@@ -1,0 +1,225 @@
+:root {
+  /* New Color Palette */
+  --crimson-primary: #990000; /* Deep Imperial Crimson */
+  --emerald-secondary: #00A859; /* Futuristic Emerald Green */
+  --gold-accent: #D4AF37; /* Champagne Gold */
+  
+  --text-dark: #111111;
+  --text-light: #F7FAFC;
+  
+  --bg-main: #FFFFFF; /* Crisp Minimalist White */
+  --bg-secondary: #FAFAFA; /* Off-white for slight contrast */
+  --bg-dark: #121212;
+  
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-dark-bg: rgba(18, 18, 18, 0.7);
+  --glass-dark-border: rgba(255, 255, 255, 0.1);
+
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-main: #121212;
+    --bg-secondary: #1A1A1A;
+    --text-dark: #F7FAFC;
+    --text-light: #E2E8F0;
+    --glass-bg: var(--glass-dark-bg);
+    --glass-border: var(--glass-dark-border);
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-dark);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800; /* Bold geometric look */
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-md);
+}
+
+/* Container */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 2rem;
+  border-radius: 4px; /* More geometric/modern than fully rounded */
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+  text-align: center;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+}
+
+.btn-primary {
+  background: var(--crimson-primary);
+  color: white;
+  box-shadow: 0 4px 14px 0 rgba(153, 0, 0, 0.39);
+}
+
+.btn-primary:hover {
+  background: #B30000;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(153, 0, 0, 0.4);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: white;
+  border: 1px solid var(--gold-accent);
+}
+
+.btn-ghost:hover {
+  background: rgba(212, 175, 55, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Micro-animations */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--gold-accent); /* Champagne gold border on hover */
+}
+
+/* Bento Grid System */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bento-card {
+  background: var(--bg-secondary);
+  border-radius: 24px;
+  padding: 2.5rem;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 350px;
+}
+
+.dark .bento-card {
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Hero Background Crossfade Animation */
+.hero-crossfade {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+}
+
+.hero-crossfade .bg-img {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  animation: crossfade 16s infinite;
+}
+
+.hero-crossfade .bg-img:nth-child(1) {
+  background-image: url('/images/banner1.jpg');
+  animation-delay: 0s;
+}
+
+.hero-crossfade .bg-img:nth-child(2) {
+  background-image: url('/images/banner2.jpg');
+  animation-delay: 8s;
+}
+
+@keyframes crossfade {
+  0% { opacity: 0; transform: scale(1); }
+  10% { opacity: 1; transform: scale(1.02); }
+  45% { opacity: 1; transform: scale(1.05); }
+  55% { opacity: 0; transform: scale(1.07); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* WhatsApp Float */
+.whatsapp-float {
+  position: fixed;
+  width: 60px;
+  height: 60px;
+  bottom: 40px;
+  right: 40px;
+  background-color: #25d366;
+  color: #FFF;
+  border-radius: 50px;
+  text-align: center;
+  font-size: 30px;
+  box-shadow: 2px 2px 3px #999;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.whatsapp-float:hover {
+  transform: scale(1.1);
+}
