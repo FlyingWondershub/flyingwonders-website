@@ -23,7 +23,7 @@ export default function RootLayout({
           <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Link href="/">
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <span style={{ fontFamily: 'var(--font-outfit)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary-blue)' }}>
+                <span style={{ fontFamily: 'var(--font-outfit)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--crimson-primary)' }}>
                   Flying Wonders
                 </span>
               </div>
@@ -31,10 +31,12 @@ export default function RootLayout({
             <nav style={{ display: 'flex', gap: '2rem' }}>
               <Link href="/" className="nav-link">Home</Link>
               <Link href="/packages" className="nav-link">Packages</Link>
+              <Link href="/book" className="nav-link">Customize</Link>
               <Link href="/about" className="nav-link">About Us</Link>
               <Link href="/reviews" className="nav-link">Reviews</Link>
+              <Link href="/contact" className="nav-link">Contact</Link>
             </nav>
-            <Link href="/packages" className="btn btn-primary">Book Now</Link>
+            <Link href="/book" className="btn btn-primary">Book Now</Link>
           </div>
         </header>
 
