@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -30,6 +30,14 @@ export default function ContactForm() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 650)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const updateForm = (key: string, value: string) => {
     setFormData(prev => ({ ...prev, [key]: value }))
@@ -70,48 +78,65 @@ export default function ContactForm() {
     }
   }
 
+  const handleWhatsAppFallback = () => {
+    const text = `Hello Flying Wonders! I filled out the contact form on your website but wanted to follow up directly.%0A%0A*Name:* ${formData.name}%0A*Email:* ${formData.email}%0A*Phone:* ${formData.phone}%0A*Subject:* ${formData.subject}%0A*Message:* ${formData.message}`
+    window.open(`https://wa.me/919886171251?text=${text}`, '_blank')
+  }
+
   if (status === 'success') {
     return (
-      <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📩</div>
-        <h2 style={{ color: 'var(--emerald-secondary)', marginBottom: '1rem' }}>Message Sent!</h2>
-        <p style={{ opacity: 0.8 }}>
-          We'll get back to you at <strong>{formData.email || 'your email'}</strong> within 24 hours.
+      <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📩</div>
+        <h2 style={{ color: 'var(--emerald-secondary)', marginBottom: '1rem', fontSize: '1.5rem' }}>Message Logged!</h2>
+        <p style={{ opacity: 0.8, fontSize: '0.95rem', marginBottom: '1.5rem' }}>
+          Thank you for reaching out. We will get back to you at your email address within 24 hours.
         </p>
-        <button onClick={() => setStatus('idle')} className="btn btn-primary" style={{ marginTop: '1.5rem' }}>Send Another Message</button>
+        <button onClick={() => setStatus('idle')} className="btn btn-primary" style={{ padding: '0.6rem 1.5rem', fontSize: '0.8rem' }}>
+          Send Another Message
+        </button>
       </div>
     )
   }
 
   return (
     <form onSubmit={handleSubmit}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+        gap: '1rem', 
+        marginBottom: '1rem' 
+      }}>
         <div>
           <label style={labelStyle}>Your Name *</label>
           <input type="text" required placeholder="Full name" value={formData.name} onChange={e => updateForm('name', e.target.value)} style={inputStyle} />
         </div>
         <div>
           <label style={labelStyle}>Email Address *</label>
-          <input type="email" required placeholder="you@email.com" value={formData.email} onChange={e => updateForm('email', e.target.value)} style={inputStyle} />
+          <input type="email" required placeholder="name@domain.com" value={formData.email} onChange={e => updateForm('email', e.target.value)} style={inputStyle} />
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1.5rem' }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+        gap: '1rem', 
+        marginBottom: '1.5rem' 
+      }}>
         <div>
           <label style={labelStyle}>Phone Number *</label>
-          <input type="tel" required placeholder="+91 98861 71251" value={formData.phone} onChange={e => updateForm('phone', e.target.value)} style={inputStyle} />
+          <input type="tel" required placeholder="E.g. +91 98861 71251" value={formData.phone} onChange={e => updateForm('phone', e.target.value)} style={inputStyle} />
         </div>
         <div>
           <label style={labelStyle}>Subject</label>
-          <input type="text" placeholder="What is this about?" value={formData.subject} onChange={e => updateForm('subject', e.target.value)} style={inputStyle} />
+          <input type="text" placeholder="Topic of inquiry" value={formData.subject} onChange={e => updateForm('subject', e.target.value)} style={inputStyle} />
         </div>
       </div>
 
-      <div style={{ marginTop: '1.5rem' }}>
+      <div>
         <label style={labelStyle}>Your Message *</label>
         <textarea
-          required rows={5}
-          placeholder="Tell us how we can help you..."
+          required rows={4}
+          placeholder="Type your message here..."
           value={formData.message}
           onChange={e => updateForm('message', e.target.value)}
           style={{ ...inputStyle, resize: 'vertical' }}
@@ -119,8 +144,24 @@ export default function ContactForm() {
       </div>
 
       {status === 'error' && (
-        <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: 'rgba(153,0,0,0.08)', color: 'var(--crimson-primary)', borderRadius: '8px', fontSize: '0.9rem' }}>
-          ⚠️ Failed to send message. Please try again or reach us on WhatsApp.
+        <div style={{ 
+          marginTop: '1.25rem', 
+          padding: '1rem', 
+          background: 'rgba(153,0,0,0.06)', 
+          borderRadius: '8px', 
+          borderLeft: '4px solid var(--crimson-primary)', 
+          fontSize: '0.85rem' 
+        }}>
+          <p style={{ fontWeight: 700, color: 'var(--crimson-primary)', marginBottom: '0.25rem' }}>SMTP Sending Failed</p>
+          <p style={{ opacity: 0.8, marginBottom: '0.75rem' }}>Your request was successfully saved to our database, but email dispatch failed. Please click below to send it to us on WhatsApp for instant confirmation:</p>
+          <button 
+            type="button" 
+            onClick={handleWhatsAppFallback} 
+            className="btn btn-primary" 
+            style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', background: '#25D366', boxShadow: 'none' }}
+          >
+            Send via WhatsApp 💬
+          </button>
         </div>
       )}
 
@@ -128,7 +169,7 @@ export default function ContactForm() {
         type="submit"
         className="btn btn-primary"
         disabled={isSubmitting}
-        style={{ marginTop: '2rem', width: '100%', padding: '1rem', opacity: isSubmitting ? 0.7 : 1 }}
+        style={{ marginTop: '1.5rem', width: '100%', padding: '1rem', opacity: isSubmitting ? 0.7 : 1 }}
       >
         {isSubmitting ? 'Sending...' : 'Send Message ✈'}
       </button>

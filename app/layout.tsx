@@ -20,7 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${outfit.variable}`}>
         <header className="glass" style={{ position: 'sticky', top: 0, zIndex: 50, padding: '1rem 0' }}>
-          <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="container header-container">
             <Link href="/">
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <span style={{ fontFamily: 'var(--font-outfit)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--crimson-primary)' }}>
@@ -28,7 +28,7 @@ export default function RootLayout({
                 </span>
               </div>
             </Link>
-            <nav style={{ display: 'flex', gap: '2rem' }}>
+            <nav className="nav-menu">
               <Link href="/" className="nav-link">Home</Link>
               <Link href="/packages" className="nav-link">Packages</Link>
               <Link href="/book" className="nav-link">Customize</Link>
@@ -36,7 +36,7 @@ export default function RootLayout({
               <Link href="/reviews" className="nav-link">Reviews</Link>
               <Link href="/contact" className="nav-link">Contact</Link>
             </nav>
-            <Link href="/book" className="btn btn-primary">Book Now</Link>
+            <Link href="/book" className="btn btn-primary nav-cta">Book Now</Link>
           </div>
         </header>
 

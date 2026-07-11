@@ -20,7 +20,7 @@ export default function ContactPage() {
 
       {/* Contact Content */}
       <section style={{ padding: '5rem 0' }}>
-        <div className="container" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'start' }}>
+        <div className="container contact-grid">
           
           {/* Left: Contact Form */}
           <div style={{ background: 'white', padding: '2.5rem', borderRadius: '16px', boxShadow: 'var(--shadow-lg)' }}>

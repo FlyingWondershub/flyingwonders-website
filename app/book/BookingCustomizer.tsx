@@ -18,6 +18,7 @@ interface Experience {
   priceINR: number
   description?: string
   duration?: string
+  imageUrl?: string
 }
 
 const TIER_BASE_PRICES: Record<string, number> = {
@@ -34,16 +35,16 @@ const TIER_LABELS: Record<string, string> = {
   groups: 'Groups & Families',
 }
 
-// Fallback experiences if Sanity is empty
+// Highly professional Singapore landmarks images
 const FALLBACK_EXPERIENCES: Experience[] = [
-  { _id: 'f1', title: 'Universal Studios Singapore', category: 'theme_park', priceINR: 5500 },
-  { _id: 'f2', title: 'Gardens by the Bay', category: 'nature', priceINR: 2800 },
-  { _id: 'f3', title: 'Marina Bay Sands SkyPark', category: 'luxury', priceINR: 3200 },
-  { _id: 'f4', title: 'Sentosa Island Day Pass', category: 'adventure', priceINR: 4500 },
-  { _id: 'f5', title: 'Night Safari Expedition', category: 'nature', priceINR: 4800 },
-  { _id: 'f6', title: 'Heritage Hawker Food Tour', category: 'food', priceINR: 3500 },
-  { _id: 'f7', title: 'Jewel Changi Experience', category: 'luxury', priceINR: 2200 },
-  { _id: 'f8', title: 'Singapore Science Centre', category: 'cultural', priceINR: 1800 },
+  { _id: 'f1', title: 'Universal Studios Singapore', category: 'theme_park', priceINR: 5500, duration: 'Full Day Ticket', imageUrl: 'https://images.unsplash.com/photo-1596422846543-75c6fc18a52b?auto=format&fit=crop&w=400&q=80' },
+  { _id: 'f2', title: 'Gardens by the Bay (Flower Dome & Cloud Forest)', category: 'nature', priceINR: 2800, duration: 'Half Day', imageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=400&q=80' },
+  { _id: 'f3', title: 'Marina Bay Sands SkyPark & Observation Deck', category: 'luxury', priceINR: 3200, duration: '2 Hours Access', imageUrl: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=400&q=80' },
+  { _id: 'f4', title: 'Luxury Sentosa Island Yacht & Beach Club Day', category: 'adventure', priceINR: 9500, duration: 'Full Day', imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80' },
+  { _id: 'f5', title: 'Night Safari Private Tram Expedition', category: 'nature', priceINR: 4800, duration: 'Evening Ticket', imageUrl: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=400&q=80' },
+  { _id: 'f6', title: 'Private Heritage Hawker Food Tasting Tour', category: 'food', priceINR: 3500, duration: '3 Hours', imageUrl: 'https://images.unsplash.com/photo-1626804475315-992d9d1ef035?auto=format&fit=crop&w=400&q=80' },
+  { _id: 'f7', title: 'Jewel Changi Canopy Park & Changi Experience', category: 'luxury', priceINR: 2200, duration: 'Flexible Entry', imageUrl: 'https://images.unsplash.com/photo-1570533317769-cf722b512c1d?auto=format&fit=crop&w=400&q=80' },
+  { _id: 'f8', title: 'Science Centre & Omni-Theatre Experience', category: 'cultural', priceINR: 1800, duration: 'Half Day', imageUrl: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=400&q=80' },
 ]
 
 const inputStyle: React.CSSProperties = {
@@ -53,7 +54,6 @@ const inputStyle: React.CSSProperties = {
   border: '1px solid #CBD5E1',
   fontSize: '1rem',
   background: '#FAFAFA',
-  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
   outline: 'none',
 }
 
@@ -69,6 +69,7 @@ export default function BookingCustomizer() {
   const [experiences, setExperiences] = useState<Experience[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [isMobile, setIsMobile] = useState(false)
 
   const [formData, setFormData] = useState({
     tier: 'solo',
@@ -81,11 +82,19 @@ export default function BookingCustomizer() {
     notes: '',
   })
 
-  // Fetch experiences from Sanity
+  // Check window size dynamically for mobile layout responsiveness
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 850)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Fetch experiences from Sanity CMS
   useEffect(() => {
     async function fetchExperiences() {
       try {
-        const query = `*[_type == "experience"]{ _id, title, category, priceINR, description, duration }`
+        const query = `*[_type == "experience"]{ _id, title, category, priceINR, description, duration, "imageUrl": image.asset->url }`
         const data = await client.fetch(query)
         setExperiences(data && data.length > 0 ? data : FALLBACK_EXPERIENCES)
       } catch {
@@ -111,7 +120,7 @@ export default function BookingCustomizer() {
   const nextStep = () => setStep(s => Math.min(s + 1, 4))
   const prevStep = () => setStep(s => Math.max(s - 1, 1))
 
-  // Live price calculation
+  // Live calculations
   const selectedExpDetails = useMemo(
     () => experiences.filter(e => formData.selectedExperiences.includes(e._id)),
     [experiences, formData.selectedExperiences]
@@ -159,24 +168,38 @@ export default function BookingCustomizer() {
     }
   }
 
+  // Pre-filled WhatsApp fallback
+  const handleWhatsAppRedirect = () => {
+    const message = `Hello Flying Wonders! I would like to request a Custom Singapore Package.%0A%0A*Name:* ${formData.name}%0A*Email:* ${formData.email}%0A*Phone:* ${formData.phone}%0A*Date:* ${formData.date}%0A*Profile:* ${TIER_LABELS[formData.tier]}%0A*Travelers:* ${formData.travelers}%0A*Total Est. Cost:* ₹${totalPrice.toLocaleString('en-IN')}/person%0A*Selected Experiences:*%0A${selectedExpDetails.map(e => `- ${e.title}`).join('%0A')}%0A%0A*Notes:* ${formData.notes || 'None'}`
+    window.open(`https://wa.me/919886171251?text=${message}`, '_blank')
+  }
+
   if (submitStatus === 'success') {
     return (
       <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
         <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✈️</div>
-        <h2 style={{ color: 'var(--emerald-secondary)', marginBottom: '1rem' }}>Request Submitted Successfully!</h2>
+        <h2 style={{ color: 'var(--emerald-secondary)', marginBottom: '1rem' }}>Request Received!</h2>
         <p style={{ opacity: 0.8, maxWidth: '500px', margin: '0 auto 2rem auto' }}>
-          Our travel architects will review your custom package and get back to you within 24 hours at <strong>{formData.email}</strong>.
+          Your request has been successfully logged. We will reach out to you within 24 hours to confirm your custom itinerary.
         </p>
-        <a href="/" className="btn btn-primary">Back to Home</a>
+        <button onClick={handleWhatsAppRedirect} className="btn btn-primary" style={{ background: '#25D366', boxShadow: 'none' }}>
+          Chat on WhatsApp for Instant Confirmation
+        </button>
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '3rem', alignItems: 'start' }}>
-      {/* Left: Multi-step Form */}
-      <div>
-        {/* Progress Bar */}
+    <div style={{ 
+      display: 'grid', 
+      gridTemplateColumns: isMobile ? '1fr' : '1fr 380px', 
+      gap: '2.5rem', 
+      alignItems: 'start' 
+    }}>
+      
+      {/* Left: Form Flow */}
+      <div className="glass" style={{ padding: isMobile ? '1.5rem' : '2.5rem', borderRadius: '16px' }}>
+        {/* Step Indicator */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2.5rem', position: 'relative' }}>
           <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '2px', background: 'rgba(0,0,0,0.1)', zIndex: 0 }}></div>
           {[1, 2, 3, 4].map(num => (
@@ -193,12 +216,11 @@ export default function BookingCustomizer() {
         </div>
 
         <form onSubmit={submit}>
-          {/* Step 1: Traveler Profile */}
           {step === 1 && (
             <div>
-              <h2 style={{ color: 'var(--crimson-primary)', marginBottom: '0.5rem' }}>Step 1: Traveler Profile</h2>
-              <p style={{ opacity: 0.7, marginBottom: '2rem' }}>Tell us about your ideal trip style.</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <h2 style={{ color: 'var(--crimson-primary)', marginBottom: '0.5rem' }}>Traveler Profile</h2>
+              <p style={{ opacity: 0.7, marginBottom: '2rem', fontSize: '0.9rem' }}>Select the travel style that best matches your expectations.</p>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '1rem' }}>
                 {Object.entries(TIER_LABELS).map(([value, label]) => (
                   <button
                     key={value}
@@ -208,21 +230,21 @@ export default function BookingCustomizer() {
                       padding: '1.25rem',
                       borderRadius: '12px',
                       border: formData.tier === value ? '2px solid var(--crimson-primary)' : '2px solid #E2E8F0',
-                      background: formData.tier === value ? 'rgba(153,0,0,0.05)' : 'white',
+                      background: formData.tier === value ? 'rgba(153,0,0,0.04)' : 'white',
                       cursor: 'pointer',
                       textAlign: 'left',
                       transition: 'all 0.2s ease',
                     }}
                   >
                     <div style={{ fontWeight: 700, fontSize: '1rem', color: formData.tier === value ? 'var(--crimson-primary)' : '#333' }}>{label}</div>
-                    <div style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '4px' }}>From ₹{TIER_BASE_PRICES[value].toLocaleString('en-IN')}/person</div>
+                    <div style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '4px' }}>Base: ₹{TIER_BASE_PRICES[value].toLocaleString('en-IN')}/person</div>
                   </button>
                 ))}
               </div>
               <div style={{ marginTop: '1.5rem' }}>
                 <label style={labelStyle}>Number of Travelers</label>
                 <input
-                  type="number" min="1" max="50"
+                  type="number" min="1" max="100"
                   value={formData.travelers}
                   onChange={e => updateForm('travelers', parseInt(e.target.value) || 1)}
                   style={inputStyle}
@@ -231,53 +253,64 @@ export default function BookingCustomizer() {
             </div>
           )}
 
-          {/* Step 2: Choose Experiences */}
           {step === 2 && (
             <div>
-              <h2 style={{ color: 'var(--crimson-primary)', marginBottom: '0.5rem' }}>Step 2: Choose Experiences</h2>
-              <p style={{ opacity: 0.7, marginBottom: '2rem' }}>Select the attractions you want to include.</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <h2 style={{ color: 'var(--crimson-primary)', marginBottom: '0.5rem' }}>Included Hotspots & Experiences</h2>
+              <p style={{ opacity: 0.7, marginBottom: '2rem', fontSize: '0.9rem' }}>Select the Singapore hotspots you want added to your itinerary.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {experiences.map(exp => {
                   const isSelected = formData.selectedExperiences.includes(exp._id)
                   return (
-                    <label
+                    <div
                       key={exp._id}
+                      onClick={() => toggleExperience(exp._id)}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: '1rem',
-                        padding: '1rem 1.25rem', borderRadius: '12px',
-                        border: isSelected ? '2px solid var(--emerald-secondary)' : '2px solid #E2E8F0',
-                        background: isSelected ? 'rgba(0,168,89,0.05)' : 'white',
-                        cursor: 'pointer', transition: 'all 0.2s ease',
+                        display: 'flex',
+                        flexDirection: isMobile ? 'column' : 'row',
+                        gap: '1rem',
+                        alignItems: isMobile ? 'stretch' : 'center',
+                        padding: '1rem',
+                        borderRadius: '12px',
+                        border: isSelected ? '2px solid var(--emerald-secondary)' : '1px solid #E2E8F0',
+                        background: isSelected ? 'rgba(0,168,89,0.03)' : 'white',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
                       }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleExperience(exp._id)}
-                        style={{ width: '20px', height: '20px', accentColor: 'var(--emerald-secondary)' }}
-                      />
+                      {exp.imageUrl && (
+                        <div style={{ width: isMobile ? '100%' : '80px', height: isMobile ? '120px' : '60px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
+                          <img src={exp.imageUrl} alt={exp.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      )}
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600 }}>{exp.title}</div>
-                        {exp.duration && <div style={{ fontSize: '0.8rem', opacity: 0.6 }}>{exp.duration}</div>}
+                        <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{exp.title}</div>
+                        {exp.duration && <div style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '2px' }}>{exp.duration}</div>}
                       </div>
-                      <div style={{ fontWeight: 700, color: 'var(--emerald-secondary)', whiteSpace: 'nowrap' }}>
-                        ₹{exp.priceINR.toLocaleString('en-IN')}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: isMobile ? '0.5rem' : '0' }}>
+                        <span style={{ fontWeight: 800, color: 'var(--emerald-secondary)', marginRight: '1rem' }}>
+                          ₹{exp.priceINR.toLocaleString('en-IN')}
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          readOnly
+                          style={{ width: '18px', height: '18px', accentColor: 'var(--emerald-secondary)' }}
+                        />
                       </div>
-                    </label>
+                    </div>
                   )
                 })}
               </div>
             </div>
           )}
 
-          {/* Step 3: Travel Date & Notes */}
           {step === 3 && (
             <div>
-              <h2 style={{ color: 'var(--crimson-primary)', marginBottom: '0.5rem' }}>Step 3: Travel Dates & Notes</h2>
-              <p style={{ opacity: 0.7, marginBottom: '2rem' }}>When are you planning to visit?</p>
+              <h2 style={{ color: 'var(--crimson-primary)', marginBottom: '0.5rem' }}>Step 3: Schedule Details</h2>
+              <p style={{ opacity: 0.7, marginBottom: '2rem', fontSize: '0.9rem' }}>Choose your approximate departure date.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div>
-                  <label style={labelStyle}>Travel Date *</label>
+                  <label style={labelStyle}>Proposed Travel Date *</label>
                   <input
                     type="date" required
                     value={formData.date}
@@ -286,12 +319,12 @@ export default function BookingCustomizer() {
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>Special Requests / Notes</label>
+                  <label style={labelStyle}>Special Instructions & Requests</label>
                   <textarea
                     rows={4}
                     value={formData.notes}
                     onChange={e => updateForm('notes', e.target.value)}
-                    placeholder="Any dietary requirements, accessibility needs, hotel preferences..."
+                    placeholder="E.g. vegetarian meals, specific hotel tier, flight itinerary..."
                     style={{ ...inputStyle, resize: 'vertical' }}
                   />
                 </div>
@@ -299,16 +332,15 @@ export default function BookingCustomizer() {
             </div>
           )}
 
-          {/* Step 4: Contact & Schedule */}
           {step === 4 && (
             <div>
-              <h2 style={{ color: 'var(--crimson-primary)', marginBottom: '0.5rem' }}>Step 4: Contact & Schedule</h2>
-              <p style={{ opacity: 0.7, marginBottom: '2rem' }}>Provide your contact details so we can finalize the booking.</p>
+              <h2 style={{ color: 'var(--crimson-primary)', marginBottom: '0.5rem' }}>Step 4: Contact & Finalize</h2>
+              <p style={{ opacity: 0.7, marginBottom: '2rem', fontSize: '0.9rem' }}>Fill in your contact information so we can generate your PDF proposal.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div>
-                  <label style={labelStyle}>Your Name *</label>
+                  <label style={labelStyle}>Full Name *</label>
                   <input
-                    type="text" required placeholder="Enter your full name"
+                    type="text" required placeholder="Enter full name"
                     value={formData.name}
                     onChange={e => updateForm('name', e.target.value)}
                     style={inputStyle}
@@ -317,16 +349,16 @@ export default function BookingCustomizer() {
                 <div>
                   <label style={labelStyle}>Email Address *</label>
                   <input
-                    type="email" required placeholder="Enter your email"
+                    type="email" required placeholder="name@domain.com"
                     value={formData.email}
                     onChange={e => updateForm('email', e.target.value)}
                     style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>Phone Number *</label>
+                  <label style={labelStyle}>WhatsApp Phone Number *</label>
                   <input
-                    type="tel" required placeholder="Enter mobile number"
+                    type="tel" required placeholder="E.g. +91 98861 71251"
                     value={formData.phone}
                     onChange={e => updateForm('phone', e.target.value)}
                     style={inputStyle}
@@ -336,11 +368,11 @@ export default function BookingCustomizer() {
             </div>
           )}
 
-          {/* Navigation Buttons */}
+          {/* Nav Controls */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2.5rem', borderTop: '1px solid rgba(0,0,0,0.1)', paddingTop: '1.5rem' }}>
             {step > 1 ? (
-              <button type="button" onClick={prevStep} className="btn" style={{ background: '#CBD5E1', color: '#1A202C' }}>
-                ← Previous
+              <button type="button" onClick={prevStep} className="btn" style={{ background: '#E2E8F0', color: '#333' }}>
+                ← Back
               </button>
             ) : <div></div>}
 
@@ -349,25 +381,27 @@ export default function BookingCustomizer() {
                 Next Step →
               </button>
             ) : (
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={isSubmitting}
-                style={{ opacity: isSubmitting ? 0.7 : 1 }}
-              >
-                {isSubmitting ? 'Sending...' : 'Submit Custom Request ✈'}
-              </button>
+              <div style={{ display: 'flex', gap: '1rem', width: isMobile ? '100%' : 'auto', flexDirection: isMobile ? 'column' : 'row' }}>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isSubmitting}
+                  style={{ opacity: isSubmitting ? 0.7 : 1 }}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </div>
             )}
           </div>
         </form>
       </div>
 
-      {/* Right: Live Custom Package Proposal */}
+      {/* Right: Custom Package Proposal Module */}
       <div style={{
-        position: 'sticky', top: '100px',
-        background: 'white',
-        border: '2px solid #E2E8F0',
+        background: '#FFF',
+        border: '1px solid #E2E8F0',
         borderRadius: '16px',
+        boxShadow: 'var(--shadow-md)',
         overflow: 'hidden',
       }}>
         <div style={{ background: 'var(--crimson-primary)', color: 'white', padding: '1.25rem 1.5rem' }}>
@@ -376,68 +410,56 @@ export default function BookingCustomizer() {
 
         <div style={{ padding: '1.5rem' }}>
           <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--crimson-primary)', fontWeight: 700, marginBottom: '1rem' }}>
-            LIVE BUILDER
+            LIVE BUILDER SUMMARY
           </div>
 
-          {/* Traveler Profile */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.5, marginBottom: '4px' }}>Traveler Profile:</div>
-            <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{TIER_LABELS[formData.tier]}</div>
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.8rem', opacity: 0.6 }}>Traveler Profile:</div>
+            <div style={{ fontWeight: 700, fontSize: '1rem' }}>{TIER_LABELS[formData.tier]}</div>
           </div>
 
-          {/* Comfort Tier */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.5, marginBottom: '4px' }}>Comfort Tier:</div>
-            <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{TIER_LABELS[formData.tier]}</div>
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.8rem', opacity: 0.6 }}>Comfort Tier:</div>
+            <div style={{ fontWeight: 700, fontSize: '1rem' }}>{TIER_LABELS[formData.tier]}</div>
           </div>
 
-          {/* Travelers */}
           <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.5, marginBottom: '4px' }}>Party Size:</div>
-            <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{formData.travelers} {formData.travelers === 1 ? 'Traveler' : 'Travelers'}</div>
-          </div>
-
-          {/* Included Experiences */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.5, marginBottom: '8px' }}>Included Experiences:</div>
+            <div style={{ fontSize: '0.8rem', opacity: 0.6 }}>Included Experiences:</div>
             {selectedExpDetails.length > 0 ? (
-              <ul style={{ paddingLeft: '1.25rem', margin: 0 }}>
+              <ul style={{ paddingLeft: '1.25rem', margin: '0.25rem 0 0 0', fontSize: '0.9rem' }}>
                 {selectedExpDetails.map(exp => (
-                  <li key={exp._id} style={{ marginBottom: '4px', fontSize: '0.95rem' }}>{exp.title}</li>
+                  <li key={exp._id} style={{ marginBottom: '4px' }}>{exp.title}</li>
                 ))}
               </ul>
             ) : (
-              <p style={{ opacity: 0.4, fontStyle: 'italic', fontSize: '0.9rem', margin: 0 }}>No experiences selected yet</p>
+              <p style={{ opacity: 0.4, fontStyle: 'italic', fontSize: '0.85rem', margin: '4px 0 0 0' }}>No attractions chosen yet</p>
             )}
           </div>
 
-          {/* Divider */}
-          <hr style={{ border: 'none', borderTop: '2px solid #E2E8F0', margin: '1.5rem 0' }} />
+          <hr style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '1rem 0' }} />
 
-          {/* Estimated Price */}
-          <div style={{ marginBottom: '0.5rem' }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 600, opacity: 0.5, marginBottom: '4px' }}>Estimated Package Value:</div>
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.8rem', opacity: 0.6 }}>Estimated Package Value:</div>
             <div style={{ fontWeight: 800, fontSize: '1.8rem', color: 'var(--crimson-primary)' }}>
               ₹{totalPrice.toLocaleString('en-IN')}
             </div>
-            <div style={{ fontSize: '0.85rem', opacity: 0.6 }}>Per Person</div>
+            <div style={{ fontSize: '0.8rem', opacity: 0.6 }}>Per Person</div>
           </div>
 
-          {/* Guarantee Badge */}
           <div style={{
-            marginTop: '1.25rem',
-            padding: '0.75rem 1rem',
-            background: 'rgba(0,168,89,0.08)',
+            padding: '0.75rem',
+            background: 'rgba(0,168,89,0.06)',
             borderRadius: '8px',
             borderLeft: '4px solid var(--emerald-secondary)',
-            fontSize: '0.8rem',
-            fontWeight: 600,
+            fontSize: '0.75rem',
             color: 'var(--emerald-secondary)',
+            fontWeight: 600,
           }}>
             🛡️ Price protected under best price guarantee.
           </div>
         </div>
       </div>
+
     </div>
   )
 }
