@@ -132,7 +132,7 @@ ${sanityDocId ? `Logged in Sanity: ${sanityDocId}` : ''}
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Accept: 'application/json',
+            'Accept': 'application/json',
           },
           body: JSON.stringify({
             access_key: web3formsKey,
@@ -144,7 +144,16 @@ ${sanityDocId ? `Logged in Sanity: ${sanityDocId}` : ''}
           }),
         })
 
-        const resData = await response.json()
+        const rawText = await response.text()
+        let resData: any = {}
+
+        try {
+          resData = JSON.parse(rawText)
+        } catch (jsonErr) {
+          console.error('Web3Forms returned non-JSON response. Raw text preview:', rawText.substring(0, 300))
+          throw new Error('Received HTML/non-JSON response from Web3Forms server. Verify your WEB3FORMS_ACCESS_KEY.')
+        }
+
         if (resData.success) {
           return NextResponse.json({ success: true, message: 'Your request has been sent and logged successfully!' })
         } else {
