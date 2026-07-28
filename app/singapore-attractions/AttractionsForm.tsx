@@ -106,12 +106,19 @@ const PHOTO_MAP: Record<string, string> = {
   tussauds: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&w=600&q=80',
   'ice cream': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?auto=format&fit=crop&w=600&q=80',
   aquarium: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=600&q=80',
-  mbs: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=600&q=80',
+  oceanarium: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=600&q=80',
+  mbs: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?auto=format&fit=crop&w=600&q=80',
+  sands: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?auto=format&fit=crop&w=600&q=80',
   ifly: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=600&q=80',
   flyer: 'https://images.unsplash.com/photo-1561470508-fd4df1ed90b2?auto=format&fit=crop&w=600&q=80',
   'science centre': 'https://images.unsplash.com/photo-1532094349884-543559137ea3?auto=format&fit=crop&w=600&q=80',
   jewel: 'https://images.unsplash.com/photo-1600420673889-c6d4f64bdf5c?auto=format&fit=crop&w=600&q=80',
-  default: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=600&q=80',
+  duck: 'https://images.unsplash.com/photo-1568285516942-f28328eb97e2?auto=format&fit=crop&w=600&q=80',
+  'cable car': 'https://images.unsplash.com/photo-1579247164998-f29eeb13bcbe?auto=format&fit=crop&w=600&q=80',
+  skyhelix: 'https://images.unsplash.com/photo-1621256331908-0bf458fa39bb?auto=format&fit=crop&w=600&q=80',
+  trick: 'https://images.unsplash.com/photo-1588607170133-7848600d832a?auto=format&fit=crop&w=600&q=80',
+  artscience: 'https://images.unsplash.com/photo-1588607170133-7848600d832a?auto=format&fit=crop&w=600&q=80',
+  default: 'https://images.unsplash.com/photo-1557343467-33e9b114d7cc?auto=format&fit=crop&w=600&q=80',
 }
 
 function getPhoto(name: string, meta?: SanityMeta): string {
