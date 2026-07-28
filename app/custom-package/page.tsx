@@ -1782,8 +1782,6 @@ ${proposal}
               👁️ Client-Ready Preview
             </button>
           )}
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <button
             type="button"
             onClick={handleRefresh}
@@ -1830,7 +1828,9 @@ ${proposal}
               🔍 Preview Package
             </button>
           )}
-
+        </div>
+        
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           {!hideIciciCustomPackage && (
             <button
               type="button"
@@ -1871,6 +1871,8 @@ ${proposal}
               transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '220px',
               gap: '0.35rem',
               boxShadow: '0 3px 8px rgba(26, 54, 93, 0.25)',
               opacity: cashfreeLoading ? 0.7 : 1
