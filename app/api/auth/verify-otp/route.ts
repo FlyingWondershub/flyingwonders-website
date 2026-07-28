@@ -69,8 +69,9 @@ export async function POST(req: Request) {
       sameSite: 'lax',
     })
 
-    const role = email.toLowerCase() === 'info.flyingwonders@gmail.com' ? 'admin' : 'user'
-
+    // Check if the user is explicitly marked as an admin in Sanity, or is the hardcoded default admin
+    const isAdminCount = await writeClient.fetch(`count(*[_type == "adminUser" && email == $email])`, { email })
+    const role = (email.toLowerCase() === 'info.flyingwonders@gmail.com' || isAdminCount > 0) ? 'admin' : 'user'
     return NextResponse.json({
       success: true,
       agent: {

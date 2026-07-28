@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
+import { cookies } from 'next/headers'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 
 const readClient = createClient({
@@ -11,6 +12,22 @@ const readClient = createClient({
 
 export async function GET() {
   try {
+    // 1. Verify Admin Authentication
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('b2b_session')
+    
+    if (!sessionCookie || !sessionCookie.value) {
+      return new NextResponse('Unauthorized - Please log in', { status: 401 })
+    }
+    
+    const email = sessionCookie.value
+    const isAdminCount = await readClient.fetch(`count(*[_type == "adminUser" && email == $email])`, { email })
+    
+    if (email.toLowerCase() !== 'info.flyingwonders@gmail.com' && isAdminCount === 0) {
+      return new NextResponse('Forbidden - Admin access required', { status: 403 })
+    }
+
+    // 2. Fetch Data
     const agents = await readClient.fetch(`*[_type == "b2bAgent"] | order(_createdAt desc) {
       companyName,
       agentName,

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { client } from '../../../../sanity/lib/client'
 
 export const dynamic = 'force-dynamic'
@@ -6,6 +7,22 @@ export const revalidate = 0
 
 export async function GET() {
   try {
+    // 1. Verify Admin Authentication
+    const cookieStore = await cookies()
+    const sessionCookie = cookieStore.get('b2b_session')
+    
+    if (!sessionCookie || !sessionCookie.value) {
+      return new NextResponse('Unauthorized - Please log in', { status: 401 })
+    }
+    
+    const email = sessionCookie.value
+    const isAdminCount = await client.fetch(`count(*[_type == "adminUser" && email == $email])`, { email })
+    
+    if (email.toLowerCase() !== 'info.flyingwonders@gmail.com' && isAdminCount === 0) {
+      return new NextResponse('Forbidden - Admin access required', { status: 403 })
+    }
+
+    // 2. Fetch Data
     const payments = await client.fetch(`*[_type == "manualPayment"] | order(_createdAt desc){
       bookingReference,
       guestName,
