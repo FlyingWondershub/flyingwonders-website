@@ -1238,7 +1238,7 @@ export default function PrototypeBuilder() {
       // 2. Initialize Cashfree SDK
       // Mode depends on whether the site is test or prod, we'll default to sandbox for safety until you configure prod
       const cashfree = await load({
-        mode: "sandbox", 
+        mode: data.environment === 'PRODUCTION' ? "production" : "sandbox", 
       })
 
       if (!cashfree) {

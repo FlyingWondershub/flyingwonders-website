@@ -60,7 +60,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ 
       success: true, 
       paymentSessionId: data.payment_session_id,
-      orderId: data.order_id 
+      orderId: data.order_id,
+      environment: env
     })
   } catch (error: any) {
     console.error('Cashfree API Route Error:', error)

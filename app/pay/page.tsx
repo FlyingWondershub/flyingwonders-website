@@ -55,7 +55,7 @@ export default function PayDirectPage() {
       }
 
       const cashfree = await load({
-        mode: "sandbox", 
+        mode: data.environment === 'PRODUCTION' ? "production" : "sandbox", 
       })
 
       if (!cashfree) {
