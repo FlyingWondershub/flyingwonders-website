@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Download, ShieldAlert, Loader2, CheckCircle, XCircle, Activity, Users, DollarSign, RefreshCw, FileText } from 'lucide-react'
-
+import { Download, ShieldAlert, Loader2, CheckCircle, XCircle, Activity, Users, DollarSign, RefreshCw, FileText, Map, ExternalLink, Zap, Package, Compass, FileQuestion, BookOpen, MessageCircle, Home } from 'lucide-react'
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -137,6 +136,83 @@ export default function AdminDashboard() {
               <h3 style={{ margin: 0, color: '#4A5568' }}>Total Contacts</h3>
             </div>
             <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#2D3748' }}>{metrics.totalContacts}</div>
+          </div>
+        </div>
+
+        {/* SITE MAP & QUICK LINKS MATRIX */}
+        <div style={{ marginBottom: '3rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <Map size={24} color="#4A5568" />
+            <h2 style={{ fontSize: '1.5rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif' }}>Site Map & Quick Links</h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+            
+            {/* Core Operations */}
+            <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <h3 style={{ fontSize: '1.1rem', color: '#2D3748', marginBottom: '1rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Zap size={18} color="#D69E2E" /> Core Operations
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {[
+                  { name: 'Sanity Studio CMS', path: '/studio', desc: 'Manage content & schemas' },
+                  { name: 'Singapore Attractions', path: '/singapore-attractions', desc: 'B2B/B2C Quote Builder' },
+                  { name: 'Active Promotions', path: '/singapore-attractions/promotions', desc: 'Discounted attraction deals' },
+                ].map(link => (
+                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{link.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#718096' }}>{link.desc}</div>
+                    </div>
+                    <ExternalLink size={16} color="#A0AEC0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Client Tools */}
+            <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <h3 style={{ fontSize: '1.1rem', color: '#2D3748', marginBottom: '1rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Package size={18} color="#3182CE" /> Client Tools
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {[
+                  { name: 'AI Trip Planner', path: '/ai-planner', desc: 'Intelligent itinerary generation' },
+                  { name: 'Instant Quote', path: '/instant-quote', desc: 'Quick package estimation' },
+                  { name: 'Live Bookings', path: '/Attractions_live', desc: 'Real-time booking portal' },
+                ].map(link => (
+                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{link.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#718096' }}>{link.desc}</div>
+                    </div>
+                    <ExternalLink size={16} color="#A0AEC0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Public Pages */}
+            <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <h3 style={{ fontSize: '1.1rem', color: '#2D3748', marginBottom: '1rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Compass size={18} color="#38A169" /> Public Pages
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {[
+                  { name: 'Homepage', path: '/', desc: 'Main landing page' },
+                  { name: 'Travel Blog', path: '/blog', desc: 'SEO articles and guides' },
+                  { name: 'Contact Us', path: '/contact', desc: 'Support and inquiries' },
+                ].map(link => (
+                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{link.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#718096' }}>{link.desc}</div>
+                    </div>
+                    <ExternalLink size={16} color="#A0AEC0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
 
