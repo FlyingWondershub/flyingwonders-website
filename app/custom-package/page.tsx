@@ -210,13 +210,13 @@ export default function PrototypeBuilder() {
   const [arrivalDate, setArrivalDate] = useState(() => {
     const today = new Date()
     return today.toISOString().split('T')[0]
-  })
-
   // Live SGD → INR exchange rate (fetched from /api/exchange-rate on mount)
   const [sgdToInrRate, setSgdToInrRate] = useState(DEFAULT_SGD_TO_INR)
   const [rateLoaded, setRateLoaded] = useState(false)
   const [isIciciModalOpen, setIsIciciModalOpen] = useState(false)
+  const [customPackageSheetUrl, setCustomPackageSheetUrl] = useState<string | null>(null)
   const [hideIciciCustomPackage, setHideIciciCustomPackage] = useState(false)
+  const [hideClientPreview, setHideClientPreview] = useState(false)
 
   // Dynamic Master Data fetched from Google Sheets (SGD pricing)
   const [hotelsList, setHotelsList] = useState(FALLBACK_HOTELS)
@@ -450,6 +450,9 @@ export default function PrototypeBuilder() {
       .then(data => {
         if (data.settings?.hideIciciCustomPackage) {
           setHideIciciCustomPackage(true)
+        }
+        if (data.settings?.hideCustomPackageClientPreview) {
+          setHideClientPreview(true)
         }
       })
       .catch(() => {})
@@ -1697,24 +1700,26 @@ ${proposal}
           >
             ⚙️ Builder Workspace
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('preview')}
-            style={{
-              padding: '0.45rem 1rem',
-              background: activeTab === 'preview' ? 'var(--emerald-secondary)' : 'transparent',
-              color: activeTab === 'preview' ? '#FFF' : '#4A5568',
-              border: 'none',
-              borderRadius: '6px',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: activeTab === 'preview' ? '0 3px 8px rgba(47,133,90,0.15)' : 'none'
-            }}
-          >
-            👁️ Client-Ready Preview
-          </button>
+          {!hideClientPreview && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('preview')}
+              style={{
+                padding: '0.45rem 1rem',
+                background: activeTab === 'preview' ? 'var(--emerald-secondary)' : 'transparent',
+                color: activeTab === 'preview' ? '#FFF' : '#4A5568',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: activeTab === 'preview' ? '0 3px 8px rgba(47,133,90,0.15)' : 'none'
+              }}
+            >
+              👁️ Client-Ready Preview
+            </button>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <button

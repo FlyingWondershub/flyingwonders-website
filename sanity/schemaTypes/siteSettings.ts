@@ -153,6 +153,13 @@ export const siteSettingsSchema = {
       initialValue: false,
     },
     {
+      name: 'hideCustomPackageClientPreview',
+      title: '🙈 Hide "Client-Ready Preview" on Custom Package Page',
+      type: 'boolean',
+      description: 'Toggle ON to hide the Client-Ready Preview tab on the Custom Package Estimator.',
+      initialValue: false,
+    },
+    {
       name: 'hideSingaporeAttractions',
       title: '🙈 Hide "Singapore Attractions" Page',
       type: 'boolean',

@@ -10,6 +10,7 @@ export async function GET() {
       notificationEmails,
       hideInstantQuote,
       hideCustomPackage,
+      hideCustomPackageClientPreview,
       hideSingaporeAttractions,
       hidePackages,
       hideBrochure,
@@ -38,6 +39,7 @@ export async function GET() {
       settings: siteSettings || {
         hideInstantQuote: true,
         hideCustomPackage: false,
+        hideCustomPackageClientPreview: false,
         hideSingaporeAttractions: false,
         hidePackages: false,
         hideBrochure: false,
@@ -54,6 +56,7 @@ export async function GET() {
       settings: {
         hideInstantQuote: true,
         hideCustomPackage: false,
+        hideCustomPackageClientPreview: false,
         hideSingaporeAttractions: false,
         hidePackages: false,
         hideBrochure: false,
