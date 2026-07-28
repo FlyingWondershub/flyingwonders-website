@@ -44,7 +44,8 @@ export async function POST(request: Request) {
   try {
     const { dates, adults, kids, vibe, budget } = await request.json()
     
-    const apiKey = process.env.Aiplanner_API_key
+    const rawKey = process.env.Aiplanner_API_key
+    const apiKey = rawKey ? rawKey.trim() : null
     if (!apiKey) {
       return NextResponse.json({ error: 'AI capabilities are currently disabled (Missing API Key)' }, { status: 503 })
     }
@@ -137,8 +138,8 @@ RULES:
             const availableModels = listData.models?.map((m: any) => m.name).join(', ') || 'None found'
             
             throw new Error(`Your API key does not support any Gemini models. Available models for your key: ${availableModels}. Original Error: ${err3?.message}`)
-          } catch (fetchErr) {
-            throw err3 // Throw original if fetching list fails
+          } catch (fetchErr: any) {
+            throw new Error(`[Diagnostic Failed]: Could not fetch models (${fetchErr?.message}). This usually means the API key is completely invalid or has extra spaces. Original Error: ${err3?.message}`)
           }
         }
       }
