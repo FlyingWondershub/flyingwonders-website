@@ -1742,8 +1742,7 @@ ${proposal}
       </div>
 
       {/* Workspace View Mode Toggle Tabs */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '2px solid #E2E8F0', paddingBottom: '0.4rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+      <div className="package-editor-toolbar" style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '2px solid #E2E8F0', paddingBottom: '0.6rem', gap: '0.5rem', overflowX: 'auto', whiteSpace: 'nowrap', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
           <button
             type="button"
             onClick={() => setActiveTab('editor')}
@@ -1811,7 +1810,7 @@ ${proposal}
               onClick={() => setShowPreviewOverlay(true)}
               style={{
                 padding: '0.45rem 1rem',
-                background: 'linear-gradient(135deg, var(--emerald-primary) 0%, #10B981 100%)',
+                background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
                 color: '#FFF',
                 border: 'none',
                 borderRadius: '6px',
@@ -1828,9 +1827,6 @@ ${proposal}
               🔍 Preview Package
             </button>
           )}
-        </div>
-        
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           {!hideIciciCustomPackage && (
             <button
               type="button"
@@ -1880,7 +1876,6 @@ ${proposal}
           >
             {cashfreeLoading ? <Loader2 size={16} className="animate-spin" /> : '💳 Pay Securely (Cashfree)'}
           </button>
-        </div>
       </div>
 
       {activeTab === 'preview' ? (
@@ -2437,7 +2432,7 @@ ${proposal}
                     setShowPreviewOverlay(false);
                   }}
                   className="btn btn-primary"
-                  style={{ padding: '0.55rem 1.75rem', fontWeight: 700, background: 'linear-gradient(135deg, var(--emerald-primary) 0%, #10B981 100%)', border: 'none', color: '#FFF', cursor: 'pointer', borderRadius: '6px' }}
+                  style={{ padding: '0.55rem 1.75rem', fontWeight: 700, background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)', border: 'none', color: '#FFF', cursor: 'pointer', borderRadius: '6px' }}
                 >
                   {saveStatus === 'saving' ? 'Saving...' : '💾 Save Proposal to Registry'}
                 </button>
@@ -3225,7 +3220,7 @@ ${proposal}
                     padding: '0.85rem 2rem',
                     fontSize: '1rem',
                     fontWeight: 800,
-                    background: 'linear-gradient(135deg, var(--emerald-primary) 0%, #10B981 100%)',
+                    background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
                     boxShadow: '0 8px 20px rgba(16, 185, 129, 0.25)',
                     border: 'none',
                     borderRadius: '8px',
