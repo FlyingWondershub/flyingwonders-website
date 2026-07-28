@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
+import { load } from '@cashfreepayments/cashfree-js'
+import { Loader2 } from 'lucide-react'
 
 // Default Fallback Master Data (Configured in SGD)
 const FALLBACK_HOTELS = [
@@ -234,6 +236,7 @@ export default function PrototypeBuilder() {
   const [agentPhone, setAgentPhone] = useState('')
   const [agentQuery, setAgentQuery] = useState('')
   const [enquiryStatus, setEnquiryStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+  const [cashfreeLoading, setCashfreeLoading] = useState(false)
 
   // White-Label Customization States
   const [customAgencyName, setCustomAgencyName] = useState('My Travel Agency')
@@ -1211,6 +1214,63 @@ export default function PrototypeBuilder() {
     }
   }
 
+  const handleCashfreePayment = async () => {
+    setCashfreeLoading(true)
+    try {
+      // 1. Create Order via our Backend API
+      const res = await fetch('/api/cashfree/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: costBreakdown.totalClientPriceINR || Math.round(costBreakdown.totalClientPrice * sgdToInrRate), // Charge the total INR amount
+          customerId: `CUST_${Date.now()}`,
+          customerName: agentName || 'B2B Partner',
+          customerEmail: agentEmail || 'partner@flyingwonders.com',
+          customerPhone: agentPhone || '9999999999'
+        })
+      })
+      const data = await res.json()
+
+      if (!data.success || !data.paymentSessionId) {
+        throw new Error(data.error || 'Failed to create payment session')
+      }
+
+      // 2. Initialize Cashfree SDK
+      // Mode depends on whether the site is test or prod, we'll default to sandbox for safety until you configure prod
+      const cashfree = await load({
+        mode: "sandbox", 
+      })
+
+      if (!cashfree) {
+        throw new Error('Cashfree SDK failed to load')
+      }
+
+      // 3. Open Checkout
+      let checkoutOptions = {
+        paymentSessionId: data.paymentSessionId,
+        redirectTarget: "_modal"
+      }
+      cashfree.checkout(checkoutOptions).then((result: any) => {
+        if(result.error){
+          console.error("Cashfree Checkout Error: ", result.error)
+          alert("Payment failed or cancelled: " + result.error.message)
+        }
+        if(result.redirect){
+          console.log("Cashfree Payment complete, redirecting...", result.redirect)
+        }
+        if(result.paymentDetails){
+          console.log("Payment completed successfully: ", result.paymentDetails)
+          alert("Payment Successful! Thank you.")
+        }
+      })
+    } catch (err: any) {
+      console.error(err)
+      alert(err.message || 'Payment initiation failed')
+    } finally {
+      setCashfreeLoading(false)
+    }
+  }
+
   // Clear existing entries and start a new itinerary
   const handleRefresh = () => {
     if (confirm('Are you sure you want to clear all existing entries and start a new itinerary? This will reset all days and custom pricing fields.')) {
@@ -1794,6 +1854,30 @@ ${proposal}
               📱 Pay Deposit via ICICI UPI QR
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={handleCashfreePayment}
+            disabled={cashfreeLoading}
+            style={{
+              padding: '0.45rem 1rem',
+              background: 'linear-gradient(135deg, #1A365D 0%, #2A4365 100%)',
+              color: '#FFF',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              cursor: cashfreeLoading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              boxShadow: '0 3px 8px rgba(26, 54, 93, 0.25)',
+              opacity: cashfreeLoading ? 0.7 : 1
+            }}
+          >
+            {cashfreeLoading ? <Loader2 size={16} className="animate-spin" /> : '💳 Pay Securely (Cashfree)'}
+          </button>
         </div>
       </div>
 

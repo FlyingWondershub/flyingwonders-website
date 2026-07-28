@@ -1,7 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import IciciQrModal from '../../components/IciciQrModal'
+import { load } from '@cashfreepayments/cashfree-js'
+import { Loader2 } from 'lucide-react'
 
 export default function PayDirectPage() {
   const [amountSgd, setAmountSgd] = useState(500)
@@ -10,6 +12,73 @@ export default function PayDirectPage() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  
+  const [cashfreeLoading, setCashfreeLoading] = useState(false)
+  const [sgdToInrRate, setSgdToInrRate] = useState(65) // Fallback rate
+
+  useEffect(() => {
+    fetch('/api/exchange-rate')
+      .then(res => res.json())
+      .then(data => {
+        if (data.rate) {
+          setSgdToInrRate(data.rate)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleCashfreePayment = async () => {
+    if (!amountSgd || amountSgd < 1) {
+      alert("Please enter a valid amount.")
+      return
+    }
+
+    setCashfreeLoading(true)
+    try {
+      const amountInr = Math.round(amountSgd * sgdToInrRate)
+
+      const res = await fetch('/api/cashfree/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amountInr,
+          customerId: `CUST_${Date.now()}`,
+          customerName: guestName || 'Direct Payer',
+          customerEmail: email || 'partner@flyingwonders.com',
+          customerPhone: phone || '9999999999'
+        })
+      })
+      const data = await res.json()
+
+      if (!data.success || !data.paymentSessionId) {
+        throw new Error(data.error || 'Failed to create payment session')
+      }
+
+      const cashfree = await load({
+        mode: "sandbox", 
+      })
+
+      if (!cashfree) {
+        throw new Error('Cashfree SDK failed to load')
+      }
+
+      cashfree.checkout({
+        paymentSessionId: data.paymentSessionId,
+        redirectTarget: "_modal"
+      }).then((result: any) => {
+        if(result.error){
+          alert("Payment failed or cancelled: " + result.error.message)
+        }
+        if(result.paymentDetails){
+          alert("Payment Successful! Thank you.")
+        }
+      })
+    } catch (err: any) {
+      alert(err.message || 'Payment initiation failed')
+    } finally {
+      setCashfreeLoading(false)
+    }
+  }
 
   return (
     <div
@@ -101,23 +170,49 @@ export default function PayDirectPage() {
           </div>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          style={{
-            width: '100%',
-            background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
-            color: '#FFFFFF',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '0.9rem',
-            fontSize: '1rem',
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
-          }}
-        >
-          📱 Generate ICICI UPI QR Code & Pay
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            style={{
+              width: '100%',
+              background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '0.9rem',
+              fontSize: '1rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
+            }}
+          >
+            📱 Generate ICICI UPI QR Code & Pay
+          </button>
+          
+          <button
+            onClick={handleCashfreePayment}
+            disabled={cashfreeLoading}
+            style={{
+              width: '100%',
+              background: 'linear-gradient(135deg, #1A365D 0%, #2A4365 100%)',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '0.9rem',
+              fontSize: '1rem',
+              fontWeight: 800,
+              cursor: cashfreeLoading ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 15px rgba(26, 54, 93, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              opacity: cashfreeLoading ? 0.7 : 1
+            }}
+          >
+            {cashfreeLoading ? <Loader2 size={18} className="animate-spin" /> : '💳 Pay Securely (Cashfree)'}
+          </button>
+        </div>
       </div>
 
       {/* ICICI Payment Modal */}
