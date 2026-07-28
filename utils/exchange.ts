@@ -1,6 +1,15 @@
 import fs from 'fs'
 import path from 'path'
 import nodemailer from 'nodemailer'
+import { createClient } from 'next-sanity'
+import { apiVersion, dataset, projectId } from '../sanity/env'
+
+const readClient = createClient({
+  apiVersion,
+  dataset,
+  projectId,
+  useCdn: false,
+})
 
 const CACHE_FILE = path.join(process.cwd(), 'data', 'exchange_rate.json')
 const DEFAULT_RATE = 74.81
@@ -21,6 +30,18 @@ async function sendEmail(subject: string, htmlContent: string) {
 }
 
 export async function getLiveExchangeRate(): Promise<number> {
+  // 1. Check Sanity for Manual Override First
+  try {
+    const settings = await readClient.fetch(`*[_type == "siteSettings"][0]{ manualRateOverride }`)
+    if (settings?.manualRateOverride && typeof settings.manualRateOverride === 'number') {
+      console.log(`Using Sanity Manual Override Rate: ₹${settings.manualRateOverride}`)
+      return settings.manualRateOverride
+    }
+  } catch (sanityErr) {
+    console.error('Failed to fetch siteSettings from Sanity:', sanityErr)
+  }
+
+  // 2. Local Fallback Cache Setup
   let cache: ExchangeRateCache = {
     rate: DEFAULT_RATE,
     lastUpdated: new Date(0).toISOString(),
@@ -28,13 +49,11 @@ export async function getLiveExchangeRate(): Promise<number> {
     lastSuccessAlertSent: new Date(0).toISOString()
   }
 
-  // 1. Ensure the data directory exists
   const dataDir = path.dirname(CACHE_FILE)
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true })
   }
 
-  // 2. Load existing cache if present
   if (fs.existsSync(CACHE_FILE)) {
     try {
       const parsed = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'))
