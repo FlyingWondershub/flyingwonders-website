@@ -210,6 +210,8 @@ export default function PrototypeBuilder() {
   const [arrivalDate, setArrivalDate] = useState(() => {
     const today = new Date()
     return today.toISOString().split('T')[0]
+  })
+
   // Live SGD → INR exchange rate (fetched from /api/exchange-rate on mount)
   const [sgdToInrRate, setSgdToInrRate] = useState(DEFAULT_SGD_TO_INR)
   const [rateLoaded, setRateLoaded] = useState(false)
