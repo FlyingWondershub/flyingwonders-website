@@ -122,10 +122,6 @@ export default function PrototypeBuilder() {
   const [authLoading, setAuthLoading] = useState(false)
   const [activeAgent, setActiveAgent] = useState<{ companyName?: string; agentName?: string; email?: string; phone?: string; role?: string } | null>(null)
 
-  // Presentation Toggles
-  const [hideClientPreview, setHideClientPreview] = useState(false)
-  const [hidePaymentUi, setHidePaymentUi] = useState(false)
-
   // Newsletter Admin States
   const [draftCampaigns, setDraftCampaigns] = useState<{ _id: string; title: string; subject: string }[]>([])
   const [selectedCampaignId, setSelectedCampaignId] = useState('')
@@ -1701,26 +1697,24 @@ ${proposal}
           >
             ⚙️ Builder Workspace
           </button>
-          {!hideClientPreview && (
-            <button
-              type="button"
-              onClick={() => setActiveTab('preview')}
-              style={{
-                padding: '0.45rem 1rem',
-                background: activeTab === 'preview' ? 'var(--emerald-secondary)' : 'transparent',
-                color: activeTab === 'preview' ? '#FFF' : '#4A5568',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: activeTab === 'preview' ? '0 3px 8px rgba(47,133,90,0.15)' : 'none'
-              }}
-            >
-              👁️ Client-Ready Preview
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setActiveTab('preview')}
+            style={{
+              padding: '0.45rem 1rem',
+              background: activeTab === 'preview' ? 'var(--emerald-secondary)' : 'transparent',
+              color: activeTab === 'preview' ? '#FFF' : '#4A5568',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: activeTab === 'preview' ? '0 3px 8px rgba(47,133,90,0.15)' : 'none'
+            }}
+          >
+            👁️ Client-Ready Preview
+          </button>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
           <button
@@ -1770,7 +1764,7 @@ ${proposal}
             </button>
           )}
 
-          {!hidePaymentUi && !hideIciciCustomPackage && (
+          {!hideIciciCustomPackage && (
             <button
               type="button"
               onClick={() => setIsIciciModalOpen(true)}
@@ -2491,16 +2485,6 @@ ${proposal}
                   onChange={e => setArrivalDate(e.target.value)}
                   style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.82rem', background: '#F8FAFC' }}
                 />
-              </div>
-              <div style={{ flex: '1 1 150px', display: 'flex', flexDirection: 'column', gap: '0.4rem', borderLeft: '1px solid #E2E8F0', paddingLeft: '1rem', justifyContent: 'center' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: '#4A5568' }}>
-                  <input type="checkbox" checked={hideClientPreview} onChange={e => setHideClientPreview(e.target.checked)} style={{ width: '1.1rem', height: '1.1rem' }} />
-                  Hide Client Preview
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: '#4A5568' }}>
-                  <input type="checkbox" checked={hidePaymentUi} onChange={e => setHidePaymentUi(e.target.checked)} style={{ width: '1.1rem', height: '1.1rem' }} />
-                  Hide Payment Options
-                </label>
               </div>
             </div>
 
