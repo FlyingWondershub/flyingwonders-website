@@ -104,29 +104,29 @@ RULES:
     let responseText = ''
     
     try {
-      // Attempt 1: Gemini 1.5 Flash
+      // Attempt 1: Gemini Flash Latest (Universal alias for newest flash model)
       const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
+        model: 'gemini-flash-latest',
         generationConfig: { responseMimeType: "application/json" }
       })
       const result = await model.generateContent(systemInstruction)
       responseText = result.response.text()
     } catch (modelError: any) {
-      console.warn('Gemini 1.5 Flash failed, trying gemini-1.5-flash-latest...', modelError?.message)
+      console.warn('Gemini Flash Latest failed, trying gemini-2.5-flash...', modelError?.message)
       
       try {
-        // Attempt 2: Gemini 1.5 Flash Latest
+        // Attempt 2: Gemini 2.5 Flash
         const fallbackModel15 = genAI.getGenerativeModel({ 
-          model: 'gemini-1.5-flash-latest',
+          model: 'gemini-2.5-flash',
           generationConfig: { responseMimeType: "application/json" }
         })
         const result = await fallbackModel15.generateContent(systemInstruction)
         responseText = result.response.text()
       } catch (err2: any) {
-        console.warn('Gemini 1.5 Flash Latest failed, falling back to gemini-pro...', err2?.message)
+        console.warn('Gemini 2.5 Flash failed, falling back to gemini-pro-latest...', err2?.message)
         try {
-          // Attempt 3: Gemini 1.0 Pro
-          const fallbackModel10 = genAI.getGenerativeModel({ model: 'gemini-pro' })
+          // Attempt 3: Gemini Pro Latest
+          const fallbackModel10 = genAI.getGenerativeModel({ model: 'gemini-pro-latest' })
           const result = await fallbackModel10.generateContent(systemInstruction)
           responseText = result.response.text()
         } catch (err3: any) {
