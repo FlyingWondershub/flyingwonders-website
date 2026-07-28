@@ -1832,13 +1832,13 @@ ${proposal}
               type="button"
               onClick={() => setIsIciciModalOpen(true)}
               style={{
-                padding: '0.45rem 1rem',
+                padding: '0.35rem 0.8rem',
                 background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
                 color: '#FFF',
                 border: 'none',
                 borderRadius: '6px',
                 fontWeight: 700,
-                fontSize: '0.85rem',
+                fontSize: '0.8rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 display: 'flex',
@@ -1847,7 +1847,7 @@ ${proposal}
                 boxShadow: '0 3px 8px rgba(16, 185, 129, 0.25)'
               }}
             >
-              📱 Pay Deposit via ICICI UPI QR
+              📱 UPI - Pay
             </button>
           )}
 
@@ -1856,25 +1856,25 @@ ${proposal}
             onClick={handleCashfreePayment}
             disabled={cashfreeLoading}
             style={{
-              padding: '0.45rem 1rem',
+              padding: '0.35rem 0.8rem',
               background: 'linear-gradient(135deg, #1A365D 0%, #2A4365 100%)',
               color: '#FFF',
               border: 'none',
               borderRadius: '6px',
               fontWeight: 700,
-              fontSize: '0.85rem',
+              fontSize: '0.8rem',
               cursor: cashfreeLoading ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              minWidth: '220px',
+              minWidth: '150px',
               gap: '0.35rem',
               boxShadow: '0 3px 8px rgba(26, 54, 93, 0.25)',
               opacity: cashfreeLoading ? 0.7 : 1
             }}
           >
-            {cashfreeLoading ? <Loader2 size={16} className="animate-spin" /> : '💳 Pay Securely (Cashfree)'}
+            {cashfreeLoading ? <Loader2 size={16} className="animate-spin" /> : '💳 Credit Card - Pay'}
           </button>
       </div>
 
