@@ -128,11 +128,11 @@ const PHOTO_MAP: Record<string, string> = {
 }
 
 function getPhoto(name: string, meta?: SanityMeta): string {
-  if (meta?.photoUrl) return meta.photoUrl
   const lower = name.toLowerCase()
   for (const [key, url] of Object.entries(PHOTO_MAP)) {
-    if (lower.includes(key)) return url
+    if (key !== 'default' && lower.includes(key)) return url
   }
+  if (meta?.photoUrl) return meta.photoUrl
   return PHOTO_MAP.default
 }
 
