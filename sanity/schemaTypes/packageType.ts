@@ -23,7 +23,7 @@ export const packageSchema = {
     },
     {
       name: 'price',
-      title: 'Price (USD)',
+      title: 'Price (SGD)',
       type: 'number',
     },
     {
@@ -40,10 +40,42 @@ export const packageSchema = {
       },
     },
     {
+      name: 'hotelOptions',
+      title: 'Hotel Options',
+      type: 'string',
+      description: 'E.g., 3* / Hotel Chancellor Orchard Road / Hotel Boss / Hotel V Lavender',
+    },
+    {
       name: 'itinerary',
-      title: 'Itinerary Highlights',
+      title: 'Itinerary Days',
       type: 'array',
-      of: [{ type: 'string' }],
+      of: [
+        {
+          type: 'object',
+          name: 'itineraryDay',
+          title: 'Itinerary Day',
+          fields: [
+            { name: 'day', title: 'Day Number', type: 'number' },
+            { name: 'title', title: 'Day Title', type: 'string' },
+            {
+              name: 'activities',
+              title: 'Activities',
+              type: 'array',
+              of: [
+                {
+                  type: 'object',
+                  name: 'activityItem',
+                  title: 'Activity Item',
+                  fields: [
+                    { name: 'time', title: 'Time / Duration', type: 'string', description: 'E.g. 08:00 or 08:00 - 09:00' },
+                    { name: 'desc', title: 'Description', type: 'string' },
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
   ],
 }

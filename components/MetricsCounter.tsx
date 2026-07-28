@@ -58,7 +58,7 @@ export default function MetricsCounter({ end, label, suffix = '', prefix = '' }:
       <div style={{ fontSize: '3.5rem', fontWeight: 800, color: 'var(--gold-accent)', marginBottom: '0.5rem', lineHeight: 1 }}>
         {prefix}{count.toLocaleString()}{suffix}
       </div>
-      <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-light)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-light)', letterSpacing: '0.05em', textTransform: 'uppercase', lineHeight: 1.4 }}>
         {label}
       </div>
     </div>

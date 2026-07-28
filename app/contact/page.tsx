@@ -1,6 +1,36 @@
 import ContactForm from '../../components/ContactForm'
+import { client } from '../../sanity/lib/client'
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  let contacts = {
+    officeAddress: '#74, 4th Cross, SBM Colony,\nBSK 1st Stage, Bangalore, India - 560050',
+    contactPhoneSingapore: '+65 94722830',
+    contactPhoneIndia: '+91 9886171251',
+    contactEmail: 'info.flyingwonders@gmail.com',
+    whatsappNumber: '+919886171251',
+    youtubeUrl: 'https://www.youtube.com/@flyingwonders7886',
+    instagramUrl: 'https://www.instagram.com/flyingwonders.sg/',
+    facebookUrl: 'https://www.facebook.com/profile.php?id=61585495532807',
+  }
+
+  try {
+    const fetchedContacts = await client.fetch(`*[_type == "globalContact"][0]{
+      officeAddress,
+      contactPhoneSingapore,
+      contactPhoneIndia,
+      contactEmail,
+      whatsappNumber,
+      youtubeUrl,
+      instagramUrl,
+      facebookUrl
+    }`)
+    if (fetchedContacts) {
+      contacts = { ...contacts, ...fetchedContacts }
+    }
+  } catch (err) {
+    console.error('Error fetching contact info from Sanity:', err)
+  }
+
   return (
     <div>
       {/* Hero Banner */}
@@ -23,7 +53,7 @@ export default function ContactPage() {
         <div className="container contact-grid">
           
           {/* Left: Contact Form */}
-          <div style={{ background: 'white', padding: '2.5rem', borderRadius: '16px', boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ background: 'var(--bg-main)', border: '1px solid var(--glass-border)', padding: '2.5rem', borderRadius: '16px', boxShadow: 'var(--shadow-lg)' }}>
             <h2 style={{ color: 'var(--crimson-primary)', marginBottom: '0.5rem' }}>Send Us a Message</h2>
             <p style={{ opacity: 0.7, marginBottom: '2rem', fontSize: '0.95rem' }}>
               Fill out the form and our team will respond within 24 hours.
@@ -40,8 +70,10 @@ export default function ContactPage() {
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                   <span style={{ fontSize: '1.5rem' }}>📍</span>
                   <div>
-                    <div style={{ fontWeight: 700, marginBottom: '4px' }}>India Office</div>
-                    <div style={{ opacity: 0.8, fontSize: '0.9rem' }}>#74, 4th Cross, SBM Colony,<br/>BSK 1st Stage, Bangalore - 560050</div>
+                    <div style={{ fontWeight: 700, marginBottom: '4px' }}>Office Address</div>
+                    <div style={{ opacity: 0.8, fontSize: '0.9rem', whiteSpace: 'pre-line' }}>
+                      {contacts.officeAddress}
+                    </div>
                   </div>
                 </div>
 
@@ -50,8 +82,8 @@ export default function ContactPage() {
                   <div>
                     <div style={{ fontWeight: 700, marginBottom: '4px' }}>Phone</div>
                     <div style={{ opacity: 0.8, fontSize: '0.9rem' }}>
-                      India: +91 9886171251<br/>
-                      Singapore: +65 94722830
+                      Singapore: {contacts.contactPhoneSingapore}<br/>
+                      India: {contacts.contactPhoneIndia}
                     </div>
                   </div>
                 </div>
@@ -60,7 +92,7 @@ export default function ContactPage() {
                   <span style={{ fontSize: '1.5rem' }}>✉️</span>
                   <div>
                     <div style={{ fontWeight: 700, marginBottom: '4px' }}>Email</div>
-                    <div style={{ opacity: 0.8, fontSize: '0.9rem' }}>info.flyingwonders@gmail.com</div>
+                    <div style={{ opacity: 0.8, fontSize: '0.9rem' }}>{contacts.contactEmail}</div>
                   </div>
                 </div>
 
@@ -76,7 +108,7 @@ export default function ContactPage() {
 
             {/* WhatsApp CTA */}
             <a
-              href="https://wa.me/919886171251"
+              href={`https://wa.me/${contacts.whatsappNumber.replace(/[^0-9]/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -95,9 +127,9 @@ export default function ContactPage() {
 
             {/* Social Links */}
             <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <a href="https://www.youtube.com/@flyingwonders7886" target="_blank" rel="noreferrer" style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', background: 'var(--bg-secondary)', fontWeight: 600, fontSize: '0.9rem', transition: 'background 0.2s' }}>YouTube</a>
-              <a href="https://www.instagram.com/flyingwonders.sg/" target="_blank" rel="noreferrer" style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', background: 'var(--bg-secondary)', fontWeight: 600, fontSize: '0.9rem', transition: 'background 0.2s' }}>Instagram</a>
-              <a href="https://www.facebook.com/profile.php?id=61585495532807" target="_blank" rel="noreferrer" style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', background: 'var(--bg-secondary)', fontWeight: 600, fontSize: '0.9rem', transition: 'background 0.2s' }}>Facebook</a>
+              {contacts.youtubeUrl && <a href={contacts.youtubeUrl} target="_blank" rel="noreferrer" style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', background: 'var(--bg-secondary)', fontWeight: 600, fontSize: '0.9rem', transition: 'background 0.2s' }}>YouTube</a>}
+              {contacts.instagramUrl && <a href={contacts.instagramUrl} target="_blank" rel="noreferrer" style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', background: 'var(--bg-secondary)', fontWeight: 600, fontSize: '0.9rem', transition: 'background 0.2s' }}>Instagram</a>}
+              {contacts.facebookUrl && <a href={contacts.facebookUrl} target="_blank" rel="noreferrer" style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', background: 'var(--bg-secondary)', fontWeight: 600, fontSize: '0.9rem', transition: 'background 0.2s' }}>Facebook</a>}
             </div>
           </div>
 

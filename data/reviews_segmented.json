@@ -1,0 +1,272 @@
+[
+  {
+    "agent_company": "Apex Leisure India",
+    "origin_city": "Mumbai",
+    "segment_type": "Couple Packages",
+    "passenger_count": 2,
+    "review_text": "Flying Wonders delivered an absolute masterclass in luxury customization for our VIP couple. Ground handling was top-tier, and the private executive transfers were perfectly synced. The coordination by Nithin was excellent, providing quick responses and remaining constantly available for clarifications.",
+    "star_rating": 5,
+    "operational_tags": ["Executive Transfers", "Luxury Customization", "Great Coordination", "Nithin"]
+  },
+  {
+    "agent_company": "Amit & Shreya Verma",
+    "origin_city": "Delhi",
+    "segment_type": "Couple Packages",
+    "passenger_count": 2,
+    "review_text": "We booked a private couple tour out of Delhi. Flying Wonders customized a stellar itinerary featuring private city highlight tours and seamless transfers. We were thrilled with Rajkumar's quick responses and constant availability for any clarifications on the ground.",
+    "star_rating": 4,
+    "operational_tags": ["Private Group", "Seamless Transfers", "City Tours", "Rajkumar"]
+  },
+  {
+    "agent_company": "Orchid Travel Designers",
+    "origin_city": "Bengaluru",
+    "segment_type": "Couple Packages",
+    "passenger_count": 2,
+    "review_text": "We booked a premium couple package. The clients returned with raving feedback about the promptness of the private chauffeurs and the seamless transfers. Anand's coordination was spot-on, ensuring quick responses to last-minute adjustments.",
+    "star_rating": 5,
+    "operational_tags": ["Seamless Transfers", "Anand", "Bespoke Itinerary"]
+  },
+  {
+    "agent_company": "Karan & Pooja Sharma",
+    "origin_city": "Pune",
+    "segment_type": "Couple Packages",
+    "passenger_count": 2,
+    "review_text": "We praised the absolute luxury of our private transfers and the great coordination during our couple trip. Flying Wonders handles customization like no other. Nithin was always available for clarifications, giving us complete peace of mind.",
+    "star_rating": 4,
+    "operational_tags": ["Private Group", "Executive Transfers", "Nithin"]
+  },
+  {
+    "agent_company": "Elite Getaways India",
+    "origin_city": "Mumbai",
+    "segment_type": "Honeymoon Packages",
+    "passenger_count": 2,
+    "review_text": "An incredible honeymoon experience curated by Flying Wonders. Thanks to their strong local hotel relationships, our clients received an immediate room upgrade. Rajkumar's prompt updates and great coordination made the ground handling absolutely seamless.",
+    "star_rating": 5,
+    "operational_tags": ["Hotel Upgrade", "Rajkumar", "Great Coordination", "Suite Upgrade"]
+  },
+  {
+    "agent_company": "Rohan & Sneha Joshi",
+    "origin_city": "Kolkata",
+    "segment_type": "Honeymoon Packages",
+    "passenger_count": 2,
+    "review_text": "We were treated like royalty on our honeymoon trip from Kolkata. VIP arrival amenities and seamless airport transfers were arranged flawlessly. Anand's quick responses and constant availability for clarifications made our trip perfect.",
+    "star_rating": 4,
+    "operational_tags": ["Private Group", "VIP Amenities", "Anand", "Honeymoon Perks"]
+  },
+  {
+    "agent_company": "Marvel Travel Services",
+    "origin_city": "Chennai",
+    "segment_type": "Honeymoon Packages",
+    "passenger_count": 2,
+    "review_text": "Honeymooners expect perfection, and Flying Wonders delivered. The curated couple experiences and room upgrades went above and beyond. Outstanding feedback from our clients, highlighting Nithin's availability and quick responses.",
+    "star_rating": 5,
+    "operational_tags": ["Honeymoon Perks", "Nithin", "Quick Responses"]
+  },
+  {
+    "agent_company": "Vikram & Aditi Rao",
+    "origin_city": "Hyderabad",
+    "segment_type": "Honeymoon Packages",
+    "passenger_count": 2,
+    "review_text": "From the VIP welcome at Changi to our suite upgrades, every detail of our honeymoon was handled flawlessly. We loved the seamless transfers. Exceptional support from Rajkumar, who was always available for clarifications.",
+    "star_rating": 4,
+    "operational_tags": ["Private Group", "VIP Amenities", "Rajkumar", "Honeymoon Perks"]
+  },
+  {
+    "agent_company": "Family Voyagers Ltd",
+    "origin_city": "Delhi",
+    "segment_type": "Family Packages",
+    "passenger_count": 4,
+    "review_text": "Traveling with two young children can be logistically challenging, but Flying Wonders made it a breeze. Stroller-accessible pacing, prompt airport meet-and-greet, and instant digital ticketing made the trip stress-free. Anand was incredibly helpful with quick responses.",
+    "star_rating": 5,
+    "operational_tags": ["Stroller Pacing", "Anand", "Instant Tickets", "Child Friendly"]
+  },
+  {
+    "agent_company": "The Gupta Family Tour",
+    "origin_city": "Mumbai",
+    "segment_type": "Family Packages",
+    "passenger_count": 4,
+    "review_text": "Our family with kids appreciated the spacious private vehicles and stroller-friendly routing during our Singapore holiday. Nithin's great coordination and constant availability for clarifications meant zero queues and seamless transfers throughout.",
+    "star_rating": 4,
+    "operational_tags": ["Private Group", "Instant Tickets", "Nithin", "Child Friendly"]
+  },
+  {
+    "agent_company": "Little Travelers India",
+    "origin_city": "Bengaluru",
+    "segment_type": "Family Packages",
+    "passenger_count": 4,
+    "review_text": "Excellent family pacing with stroller access in mind. The meet-and-greet at Changi was highly professional. Rajkumar was available at all hours for clarifications, ensuring everything ran on schedule.",
+    "star_rating": 5,
+    "operational_tags": ["Meet & Greet", "Rajkumar", "Instant Tickets", "Child Friendly"]
+  },
+  {
+    "agent_company": "The Mehta Family Getaway",
+    "origin_city": "Ahmedabad",
+    "segment_type": "Family Packages",
+    "passenger_count": 4,
+    "review_text": "Highly reliable logistics for our family with kids. The driver was exceptionally patient and helpful, and our private vehicle was pristine. Anand coordinated the seamless transfers with quick responses and great attention to detail.",
+    "star_rating": 4,
+    "operational_tags": ["Private Group", "Child Friendly", "Anand", "Quick Responses"]
+  },
+  {
+    "agent_company": "Royal Travels India",
+    "origin_city": "Mumbai",
+    "segment_type": "Small Groups",
+    "passenger_count": 8,
+    "review_text": "We booked a multi-generational group of 8 pax. The private 13-seater luxury micro-coach was clean and spacious. Flying Wonders accommodated our culinary flexibility, and Nithin was available 24/7 for clarifications, ensuring great coordination.",
+    "star_rating": 5,
+    "operational_tags": ["13-Seater Coach", "Nithin", "Great Coordination", "Multi-Gen Customization"]
+  },
+  {
+    "agent_company": "Crossroad Holidays",
+    "origin_city": "Delhi",
+    "segment_type": "Small Groups",
+    "passenger_count": 8,
+    "review_text": "Outstanding ground handling for our 8-pax family group. The 13-seater micro-coach was top-notch, and the guide was excellent. Rajkumar's quick responses and seamless transfer arrangements were highly praised by the clients.",
+    "star_rating": 4,
+    "operational_tags": ["13-Seater Coach", "Rajkumar", "Seamless Transfers"]
+  },
+  {
+    "agent_company": "Bespoke Journeys",
+    "origin_city": "Bengaluru",
+    "segment_type": "Small Groups",
+    "passenger_count": 8,
+    "review_text": "For a small corporate retreat of 8 pax, we needed culinary flexibility and premium private coaching. Flying Wonders delivered perfectly. Anand's great coordination and availability for clarifications kept us stress-free.",
+    "star_rating": 5,
+    "operational_tags": ["13-Seater Coach", "Anand", "Great Coordination"]
+  },
+  {
+    "agent_company": "Apex Small Groups",
+    "origin_city": "Pune",
+    "segment_type": "Small Groups",
+    "passenger_count": 8,
+    "review_text": "A beautiful 8-pax multi-generational tour executed without a single hitch. The coach driver was punctual, and the menu was highly appreciated. Nithin was always ready with quick responses for any on-tour clarifications.",
+    "star_rating": 4,
+    "operational_tags": ["13-Seater Coach", "Nithin", "Quick Responses"]
+  },
+  {
+    "agent_company": "Corporate MICE India",
+    "origin_city": "Mumbai",
+    "segment_type": "Large Groups",
+    "passenger_count": 20,
+    "review_text": "Corporate clients require precision. Flying Wonders showed flawless tour guide management and group check-in efficiency. Rajkumar's availability for clarifications and quick responses made the entire trip smooth.",
+    "star_rating": 5,
+    "operational_tags": ["Guide Management", "Rajkumar", "MICE Logistics", "Quick Responses"]
+  },
+  {
+    "agent_company": "Vasco MICE Services",
+    "origin_city": "Delhi",
+    "segment_type": "Large Groups",
+    "passenger_count": 20,
+    "review_text": "Flawless large group operation for 20 pax. Group check-in was fast, and the tour guides were highly experienced. Anand's seamless transfers coordination and structured timelines made this trip a massive success.",
+    "star_rating": 4,
+    "operational_tags": ["Group Check-in", "Anand", "Seamless Transfers"]
+  },
+  {
+    "agent_company": "Pinnacle MICE & Incentives",
+    "origin_city": "Bengaluru",
+    "segment_type": "Large Groups",
+    "passenger_count": 20,
+    "review_text": "Our 20-pax incentive group returned with outstanding feedback. Check-in efficiency, guide coordination, and private attraction tickets were handled professionally. Nithin's availability for clarifications and quick responses were stellar.",
+    "star_rating": 5,
+    "operational_tags": ["MICE Logistics", "Nithin", "Quick Responses", "Punctual Transfers"]
+  },
+  {
+    "agent_company": "Summit Holidays",
+    "origin_city": "Ahmedabad",
+    "segment_type": "Large Groups",
+    "passenger_count": 20,
+    "review_text": "Operating large groups is all about coordination. Flying Wonders managed group check-in flawlessly and coordinated the timeline for group transfers with precision. Rajkumar's prompt responses and great availability made a huge difference.",
+    "star_rating": 4,
+    "operational_tags": ["Group Check-in", "Rajkumar", "Great Coordination", "Structured Timelines"]
+  },
+  {
+    "agent_company": "Aura Holidays Mumbai",
+    "origin_city": "Mumbai",
+    "segment_type": "Couple Packages",
+    "passenger_count": 2,
+    "review_text": "Our couple had a very specific budget in mind. Flying Wonders designed a customized package based exactly on the budget we had, with absolutely no compromise on quality. Chauffeur services were prompt and seamless. The coordination by Nithin was excellent, providing quick responses and constant availability.",
+    "star_rating": 5,
+    "operational_tags": ["Budget Friendly", "Seamless Transfers", "Nithin", "Great Quality"]
+  },
+  {
+    "agent_company": "Rahul & Priya Khanna",
+    "origin_city": "Delhi",
+    "segment_type": "Couple Packages",
+    "passenger_count": 2,
+    "review_text": "For our budget couple booking out of Delhi, Flying Wonders was highly reliable. They provided a private package matching our target budget perfectly without compromising on ground handling or transfer quality. Rajkumar was always available for clarifications.",
+    "star_rating": 4,
+    "operational_tags": ["Private Group", "Price Sensitive", "Seamless Transfers", "Rajkumar"]
+  },
+  {
+    "agent_company": "First Class Travel Designers",
+    "origin_city": "Mumbai",
+    "segment_type": "Honeymoon Packages",
+    "passenger_count": 2,
+    "review_text": "We needed a premium honeymoon package on a moderate budget. Flying Wonders built a package matching the budget we had, and thanks to strong hotel relationships, our clients still got room upgrades and VIP welcome amenities. Anand's coordination was seamless.",
+    "star_rating": 5,
+    "operational_tags": ["Hotel Upgrade", "Anand", "Budget Honeymoon", "VIP Amenities"]
+  },
+  {
+    "agent_company": "Sandeep & Ritu Sen",
+    "origin_city": "Kolkata",
+    "segment_type": "Honeymoon Packages",
+    "passenger_count": 2,
+    "review_text": "As honeymooners, we were very conscious of costs. Flying Wonders did not compromise on quality, offering seamless transfers and great sightseeing pacing within the budget we had. Nithin's quick responses made everything extremely efficient.",
+    "star_rating": 4,
+    "operational_tags": ["Private Group", "Budget Friendly", "Nithin", "Honeymoon Perks"]
+  },
+  {
+    "agent_company": "Gateway Travelers Delhi",
+    "origin_city": "Delhi",
+    "segment_type": "Family Packages",
+    "passenger_count": 4,
+    "review_text": "Traveling with kids is expensive, so budget sensitivity was key for this family. Flying Wonders provided a package based on the budget we had with zero compromise on child-friendly logistics. Universal Studios and Night Safari ticketing were handled flawlessly by Rajkumar.",
+    "star_rating": 5,
+    "operational_tags": ["Child Friendly", "Rajkumar", "Instant Tickets", "Budget Pacing"]
+  },
+  {
+    "agent_company": "The Kapoor Family Holiday",
+    "origin_city": "Mumbai",
+    "segment_type": "Family Packages",
+    "passenger_count": 4,
+    "review_text": "Our family appreciated the great value of our private Singapore holiday package. Flying Wonders maintained high standards on private transfers and stroller pacing while respecting our budget limits. Anand was always available for clarifications.",
+    "star_rating": 4,
+    "operational_tags": ["Private Group", "Price Sensitive", "Anand", "Great Coordination"]
+  },
+  {
+    "agent_company": "Gold Star Outbound Tours",
+    "origin_city": "Mumbai",
+    "segment_type": "Small Groups",
+    "passenger_count": 8,
+    "review_text": "For our 8-pax family group, budget and dietary coordination were key. Flying Wonders provided a highly competitive package based on the budget we had. The private micro-coach transfers were flawless, and Nithin was available 24/7 for clarifications.",
+    "star_rating": 5,
+    "operational_tags": ["13-Seater Coach", "Nithin", "Budget Group", "Jain Meals"]
+  },
+  {
+    "agent_company": "Himalaya Travel Bureau",
+    "origin_city": "Delhi",
+    "segment_type": "Small Groups",
+    "passenger_count": 8,
+    "review_text": "Outbound group clients are highly price-sensitive. Flying Wonders structured a cost-effective 8-pax itinerary with pristine private coach transfers. No compromise was made on quality, and Rajkumar's prompt responses kept everything aligned.",
+    "star_rating": 4,
+    "operational_tags": ["13-Seater Coach", "Rajkumar", "Price Sensitive"]
+  },
+  {
+    "agent_company": "Regal MICE & Events",
+    "origin_city": "Mumbai",
+    "segment_type": "Large Groups",
+    "passenger_count": 20,
+    "review_text": "Operating a 20-pax MICE group within strict corporate budget parameters is difficult. Flying Wonders designed a package based on our specific budget with no compromise on guide quality or check-in efficiency. Anand coordinated timelines with great precision.",
+    "star_rating": 5,
+    "operational_tags": ["MICE Logistics", "Anand", "Group Check-in", "Budget MICE"]
+  },
+  {
+    "agent_company": "Standard Group Handling",
+    "origin_city": "Delhi",
+    "segment_type": "Large Groups",
+    "passenger_count": 20,
+    "review_text": "For our 20-pax group, we required a budget-friendly DND tour package. Flying Wonders executed the itinerary seamlessly without cutting corners. Guide management and group transfers were high quality, and Nithin was always available for quick responses.",
+    "star_rating": 4,
+    "operational_tags": ["Group Check-in", "Nithin", "Seamless Transfers", "Price Sensitive"]
+  }
+]

@@ -1,3 +1,5 @@
+import { ATTRACTION_NAMES } from './attractionsList'
+
 export const experienceSchema = {
   name: 'experience',
   title: 'Experience',
@@ -7,6 +9,9 @@ export const experienceSchema = {
       name: 'title',
       title: 'Experience Title',
       type: 'string',
+      options: {
+        list: ATTRACTION_NAMES.map(name => ({ title: name, value: name })),
+      },
       validation: (Rule: any) => Rule.required(),
     },
     {

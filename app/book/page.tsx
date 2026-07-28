@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import BookingCustomizer from './BookingCustomizer'
 
 export default function BookPage() {
@@ -8,7 +9,9 @@ export default function BookPage() {
         Design your perfect Singapore experience step by step. Our travel architects will tailor the final itinerary to match your unique story.
       </p>
 
-      <BookingCustomizer />
+      <Suspense fallback={<div style={{ textAlign: 'center', padding: '3rem', opacity: 0.7 }}>Loading Booking Architect...</div>}>
+        <BookingCustomizer />
+      </Suspense>
     </div>
   )
 }

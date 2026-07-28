@@ -33,7 +33,7 @@ export async function POST(request: Request) {
 
     const isGeneralInquiry = tier === 'general_inquiry'
 
-    // 1. Try to log lead directly to Sanity CMS
+    // 1. Log lead directly to Sanity CMS
     const writeClient = getSanityWriteClient()
     let sanityDocId = null
     
@@ -71,115 +71,14 @@ export async function POST(request: Request) {
       }
     }
 
-    // 2. Prepare Formatted Message Text for Web3Forms
-    const tierLabels: Record<string, string> = {
-      budget: 'Budget Explorer',
-      premium: 'Premium Luxury',
-      solo: 'Solo Adventurer',
-      groups: 'Groups & Families',
-      general_inquiry: 'General Inquiry',
-    }
-
-    let messageText = ''
-    let subjectLine = ''
-
-    if (isGeneralInquiry) {
-      subjectLine = `✉️ New Contact Inquiry from ${name}`
-      messageText = `
-=== NEW CONTACT INQUIRY ===
-Name: ${name}
-Email: ${email}
-Phone: ${phone}
-
-Message:
-${notes}
-
-${sanityDocId ? `Logged in Sanity: ${sanityDocId}` : ''}
-      `.trim()
-    } else {
-      subjectLine = `✈️ Custom Package Booking Request from ${name}`
-      const experienceList = experiences && experiences.length > 0
-        ? experiences.map((exp: any) => `- ${exp.title}`).join('\n')
-        : 'None selected'
-
-      messageText = `
-=== CUSTOM PACKAGE LEAD ===
-Name: ${name}
-Email: ${email}
-Phone: ${phone}
-Travel Date: ${travelDate || 'Not specified'}
-
-Package Profile: ${tierLabels[tier] || tier}
-Travelers: ${travelers}
-
-Selected Experiences:
-${experienceList}
-
-Estimated Value: ₹${totalPrice?.toLocaleString('en-IN') ?? '0'} Per Person
-
-Special Notes:
-${notes || 'None'}
-
-${sanityDocId ? `Logged in Sanity: ${sanityDocId}` : ''}
-      `.trim()
-    }
-
-    // 3. Send via Web3Forms API
-    const web3formsKey = process.env.WEB3FORMS_ACCESS_KEY
-    if (web3formsKey) {
-      try {
-        const response = await fetch('https://api.web3forms.com/submit', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({
-            access_key: web3formsKey,
-            subject: subjectLine,
-            from_name: 'Flying Wonders Website',
-            name: name,
-            email: email,
-            message: messageText,
-          }),
-        })
-
-        const rawText = await response.text()
-        let resData: any = {}
-
-        try {
-          resData = JSON.parse(rawText)
-        } catch (jsonErr) {
-          console.error('Web3Forms returned non-JSON response. Raw text preview:', rawText.substring(0, 300))
-          throw new Error('Received HTML/non-JSON response from Web3Forms server. Verify your WEB3FORMS_ACCESS_KEY.')
-        }
-
-        if (resData.success) {
-          return NextResponse.json({ success: true, message: 'Your request has been sent and logged successfully!' })
-        } else {
-          throw new Error(resData.message || 'Web3Forms API rejected the request')
-        }
-      } catch (emailError: any) {
-        console.error('Web3Forms dispatch failed:', emailError)
-        return NextResponse.json({
-          success: true,
-          warn: 'Email delivery failed, but lead was logged to dashboard.',
-          message: 'Saved to dashboard. Please also touch base via WhatsApp for instant confirmation!'
-        })
-      }
-    }
-
-    // Return success if logged to Sanity even if Web3Forms is not configured yet
-    if (sanityDocId) {
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Lead logged successfully in dashboard CMS!' 
-      })
-    }
-
+    // Return success to the client, along with the doc ID.
+    // The client (browser) will trigger the Web3Forms email send directly,
+    // which bypasses Cloudflare blocking Vercel serverless IPs.
     return NextResponse.json({ 
-      error: 'Form service currently offline. Please chat with us on WhatsApp for instant booking!' 
-    }, { status: 500 })
+      success: true, 
+      sanityDocId,
+      message: 'Lead logged successfully!' 
+    })
 
   } catch (error: any) {
     console.error('General route error:', error)

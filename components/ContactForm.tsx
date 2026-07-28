@@ -49,6 +49,7 @@ export default function ContactForm() {
     setStatus('idle')
 
     try {
+      // 1. Log lead in Sanity CMS Database (Server-side)
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,13 +66,50 @@ export default function ContactForm() {
         }),
       })
 
-      if (res.ok) {
-        setStatus('success')
-        setFormData({ name: '', email: '', phone: '', subject: '', message: '' })
-      } else {
-        setStatus('error')
+      if (!res.ok) {
+        throw new Error('Database logging failed')
       }
-    } catch {
+
+      const resData = await res.json()
+      const sanityDocId = resData.sanityDocId
+
+      // 2. Trigger Web3Forms email directly from Client Browser
+      // (This bypasses Cloudflare blocking Vercel serverless IPs)
+      const web3formsKey = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY
+      if (web3formsKey) {
+        const messageText = `
+=== NEW CONTACT INQUIRY ===
+Name: ${formData.name}
+Email: ${formData.email}
+Phone: ${formData.phone}
+
+Message:
+${formData.message}
+
+${sanityDocId ? `Logged in Sanity: ${sanityDocId}` : ''}
+        `.trim()
+
+        await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            access_key: web3formsKey,
+            subject: `✉️ New Contact Inquiry from ${formData.name}`,
+            from_name: 'Flying Wonders Website',
+            name: formData.name,
+            email: formData.email,
+            message: messageText,
+          }),
+        })
+      }
+
+      setStatus('success')
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' })
+    } catch (err) {
+      console.error('Contact submit error:', err)
       setStatus('error')
     } finally {
       setIsSubmitting(false)
@@ -79,7 +117,7 @@ export default function ContactForm() {
   }
 
   const handleWhatsAppFallback = () => {
-    const text = `Hello Flying Wonders! I filled out the contact form on your website but wanted to follow up directly.%0A%0A*Name:* ${formData.name}%0A*Email:* ${formData.email}%0A*Phone:* ${formData.phone}%0A*Subject:* ${formData.subject}%0A*Message:* ${formData.message}`
+    const text = `Hello Flying Wonders! I wanted to touch base directly.%0A%0A*Name:* ${formData.name}%0A*Email:* ${formData.email}%0A*Phone:* ${formData.phone}%0A*Subject:* ${formData.subject}%0A*Message:* ${formData.message}`
     window.open(`https://wa.me/919886171251?text=${text}`, '_blank')
   }
 
@@ -152,8 +190,8 @@ export default function ContactForm() {
           borderLeft: '4px solid var(--crimson-primary)', 
           fontSize: '0.85rem' 
         }}>
-          <p style={{ fontWeight: 700, color: 'var(--crimson-primary)', marginBottom: '0.25rem' }}>SMTP Sending Failed</p>
-          <p style={{ opacity: 0.8, marginBottom: '0.75rem' }}>Your request was successfully saved to our database, but email dispatch failed. Please click below to send it to us on WhatsApp for instant confirmation:</p>
+          <p style={{ fontWeight: 700, color: 'var(--crimson-primary)', marginBottom: '0.25rem' }}>Submission Alert</p>
+          <p style={{ opacity: 0.8, marginBottom: '0.75rem' }}>Failed to submit request to database. Please click below to send it to us directly on WhatsApp:</p>
           <button 
             type="button" 
             onClick={handleWhatsAppFallback} 

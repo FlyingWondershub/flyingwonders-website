@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { client } from '../sanity/lib/client'
 import MetricsCounter from '../components/MetricsCounter'
+import HeroBackground from '../components/HeroBackground'
+import { getLiveExchangeRate } from '../utils/exchange'
 
 export const revalidate = 60 // Revalidate home page every minute
 
@@ -8,20 +10,97 @@ export default async function Home() {
   let settings = {
     heroTitle: 'Where the Future Lives. Experience Singapore.',
     heroSubtitle: 'Discover a global hub of innovation, Michelin-starred heritage, and luxury living wrapped inside a city of tomorrow.',
-    whatsappNumber: '+919886171251'
+    whatsappNumber: '+919886171251',
+    itinerarySectionTitle: 'The Itinerary for Wonders',
+    card1Tagline: 'SENSORY JOURNEYS',
+    card1Header: 'Taste the World in a Single Square Mile',
+    card1Story: 'A collision of cross-cultural heritage and culinary artistry. Lose yourself in the generational smoke of legendary hawker street stalls, or ascend to the stars for avant-garde dining suspended high above the glittering skyline.',
+    card1Image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
+    card2Tagline: 'REGENERATIVE EXPLORATION',
+    card2Header: "The World's Finest City in Nature",
+    card2Story: 'Step into a living blueprint for tomorrow’s travel. Wander through an eco-futuristic wonderland where high-density vertical gardens breathe alongside bioluminescent glass domes, redefining the boundary between urban luxury and the wild.',
+    card2Image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80',
+    card3Tagline: 'THE BLEISURE ESCAPE',
+    card3Header: 'Where Global Ambition Meets Uncharted Play',
+    card3Story: 'The ultimate playground for the modern global traveler. Effortlessly transition from high-stakes networking summits in architectural marvels to pulse-pounding nightlife, world-class Grand Prix weekends, and sun-soaked offshore island retreats.',
+    card3Image: 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=800&q=80',
+    hideAiPlanner: false
   }
 
   try {
     const fetchedSettings = await client.fetch(`*[_type == "siteSettings"][0]{
       heroTitle,
       heroSubtitle,
-      whatsappNumber
+      itinerarySectionTitle,
+      card1Tagline,
+      card1Header,
+      card1Story,
+      card1Image,
+      card2Tagline,
+      card2Header,
+      card2Story,
+      card2Image,
+      card3Tagline,
+      card3Header,
+      card3Story,
+      card3Image,
+      hideAiPlanner
     }`)
     if (fetchedSettings) {
       settings = { ...settings, ...fetchedSettings }
     }
+
+    const fetchedContact = await client.fetch(`*[_type == "globalContact"][0]{
+      whatsappNumber
+    }`)
+    if (fetchedContact?.whatsappNumber) {
+      settings.whatsappNumber = fetchedContact.whatsappNumber
+    }
   } catch (err) {
     console.error('Error fetching site settings from Sanity, using defaults:', err)
+  }
+
+  let exchangeRate = 74.81
+  try {
+    exchangeRate = await getLiveExchangeRate()
+  } catch (exErr) {
+    console.error('Failed to get dynamic rate on home page:', exErr)
+  }
+
+  const formatHeroTitle = (title: string) => {
+    let line1 = title
+    let line2 = ''
+    
+    if (title.includes(' - ')) {
+      const parts = title.split(' - ')
+      line1 = parts[0] + ' -'
+      line2 = parts.slice(1).join(' - ')
+    } else if (title.includes('-')) {
+      const parts = title.split('-')
+      line1 = parts[0] + '-'
+      line2 = parts.slice(1).join('-')
+    }
+
+    const renderColoredSingapore = (text: string) => {
+      if (!text.includes('Singapore')) {
+        return text
+      }
+      const parts = text.split('Singapore')
+      return (
+        <>
+          {parts[0]}
+          <span style={{ fontFamily: 'var(--font-playfair), serif', fontStyle: 'italic', color: 'var(--gold-accent)' }}>Singapore</span>
+          {parts[1]}
+        </>
+      )
+    }
+
+    return (
+      <>
+        <span style={{ display: 'block' }}>{renderColoredSingapore(line1)}</span>
+        {line2 && <span style={{ display: 'block', marginTop: '0.75rem', fontFamily: 'var(--font-playfair), serif', fontWeight: 300 }}>{renderColoredSingapore(line2)}</span>}
+      </>
+    )
   }
 
   return (
@@ -37,52 +116,58 @@ export default async function Home() {
       }}>
         
         {/* CSS Crossfade Background with High-quality Unsplash Images */}
-        <div className="hero-crossfade">
-          <div className="bg-img" style={{ 
-            backgroundImage: "url('https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1600&q=80')",
-            filter: 'brightness(0.45)' 
-          }}></div>
-          <div className="bg-img" style={{ 
-            backgroundImage: "url('https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1600&q=80')",
-            filter: 'brightness(0.45)' 
-          }}></div>
-        </div>
+        <HeroBackground />
         
-        <div className="container" style={{ position: 'relative', zIndex: 10, textAlign: 'center', color: 'white' }}>
+        <div className="container" style={{ position: 'relative', zIndex: 10, textAlign: 'center', color: 'white', marginTop: '-1.5rem' }}>
           <span style={{ 
             color: 'var(--gold-accent)', 
             textTransform: 'uppercase', 
             fontWeight: 700, 
-            letterSpacing: '0.2em',
-            fontSize: '0.9rem',
+            letterSpacing: '0.25em',
+            fontSize: '0.75rem',
             display: 'inline-block',
-            marginBottom: '1rem'
+            marginBottom: '1.25rem'
           }}>
-            Destination Management Specialist
+            Singapore Destination Management Specialist
           </span>
           <h1 style={{ 
-            fontSize: 'calc(2.5rem + 2vw)', 
-            textShadow: '0 4px 20px rgba(0,0,0,0.8)', 
-            letterSpacing: '-0.02em', 
-            marginBottom: '1.5rem',
-            lineHeight: 1.15
+            fontSize: 'calc(2.6rem + 2.5vw)', 
+            textShadow: '0 4px 30px rgba(0,0,0,0.5)', 
+            letterSpacing: '-0.01em', 
+            marginBottom: '2rem',
+            lineHeight: 1.15,
+            fontWeight: 400,
+            fontFamily: 'var(--font-playfair), serif',
           }}>
-            {settings.heroTitle}
+            {formatHeroTitle(settings.heroTitle)}
           </h1>
           <p style={{ 
-            fontSize: 'calc(1rem + 0.3vw)', 
-            maxWidth: '800px', 
-            margin: '0 auto 3rem auto', 
-            opacity: 0.95, 
-            fontWeight: 400, 
-            lineHeight: 1.6,
-            textShadow: '0 2px 10px rgba(0,0,0,0.5)' 
+            fontSize: '1.1rem', 
+            maxWidth: '600px', 
+            margin: '0 auto 3.5rem auto', 
+            opacity: 0.9, 
+            fontWeight: 300, 
+            lineHeight: 1.7,
+            textShadow: '0 2px 10px rgba(0,0,0,0.3)',
+            letterSpacing: '0.02em',
           }}>
             {settings.heroSubtitle}
           </p>
-          <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/book" className="btn btn-primary">Plan Your Journey</Link>
-            <Link href="/about" className="btn btn-ghost">Explore Business & Investment</Link>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <Link href="/packages" className="btn btn-primary">Plan Your Journey</Link>
+            {!settings.hideAiPlanner && (
+              <Link href="/ai-planner" className="btn btn-secondary" style={{ 
+                background: 'rgba(255,255,255,0.1)', 
+                color: 'white', 
+                border: '1px solid rgba(255,255,255,0.3)',
+                backdropFilter: 'blur(10px)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <span style={{ fontSize: '1.2rem' }}>✨</span> AI Journey Planner
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -94,8 +179,8 @@ export default async function Home() {
             color: 'var(--crimson-primary)', 
             textTransform: 'uppercase', 
             fontWeight: 700, 
-            letterSpacing: '0.15em',
-            fontSize: '0.85rem',
+            letterSpacing: '0.2em',
+            fontSize: '0.8rem',
             display: 'block',
             textAlign: 'center',
             marginBottom: '0.5rem'
@@ -103,44 +188,49 @@ export default async function Home() {
             Singapore At A Glance
           </span>
           <h2 style={{ textAlign: 'center', fontSize: '3rem', marginBottom: '4rem', color: 'var(--text-dark)' }}>
-            The Pillars of Excellence
+            {settings.itinerarySectionTitle}
           </h2>
           
           <div className="bento-grid">
             {/* Card 1 */}
             <div className="bento-card hover-lift" style={{ 
-              backgroundImage: 'linear-gradient(to top, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.1)), url(https://images.unsplash.com/photo-1626804475315-992d9d1ef035?auto=format&fit=crop&w=600&q=80)', 
+              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.1)), url(${settings.card1Image})`, 
               backgroundSize: 'cover', 
               backgroundPosition: 'center', 
               color: 'white' 
             }}>
               <div style={{ position: 'relative', zIndex: 2 }}>
-                <span style={{ color: 'var(--gold-accent)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>GASTRONOMY & CULTURE</span>
-                <h3 style={{ fontSize: '1.6rem', color: '#FFF', margin: '0.25rem 0 0.5rem 0' }}>The Culinary & Culture Capital</h3>
-                <p style={{ opacity: 0.9, fontSize: '0.95rem', fontWeight: 300 }}>Taste the world in one square mile. From Michelin-starred hawker stalls to elite sky dining reservations.</p>
+                <span style={{ color: 'var(--gold-accent)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{settings.card1Tagline}</span>
+                <h3 style={{ fontSize: '1.6rem', color: '#FFF', margin: '0.25rem 0 0.5rem 0' }}>{settings.card1Header}</h3>
+                <p style={{ opacity: 0.9, fontSize: '0.95rem', fontWeight: 300 }}>{settings.card1Story}</p>
               </div>
             </div>
 
             {/* Card 2 */}
             <div className="bento-card hover-lift" style={{ 
-              backgroundImage: 'linear-gradient(to top, rgba(0,70,30,0.95) 20%, rgba(0,0,0,0.1)), url(https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=600&q=80)', 
+              backgroundImage: `linear-gradient(to top, rgba(15,76,58,0.95) 20%, rgba(0,0,0,0.1)), url(${settings.card2Image})`, 
               backgroundSize: 'cover', 
               backgroundPosition: 'center', 
               color: 'white' 
             }}>
               <div style={{ position: 'relative', zIndex: 2 }}>
-                <span style={{ color: '#A3E635', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>SUSTAINABILITY</span>
-                <h3 style={{ fontSize: '1.6rem', color: '#FFF', margin: '0.25rem 0 0.5rem 0' }}>The Blueprint of Tomorrow</h3>
-                <p style={{ opacity: 0.9, fontSize: '0.95rem', fontWeight: 300 }}>Navigate an eco-futuristic paradise driven by high-density vertical gardens and intelligent smart infrastructure.</p>
+                <span style={{ color: 'var(--gold-accent)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{settings.card2Tagline}</span>
+                <h3 style={{ fontSize: '1.6rem', color: '#FFF', margin: '0.25rem 0 0.5rem 0' }}>{settings.card2Header}</h3>
+                <p style={{ opacity: 0.9, fontSize: '0.95rem', fontWeight: 300 }}>{settings.card2Story}</p>
               </div>
             </div>
 
             {/* Card 3 */}
-            <div className="bento-card hover-lift" style={{ background: 'var(--bg-dark)', color: 'white', border: '1px solid rgba(255,255,255,0.15)' }}>
+            <div className="bento-card hover-lift" style={{ 
+              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.1)), url(${settings.card3Image})`, 
+              backgroundSize: 'cover', 
+              backgroundPosition: 'center', 
+              color: 'white' 
+            }}>
               <div style={{ position: 'relative', zIndex: 2 }}>
-                <span style={{ color: 'var(--gold-accent)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>FINANCE & ASSETS</span>
-                <h3 style={{ fontSize: '1.6rem', color: 'var(--gold-accent)', margin: '0.25rem 0 0.5rem 0' }}>The Global Sandbox</h3>
-                <p style={{ opacity: 0.85, fontSize: '0.95rem', fontWeight: 300 }}>Scale, invest, and compound wealth in the world's most business-friendly, tax-efficient gateway economy.</p>
+                <span style={{ color: 'var(--gold-accent)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{settings.card3Tagline}</span>
+                <h3 style={{ fontSize: '1.6rem', color: '#FFF', margin: '0.25rem 0 0.5rem 0' }}>{settings.card3Header}</h3>
+                <p style={{ opacity: 0.9, fontSize: '0.95rem', fontWeight: 300 }}>{settings.card3Story}</p>
               </div>
             </div>
           </div>
@@ -165,34 +255,41 @@ export default async function Home() {
           <div style={{ display: 'flex', gap: '2rem', overflowX: 'auto', paddingBottom: '2rem', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
             {[
               { 
-                title: "Exclusive Heritage & Hawker VIP Food Tour", 
-                price: "From ₹8,500/person",
-                imageUrl: "https://images.unsplash.com/photo-1626804475315-992d9d1ef035?auto=format&fit=crop&w=500&q=80",
-                desc: "Go behind the scenes of Singapore's iconic street food culture with an expert culinary historian guide."
+                id: "exotic_4d3n",
+                title: "Exotic 4Days - 3Nights", 
+                priceVal: 600,
+                priceSuffix: " / person",
+                imageUrl: "/images/hero/singapore-hero-1.jpg",
+                desc: "Explore Singapore in a compact, action-packed 4 Days, 3 Nights budget-friendly tour featuring city highlights, Night Safari, Gardens by the Bay, and Sentosa."
               },
               { 
-                title: "Luxury Sentosa Superyacht Yacht Charter", 
-                price: "From ₹1,20,000/charter",
-                imageUrl: "https://images.unsplash.com/photo-1567899378494-47b22a2ae96a?auto=format&fit=crop&w=500&q=80",
-                desc: "Sail around Singapore's Southern Islands on a crewed luxury catamaran with premium champagne."
+                id: "classic_5d4n",
+                title: "Singapore Explorer Classic 5D4N", 
+                priceVal: 850,
+                priceSuffix: " / person",
+                imageUrl: "/images/hero/singapore-hero-2.jpg",
+                desc: "Experience Singapore in style. Includes premium 4* hotel stays, Gardens by the Bay, Night Safari, Universal Studios, and Marina Bay Sands."
               },
               { 
-                title: "Artisanal Botanicals & Bespoke Shopping Experience", 
-                price: "Bespoke Quote",
-                imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=500&q=80",
-                desc: "Access private ateliers and custom-blend perfume oils infused with rare Singapore orchids."
+                id: "solo_exploration_4d3n",
+                title: "Solo Exploration 4D3N (Private)", 
+                priceVal: 1000,
+                priceSuffix: " / person",
+                imageUrl: "/images/hero/singapore-hero-3.jpg",
+                desc: "Experience Singapore at your own pace with a premium private-transfer solo package featuring Museum of Ice Cream, Sentosa, and Universal Studios."
               }
             ].map((product, idx) => (
               <div key={idx} className="glass hover-lift" style={{ 
                 minWidth: '320px', 
                 maxWidth: '380px',
-                borderRadius: '16px', 
+                borderRadius: '4px', /* Crisp corners */
                 overflow: 'hidden', 
                 scrollSnapAlign: 'start', 
                 flexShrink: 0, 
                 background: 'var(--bg-main)',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                border: '1px solid rgba(0,0,0,0.06)'
               }}>
                 <div style={{ height: '220px', backgroundImage: `url(${product.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 </div>
@@ -200,8 +297,15 @@ export default async function Home() {
                   <h3 style={{ fontSize: '1.25rem', color: 'var(--text-dark)', marginBottom: '0.5rem' }}>{product.title}</h3>
                   <p style={{ fontSize: '0.9rem', opacity: 0.75, flex: 1, marginBottom: '1.5rem' }}>{product.desc}</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: 'var(--emerald-secondary)', fontWeight: 800, fontSize: '0.95rem' }}>{product.price}</span>
-                    <Link href="/book" className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>Book Now</Link>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ color: 'var(--crimson-primary)', fontWeight: 800, fontSize: '1.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+                        ₹ {Math.round(product.priceVal * exchangeRate).toLocaleString('en-IN')}{product.priceSuffix}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--emerald-secondary)', fontWeight: 700, opacity: 0.85 }}>
+                        (S$ {product.priceVal}{product.priceSuffix})
+                      </span>
+                    </div>
+                    <Link href={`/book?packageId=${product.id}`} className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>Book Now</Link>
                   </div>
                 </div>
               </div>
@@ -214,9 +318,9 @@ export default async function Home() {
       <section style={{ padding: '8rem 0', background: 'var(--bg-dark)' }}>
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '4rem' }}>
-            <MetricsCounter prefix="#" end={1} label="Easiest Place to Do Business Worldwide" />
-            <MetricsCounter end={6} suffix="M+" label="Annual Moments of Wonder" />
-            <MetricsCounter end={50} suffix="%+" label="Green Canopy: The Greenest Urban City on Earth" />
+            <MetricsCounter prefix="#" end={1} label="World's Safest & Cleanest Travel Destination" />
+            <MetricsCounter end={94} suffix="%" label="Visitor Satisfaction & Return Intent Index" />
+            <MetricsCounter end={100} suffix="%" label="English-Covered Public Signs & Services" />
           </div>
         </div>
       </section>
