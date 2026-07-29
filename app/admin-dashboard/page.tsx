@@ -647,7 +647,7 @@ export default function AdminDashboard() {
 
                                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
                                     <a
-                                      href={`/custom-package/proposal/${p.proposalNumber}`}
+                                      href={`/custom-package?ref=${p.proposalNumber}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.45rem 0.9rem', background: '#2B6CB0', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontSize: '0.78rem', fontWeight: 700 }}
@@ -1008,7 +1008,7 @@ export default function AdminDashboard() {
               {/* Actions */}
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
                 <a
-                  href={`/custom-package/proposal/${selectedProposal.proposalNumber}`}
+                  href={`/custom-package?ref=${selectedProposal.proposalNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.6rem 1.2rem', background: '#2B6CB0', color: '#FFF', borderRadius: '8px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}

@@ -1126,17 +1126,19 @@ export default function PrototypeBuilder() {
     }
   }
 
-  // Handle Search & Load Proposal from Sanity
-  const handleSearchProposal = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!searchQuery.trim()) return
+  // Core function to load proposal details by proposal number
+  const loadProposalByNumber = async (num: string, showAlert = true) => {
+    const targetNum = num.trim()
+    if (!targetNum) return
+    setSearchQuery(targetNum)
     setSearchStatus('searching')
     try {
-      const res = await fetch(`/api/proposals?number=${encodeURIComponent(searchQuery.trim())}`)
+      const res = await fetch(`/api/proposals?number=${encodeURIComponent(targetNum)}`)
       const data = await res.json()
       if (res.ok && data.found) {
         const prop = data.proposal
         setSearchStatus('success')
+        setSavedProposalNum(prop.proposalNumber)
         // Load details back into state
         setGuestName(prop.guestName || '')
         setAdults(prop.adults || 2)
@@ -1202,17 +1204,36 @@ export default function PrototypeBuilder() {
         }
         // Force days open if loaded
         setCollapsedDays(new Set())
-        alert(`Loaded Proposal: ${prop.proposalNumber}`)
+        if (showAlert) {
+          alert(`Loaded Proposal: ${prop.proposalNumber}`)
+        }
       } else {
         setSearchStatus('not_found')
-        alert('Proposal not found.')
+        if (showAlert) alert('Proposal not found.')
       }
     } catch (err) {
       console.error(err)
       setSearchStatus('error')
-      alert('Failed to fetch proposal details.')
+      if (showAlert) alert('Failed to fetch proposal details.')
     }
   }
+
+  // Handle Search Form Submission
+  const handleSearchProposal = async (e: React.FormEvent) => {
+    e.preventDefault()
+    loadProposalByNumber(searchQuery)
+  }
+
+  // Auto-load proposal when ref/proposal parameter is present in URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const ref = params.get('ref') || params.get('proposal') || params.get('number') || params.get('proposalNumber')
+      if (ref) {
+        loadProposalByNumber(ref, false)
+      }
+    }
+  }, [])
 
   const handleCashfreePayment = async () => {
     setCashfreeLoading(true)
