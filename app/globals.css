@@ -21,14 +21,20 @@
   --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
 }
 
+/* ── DARK MODE & CONTRAST PROTECTION ── */
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-main: #111111;
-    --bg-secondary: #181818;
-    --text-dark: #F9F9F9;
-    --text-light: #E5E5E5;
-    --glass-bg: var(--glass-dark-bg);
-    --glass-border: var(--glass-dark-border);
+    --bg-main: #FFFFFF;
+    --bg-secondary: #F4F4F4;
+    --text-dark: #1A1A1A;
+    --text-light: #F9F9F9;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.08);
+  }
+
+  body {
+    background-color: #FFFFFF !important;
+    color: #1A1A1A !important;
   }
 }
 
@@ -48,10 +54,54 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-playfair), serif;
-  font-weight: 400; /* Editorial look is lighter and elegant */
+  font-weight: 500;
   letter-spacing: -0.01em;
   line-height: 1.2;
   margin-bottom: 1rem;
+  color: inherit;
+}
+
+/* Ensure Headings & Text inside Light/White Cards are ALWAYS dark and legible */
+div[style*="background: #FFF"],
+div[style*="background:#FFF"],
+div[style*="background: white"],
+div[style*="background: #FFFFFF"],
+div[style*="background:#FFFFFF"],
+div[style*="background: rgb(255, 255, 255)"],
+div[style*="background: #F7FAFC"],
+div[style*="background:#F7FAFC"],
+section[style*="background: #FFF"],
+section[style*="background: white"],
+main[style*="background: #F7FAFC"],
+.bento-card,
+.bg-white,
+table,
+td,
+th {
+  color: #1A202C !important;
+}
+
+div[style*="background: #FFF"] h1, div[style*="background: #FFF"] h2, div[style*="background: #FFF"] h3, div[style*="background: #FFF"] h4, div[style*="background: #FFF"] h5, div[style*="background: #FFF"] h6,
+div[style*="background:#FFF"] h1, div[style*="background:#FFF"] h2, div[style*="background:#FFF"] h3, div[style*="background:#FFF"] h4, div[style*="background:#FFF"] h5, div[style*="background:#FFF"] h6,
+div[style*="background: white"] h1, div[style*="background: white"] h2, div[style*="background: white"] h3, div[style*="background: white"] h4, div[style*="background: white"] h5, div[style*="background: white"] h6,
+div[style*="background: #F7FAFC"] h1, div[style*="background: #F7FAFC"] h2, div[style*="background: #F7FAFC"] h3, div[style*="background: #F7FAFC"] h4, div[style*="background: #F7FAFC"] h5, div[style*="background: #F7FAFC"] h6,
+main[style*="background: #F7FAFC"] h1, main[style*="background: #F7FAFC"] h2, main[style*="background: #F7FAFC"] h3, main[style*="background: #F7FAFC"] h4, main[style*="background: #F7FAFC"] h5, main[style*="background: #F7FAFC"] h6 {
+  color: #1A202C !important;
+}
+
+/* Ensure Headings & Text inside Dark Sidebars / Hero Sections stay light */
+aside[style*="background: #1A202C"],
+div[style*="background: #1A202C"],
+div[style*="background: #111"],
+div[style*="background: #000"],
+.bg-dark {
+  color: #E2E8F0 !important;
+}
+
+aside[style*="background: #1A202C"] h1, aside[style*="background: #1A202C"] h2, aside[style*="background: #1A202C"] h3, aside[style*="background: #1A202C"] h4,
+div[style*="background: #1A202C"] h1, div[style*="background: #1A202C"] h2, div[style*="background: #1A202C"] h3, div[style*="background: #1A202C"] h4,
+div[style*="background: #111"] h1, div[style*="background: #111"] h2, div[style*="background: #111"] h3, div[style*="background: #111"] h4 {
+  color: #FFFFFF !important;
 }
 
 a {
