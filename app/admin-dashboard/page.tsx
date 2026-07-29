@@ -251,7 +251,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // Helper to format creation / last updated time (whichever is latest)
+  // Helper to format creation / last updated time compactly (e.g. "Upd: 29 Jul 11:45 AM")
   const getLatestTimestamp = (p: any) => {
     const created = p._createdAt ? new Date(p._createdAt).getTime() : 0
     const updated = p._updatedAt ? new Date(p._updatedAt).getTime() : 0
@@ -259,10 +259,10 @@ export default function AdminDashboard() {
     if (!latestTime) return 'N/A'
     const isUpdate = updated > created
     const formatted = new Date(latestTime).toLocaleString('en-SG', {
-      day: '2-digit', month: 'short', year: 'numeric',
+      day: '2-digit', month: 'short',
       hour: '2-digit', minute: '2-digit', hour12: true
     })
-    return `${isUpdate ? 'Updated' : 'Created'}: ${formatted}`
+    return `${isUpdate ? 'Upd' : 'Cre'}: ${formatted}`
   }
 
   // Navigation Items for Left Menu
@@ -639,18 +639,19 @@ export default function AdminDashboard() {
               {filteredProposals.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '2.5rem', color: '#A0AEC0', fontSize: '0.88rem' }}>No packages match the selected criteria.</div>
               ) : (
-                <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid #E2E8F0', color: '#718096' }}>
-                      <th style={{ padding: '0.65rem 0.4rem', width: '30px' }}></th>
-                      <th style={{ padding: '0.65rem' }}>Proposal Ref</th>
-                      <th style={{ padding: '0.65rem' }}>Guest Name</th>
-                      <th style={{ padding: '0.65rem' }}>Arrival Date</th>
-                      <th style={{ padding: '0.65rem' }}>Total Cost (SGD / ₹)</th>
-                      <th style={{ padding: '0.65rem' }}>Latest Activity</th>
-                      <th style={{ padding: '0.65rem' }}>Current Status</th>
-                      <th style={{ padding: '0.65rem' }}>Set Lifecycle Status</th>
-                      <th style={{ padding: '0.65rem', textAlign: 'right' }}>Details</th>
+                      <th style={{ padding: '0.5rem 0.3rem', width: '25px' }}></th>
+                      <th style={{ padding: '0.5rem 0.65rem' }}>Proposal Ref</th>
+                      <th style={{ padding: '0.5rem 0.65rem' }}>Guest Name</th>
+                      <th style={{ padding: '0.5rem 0.65rem' }}>Agent / Company</th>
+                      <th style={{ padding: '0.5rem 0.65rem' }}>Arrival Date</th>
+                      <th style={{ padding: '0.5rem 0.65rem' }}>Total Cost (SGD / ₹)</th>
+                      <th style={{ padding: '0.5rem 0.65rem' }}>Latest Activity</th>
+                      <th style={{ padding: '0.5rem 0.65rem' }}>Current Status</th>
+                      <th style={{ padding: '0.5rem 0.65rem' }}>Set Lifecycle Status</th>
+                      <th style={{ padding: '0.5rem 0.65rem', textAlign: 'right' }}>Details</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -658,43 +659,49 @@ export default function AdminDashboard() {
                       const badge = getStatusBadge(p.status)
                       const isExpanded = !!expandedIds[p._id]
                       const latestTimestamp = getLatestTimestamp(p)
+                      const agentCompany = p.agent?.companyName || p.agent?.agentName || 'B2C Direct'
 
                       return (
                         <React.Fragment key={p._id}>
                           <tr style={{ borderBottom: isExpanded ? 'none' : '1px solid #EDF2F7', background: isExpanded ? '#F7FAFC' : p.status === 'confirmed' ? '#F0FFF4' : 'transparent' }}>
-                            <td style={{ padding: '0.75rem 0.2rem', textAlign: 'center' }}>
+                            <td style={{ padding: '0.5rem 0.2rem', textAlign: 'center' }}>
                               <button
                                 onClick={() => toggleExpand(p._id)}
                                 title={isExpanded ? 'Collapse details' : 'Expand details'}
                                 style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#718096', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                               >
-                                {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                                {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                               </button>
                             </td>
-                            <td style={{ padding: '0.75rem', fontWeight: 700, color: '#2D3748' }}>{p.proposalNumber}</td>
-                            <td style={{ padding: '0.75rem', fontWeight: 600 }}>{p.guestName || 'Guest'}</td>
-                            <td style={{ padding: '0.75rem', color: p.arrivalDate ? '#2B6CB0' : '#A0AEC0', fontWeight: 600 }}>
+                            <td style={{ padding: '0.5rem 0.65rem', fontWeight: 700, color: '#2D3748' }}>{p.proposalNumber}</td>
+                            <td style={{ padding: '0.5rem 0.65rem', fontWeight: 600 }}>{p.guestName || 'Guest'}</td>
+                            <td style={{ padding: '0.5rem 0.65rem', color: '#4A5568', fontWeight: 600 }}>
+                              <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', background: p.agent?.companyName ? '#EBF4FF' : '#F7FAFC', border: '1px solid #E2E8F0', fontSize: '0.72rem' }}>
+                                👤 {agentCompany}
+                              </span>
+                            </td>
+                            <td style={{ padding: '0.5rem 0.65rem', color: p.arrivalDate ? '#2B6CB0' : '#A0AEC0', fontWeight: 600 }}>
                               {p.arrivalDate ? `📅 ${p.arrivalDate}` : 'Not set'}
                             </td>
-                            <td style={{ padding: '0.75rem' }}>
+                            <td style={{ padding: '0.5rem 0.65rem' }}>
                               <div style={{ fontWeight: 800, color: '#22543D' }}>S$ {p.totalClientPrice || 0}</div>
                               {p.costBreakdown?.totalClientPriceINR && (
-                                <div style={{ fontSize: '0.72rem', color: '#718096' }}>₹{p.costBreakdown.totalClientPriceINR.toLocaleString()}</div>
+                                <div style={{ fontSize: '0.68rem', color: '#718096' }}>₹{p.costBreakdown.totalClientPriceINR.toLocaleString()}</div>
                               )}
                             </td>
-                            <td style={{ padding: '0.75rem', fontSize: '0.73rem', color: '#718096', fontWeight: 600 }}>
+                            <td style={{ padding: '0.5rem 0.65rem', fontSize: '0.72rem', color: '#718096', fontWeight: 600 }}>
                               {latestTimestamp}
                             </td>
-                            <td style={{ padding: '0.75rem' }}>
-                              <span style={{ padding: '0.2rem 0.55rem', borderRadius: '10px', fontSize: '0.73rem', fontWeight: 700, background: badge.bg, color: badge.color }}>
+                            <td style={{ padding: '0.5rem 0.65rem' }}>
+                              <span style={{ padding: '0.15rem 0.45rem', borderRadius: '8px', fontSize: '0.71rem', fontWeight: 700, background: badge.bg, color: badge.color }}>
                                 {badge.label}
                               </span>
                             </td>
-                            <td style={{ padding: '0.75rem' }}>
+                            <td style={{ padding: '0.5rem 0.65rem' }}>
                               <select
                                 value={p.status || 'pending'}
                                 onChange={e => updatePackageStatus(p._id, e.target.value)}
-                                style={{ padding: '0.3rem 0.5rem', borderRadius: '6px', border: '1px solid #CBD5E0', fontSize: '0.75rem', fontWeight: 700, background: '#FFF', cursor: 'pointer' }}
+                                style={{ padding: '0.25rem 0.4rem', borderRadius: '6px', border: '1px solid #CBD5E0', fontSize: '0.73rem', fontWeight: 700, background: '#FFF', cursor: 'pointer' }}
                               >
                                 <option value="pending">🔵 Pending</option>
                                 <option value="followup">🟡 Follow-Up Needed</option>
@@ -704,12 +711,12 @@ export default function AdminDashboard() {
                                 <option value="ignore">⚪ Ignore / Closed</option>
                               </select>
                             </td>
-                            <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                            <td style={{ padding: '0.5rem 0.65rem', textAlign: 'right' }}>
                               <button
                                 onClick={() => setSelectedProposal(p)}
-                                style={{ border: '1px solid #CBD5E0', background: '#FFF', padding: '0.3rem 0.65rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                style={{ border: '1px solid #CBD5E0', background: '#FFF', padding: '0.25rem 0.55rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.73rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
                               >
-                                <Eye size={13} /> Full Modal
+                                <Eye size={12} /> Modal
                               </button>
                             </td>
                           </tr>
@@ -717,7 +724,7 @@ export default function AdminDashboard() {
                           {/* EXPANDABLE INLINE PANEL */}
                           {isExpanded && (
                             <tr style={{ borderBottom: '1px solid #EDF2F7', background: '#F7FAFC' }}>
-                              <td colSpan={9} style={{ padding: '0.85rem 1.25rem' }}>
+                              <td colSpan={10} style={{ padding: '0.75rem 1rem' }}>
                                 <div style={{ background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                                   
                                   <div>
