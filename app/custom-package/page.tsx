@@ -3414,7 +3414,7 @@ ${proposal}
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginTop: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem', marginTop: '1.25rem' }}>
                 <button 
                   type="button" 
                   onClick={() => {
@@ -3423,15 +3423,15 @@ ${proposal}
                     alert(`Proposal copied to clipboard successfully!`)
                   }}
                   className="btn btn-primary" 
-                  style={{ background: 'var(--gold-accent)', color: '#111', fontWeight: 700, padding: '0.75rem 0.25rem', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                  style={{ background: 'var(--gold-accent)', color: '#111', fontWeight: 700, padding: '0.7rem 0.2rem', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '8px' }}
                 >
-                  <span>📋 Copy</span>
+                  <span>📋 COPY</span>
                 </button>
                 <button 
                   type="button" 
                   onClick={downloadProposalPDF}
                   className="btn btn-primary" 
-                  style={{ background: 'var(--emerald-secondary)', color: '#FFF', fontWeight: 700, padding: '0.75rem 0.25rem', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                  style={{ background: 'var(--emerald-secondary)', color: '#FFF', fontWeight: 700, padding: '0.7rem 0.2rem', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '8px' }}
                 >
                   <span>📄 PDF</span>
                 </button>
@@ -3439,19 +3439,58 @@ ${proposal}
                   type="button" 
                   onClick={() => { setShowScheduleModal(true); setPriceDrawerOpen(false); }}
                   className="btn btn-primary" 
-                  style={{ background: '#4A5568', color: '#FFF', fontWeight: 700, padding: '0.75rem 0.25rem', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                  style={{ background: '#4A5568', color: '#FFF', fontWeight: 700, padding: '0.7rem 0.2rem', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '8px' }}
                 >
-                  <span>🗓️ Schedule</span>
+                  <span>🗓️ SCHEDULE</span>
                 </button>
                 <button 
                   type="button" 
                   onClick={sendOnWhatsApp}
                   className="btn btn-primary" 
-                  style={{ background: '#25D366', color: '#FFF', border: 'none', fontWeight: 700, padding: '0.75rem 0.25rem', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                  style={{ background: '#25D366', color: '#FFF', border: 'none', fontWeight: 700, padding: '0.7rem 0.2rem', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '8px' }}
                 >
-                  <span>💬 WhatsApp</span>
+                  <span>💬 WHATSAPP</span>
+                </button>
+                <button 
+                  type="button" 
+                  onClick={handleSaveProposal}
+                  disabled={saveStatus === 'saving'}
+                  className="btn btn-primary" 
+                  style={{ background: '#6B46C1', color: '#FFF', border: 'none', fontWeight: 700, padding: '0.7rem 0.2rem', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '8px', opacity: saveStatus === 'saving' ? 0.7 : 1 }}
+                >
+                  <span>💾 {saveStatus === 'saving' ? 'SAVING...' : 'SAVE'}</span>
                 </button>
               </div>
+
+              {/* Order / Enquire - Flying Wonders Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEnquiry(true);
+                  setPriceDrawerOpen(false);
+                }}
+                className="btn btn-primary"
+                style={{
+                  width: '100%',
+                  marginTop: '0.75rem',
+                  padding: '0.85rem 1rem',
+                  fontSize: '0.88rem',
+                  fontWeight: 800,
+                  background: 'linear-gradient(135deg, var(--crimson-primary) 0%, #9B2C39 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 4px 12px rgba(184, 58, 75, 0.35)',
+                  letterSpacing: '0.02em'
+                }}
+              >
+                ✉️ Order / Enquire - Flying Wonders
+              </button>
 
             </div>
           </div>
