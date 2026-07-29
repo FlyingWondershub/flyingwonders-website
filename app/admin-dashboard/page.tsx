@@ -6,12 +6,14 @@ import {
   Download, ShieldAlert, Loader2, CheckCircle, XCircle, Activity, Users,
   DollarSign, RefreshCw, FileText, Map, ExternalLink, Zap, Package, Compass,
   Calendar, Eye, Filter, ChevronLeft, ChevronRight, AlertCircle, Clock,
-  ChevronDown, ChevronUp, CalendarCheck, CheckCheck
+  ChevronDown, ChevronUp, CalendarCheck, CheckCheck, LayoutDashboard, Database,
+  ArrowRight, ShieldCheck, CreditCard
 } from 'lucide-react'
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [activeTab, setActiveTab] = useState('metrics')
   const router = useRouter()
 
   const [metrics, setMetrics] = useState({ activeAgents: 0, pendingPayments: 0, totalContacts: 0 })
@@ -123,6 +125,18 @@ export default function AdminDashboard() {
     }
   }
 
+  // Scroll to section helper
+  const scrollToSection = (sectionId: string, filter?: string) => {
+    setActiveTab(sectionId)
+    if (filter) {
+      setPackageFilter(filter)
+    }
+    const elem = document.getElementById(sectionId)
+    if (elem) {
+      elem.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -203,85 +217,252 @@ export default function AdminDashboard() {
     return `${isUpdate ? 'Updated' : 'Created'}: ${formatted}`
   }
 
+  // Navigation Items for Left Menu
+  const navItems = [
+    { id: 'section-metrics', label: 'Dashboard KPI Overview', icon: LayoutDashboard },
+    { id: 'section-packages', label: 'Package Lifecycle & Calendar', icon: Package, badge: totalPackages },
+    { id: 'section-sitemap', label: 'Site Map & Quick Links', icon: Map },
+    { id: 'section-payments', label: 'Pending Payments', icon: CreditCard, badge: pendingPayments.length },
+    { id: 'section-agents', label: 'B2B Agent Approvals', icon: Users, badge: metrics.activeAgents },
+    { id: 'section-exports', label: 'Data Exports', icon: Download },
+    { id: 'section-audit-logs', label: 'Security & Audit Logs', icon: ShieldCheck, badge: logs.length },
+  ]
+
   return (
-    <div style={{ minHeight: '100vh', background: '#F7FAFC', padding: '4rem 2rem' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', background: '#F7FAFC', display: 'flex' }}>
+      
+      {/* ── LEFT SIDEBAR NAVIGATION MENU ── */}
+      <aside style={{
+        width: '270px',
+        background: '#1A202C',
+        color: '#E2E8F0',
+        padding: '2rem 1rem',
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '4px 0 10px rgba(0,0,0,0.1)',
+        zIndex: 100
+      }}>
+        {/* Brand Logo Header */}
+        <div style={{ paddingBottom: '1.5rem', borderBottom: '1px solid #2D3748', marginBottom: '1.5rem', paddingLeft: '0.5rem' }}>
+          <div style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.35rem', fontWeight: 800, color: 'var(--gold-accent)' }}>
+            Flying Wonders
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#A0AEC0', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '0.2rem' }}>
+            Admin Command Center
+          </div>
+        </div>
+
+        {/* Menu Navigation Links */}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
+          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#718096', fontWeight: 800, paddingLeft: '0.75rem', marginBottom: '0.5rem' }}>
+            Navigation
+          </div>
+          {navItems.map(item => {
+            const Icon = item.icon
+            const isActive = activeTab === item.id
+            return (
+              <button
+                key={item.id}
+                onClick={() => scrollToSection(item.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: isActive ? 'var(--emerald-secondary)' : 'transparent',
+                  color: isActive ? '#FFF' : '#CBD5E0',
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease-in-out'
+                }}
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#2D3748' }}
+                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <Icon size={17} color={isActive ? '#FFF' : 'var(--gold-accent)'} />
+                  <span>{item.label}</span>
+                </div>
+                {item.badge !== undefined && (
+                  <span style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: '12px',
+                    background: isActive ? 'rgba(255,255,255,0.25)' : '#2D3748',
+                    color: isActive ? '#FFF' : '#A0AEC0'
+                  }}>
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div style={{ borderTop: '1px solid #2D3748', paddingTop: '1rem', marginTop: '1.5rem', paddingLeft: '0.5rem' }}>
+          <button
+            onClick={() => router.push('/')}
+            style={{ width: '100%', padding: '0.6rem', background: '#2D3748', color: '#CBD5E0', border: 'none', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+          >
+            ← Return to Main Site
+          </button>
+        </div>
+      </aside>
+
+      {/* ── MAIN DASHBOARD CONTENT AREA ── */}
+      <main style={{ flex: 1, padding: '2.5rem 3rem', maxWidth: '1350px', overflowX: 'hidden' }}>
         
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <div>
-            <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.5rem', color: '#2D3748', margin: 0 }}>Admin Operations Dashboard</h1>
-            <p style={{ color: '#4A5568', fontSize: '1.1rem', margin: '0.5rem 0 0 0' }}>Manage package lifecycles, booking calendar, approvals & audit logs.</p>
+            <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.3rem', color: '#2D3748', margin: 0 }}>Admin Operations Dashboard</h1>
+            <p style={{ color: '#4A5568', fontSize: '1rem', margin: '0.35rem 0 0 0' }}>Manage package lifecycles, booking calendar, approvals & audit logs.</p>
           </div>
           <button 
             onClick={fetchData} 
             disabled={refreshing}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem', background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}
           >
-            <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} /> Refresh Data
+            <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} /> Refresh Data
           </button>
         </div>
 
-        {/* METRICS ROW */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
-          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '0.65rem', background: '#E6FFFA', borderRadius: '10px' }}><Users color="#319795" size={18} /></div>
-              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Active Agents</h3>
-            </div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#2D3748' }}>{metrics.activeAgents}</div>
+        {/* ── SECTION 1: COMPACT KPI METRICS ROW ── */}
+        <div id="section-metrics" style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+            <LayoutDashboard size={20} color="var(--emerald-secondary)" />
+            <h2 style={{ fontSize: '1.3rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif' }}>Key Performance Indicators</h2>
           </div>
 
-          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '0.65rem', background: '#EBF4FF', borderRadius: '10px' }}><Package color="#3182CE" size={18} /></div>
-              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Total Saved Packages</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.9rem' }}>
+            
+            {/* 1. Active Agents */}
+            <div style={{ background: '#FFF', padding: '0.85rem 1rem', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                <div style={{ padding: '0.4rem', background: '#E6FFFA', borderRadius: '8px' }}><Users color="#319795" size={15} /></div>
+                <h3 style={{ margin: 0, color: '#718096', fontSize: '0.76rem', fontWeight: 600 }}>Active Agents</h3>
+              </div>
+              <button
+                onClick={() => scrollToSection('section-agents')}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '1.4rem', fontWeight: 800, color: '#319795', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                title="Click to view agent approvals section"
+              >
+                {metrics.activeAgents} <ArrowRight size={14} />
+              </button>
             </div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#2D3748' }}>{totalPackages}</div>
-          </div>
 
-          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '0.65rem', background: '#C6F6D5', borderRadius: '10px' }}><CheckCircle color="#22543D" size={18} /></div>
-              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Confirmed</h3>
+            {/* 2. Total Saved Packages */}
+            <div style={{ background: '#FFF', padding: '0.85rem 1rem', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                <div style={{ padding: '0.4rem', background: '#EBF4FF', borderRadius: '8px' }}><Package color="#3182CE" size={15} /></div>
+                <h3 style={{ margin: 0, color: '#718096', fontSize: '0.76rem', fontWeight: 600 }}>Total Packages</h3>
+              </div>
+              <button
+                onClick={() => scrollToSection('section-packages', 'all')}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '1.4rem', fontWeight: 800, color: '#3182CE', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                title="Click to view all packages"
+              >
+                {totalPackages} <ArrowRight size={14} />
+              </button>
             </div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#22543D' }}>{confirmedPackages.length}</div>
-            <div style={{ fontSize: '0.7rem', color: '#718096', marginTop: '0.15rem' }}>S$ {confirmedRevenueSGD.toLocaleString()} (₹{confirmedRevenueINR.toLocaleString()})</div>
-          </div>
 
-          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '0.65rem', background: '#E9D8FD', borderRadius: '10px' }}><CalendarCheck color="#553C9A" size={18} /></div>
-              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Scheduled</h3>
+            {/* 3. Confirmed Packages */}
+            <div style={{ background: '#FFF', padding: '0.85rem 1rem', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                <div style={{ padding: '0.4rem', background: '#C6F6D5', borderRadius: '8px' }}><CheckCircle color="#22543D" size={15} /></div>
+                <h3 style={{ margin: 0, color: '#718096', fontSize: '0.76rem', fontWeight: 600 }}>Confirmed</h3>
+              </div>
+              <button
+                onClick={() => scrollToSection('section-packages', 'confirmed')}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '1.4rem', fontWeight: 800, color: '#22543D', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                title="Click to filter confirmed packages"
+              >
+                {confirmedPackages.length} <ArrowRight size={14} />
+              </button>
+              <div style={{ fontSize: '0.68rem', color: '#718096', marginTop: '0.1rem', fontWeight: 600 }}>S$ {confirmedRevenueSGD.toLocaleString()} (₹{confirmedRevenueINR.toLocaleString()})</div>
             </div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#553C9A' }}>{scheduledPackages.length}</div>
-          </div>
 
-          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '0.65rem', background: '#D6BCFA', borderRadius: '10px' }}><CheckCheck color="#322659" size={18} /></div>
-              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Completed</h3>
+            {/* 4. Scheduled Packages */}
+            <div style={{ background: '#FFF', padding: '0.85rem 1rem', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                <div style={{ padding: '0.4rem', background: '#E9D8FD', borderRadius: '8px' }}><CalendarCheck color="#553C9A" size={15} /></div>
+                <h3 style={{ margin: 0, color: '#718096', fontSize: '0.76rem', fontWeight: 600 }}>Scheduled</h3>
+              </div>
+              <button
+                onClick={() => scrollToSection('section-packages', 'scheduled')}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '1.4rem', fontWeight: 800, color: '#553C9A', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                title="Click to filter scheduled packages"
+              >
+                {scheduledPackages.length} <ArrowRight size={14} />
+              </button>
             </div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#322659' }}>{completedPackages.length}</div>
-          </div>
 
-          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-              <div style={{ padding: '0.65rem', background: '#FEFCBF', borderRadius: '10px' }}><Clock color="#B7791F" size={18} /></div>
-              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Follow-Up Needed</h3>
+            {/* 5. Completed Packages */}
+            <div style={{ background: '#FFF', padding: '0.85rem 1rem', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                <div style={{ padding: '0.4rem', background: '#D6BCFA', borderRadius: '8px' }}><CheckCheck color="#322659" size={15} /></div>
+                <h3 style={{ margin: 0, color: '#718096', fontSize: '0.76rem', fontWeight: 600 }}>Completed</h3>
+              </div>
+              <button
+                onClick={() => scrollToSection('section-packages', 'completed')}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '1.4rem', fontWeight: 800, color: '#322659', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                title="Click to filter completed packages"
+              >
+                {completedPackages.length} <ArrowRight size={14} />
+              </button>
             </div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#B7791F' }}>{followupPackages.length}</div>
+
+            {/* 6. Follow-Up Needed */}
+            <div style={{ background: '#FFF', padding: '0.85rem 1rem', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                <div style={{ padding: '0.4rem', background: '#FEFCBF', borderRadius: '8px' }}><Clock color="#B7791F" size={15} /></div>
+                <h3 style={{ margin: 0, color: '#718096', fontSize: '0.76rem', fontWeight: 600 }}>Follow-Up</h3>
+              </div>
+              <button
+                onClick={() => scrollToSection('section-packages', 'followup')}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '1.4rem', fontWeight: 800, color: '#B7791F', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                title="Click to filter follow-up packages"
+              >
+                {followupPackages.length} <ArrowRight size={14} />
+              </button>
+            </div>
+
+            {/* 7. Pending Payments */}
+            <div style={{ background: '#FFF', padding: '0.85rem 1rem', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                <div style={{ padding: '0.4rem', background: '#FED7D7', borderRadius: '8px' }}><CreditCard color="#9B2C2C" size={15} /></div>
+                <h3 style={{ margin: 0, color: '#718096', fontSize: '0.76rem', fontWeight: 600 }}>Pending Pay</h3>
+              </div>
+              <button
+                onClick={() => scrollToSection('section-payments')}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '1.4rem', fontWeight: 800, color: '#9B2C2C', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                title="Click to view pending payments"
+              >
+                {pendingPayments.length} <ArrowRight size={14} />
+              </button>
+            </div>
+
           </div>
         </div>
 
-        {/* ── SAVED PACKAGES LIFECYCLE & CALENDAR MANAGER ── */}
-        <div style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '3rem', border: '1px solid #EDF2F7' }}>
+        {/* ── SECTION 2: SAVED PACKAGES LIFECYCLE & CALENDAR MANAGER ── */}
+        <div id="section-packages" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '3rem', border: '1px solid #EDF2F7' }}>
           
           {/* Header Controls */}
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
             <div>
-              <h2 style={{ fontSize: '1.5rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Package color="var(--emerald-secondary)" size={24} /> Packages Lifecycle & Calendar
+              <h2 style={{ fontSize: '1.4rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Package color="var(--emerald-secondary)" size={22} /> Packages Lifecycle & Calendar
               </h2>
               <p style={{ color: '#718096', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
                 Lifecycle Sequence: Pending ➔ Follow-Up ➔ Confirmed (Admin) ➔ Scheduled ➔ Completed.
@@ -573,6 +754,184 @@ export default function AdminDashboard() {
 
         </div>
 
+        {/* ── SECTION 3: SITE MAP & QUICK LINKS MATRIX ── */}
+        <div id="section-sitemap" style={{ marginBottom: '3rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <Map size={22} color="#4A5568" />
+            <h2 style={{ fontSize: '1.4rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif' }}>Site Map & Quick Links</h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+            
+            {/* Core Operations */}
+            <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <h3 style={{ fontSize: '1.05rem', color: '#2D3748', marginBottom: '1rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Zap size={18} color="#D69E2E" /> Core Operations
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {[
+                  { name: 'Sanity Studio CMS', path: '/studio', desc: 'Manage content & schemas' },
+                  { name: 'Singapore Attractions', path: '/singapore-attractions', desc: 'B2B/B2C Quote Builder' },
+                  { name: 'Active Promotions', path: '/singapore-attractions/promotions', desc: 'Discounted attraction deals' },
+                ].map(link => (
+                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{link.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#718096' }}>{link.desc}</div>
+                    </div>
+                    <ExternalLink size={16} color="#A0AEC0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Client Tools */}
+            <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <h3 style={{ fontSize: '1.05rem', color: '#2D3748', marginBottom: '1rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Package size={18} color="#3182CE" /> Client Tools
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {[
+                  { name: 'AI Trip Planner', path: '/ai-planner', desc: 'Intelligent itinerary generation' },
+                  { name: 'Instant Quote', path: '/instant-quote', desc: 'Quick package estimation' },
+                  { name: 'Live Bookings', path: '/Attractions_live', desc: 'Real-time booking portal' },
+                ].map(link => (
+                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{link.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#718096' }}>{link.desc}</div>
+                    </div>
+                    <ExternalLink size={16} color="#A0AEC0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Public Pages */}
+            <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <h3 style={{ fontSize: '1.05rem', color: '#2D3748', marginBottom: '1rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Compass size={18} color="#38A169" /> Public Pages
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {[
+                  { name: 'Homepage', path: '/', desc: 'Main landing page' },
+                  { name: 'Travel Blog', path: '/blog', desc: 'SEO articles and guides' },
+                  { name: 'Contact Us', path: '/contact', desc: 'Support and inquiries' },
+                ].map(link => (
+                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{link.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#718096' }}>{link.desc}</div>
+                    </div>
+                    <ExternalLink size={16} color="#A0AEC0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* ── SECTION 4 & 5 & 6: PAYMENTS, AGENTS, EXPORTS ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem', marginBottom: '3rem' }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            
+            {/* PENDING PAYMENTS */}
+            <div id="section-payments" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <h2 style={{ fontSize: '1.3rem', marginBottom: '1.25rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CreditCard size={20} color="#9B2C2C" /> Pending Manual Payments
+              </h2>
+              {pendingPayments.length === 0 ? <p style={{ color: '#718096', fontSize: '0.9rem' }}>No pending payments to verify.</p> : (
+                <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
+                      <th style={{ padding: '0.75rem 0' }}>Ref</th>
+                      <th style={{ padding: '0.75rem 0' }}>Amount</th>
+                      <th style={{ padding: '0.75rem 0' }}>UTR Number</th>
+                      <th style={{ padding: '0.75rem 0' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingPayments.map(p => (
+                      <tr key={p._id} style={{ borderBottom: '1px solid #EDF2F7' }}>
+                        <td style={{ padding: '0.85rem 0', fontWeight: 600 }}>{p.bookingReference || 'N/A'}</td>
+                        <td style={{ padding: '0.85rem 0', fontWeight: 700, color: '#22543D' }}>₹{p.amountInr}</td>
+                        <td style={{ padding: '0.85rem 0', fontFamily: 'monospace' }}>{p.utrNumber}</td>
+                        <td style={{ padding: '0.85rem 0', display: 'flex', gap: '0.5rem' }}>
+                          <button onClick={() => updatePaymentStatus(p._id, 'verified')} style={{ background: '#48BB78', color: '#FFF', border: 'none', borderRadius: '6px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}><CheckCircle size={14} /> Verify</button>
+                          <button onClick={() => updatePaymentStatus(p._id, 'rejected')} style={{ background: '#F56565', color: '#FFF', border: 'none', borderRadius: '6px', padding: '0.4rem 0.75rem', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}><XCircle size={14} /> Reject</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* B2B AGENT APPROVALS */}
+            <div id="section-agents" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <h2 style={{ fontSize: '1.3rem', marginBottom: '1.25rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Users size={20} color="#319795" /> B2B Agent Approvals & Status
+              </h2>
+              <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
+                    <th style={{ padding: '0.75rem 0' }}>Company</th>
+                    <th style={{ padding: '0.75rem 0' }}>Email</th>
+                    <th style={{ padding: '0.75rem 0' }}>Status</th>
+                    <th style={{ padding: '0.75rem 0' }}>Toggle</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agents.map(a => (
+                    <tr key={a._id} style={{ borderBottom: '1px solid #EDF2F7' }}>
+                      <td style={{ padding: '0.85rem 0', fontWeight: 600 }}>{a.companyName}</td>
+                      <td style={{ padding: '0.85rem 0' }}>{a.email}</td>
+                      <td style={{ padding: '0.85rem 0' }}>
+                        <span style={{ padding: '0.2rem 0.5rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 700, background: a.isActive ? '#C6F6D5' : '#FED7D7', color: a.isActive ? '#22543D' : '#742A2A' }}>
+                          {a.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '0.85rem 0' }}>
+                        <button onClick={() => toggleAgentStatus(a._id, a.isActive)} style={{ background: '#E2E8F0', border: 'none', borderRadius: '6px', padding: '0.35rem 0.85rem', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700 }}>
+                          {a.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* DATA EXPORTS */}
+            <div id="section-exports" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <h2 style={{ fontSize: '1.3rem', marginBottom: '1.25rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Download size={20} color="#2B6CB0" /> Data Exports & Reports
+              </h2>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                <a href="/api/admin/export-agents" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.85rem' }}><Download size={16} /> Export Agents CSV</a>
+                <a href="/api/admin/export-contacts" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.85rem' }}><Download size={16} /> Export Contacts CSV</a>
+                <a href="/api/admin/export-payments" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.85rem' }}><Download size={16} /> Export Payments CSV</a>
+              </div>
+            </div>
+          </div>
+
+          {/* AUDIT LOGS */}
+          <div id="section-audit-logs" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', height: 'fit-content', maxHeight: '800px', overflowY: 'auto' }}>
+            <h2 style={{ fontSize: '1.3rem', marginBottom: '1.25rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={18} /> Audit Trail</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              {logs.length === 0 ? <p style={{ color: '#718096', fontSize: '0.85rem' }}>No logs recorded yet.</p> : logs.map(log => (
+                <div key={log._id} style={{ padding: '0.85rem', background: '#F7FAFC', borderRadius: '8px', borderLeft: '4px solid #3182CE' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#718096', marginBottom: '0.2rem' }}>{new Date(log.timestamp).toLocaleString()}</div>
+                  <div style={{ fontWeight: 600, color: '#2D3748', fontSize: '0.85rem', marginBottom: '0.15rem' }}>{log.action}</div>
+                  <div style={{ fontSize: '0.8rem', color: '#4A5568' }}>{log.email}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
         {/* ── PACKAGE DETAIL MODAL ── */}
         {selectedProposal && (
           <div onClick={() => setSelectedProposal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 10000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
@@ -662,176 +1021,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* SITE MAP & QUICK LINKS MATRIX */}
-        <div style={{ marginBottom: '3rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <Map size={24} color="#4A5568" />
-            <h2 style={{ fontSize: '1.5rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif' }}>Site Map & Quick Links</h2>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-            
-            {/* Core Operations */}
-            <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-              <h3 style={{ fontSize: '1.1rem', color: '#2D3748', marginBottom: '1rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Zap size={18} color="#D69E2E" /> Core Operations
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {[
-                  { name: 'Sanity Studio CMS', path: '/studio', desc: 'Manage content & schemas' },
-                  { name: 'Singapore Attractions', path: '/singapore-attractions', desc: 'B2B/B2C Quote Builder' },
-                  { name: 'Active Promotions', path: '/singapore-attractions/promotions', desc: 'Discounted attraction deals' },
-                ].map(link => (
-                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{link.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#718096' }}>{link.desc}</div>
-                    </div>
-                    <ExternalLink size={16} color="#A0AEC0" />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Client Tools */}
-            <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-              <h3 style={{ fontSize: '1.1rem', color: '#2D3748', marginBottom: '1rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Package size={18} color="#3182CE" /> Client Tools
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {[
-                  { name: 'AI Trip Planner', path: '/ai-planner', desc: 'Intelligent itinerary generation' },
-                  { name: 'Instant Quote', path: '/instant-quote', desc: 'Quick package estimation' },
-                  { name: 'Live Bookings', path: '/Attractions_live', desc: 'Real-time booking portal' },
-                ].map(link => (
-                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{link.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#718096' }}>{link.desc}</div>
-                    </div>
-                    <ExternalLink size={16} color="#A0AEC0" />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Public Pages */}
-            <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-              <h3 style={{ fontSize: '1.1rem', color: '#2D3748', marginBottom: '1rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Compass size={18} color="#38A169" /> Public Pages
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {[
-                  { name: 'Homepage', path: '/', desc: 'Main landing page' },
-                  { name: 'Travel Blog', path: '/blog', desc: 'SEO articles and guides' },
-                  { name: 'Contact Us', path: '/contact', desc: 'Support and inquiries' },
-                ].map(link => (
-                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{link.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#718096' }}>{link.desc}</div>
-                    </div>
-                    <ExternalLink size={16} color="#A0AEC0" />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            {/* PENDING PAYMENTS */}
-            <div style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem' }}>Pending Payments</h2>
-              {pendingPayments.length === 0 ? <p style={{ color: '#718096' }}>No pending payments to verify.</p> : (
-                <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
-                      <th style={{ padding: '0.75rem 0' }}>Ref</th>
-                      <th style={{ padding: '0.75rem 0' }}>Amount</th>
-                      <th style={{ padding: '0.75rem 0' }}>UTR</th>
-                      <th style={{ padding: '0.75rem 0' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingPayments.map(p => (
-                      <tr key={p._id} style={{ borderBottom: '1px solid #EDF2F7' }}>
-                        <td style={{ padding: '1rem 0', fontWeight: 600 }}>{p.bookingReference || 'N/A'}</td>
-                        <td style={{ padding: '1rem 0' }}>₹{p.amountInr}</td>
-                        <td style={{ padding: '1rem 0', fontFamily: 'monospace' }}>{p.utrNumber}</td>
-                        <td style={{ padding: '1rem 0', display: 'flex', gap: '0.5rem' }}>
-                          <button onClick={() => updatePaymentStatus(p._id, 'verified')} style={{ background: '#48BB78', color: '#FFF', border: 'none', borderRadius: '6px', padding: '0.5rem', cursor: 'pointer' }}><CheckCircle size={16} /></button>
-                          <button onClick={() => updatePaymentStatus(p._id, 'rejected')} style={{ background: '#F56565', color: '#FFF', border: 'none', borderRadius: '6px', padding: '0.5rem', cursor: 'pointer' }}><XCircle size={16} /></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            {/* AGENT APPROVALS */}
-            <div style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem' }}>Recent B2B Agents</h2>
-              <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
-                      <th style={{ padding: '0.75rem 0' }}>Company</th>
-                      <th style={{ padding: '0.75rem 0' }}>Email</th>
-                      <th style={{ padding: '0.75rem 0' }}>Status</th>
-                      <th style={{ padding: '0.75rem 0' }}>Toggle</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {agents.map(a => (
-                      <tr key={a._id} style={{ borderBottom: '1px solid #EDF2F7' }}>
-                        <td style={{ padding: '1rem 0', fontWeight: 600 }}>{a.companyName}</td>
-                        <td style={{ padding: '1rem 0' }}>{a.email}</td>
-                        <td style={{ padding: '1rem 0' }}>
-                          <span style={{ padding: '0.25rem 0.5rem', borderRadius: '999px', fontSize: '0.8rem', background: a.isActive ? '#C6F6D5' : '#FED7D7', color: a.isActive ? '#22543D' : '#742A2A' }}>
-                            {a.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem 0' }}>
-                          <button onClick={() => toggleAgentStatus(a._id, a.isActive)} style={{ background: '#E2E8F0', border: 'none', borderRadius: '6px', padding: '0.5rem 1rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                            {a.isActive ? 'Deactivate' : 'Activate'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-            </div>
-
-            {/* EXPORTS */}
-            <div style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem' }}>Data Exports</h2>
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <a href="/api/admin/export-agents" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600 }}><Download size={18} /> Agents CSV</a>
-                <a href="/api/admin/export-contacts" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600 }}><Download size={18} /> Contacts CSV</a>
-                <a href="/api/admin/export-payments" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600 }}><Download size={18} /> Payments CSV</a>
-              </div>
-            </div>
-          </div>
-
-          {/* AUDIT LOGS */}
-          <div style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', height: 'fit-content', maxHeight: '800px', overflowY: 'auto' }}>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={20} /> Security & Audit Logs</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {logs.length === 0 ? <p style={{ color: '#718096' }}>No logs recorded yet.</p> : logs.map(log => (
-                <div key={log._id} style={{ padding: '1rem', background: '#F7FAFC', borderRadius: '8px', borderLeft: '4px solid #3182CE' }}>
-                  <div style={{ fontSize: '0.8rem', color: '#718096', marginBottom: '0.25rem' }}>{new Date(log.timestamp).toLocaleString()}</div>
-                  <div style={{ fontWeight: 600, color: '#2D3748', marginBottom: '0.25rem' }}>{log.action}</div>
-                  <div style={{ fontSize: '0.9rem', color: '#4A5568' }}>{log.email}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-      </div>
+      </main>
     </div>
   )
 }
