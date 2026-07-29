@@ -20,10 +20,7 @@ export const attractionMetaSchema = defineType({
       title: 'Attraction Name',
       group: 'identity',
       type: 'string',
-      description: 'Select the attraction name to match from the Google Sheet pricing list.',
-      options: {
-        list: ATTRACTION_NAMES.map(name => ({ title: name, value: name })),
-      },
+      description: 'Enter the attraction name (e.g. from the Google Sheet pricing list).',
       validation: Rule => Rule.required()
     }),
     defineField({
