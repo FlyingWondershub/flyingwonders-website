@@ -60,7 +60,8 @@ export const metadata = {
   }
 }
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export default async function SingaporeAttractionsPage() {
   const attractions = await getAttractions()
@@ -76,7 +77,7 @@ export default async function SingaporeAttractionsPage() {
       attractionsBannerText,
       attractionsBannerActive,
       attractionsBannerWhatsappMessage
-    }`)
+    }`, {}, { cache: 'no-store' })
     if (fetched) bannerSettings = { ...bannerSettings, ...fetched }
   } catch (err) {
     console.error('Error fetching banner settings:', err)
@@ -87,7 +88,7 @@ export default async function SingaporeAttractionsPage() {
   try {
     const rawBundles = await client.fetch(`*[_type == "attractionBundle" && isActive == true] | order(sortOrder asc) {
       _id, label, emoji, description, adultQty, childQty, attractionKeywords
-    }`)
+    }`, {}, { cache: 'no-store' })
     sanityBundles = rawBundles || []
   } catch (err) {
     console.error('Error fetching attraction bundles from Sanity:', err)
@@ -98,7 +99,7 @@ export default async function SingaporeAttractionsPage() {
   try {
     const rawMeta = await client.fetch(`*[_type == "attractionMeta"] {
       _id, name, matchKeyword, photo, officialWebsite, shortDescription, openingHours, rating, category, isPopular, isTrending, longDescription, highlights, tips, duration, location, ageRecommendation
-    }`)
+    }`, {}, { cache: 'no-store' })
     // Resolve photo URLs
     sanityMeta = (rawMeta || []).map((m: any) => ({
       ...m,
