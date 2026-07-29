@@ -77,6 +77,7 @@ export async function POST(req: NextRequest) {
       customHotelEnabled: !!customHotelEnabled,
       customHotelPrice: Number(customHotelPrice) || 0,
       customHotelSuppCost: Number(customHotelSuppCost) || 0,
+      status: 'pending',
       costBreakdown: {
         roomCostTotal: Number(costBreakdown?.roomCostTotal) || 0,
         suppCostTotal: Number(costBreakdown?.suppCostTotal) || 0,
@@ -123,12 +124,20 @@ export async function GET(req: NextRequest) {
       }
 
       query += ` | order(_createdAt desc) {
+        _id,
+        _createdAt,
         proposalNumber,
         guestName,
         nights,
+        adults,
+        kids,
         arrivalDate,
+        hotelName,
+        roomType,
+        status,
         totalClientPrice,
         costBreakdown,
+        itinerary,
         agent->{
           agentName,
           companyName,

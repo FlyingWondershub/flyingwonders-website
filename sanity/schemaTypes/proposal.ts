@@ -106,6 +106,21 @@ export const proposalSchema = defineType({
       ]
     }),
     defineField({
+      name: 'status',
+      title: 'Package Lifecycle Status',
+      type: 'string',
+      options: {
+        list: [
+          { title: '🔵 Pending (Default)', value: 'pending' },
+          { title: '🟡 Follow-Up Needed', value: 'followup' },
+          { title: '🟢 Confirmed (Admin Only)', value: 'confirmed' },
+          { title: '⚪ Ignored / Closed', value: 'ignore' },
+        ],
+      },
+      initialValue: 'pending',
+      description: 'Lifecycle status of this package proposal. Confirmed status can only be set via the Admin Dashboard.',
+    }),
+    defineField({
       name: 'itinerary',
       title: 'Itinerary Custom Structure (JSON)',
       type: 'text',

@@ -2,7 +2,12 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Download, ShieldAlert, Loader2, CheckCircle, XCircle, Activity, Users, DollarSign, RefreshCw, FileText, Map, ExternalLink, Zap, Package, Compass, FileQuestion, BookOpen, MessageCircle, Home } from 'lucide-react'
+import {
+  Download, ShieldAlert, Loader2, CheckCircle, XCircle, Activity, Users,
+  DollarSign, RefreshCw, FileText, Map, ExternalLink, Zap, Package, Compass,
+  Calendar, Eye, Filter, ChevronLeft, ChevronRight, AlertCircle, Clock
+} from 'lucide-react'
+
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -13,17 +18,28 @@ export default function AdminDashboard() {
   const [agents, setAgents] = useState<any[]>([])
   const [logs, setLogs] = useState<any[]>([])
 
+  // ── Package Lifecycle State ──
+  const [proposals, setProposals] = useState<any[]>([])
+  const [packageFilter, setPackageFilter] = useState('all')
+  const [packageSearch, setPackageSearch] = useState('')
+  const [packageViewMode, setPackageViewMode] = useState<'list' | 'calendar'>('list')
+  const [selectedProposal, setSelectedProposal] = useState<any | null>(null)
+
+  // Calendar State
+  const [currentMonthDate, setCurrentMonthDate] = useState(new Date())
+
   const [refreshing, setRefreshing] = useState(false)
 
   const fetchData = async () => {
     setRefreshing(true)
     try {
-      const [authRes, metRes, payRes, agentRes, logRes] = await Promise.all([
+      const [authRes, metRes, payRes, agentRes, logRes, propRes] = await Promise.all([
         fetch('/api/auth/check'),
         fetch('/api/admin/metrics'),
         fetch('/api/admin/payments/pending'),
         fetch('/api/admin/agents'),
-        fetch('/api/admin/audit-logs')
+        fetch('/api/admin/audit-logs'),
+        fetch('/api/proposals?listAll=true')
       ])
 
       const authData = await authRes.json()
@@ -33,6 +49,11 @@ export default function AdminDashboard() {
         setPendingPayments(await payRes.json())
         setAgents(await agentRes.json())
         setLogs(await logRes.json())
+
+        const propData = await propRes.json()
+        if (propData.success && Array.isArray(propData.list)) {
+          setProposals(propData.list)
+        }
       }
     } catch (e) {
       console.error(e)
@@ -72,6 +93,28 @@ export default function AdminDashboard() {
     }
   }
 
+  // ── Update Package Status (Admin Only) ──
+  const updatePackageStatus = async (proposalId: string, status: string) => {
+    try {
+      const res = await fetch('/api/admin/packages/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposalId, status })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setProposals((prev: any[]) => prev.map(p => p._id === proposalId ? { ...p, status } : p))
+        if (selectedProposal && selectedProposal._id === proposalId) {
+          setSelectedProposal((prev: any) => prev ? { ...prev, status } : null)
+        }
+      } else {
+        alert(data.error || 'Failed to update package status')
+      }
+    } catch (e) {
+      alert('Error updating package status')
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -96,48 +139,410 @@ export default function AdminDashboard() {
     )
   }
 
+  // ── Package Analytics Calculations ──
+  const totalPackages = proposals.length
+  const confirmedPackages = proposals.filter(p => p.status === 'confirmed')
+  const followupPackages = proposals.filter(p => p.status === 'followup')
+  const pendingPackages = proposals.filter(p => !p.status || p.status === 'pending')
+  const ignoredPackages = proposals.filter(p => p.status === 'ignore')
+
+  const confirmedRevenueSGD = confirmedPackages.reduce((sum, p) => sum + (Number(p.totalClientPrice) || 0), 0)
+  const confirmedRevenueINR = confirmedPackages.reduce((sum, p) => sum + (Number(p.costBreakdown?.totalClientPriceINR) || 0), 0)
+
+  // Filtered Proposals
+  const filteredProposals = proposals.filter(p => {
+    const pStatus = p.status || 'pending'
+    const matchesFilter = packageFilter === 'all' || pStatus === packageFilter
+    const term = packageSearch.toLowerCase()
+    const matchesSearch = !term ||
+      (p.proposalNumber && p.proposalNumber.toLowerCase().includes(term)) ||
+      (p.guestName && p.guestName.toLowerCase().includes(term)) ||
+      (p.agent?.email && p.agent.email.toLowerCase().includes(term))
+    return matchesFilter && matchesSearch
+  })
+
+  // Calendar Helpers
+  const year = currentMonthDate.getFullYear()
+  const month = currentMonthDate.getMonth()
+  const firstDayOfMonth = new Date(year, month, 1).getDay()
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+  const getStatusBadge = (st: string = 'pending') => {
+    switch (st) {
+      case 'confirmed': return { label: '🟢 Confirmed', bg: '#C6F6D5', color: '#22543D' }
+      case 'followup':  return { label: '🟡 Follow-Up', bg: '#FEFCBF', color: '#744210' }
+      case 'ignore':    return { label: '⚪ Ignored',   bg: '#EDF2F7', color: '#4A5568' }
+      default:          return { label: '🔵 Pending',   bg: '#EBF4FF', color: '#2B6CB0' }
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#F7FAFC', padding: '4rem 2rem' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
         
+        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <div>
-            <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.5rem', color: '#2D3748', margin: 0 }}>Admin Dashboard</h1>
-            <p style={{ color: '#4A5568', fontSize: '1.1rem', margin: '0.5rem 0 0 0' }}>Manage operations, approvals, and data exports.</p>
+            <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.5rem', color: '#2D3748', margin: 0 }}>Admin Operations Dashboard</h1>
+            <p style={{ color: '#4A5568', fontSize: '1.1rem', margin: '0.5rem 0 0 0' }}>Manage package lifecycles, booking calendar, approvals & audit logs.</p>
           </div>
           <button 
             onClick={fetchData} 
             disabled={refreshing}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
           >
             <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} /> Refresh Data
           </button>
         </div>
 
         {/* METRICS ROW */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-          <div style={{ background: '#FFF', padding: '2rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-              <div style={{ padding: '1rem', background: '#E6FFFA', borderRadius: '12px' }}><Users color="#319795" /></div>
-              <h3 style={{ margin: 0, color: '#4A5568' }}>Active Agents</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
+          <div style={{ background: '#FFF', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ padding: '0.75rem', background: '#E6FFFA', borderRadius: '10px' }}><Users color="#319795" size={20} /></div>
+              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.9rem' }}>Active Agents</h3>
             </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#2D3748' }}>{metrics.activeAgents}</div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#2D3748' }}>{metrics.activeAgents}</div>
           </div>
-          <div style={{ background: '#FFF', padding: '2rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-              <div style={{ padding: '1rem', background: '#FFF5F5', borderRadius: '12px' }}><DollarSign color="#E53E3E" /></div>
-              <h3 style={{ margin: 0, color: '#4A5568' }}>Pending Payments</h3>
+
+          <div style={{ background: '#FFF', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ padding: '0.75rem', background: '#EBF4FF', borderRadius: '10px' }}><Package color="#3182CE" size={20} /></div>
+              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.9rem' }}>Saved Packages</h3>
             </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#2D3748' }}>{metrics.pendingPayments}</div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#2D3748' }}>{totalPackages}</div>
           </div>
-          <div style={{ background: '#FFF', padding: '2rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-              <div style={{ padding: '1rem', background: '#EBF4FF', borderRadius: '12px' }}><FileText color="#3182CE" /></div>
-              <h3 style={{ margin: 0, color: '#4A5568' }}>Total Contacts</h3>
+
+          <div style={{ background: '#FFF', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ padding: '0.75rem', background: '#C6F6D5', borderRadius: '10px' }}><CheckCircle color="#22543D" size={20} /></div>
+              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.9rem' }}>Confirmed Packages</h3>
             </div>
-            <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#2D3748' }}>{metrics.totalContacts}</div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#22543D' }}>{confirmedPackages.length}</div>
+            <div style={{ fontSize: '0.75rem', color: '#718096', marginTop: '0.25rem' }}>S$ {confirmedRevenueSGD.toLocaleString()} (approx ₹{confirmedRevenueINR.toLocaleString()})</div>
+          </div>
+
+          <div style={{ background: '#FFF', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ padding: '0.75rem', background: '#FEFCBF', borderRadius: '10px' }}><Clock color="#B7791F" size={20} /></div>
+              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.9rem' }}>Follow-Up Needed</h3>
+            </div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#B7791F' }}>{followupPackages.length}</div>
+          </div>
+
+          <div style={{ background: '#FFF', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div style={{ padding: '0.75rem', background: '#FFF5F5', borderRadius: '10px' }}><DollarSign color="#E53E3E" size={20} /></div>
+              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.9rem' }}>Pending Payments</h3>
+            </div>
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#E53E3E' }}>{metrics.pendingPayments}</div>
           </div>
         </div>
+
+        {/* ── SAVED PACKAGES LIFECYCLE & CALENDAR MANAGER ── */}
+        <div style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '3rem', border: '1px solid #EDF2F7' }}>
+          
+          {/* Header Controls */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1.25rem', marginBottom: '1.5rem' }}>
+            <div>
+              <h2 style={{ fontSize: '1.5rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Package color="var(--emerald-secondary)" size={24} /> Packages Lifecycle & Calendar
+              </h2>
+              <p style={{ color: '#718096', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
+                Manage confirmation status, track arrival dates, and set follow-ups. Confirmed status can only be set here.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              {/* View Switcher */}
+              <div style={{ background: '#F7FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.2rem', display: 'flex', gap: '0.2rem' }}>
+                <button
+                  onClick={() => setPackageViewMode('list')}
+                  style={{ padding: '0.45rem 0.9rem', borderRadius: '6px', border: 'none', background: packageViewMode === 'list' ? 'var(--emerald-secondary)' : 'transparent', color: packageViewMode === 'list' ? '#FFF' : '#4A5568', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                >
+                  📋 List Manager
+                </button>
+                <button
+                  onClick={() => setPackageViewMode('calendar')}
+                  style={{ padding: '0.45rem 0.9rem', borderRadius: '6px', border: 'none', background: packageViewMode === 'calendar' ? 'var(--emerald-secondary)' : 'transparent', color: packageViewMode === 'calendar' ? '#FFF' : '#4A5568', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                >
+                  📅 Arrival Calendar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Filters & Search Bar */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {[
+                { id: 'all', label: `All (${proposals.length})` },
+                { id: 'pending', label: `🔵 Pending (${pendingPackages.length})` },
+                { id: 'followup', label: `🟡 Follow-Up (${followupPackages.length})` },
+                { id: 'confirmed', label: `🟢 Confirmed (${confirmedPackages.length})` },
+                { id: 'ignore', label: `⚪ Ignored (${ignoredPackages.length})` },
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setPackageFilter(f.id)}
+                  style={{
+                    padding: '0.4rem 0.85rem',
+                    borderRadius: '20px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    border: packageFilter === f.id ? 'none' : '1px solid #E2E8F0',
+                    background: packageFilter === f.id ? '#2D3748' : '#F7FAFC',
+                    color: packageFilter === f.id ? '#FFF' : '#4A5568',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <input
+              type="text"
+              placeholder="🔍 Search guest, FW number, agent..."
+              value={packageSearch}
+              onChange={e => setPackageSearch(e.target.value)}
+              style={{ padding: '0.45rem 0.9rem', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.85rem', width: '250px', outline: 'none' }}
+            />
+          </div>
+
+          {/* VIEW MODE 1: LIST MANAGER */}
+          {packageViewMode === 'list' && (
+            <div style={{ overflowX: 'auto' }}>
+              {filteredProposals.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#A0AEC0', fontSize: '0.9rem' }}>No packages match the selected criteria.</div>
+              ) : (
+                <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid #E2E8F0', color: '#718096' }}>
+                      <th style={{ padding: '0.75rem' }}>Proposal Ref</th>
+                      <th style={{ padding: '0.75rem' }}>Guest Name</th>
+                      <th style={{ padding: '0.75rem' }}>Arrival Date</th>
+                      <th style={{ padding: '0.75rem' }}>Total Cost (SGD / ₹)</th>
+                      <th style={{ padding: '0.75rem' }}>Current Status</th>
+                      <th style={{ padding: '0.75rem' }}>Set Lifecycle Status</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'right' }}>Details</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredProposals.map(p => {
+                      const badge = getStatusBadge(p.status)
+                      return (
+                        <tr key={p._id} style={{ borderBottom: '1px solid #EDF2F7', background: p.status === 'confirmed' ? '#F0FFF4' : 'transparent' }}>
+                          <td style={{ padding: '0.85rem 0.75rem', fontWeight: 700, color: '#2D3748' }}>{p.proposalNumber}</td>
+                          <td style={{ padding: '0.85rem 0.75rem', fontWeight: 600 }}>{p.guestName || 'Guest'}</td>
+                          <td style={{ padding: '0.85rem 0.75rem', color: p.arrivalDate ? '#2B6CB0' : '#A0AEC0', fontWeight: 600 }}>
+                            {p.arrivalDate ? `📅 ${p.arrivalDate}` : 'Not set'}
+                          </td>
+                          <td style={{ padding: '0.85rem 0.75rem' }}>
+                            <div style={{ fontWeight: 800, color: '#22543D' }}>S$ {p.totalClientPrice || 0}</div>
+                            {p.costBreakdown?.totalClientPriceINR && (
+                              <div style={{ fontSize: '0.75rem', color: '#718096' }}>₹{p.costBreakdown.totalClientPriceINR.toLocaleString()}</div>
+                            )}
+                          </td>
+                          <td style={{ padding: '0.85rem 0.75rem' }}>
+                            <span style={{ padding: '0.25rem 0.65rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: badge.bg, color: badge.color }}>
+                              {badge.label}
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.85rem 0.75rem' }}>
+                            <select
+                              value={p.status || 'pending'}
+                              onChange={e => updatePackageStatus(p._id, e.target.value)}
+                              style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E0', fontSize: '0.8rem', fontWeight: 700, background: '#FFF', cursor: 'pointer' }}
+                            >
+                              <option value="pending">🔵 Pending</option>
+                              <option value="followup">🟡 Follow-Up Needed</option>
+                              <option value="confirmed">🟢 Confirmed (Admin)</option>
+                              <option value="ignore">⚪ Ignore / Closed</option>
+                            </select>
+                          </td>
+                          <td style={{ padding: '0.85rem 0.75rem', textAlign: 'right' }}>
+                            <button
+                              onClick={() => setSelectedProposal(p)}
+                              style={{ border: '1px solid #CBD5E0', background: '#F7FAFC', padding: '0.35rem 0.75rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                            >
+                              <Eye size={14} /> View
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {/* VIEW MODE 2: ARRIVAL CALENDAR */}
+          {packageViewMode === 'calendar' && (
+            <div>
+              {/* Calendar Month Navigation */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', background: '#F7FAFC', padding: '0.75rem 1.25rem', borderRadius: '10px' }}>
+                <button
+                  onClick={() => setCurrentMonthDate(new Date(year, month - 1, 1))}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#4A5568' }}
+                >
+                  <ChevronLeft size={18} /> Previous Month
+                </button>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#2D3748', fontWeight: 800 }}>
+                  {monthNames[month]} {year}
+                </h3>
+                <button
+                  onClick={() => setCurrentMonthDate(new Date(year, month + 1, 1))}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#4A5568' }}
+                >
+                  Next Month <ChevronRight size={18} />
+                </button>
+              </div>
+
+              {/* Grid Header Days */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', fontWeight: 700, fontSize: '0.8rem', color: '#718096', marginBottom: '0.5rem' }}>
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d} style={{ padding: '0.4rem' }}>{d}</div>)}
+              </div>
+
+              {/* Grid Day Cells */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+                {/* Empty cells before 1st day */}
+                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                  <div key={`empty-${i}`} style={{ background: '#FAF5FF', minHeight: '90px', borderRadius: '8px', opacity: 0.4 }} />
+                ))}
+
+                {/* Days of the month */}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const dayNum = i + 1
+                  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`
+                  
+                  // Find proposals matching this arrival date
+                  const dayProposals = filteredProposals.filter(p => {
+                    if (p.arrivalDate && p.arrivalDate.trim() === dateStr) return true
+                    return false
+                  })
+
+                  return (
+                    <div key={dayNum} style={{ background: '#F7FAFC', border: '1px solid #EDF2F7', minHeight: '95px', borderRadius: '8px', padding: '0.4rem', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#4A5568', marginBottom: '0.3rem' }}>{dayNum}</div>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', overflowY: 'auto', flex: 1 }}>
+                        {dayProposals.map(p => {
+                          const badge = getStatusBadge(p.status)
+                          return (
+                            <div
+                              key={p._id}
+                              onClick={() => setSelectedProposal(p)}
+                              style={{
+                                background: badge.bg,
+                                color: badge.color,
+                                padding: '0.2rem 0.4rem',
+                                borderRadius: '4px',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                border: '1px solid rgba(0,0,0,0.05)'
+                              }}
+                              title={`${p.proposalNumber} — ${p.guestName || 'Guest'} (S$ ${p.totalClientPrice})`}
+                            >
+                              {p.proposalNumber}: {p.guestName || 'Guest'}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* ── PACKAGE DETAIL MODAL ── */}
+        {selectedProposal && (
+          <div onClick={() => setSelectedProposal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 10000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1rem' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: '#FFF', borderRadius: '16px', maxWidth: '650px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--gold-accent)', textTransform: 'uppercase' }}>Package Proposal Details</div>
+                  <h2 style={{ fontSize: '1.4rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif' }}>{selectedProposal.proposalNumber}</h2>
+                  <div style={{ fontSize: '0.85rem', color: '#718096', marginTop: '0.2rem' }}>Guest: {selectedProposal.guestName || 'N/A'}</div>
+                </div>
+                <button onClick={() => setSelectedProposal(null)} style={{ border: 'none', background: '#EDF2F7', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+              </div>
+
+              {/* Status Change Strip */}
+              <div style={{ background: '#F7FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#718096', fontWeight: 700 }}>ADMIN STATUS UPDATE</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#2D3748', marginTop: '0.15rem' }}>
+                    Current: {getStatusBadge(selectedProposal.status).label}
+                  </div>
+                </div>
+                <select
+                  value={selectedProposal.status || 'pending'}
+                  onChange={e => updatePackageStatus(selectedProposal._id, e.target.value)}
+                  style={{ padding: '0.45rem 0.8rem', borderRadius: '8px', border: '1px solid var(--emerald-secondary)', fontSize: '0.85rem', fontWeight: 800, background: '#FFF', cursor: 'pointer' }}
+                >
+                  <option value="pending">🔵 Pending</option>
+                  <option value="followup">🟡 Follow-Up Needed</option>
+                  <option value="confirmed">🟢 Confirmed (Admin Only)</option>
+                  <option value="ignore">⚪ Ignore / Closed</option>
+                </select>
+              </div>
+
+              {/* Details Breakdown */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ background: '#F7FAFC', padding: '0.9rem', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#718096', fontWeight: 700 }}>ARRIVAL DATE</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#2D3748', marginTop: '0.2rem' }}>{selectedProposal.arrivalDate || 'Not set'}</div>
+                </div>
+                <div style={{ background: '#F7FAFC', padding: '0.9rem', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#718096', fontWeight: 700 }}>STAY DURATION</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#2D3748', marginTop: '0.2rem' }}>{selectedProposal.nights} Nights ({selectedProposal.adults || 2} Adults, {selectedProposal.kids || 0} Kids)</div>
+                </div>
+                <div style={{ background: '#F0FFF4', padding: '0.9rem', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#22543D', fontWeight: 700 }}>TOTAL CLIENT PRICE (SGD)</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#22543D', marginTop: '0.2rem' }}>S$ {selectedProposal.totalClientPrice || 0}</div>
+                </div>
+                <div style={{ background: '#F0FFF4', padding: '0.9rem', borderRadius: '8px' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#22543D', fontWeight: 700 }}>APPROX PRICE (INR ₹)</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#22543D', marginTop: '0.2rem' }}>₹{(selectedProposal.costBreakdown?.totalClientPriceINR || 0).toLocaleString()}</div>
+                </div>
+              </div>
+
+              {/* Agent info */}
+              {selectedProposal.agent && (
+                <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '1rem', marginBottom: '1.5rem' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#4A5568', marginBottom: '0.35rem' }}>Agent Info</div>
+                  <div style={{ fontSize: '0.85rem', color: '#2D3748' }}>Company: <strong>{selectedProposal.agent.companyName || 'B2B Partner'}</strong></div>
+                  <div style={{ fontSize: '0.85rem', color: '#2D3748' }}>Email: {selectedProposal.agent.email}</div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
+                <a
+                  href={`/custom-package/proposal/${selectedProposal.proposalNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.6rem 1.2rem', background: '#2B6CB0', color: '#FFF', borderRadius: '8px', textDecoration: 'none', fontSize: '0.85rem', fontWeight: 700 }}
+                >
+                  <ExternalLink size={14} /> Open Full Proposal Page
+                </a>
+              </div>
+
+            </div>
+          </div>
+        )}
 
         {/* SITE MAP & QUICK LINKS MATRIX */}
         <div style={{ marginBottom: '3rem' }}>
