@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send } from 'lucide-react'
 
 // Default Fallback Master Data (Configured in SGD)
 const FALLBACK_HOTELS = [
@@ -1078,11 +1078,10 @@ export default function PrototypeBuilder() {
     notifyAgentActivity('whatsapp_share')
   }
 
-  // Handle Save Proposal to Sanity
+  // Handle Save Proposal to Sanity (Updates existing proposal if reloaded/active, or creates new if fresh)
   const handleSaveProposal = async () => {
     if (!activeAgent) return
     setSaveStatus('saving')
-    setSavedProposalNum(null)
     try {
       const h = hotelsList[globalHotelIndex]
       const room = h?.rooms[globalRoomIndex]
@@ -1092,6 +1091,7 @@ export default function PrototypeBuilder() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          proposalNumber: savedProposalNum || undefined,
           agentEmail: activeAgent.email,
           guestName,
           adults,
@@ -1115,7 +1115,7 @@ export default function PrototypeBuilder() {
       if (res.ok && data.success) {
         setSaveStatus('success')
         setSavedProposalNum(data.proposalNumber)
-        alert(`Proposal saved successfully! Proposal Number: ${data.proposalNumber}`)
+        alert(data.updated ? `Proposal ${data.proposalNumber} updated successfully!` : `Proposal created successfully! Proposal Number: ${data.proposalNumber}`)
       } else {
         throw new Error(data.error || 'Failed to save proposal')
       }
@@ -3423,42 +3423,51 @@ ${proposal}
                     alert(`Proposal copied to clipboard successfully!`)
                   }}
                   className="btn btn-primary" 
-                  style={{ background: 'var(--gold-accent)', color: '#111', fontWeight: 700, padding: '0.7rem 0.2rem', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '8px' }}
+                  style={{ background: 'var(--gold-accent)', color: '#111', fontWeight: 700, padding: '0.65rem 0.2rem', fontSize: '0.68rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
                 >
-                  <span>📋 COPY</span>
+                  <Copy size={16} color="#111" />
+                  <span>COPY</span>
                 </button>
+
                 <button 
                   type="button" 
                   onClick={downloadProposalPDF}
                   className="btn btn-primary" 
-                  style={{ background: 'var(--emerald-secondary)', color: '#FFF', fontWeight: 700, padding: '0.7rem 0.2rem', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '8px' }}
+                  style={{ background: 'var(--emerald-secondary)', color: '#FFF', fontWeight: 700, padding: '0.65rem 0.2rem', fontSize: '0.68rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
                 >
-                  <span>📄 PDF</span>
+                  <FileText size={16} color="#FFF" />
+                  <span>PDF</span>
                 </button>
+
                 <button 
                   type="button" 
                   onClick={() => { setShowScheduleModal(true); setPriceDrawerOpen(false); }}
                   className="btn btn-primary" 
-                  style={{ background: '#4A5568', color: '#FFF', fontWeight: 700, padding: '0.7rem 0.2rem', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '8px' }}
+                  style={{ background: '#4A5568', color: '#FFF', fontWeight: 700, padding: '0.65rem 0.2rem', fontSize: '0.68rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
                 >
-                  <span>🗓️ SCHEDULE</span>
+                  <Calendar size={16} color="#FFF" />
+                  <span>SCHEDULE</span>
                 </button>
+
                 <button 
                   type="button" 
                   onClick={sendOnWhatsApp}
                   className="btn btn-primary" 
-                  style={{ background: '#25D366', color: '#FFF', border: 'none', fontWeight: 700, padding: '0.7rem 0.2rem', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '8px' }}
+                  style={{ background: '#25D366', color: '#FFF', border: 'none', fontWeight: 700, padding: '0.65rem 0.2rem', fontSize: '0.68rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', borderRadius: '8px', cursor: 'pointer' }}
                 >
-                  <span>💬 WHATSAPP</span>
+                  <MessageSquare size={16} color="#FFF" />
+                  <span>WHATSAPP</span>
                 </button>
+
                 <button 
                   type="button" 
                   onClick={handleSaveProposal}
                   disabled={saveStatus === 'saving'}
                   className="btn btn-primary" 
-                  style={{ background: '#6B46C1', color: '#FFF', border: 'none', fontWeight: 700, padding: '0.7rem 0.2rem', fontSize: '0.72rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', borderRadius: '8px', opacity: saveStatus === 'saving' ? 0.7 : 1 }}
+                  style={{ background: '#6B46C1', color: '#FFF', border: 'none', fontWeight: 700, padding: '0.65rem 0.2rem', fontSize: '0.68rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', borderRadius: '8px', cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer', opacity: saveStatus === 'saving' ? 0.7 : 1 }}
                 >
-                  <span>💾 {saveStatus === 'saving' ? 'SAVING...' : 'SAVE'}</span>
+                  <Save size={16} color="#FFF" />
+                  <span>{saveStatus === 'saving' ? 'SAVING...' : 'SAVE'}</span>
                 </button>
               </div>
 
@@ -3489,7 +3498,7 @@ ${proposal}
                   letterSpacing: '0.02em'
                 }}
               >
-                ✉️ Order / Enquire - Flying Wonders
+                <Send size={18} color="#FFF" /> Order / Enquire - Flying Wonders
               </button>
 
             </div>
