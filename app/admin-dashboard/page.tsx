@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import {
   Download, ShieldAlert, Loader2, CheckCircle, XCircle, Activity, Users,
   DollarSign, RefreshCw, FileText, Map, ExternalLink, Zap, Package, Compass,
-  Calendar, Eye, Filter, ChevronLeft, ChevronRight, AlertCircle, Clock
+  Calendar, Eye, Filter, ChevronLeft, ChevronRight, AlertCircle, Clock,
+  ChevronDown, ChevronUp, CalendarCheck, CheckCheck
 } from 'lucide-react'
 
 export default function AdminDashboard() {
@@ -24,11 +25,18 @@ export default function AdminDashboard() {
   const [packageSearch, setPackageSearch] = useState('')
   const [packageViewMode, setPackageViewMode] = useState<'list' | 'calendar'>('list')
   const [selectedProposal, setSelectedProposal] = useState<any | null>(null)
+  
+  // Expand / Collapse row tracking
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({})
 
   // Calendar State
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date())
 
   const [refreshing, setRefreshing] = useState(false)
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }))
+  }
 
   const fetchData = async () => {
     setRefreshing(true)
@@ -142,6 +150,8 @@ export default function AdminDashboard() {
   // ── Package Analytics Calculations ──
   const totalPackages = proposals.length
   const confirmedPackages = proposals.filter(p => p.status === 'confirmed')
+  const scheduledPackages = proposals.filter(p => p.status === 'scheduled')
+  const completedPackages = proposals.filter(p => p.status === 'completed')
   const followupPackages = proposals.filter(p => p.status === 'followup')
   const pendingPackages = proposals.filter(p => !p.status || p.status === 'pending')
   const ignoredPackages = proposals.filter(p => p.status === 'ignore')
@@ -166,16 +176,31 @@ export default function AdminDashboard() {
   const month = currentMonthDate.getMonth()
   const firstDayOfMonth = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
-
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
   const getStatusBadge = (st: string = 'pending') => {
     switch (st) {
-      case 'confirmed': return { label: '🟢 Confirmed', bg: '#C6F6D5', color: '#22543D' }
-      case 'followup':  return { label: '🟡 Follow-Up', bg: '#FEFCBF', color: '#744210' }
-      case 'ignore':    return { label: '⚪ Ignored',   bg: '#EDF2F7', color: '#4A5568' }
-      default:          return { label: '🔵 Pending',   bg: '#EBF4FF', color: '#2B6CB0' }
+      case 'confirmed': return { label: '🟢 Confirmed',   bg: '#C6F6D5', color: '#22543D' }
+      case 'scheduled': return { label: '💜 Scheduled',   bg: '#E9D8FD', color: '#553C9A' }
+      case 'completed': return { label: '✅ Completed',   bg: '#D6BCFA', color: '#322659' }
+      case 'followup':  return { label: '🟡 Follow-Up',   bg: '#FEFCBF', color: '#744210' }
+      case 'ignore':    return { label: '⚪ Ignored',     bg: '#EDF2F7', color: '#4A5568' }
+      default:          return { label: '🔵 Pending',     bg: '#EBF4FF', color: '#2B6CB0' }
     }
+  }
+
+  // Helper to format creation / last updated time (whichever is latest)
+  const getLatestTimestamp = (p: any) => {
+    const created = p._createdAt ? new Date(p._createdAt).getTime() : 0
+    const updated = p._updatedAt ? new Date(p._updatedAt).getTime() : 0
+    const latestTime = Math.max(created, updated)
+    if (!latestTime) return 'N/A'
+    const isUpdate = updated > created
+    const formatted = new Date(latestTime).toLocaleString('en-SG', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true
+    })
+    return `${isUpdate ? 'Updated' : 'Created'}: ${formatted}`
   }
 
   return (
@@ -198,46 +223,54 @@ export default function AdminDashboard() {
         </div>
 
         {/* METRICS ROW */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
-          <div style={{ background: '#FFF', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{ padding: '0.75rem', background: '#E6FFFA', borderRadius: '10px' }}><Users color="#319795" size={20} /></div>
-              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.9rem' }}>Active Agents</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
+          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={{ padding: '0.65rem', background: '#E6FFFA', borderRadius: '10px' }}><Users color="#319795" size={18} /></div>
+              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Active Agents</h3>
             </div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#2D3748' }}>{metrics.activeAgents}</div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#2D3748' }}>{metrics.activeAgents}</div>
           </div>
 
-          <div style={{ background: '#FFF', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{ padding: '0.75rem', background: '#EBF4FF', borderRadius: '10px' }}><Package color="#3182CE" size={20} /></div>
-              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.9rem' }}>Saved Packages</h3>
+          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={{ padding: '0.65rem', background: '#EBF4FF', borderRadius: '10px' }}><Package color="#3182CE" size={18} /></div>
+              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Total Saved Packages</h3>
             </div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#2D3748' }}>{totalPackages}</div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#2D3748' }}>{totalPackages}</div>
           </div>
 
-          <div style={{ background: '#FFF', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{ padding: '0.75rem', background: '#C6F6D5', borderRadius: '10px' }}><CheckCircle color="#22543D" size={20} /></div>
-              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.9rem' }}>Confirmed Packages</h3>
+          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={{ padding: '0.65rem', background: '#C6F6D5', borderRadius: '10px' }}><CheckCircle color="#22543D" size={18} /></div>
+              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Confirmed</h3>
             </div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#22543D' }}>{confirmedPackages.length}</div>
-            <div style={{ fontSize: '0.75rem', color: '#718096', marginTop: '0.25rem' }}>S$ {confirmedRevenueSGD.toLocaleString()} (approx ₹{confirmedRevenueINR.toLocaleString()})</div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#22543D' }}>{confirmedPackages.length}</div>
+            <div style={{ fontSize: '0.7rem', color: '#718096', marginTop: '0.15rem' }}>S$ {confirmedRevenueSGD.toLocaleString()} (₹{confirmedRevenueINR.toLocaleString()})</div>
           </div>
 
-          <div style={{ background: '#FFF', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{ padding: '0.75rem', background: '#FEFCBF', borderRadius: '10px' }}><Clock color="#B7791F" size={20} /></div>
-              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.9rem' }}>Follow-Up Needed</h3>
+          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={{ padding: '0.65rem', background: '#E9D8FD', borderRadius: '10px' }}><CalendarCheck color="#553C9A" size={18} /></div>
+              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Scheduled</h3>
             </div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#B7791F' }}>{followupPackages.length}</div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#553C9A' }}>{scheduledPackages.length}</div>
           </div>
 
-          <div style={{ background: '#FFF', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{ padding: '0.75rem', background: '#FFF5F5', borderRadius: '10px' }}><DollarSign color="#E53E3E" size={20} /></div>
-              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.9rem' }}>Pending Payments</h3>
+          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={{ padding: '0.65rem', background: '#D6BCFA', borderRadius: '10px' }}><CheckCheck color="#322659" size={18} /></div>
+              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Completed</h3>
             </div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#E53E3E' }}>{metrics.pendingPayments}</div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#322659' }}>{completedPackages.length}</div>
+          </div>
+
+          <div style={{ background: '#FFF', padding: '1.25rem', borderRadius: '16px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+              <div style={{ padding: '0.65rem', background: '#FEFCBF', borderRadius: '10px' }}><Clock color="#B7791F" size={18} /></div>
+              <h3 style={{ margin: 0, color: '#4A5568', fontSize: '0.85rem' }}>Follow-Up Needed</h3>
+            </div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#B7791F' }}>{followupPackages.length}</div>
           </div>
         </div>
 
@@ -251,7 +284,7 @@ export default function AdminDashboard() {
                 <Package color="var(--emerald-secondary)" size={24} /> Packages Lifecycle & Calendar
               </h2>
               <p style={{ color: '#718096', fontSize: '0.85rem', margin: '0.25rem 0 0 0' }}>
-                Manage confirmation status, track arrival dates, and set follow-ups. Confirmed status can only be set here.
+                Lifecycle Sequence: Pending ➔ Follow-Up ➔ Confirmed (Admin) ➔ Scheduled ➔ Completed.
               </p>
             </div>
 
@@ -276,21 +309,23 @@ export default function AdminDashboard() {
 
           {/* Filters & Search Bar */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
               {[
                 { id: 'all', label: `All (${proposals.length})` },
                 { id: 'pending', label: `🔵 Pending (${pendingPackages.length})` },
                 { id: 'followup', label: `🟡 Follow-Up (${followupPackages.length})` },
                 { id: 'confirmed', label: `🟢 Confirmed (${confirmedPackages.length})` },
+                { id: 'scheduled', label: `💜 Scheduled (${scheduledPackages.length})` },
+                { id: 'completed', label: `✅ Completed (${completedPackages.length})` },
                 { id: 'ignore', label: `⚪ Ignored (${ignoredPackages.length})` },
               ].map(f => (
                 <button
                   key={f.id}
                   onClick={() => setPackageFilter(f.id)}
                   style={{
-                    padding: '0.4rem 0.85rem',
+                    padding: '0.4rem 0.75rem',
                     borderRadius: '20px',
-                    fontSize: '0.78rem',
+                    fontSize: '0.76rem',
                     fontWeight: 700,
                     border: packageFilter === f.id ? 'none' : '1px solid #E2E8F0',
                     background: packageFilter === f.id ? '#2D3748' : '#F7FAFC',
@@ -312,19 +347,21 @@ export default function AdminDashboard() {
             />
           </div>
 
-          {/* VIEW MODE 1: LIST MANAGER */}
+          {/* VIEW MODE 1: LIST MANAGER WITH EXPAND / COLLAPSE */}
           {packageViewMode === 'list' && (
             <div style={{ overflowX: 'auto' }}>
               {filteredProposals.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '3rem', color: '#A0AEC0', fontSize: '0.9rem' }}>No packages match the selected criteria.</div>
               ) : (
-                <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+                <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid #E2E8F0', color: '#718096' }}>
+                      <th style={{ padding: '0.75rem 0.5rem', width: '35px' }}></th>
                       <th style={{ padding: '0.75rem' }}>Proposal Ref</th>
                       <th style={{ padding: '0.75rem' }}>Guest Name</th>
                       <th style={{ padding: '0.75rem' }}>Arrival Date</th>
                       <th style={{ padding: '0.75rem' }}>Total Cost (SGD / ₹)</th>
+                      <th style={{ padding: '0.75rem' }}>Latest Activity</th>
                       <th style={{ padding: '0.75rem' }}>Current Status</th>
                       <th style={{ padding: '0.75rem' }}>Set Lifecycle Status</th>
                       <th style={{ padding: '0.75rem', textAlign: 'right' }}>Details</th>
@@ -333,45 +370,116 @@ export default function AdminDashboard() {
                   <tbody>
                     {filteredProposals.map(p => {
                       const badge = getStatusBadge(p.status)
+                      const isExpanded = !!expandedIds[p._id]
+                      const latestTimestamp = getLatestTimestamp(p)
+
                       return (
-                        <tr key={p._id} style={{ borderBottom: '1px solid #EDF2F7', background: p.status === 'confirmed' ? '#F0FFF4' : 'transparent' }}>
-                          <td style={{ padding: '0.85rem 0.75rem', fontWeight: 700, color: '#2D3748' }}>{p.proposalNumber}</td>
-                          <td style={{ padding: '0.85rem 0.75rem', fontWeight: 600 }}>{p.guestName || 'Guest'}</td>
-                          <td style={{ padding: '0.85rem 0.75rem', color: p.arrivalDate ? '#2B6CB0' : '#A0AEC0', fontWeight: 600 }}>
-                            {p.arrivalDate ? `📅 ${p.arrivalDate}` : 'Not set'}
-                          </td>
-                          <td style={{ padding: '0.85rem 0.75rem' }}>
-                            <div style={{ fontWeight: 800, color: '#22543D' }}>S$ {p.totalClientPrice || 0}</div>
-                            {p.costBreakdown?.totalClientPriceINR && (
-                              <div style={{ fontSize: '0.75rem', color: '#718096' }}>₹{p.costBreakdown.totalClientPriceINR.toLocaleString()}</div>
-                            )}
-                          </td>
-                          <td style={{ padding: '0.85rem 0.75rem' }}>
-                            <span style={{ padding: '0.25rem 0.65rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: badge.bg, color: badge.color }}>
-                              {badge.label}
-                            </span>
-                          </td>
-                          <td style={{ padding: '0.85rem 0.75rem' }}>
-                            <select
-                              value={p.status || 'pending'}
-                              onChange={e => updatePackageStatus(p._id, e.target.value)}
-                              style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E0', fontSize: '0.8rem', fontWeight: 700, background: '#FFF', cursor: 'pointer' }}
-                            >
-                              <option value="pending">🔵 Pending</option>
-                              <option value="followup">🟡 Follow-Up Needed</option>
-                              <option value="confirmed">🟢 Confirmed (Admin)</option>
-                              <option value="ignore">⚪ Ignore / Closed</option>
-                            </select>
-                          </td>
-                          <td style={{ padding: '0.85rem 0.75rem', textAlign: 'right' }}>
-                            <button
-                              onClick={() => setSelectedProposal(p)}
-                              style={{ border: '1px solid #CBD5E0', background: '#F7FAFC', padding: '0.35rem 0.75rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-                            >
-                              <Eye size={14} /> View
-                            </button>
-                          </td>
-                        </tr>
+                        <React.Fragment key={p._id}>
+                          <tr style={{ borderBottom: isExpanded ? 'none' : '1px solid #EDF2F7', background: isExpanded ? '#F7FAFC' : p.status === 'confirmed' ? '#F0FFF4' : 'transparent' }}>
+                            <td style={{ padding: '0.85rem 0.3rem', textAlign: 'center' }}>
+                              <button
+                                onClick={() => toggleExpand(p._id)}
+                                title={isExpanded ? 'Collapse details' : 'Expand details'}
+                                style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#718096', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              >
+                                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                              </button>
+                            </td>
+                            <td style={{ padding: '0.85rem 0.75rem', fontWeight: 700, color: '#2D3748' }}>{p.proposalNumber}</td>
+                            <td style={{ padding: '0.85rem 0.75rem', fontWeight: 600 }}>{p.guestName || 'Guest'}</td>
+                            <td style={{ padding: '0.85rem 0.75rem', color: p.arrivalDate ? '#2B6CB0' : '#A0AEC0', fontWeight: 600 }}>
+                              {p.arrivalDate ? `📅 ${p.arrivalDate}` : 'Not set'}
+                            </td>
+                            <td style={{ padding: '0.85rem 0.75rem' }}>
+                              <div style={{ fontWeight: 800, color: '#22543D' }}>S$ {p.totalClientPrice || 0}</div>
+                              {p.costBreakdown?.totalClientPriceINR && (
+                                <div style={{ fontSize: '0.75rem', color: '#718096' }}>₹{p.costBreakdown.totalClientPriceINR.toLocaleString()}</div>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.85rem 0.75rem', fontSize: '0.75rem', color: '#718096', fontWeight: 600 }}>
+                              {latestTimestamp}
+                            </td>
+                            <td style={{ padding: '0.85rem 0.75rem' }}>
+                              <span style={{ padding: '0.25rem 0.65rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700, background: badge.bg, color: badge.color }}>
+                                {badge.label}
+                              </span>
+                            </td>
+                            <td style={{ padding: '0.85rem 0.75rem' }}>
+                              <select
+                                value={p.status || 'pending'}
+                                onChange={e => updatePackageStatus(p._id, e.target.value)}
+                                style={{ padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E0', fontSize: '0.78rem', fontWeight: 700, background: '#FFF', cursor: 'pointer' }}
+                              >
+                                <option value="pending">🔵 Pending</option>
+                                <option value="followup">🟡 Follow-Up Needed</option>
+                                <option value="confirmed">🟢 Confirmed (Admin)</option>
+                                <option value="scheduled">💜 Scheduled</option>
+                                <option value="completed">✅ Completed</option>
+                                <option value="ignore">⚪ Ignore / Closed</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '0.85rem 0.75rem', textAlign: 'right' }}>
+                              <button
+                                onClick={() => setSelectedProposal(p)}
+                                style={{ border: '1px solid #CBD5E0', background: '#FFF', padding: '0.35rem 0.75rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                              >
+                                <Eye size={14} /> Full Modal
+                              </button>
+                            </td>
+                          </tr>
+
+                          {/* EXPANDABLE INLINE PANEL */}
+                          {isExpanded && (
+                            <tr style={{ borderBottom: '1px solid #EDF2F7', background: '#F7FAFC' }}>
+                              <td colSpan={9} style={{ padding: '1rem 1.5rem' }}>
+                                <div style={{ background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.25rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+                                  
+                                  <div>
+                                    <div style={{ fontSize: '0.72rem', color: '#718096', fontWeight: 700, textTransform: 'uppercase' }}>Stay & Guests</div>
+                                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#2D3748', marginTop: '0.2rem' }}>
+                                      {p.nights || 3} Nights — {p.adults || 2} Adults, {p.kids || 0} Kids
+                                    </div>
+                                    <div style={{ fontSize: '0.8rem', color: '#4A5568', marginTop: '0.15rem' }}>
+                                      Hotel: {p.hotelName || 'No hotel selected'} ({p.roomType || 'Standard'})
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <div style={{ fontSize: '0.72rem', color: '#718096', fontWeight: 700, textTransform: 'uppercase' }}>Price Breakdown</div>
+                                    <div style={{ fontSize: '0.8rem', color: '#4A5568', marginTop: '0.2rem' }}>
+                                      Rooms: S${p.costBreakdown?.roomCostTotal || 0} · Transport: S${p.costBreakdown?.transportTotal || 0}
+                                    </div>
+                                    <div style={{ fontSize: '0.8rem', color: '#4A5568', marginTop: '0.15rem' }}>
+                                      Attractions: S${p.costBreakdown?.attractionTotal || 0} · Meals: S${p.costBreakdown?.mealTotal || 0}
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <div style={{ fontSize: '0.72rem', color: '#718096', fontWeight: 700, textTransform: 'uppercase' }}>Timestamp Audit</div>
+                                    <div style={{ fontSize: '0.78rem', color: '#4A5568', marginTop: '0.2rem' }}>
+                                      Created: {p._createdAt ? new Date(p._createdAt).toLocaleString() : 'N/A'}
+                                    </div>
+                                    <div style={{ fontSize: '0.78rem', color: '#4A5568', marginTop: '0.15rem' }}>
+                                      Last Modified: {p._updatedAt ? new Date(p._updatedAt).toLocaleString() : 'N/A'}
+                                    </div>
+                                  </div>
+
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                    <a
+                                      href={`/custom-package/proposal/${p.proposalNumber}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.45rem 0.9rem', background: '#2B6CB0', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontSize: '0.78rem', fontWeight: 700 }}
+                                    >
+                                      <ExternalLink size={14} /> Open Link
+                                    </a>
+                                  </div>
+
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       )
                     })}
                   </tbody>
@@ -495,6 +603,8 @@ export default function AdminDashboard() {
                   <option value="pending">🔵 Pending</option>
                   <option value="followup">🟡 Follow-Up Needed</option>
                   <option value="confirmed">🟢 Confirmed (Admin Only)</option>
+                  <option value="scheduled">💜 Scheduled</option>
+                  <option value="completed">✅ Completed</option>
                   <option value="ignore">⚪ Ignore / Closed</option>
                 </select>
               </div>
@@ -516,6 +626,14 @@ export default function AdminDashboard() {
                 <div style={{ background: '#F0FFF4', padding: '0.9rem', borderRadius: '8px' }}>
                   <div style={{ fontSize: '0.72rem', color: '#22543D', fontWeight: 700 }}>APPROX PRICE (INR ₹)</div>
                   <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#22543D', marginTop: '0.2rem' }}>₹{(selectedProposal.costBreakdown?.totalClientPriceINR || 0).toLocaleString()}</div>
+                </div>
+              </div>
+
+              {/* Timestamp Audit */}
+              <div style={{ background: '#F7FAFC', border: '1px solid #E2E8F0', padding: '0.85rem', borderRadius: '8px', fontSize: '0.8rem', color: '#4A5568', marginBottom: '1.5rem' }}>
+                <div>⏱️ {getLatestTimestamp(selectedProposal)}</div>
+                <div style={{ fontSize: '0.75rem', color: '#718096', marginTop: '0.15rem' }}>
+                  Created: {selectedProposal._createdAt ? new Date(selectedProposal._createdAt).toLocaleString() : 'N/A'} | Updated: {selectedProposal._updatedAt ? new Date(selectedProposal._updatedAt).toLocaleString() : 'N/A'}
                 </div>
               </div>
 

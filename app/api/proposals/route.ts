@@ -55,10 +55,59 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Generate clean proposal number
-    const proposalNumber = generateProposalNumber()
+    // 2. Check if proposalNumber already exists (retaining same proposal number on edits)
+    let proposalNumber = body.proposalNumber
+    let isUpdate = false
 
-    // 3. Create document in Sanity
+    if (proposalNumber) {
+      const existing = await writeClient.fetch(`*[_type == "proposal" && proposalNumber == $proposalNumber][0]`, { proposalNumber })
+      if (existing) {
+        isUpdate = true
+        await writeClient.patch(existing._id).set({
+          guestName: guestName || existing.guestName,
+          adults: Number(adults) || existing.adults,
+          kids: Number(kids) || existing.kids,
+          nights: Number(nights) || existing.nights,
+          arrivalDate: arrivalDate || existing.arrivalDate,
+          hotelRequired: hotelRequired !== undefined ? !!hotelRequired : existing.hotelRequired,
+          hotelName: hotelName || existing.hotelName,
+          roomType: roomType || existing.roomType,
+          roomCount: Number(roomCount) || existing.roomCount,
+          supplementType: supplementType || existing.supplementType,
+          supplementCount: Number(supplementCount) || existing.supplementCount,
+          customHotelEnabled: customHotelEnabled !== undefined ? !!customHotelEnabled : existing.customHotelEnabled,
+          customHotelPrice: Number(customHotelPrice) || existing.customHotelPrice,
+          customHotelSuppCost: Number(customHotelSuppCost) || existing.customHotelSuppCost,
+          costBreakdown: {
+            roomCostTotal: Number(costBreakdown?.roomCostTotal) || 0,
+            suppCostTotal: Number(costBreakdown?.suppCostTotal) || 0,
+            transportTotal: Number(costBreakdown?.transportTotal) || 0,
+            attractionTotal: Number(costBreakdown?.attractionTotal) || 0,
+            mealTotal: Number(costBreakdown?.mealTotal) || 0,
+            guideTotal: Number(costBreakdown?.guideTotal) || 0,
+            netCost: Number(costBreakdown?.netCost) || 0,
+            totalClientPrice: Number(costBreakdown?.totalClientPrice) || 0,
+            totalClientPriceINR: Number(costBreakdown?.totalClientPriceINR) || 0,
+            adultQuote: Number(costBreakdown?.adultQuote) || 0,
+            childQuote: Number(costBreakdown?.childQuote) || 0,
+          },
+          itinerary: JSON.stringify(itinerary || []),
+        }).commit()
+
+        return NextResponse.json({
+          success: true,
+          proposalNumber: existing.proposalNumber,
+          proposalId: existing._id,
+          updated: true,
+        })
+      }
+    }
+
+    if (!proposalNumber) {
+      proposalNumber = generateProposalNumber()
+    }
+
+    // 3. Create new document in Sanity
     const doc = await writeClient.create({
       _type: 'proposal',
       proposalNumber,
@@ -126,6 +175,7 @@ export async function GET(req: NextRequest) {
       query += ` | order(_createdAt desc) {
         _id,
         _createdAt,
+        _updatedAt,
         proposalNumber,
         guestName,
         nights,

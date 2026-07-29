@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Proposal ID and status are required' }, { status: 400 })
     }
 
-    const validStatuses = ['pending', 'followup', 'confirmed', 'ignore']
+    const validStatuses = ['pending', 'followup', 'confirmed', 'scheduled', 'completed', 'ignore']
     if (!validStatuses.includes(status)) {
       return NextResponse.json({ error: 'Invalid status value' }, { status: 400 })
     }
