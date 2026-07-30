@@ -3,6 +3,8 @@ import { createClient } from 'next-sanity'
 import nodemailer from 'nodemailer'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 
+export const dynamic = 'force-dynamic'
+
 const writeClient = createClient({
   apiVersion,
   dataset,

@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   
   // Sidebar Width Adjustment State
   const [sidebarWidth, setSidebarWidth] = useState(250) // Default 250px
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(true)
   const isResizingRef = useRef(false)
 
   const router = useRouter()
@@ -41,6 +41,35 @@ export default function AdminDashboard() {
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date())
 
   const [refreshing, setRefreshing] = useState(false)
+  const [competitorPrices, setCompetitorPrices] = useState<any[]>([])
+  const [refreshingPrices, setRefreshingPrices] = useState(false)
+
+  const fetchCompetitorPrices = async () => {
+    try {
+      const res = await fetch(`/api/admin/price-tracker?cb=${Date.now()}`)
+      const data = await res.json()
+      if (Array.isArray(data)) {
+        setCompetitorPrices(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch competitor prices:', err)
+    }
+  }
+
+  const triggerPriceRefresh = async () => {
+    setRefreshingPrices(true)
+    try {
+      const res = await fetch('/api/admin/price-tracker', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        await fetchCompetitorPrices()
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setRefreshingPrices(false)
+    }
+  }
 
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => ({ ...prev, [id]: !prev[id] }))
@@ -91,13 +120,14 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setRefreshing(true)
     try {
+      const cb = Date.now()
       const [authRes, metRes, payRes, agentRes, logRes, propRes] = await Promise.all([
-        fetch('/api/auth/check'),
-        fetch('/api/admin/metrics'),
-        fetch('/api/admin/payments/pending'),
-        fetch('/api/admin/agents'),
-        fetch('/api/admin/audit-logs'),
-        fetch('/api/proposals?listAll=true')
+        fetch(`/api/auth/check?cb=${cb}`),
+        fetch(`/api/admin/metrics?cb=${cb}`),
+        fetch(`/api/admin/payments/pending?cb=${cb}`),
+        fetch(`/api/admin/agents?cb=${cb}`),
+        fetch(`/api/admin/audit-logs?cb=${cb}`),
+        fetch(`/api/proposals?listAll=true&cb=${cb}`)
       ])
 
       const authData = await authRes.json()
@@ -112,6 +142,7 @@ export default function AdminDashboard() {
         if (propData.success && Array.isArray(propData.list)) {
           setProposals(propData.list)
         }
+        await fetchCompetitorPrices()
       }
     } catch (e) {
       console.error(e)
@@ -273,6 +304,7 @@ export default function AdminDashboard() {
     { id: 'section-payments', label: 'Pending Payments', icon: CreditCard, badge: pendingPayments.length },
     { id: 'section-agents', label: 'Agent Approvals', icon: Users, badge: metrics.activeAgents },
     { id: 'section-exports', label: 'Data Exports', icon: Download },
+    { id: 'section-competitor-pricing', label: 'Competitor Tracker', icon: Eye },
     { id: 'section-audit-logs', label: 'Audit Logs', icon: ShieldCheck, badge: logs.length },
   ]
 
@@ -884,6 +916,7 @@ export default function AdminDashboard() {
                   { name: 'Sanity Studio CMS', path: '/studio', desc: 'Manage content & schemas' },
                   { name: 'Singapore Attractions', path: '/singapore-attractions', desc: 'B2B/B2C Quote Builder' },
                   { name: 'Active Promotions', path: '/singapore-attractions/promotions', desc: 'Discounted attraction deals' },
+                  { name: 'Competitor price tracker', path: '/api/admin/price-tracker', desc: 'JSON list of competitor prices' },
                 ].map(link => (
                   <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
                     <div>
@@ -1016,7 +1049,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* DATA EXPORTS */}
-            <div id="section-exports" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+            <div id="section-exports" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Download size={18} color="#2B6CB0" /> Data Exports & Reports
               </h2>
@@ -1025,6 +1058,58 @@ export default function AdminDashboard() {
                 <a href="/api/admin/export-contacts" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem' }}><Download size={15} /> Export Contacts CSV</a>
                 <a href="/api/admin/export-payments" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem' }}><Download size={15} /> Export Payments CSV</a>
               </div>
+            </div>
+
+            {/* COMPETITOR TICKET PRICE TRACKER */}
+            <div id="section-competitor-pricing" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem', marginBottom: '1rem' }}>
+                <h2 style={{ fontSize: '1.2rem', color: '#2D3748', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
+                  🎡 Competitor Ticket Tracker
+                </h2>
+                <button 
+                  onClick={triggerPriceRefresh} 
+                  disabled={refreshingPrices}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.35rem 0.85rem', background: 'var(--emerald-secondary)', color: '#FFF', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.75rem' }}
+                >
+                  <RefreshCw className={refreshingPrices ? "animate-spin" : ""} size={12} />
+                  {refreshingPrices ? 'Refreshing...' : 'Fetch Live Rates'}
+                </button>
+              </div>
+
+              <div style={{ fontSize: '0.8rem', color: '#718096', marginBottom: '0.85rem' }}>
+                Showing comparative ticket rates for <strong>Universal Studios Singapore - Fixed Date</strong>:
+              </div>
+
+              {competitorPrices.length === 0 ? (
+                <div style={{ padding: '1rem', textAlign: 'center', background: '#F7FAFC', borderRadius: '8px', color: '#718096', fontSize: '0.82rem' }}>
+                  No rates loaded. Click &quot;Fetch Live Rates&quot; to load comparative pricing.
+                </div>
+              ) : (
+                <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
+                      <th style={{ padding: '0.5rem 0' }}>Platform</th>
+                      <th style={{ padding: '0.5rem 0' }}>Adult Price</th>
+                      <th style={{ padding: '0.5rem 0' }}>Child Price</th>
+                      <th style={{ padding: '0.5rem 0', textAlign: 'right' }}>Booking Link</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {competitorPrices.map((p, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid #EDF2F7' }}>
+                        <td style={{ padding: '0.6rem 0', fontWeight: 700, textTransform: 'uppercase', color: '#2B6CB0' }}>{p.platform}</td>
+                        <td style={{ padding: '0.6rem 0', fontWeight: 700, color: '#2D3748' }}>S$ {p.adultPrice}</td>
+                        <td style={{ padding: '0.6rem 0', color: '#4A5568' }}>S$ {p.childPrice}</td>
+                        <td style={{ padding: '0.6rem 0', textAlign: 'right' }}>
+                          <a href={p.bookingUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold-accent)', fontWeight: 700, textDecoration: 'underline' }}>
+                            View Page ↗
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
 

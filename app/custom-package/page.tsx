@@ -761,7 +761,11 @@ export default function PrototypeBuilder() {
   // Concise WhatsApp-optimised Proposal Text
   const generateProposalText = () => {
     const sep = '━━━━━━━━━━━━━━━━━━━━━'
-    let t = `✈️ *SINGAPORE ITINERARY*\n${sep}\n\n`
+    let t = `✈️ *SINGAPORE ITINERARY*`
+    if (savedProposalNum) {
+      t += `  (Ref: ${savedProposalNum})`
+    }
+    t += `\n${sep}\n\n`
 
     // Calculate summaries
     let totalTransfers = 0

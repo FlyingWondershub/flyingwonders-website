@@ -24,6 +24,7 @@ import { manualPaymentSchema } from './manualPayment'
 import { faqItemSchema } from './faqItem'
 
 import { adminUserSchema } from './adminUser'
+import { competitorPriceSchema } from './competitorPrice'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -49,6 +50,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     businessCardSchema,
     manualPaymentSchema,
     faqItemSchema,
-    adminUserSchema
+    adminUserSchema,
+    competitorPriceSchema
   ],
 }

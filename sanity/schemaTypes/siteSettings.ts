@@ -23,6 +23,24 @@ export const siteSettingsSchema = {
       initialValue: 'Flying Wonders is Singapore’s premier B2B Destination Management Company, architecting Group tours , high-end MICE execution and hyper-curated leisure experiences for global travel partners ',
     },
     {
+      name: 'aboutStoryTitle',
+      title: 'About Us: Story Title',
+      type: 'string',
+      initialValue: 'Our Story & Strategy',
+    },
+    {
+      name: 'aboutStoryParagraph1',
+      title: 'About Us: Story Paragraph 1',
+      type: 'text',
+      initialValue: 'Flying Wonders Private Limited is a specialist Destination Management Company (DMC) based in India & Singapore. We design and deliver premium travel experiences across Singapore, South-East Asia and beyond — for leisure groups, corporate travellers and trade partners who demand more than a standard package.',
+    },
+    {
+      name: 'aboutStoryParagraph2',
+      title: 'About Us: Story Paragraph 2',
+      type: 'text',
+      initialValue: 'With direct hotel partnerships, exclusive ground assets and a passionate team of travel architects, we turn every itinerary into a story worth telling. From iconic Singapore sights to hidden regional gems, Flying Wonders brings the destination to life.',
+    },
+    {
       name: 'aboutStrategicAdvantage',
       title: 'About Us: Strategic Advantage Narrative',
       type: 'text',

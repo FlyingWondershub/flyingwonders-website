@@ -36,13 +36,11 @@ export const b2bAgentSchema = defineType({
       name: 'otp',
       title: 'OTP (Temporary Verification Code)',
       type: 'string',
-      readOnly: true,
     }),
     defineField({
       name: 'otpExpiry',
-      title: 'OTP Expiry Time',
-      type: 'datetime',
-      readOnly: true,
+      title: 'OTP Expiry Time (ISO String)',
+      type: 'string',
     }),
   ],
 })

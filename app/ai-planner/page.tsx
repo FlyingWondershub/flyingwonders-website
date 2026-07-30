@@ -182,17 +182,73 @@ export default function AIPlannerPage() {
                 </div>
 
                 {/* Handoff */}
-                <div style={{ textAlign: 'center', marginTop: '3rem', background: 'linear-gradient(135deg, var(--bg-dark) 0%, #1E293B 100%)', padding: '3rem 2rem', borderRadius: '16px', color: 'white' }}>
+                <div style={{ textAlign: 'center', marginTop: '3rem', background: 'linear-gradient(135deg, var(--bg-dark) 0%, #1E293B 100%)', padding: '3rem 2rem', borderRadius: '16px', color: 'white', border: '1px solid rgba(255,255,255,0.08)' }}>
                   <h3 style={{ fontSize: '1.8rem', fontFamily: 'var(--font-playfair), serif', margin: '0 0 1rem' }}>Ready to make this a reality?</h3>
                   <p style={{ opacity: 0.9, marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
                     Send this itinerary to our expert travel agents. We will confirm availability, finalize the pricing, and lock in your dream vacation.
                   </p>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                    <a href={`https://wa.me/6591234567?text=Hi, I would like to book the following AI generated itinerary: ${result.tripSummary}`} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ background: '#25D366', color: 'white', border: 'none', padding: '1rem 2rem', fontSize: '1.1rem' }}>
-                      💬 WhatsApp Us
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <a 
+                      href={`https://wa.me/919886171251?text=Hi, I would like to book the following AI generated itinerary: ${encodeURIComponent(result.tripSummary || '')}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="btn" 
+                      style={{ 
+                        background: '#25D366', 
+                        color: 'white', 
+                        border: 'none', 
+                        padding: '0.85rem 2.2rem', 
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                        borderRadius: '8px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.transform = 'translateY(-2px)'
+                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(37, 211, 102, 0.45)'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.transform = 'none'
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 211, 102, 0.3)'
+                      }}
+                    >
+                      <svg viewBox="0 0 32 32" width="18" height="18" fill="currentColor">
+                        <path d="M16 2a13 13 0 0 0-11 20l-2 7 7-2a13 13 0 1 0 6-25zM16 26a11 11 0 0 1-6-2l-1-1-4 1 1-4-1-1a11 11 0 1 1 11 7z"></path>
+                        <path d="M21 21c-1 1-2 1-3 1-3-1-6-4-7-7 0-1 0-2 1-3l2-1h1l2 3v1l-1 2c1 2 3 4 5 5l2-1h1l2 2v2z"></path>
+                      </svg>
+                      Chat &amp; Book on WhatsApp
                     </a>
-                    <button onClick={() => setResult(null)} className="btn btn-secondary" style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'white', padding: '1rem 2rem', fontSize: '1.1rem' }}>
-                      Start Over
+                    <button 
+                      onClick={() => setResult(null)} 
+                      className="btn" 
+                      style={{ 
+                        border: '1px solid rgba(255,255,255,0.3)', 
+                        background: 'transparent',
+                        color: 'white', 
+                        padding: '0.85rem 2.2rem', 
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                        borderRadius: '8px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.1)'
+                        e.currentTarget.style.transform = 'translateY(-2px)'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.transform = 'none'
+                      }}
+                    >
+                      🔄 Start Over
                     </button>
                   </div>
                 </div>
