@@ -938,10 +938,11 @@ export default function PrototypeBuilder() {
         setFill(NAVY); doc.rect(0, fy - 2, PW, 14, 'F')
         setFill(GOLD); doc.rect(0, fy - 2, PW, 0.8, 'F')
         font('normal', 7); setTxt(GOLD)
-        doc.text('Authorized DMC Travel Partner | Singapore Tourism Licensed', ML, fy + 3)
+        doc.text('Singapore DMC Travel Partner', ML, fy + 3)
         setTxt(WHITE)
         doc.text(`Page ${pageNum}`, PW / 2, fy + 3, { align: 'center' })
         const today = new Date().toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' })
+        font('normal', 7); setTxt(WHITE)
         doc.text(`Generated: ${today}`, MR, fy + 3, { align: 'right' })
       }
 
@@ -988,7 +989,10 @@ export default function PrototypeBuilder() {
 
       // Tagline
       font('italic', 9); setTxt(GOLD)
-      doc.text('Authorized DMC Travel Partner · Singapore Specialist', ML, 31)
+      const agencyTagline = activeAgent?.companyName
+        ? `${activeAgent.companyName} · Singapore DMC Travel Partner`
+        : 'Singapore DMC Travel Partner · Singapore Specialist'
+      doc.text(agencyTagline, ML, 31)
 
       // Document label (vertical on right accent)
       doc.setFont('Helvetica', 'bold'); doc.setFontSize(7.5); setTxt(WHITE)
@@ -998,9 +1002,8 @@ export default function PrototypeBuilder() {
       // Contact row
       font('normal', 8); setTxt(GOLD)
       const ctLine = [
-        customAgencyPhone ? `✆ ${customAgencyPhone}` : '',
-        customAgencyEmail ? `✉ ${customAgencyEmail}` : '',
-        'flyingwonders.in'
+        customAgencyPhone ? `Tel: ${customAgencyPhone}` : '',
+        customAgencyEmail ? `Email: ${customAgencyEmail}` : '',
       ].filter(Boolean).join('   |   ')
       doc.text(ctLine, ML, 43)
 
@@ -1270,10 +1273,11 @@ export default function PrototypeBuilder() {
             const location = meta?.location || ''
             const hasPhoto = !!(meta?.photoUrl)
 
-            // Estimate card height
+            // Estimate card height — meta parts render one-per-line at 4.5mm each
             const descLines = doc.splitTextToSize(shortDesc, hasPhoto ? CW - 60 : CW - 8)
             const highlightRows = Math.ceil(highlights.length / 2)
-            const cardH = 14 + descLines.length * 4 + (highlights.length > 0 ? highlightRows * 6 + 4 : 0) + (openingHours || duration || location ? 8 : 0) + (notes ? 6 : 0)
+            const metaLineCount = [openingHours, duration, location].filter(Boolean).length
+            const cardH = 16 + descLines.length * 4 + (highlights.length > 0 ? highlightRows * 6 + 4 : 0) + (metaLineCount > 0 ? metaLineCount * 4.5 + 4 : 0) + (notes ? 7 : 0)
             checkPage(cardH + 10)
 
             // Card background
@@ -1305,15 +1309,15 @@ export default function PrototypeBuilder() {
             cy += 5
 
             // Time + ticket count chips inline
-            const ticketInfo = `${a.time ? a.time + '  ·  ' : ''}Ad ×${a.adultTickets}${kids > 0 ? `  ·  Ch ×${a.childTickets}` : ''}`
+            const ticketInfo = `${a.time ? a.time + '  |  ' : ''}Adult x${a.adultTickets}${kids > 0 ? `  |  Child x${a.childTickets}` : ''}`
             font('bold', 7.5); setTxt(CRIM)
             doc.text(ticketInfo, ML + 6, cy)
 
-            // Rating stars
+            // Rating — ASCII-safe (jsPDF Helvetica cannot render Unicode stars)
             if (rating) {
-              const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating))
-              font('normal', 8); setTxt([200, 150, 30] as [number,number,number])
-              doc.text(`${stars} ${rating.toFixed(1)}`, ML + textW - 10, cy, { align: 'right' })
+              const ratingStr = `Rating: ${rating.toFixed(1)} / 5.0`
+              font('bold', 7.5); setTxt([180, 130, 20] as [number,number,number])
+              doc.text(ratingStr, ML + textW - 2, cy, { align: 'right' })
             }
             cy += 5
 
@@ -1347,16 +1351,19 @@ export default function PrototypeBuilder() {
               else cy += 5.5
             }
 
-            // Opening hours / duration / location metadata row
-            const metaParts = [
-              openingHours ? `⏰ ${openingHours}` : '',
-              duration ? `⏱ ${duration}` : '',
-              location ? `📍 ${location}` : '',
-            ].filter(Boolean)
+            // Opening hours / duration / location metadata row — ASCII-safe labels only
+            const metaParts: string[] = []
+            if (openingHours) metaParts.push(`Hours: ${openingHours}`)
+            if (duration) metaParts.push(`Duration: ${duration}`)
+            if (location) metaParts.push(`Location: ${location}`)
             if (metaParts.length > 0) {
               font('normal', 6.5); setTxt(MGRAY)
-              doc.text(metaParts.join('   ·   '), ML + 6, cy + 1)
-              cy += 6
+              // Render each part on a new line to avoid overflow
+              metaParts.forEach((mp, mpi) => {
+                const mpLines = doc.splitTextToSize(mp, textW)
+                doc.text(mpLines, ML + 6, cy + 1 + mpi * 4.5)
+              })
+              cy += metaParts.length * 4.5 + 2
             }
 
             y += cardH + 4
@@ -1393,22 +1400,33 @@ export default function PrototypeBuilder() {
       // ─── AGENT / CONTACT CARD ────────────────────────────
       y += 5
       checkPage(38)
-      setFill(NAVY); doc.roundedRect(ML, y, CW, 30, 3, 3, 'F')
-      setFill(GOLD); doc.rect(ML, y + 28, CW, 2, 'F')
+      setFill(NAVY); doc.roundedRect(ML, y, CW, 32, 3, 3, 'F')
+      setFill(GOLD); doc.rect(ML, y + 30, CW, 2, 'F')
       font('bold', 10); setTxt(GOLD)
       doc.text('Your Travel Consultant', ML + 5, y + 9)
       if (activeAgent) {
         font('bold', 12); setTxt(WHITE)
-        doc.text(activeAgent.agentName || '', ML + 5, y + 17)
+        doc.text(activeAgent.agentName || 'Travel Consultant', ML + 5, y + 18)
         font('normal', 8.5); setTxt(GOLD)
-        const agentParts = [activeAgent.phone ? `✆ ${activeAgent.phone}` : '', activeAgent.email ? `✉ ${activeAgent.email}` : ''].filter(Boolean).join('   ')
-        doc.text(agentParts, ML + 5, y + 24)
+        const agentContactParts: string[] = []
+        if (activeAgent.phone) agentContactParts.push(`Tel: ${activeAgent.phone}`)
+        if (activeAgent.email) agentContactParts.push(`Email: ${activeAgent.email}`)
+        doc.text(agentContactParts.join('   |   '), ML + 5, y + 26)
+
+        // Company name on the right
+        if (activeAgent.companyName) {
+          font('bold', 9); setTxt(GOLD)
+          doc.text(activeAgent.companyName.toUpperCase(), MR - 5, y + 18, { align: 'right' })
+        }
+        font('normal', 7.5); setTxt(WHITE)
+        doc.text('Singapore DMC Travel Partner', MR - 5, y + 26, { align: 'right' })
+      } else {
+        font('bold', 9); setTxt(GOLD)
+        doc.text('FLYING WONDERS', MR - 5, y + 18, { align: 'right' })
+        font('normal', 7.5); setTxt(WHITE)
+        doc.text('Singapore DMC Travel Partner', MR - 5, y + 26, { align: 'right' })
       }
-      font('bold', 9); setTxt(GOLD)
-      doc.text('flyingwonders.in', MR - 5, y + 17, { align: 'right' })
-      font('normal', 8); setTxt(WHITE)
-      doc.text('Singapore Specialist Since 2015', MR - 5, y + 24, { align: 'right' })
-      y += 35
+      y += 37
 
       // final footer
       addFooter()
