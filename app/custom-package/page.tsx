@@ -771,8 +771,13 @@ export default function PrototypeBuilder() {
     // Calculate summaries
     let totalTransfers = 0
     let totalAttractionsCount = 0
+    const usedVehicles = new Set<string>()
     itinerary.forEach(day => {
-      totalTransfers += day.transfers.length
+      day.transfers.forEach(tr => {
+        totalTransfers += (tr.qty || 1)
+        const vName = vehiclesList[tr.vehicleIndex]?.type
+        if (vName) usedVehicles.add(vName.split(' - ')[0] || vName)
+      })
       totalAttractionsCount += day.attractions.length
     })
     const totalRooms = hotelRequired ? (globalRoomCount + (globalSuppIndex >= 0 ? globalSuppCount : 0)) : 0
@@ -798,8 +803,15 @@ export default function PrototypeBuilder() {
       t += `🏨 *Hotel:* Not Included\n`
     }
 
+    // Transfers summary line
+    if (usedVehicles.size > 0) {
+      t += `🚗 *Transfers:* ${totalTransfers > 0 ? `${totalTransfers} Transfer${totalTransfers !== 1 ? 's' : ''}` : 'Included'} (${Array.from(usedVehicles).join(', ')})\n`
+    } else if (totalTransfers > 0) {
+      t += `🚗 *Transfers:* ${totalTransfers} Transfer${totalTransfers !== 1 ? 's' : ''} Included\n`
+    }
+
     // Pax + dates
-    t += `\n👥 *Pax:* ${adults} Adult${adults !== 1 ? 's' : ''}${kids > 0 ? ` & ${kids} Child${kids !== 1 ? 'ren' : ''}` : ''}\n`
+    t += `👥 *Pax:* ${adults} Adult${adults !== 1 ? 's' : ''}${kids > 0 ? ` & ${kids} Child${kids !== 1 ? 'ren' : ''}` : ''}\n`
     t += `📅 *Arrival:* ${getItineraryDate(0)}  •  ${nightsCount + 1}D/${nightsCount}N\n`
     t += `💰 *Total:* S$ ${costBreakdown.totalClientPrice.toLocaleString()}  _(≈₹${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')})_\n`
 
@@ -815,9 +827,10 @@ export default function PrototypeBuilder() {
       const dayItems: { time: string; text: string }[] = []
       day.transfers.forEach(tr => {
         const v = vehiclesList[tr.vehicleIndex]?.type || 'Transfer'
+        const qtyStr = tr.qty && tr.qty > 1 ? ` (×${tr.qty})` : ''
         dayItems.push({
           time: tr.time || '00:00',
-          text: `🚗 ${tr.time} — ${v}${tr.description ? ' → ' + tr.description : ''}`
+          text: `🚗 ${tr.time || '00:00'} — ${v}${qtyStr}${tr.description ? ' → ' + tr.description : ''}`
         })
       })
       day.attractions.forEach(a => {
@@ -825,7 +838,7 @@ export default function PrototypeBuilder() {
         const paxStr = a.adultTickets > 0 || a.childTickets > 0 ? ` (${a.adultTickets}Ad${a.childTickets > 0 ? `/${a.childTickets}Ch` : ''})` : ''
         dayItems.push({
           time: a.time || '00:00',
-          text: `🎟️ ${a.time} — ${name}${paxStr}${a.description ? ' · ' + a.description : ''}`
+          text: `🎟️ ${a.time || '00:00'} — ${name}${paxStr}${a.description ? ' · ' + a.description : ''}`
         })
       })
       const cbMeals: string[] = []
@@ -1204,7 +1217,8 @@ export default function PrototypeBuilder() {
 
         day.transfers.forEach(t => {
           const vehicle = vehiclesList[t.vehicleIndex]?.type || 'Vehicle'
-          nonAttrItems.push({ time: t.time||'00:00', label: `Private Transfer — ${vehicle}`, detail: t.description || 'Point-to-point transfer', color: TEAL })
+          const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
+          nonAttrItems.push({ time: t.time||'00:00', label: `Private Transfer — ${vehicle}${qtyStr}`, detail: t.description || 'Point-to-point transfer', color: TEAL })
         })
         if (day.breakfast || day.lunch || day.dinner) {
           const cbMeals = [day.breakfast&&'Breakfast', day.lunch&&'Lunch', day.dinner&&'Dinner'].filter(Boolean).join(', ')
@@ -2036,7 +2050,8 @@ ${proposal}
       day.transfers.forEach(t => {
         if (!scheduleFilters.transfers) return
         const vehicle = vehiclesList[t.vehicleIndex]?.type || 'Vehicle'
-        events.push({ dayStr, dateStr, time: t.time || '00:00', type: 'Transfer', details: vehicle, pax: `${adults + kids} Pax`, notes: t.description })
+        const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
+        events.push({ dayStr, dateStr, time: t.time || '00:00', type: 'Transfer', details: `${vehicle}${qtyStr}`, pax: `${adults + kids} Pax`, notes: t.description })
       })
       day.attractions.forEach(a => {
         if (!scheduleFilters.attractions) return
