@@ -196,13 +196,34 @@ export default async function Home() {
             <div className="bento-card hover-lift" style={{ 
               backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.1)), url(${settings.card1Image})`, 
               backgroundSize: 'cover', 
-              backgroundPosition: 'center', 
-              color: 'white' 
+              backgroundPosition: 'center',
+              colorScheme: 'dark'
             }}>
               <div style={{ position: 'relative', zIndex: 2 }}>
-                <span style={{ color: 'var(--gold-accent)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{settings.card1Tagline}</span>
-                <h3 style={{ fontSize: '1.6rem', color: '#FFF', margin: '0.25rem 0 0.5rem 0' }}>{settings.card1Header}</h3>
-                <p style={{ opacity: 0.9, fontSize: '0.95rem', fontWeight: 300 }}>{settings.card1Story}</p>
+                <span style={{ 
+                  color: 'var(--gold-accent)', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 700, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.1em',
+                  display: 'block',
+                  marginBottom: '0.35rem'
+                }}>{settings.card1Tagline}</span>
+                <h3 style={{ 
+                  fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)', 
+                  color: '#FFFFFF', 
+                  margin: '0 0 0.5rem 0',
+                  lineHeight: 1.25,
+                  fontFamily: 'var(--font-playfair), Georgia, serif',
+                  fontWeight: 500
+                }}>{settings.card1Header}</h3>
+                <p style={{ 
+                  color: 'rgba(255,255,255,0.88)', 
+                  fontSize: '0.92rem', 
+                  fontWeight: 300, 
+                  lineHeight: 1.65,
+                  margin: 0
+                }}>{settings.card1Story}</p>
               </div>
             </div>
 
@@ -210,13 +231,34 @@ export default async function Home() {
             <div className="bento-card hover-lift" style={{ 
               backgroundImage: `linear-gradient(to top, rgba(15,76,58,0.95) 20%, rgba(0,0,0,0.1)), url(${settings.card2Image})`, 
               backgroundSize: 'cover', 
-              backgroundPosition: 'center', 
-              color: 'white' 
+              backgroundPosition: 'center',
+              colorScheme: 'dark'
             }}>
               <div style={{ position: 'relative', zIndex: 2 }}>
-                <span style={{ color: 'var(--gold-accent)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{settings.card2Tagline}</span>
-                <h3 style={{ fontSize: '1.6rem', color: '#FFF', margin: '0.25rem 0 0.5rem 0' }}>{settings.card2Header}</h3>
-                <p style={{ opacity: 0.9, fontSize: '0.95rem', fontWeight: 300 }}>{settings.card2Story}</p>
+                <span style={{ 
+                  color: 'var(--gold-accent)', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 700, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.1em',
+                  display: 'block',
+                  marginBottom: '0.35rem'
+                }}>{settings.card2Tagline}</span>
+                <h3 style={{ 
+                  fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)', 
+                  color: '#FFFFFF', 
+                  margin: '0 0 0.5rem 0',
+                  lineHeight: 1.25,
+                  fontFamily: 'var(--font-playfair), Georgia, serif',
+                  fontWeight: 500
+                }}>{settings.card2Header}</h3>
+                <p style={{ 
+                  color: 'rgba(255,255,255,0.88)', 
+                  fontSize: '0.92rem', 
+                  fontWeight: 300, 
+                  lineHeight: 1.65,
+                  margin: 0
+                }}>{settings.card2Story}</p>
               </div>
             </div>
 
@@ -224,13 +266,34 @@ export default async function Home() {
             <div className="bento-card hover-lift" style={{ 
               backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.1)), url(${settings.card3Image})`, 
               backgroundSize: 'cover', 
-              backgroundPosition: 'center', 
-              color: 'white' 
+              backgroundPosition: 'center',
+              colorScheme: 'dark'
             }}>
               <div style={{ position: 'relative', zIndex: 2 }}>
-                <span style={{ color: 'var(--gold-accent)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{settings.card3Tagline}</span>
-                <h3 style={{ fontSize: '1.6rem', color: '#FFF', margin: '0.25rem 0 0.5rem 0' }}>{settings.card3Header}</h3>
-                <p style={{ opacity: 0.9, fontSize: '0.95rem', fontWeight: 300 }}>{settings.card3Story}</p>
+                <span style={{ 
+                  color: 'var(--gold-accent)', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 700, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.1em',
+                  display: 'block',
+                  marginBottom: '0.35rem'
+                }}>{settings.card3Tagline}</span>
+                <h3 style={{ 
+                  fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)', 
+                  color: '#FFFFFF', 
+                  margin: '0 0 0.5rem 0',
+                  lineHeight: 1.25,
+                  fontFamily: 'var(--font-playfair), Georgia, serif',
+                  fontWeight: 500
+                }}>{settings.card3Header}</h3>
+                <p style={{ 
+                  color: 'rgba(255,255,255,0.88)', 
+                  fontSize: '0.92rem', 
+                  fontWeight: 300, 
+                  lineHeight: 1.65,
+                  margin: 0
+                }}>{settings.card3Story}</p>
               </div>
             </div>
           </div>

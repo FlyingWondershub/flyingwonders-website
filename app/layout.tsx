@@ -4,8 +4,19 @@ import './globals.css'
 import LayoutWrapper from '../components/LayoutWrapper'
 import Script from 'next/script'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
-const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair', style: ['normal', 'italic'] })
+const inter = Inter({ 
+  subsets: ['latin'], 
+  variable: '--font-inter',
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap'
+})
+const playfair = Playfair_Display({ 
+  subsets: ['latin'], 
+  variable: '--font-playfair', 
+  style: ['normal', 'italic'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap'
+})
 
 import SeoSchema from '../components/SeoSchema'
 
