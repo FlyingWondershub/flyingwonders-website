@@ -42,7 +42,7 @@ async function fetchInventory() {
 
 export async function POST(request: Request) {
   try {
-    const { dates, adults, kids, vibe, budget } = await request.json()
+    const { dates, adults, kids, vibe, budget, textQuery } = await request.json()
     
     const rawKey = process.env.Aiplanner_API_key
     const apiKey = rawKey ? rawKey.trim() : null
@@ -53,7 +53,66 @@ export async function POST(request: Request) {
     const genAI = new GoogleGenerativeAI(apiKey)
     const inventory = await fetchInventory()
     
-    const systemInstruction = `You are an expert Singapore Destination Management Agent (DMC) named "Flying Wonders AI".
+    let systemInstruction = ''
+
+    if (textQuery) {
+      systemInstruction = `You are an expert Singapore Destination Management Agent (DMC) named "Flying Wonders AI".
+Your job is to parse unstructured travel requirements (like emails or notes) and turn them into a structured, priced day-by-day itinerary.
+
+UNSTRUCTURED REQUIREMENTS:
+"${textQuery}"
+
+INVENTORY LIST (Only these are available in our official Google sheets pricing):
+${JSON.stringify(inventory)}
+
+RULES:
+1. Parse the text requirements to extract the duration, dates, pax count, and day-by-day plan.
+2. For each day, include a title and a list of events.
+3. For each event or attraction, search the INVENTORY LIST:
+   - If you find a match, set "isAvailableInSheet" to true and "priceSGD" to the exact calculated price (Adult Price * Adults + Child Price * Kids). Use the exact name from the inventory list as the event "title".
+   - If the attraction, activity, or hotel is NOT available in the INVENTORY LIST, set "isAvailableInSheet" to false, "priceSGD" to 0, and suggest 1-2 fallback items from our INVENTORY LIST inside "suggestedAlternatives" (e.g. if Universal Studios Express Pass isn't in sheet, suggest standard USS, or alternative available activities).
+4. Calculate a total estimated price for the entire trip based only on items where "isAvailableInSheet" is true.
+5. Provide a summary of the trip.
+6. The output must be valid JSON matching this exact structure:
+{
+  "tripSummary": "A brief engaging summary of the customized trip.",
+  "totalEstimatedPriceSGD": 1250,
+  "days": [
+    {
+      "dayNumber": 1,
+      "title": "Arrival & Check-in",
+      "events": [
+        {
+          "time": "14:00",
+          "title": "Check-in & Rest",
+          "description": "Arrive at hotel.",
+          "isInventoryItem": false,
+          "isAvailableInSheet": true,
+          "priceSGD": 0
+        },
+        {
+          "time": "18:00",
+          "title": "Gardens by the Bay (Double Domes)",
+          "description": "Visit Cloud Forest & Flower Dome.",
+          "isInventoryItem": true,
+          "isAvailableInSheet": true,
+          "priceSGD": 180
+        },
+        {
+          "time": "20:00",
+          "title": "Village Albert Hotel",
+          "description": "Overnight stay request.",
+          "isInventoryItem": true,
+          "isAvailableInSheet": false,
+          "priceSGD": 0,
+          "suggestedAlternatives": ["Boss Hotel Singapore (3★ Budget)", "Orchard Hotel Singapore (4★ Premium)"]
+        }
+      ]
+    }
+  ]
+}`
+    } else {
+      systemInstruction = `You are an expert Singapore Destination Management Agent (DMC) named "Flying Wonders AI".
 Your job is to create a realistic, well-paced day-by-day travel itinerary for a customer visiting Singapore.
 
 CUSTOMER DETAILS:
@@ -70,7 +129,7 @@ ${JSON.stringify(inventory)}
 RULES:
 1. Generate a day-by-day itinerary.
 2. For each day, include a title and a list of events.
-3. For events that are attractions, you MUST use the EXACT NAME from the inventory list and calculate its total price (Adult Price * Adults + Child Price * Kids).
+3. For events that are attractions, you MUST use the EXACT NAME from the inventory list and calculate its total price (Adult Price * Adults + Child Price * Kids). Set "isAvailableInSheet" to true.
 4. Calculate a total estimated price for the entire trip based on the selected inventory. 
 5. Provide a summary of the trip.
 6. The output must be valid JSON matching this exact structure:
@@ -87,24 +146,27 @@ RULES:
           "title": "Check-in & Rest",
           "description": "Arrive at the hotel and freshen up.",
           "isInventoryItem": false,
+          "isAvailableInSheet": true,
           "priceSGD": 0
         },
         {
           "time": "18:00",
-          "title": "Gardens by the Bay",
+          "title": "Gardens by the Bay (Double Domes)",
           "description": "Explore the Cloud Forest and Flower Dome.",
           "isInventoryItem": true,
+          "isAvailableInSheet": true,
           "priceSGD": 120
         }
       ]
     }
   ]
 }`
+    }
 
     let responseText = ''
     
     try {
-      // Attempt 1: Gemini Flash Latest (Universal alias for newest flash model)
+      // Attempt 1: Gemini Flash Latest
       const model = genAI.getGenerativeModel({ 
         model: 'gemini-flash-latest',
         generationConfig: { responseMimeType: "application/json" }

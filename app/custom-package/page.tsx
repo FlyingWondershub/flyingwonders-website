@@ -751,8 +751,9 @@ export default function PrototypeBuilder() {
         totalPrice: costBreakdown.totalClientPrice,
         pax,
         nights: nightsCount,
-        arrivalDate: getItineraryDate(0),
         hotel,
+        proposalNumber: savedProposalNum || 'Draft',
+        directProposalUrl: savedProposalNum ? `${window.location.origin}/custom-package?ref=${savedProposalNum}` : '',
         itinerarySummary: generateProposalText(),
       }),
     }).catch(() => {}) // Fire-and-forget, never block UI
@@ -1715,6 +1716,10 @@ export default function PrototypeBuilder() {
 
     try {
       const proposal = generateProposalText()
+      const directProposalUrl = savedProposalNum 
+        ? `${window.location.origin}/custom-package?ref=${savedProposalNum}`
+        : ''
+
       const payload = {
         name: agentName,
         email: agentEmail,
@@ -1726,6 +1731,8 @@ export default function PrototypeBuilder() {
         totalPrice: costBreakdown.totalClientPriceINR,
         notes: `
 B2B Package Builder Submission (SGD Pricing Mode)
+Proposal Number: ${savedProposalNum || 'Draft'}
+Direct Link to Open: ${directProposalUrl || 'N/A'}
 
 === AGENT QUERY / NOTES ===
 ${agentQuery}
@@ -1755,10 +1762,11 @@ ${proposal}
           },
           body: JSON.stringify({
             access_key: web3formsKey,
-            subject: `💼 B2B SGD Package Enquiry from ${agentName}`,
+            subject: `💼 B2B SGD Package Enquiry [${savedProposalNum || 'Draft'}] from ${agentName}`,
             from_name: 'Flying Wonders Website B2B',
             name: agentName,
             email: agentEmail,
+            cc: agentEmail, // CC to agent email ID
             message: payload.notes,
           }),
         })
@@ -2729,13 +2737,8 @@ ${proposal}
                             key={idx}
                             onClick={() => {
                               setSearchQuery(q.proposalNumber);
-                              // Trigger search and close modal
                               setShowQuotationsModal(false);
-                              const fakeEvent = { preventDefault: () => {} } as any;
-                              setTimeout(() => {
-                                const searchBtn = document.querySelector('form button[type="submit"]') as HTMLButtonElement;
-                                if (searchBtn) searchBtn.click();
-                              }, 100);
+                              loadProposalByNumber(q.proposalNumber);
                             }}
                             style={{ 
                               background: '#F8FAFC', 

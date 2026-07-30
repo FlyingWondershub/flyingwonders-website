@@ -38,6 +38,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, skipped: true })
     }
 
+    const proposalNumber = body.proposalNumber || 'Draft'
+    const directProposalUrl = body.directProposalUrl || ''
+
     const actionLabel = ACTION_LABELS[action] || `🔔 Action: ${action}`
     const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Singapore' })
 
@@ -61,7 +64,7 @@ export async function POST(req: NextRequest) {
     await transporter.sendMail({
       from: `"Flying Wonders CRM" <${user}>`,
       to: recipientEmails,
-      subject: `${actionLabel} — ${agentName} | S$${totalPrice.toLocaleString()}`,
+      subject: `${actionLabel} [${proposalNumber}] — ${agentName} | S$${totalPrice.toLocaleString()}`,
       html: `
         <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden;">
           
@@ -69,6 +72,19 @@ export async function POST(req: NextRequest) {
           <div style="background: linear-gradient(135deg, #0F4C3A, #1a6b52); padding: 20px 24px; color: white;">
             <h2 style="margin: 0; font-size: 18px; letter-spacing: 0.5px;">🔔 Agent Activity Alert</h2>
             <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.8;">${actionLabel}</p>
+          </div>
+
+          <!-- Proposal Badge / Workspace Link -->
+          <div style="padding: 15px 24px; background: #FFF; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <span style="font-size: 12px; color: #718096; text-transform: uppercase; font-weight: 600; display: block;">Proposal Number:</span>
+              <strong style="font-size: 16px; color: var(--emerald-secondary);">${proposalNumber}</strong>
+            </div>
+            ${directProposalUrl ? `
+              <a href="${directProposalUrl}" target="_blank" style="display: inline-block; padding: 6px 14px; background: #0F4C3A; color: white; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 12px;">
+                Open in Workspace ↗
+              </a>
+            ` : ''}
           </div>
 
           <!-- Agent Details -->
@@ -87,7 +103,7 @@ export async function POST(req: NextRequest) {
             <h3 style="margin: 0 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.8px; color: #4A5568;">Itinerary Details</h3>
             <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
               <tr><td style="padding: 4px 0; color: #718096; width: 130px;">Hotel:</td><td style="font-weight: 600; color: #2D3748;">${hotel || '—'}</td></tr>
-              <tr><td style="padding: 4px 0; color: #718096;">Arrival Date:</td><td style="color: #2D3748;">${arrivalDate || '—'}</td></tr>
+              ${arrivalDate ? `<tr><td style="padding: 4px 0; color: #718096;">Arrival Date:</td><td style="color: #2D3748;">${arrivalDate}</td></tr>` : ''}
               <tr><td style="padding: 4px 0; color: #718096;">Duration:</td><td style="color: #2D3748;">${nights} Nights / ${nights + 1} Days</td></tr>
               <tr><td style="padding: 4px 0; color: #718096;">Travelers:</td><td style="color: #2D3748;">${pax || '—'}</td></tr>
             </table>

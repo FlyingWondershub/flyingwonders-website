@@ -938,7 +938,7 @@ export default function AdminDashboard() {
                 {[
                   { name: 'AI Trip Planner', path: '/ai-planner', desc: 'Intelligent itinerary generation' },
                   { name: 'Instant Quote', path: '/instant-quote', desc: 'Quick package estimation' },
-                  { name: 'Live Bookings', path: '/Attractions_live', desc: 'Real-time booking portal' },
+                  { name: 'Live Bookings', path: '/attractions-live', desc: 'Real-time booking portal' },
                 ].map(link => (
                   <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
                     <div>
