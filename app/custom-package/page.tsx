@@ -103,13 +103,14 @@ interface AttractionEntry {
 
 interface DayPlan {
   transfers: TransferEntry[]
-  breakfast?: boolean
-  lunch?: boolean
-  dinner?: boolean
-  guideRequired?: boolean
-  meals?: MealEntry[]
-  guides: GuideEntry[]
   attractions: AttractionEntry[]
+  breakfast: boolean
+  lunch: boolean
+  dinner: boolean
+  guides: GuideEntry[]
+  meals?: MealEntry[]
+  guideRequired?: boolean
+  isBreakTrip?: boolean
 }
 
 // Default fallback rate until live API responds (overridden on mount)
@@ -509,6 +510,7 @@ export default function PrototypeBuilder() {
             meals: [],
             guides: [],
             attractions: [],
+            isBreakTrip: false,
           })
         }
       } else if (targetLength < nextPlan.length) {
@@ -862,6 +864,14 @@ export default function PrototypeBuilder() {
     t += `\n${sep}\n`
     itinerary.forEach((day, dIdx) => {
       const dayItems: { time: string; text: string }[] = []
+      
+      if (day.isBreakTrip) {
+        dayItems.push({
+          time: '08:00',
+          text: `🌴 *Free & Easy / Interline Break Day* — No scheduled sightseeing`
+        })
+      }
+      
       day.transfers.forEach(tr => {
         const v = vehiclesList[tr.vehicleIndex]?.type || 'Transfer'
         const qtyStr = tr.qty && tr.qty > 1 ? ` (×${tr.qty})` : ''
@@ -3384,20 +3394,55 @@ ${proposal}
                 {/* Clickable Day Header */}
                 <div
                   onClick={() => toggleDay(dIdx)}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', cursor: 'pointer', background: isCollapsed ? '#FFFDF5' : '#FFF', userSelect: 'none' }}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.25rem', cursor: 'pointer', background: isCollapsed ? '#FFFDF5' : '#FFF', userSelect: 'none', gap: '0.5rem', flexWrap: 'wrap' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <h4 style={{ color: 'var(--emerald-secondary)', fontSize: '1.05rem', fontFamily: 'var(--font-playfair), serif', margin: 0 }}>
                       Day {dIdx + 1} · {getItineraryDate(dIdx)}
                     </h4>
-                    {summaryParts.length > 0 && (
+                    {itinerary.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setItinerary(prev => prev.filter((_, idx) => idx !== dIdx))
+                          setNightsCount(prev => Math.max(1, prev - 1))
+                        }}
+                        style={{ background: '#FFF5F5', color: '#E53E3E', border: '1px solid #FEB2B2', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        ✕ Remove Day
+                      </button>
+                    )}
+                    {summaryParts.length > 0 && !day.isBreakTrip && (
                       <span style={{ fontSize: '0.75rem', color: '#718096', display: 'flex', gap: '0.35rem' }}>
                         {summaryParts.map((p, i) => <span key={i} style={{ background: '#F0FDF4', border: '1px solid #C6F6D5', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>{p}</span>)}
                       </span>
                     )}
-                    {summaryParts.length === 0 && <span style={{ fontSize: '0.72rem', color: '#A0AEC0', fontStyle: 'italic' }}>Empty — tap to add</span>}
+                    {summaryParts.length === 0 && !day.isBreakTrip && <span style={{ fontSize: '0.72rem', color: '#A0AEC0', fontStyle: 'italic' }}>Empty — tap to add</span>}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        updateDay(dIdx, 'isBreakTrip', !day.isBreakTrip)
+                      }}
+                      style={{
+                        background: day.isBreakTrip ? '#D69E2E' : '#B7791F',
+                        color: '#FFF',
+                        border: 'none',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '14px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      Break Trip {day.isBreakTrip ? '✓' : '▼'}
+                    </button>
                     <span style={{ background: 'var(--gold-accent)', color: '#FFF', padding: '0.15rem 0.6rem', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700 }}>SGP</span>
                     <span style={{ fontSize: '0.85rem', color: '#94A3B8', fontWeight: 700 }}>{isCollapsed ? '▼' : '▲'}</span>
                   </div>
@@ -3495,11 +3540,17 @@ ${proposal}
                           <select 
                             value={trans.vehicleIndex} 
                             onChange={e => updateTransferRow(dIdx, rIdx, 'vehicleIndex', parseInt(e.target.value))}
-                            style={{ padding: '0.4rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem', width: '135px' }}
+                            style={{ padding: '0.4rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem', minWidth: '180px', flex: '1 0 180px' }}
                           >
-                            {vehiclesList.map((v, idx) => (
-                              <option key={idx} value={idx}>{v.type}</option>
-                            ))}
+                            {vehiclesList.map((v, idx) => {
+                              const vType = (v as any).vehicleType || v.type.split(' - ')[0] || v.type
+                              const tType = (v as any).transferType || ''
+                              const sName = (v as any).serviceName || (v as any).transfers || 'Transfers'
+                              const label = [vType, tType, sName].filter(Boolean).join(' - ')
+                              return (
+                                <option key={idx} value={idx}>{label}</option>
+                              )
+                            })}
                           </select>
                           
                           <div style={{ display: 'flex', gap: '0.5rem', flex: '1 0 200px', alignItems: 'center' }}>
@@ -3883,8 +3934,46 @@ ${proposal}
               )
             })}
 
+            {/* Add Custom Day (Break Trip) Button */}
+            <div style={{ marginTop: '1.5rem', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setItinerary(prev => [
+                    ...prev,
+                    {
+                      transfers: [],
+                      attractions: [],
+                      breakfast: false,
+                      lunch: false,
+                      dinner: false,
+                      guides: [],
+                      guideRequired: false,
+                      isBreakTrip: true
+                    }
+                  ])
+                }}
+                style={{
+                  padding: '0.75rem 1.75rem',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  color: '#6B46C1',
+                  background: '#FAF5FF',
+                  border: '1.5px solid #E9D5FF',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 2px 8px rgba(107, 70, 193, 0.08)'
+                }}
+              >
+                <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>+</span> Add Custom Day (Break Trip)
+              </button>
+            </div>
+
             {itinerary.length > 0 && (
-              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'center' }}>
                 <button
                   type="button"
                   onClick={() => setShowPreviewOverlay(true)}
