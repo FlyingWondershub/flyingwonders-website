@@ -18,6 +18,50 @@ export const travelToolsSchema = defineType({
       initialValue: 'Your 1-stop portal for ICA SG Arrival Card (SGAC), Malaysia MDAC, Visa Document Checklists, Live Currency Converter, and Smart Packing Lists.',
     }),
 
+    // SECTION HIDE TOGGLES
+    defineField({
+      name: 'hideOfficialPortals',
+      title: '🙈 Hide Official Entry Portals Section (SGAC / MDAC)',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hideScamAdvisory',
+      title: '🙈 Hide Fraud / Scam Advisory Banner',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hideVisaChecklist',
+      title: '🙈 Hide Visa Document Requirements & Checklists Section',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hideCurrencyConverter',
+      title: '🙈 Hide Live Currency Converter Widget',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hideMealEstimator',
+      title: '🙈 Hide Meal Budget Estimator Widget',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hideInteractiveChecklist',
+      title: '🙈 Hide Interactive Pre-Departure Checklist',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hideAttractionAllocator',
+      title: '🙈 Hide Recommended Attraction Time Allocator Table',
+      type: 'boolean',
+      initialValue: false,
+    }),
+
     // Official Entry Links
     defineField({
       name: 'sgacOfficialLink',
