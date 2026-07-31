@@ -482,8 +482,8 @@ a {
 /* B2B Builder responsive classes */
 .builder-layout {
   display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 2rem;
+  grid-template-columns: 1fr 280px;
+  gap: 1.5rem;
   align-items: start;
 }
 
@@ -590,8 +590,8 @@ a {
 
 .builder-layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 2.5rem;
+  grid-template-columns: 1fr 280px;
+  gap: 1.5rem;
   align-items: flex-start;
 }
 

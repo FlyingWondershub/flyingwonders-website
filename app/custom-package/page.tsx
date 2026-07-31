@@ -218,6 +218,8 @@ export default function PrototypeBuilder() {
   const [kids, setKids] = useState(0)
   const [childAges, setChildAges] = useState<number[]>([])
   const [nightsCount, setNightsCount] = useState(3)
+  const [miscCostPerPerson, setMiscCostPerPerson] = useState(0)
+  const [miscNotes, setMiscNotes] = useState('')
   const [markupPercent, setMarkupPercent] = useState(0)
   const [markupAbsolute, setMarkupAbsolute] = useState(0)
   const [discountPerPerson, setDiscountPerPerson] = useState(0)
@@ -638,7 +640,7 @@ export default function PrototypeBuilder() {
 
   // Cost Calculations
   const costBreakdown = useMemo(() => {
-    if (!isAuthenticated) return { hotelTotal: 0, roomCostTotal: 0, suppCostTotal: 0, transportTotal: 0, attractionTotal: 0, mealTotal: 0, guideTotal: 0, netCost: 0, netCostINR: 0, totalClientPrice: 0, totalClientPriceINR: 0, adultQuote: 0, childQuote: 0 }
+    if (!isAuthenticated) return { hotelTotal: 0, roomCostTotal: 0, suppCostTotal: 0, transportTotal: 0, attractionTotal: 0, mealTotal: 0, guideTotal: 0, miscTotal: 0, netCost: 0, netCostINR: 0, totalClientPrice: 0, totalClientPriceINR: 0, adultQuote: 0, childQuote: 0 }
 
     let hotelTotal = 0
     let transportTotal = 0
@@ -719,8 +721,9 @@ export default function PrototypeBuilder() {
       })
     })
 
-    const rawNetCost = hotelTotal + transportTotal + attractionTotal + mealTotal + guideTotal
     const totalPeople = adults + kids
+    const miscTotal = (miscCostPerPerson || 0) * totalPeople
+    const rawNetCost = hotelTotal + transportTotal + attractionTotal + mealTotal + guideTotal + miscTotal
     const totalDiscount = discountPerPerson * totalPeople
     const netCost = Math.max(0, rawNetCost - totalDiscount)
     
@@ -731,10 +734,10 @@ export default function PrototypeBuilder() {
     const mealsNetPerHead = mealTotal / (totalPeople || 1)
     const absoluteMarkupPerHead = markupAbsolute / (totalPeople || 1)
 
-    const netAdultPerHead = Math.max(0, sharedNetPerHead + mealsNetPerHead + (attractionAdultTotal / (adults || 1)) - discountPerPerson)
+    const netAdultPerHead = Math.max(0, sharedNetPerHead + mealsNetPerHead + (miscCostPerPerson || 0) + (attractionAdultTotal / (adults || 1)) - discountPerPerson)
     const adultQuote = Math.round(netAdultPerHead * markupFactor + absoluteMarkupPerHead)
 
-    const netChildPerHead = Math.max(0, sharedNetPerHead + mealsNetPerHead + (attractionChildTotal / (kids || 1)) - discountPerPerson)
+    const netChildPerHead = Math.max(0, sharedNetPerHead + mealsNetPerHead + (miscCostPerPerson || 0) + (attractionChildTotal / (kids || 1)) - discountPerPerson)
     const childQuote = kids > 0 ? Math.round(netChildPerHead * markupFactor + absoluteMarkupPerHead) : 0
 
     const netCostINR = Math.round(netCost * sgdToInrRate)
@@ -748,6 +751,7 @@ export default function PrototypeBuilder() {
       attractionTotal,
       mealTotal,
       guideTotal,
+      miscTotal,
       netCost,
       netCostINR,
       totalClientPrice,
@@ -755,7 +759,7 @@ export default function PrototypeBuilder() {
       adultQuote,
       childQuote,
     }
-  }, [itinerary, hotelsList, vehiclesList, attractionsList, mealsList, guidesList, adults, kids, nightsCount, globalHotelIndex, globalRoomIndex, globalRoomCount, globalSuppIndex, globalSuppCount, markupPercent, markupAbsolute, discountPerPerson, isAuthenticated, hotelRequired, sgdToInrRate, customHotelEnabled, customHotelName, customHotelRoomType, customHotelPrice, customHotelSuppName, customHotelSuppCost])
+  }, [itinerary, hotelsList, vehiclesList, attractionsList, mealsList, guidesList, adults, kids, nightsCount, miscCostPerPerson, globalHotelIndex, globalRoomIndex, globalRoomCount, globalSuppIndex, globalSuppCount, markupPercent, markupAbsolute, discountPerPerson, isAuthenticated, hotelRequired, sgdToInrRate, customHotelEnabled, customHotelName, customHotelRoomType, customHotelPrice, customHotelSuppName, customHotelSuppCost])
 
   // Agent activity notification helper
   const notifyAgentActivity = (action: string) => {
@@ -1788,6 +1792,9 @@ export default function PrototypeBuilder() {
       setCustomHotelSuppName('')
       setCustomHotelSuppCost(0)
       setGuestName('')
+      setMiscCostPerPerson(0)
+      setMiscNotes('')
+      setSavedProposalNum(null)
       alert('Workspace cleared. You can now build a new itinerary.')
     }
   }
@@ -2655,15 +2662,15 @@ ${proposal}
           }
           .cp-day-body.collapsed { max-height: 0 !important; opacity: 0; }
           .cp-agent-toolbar {
-            display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;
-            padding: 0.75rem 1rem; background: #F7FAFC;
-            border: 1px solid #E2E8F0; border-radius: 10px; margin-bottom: 1.5rem;
+            display: flex; gap: 0.35rem; flex-wrap: nowrap; align-items: center; overflow-x: auto;
+            padding: 0.55rem 0.85rem; background: #F8FAFC;
+            border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 1.25rem;
           }
           .cp-tool-btn {
-            display: inline-flex; align-items: center; gap: 0.35rem;
-            padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #CBD5E1;
-            background: #FFF; color: #2D3748; font-size: 0.78rem; font-weight: 700;
-            cursor: pointer; white-space: nowrap; transition: all 0.15s;
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            padding: 0.35rem 0.65rem; border-radius: 5px; border: 1px solid #CBD5E1;
+            background: #FFF; color: #2D3748; font-size: 0.76rem; font-weight: 700;
+            cursor: pointer; white-space: nowrap; transition: all 0.15s; flex-shrink: 0;
           }
           .cp-tool-btn:hover { background: #EBF8F0; border-color: #0F4C3A; color: #0F4C3A; }
           .cp-tool-btn.whatsapp { background: #25D366; color: #FFF; border-color: #25D366; }
@@ -2796,7 +2803,7 @@ ${proposal}
         {/* ══ COMPACT AGENT TOOLS BAR ══ */}
         <div className="cp-agent-toolbar">
           {activeAgent && (
-            <span style={{ fontSize: '0.75rem', color: '#4A5568', fontWeight: 600, marginRight: 'auto', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.75rem', color: '#4A5568', fontWeight: 600, marginRight: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
               👤 {activeAgent.agentName}{activeAgent.companyName ? ` · ${activeAgent.companyName}` : ''}
             </span>
           )}
@@ -2808,7 +2815,7 @@ ${proposal}
             💾 {saveStatus === 'saving' ? 'Saving...' : 'Save Proposal'}
           </button>
           {savedProposalNum && (
-            <span style={{ fontSize: '0.75rem', background: '#EBF8FF', color: '#2B6CB0', fontWeight: 700, padding: '0.3rem 0.6rem', borderRadius: '4px', border: '1px solid #BEE3F8' }}>
+            <span style={{ fontSize: '0.75rem', background: '#EBF8FF', color: '#2B6CB0', fontWeight: 700, padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #BEE3F8', flexShrink: 0 }}>
               Num: {savedProposalNum}
             </span>
           )}
@@ -3113,6 +3120,24 @@ ${proposal}
                   type="date"
                   value={arrivalDate} 
                   onChange={e => setArrivalDate(e.target.value)}
+                  style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.82rem', background: '#F8FAFC' }}
+                />
+              </div>
+              <div style={{ flex: '1 1 110px' }}>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.35rem' }} title="e.g. Visas, Water bottle, Extra items per person">Misc Cost / Pax (S$)</label>
+                <input 
+                  type="number" min="0" placeholder="e.g. 25"
+                  value={miscCostPerPerson || ''} 
+                  onChange={e => setMiscCostPerPerson(Math.max(0, parseFloat(e.target.value) || 0))}
+                  style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.82rem', background: '#F8FAFC' }}
+                />
+              </div>
+              <div style={{ flex: '1.5 1 150px' }}>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.35rem' }}>Misc Notes</label>
+                <input 
+                  type="text" placeholder="e.g. Visas, Water bottle"
+                  value={miscNotes} 
+                  onChange={e => setMiscNotes(e.target.value)}
                   style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.82rem', background: '#F8FAFC' }}
                 />
               </div>
@@ -4113,6 +4138,12 @@ ${proposal}
                   <span style={{ opacity: 0.6 }}>Guides Assigned:</span>
                   <span>S$ {costBreakdown.guideTotal.toLocaleString()}</span>
                 </div>
+                {(costBreakdown.miscTotal > 0 || miscNotes) && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ opacity: 0.6 }} title={miscNotes}>📌 Misc ({miscNotes || 'Additions'}):</span>
+                    <span>S$ {costBreakdown.miscTotal.toLocaleString()}</span>
+                  </div>
+                )}
               </div>
 
               {/* Net Subtotal */}
