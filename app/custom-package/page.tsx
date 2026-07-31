@@ -111,6 +111,7 @@ interface DayPlan {
   meals?: MealEntry[]
   guideRequired?: boolean
   isBreakTrip?: boolean
+  isCustomDay?: boolean
 }
 
 // Default fallback rate until live API responds (overridden on mount)
@@ -818,7 +819,7 @@ export default function PrototypeBuilder() {
         }
       })
     })
-    const totalRooms = hotelRequired ? (globalRoomCount + (globalSuppIndex >= 0 ? globalSuppCount : 0)) : 0
+    const totalRooms = hotelRequired ? globalRoomCount : 0
 
     // Hotel
     if (hotelRequired) {
@@ -3400,7 +3401,7 @@ ${proposal}
                     <h4 style={{ color: 'var(--emerald-secondary)', fontSize: '1.05rem', fontFamily: 'var(--font-playfair), serif', margin: 0 }}>
                       Day {dIdx + 1} · {getItineraryDate(dIdx)}
                     </h4>
-                    {itinerary.length > 1 && (
+                    {day.isCustomDay && (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -3421,28 +3422,30 @@ ${proposal}
                     {summaryParts.length === 0 && !day.isBreakTrip && <span style={{ fontSize: '0.72rem', color: '#A0AEC0', fontStyle: 'italic' }}>Empty — tap to add</span>}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        updateDay(dIdx, 'isBreakTrip', !day.isBreakTrip)
-                      }}
-                      style={{
-                        background: day.isBreakTrip ? '#D69E2E' : '#B7791F',
-                        color: '#FFF',
-                        border: 'none',
-                        padding: '0.25rem 0.75rem',
-                        borderRadius: '14px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                    >
-                      Break Trip {day.isBreakTrip ? '✓' : '▼'}
-                    </button>
+                    {day.isCustomDay && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          updateDay(dIdx, 'isBreakTrip', !day.isBreakTrip)
+                        }}
+                        style={{
+                          background: day.isBreakTrip ? '#D69E2E' : '#B7791F',
+                          color: '#FFF',
+                          border: 'none',
+                          padding: '0.25rem 0.75rem',
+                          borderRadius: '14px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        Break Trip {day.isBreakTrip ? '✓' : '▼'}
+                      </button>
+                    )}
                     <span style={{ background: 'var(--gold-accent)', color: '#FFF', padding: '0.15rem 0.6rem', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700 }}>SGP</span>
                     <span style={{ fontSize: '0.85rem', color: '#94A3B8', fontWeight: 700 }}>{isCollapsed ? '▼' : '▲'}</span>
                   </div>
@@ -3949,6 +3952,7 @@ ${proposal}
                       dinner: false,
                       guides: [],
                       guideRequired: false,
+                      isCustomDay: true,
                       isBreakTrip: true
                     }
                   ])
