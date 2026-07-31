@@ -497,12 +497,13 @@ export default function PrototypeBuilder() {
   // Initialize itinerary array when nightsCount changes to show number of nights + 1 days
   useEffect(() => {
     if (!isAuthenticated) return
-    const targetLength = nightsCount + 1
+    const baseDaysCount = nightsCount + 1
     setItinerary(prev => {
-      const nextPlan = [...prev]
-      if (targetLength > nextPlan.length) {
-        for (let i = nextPlan.length; i < targetLength; i++) {
-          nextPlan.push({
+      const customDays = prev.filter(d => d.isCustomDay)
+      const baseDays = prev.filter(d => !d.isCustomDay)
+      if (baseDaysCount > baseDays.length) {
+        for (let i = baseDays.length; i < baseDaysCount; i++) {
+          baseDays.push({
             transfers: [],
             breakfast: false,
             lunch: false,
@@ -512,12 +513,13 @@ export default function PrototypeBuilder() {
             guides: [],
             attractions: [],
             isBreakTrip: false,
+            isCustomDay: false
           })
         }
-      } else if (targetLength < nextPlan.length) {
-        nextPlan.length = targetLength
+      } else if (baseDaysCount < baseDays.length) {
+        baseDays.length = baseDaysCount
       }
-      return nextPlan
+      return [...baseDays, ...customDays]
     })
   }, [nightsCount, isAuthenticated])
 
@@ -3407,7 +3409,6 @@ ${proposal}
                         onClick={(e) => {
                           e.stopPropagation()
                           setItinerary(prev => prev.filter((_, idx) => idx !== dIdx))
-                          setNightsCount(prev => Math.max(1, prev - 1))
                         }}
                         style={{ background: '#FFF5F5', color: '#E53E3E', border: '1px solid #FEB2B2', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
                       >
