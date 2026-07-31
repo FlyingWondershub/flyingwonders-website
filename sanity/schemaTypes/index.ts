@@ -26,6 +26,7 @@ import { faqItemSchema } from './faqItem'
 import { adminUserSchema } from './adminUser'
 import { competitorPriceSchema } from './competitorPrice'
 import { corporateTravelSchema } from './corporateTravel'
+import { travelToolsSchema } from './travelTools'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -53,6 +54,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     faqItemSchema,
     adminUserSchema,
     competitorPriceSchema,
-    corporateTravelSchema
+    corporateTravelSchema,
+    travelToolsSchema
   ],
 }
