@@ -4032,36 +4032,42 @@ ${proposal}
         {/* Right Sidebar: Dynamic Pricing Calculator */}
         <div style={{ position: 'sticky', top: '100px' }}>
           
-          {/* Collapsible Agent Markup Slider Widget */}
-          <div className="glass" style={{ padding: '1.5rem', borderRadius: '16px', background: '#FFF', border: '1px solid #E2E8F0', marginBottom: '1.5rem' }}>
+          {/* Agent Profit Control Panel */}
+          <div className="glass" style={{ 
+            padding: '1rem 1.15rem', 
+            borderRadius: '12px', 
+            marginBottom: '1rem', 
+            background: '#FFF', 
+            border: '1px solid #E2E8F0' 
+          }}>
             <div 
-              onClick={() => setAgentSettingsOpen(!agentSettingsOpen)}
+              onClick={() => setAgentSettingsOpen(prev => !prev)}
               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
             >
-              <h4 style={{ color: 'var(--emerald-secondary)', margin: 0, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+              <h4 style={{ color: 'var(--emerald-secondary)', margin: 0, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
                 Agent Profit Settings
               </h4>
-              <span style={{ fontSize: '0.85rem', color: '#94A3B8', fontWeight: 700 }}>
+              <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700 }}>
                 {agentSettingsOpen ? '▲' : '▼'}
               </span>
             </div>
             
             {agentSettingsOpen && (
-              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.25rem', color: '#4A5568' }}>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '0.2rem', color: '#4A5568' }}>
                       Markup (%)
                     </label>
                     <input 
                       type="number" min="0" max="100"
                       value={markupPercent}
                       onChange={e => setMarkupPercent(Math.max(0, parseInt(e.target.value) || 0))}
-                      style={{ width: '100%', padding: '0.45rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.85rem', outline: 'none' }}
+                      style={{ width: '100%', padding: '0.35rem 0.45rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.78rem', outline: 'none' }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.25rem', color: '#4A5568' }}>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '0.2rem', color: '#4A5568' }}>
                       Absolute (S$)
                     </label>
                     <input 
@@ -4069,20 +4075,20 @@ ${proposal}
                       placeholder="0"
                       value={markupAbsolute || ''}
                       onChange={e => setMarkupAbsolute(Math.max(0, parseFloat(e.target.value) || 0))}
-                      style={{ width: '100%', padding: '0.45rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.85rem', outline: 'none' }}
+                      style={{ width: '100%', padding: '0.35rem 0.45rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.78rem', outline: 'none' }}
                     />
                   </div>
                 </div>
 
-                <div style={{ borderTop: '1px dashed #E2E8F0', paddingTop: '0.75rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.25rem', color: '#4A5568' }}>
-                    Discount per Person (S$)
+                <div style={{ borderTop: '1px dashed #E2E8F0', paddingTop: '0.5rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '0.2rem', color: '#4A5568' }}>
+                    Discount / Pax (S$)
                   </label>
                   <input 
                     type="number" min="0" max="10000" step="5"
                     value={discountPerPerson}
                     onChange={e => setDiscountPerPerson(Math.max(0, parseInt(e.target.value) || 0))}
-                    style={{ width: '100%', padding: '0.45rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.85rem', outline: 'none' }}
+                    style={{ width: '100%', padding: '0.35rem 0.45rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.78rem', outline: 'none' }}
                   />
                 </div>
               </div>
@@ -4093,30 +4099,30 @@ ${proposal}
           <div style={{ 
             background: 'var(--bg-dark)', 
             color: 'var(--text-light)', 
-            borderRadius: '16px', 
+            borderRadius: '12px', 
             boxShadow: 'var(--shadow-lg)',
             overflow: 'hidden',
-            marginBottom: '1.5rem'
+            marginBottom: '1.25rem'
           }}>
-            <div style={{ background: 'var(--emerald-secondary)', padding: '1.25rem 1.5rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', letterSpacing: '0.05em', textTransform: 'uppercase', color: '#FFF' }}>
+            <div style={{ background: 'var(--emerald-secondary)', padding: '0.85rem 1.15rem' }}>
+              <h3 style={{ margin: 0, fontSize: '0.9rem', letterSpacing: '0.05em', textTransform: 'uppercase', color: '#FFF' }}>
                 Quotation Summary
               </h3>
             </div>
 
-            <div style={{ padding: '1.5rem' }}>
+            <div style={{ padding: '1rem 1.15rem' }}>
               
               {/* Itemized Net Cost (SGD) */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.78rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem' }}>
                 {hotelRequired && (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ opacity: 0.6 }}>Accommodation Rooms (Net):</span>
+                      <span style={{ opacity: 0.6 }}>Accommodation Rooms:</span>
                       <span>S$ {costBreakdown.roomCostTotal.toLocaleString()}</span>
                     </div>
                     {globalSuppIndex >= 0 && globalSuppCount > 0 && (
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ opacity: 0.6 }}>Accommodation Supp (Net):</span>
+                        <span style={{ opacity: 0.6 }}>Accommodation Supp:</span>
                         <span>S$ {costBreakdown.suppCostTotal.toLocaleString()}</span>
                       </div>
                     )}
@@ -4147,11 +4153,11 @@ ${proposal}
               </div>
 
               {/* Net Subtotal */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: 600, padding: '1.25rem 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, padding: '0.85rem 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                 <span>Subtotal (Net Cost):</span>
                 <span style={{ textAlign: 'right' }}>
                   S$ {costBreakdown.netCost.toLocaleString()}<br />
-                  <span style={{ fontSize: '0.8rem', color: 'var(--gold-accent)', fontWeight: 400 }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--gold-accent)', fontWeight: 400 }}>
                     (₹{costBreakdown.netCostINR.toLocaleString('en-IN')})
                   </span>
                 </span>
@@ -4160,17 +4166,17 @@ ${proposal}
               {/* B2B Price Splits */}
               <div style={{ 
                 background: 'rgba(255,255,255,0.05)', 
-                padding: '1rem', 
-                borderRadius: '8px', 
-                marginTop: '1rem',
-                borderLeft: '4px solid var(--gold-accent)'
+                padding: '0.65rem 0.85rem', 
+                borderRadius: '6px', 
+                marginTop: '0.75rem',
+                borderLeft: '3px solid var(--gold-accent)'
               }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', fontSize: '0.76rem' }}>
                   <span style={{ opacity: 0.8 }}>Quote per Adult:</span>
                   <span style={{ fontWeight: 700, color: 'var(--gold-accent)' }}>S$ {costBreakdown.adultQuote.toLocaleString()}</span>
                 </div>
                 {kids > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem' }}>
                     <span style={{ opacity: 0.8 }}>Quote per Child:</span>
                     <span style={{ fontWeight: 700, color: 'var(--gold-accent)' }}>S$ {costBreakdown.childQuote.toLocaleString()}</span>
                   </div>
@@ -4178,20 +4184,20 @@ ${proposal}
               </div>
 
               {/* Client Proposal Total */}
-              <div style={{ padding: '1.25rem 0 0.5rem 0', borderTop: '2px solid var(--gold-accent)', marginTop: '1rem' }}>
-                <div style={{ fontSize: '0.8rem', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <div style={{ padding: '0.85rem 0 0.35rem 0', borderTop: '2px solid var(--gold-accent)', marginTop: '0.75rem' }}>
+                <div style={{ fontSize: '0.72rem', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Total Package Valuation (Client Price)
                 </div>
-                <div style={{ fontSize: '2.1rem', fontWeight: 800, color: '#FFF', margin: '0.25rem 0', lineHeight: '1.2' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#FFF', margin: '0.15rem 0', lineHeight: '1.2' }}>
                   S$ {costBreakdown.totalClientPrice.toLocaleString()}
                 </div>
-                <div style={{ fontSize: '0.95rem', color: 'var(--gold-accent)', fontWeight: 700 }}>
+                <div style={{ fontSize: '0.82rem', color: 'var(--gold-accent)', fontWeight: 700 }}>
                   ₹{costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}{' '}
-                  <span style={{ fontSize: '0.75rem', opacity: 0.6, fontWeight: 400, color: '#FFF' }}>approx. INR value</span>
+                  <span style={{ fontSize: '0.68rem', opacity: 0.6, fontWeight: 400, color: '#FFF' }}>approx. INR</span>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem', marginTop: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.3rem', marginTop: '1rem' }}>
                 <button 
                   type="button" 
                   onClick={() => {
@@ -4200,9 +4206,10 @@ ${proposal}
                     alert(`Proposal copied to clipboard successfully!`)
                   }}
                   className="btn btn-primary" 
-                  style={{ background: 'var(--gold-accent)', color: '#111', fontWeight: 700, padding: '0.65rem 0.2rem', fontSize: '0.68rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+                  title="Copy Proposal"
+                  style={{ background: 'var(--gold-accent)', color: '#111', fontWeight: 700, padding: '0.5rem 0.15rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
                 >
-                  <Copy size={16} color="#111" />
+                  <Copy size={14} color="#111" />
                   <span>COPY</span>
                 </button>
 
@@ -4210,9 +4217,10 @@ ${proposal}
                   type="button" 
                   onClick={downloadProposalPDF}
                   className="btn btn-primary" 
-                  style={{ background: 'var(--emerald-secondary)', color: '#FFF', fontWeight: 700, padding: '0.65rem 0.2rem', fontSize: '0.68rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+                  title="Download PDF"
+                  style={{ background: 'var(--emerald-secondary)', color: '#FFF', fontWeight: 700, padding: '0.5rem 0.15rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
                 >
-                  <FileText size={16} color="#FFF" />
+                  <FileText size={14} color="#FFF" />
                   <span>PDF</span>
                 </button>
 
@@ -4220,10 +4228,11 @@ ${proposal}
                   type="button" 
                   onClick={() => { setShowScheduleModal(true); setPriceDrawerOpen(false); }}
                   className="btn btn-primary" 
-                  style={{ background: '#4A5568', color: '#FFF', fontWeight: 700, padding: '0.65rem 0.2rem', fontSize: '0.68rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+                  title="Transport Schedule"
+                  style={{ background: '#4A5568', color: '#FFF', fontWeight: 700, padding: '0.5rem 0.15rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
                 >
-                  <Calendar size={16} color="#FFF" />
-                  <span>SCHEDULE</span>
+                  <Calendar size={14} color="#FFF" />
+                  <span>SCHED</span>
                 </button>
 
                 <button 
