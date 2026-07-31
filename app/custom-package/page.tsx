@@ -90,6 +90,15 @@ interface AttractionEntry {
   childTickets: number
   time: string
   description: string
+  hasTransfer?: boolean
+  pickupEnabled?: boolean
+  pickupTime?: string
+  pickupVehicleIndex?: number
+  pickupNotes?: string
+  dropEnabled?: boolean
+  dropTime?: string
+  dropVehicleIndex?: number
+  dropNotes?: string
 }
 
 interface DayPlan {
@@ -667,6 +676,16 @@ export default function PrototypeBuilder() {
           attractionAdultTotal += attr.adultPrice * rowAdultCount
           attractionChildTotal += attr.childPrice * rowChildCount
         }
+        if (attrRow.hasTransfer) {
+          if (attrRow.pickupEnabled !== false) {
+            const pv = vehiclesList[attrRow.pickupVehicleIndex ?? 0]
+            if (pv) transportTotal += pv.pricePerTransfer
+          }
+          if (attrRow.dropEnabled !== false) {
+            const dv = vehiclesList[attrRow.dropVehicleIndex ?? 0]
+            if (dv) transportTotal += dv.pricePerTransfer
+          }
+        }
       })
 
       let dayMealCost = 0
@@ -778,7 +797,21 @@ export default function PrototypeBuilder() {
         const vName = vehiclesList[tr.vehicleIndex]?.type
         if (vName) usedVehicles.add(vName.split(' - ')[0] || vName)
       })
-      totalAttractionsCount += day.attractions.length
+      day.attractions.forEach(a => {
+        totalAttractionsCount++
+        if (a.hasTransfer) {
+          if (a.pickupEnabled !== false) {
+            totalTransfers++
+            const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type
+            if (pvName) usedVehicles.add(pvName.split(' - ')[0] || pvName)
+          }
+          if (a.dropEnabled !== false) {
+            totalTransfers++
+            const dvName = vehiclesList[a.dropVehicleIndex ?? 0]?.type
+            if (dvName) usedVehicles.add(dvName.split(' - ')[0] || dvName)
+          }
+        }
+      })
     })
     const totalRooms = hotelRequired ? (globalRoomCount + (globalSuppIndex >= 0 ? globalSuppCount : 0)) : 0
 
@@ -836,10 +869,30 @@ export default function PrototypeBuilder() {
       day.attractions.forEach(a => {
         const name = attractionsList[a.attractionIndex]?.name || 'Attraction'
         const paxStr = a.adultTickets > 0 || a.childTickets > 0 ? ` (${a.adultTickets}Ad${a.childTickets > 0 ? `/${a.childTickets}Ch` : ''})` : ''
+        
+        // Interline Pickup Transfer
+        if (a.hasTransfer && a.pickupEnabled !== false) {
+          const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Transfer'
+          dayItems.push({
+            time: a.pickupTime || '09:00',
+            text: `🚗 ${a.pickupTime || '09:00'} — Pickup Transfer (${pvName})${a.pickupNotes ? ' → ' + a.pickupNotes : ''} [for ${name}]`
+          })
+        }
+
+        // Attraction Entry
         dayItems.push({
           time: a.time || '00:00',
           text: `🎟️ ${a.time || '00:00'} — ${name}${paxStr}${a.description ? ' · ' + a.description : ''}`
         })
+
+        // Interline Drop Transfer
+        if (a.hasTransfer && a.dropEnabled !== false) {
+          const dvName = vehiclesList[a.dropVehicleIndex ?? 0]?.type || 'Transfer'
+          dayItems.push({
+            time: a.dropTime || '17:00',
+            text: `🚗 ${a.dropTime || '17:00'} — Drop Transfer (${dvName})${a.dropNotes ? ' → ' + a.dropNotes : ''} [from ${name}]`
+          })
+        }
       })
       const cbMeals: string[] = []
       if (day.breakfast) cbMeals.push('Breakfast')
@@ -1168,7 +1221,7 @@ export default function PrototypeBuilder() {
 
       // ─── INCLUDES / EXCLUDES ─────────────────────────────
       const hasAttr  = itinerary.some(d => d.attractions.length > 0)
-      const hasXfer  = itinerary.some(d => d.transfers.length > 0)
+      const hasXfer  = itinerary.some(d => d.transfers.length > 0 || d.attractions.some(a => a.hasTransfer))
       const hasMeals = itinerary.some(d => d.breakfast || d.lunch || d.dinner || (d.meals && d.meals.length > 0))
 
       sectionTitle('✅  Package Inclusions & Exclusions')
@@ -1219,6 +1272,19 @@ export default function PrototypeBuilder() {
           const vehicle = vehiclesList[t.vehicleIndex]?.type || 'Vehicle'
           const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
           nonAttrItems.push({ time: t.time||'00:00', label: `Private Transfer — ${vehicle}${qtyStr}`, detail: t.description || 'Point-to-point transfer', color: TEAL })
+        })
+        day.attractions.forEach(a => {
+          const name = attractionsList[a.attractionIndex]?.name || 'Attraction'
+          if (a.hasTransfer) {
+            if (a.pickupEnabled !== false) {
+              const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Vehicle'
+              nonAttrItems.push({ time: a.pickupTime || '09:00', label: `Pickup Transfer — ${pvName}`, detail: a.pickupNotes || `Transfer to ${name}`, color: TEAL })
+            }
+            if (a.dropEnabled !== false) {
+              const dvName = vehiclesList[a.dropVehicleIndex ?? 0]?.type || 'Vehicle'
+              nonAttrItems.push({ time: a.dropTime || '17:00', label: `Drop Transfer — ${dvName}`, detail: a.dropNotes || `Transfer from ${name}`, color: TEAL })
+            }
+          }
         })
         if (day.breakfast || day.lunch || day.dinner) {
           const cbMeals = [day.breakfast&&'Breakfast', day.lunch&&'Lunch', day.dinner&&'Dinner'].filter(Boolean).join(', ')
@@ -1581,7 +1647,12 @@ export default function PrototypeBuilder() {
             ...day,
             transfers: day.transfers?.map((t: any) => ({ ...t, time: sanitizeTime(t.time) })) || [],
             guides: day.guides?.map((g: any) => ({ ...g, time: sanitizeTime(g.time) })) || [],
-            attractions: day.attractions?.map((a: any) => ({ ...a, time: sanitizeTime(a.time) })) || []
+            attractions: day.attractions?.map((a: any) => ({ 
+              ...a, 
+              time: sanitizeTime(a.time),
+              pickupTime: sanitizeTime(a.pickupTime || '09:00'),
+              dropTime: sanitizeTime(a.dropTime || '17:00')
+            })) || []
           }))
           setItinerary(sanitizedItin)
         }
@@ -2388,10 +2459,31 @@ ${proposal}
                           })
                         })
                         day.attractions.forEach(a => {
+                          const name = attractionsList[a.attractionIndex]?.name || 'Attraction'
+                          if (a.hasTransfer) {
+                            if (a.pickupEnabled !== false) {
+                              const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Vehicle'
+                              items.push({
+                                time: a.pickupTime || '09:00',
+                                icon: '🚗',
+                                title: `Pickup Transfer (${pvName})`,
+                                desc: a.pickupNotes || `Transport to ${name}`
+                              })
+                            }
+                            if (a.dropEnabled !== false) {
+                              const dvName = vehiclesList[a.dropVehicleIndex ?? 0]?.type || 'Vehicle'
+                              items.push({
+                                time: a.dropTime || '17:00',
+                                icon: '🚗',
+                                title: `Drop Transfer (${dvName})`,
+                                desc: a.dropNotes || `Transport from ${name}`
+                              })
+                            }
+                          }
                           items.push({
                             time: a.time || '00:00',
                             icon: '🎟️',
-                            title: `${attractionsList[a.attractionIndex]?.name} Entry Pass`,
+                            title: `${name} Entry Pass`,
                             desc: `Adult Tickets: ${a.adultTickets} ${a.childTickets > 0 ? `| Child Tickets: ${a.childTickets}` : ''} ${a.description ? `(Note: ${a.description})` : ''}`
                           })
                         })
@@ -3314,7 +3406,10 @@ ${proposal}
                 <div style={{ background: '#FAF5FF', padding: '1.25rem 1rem', borderRadius: '8px', borderLeft: '4px solid #805AD5', marginBottom: '1.5rem' }}>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <h5 style={{ color: '#6B46C1', fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>🚗 Transfers</h5>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <h5 style={{ color: '#6B46C1', fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>🚗 Transfers</h5>
+                      <span style={{ fontSize: '0.72rem', color: '#805AD5', fontStyle: 'italic', opacity: 0.8 }}>(for Arrival / Departure / Meal transfers)</span>
+                    </div>
                     <button type="button" onClick={() => addTransferRow(dIdx)} style={{ background: '#805AD5', color: '#FFF', border: 'none', padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}>
                       + Add Transfer
                     </button>
@@ -3597,7 +3692,108 @@ ${proposal}
                                                 onChange={e => updateAttractionRow(dIdx, existingIdx, 'description', e.target.value)}
                                                 style={{ flex: '1 1 120px', padding: '0.15rem 0.35rem', borderRadius: '3px', border: '1px solid #CBD5E1', fontSize: '0.75rem' }}
                                               />
+
+                                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 700, color: '#6B46C1', cursor: 'pointer', marginLeft: 'auto', userSelect: 'none' }}>
+                                                <input 
+                                                  type="checkbox"
+                                                  checked={row.hasTransfer || false}
+                                                  onChange={e => updateAttractionRow(dIdx, existingIdx, 'hasTransfer', e.target.checked)}
+                                                />
+                                                🚌 Transfer?
+                                              </label>
                                             </div>
+
+                                            {row.hasTransfer && (
+                                              <div style={{ marginTop: '0.5rem', background: '#F3E8FF', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #E9D5FF', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                                {/* Pickup Transfer Line */}
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
+                                                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: 700, color: '#581C87', cursor: 'pointer' }}>
+                                                    <input 
+                                                      type="checkbox" 
+                                                      checked={row.pickupEnabled !== false} 
+                                                      onChange={e => updateAttractionRow(dIdx, existingIdx, 'pickupEnabled', e.target.checked)} 
+                                                    />
+                                                    Pickup Time:
+                                                  </label>
+                                                  <select
+                                                    value={row.pickupTime || '09:00'}
+                                                    onChange={e => updateAttractionRow(dIdx, existingIdx, 'pickupTime', e.target.value)}
+                                                    style={{ padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF' }}
+                                                    disabled={row.pickupEnabled === false}
+                                                  >
+                                                    {TIME_OPTIONS.map(t => (
+                                                      <option key={t} value={t}>{t}</option>
+                                                    ))}
+                                                  </select>
+                                                  <select
+                                                    value={row.pickupVehicleIndex ?? 0}
+                                                    onChange={e => updateAttractionRow(dIdx, existingIdx, 'pickupVehicleIndex', parseInt(e.target.value))}
+                                                    style={{ padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', maxWidth: '200px' }}
+                                                    disabled={row.pickupEnabled === false}
+                                                  >
+                                                    {vehiclesList
+                                                      .map((v, vIdx) => ({ ...v, vIdx }))
+                                                      .filter(v => (v as any).serviceName === 'Transfers' || !('serviceName' in v))
+                                                      .map(v => (
+                                                        <option key={v.vIdx} value={v.vIdx}>{v.type.split(' - ')[0] || v.type}</option>
+                                                      ))
+                                                    }
+                                                  </select>
+                                                  <input
+                                                    type="text"
+                                                    placeholder="Pickup Notes (e.g. Hotel to Attraction)"
+                                                    value={row.pickupNotes || ''}
+                                                    onChange={e => updateAttractionRow(dIdx, existingIdx, 'pickupNotes', e.target.value)}
+                                                    style={{ flex: '1 1 140px', padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: row.pickupEnabled === false ? '#F1F5F9' : '#FFF' }}
+                                                    disabled={row.pickupEnabled === false}
+                                                  />
+                                                </div>
+
+                                                {/* Drop Transfer Line */}
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
+                                                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: 700, color: '#581C87', cursor: 'pointer' }}>
+                                                    <input 
+                                                      type="checkbox" 
+                                                      checked={row.dropEnabled !== false} 
+                                                      onChange={e => updateAttractionRow(dIdx, existingIdx, 'dropEnabled', e.target.checked)} 
+                                                    />
+                                                    Drop Time:
+                                                  </label>
+                                                  <select
+                                                    value={row.dropTime || '17:00'}
+                                                    onChange={e => updateAttractionRow(dIdx, existingIdx, 'dropTime', e.target.value)}
+                                                    style={{ padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF' }}
+                                                    disabled={row.dropEnabled === false}
+                                                  >
+                                                    {TIME_OPTIONS.map(t => (
+                                                      <option key={t} value={t}>{t}</option>
+                                                    ))}
+                                                  </select>
+                                                  <select
+                                                    value={row.dropVehicleIndex ?? 0}
+                                                    onChange={e => updateAttractionRow(dIdx, existingIdx, 'dropVehicleIndex', parseInt(e.target.value))}
+                                                    style={{ padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', maxWidth: '200px' }}
+                                                    disabled={row.dropEnabled === false}
+                                                  >
+                                                    {vehiclesList
+                                                      .map((v, vIdx) => ({ ...v, vIdx }))
+                                                      .filter(v => (v as any).serviceName === 'Transfers' || !('serviceName' in v))
+                                                      .map(v => (
+                                                        <option key={v.vIdx} value={v.vIdx}>{v.type.split(' - ')[0] || v.type}</option>
+                                                      ))
+                                                    }
+                                                  </select>
+                                                  <input
+                                                    type="text"
+                                                    placeholder="Drop Notes (e.g. Attraction to Hotel)"
+                                                    value={row.dropNotes || ''}
+                                                    onChange={e => updateAttractionRow(dIdx, existingIdx, 'dropNotes', e.target.value)}
+                                                    style={{ flex: '1 1 140px', padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: row.dropEnabled === false ? '#F1F5F9' : '#FFF' }}
+                                                    disabled={row.dropEnabled === false}
+                                                  />
+                                                </div>
+                                              </div>
+                                            )}
                                           </div>
                                         )}
                                       </div>
