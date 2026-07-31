@@ -214,6 +214,7 @@ export default function PrototypeBuilder() {
   // Global Parameter States
   const [adults, setAdults] = useState(2)
   const [kids, setKids] = useState(0)
+  const [childAges, setChildAges] = useState<number[]>([])
   const [nightsCount, setNightsCount] = useState(3)
   const [markupPercent, setMarkupPercent] = useState(0)
   const [markupAbsolute, setMarkupAbsolute] = useState(0)
@@ -386,9 +387,11 @@ export default function PrototypeBuilder() {
             const vType = row['Vehicle Type'] || ''
             const tType = row['Transfer Type'] || ''
             const transName = row['Transfers'] || ''
+            const serviceName = row['Service Name'] || row['Service'] || row['Transfers'] || 'Transfers'
             const rate = Number(row['Rate']) || 0
             return {
-              type: `${vType} - ${transName} (${tType})`,
+              type: `${vType}${tType ? ` - ${tType}` : ''}`,
+              serviceName,
               pricePerTransfer: rate
             }
           })
@@ -844,7 +847,8 @@ export default function PrototypeBuilder() {
     }
 
     // Pax + dates
-    t += `👥 *Pax:* ${adults} Adult${adults !== 1 ? 's' : ''}${kids > 0 ? ` & ${kids} Child${kids !== 1 ? 'ren' : ''}` : ''}\n`
+    const childAgeStr = kids > 0 && childAges.length > 0 ? ` (Ages: ${childAges.slice(0, kids).join(', ')} yrs)` : ''
+    t += `👥 *Pax:* ${adults} Adult${adults !== 1 ? 's' : ''}${kids > 0 ? ` & ${kids} Child${kids !== 1 ? 'ren' : ''}${childAgeStr}` : ''}\n`
     t += `📅 *Arrival:* ${getItineraryDate(0)}  •  ${nightsCount + 1}D/${nightsCount}N\n`
     t += `💰 *Total:* S$ ${costBreakdown.totalClientPrice.toLocaleString()}  _(≈₹${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')})_\n`
 
@@ -3019,7 +3023,11 @@ ${proposal}
                 <div style={{ display: 'flex', alignItems: 'center', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '6px', overflow: 'hidden' }}>
                   <button 
                     type="button" 
-                    onClick={() => setKids(prev => Math.max(0, prev - 1))}
+                    onClick={() => {
+                      const newKids = Math.max(0, kids - 1)
+                      setKids(newKids)
+                      setChildAges(prev => prev.slice(0, newKids))
+                    }}
                     style={{ border: 'none', background: 'transparent', padding: '0.5rem 0.35rem', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', userSelect: 'none', color: '#4A5568' }}
                   >
                     −
@@ -3027,12 +3035,34 @@ ${proposal}
                   <input 
                     type="number" min="0" max="100" 
                     value={kids} 
-                    onChange={e => setKids(Math.max(0, parseInt(e.target.value) || 0))}
+                    onChange={e => {
+                      const newKids = Math.max(0, parseInt(e.target.value) || 0)
+                      setKids(newKids)
+                      setChildAges(prev => {
+                        const next = [...prev]
+                        if (newKids > next.length) {
+                          for (let i = next.length; i < newKids; i++) next.push(5)
+                        } else {
+                          next.length = newKids
+                        }
+                        return next
+                      })
+                    }}
                     style={{ flex: 1, width: '100%', border: 'none', background: 'transparent', textAlign: 'center', padding: '0.5rem 0', fontWeight: 700, fontSize: '0.82rem', outline: 'none' }}
                   />
                   <button 
                     type="button" 
-                    onClick={() => setKids(prev => Math.min(100, prev + 1))}
+                    onClick={() => {
+                      const newKids = Math.min(100, kids + 1)
+                      setKids(newKids)
+                      setChildAges(prev => {
+                        const next = [...prev]
+                        if (newKids > next.length) {
+                          for (let i = next.length; i < newKids; i++) next.push(5)
+                        }
+                        return next
+                      })
+                    }}
                     style={{ border: 'none', background: 'transparent', padding: '0.5rem 0.35rem', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer', userSelect: 'none', color: '#4A5568' }}
                   >
                     +
@@ -3074,6 +3104,36 @@ ${proposal}
                 />
               </div>
             </div>
+
+            {/* Child Ages Dropdowns */}
+            {kids > 0 && (
+              <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1rem', alignItems: 'center', background: '#FFF5F5', padding: '0.6rem 0.85rem', borderRadius: '6px', border: '1px solid #FEB2B2' }}>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#C53030', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  👶 Child Age{kids > 1 ? 's' : ''}:
+                </span>
+                {Array.from({ length: kids }).map((_, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem' }}>
+                    <span style={{ color: '#4A5568', fontWeight: 600 }}>Child {idx + 1}:</span>
+                    <select
+                      value={childAges[idx] ?? 5}
+                      onChange={e => {
+                        const age = parseInt(e.target.value)
+                        setChildAges(prev => {
+                          const updated = [...prev]
+                          updated[idx] = age
+                          return updated
+                        })
+                      }}
+                      style={{ padding: '0.25rem 0.4rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.78rem', background: '#FFF', fontWeight: 600 }}
+                    >
+                      {Array.from({ length: 17 }, (_, a) => a + 1).map(age => (
+                        <option key={age} value={age}>{age} yrs</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Row 2: Hotel */}
             <div style={{ background: '#F0F7FF', padding: '1.25rem', borderRadius: '12px', borderLeft: '4px solid #3182CE' }}>
@@ -3733,7 +3793,12 @@ ${proposal}
                                                   >
                                                     {vehiclesList
                                                       .map((v, vIdx) => ({ ...v, vIdx }))
-                                                      .filter(v => (v as any).serviceName === 'Transfers' || !('serviceName' in v))
+                                                      .filter(v => {
+                                                        const sName = (v as any).serviceName || (v as any).service || ''
+                                                        if (!sName) return true
+                                                        const s = sName.toString().trim().toLowerCase()
+                                                        return s === 'transfers' || s === 'transfer' || s.includes('transfer')
+                                                      })
                                                       .map(v => (
                                                         <option key={v.vIdx} value={v.vIdx}>{v.type.split(' - ')[0] || v.type}</option>
                                                       ))
@@ -3777,7 +3842,12 @@ ${proposal}
                                                   >
                                                     {vehiclesList
                                                       .map((v, vIdx) => ({ ...v, vIdx }))
-                                                      .filter(v => (v as any).serviceName === 'Transfers' || !('serviceName' in v))
+                                                      .filter(v => {
+                                                        const sName = (v as any).serviceName || (v as any).service || ''
+                                                        if (!sName) return true
+                                                        const s = sName.toString().trim().toLowerCase()
+                                                        return s === 'transfers' || s === 'transfer' || s.includes('transfer')
+                                                      })
                                                       .map(v => (
                                                         <option key={v.vIdx} value={v.vIdx}>{v.type.split(' - ')[0] || v.type}</option>
                                                       ))
