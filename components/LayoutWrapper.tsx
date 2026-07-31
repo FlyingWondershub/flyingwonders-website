@@ -162,6 +162,7 @@ export default function LayoutWrapper({
               {!pageVisibility?.hidePackages && <Link href="/packages" className="nav-link">Packages</Link>}
               {!pageVisibility?.hideInstantQuote && <Link href="/instant-quote" className="nav-link">Instant Quote</Link>}
               <Link href="/about" className="nav-link">About Us</Link>
+              <Link href="/corporate-travel" className="nav-link">Corporate Desk</Link>
               {!pageVisibility?.hideReviews && <Link href="/reviews" className="nav-link">Reviews</Link>}
               {!pageVisibility?.hideBlog && <Link href="/blog" className="nav-link">Blog</Link>}
               {!pageVisibility?.hideContact && <Link href="/contact" className="nav-link">Contact</Link>}
