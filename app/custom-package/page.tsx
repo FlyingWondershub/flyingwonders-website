@@ -112,6 +112,7 @@ interface DayPlan {
   guideRequired?: boolean
   isBreakTrip?: boolean
   isCustomDay?: boolean
+  customDate?: string
 }
 
 // Default fallback rate until live API responds (overridden on mount)
@@ -223,9 +224,16 @@ export default function PrototypeBuilder() {
   const [markupPercent, setMarkupPercent] = useState(0)
   const [markupAbsolute, setMarkupAbsolute] = useState(0)
   const [discountPerPerson, setDiscountPerPerson] = useState(0)
+  const minCheckinDate = useMemo(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 3)
+    return d.toISOString().split('T')[0]
+  }, [])
+
   const [arrivalDate, setArrivalDate] = useState(() => {
-    const today = new Date()
-    return today.toISOString().split('T')[0]
+    const d = new Date()
+    d.setDate(d.getDate() + 3)
+    return d.toISOString().split('T')[0]
   })
 
   // Live SGD → INR exchange rate (fetched from /api/exchange-rate on mount)
@@ -527,6 +535,18 @@ export default function PrototypeBuilder() {
 
   // Custom date formatter: e.g. "24 Jul 2026"
   const getItineraryDate = (dayIndex: number) => {
+    const dayObj = itinerary[dayIndex]
+    if (dayObj && dayObj.customDate) {
+      const date = new Date(dayObj.customDate)
+      if (!isNaN(date.getTime())) {
+        const day = date.getDate()
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        const month = months[date.getMonth()]
+        const year = date.getFullYear()
+        return `${day} ${month} ${year}`
+      }
+    }
+
     if (!arrivalDate) return `Day ${dayIndex + 1}`
     const date = new Date(arrivalDate)
     date.setDate(date.getDate() + dayIndex)
@@ -638,6 +658,32 @@ export default function PrototypeBuilder() {
     updateDay(dayIndex, 'attractions', updated)
   }
 
+  // Top + Add Custom Day (Break Trip) - Inserts at beginning of itinerary
+  const handleAddTopCustomBreakDay = () => {
+    let defaultTopDate = ''
+    if (arrivalDate) {
+      const d = new Date(arrivalDate)
+      d.setDate(d.getDate() - 1)
+      defaultTopDate = d.toISOString().split('T')[0]
+    }
+    setItinerary(prev => [
+      {
+        transfers: [],
+        attractions: [],
+        breakfast: false,
+        lunch: false,
+        dinner: false,
+        guides: [],
+        guideRequired: false,
+        isCustomDay: true,
+        isBreakTrip: true,
+        customDate: defaultTopDate
+      },
+      ...prev
+    ])
+  }
+
+  // Bottom + Add Custom Day (Break Trip) - Appends at end of itinerary
   const handleAddCustomBreakDay = () => {
     setItinerary(prev => [
       ...prev,
@@ -3152,9 +3198,10 @@ ${proposal}
                 </div>
               </div>
               <div style={{ flex: '1 1 120px' }}>
-                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.35rem' }}>Arrival Date</label>
+                <label style={{ display: 'block', fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.35rem' }}>Checkin Date</label>
                 <input 
                   type="date"
+                  min={minCheckinDate}
                   value={arrivalDate} 
                   onChange={e => setArrivalDate(e.target.value)}
                   style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.82rem', background: '#F8FAFC' }}
@@ -3435,7 +3482,7 @@ ${proposal}
               <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
                 <button 
                   type="button" 
-                  onClick={handleAddCustomBreakDay} 
+                  onClick={handleAddTopCustomBreakDay} 
                   style={{ border: '1.5px solid var(--gold-accent)', background: '#FFFDF5', padding: '0.3rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', color: '#0F4C3A' }}
                 >
                   + Add Custom Day (Break Trip)
@@ -3473,16 +3520,27 @@ ${proposal}
                       Day {dIdx + 1} · {getItineraryDate(dIdx)}
                     </h4>
                     {day.isCustomDay && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setItinerary(prev => prev.filter((_, idx) => idx !== dIdx))
-                        }}
-                        style={{ background: '#FFF5F5', color: '#E53E3E', border: '1px solid #FEB2B2', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
-                      >
-                        ✕ Remove Day
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setItinerary(prev => prev.filter((_, idx) => idx !== dIdx))
+                          }}
+                          style={{ background: '#FFF5F5', color: '#E53E3E', border: '1px solid #FEB2B2', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}
+                        >
+                          ✕ Remove Day
+                        </button>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }} onClick={(e) => e.stopPropagation()}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#4A5568' }}>Date:</span>
+                          <input 
+                            type="date"
+                            value={day.customDate || ''}
+                            onChange={(e) => updateDay(dIdx, 'customDate', e.target.value)}
+                            style={{ padding: '0.15rem 0.4rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', outline: 'none', background: '#FFF' }}
+                          />
+                        </div>
+                      </>
                     )}
                     {summaryParts.length > 0 && !day.isBreakTrip && (
                       <span style={{ fontSize: '0.75rem', color: '#718096', display: 'flex', gap: '0.35rem' }}>
