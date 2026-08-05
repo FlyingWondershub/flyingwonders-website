@@ -168,6 +168,17 @@ export default async function Home() {
                 <span style={{ fontSize: '1.2rem' }}>✨</span> AI Journey Planner
               </Link>
             )}
+            <Link href="/events" className="btn btn-secondary" style={{ 
+              background: 'rgba(255,255,255,0.1)', 
+              color: 'white', 
+              border: '1px solid rgba(255,255,255,0.3)',
+              backdropFilter: 'blur(10px)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <span style={{ fontSize: '1.1rem' }}>📅</span> Trade Shows & Events
+            </Link>
           </div>
         </div>
       </section>
