@@ -17,12 +17,10 @@ export async function POST(req: Request) {
   try {
     const { email, otp } = await req.json()
 
-    if (!email || !otp) {
-      return NextResponse.json({ error: 'Email and OTP are required' }, { status: 400 })
-    }
+    const cleanEmail = email.trim().toLowerCase()
 
-    // 1. Fetch agent record from Sanity
-    const agent = await writeClient.fetch(`*[_type == "b2bAgent" && email == $email][0]`, { email })
+    // 1. Fetch agent record from Sanity (case-insensitive)
+    const agent = await writeClient.fetch(`*[_type == "b2bAgent" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
 
     if (!agent) {
       return NextResponse.json({ error: 'Agent profile not found.' }, { status: 404 })
@@ -54,7 +52,7 @@ export async function POST(req: Request) {
         _type: 'auditLog',
         timestamp: new Date().toISOString(),
         action: 'B2B Login Success',
-        email: email,
+        email: cleanEmail,
         details: `Agent ${agent.agentName || 'Unknown'} from company ${agent.companyName || 'Unknown'} logged in successfully.`,
       })
     } catch (auditErr) {
@@ -63,7 +61,7 @@ export async function POST(req: Request) {
 
     // 5. Set Secure, HTTP-Only Cookie Session
     const cookieStore = await cookies()
-    cookieStore.set('b2b_session', email, {
+    cookieStore.set('b2b_session', cleanEmail, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 7 days session
@@ -72,8 +70,8 @@ export async function POST(req: Request) {
     })
 
     // Check if the user is explicitly marked as an admin in Sanity, or is the hardcoded default admin
-    const isAdminCount = await writeClient.fetch(`count(*[_type == "adminUser" && email == $email])`, { email })
-    const role = (email.toLowerCase() === 'info.flyingwonders@gmail.com' || isAdminCount > 0) ? 'admin' : 'user'
+    const isAdminCount = await writeClient.fetch(`count(*[_type == "adminUser" && (lower(email) == $cleanEmail || email == $cleanEmail)])`, { cleanEmail })
+    const role = (cleanEmail === 'info.flyingwonders@gmail.com' || isAdminCount > 0) ? 'admin' : 'user'
     return NextResponse.json({
       success: true,
       agent: {

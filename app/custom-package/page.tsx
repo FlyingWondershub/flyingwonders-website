@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
-import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send } from 'lucide-react'
+import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck } from 'lucide-react'
 
 // Default Fallback Master Data (Configured in SGD)
 const FALLBACK_HOTELS = [
@@ -638,6 +638,23 @@ export default function PrototypeBuilder() {
     updateDay(dayIndex, 'attractions', updated)
   }
 
+  const handleAddCustomBreakDay = () => {
+    setItinerary(prev => [
+      ...prev,
+      {
+        transfers: [],
+        attractions: [],
+        breakfast: false,
+        lunch: false,
+        dinner: false,
+        guides: [],
+        guideRequired: false,
+        isCustomDay: true,
+        isBreakTrip: true
+      }
+    ])
+  }
+
   // Cost Calculations
   const costBreakdown = useMemo(() => {
     if (!isAuthenticated) return { hotelTotal: 0, roomCostTotal: 0, suppCostTotal: 0, transportTotal: 0, attractionTotal: 0, mealTotal: 0, guideTotal: 0, miscTotal: 0, netCost: 0, netCostINR: 0, totalClientPrice: 0, totalClientPriceINR: 0, adultQuote: 0, childQuote: 0 }
@@ -667,12 +684,20 @@ export default function PrototypeBuilder() {
         hotelTotal = roomCostTotal + suppCostTotal
       }
     }
+    let totalTransfers = 0
+    let totalAttractionsCount = 0
+    let totalLunchCount = 0
+    let totalDinnerCount = 0
+    let totalBreakfastCount = 0
+    let totalGuidesCount = 0
+
     itinerary.forEach(day => {
       day.transfers.forEach(trans => {
         const vehicle = vehiclesList[trans.vehicleIndex]
         if (vehicle) {
           const qty = trans.qty || 1
           transportTotal += vehicle.pricePerTransfer * qty
+          totalTransfers += qty
         }
       })
 
@@ -685,23 +710,24 @@ export default function PrototypeBuilder() {
           attractionTotal += (attr.adultPrice * rowAdultCount) + (attr.childPrice * rowChildCount)
           attractionAdultTotal += attr.adultPrice * rowAdultCount
           attractionChildTotal += attr.childPrice * rowChildCount
+          totalAttractionsCount++
         }
         if (attrRow.hasTransfer) {
           if (attrRow.pickupEnabled !== false) {
             const pv = vehiclesList[attrRow.pickupVehicleIndex ?? 0]
-            if (pv) transportTotal += pv.pricePerTransfer
+            if (pv) { transportTotal += pv.pricePerTransfer; totalTransfers++; }
           }
           if (attrRow.dropEnabled !== false) {
             const dv = vehiclesList[attrRow.dropVehicleIndex ?? 0]
-            if (dv) transportTotal += dv.pricePerTransfer
+            if (dv) { transportTotal += dv.pricePerTransfer; totalTransfers++; }
           }
         }
       })
 
       let dayMealCost = 0
-      if (day.breakfast) dayMealCost += MEAL_PRICES.breakfast
-      if (day.lunch) dayMealCost += MEAL_PRICES.lunch
-      if (day.dinner) dayMealCost += MEAL_PRICES.dinner
+      if (day.breakfast) { dayMealCost += MEAL_PRICES.breakfast; totalBreakfastCount++; }
+      if (day.lunch) { dayMealCost += MEAL_PRICES.lunch; totalLunchCount++; }
+      if (day.dinner) { dayMealCost += MEAL_PRICES.dinner; totalDinnerCount++; }
       mealTotal += dayMealCost * (adults + kids)
 
       if (day.meals && Array.isArray(day.meals)) {
@@ -709,6 +735,9 @@ export default function PrototypeBuilder() {
           const meal = mealsList[mealRow.mealIndex]
           if (meal) {
             mealTotal += meal.pricePerHead * (adults + kids)
+            const mType = (meal.type || '').toLowerCase()
+            if (mType.includes('lunch')) totalLunchCount++
+            else if (mType.includes('dinner')) totalDinnerCount++
           }
         })
       }
@@ -717,6 +746,7 @@ export default function PrototypeBuilder() {
         const guide = guidesList[guideRow.guideIndex]
         if (guide) {
           guideTotal += guide.pricePerDay
+          totalGuidesCount++
         }
       })
     })
@@ -758,6 +788,12 @@ export default function PrototypeBuilder() {
       totalClientPriceINR,
       adultQuote,
       childQuote,
+      totalTransfers,
+      totalAttractionsCount,
+      totalLunchCount,
+      totalDinnerCount,
+      totalBreakfastCount,
+      totalGuidesCount,
     }
   }, [itinerary, hotelsList, vehiclesList, attractionsList, mealsList, guidesList, adults, kids, nightsCount, miscCostPerPerson, globalHotelIndex, globalRoomIndex, globalRoomCount, globalSuppIndex, globalSuppCount, markupPercent, markupAbsolute, discountPerPerson, isAuthenticated, hotelRequired, sgdToInrRate, customHotelEnabled, customHotelName, customHotelRoomType, customHotelPrice, customHotelSuppName, customHotelSuppCost])
 
@@ -955,7 +991,8 @@ export default function PrototypeBuilder() {
     t += `📊 *SUMMARY STATS:*\n`
     t += `  • Total Rooms: ${totalRooms}\n`
     t += `  • Total Transfers: ${totalTransfers}\n`
-    t += `  • Total Attractions: ${totalAttractionsCount}\n\n`
+    t += `  • Total Attractions: ${totalAttractionsCount}\n`
+    t += `  • Meals Plan: ${costBreakdown.totalLunchCount} Lunch, ${costBreakdown.totalDinnerCount} Dinner\n\n`
     t += `⚠️ *Note:* Prices may vary based on surcharges / unforeseen events\n`
     t += `${sep}\n`
     if (activeAgent) {
@@ -1189,12 +1226,12 @@ export default function PrototypeBuilder() {
       // ─── COST BREAKDOWN TABLE ─────────────────────────────
       sectionTitle('💰  Price Breakdown')
       const costRows = [
-        ['Hotel / Room Cost',   `S$ ${costBreakdown.roomCostTotal.toFixed(2)}`],
-        ['Supplement Cost',     `S$ ${costBreakdown.suppCostTotal.toFixed(2)}`],
-        ['Transport / Transfers', `S$ ${costBreakdown.transportTotal.toFixed(2)}`],
-        ['Attraction Tickets',  `S$ ${costBreakdown.attractionTotal.toFixed(2)}`],
-        ['Meals Plan',          `S$ ${costBreakdown.mealTotal.toFixed(2)}`],
-        ['Guide / Escort',      `S$ ${costBreakdown.guideTotal.toFixed(2)}`],
+        [`Rooms (${globalRoomCount})`, `S$ ${costBreakdown.roomCostTotal.toFixed(2)}`],
+        [`Supp (${globalSuppCount})`, `S$ ${costBreakdown.suppCostTotal.toFixed(2)}`],
+        [`Transfers (${costBreakdown.totalTransfers})`, `S$ ${costBreakdown.transportTotal.toFixed(2)}`],
+        [`Tickets (${costBreakdown.totalAttractionsCount})`, `S$ ${costBreakdown.attractionTotal.toFixed(2)}`],
+        [`Meals (${costBreakdown.totalLunchCount}L, ${costBreakdown.totalDinnerCount}D)`, `S$ ${costBreakdown.mealTotal.toFixed(2)}`],
+        [`Guides (${costBreakdown.totalGuidesCount})`, `S$ ${costBreakdown.guideTotal.toFixed(2)}`],
       ].filter(r => parseFloat(r[1].replace('S$ ', '')) > 0)
 
       costRows.forEach((row, i) => {
@@ -3395,7 +3432,14 @@ ${proposal}
               <h3 style={{ color: 'var(--emerald-secondary)', fontFamily: 'var(--font-playfair), serif', fontSize: '1.5rem', margin: 0 }}>
                 📅 Daywise Itinerary
               </h3>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <button 
+                  type="button" 
+                  onClick={handleAddCustomBreakDay} 
+                  style={{ border: '1.5px solid var(--gold-accent)', background: '#FFFDF5', padding: '0.3rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', color: '#0F4C3A' }}
+                >
+                  + Add Custom Day (Break Trip)
+                </button>
                 <button type="button" onClick={expandAll} style={{ border: '1px solid #CBD5E1', background: '#FFF', padding: '0.3rem 0.7rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', color: '#4A5568' }}>↕ Expand All</button>
                 <button type="button" onClick={collapseAll} style={{ border: '1px solid #CBD5E1', background: '#FFF', padding: '0.3rem 0.7rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', color: '#4A5568' }}>↕ Collapse All</button>
               </div>
@@ -3967,22 +4011,7 @@ ${proposal}
             <div style={{ marginTop: '1.5rem', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
               <button
                 type="button"
-                onClick={() => {
-                  setItinerary(prev => [
-                    ...prev,
-                    {
-                      transfers: [],
-                      attractions: [],
-                      breakfast: false,
-                      lunch: false,
-                      dinner: false,
-                      guides: [],
-                      guideRequired: false,
-                      isCustomDay: true,
-                      isBreakTrip: true
-                    }
-                  ])
-                }}
+                onClick={handleAddCustomBreakDay}
                 style={{
                   padding: '0.75rem 1.75rem',
                   fontSize: '0.95rem',
@@ -4117,36 +4146,36 @@ ${proposal}
                 {hotelRequired && (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ opacity: 0.6 }}>Accommodation Rooms:</span>
+                      <span style={{ opacity: 0.7 }}>Rooms ({globalRoomCount}):</span>
                       <span>S$ {costBreakdown.roomCostTotal.toLocaleString()}</span>
                     </div>
                     {globalSuppIndex >= 0 && globalSuppCount > 0 && (
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ opacity: 0.6 }}>Accommodation Supp:</span>
+                        <span style={{ opacity: 0.7 }}>Supp ({globalSuppCount}):</span>
                         <span>S$ {costBreakdown.suppCostTotal.toLocaleString()}</span>
                       </div>
                     )}
                   </>
                 )}
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ opacity: 0.6 }}>Transport & Transfers:</span>
+                  <span style={{ opacity: 0.7 }}>Transfers ({costBreakdown.totalTransfers}):</span>
                   <span>S$ {costBreakdown.transportTotal.toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ opacity: 0.6 }}>Sightseeing Tickets:</span>
+                  <span style={{ opacity: 0.7 }}>Tickets ({costBreakdown.totalAttractionsCount}):</span>
                   <span>S$ {costBreakdown.attractionTotal.toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ opacity: 0.6 }}>Meals Plan:</span>
+                  <span style={{ opacity: 0.7 }}>Meals ({costBreakdown.totalLunchCount}L, {costBreakdown.totalDinnerCount}D):</span>
                   <span>S$ {costBreakdown.mealTotal.toLocaleString()}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ opacity: 0.6 }}>Guides Assigned:</span>
+                  <span style={{ opacity: 0.7 }}>Guides ({costBreakdown.totalGuidesCount}):</span>
                   <span>S$ {costBreakdown.guideTotal.toLocaleString()}</span>
                 </div>
                 {(costBreakdown.miscTotal > 0 || miscNotes) && (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ opacity: 0.6 }} title={miscNotes}>📌 Misc ({miscNotes || 'Additions'}):</span>
+                    <span style={{ opacity: 0.7 }} title={miscNotes}>Misc ({miscNotes || 'Addons'}):</span>
                     <span>S$ {costBreakdown.miscTotal.toLocaleString()}</span>
                   </div>
                 )}
@@ -4197,7 +4226,7 @@ ${proposal}
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.3rem', marginTop: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.25rem', marginTop: '1rem' }}>
                 <button 
                   type="button" 
                   onClick={() => {
@@ -4205,55 +4234,52 @@ ${proposal}
                     navigator.clipboard.writeText(textSummary)
                     alert(`Proposal copied to clipboard successfully!`)
                   }}
-                  className="btn btn-primary" 
                   title="Copy Proposal"
-                  style={{ background: 'var(--gold-accent)', color: '#111', fontWeight: 700, padding: '0.5rem 0.15rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
+                  style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <Copy size={14} color="#111" />
+                  <CopyCheck size={15} color="#FFF" />
                   <span>COPY</span>
                 </button>
 
                 <button 
                   type="button" 
                   onClick={downloadProposalPDF}
-                  className="btn btn-primary" 
                   title="Download PDF"
-                  style={{ background: 'var(--emerald-secondary)', color: '#FFF', fontWeight: 700, padding: '0.5rem 0.15rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
+                  style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <FileText size={14} color="#FFF" />
+                  <FileDown size={15} color="#FFF" />
                   <span>PDF</span>
                 </button>
 
                 <button 
                   type="button" 
                   onClick={() => { setShowScheduleModal(true); setPriceDrawerOpen(false); }}
-                  className="btn btn-primary" 
                   title="Transport Schedule"
-                  style={{ background: '#4A5568', color: '#FFF', fontWeight: 700, padding: '0.5rem 0.15rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
+                  style={{ background: 'linear-gradient(135deg, #475569 0%, #334155 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <Calendar size={14} color="#FFF" />
+                  <CalendarDays size={15} color="#FFF" />
                   <span>SCHED</span>
                 </button>
 
                 <button 
                   type="button" 
                   onClick={sendOnWhatsApp}
-                  className="btn btn-primary" 
-                  style={{ background: '#25D366', color: '#FFF', border: 'none', fontWeight: 700, padding: '0.65rem 0.2rem', fontSize: '0.68rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', borderRadius: '8px', cursor: 'pointer' }}
+                  title="WhatsApp Proposal"
+                  style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <MessageSquare size={16} color="#FFF" />
-                  <span>WHATSAPP</span>
+                  <MessageCircle size={15} color="#FFF" />
+                  <span>WA</span>
                 </button>
 
                 <button 
                   type="button" 
                   onClick={handleSaveProposal}
                   disabled={saveStatus === 'saving'}
-                  className="btn btn-primary" 
-                  style={{ background: '#6B46C1', color: '#FFF', border: 'none', fontWeight: 700, padding: '0.65rem 0.2rem', fontSize: '0.68rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px', borderRadius: '8px', cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer', opacity: saveStatus === 'saving' ? 0.7 : 1 }}
+                  title="Save Proposal"
+                  style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer', opacity: saveStatus === 'saving' ? 0.7 : 1, boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <Save size={16} color="#FFF" />
-                  <span>{saveStatus === 'saving' ? 'SAVING...' : 'SAVE'}</span>
+                  <BookmarkCheck size={15} color="#FFF" />
+                  <span>{saveStatus === 'saving' ? '...' : 'SAVE'}</span>
                 </button>
               </div>
 

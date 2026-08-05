@@ -21,8 +21,8 @@ export async function GET() {
       return NextResponse.json({ authenticated: false })
     }
 
-    const email = sessionCookie.value
-    const agent = await readClient.fetch(`*[_type == "b2bAgent" && email == $email][0]`, { email })
+    const cleanEmail = sessionCookie.value.trim().toLowerCase()
+    const agent = await readClient.fetch(`*[_type == "b2bAgent" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
 
     if (!agent || !agent.isActive) {
       // Clear cookie if agent no longer exists or is deactivated
@@ -31,8 +31,8 @@ export async function GET() {
     }
 
     // Check if the user is explicitly marked as an admin in Sanity, or is the hardcoded default admin
-    const isAdminCount = await readClient.fetch(`count(*[_type == "adminUser" && email == $email])`, { email })
-    const role = (email.toLowerCase() === 'info.flyingwonders@gmail.com' || isAdminCount > 0) ? 'admin' : 'user'
+    const isAdminCount = await readClient.fetch(`count(*[_type == "adminUser" && (lower(email) == $cleanEmail || email == $cleanEmail)])`, { cleanEmail })
+    const role = (cleanEmail === 'info.flyingwonders@gmail.com' || isAdminCount > 0) ? 'admin' : 'user'
     return NextResponse.json({
       authenticated: true,
       agent: {

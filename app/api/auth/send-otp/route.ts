@@ -36,16 +36,14 @@ export async function POST(req: Request) {
   try {
     const { email, companyName, agentName, phone } = await req.json()
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
-    }
+    const cleanEmail = email.trim().toLowerCase()
 
     // 1. Generate 6-digit OTP code
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes valid
 
-    // 2. Query if agent exists in Sanity
-    const agent = await writeClient.fetch(`*[_type == "b2bAgent" && email == $email][0]`, { email })
+    // 2. Query if agent exists in Sanity (case-insensitive)
+    const agent = await writeClient.fetch(`*[_type == "b2bAgent" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
     let isNewAgent = false
 
     if (agent) {
@@ -69,7 +67,7 @@ export async function POST(req: Request) {
         _type: 'b2bAgent',
         companyName: companyName || 'N/A',
         agentName: agentName || 'N/A',
-        email,
+        email: cleanEmail,
         phone: phone || 'N/A',
         isActive: true,
         otp,
@@ -78,7 +76,7 @@ export async function POST(req: Request) {
 
       // By default add all B2B agent accounts to Newsletter subscribers
       try {
-        const existingSub = await writeClient.fetch(`*[_type == "newsletterSubscriber" && email == $email][0]`, { email })
+        const existingSub = await writeClient.fetch(`*[_type == "newsletterSubscriber" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
         if (!existingSub) {
           await writeClient.create({
             _type: 'newsletterSubscriber',
