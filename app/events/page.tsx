@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { client } from '../../sanity/lib/client'
+import { urlForImage } from '../../sanity/lib/image'
 import { 
   Calendar, 
   MapPin, 
@@ -24,6 +25,82 @@ import {
   Play,
   X
 } from 'lucide-react'
+
+// Helper: Extract valid Image URL from Sanity image object or string
+function resolveImageUrl(img: any): string {
+  if (!img) return ''
+  if (typeof img === 'string') return img
+  if (img.asset?.url) return img.asset.url
+  try {
+    const url = urlForImage(img)?.url()
+    return url || ''
+  } catch (e) {
+    return ''
+  }
+}
+
+// Helper: Convert YouTube watch/shorts links to embed format
+function getEmbedVideoUrl(url?: string): string | null {
+  if (!url) return null
+  const trimmed = url.trim()
+  if (trimmed.includes('youtube.com/embed/')) return trimmed
+  
+  const ytMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|live\/|embed\/))([a-zA-Z0-9_-]+)/)
+  if (ytMatch && ytMatch[1]) {
+    return `https://www.youtube.com/embed/${ytMatch[1]}`
+  }
+  
+  const vimeoMatch = trimmed.match(/vimeo\.com\/([0-9]+)/)
+  if (vimeoMatch && vimeoMatch[1]) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}`
+  }
+  
+  return trimmed
+}
+
+// Helper: Render Markdown-like bold text and numbered paragraphs cleanly
+function FormattedText({ text }: { text?: string }) {
+  if (!text) return null
+
+  // Split numbered items like "1. **Title:** description 2. **Title:** description"
+  const parts = text.split(/(?=\d+\.\s+\*\*)/g)
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', lineHeight: 1.65 }}>
+      {parts.map((part, pIdx) => {
+        const trimmed = part.trim()
+        if (!trimmed) return null
+
+        // Parse **bold** markdown tags
+        const formattedSegments: any[] = []
+        let lastIdx = 0
+        const boldRegex = /\*\*(.*?)\*\*/g
+        let match
+
+        while ((match = boldRegex.exec(trimmed)) !== null) {
+          if (match.index > lastIdx) {
+            formattedSegments.push(trimmed.substring(lastIdx, match.index))
+          }
+          formattedSegments.push(
+            <strong key={match.index} style={{ color: '#1A365D', fontWeight: 800 }}>
+              {match[1]}
+            </strong>
+          )
+          lastIdx = boldRegex.lastIndex
+        }
+        if (lastIdx < trimmed.length) {
+          formattedSegments.push(trimmed.substring(lastIdx))
+        }
+
+        return (
+          <p key={pIdx} style={{ margin: 0, fontSize: '0.92rem', color: '#475569' }}>
+            {formattedSegments}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
 
 // Demo Fallback Data for Trade Shows
 const FALLBACK_EVENTS = [
@@ -61,8 +138,8 @@ const FALLBACK_EVENTS = [
     city: 'Singapore',
     venue: 'Marina Bay Sands Expo & Convention Centre',
     boothNumber: 'Grand Ballroom · Table T-88',
-    summary: 'Host DMC partner presentation for 500+ top Indian travel agency delegates. Insights on Singapore Sustainable Tourism and Jewel Changi experiences.',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    summary: '1. **Review and Confirmation:** Host DMC partner presentation for 500+ top Indian travel agency delegates. 2. **Regulatory & Sustainable Tourism:** Keynote insights on Singapore Sustainable Tourism and Jewel Changi experiences.',
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     gallery: [
       'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&auto=format&fit=crop&q=80',
       'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&auto=format&fit=crop&q=80',
@@ -85,7 +162,6 @@ export default function EventsPage() {
   const [selectedTab, setSelectedTab] = useState<'all' | 'upcoming' | 'past'>('all')
   const [meetingModalEvent, setMeetingModalEvent] = useState<any>(null)
   const [lightboxImg, setLightboxImg] = useState<string | null>(null)
-  const [openAccordion, setOpenAccordion] = useState<Record<string, boolean>>({})
 
   // Gated Lead Magnet Form States
   const [leadForm, setLeadForm] = useState({ name: '', company: '', email: '', inquiryType: 'Outsourced Corporate Travel Desk' })
@@ -98,7 +174,24 @@ export default function EventsPage() {
   const [bookingSuccess, setBookingSuccess] = useState(false)
 
   useEffect(() => {
-    client.fetch(`*[_type == "eventsPage"][0]`)
+    // GROQ Query expanding asset URLs for images and downloadable files
+    client.fetch(`*[_type == "eventsPage"][0]{
+      ...,
+      events[]{
+        ...,
+        "logoUrl": logo.asset->url,
+        "coverImageUrl": coverImage.asset->url,
+        "galleryUrls": gallery[].asset->url,
+        downloadableFiles[]{
+          ...,
+          "fileUrl": file.asset->url
+        },
+        teamMembers[]{
+          ...,
+          "photoUrl": photo.asset->url
+        }
+      }
+    }`)
       .then(res => {
         if (res) setSanityData(res)
       })
@@ -112,10 +205,6 @@ export default function EventsPage() {
     if (selectedTab === 'past') return ev.status === 'past'
     return true
   })
-
-  const toggleAccordion = (key: string) => {
-    setOpenAccordion(prev => ({ ...prev, [key]: !prev[key] }))
-  }
 
   const handleLeadSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -229,7 +318,7 @@ export default function EventsPage() {
       <div style={{ maxWidth: '1200px', margin: '-2.5rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
 
         {/* SECTION FILTER TABS */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '3rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={() => setSelectedTab('all')}
@@ -296,98 +385,113 @@ export default function EventsPage() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem' }}>
-              {filteredEvents.filter((ev: any) => ev.status === 'upcoming').map((ev: any) => (
-                <div key={ev._key || ev.title} style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div style={{ padding: '1.75rem' }}>
-                    
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                      <span style={{ background: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800 }}>
-                        UPCOMING EXPO
-                      </span>
-                      {ev.boothNumber && (
-                        <span style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800 }}>
-                          📍 {ev.boothNumber}
-                        </span>
+              {filteredEvents.filter((ev: any) => ev.status === 'upcoming').map((ev: any) => {
+                const logoImgUrl = ev.logoUrl || resolveImageUrl(ev.logo)
+
+                return (
+                  <div key={ev._key || ev.title} style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div style={{ padding: '1.75rem' }}>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                          {logoImgUrl && (
+                            <img src={logoImgUrl} alt={`${ev.title} logo`} style={{ height: '32px', width: 'auto', objectFit: 'contain' }} />
+                          )}
+                          <span style={{ background: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800 }}>
+                            UPCOMING EXPO
+                          </span>
+                        </div>
+                        {ev.boothNumber && (
+                          <span style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800 }}>
+                            📍 {ev.boothNumber}
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#1A365D', margin: '0 0 0.85rem', lineHeight: 1.3 }}>
+                        {ev.title}
+                      </h3>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.85rem', color: '#475569', marginBottom: '1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Calendar size={16} color="#059669" />
+                          <span><strong>Dates:</strong> {ev.startDate} {ev.endDate ? `to ${ev.endDate}` : ''}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <MapPin size={16} color="#059669" />
+                          <span><strong>City/Venue:</strong> {ev.city} — {ev.venue}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: '1.25rem' }}>
+                        <FormattedText text={ev.summary} />
+                      </div>
+
+                      {/* Attending DMC Team Members */}
+                      {ev.teamMembers && ev.teamMembers.length > 0 && (
+                        <div style={{ background: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1A365D', display: 'block', marginBottom: '0.35rem' }}>
+                            👥 Attending Flying Wonders DMC Team:
+                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem', color: '#475569' }}>
+                            {ev.teamMembers.map((m: any, idx: number) => {
+                              const memberPhotoUrl = m.photoUrl || resolveImageUrl(m.photo)
+                              return (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    {memberPhotoUrl && <img src={memberPhotoUrl} alt={m.name} style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }} />}
+                                    <span><strong>{m.name}</strong> ({m.role})</span>
+                                  </div>
+                                  {m.phone && <a href={`https://wa.me/${m.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" style={{ color: '#059669', fontWeight: 700, textDecoration: 'none' }}>WhatsApp 💬</a>}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+
+                    <div style={{ background: '#F8FAFC', borderTop: '1px solid #E2E8F0', padding: '1.25rem 1.75rem', display: 'flex', gap: '0.75rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => setMeetingModalEvent(ev)}
+                        style={{ 
+                          flex: 1, 
+                          background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)', 
+                          color: '#FFF', 
+                          padding: '0.75rem 1rem', 
+                          borderRadius: '8px', 
+                          fontWeight: 800, 
+                          fontSize: '0.88rem', 
+                          border: 'none', 
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem',
+                          boxShadow: '0 3px 8px rgba(5,150,105,0.2)'
+                        }}
+                      >
+                        <Clock size={16} /> Schedule 15-Min Meeting
+                      </button>
+
+                      {ev.meetingBookingUrl && (
+                        <a
+                          href={ev.meetingBookingUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#334155', padding: '0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="Open External Booking"
+                        >
+                          <ExternalLink size={16} />
+                        </a>
                       )}
                     </div>
 
-                    <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#1A365D', margin: '0 0 0.85rem', lineHeight: 1.3 }}>
-                      {ev.title}
-                    </h3>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.85rem', color: '#475569', marginBottom: '1.25rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Calendar size={16} color="#059669" />
-                        <span><strong>Dates:</strong> {ev.startDate} {ev.endDate ? `to ${ev.endDate}` : ''}</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <MapPin size={16} color="#059669" />
-                        <span><strong>City/Venue:</strong> {ev.city} — {ev.venue}</span>
-                      </div>
-                    </div>
-
-                    <p style={{ fontSize: '0.88rem', color: '#64748B', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
-                      {ev.summary}
-                    </p>
-
-                    {/* Attending DMC Team Members */}
-                    {ev.teamMembers && ev.teamMembers.length > 0 && (
-                      <div style={{ background: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1A365D', display: 'block', marginBottom: '0.35rem' }}>
-                          👥 Attending Flying Wonders DMC Team:
-                        </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.78rem', color: '#475569' }}>
-                          {ev.teamMembers.map((m: any, idx: number) => (
-                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <span><strong>{m.name}</strong> ({m.role})</span>
-                              {m.phone && <a href={`https://wa.me/${m.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" style={{ color: '#059669', fontWeight: 700, textDecoration: 'none' }}>WhatsApp 💬</a>}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                   </div>
-
-                  <div style={{ background: '#F8FAFC', borderTop: '1px solid #E2E8F0', padding: '1.25rem 1.75rem', display: 'flex', gap: '0.75rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => setMeetingModalEvent(ev)}
-                      style={{ 
-                        flex: 1, 
-                        background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)', 
-                        color: '#FFF', 
-                        padding: '0.75rem 1rem', 
-                        borderRadius: '8px', 
-                        fontWeight: 800, 
-                        fontSize: '0.88rem', 
-                        border: 'none', 
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        boxShadow: '0 3px 8px rgba(5,150,105,0.2)'
-                      }}
-                    >
-                      <Clock size={16} /> Schedule 15-Min Meeting
-                    </button>
-
-                    {ev.meetingBookingUrl && (
-                      <a
-                        href={ev.meetingBookingUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#334155', padding: '0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        title="Open External Booking"
-                      >
-                        <ExternalLink size={16} />
-                      </a>
-                    )}
-                  </div>
-
-                </div>
-              ))}
+                )
+              })}
             </div>
           </section>
         )}
@@ -405,113 +509,145 @@ export default function EventsPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-              {filteredEvents.filter((ev: any) => ev.status === 'past' || selectedTab === 'past').map((ev: any) => (
-                <div key={ev._key || ev.title} style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', padding: '2rem' }}>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+              {filteredEvents.filter((ev: any) => ev.status === 'past' || selectedTab === 'past').map((ev: any) => {
+                const embedVideoUrl = getEmbedVideoUrl(ev.videoUrl)
+                
+                // Properly extract photo gallery URLs from Sanity image objects or strings
+                const galleryList: string[] = Array.isArray(ev.galleryUrls) && ev.galleryUrls.length > 0 
+                  ? ev.galleryUrls 
+                  : (Array.isArray(ev.gallery) ? ev.gallery.map(resolveImageUrl).filter(Boolean) : [])
+
+                const coverUrl = ev.coverImageUrl || resolveImageUrl(ev.coverImage)
+
+                return (
+                  <div key={ev._key || ev.title} style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', padding: '2rem' }}>
                     
-                    {/* Media Container (Video / Cover) */}
-                    <div>
-                      {ev.videoUrl ? (
-                        <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', background: '#000' }}>
-                          <iframe 
-                            src={ev.videoUrl} 
-                            title={ev.title} 
-                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                            allowFullScreen
-                          />
-                        </div>
-                      ) : (
-                        <div style={{ width: '100%', height: '220px', background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8' }}>
-                          <Video size={40} />
-                        </div>
-                      )}
-
-                      {/* Photo Grid Lightbox */}
-                      {ev.gallery && ev.gallery.length > 0 && (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
-                          {ev.gallery.map((imgUrl: string, gIdx: number) => (
-                            <div 
-                              key={gIdx}
-                              onClick={() => setLightboxImg(imgUrl)}
-                              style={{ height: '75px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: '1px solid #CBD5E1' }}
-                            >
-                              <img src={imgUrl} alt={`${ev.title} recap ${gIdx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Content Brief & Takeaways */}
-                    <div>
-                      <span style={{ background: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800 }}>
-                        PAST HIGHLIGHT · {ev.city}
-                      </span>
-                      <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1A365D', margin: '0.5rem 0' }}>
-                        {ev.title}
-                      </h3>
-                      <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.6, margin: '0 0 1.25rem' }}>
-                        {ev.summary}
-                      </p>
-
-                      {/* Key Industry Takeaways */}
-                      {ev.takeaways && ev.takeaways.length > 0 && (
-                        <div style={{ background: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0', padding: '1.15rem', marginBottom: '1.25rem' }}>
-                          <strong style={{ fontSize: '0.85rem', color: '#0F4C3A', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
-                            <Award size={16} /> Key Industry Takeaways Observed:
-                          </strong>
-                          <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.82rem', color: '#334155', lineHeight: 1.6 }}>
-                            {ev.takeaways.map((item: string, idx: number) => (
-                              <li key={idx}>{item}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Downloadable Collateral & Minutes */}
-                      {ev.downloadableFiles && ev.downloadableFiles.length > 0 && (
-                        <div>
-                          <strong style={{ fontSize: '0.82rem', color: '#1A365D', display: 'block', marginBottom: '0.5rem' }}>
-                            📄 Downloadable Event Collateral & Minutes:
-                          </strong>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                            {ev.downloadableFiles.map((f: any, fIdx: number) => (
-                              <a
-                                key={fIdx}
-                                href={f.externalUrl || '#'}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={{ 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  justifyContent: 'space-between', 
-                                  background: '#FFF', 
-                                  border: '1px solid #CBD5E1', 
-                                  padding: '0.55rem 0.85rem', 
-                                  borderRadius: '6px', 
-                                  fontSize: '0.82rem', 
-                                  color: '#0F4C3A', 
-                                  fontWeight: 700, 
-                                  textDecoration: 'none' 
-                                }}
-                              >
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                  <FileText size={15} color="#059669" /> {f.title}
-                                </span>
-                                <Download size={14} color="#059669" />
-                              </a>
-                            ))}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+                      
+                      {/* Media Container (Video / Cover Photo) */}
+                      <div>
+                        {embedVideoUrl ? (
+                          <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', background: '#000', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+                            <iframe 
+                              src={embedVideoUrl} 
+                              title={ev.title} 
+                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
                           </div>
+                        ) : coverUrl ? (
+                          <div style={{ width: '100%', height: '220px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #E2E8F0' }}>
+                            <img src={coverUrl} alt={ev.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                        ) : (
+                          <div style={{ width: '100%', height: '220px', background: 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8' }}>
+                            <Video size={40} />
+                          </div>
+                        )}
+
+                        {/* Photo Grid Lightbox */}
+                        {galleryList.length > 0 && (
+                          <div style={{ marginTop: '1rem' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '0.35rem' }}>
+                              📸 Event Photo Gallery (Click to expand):
+                            </span>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                              {galleryList.map((imgUrl: string, gIdx: number) => (
+                                <div 
+                                  key={gIdx}
+                                  onClick={() => setLightboxImg(imgUrl)}
+                                  style={{ height: '75px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', border: '1px solid #CBD5E1', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+                                >
+                                  <img src={imgUrl} alt={`${ev.title} recap ${gIdx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content Brief & Takeaways */}
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                          <span style={{ background: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800 }}>
+                            PAST HIGHLIGHT · {ev.city}
+                          </span>
+                          {ev.boothNumber && (
+                            <span style={{ fontSize: '0.75rem', color: '#64748B' }}>📍 {ev.boothNumber}</span>
+                          )}
                         </div>
-                      )}
+
+                        <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1A365D', margin: '0 0 0.85rem' }}>
+                          {ev.title}
+                        </h3>
+
+                        {/* Formatted Text Component for structured markdown paragraphs */}
+                        <div style={{ marginBottom: '1.25rem' }}>
+                          <FormattedText text={ev.summary} />
+                        </div>
+
+                        {/* Key Industry Takeaways */}
+                        {ev.takeaways && ev.takeaways.length > 0 && (
+                          <div style={{ background: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0', padding: '1.15rem', marginBottom: '1.25rem' }}>
+                            <strong style={{ fontSize: '0.85rem', color: '#0F4C3A', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem' }}>
+                              <Award size={16} /> Key Industry Takeaways Observed:
+                            </strong>
+                            <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.84rem', color: '#334155', lineHeight: 1.6 }}>
+                              {ev.takeaways.map((item: string, idx: number) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Downloadable Collateral & Minutes */}
+                        {ev.downloadableFiles && ev.downloadableFiles.length > 0 && (
+                          <div>
+                            <strong style={{ fontSize: '0.82rem', color: '#1A365D', display: 'block', marginBottom: '0.5rem' }}>
+                              📄 Downloadable Event Collateral & Minutes:
+                            </strong>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                              {ev.downloadableFiles.map((f: any, fIdx: number) => {
+                                const fileHref = f.fileUrl || f.externalUrl || '#'
+                                return (
+                                  <a
+                                    key={fIdx}
+                                    href={fileHref}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{ 
+                                      display: 'flex', 
+                                      alignItems: 'center', 
+                                      justifyContent: 'space-between', 
+                                      background: '#FFF', 
+                                      border: '1px solid #CBD5E1', 
+                                      padding: '0.55rem 0.85rem', 
+                                      borderRadius: '6px', 
+                                      fontSize: '0.82rem', 
+                                      color: '#0F4C3A', 
+                                      fontWeight: 700, 
+                                      textDecoration: 'none' 
+                                    }}
+                                  >
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                      <FileText size={15} color="#059669" /> {f.title}
+                                    </span>
+                                    <Download size={14} color="#059669" />
+                                  </a>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
 
                     </div>
 
                   </div>
-
-                </div>
-              ))}
+                )
+              })}
             </div>
           </section>
         )}
