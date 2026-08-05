@@ -61,6 +61,12 @@ export const travelToolsSchema = defineType({
       type: 'boolean',
       initialValue: false,
     }),
+    defineField({
+      name: 'hideFlightTracker',
+      title: '🙈 Hide AirLabs Live Flight Tracker Widget',
+      type: 'boolean',
+      initialValue: false,
+    }),
 
     // Official Entry Links
     defineField({

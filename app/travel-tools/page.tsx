@@ -19,7 +19,10 @@ import {
   Sparkles,
   Phone,
   HelpCircle,
-  Bus
+  Bus,
+  Plane,
+  Search,
+  Loader2
 } from 'lucide-react'
 
 export default function TravelToolsPage() {
@@ -36,10 +39,17 @@ export default function TravelToolsPage() {
     hideMealEstimator?: boolean
     hideInteractiveChecklist?: boolean
     hideAttractionAllocator?: boolean
+    hideFlightTracker?: boolean
     sgacOfficialLink?: string
     mdacOfficialLink?: string
     sgVisaStatusLink?: string
   }>({})
+
+  // AirLabs Live Flight Search State
+  const [flightNumberInput, setFlightNumberInput] = useState<string>('')
+  const [flightLoading, setFlightLoading] = useState<boolean>(false)
+  const [flightResult, setFlightResult] = useState<any>(null)
+  const [flightError, setFlightError] = useState<string | null>(null)
 
   // Currency Calculator States
   const [amountSgd, setAmountSgd] = useState<number>(100)
@@ -99,6 +109,31 @@ export default function TravelToolsPage() {
   const totalMealCostSgd = Math.round((adults * dailyAdultMeal + kids * dailyChildMeal) * days)
   const totalMealCostInr = Math.round(totalMealCostSgd * sgdToInrRate)
 
+  const handleSearchFlight = async (e?: React.FormEvent, codeOverride?: string) => {
+    if (e) e.preventDefault()
+    const targetCode = (codeOverride || flightNumberInput).trim()
+    if (!targetCode) return
+    setFlightLoading(true)
+    setFlightError(null)
+    setFlightResult(null)
+
+    try {
+      const res = await fetch(`/api/flights?flight_iata=${encodeURIComponent(targetCode)}`)
+      const json = await res.json()
+      if (!res.ok || json.error) {
+        setFlightError(json.error || 'Flight not found or invalid flight number.')
+      } else if (json.data) {
+        setFlightResult(json.data)
+      } else {
+        setFlightError('No flight data returned for this flight number.')
+      }
+    } catch (err: any) {
+      setFlightError('Failed to fetch live flight details. Please try again.')
+    } finally {
+      setFlightLoading(false)
+    }
+  }
+
   const sgacLink = sanitySettings.sgacOfficialLink || 'https://eservices.ica.gov.sg/sgarrivalcard/'
   const mdacLink = sanitySettings.mdacOfficialLink || 'https://imigresen-online.imi.gov.my/mdac/main'
   const sgVisaLink = sanitySettings.sgVisaStatusLink || 'https://eservices.ica.gov.sg/save/sso/login.xhtml'
@@ -143,6 +178,134 @@ export default function TravelToolsPage() {
       </section>
 
       <div style={{ maxWidth: '1200px', margin: '-2.5rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
+        
+        {/* ✈️ AIRLABS LIVE FLIGHT RADAR & STATUS TRACKER */}
+        {!sanitySettings.hideFlightTracker && (
+          <div style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Plane size={22} color="#059669" /> AirLabs Real-Time Flight Radar & Changi Status
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '0.25rem 0 0' }}>
+                  Track live flight status, arrivals, departures, terminals, and gates in real time.
+                </p>
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', padding: '0.25rem 0.65rem', borderRadius: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} /> Live AirLabs Data
+              </span>
+            </div>
+
+            <form onSubmit={handleSearchFlight} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <div style={{ flex: '1 1 280px', position: 'relative' }}>
+                <input 
+                  type="text" 
+                  placeholder="Enter Flight Number (e.g. SQ423, 6E53, AI380, MH601)..." 
+                  value={flightNumberInput}
+                  onChange={e => setFlightNumberInput(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.5rem', borderRadius: '8px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.92rem', fontWeight: 600, background: '#F8FAFC' }}
+                />
+                <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />
+              </div>
+              <button 
+                type="submit"
+                disabled={flightLoading}
+                style={{ padding: '0.75rem 1.75rem', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)', color: '#FFF', fontWeight: 700, fontSize: '0.9rem', cursor: flightLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 3px 10px rgba(5,150,105,0.2)' }}
+              >
+                {flightLoading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
+                <span>Track Flight</span>
+              </button>
+            </form>
+
+            {/* Quick Sample Badges */}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', fontSize: '0.78rem', color: '#64748B' }}>
+              <span>Try example flights:</span>
+              {['SQ423', '6E53', 'AI380', 'MH601'].map(code => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => { setFlightNumberInput(code); handleSearchFlight(undefined, code); }}
+                  style={{ background: '#F1F5F9', border: '1px solid #E2E8F0', padding: '0.2rem 0.5rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 700, color: '#334155' }}
+                >
+                  {code}
+                </button>
+              ))}
+            </div>
+
+            {/* Flight Search Error */}
+            {flightError && (
+              <div style={{ marginTop: '1.25rem', padding: '1rem', borderRadius: '8px', background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', fontSize: '0.88rem', fontWeight: 600 }}>
+                ⚠️ {flightError}
+              </div>
+            )}
+
+            {/* Flight Search Result Display Card */}
+            {flightResult && (
+              <div style={{ marginTop: '1.5rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem', marginBottom: '1rem' }}>
+                  <div>
+                    <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {flightResult.airline_name || 'Airline Carrier'}
+                    </span>
+                    <h4 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1A365D', margin: '0.1rem 0 0' }}>
+                      Flight {flightResult.flight_iata || flightResult.flight_number}
+                    </h4>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ 
+                      padding: '0.35rem 0.85rem', 
+                      borderRadius: '20px', 
+                      fontSize: '0.8rem', 
+                      fontWeight: 800, 
+                      textTransform: 'uppercase',
+                      background: flightResult.status === 'en-route' ? '#DBEAFE' : (flightResult.status === 'landed' ? '#DCFCE7' : '#FEF3C7'),
+                      color: flightResult.status === 'en-route' ? '#1E40AF' : (flightResult.status === 'landed' ? '#166534' : '#92400E'),
+                      border: `1px solid ${flightResult.status === 'en-route' ? '#93C5FD' : (flightResult.status === 'landed' ? '#86EFAC' : '#FCD34D')}`
+                    }}>
+                      {flightResult.status || 'Scheduled'}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', fontSize: '0.88rem' }}>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, display: 'block' }}>DEPARTURE</span>
+                    <strong style={{ fontSize: '1.05rem', color: '#1E293B', display: 'block' }}>{flightResult.dep_name || flightResult.dep_iata} ({flightResult.dep_iata})</strong>
+                    <span style={{ fontSize: '0.8rem', color: '#475569' }}>Terminal: {flightResult.dep_terminal || 'TBA'} | Gate: {flightResult.dep_gate || 'TBA'}</span>
+                    <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', color: '#059669', fontWeight: 700 }}>
+                      Time: {flightResult.dep_time || flightResult.dep_estimated || 'On Schedule'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, display: 'block' }}>ARRIVAL</span>
+                    <strong style={{ fontSize: '1.05rem', color: '#1E293B', display: 'block' }}>{flightResult.arr_name || flightResult.arr_iata} ({flightResult.arr_iata})</strong>
+                    <span style={{ fontSize: '0.8rem', color: '#475569' }}>Terminal: {flightResult.arr_terminal || 'TBA'} | Gate: {flightResult.arr_gate || 'TBA'}</span>
+                    <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', color: '#059669', fontWeight: 700 }}>
+                      Time: {flightResult.arr_time || flightResult.arr_estimated || 'On Schedule'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, display: 'block' }}>AIRCRAFT & STATUS</span>
+                    <span style={{ fontSize: '0.85rem', color: '#334155', display: 'block', fontWeight: 600 }}>Model: {flightResult.aircraft_code || 'Commercial Jet'}</span>
+                    <span style={{ fontSize: '0.8rem', color: '#475569', display: 'block' }}>Speed: {flightResult.speed ? `${flightResult.speed} km/h` : 'N/A'}</span>
+                    {flightResult.delayed ? (
+                      <span style={{ fontSize: '0.8rem', color: '#DC2626', fontWeight: 700, display: 'block', marginTop: '0.2rem' }}>
+                        ⚠️ Delayed by {flightResult.delayed} mins
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: '0.8rem', color: '#166534', fontWeight: 700, display: 'block', marginTop: '0.2rem' }}>
+                        ✓ Operating On Time
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
+        )}
         
         {/* 2. OFFICIAL GOVERNMENT PORTALS */}
         {!sanitySettings.hideOfficialPortals && (
