@@ -19,6 +19,9 @@ async function getAuthToken(): Promise<string> {
 
   if (!sessionRes.ok) throw new Error('Failed to start reseller auth session.')
   const sessionData = await sessionRes.json()
+  if (sessionData.status !== 1000 || !sessionData.response?.data?.session_key) {
+    throw new Error(sessionData.message || `Supplier auth error (${sessionData.status})`)
+  }
   const sessionKey = sessionData.response.data.session_key
 
   const authKey = crypto.createHash('md5').update(sessionKey + SECRET_KEY).digest('hex')

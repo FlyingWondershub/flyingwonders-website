@@ -36,7 +36,7 @@ async function getAuthToken(): Promise<string> {
 
   const sessionData = await sessionRes.json()
   if (sessionData.status !== 1000 || !sessionData.response?.data?.session_key) {
-    throw new Error(`Invalid session response: ${JSON.stringify(sessionData)}`)
+    throw new Error(sessionData.message || `Supplier auth error (${sessionData.status})`)
   }
 
   const sessionKey = sessionData.response.data.session_key
