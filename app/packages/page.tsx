@@ -315,8 +315,13 @@ export default async function PackagesPage() {
       packagesMap.set(sanityPkg._id, {
         ...defaultPkg,
         ...sanityPkg,
-        image: sanityPkg.image || defaultPkg.image
+        image: sanityPkg.image || defaultPkg.image,
+        // Only use Sanity itinerary if it exists and has entries; otherwise preserve the hardcoded default
+        itinerary: (sanityPkg.itinerary && sanityPkg.itinerary.length > 0) ? sanityPkg.itinerary : defaultPkg.itinerary,
+        // Only use Sanity hotelOptions if non-empty string
+        hotelOptions: (sanityPkg.hotelOptions && sanityPkg.hotelOptions.trim()) ? sanityPkg.hotelOptions : defaultPkg.hotelOptions,
       })
+
     } else {
       packagesMap.set(sanityPkg._id, sanityPkg)
     }
