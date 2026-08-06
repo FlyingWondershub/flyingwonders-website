@@ -560,8 +560,12 @@ export default function PrototypeBuilder() {
         try {
           const settingsRes = await fetch('/api/site-settings')
           const settingsData = await settingsRes.json()
-          if (settingsData.settings?.customPackageSheetUrl) {
-            sheetUrl = settingsData.settings.customPackageSheetUrl
+          const customUrl = settingsData.settings?.customPackageSheetUrl || settingsData.settings?.attractionsSheetUrl
+          if (customUrl) {
+            sheetUrl = customUrl.replace(/output=csv/gi, 'output=xlsx')
+            if (!sheetUrl.includes('output=xlsx')) {
+              sheetUrl += (sheetUrl.includes('?') ? '&' : '?') + 'output=xlsx'
+            }
           }
         } catch (e) {}
 
