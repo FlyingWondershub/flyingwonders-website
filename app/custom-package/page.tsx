@@ -562,7 +562,10 @@ export default function PrototypeBuilder() {
           const settingsData = await settingsRes.json()
           const customUrl = settingsData.settings?.customPackageSheetUrl || settingsData.settings?.attractionsSheetUrl
           if (customUrl) {
-            sheetUrl = customUrl.replace(/output=csv/gi, 'output=xlsx')
+            sheetUrl = customUrl
+              .replace(/\/pubhtml.*/gi, '/pub?output=xlsx')
+              .replace(/output=csv/gi, 'output=xlsx')
+              .replace(/output=html/gi, 'output=xlsx')
             if (!sheetUrl.includes('output=xlsx')) {
               sheetUrl += (sheetUrl.includes('?') ? '&' : '?') + 'output=xlsx'
             }
