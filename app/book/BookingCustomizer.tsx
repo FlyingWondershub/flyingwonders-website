@@ -224,6 +224,62 @@ const RECOGNIZED_PACKAGES = {
         ]
       }
     ]
+  },
+  genting_5n6d: {
+    title: 'Enchanting Singapore With Genting Dream Cruise ( 5N - 6D)',
+    price: 1050,
+    hotel: '3* / Hotel Chancellor Orchard Road / Hotel Boss / Hotel V Lavendar',
+    tier: 'groups',
+    desc: 'A magical 6-day journey combining the vibrant cityscape of Singapore with the luxury and entertainment of a Genting Dream Cruise.',
+    itinerary: [
+      {
+        day: 1,
+        title: "Changi Airport Arrival & Night Safari",
+        activities: [
+          { time: "08:00", desc: "Pickup from Changi Airport" },
+          { time: "14:30", desc: "Hotel Checkin - Hotel Chancellor @ Orchard Road" },
+          { time: "17:30", desc: "Night Safari with tram ride, followed by Dinner" }
+        ]
+      },
+      {
+        day: 2,
+        title: "Gardens by the Bay & Sentosa Fun",
+        activities: [
+          { time: "09:30", desc: "Gardens by the bay ( 2 domes: Cloud Forest & Flower Dome )" },
+          { time: "14:00", desc: "Sentosa Pickup from Mount Faber - Ride the Cable Car & Madame Tussauds" },
+          { time: "19:20", desc: "Wings of Time Show" }
+        ]
+      },
+      {
+        day: 3,
+        title: "Universal Studios Thrills",
+        activities: [
+          { time: "09:30", desc: "Universal Studios - Full Day + Lunch Coupon" }
+        ]
+      },
+      {
+        day: 4,
+        title: "Shopping & Genting Dream Cruise Embarkation",
+        activities: [
+          { time: "10:00", desc: "Free & Easy / Shopping Time" },
+          { time: "14:00", desc: "Pick Baggage from hotel and transfer to Cruise Terminal for Check-in" }
+        ]
+      },
+      {
+        day: 5,
+        title: "Enjoy Experiences on Cruise",
+        activities: [
+          { time: "Full Day", desc: "Enjoy premium experiences, slides, theater shows, dining, and Stay on Cruise" }
+        ]
+      },
+      {
+        day: 6,
+        title: "Cruise Arrival & Changi Departure",
+        activities: [
+          { time: "14:00", desc: "Reach Singapore Cruise Terminal & Drop to Airport / Explore Jewel Changi" }
+        ]
+      }
+    ]
   }
 }
 
@@ -248,14 +304,50 @@ export default function BookingCustomizer() {
   const searchParams = useSearchParams()
   const packageId = searchParams.get('packageId')
 
-  const selectedPackage = packageId ? (RECOGNIZED_PACKAGES[packageId as keyof typeof RECOGNIZED_PACKAGES] || {
-    title: 'Singapore Tour Package',
-    price: 600,
-    hotel: '3* / Standard Hotels',
-    tier: 'budget',
-    desc: 'A premium customizable package to explore Singapore.',
-    itinerary: [] as any[]
-  }) : null
+  const [sanityPkg, setSanityPkg] = useState<any>(null)
+
+  useEffect(() => {
+    if (!packageId) return
+    async function fetchPackageFromSanity() {
+      try {
+        const query = `*[_type == "travelPackage" && _id == $id][0]{
+          _id, title, tier, price, description, hotelOptions, itinerary
+        }`
+        const res = await client.fetch(query, { id: packageId })
+        if (res) {
+          setSanityPkg(res)
+        }
+      } catch (err) {
+        console.error('Error fetching package from Sanity:', err)
+      }
+    }
+    fetchPackageFromSanity()
+  }, [packageId])
+
+  const fallbackPkg = packageId ? RECOGNIZED_PACKAGES[packageId as keyof typeof RECOGNIZED_PACKAGES] : null
+
+  const selectedPackage = useMemo(() => {
+    if (!packageId) return null
+    if (sanityPkg) {
+      return {
+        title: sanityPkg.title || fallbackPkg?.title || 'Singapore Tour Package',
+        price: sanityPkg.price || fallbackPkg?.price || 600,
+        hotel: (sanityPkg.hotelOptions && sanityPkg.hotelOptions.trim()) ? sanityPkg.hotelOptions : (fallbackPkg?.hotel || '3* / Standard Hotels'),
+        tier: sanityPkg.tier || fallbackPkg?.tier || 'budget',
+        desc: sanityPkg.description || fallbackPkg?.desc || 'A premium customizable package to explore Singapore.',
+        itinerary: (sanityPkg.itinerary && sanityPkg.itinerary.length > 0) ? sanityPkg.itinerary : (fallbackPkg?.itinerary || [])
+      }
+    }
+    if (fallbackPkg) return fallbackPkg
+    return {
+      title: 'Singapore Tour Package',
+      price: 600,
+      hotel: '3* / Standard Hotels',
+      tier: 'budget',
+      desc: 'A premium customizable package to explore Singapore.',
+      itinerary: [] as any[]
+    }
+  }, [packageId, sanityPkg, fallbackPkg])
 
   const [step, setStep] = useState(1)
   const [itineraryExpanded, setItineraryExpanded] = useState(false)
