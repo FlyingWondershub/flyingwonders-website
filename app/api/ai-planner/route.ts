@@ -5,7 +5,27 @@ export const maxDuration = 60
 
 async function fetchInventory() {
   try {
-    const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlNHAbUt7ldY7my-EXF1VZq4s2eQ7y3YzZm8z6vFLfUH4KYKHw3G03FK60DlgQ_fGUN1Hz1qIBFqUT/pub?output=csv'
+    let sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlNHAbUt7ldY7my-EXF1VZq4s2eQ7y3YzZm8z6vFLfUH4KYKHw3G03FK60DlgQ_fGUN1Hz1qIBFqUT/pub?output=csv'
+    try {
+      const { createClient } = require('next-sanity')
+      const sanityClient = createClient({
+        projectId: '8xtd7yiv',
+        dataset: 'production',
+        apiVersion: '2024-01-01',
+        useCdn: false
+      })
+      const settings = await sanityClient.fetch(`*[_type == "siteSettings"][0]{ attractionsSheetUrl }`)
+      if (settings?.attractionsSheetUrl) {
+        sheetUrl = settings.attractionsSheetUrl
+          .replace(/\/pubhtml.*/gi, '/pub?output=csv')
+          .replace(/output=xlsx/gi, 'output=csv')
+          .replace(/output=html/gi, 'output=csv')
+        if (!sheetUrl.includes('output=csv')) {
+          sheetUrl += (sheetUrl.includes('?') ? '&' : '?') + 'output=csv'
+        }
+      }
+    } catch (e) {}
+
     const res = await fetch(sheetUrl, { next: { revalidate: 3600 } })
     if (!res.ok) throw new Error('Failed to fetch attractions sheet')
     const text = await res.text()

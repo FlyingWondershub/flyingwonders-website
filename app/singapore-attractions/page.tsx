@@ -9,6 +9,12 @@ async function getAttractions() {
       const siteSettings = await client.fetch(`*[_type == "siteSettings"][0]{ attractionsSheetUrl }`)
       if (siteSettings?.attractionsSheetUrl) {
         sheetUrl = siteSettings.attractionsSheetUrl
+          .replace(/\/pubhtml.*/gi, '/pub?output=csv')
+          .replace(/output=xlsx/gi, 'output=csv')
+          .replace(/output=html/gi, 'output=csv')
+        if (!sheetUrl.includes('output=csv')) {
+          sheetUrl += (sheetUrl.includes('?') ? '&' : '?') + 'output=csv'
+        }
       }
     } catch (e) {}
 
