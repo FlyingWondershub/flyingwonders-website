@@ -2651,57 +2651,60 @@ ${proposal}
           </button>
 
           {/* 🇸🇬 / 🇲🇾 Destination Mode Switcher */}
-          <div style={{ display: 'inline-flex', background: '#EDF2F7', padding: '0.15rem', borderRadius: '8px', border: '1px solid #CBD5E1', marginLeft: '0.5rem', marginRight: '0.5rem' }}>
+          <div style={{ display: 'inline-flex', background: '#EDF2F7', padding: '0.15rem', borderRadius: '8px', border: '1px solid #CBD5E1', marginLeft: '0.4rem', marginRight: '0.4rem' }}>
             <button
               type="button"
               onClick={() => setDestinationMode('singapore')}
+              title="Singapore DMC Mode"
               style={{
-                padding: '0.35rem 0.75rem',
+                padding: '0.3rem 0.6rem',
                 borderRadius: '6px',
                 border: 'none',
                 background: destinationMode === 'singapore' ? '#0F4C3A' : 'transparent',
                 color: destinationMode === 'singapore' ? '#FFF' : '#4A5568',
-                fontWeight: 700,
+                fontWeight: 800,
                 fontSize: '0.78rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
             >
-              🇸🇬 Singapore DMC
+              🇸🇬 SG
             </button>
             <button
               type="button"
               onClick={() => setDestinationMode('malaysia')}
+              title="Malaysia DMC Mode"
               style={{
-                padding: '0.35rem 0.75rem',
+                padding: '0.3rem 0.6rem',
                 borderRadius: '6px',
                 border: 'none',
                 background: destinationMode === 'malaysia' ? '#B7791F' : 'transparent',
                 color: destinationMode === 'malaysia' ? '#FFF' : '#4A5568',
-                fontWeight: 700,
+                fontWeight: 800,
                 fontSize: '0.78rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
             >
-              🇲🇾 Malaysia DMC
+              🇲🇾 MY
             </button>
             <button
               type="button"
               onClick={() => setDestinationMode('combined')}
+              title="Singapore + Malaysia Twin-Center Mode"
               style={{
-                padding: '0.35rem 0.75rem',
+                padding: '0.3rem 0.6rem',
                 borderRadius: '6px',
                 border: 'none',
                 background: destinationMode === 'combined' ? '#2B6CB0' : 'transparent',
                 color: destinationMode === 'combined' ? '#FFF' : '#4A5568',
-                fontWeight: 700,
+                fontWeight: 800,
                 fontSize: '0.78rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
             >
-              🇸🇬+🇲🇾 Combined
+              🇸🇬+🇲🇾 SG+MY
             </button>
           </div>
           {!hideReadyTemplatesSubpage && (
