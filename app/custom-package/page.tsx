@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
-import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck } from 'lucide-react'
+import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X } from 'lucide-react'
 
 // Default Fallback Master Data (Configured in SGD)
 const FALLBACK_HOTELS = [
@@ -86,6 +86,7 @@ interface GuideEntry {
 
 interface AttractionEntry {
   attractionIndex: number
+  attractionName?: string
   adultTickets: number
   childTickets: number
   time: string
@@ -266,7 +267,159 @@ export default function PrototypeBuilder() {
   const [customAgencyEmail, setCustomAgencyEmail] = useState('')
   const [customAgencyPhone, setCustomAgencyPhone] = useState('')
   const [hideNetPricing, setHideNetPricing] = useState(true)
-  const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor')
+  const [activeTab, setActiveTab] = useState<'editor' | 'preview' | 'templates'>('editor')
+  const [hideReadyTemplatesSubpage, setHideReadyTemplatesSubpage] = useState(false)
+  const [activeTemplateName, setActiveTemplateName] = useState<string | null>(null)
+  const [readyTemplatesList, setReadyTemplatesList] = useState<any[]>([
+    {
+      _id: 'template-1',
+      title: '3N/4D Singapore Highlights & City Essentials',
+      nightsCount: 3,
+      category: 'popular',
+      badgeText: 'BESTSELLER',
+      startingPriceSGD: 485,
+      summary: 'Airport Transfers + Half Day City Tour + Gardens by the Bay (2 Domes) + Night Safari with Tram.',
+      coverImage: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80',
+      itinerary: [
+        {
+          dayTitle: 'Arrival & Changi Jewel Transfer',
+          transfers: [{ vehicleIndex: 0, time: '12:00', description: 'Changi Airport to Hotel Private Transfer', qty: 1 }],
+          attractions: [],
+          breakfast: false, lunch: false, dinner: false,
+          guides: []
+        },
+        {
+          dayTitle: 'Gardens by the Bay & Flower Dome',
+          transfers: [{ vehicleIndex: 0, time: '09:30', description: 'Hotel to Gardens by the Bay Transfer', qty: 1 }],
+          attractions: [{ attractionIndex: 0, attractionName: 'Gardens by the Bay - Flower Dome & Cloud Forest', time: '10:00', adultQty: 2, childQty: 0 }],
+          breakfast: true, lunch: false, dinner: false,
+          guides: [{ guideType: 0, notes: 'English Speaking Half Day Guide' }]
+        },
+        {
+          dayTitle: 'Night Safari Experience',
+          transfers: [{ vehicleIndex: 0, time: '17:00', description: 'Hotel to Mandai Wildlife Reserve', qty: 1 }],
+          attractions: [{ attractionIndex: 2, attractionName: 'Night Safari with Tram Ride', time: '18:30', adultQty: 2, childQty: 0 }],
+          breakfast: true, lunch: false, dinner: true,
+          guides: []
+        },
+        {
+          dayTitle: 'Departure Transfer',
+          transfers: [{ vehicleIndex: 0, time: '11:00', description: 'Hotel to Changi Airport Private Departure', qty: 1 }],
+          attractions: [],
+          breakfast: true, lunch: false, dinner: false,
+          guides: []
+        }
+      ]
+    },
+    {
+      _id: 'template-2',
+      title: '4N/5D Sentosa Thrill & Universal Studios Special',
+      nightsCount: 4,
+      category: 'family',
+      badgeText: 'FAMILY FAVORITE',
+      startingPriceSGD: 720,
+      summary: 'Universal Studios Full Day Pass + S.E.A. Aquarium + Wings of Time + Marina Bay Sands SkyPark.',
+      coverImage: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
+      itinerary: [
+        {
+          dayTitle: 'Arrival & Hotel Check-in',
+          transfers: [{ vehicleIndex: 0, time: '14:00', description: 'Airport to Hotel Transfer', qty: 1 }],
+          attractions: [],
+          breakfast: false, lunch: false, dinner: false,
+          guides: []
+        },
+        {
+          dayTitle: 'Universal Studios Singapore Full Day',
+          transfers: [{ vehicleIndex: 0, time: '09:00', description: 'Hotel to Resorts World Sentosa Transfer', qty: 1 }],
+          attractions: [{ attractionIndex: 1, attractionName: 'Universal Studios Singapore One-Day Ticket', time: '10:00', adultQty: 2, childQty: 0 }],
+          breakfast: true, lunch: false, dinner: false,
+          guides: []
+        },
+        {
+          dayTitle: 'S.E.A. Aquarium & Wings of Time',
+          transfers: [{ vehicleIndex: 0, time: '10:00', description: 'Hotel to Sentosa Island', qty: 1 }],
+          attractions: [
+            { attractionIndex: 3, attractionName: 'S.E.A. Aquarium', time: '10:30', adultQty: 2, childQty: 0 },
+            { attractionIndex: 4, attractionName: 'Wings of Time Night Show', time: '19:40', adultQty: 2, childQty: 0 }
+          ],
+          breakfast: true, lunch: false, dinner: true,
+          guides: []
+        },
+        {
+          dayTitle: 'MBS SkyPark & Marina Bay Cruise',
+          transfers: [{ vehicleIndex: 0, time: '15:00', description: 'Hotel to Marina Bay Sands', qty: 1 }],
+          attractions: [{ attractionIndex: 5, attractionName: 'Marina Bay Sands SkyPark Observation Deck', time: '16:00', adultQty: 2, childQty: 0 }],
+          breakfast: true, lunch: false, dinner: false,
+          guides: [{ guideType: 0, notes: 'Half Day Escort Guide' }]
+        },
+        {
+          dayTitle: 'Departure Transfer',
+          transfers: [{ vehicleIndex: 0, time: '12:00', description: 'Hotel to Changi Departure', qty: 1 }],
+          attractions: [],
+          breakfast: true, lunch: false, dinner: false,
+          guides: []
+        }
+      ]
+    },
+    {
+      _id: 'template-3',
+      title: '5N/6D Grand Singapore & Malaysia Cross-Border Escape',
+      nightsCount: 5,
+      category: 'luxury',
+      badgeText: 'LUXURY DMC',
+      startingPriceSGD: 1050,
+      summary: 'Full Singapore Highlights + Private VIP Cross-Border Transfer to Johor Bahru / Desaru Coast.',
+      coverImage: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
+      itinerary: [
+        {
+          dayTitle: 'Arrival & VIP Transfer',
+          transfers: [{ vehicleIndex: 1, time: '13:00', description: 'Changi Airport to Luxury Hotel VIP 7-Seater', qty: 1 }],
+          attractions: [],
+          breakfast: false, lunch: false, dinner: false,
+          guides: []
+        },
+        {
+          dayTitle: 'Gardens by the Bay & Supertree Observatory',
+          transfers: [{ vehicleIndex: 1, time: '09:30', description: 'Private Transfer to Gardens by the Bay', qty: 1 }],
+          attractions: [{ attractionIndex: 0, attractionName: 'Gardens by the Bay + Supertree Observatory', time: '10:00', adultQty: 2, childQty: 0 }],
+          breakfast: true, lunch: true, dinner: false,
+          guides: [{ guideType: 1, notes: 'Full Day Licensed English Guide' }]
+        },
+        {
+          dayTitle: 'Universal Studios VIP Access',
+          transfers: [{ vehicleIndex: 1, time: '09:00', description: 'Private Sentosa VIP Transfer', qty: 1 }],
+          attractions: [{ attractionIndex: 1, attractionName: 'Universal Studios Singapore Express Ticket', time: '10:00', adultQty: 2, childQty: 0 }],
+          breakfast: true, lunch: false, dinner: true,
+          guides: []
+        },
+        {
+          dayTitle: 'Private Cross-Border Transfer to Malaysia',
+          transfers: [{ vehicleIndex: 1, time: '09:00', description: 'Singapore Hotel to Johor Bahru Cross-Border VIP MPV', qty: 1 }],
+          attractions: [],
+          breakfast: true, lunch: false, dinner: false,
+          guides: []
+        },
+        {
+          dayTitle: 'Desaru Coast Leisure Day',
+          transfers: [],
+          attractions: [],
+          breakfast: true, lunch: false, dinner: false,
+          guides: []
+        },
+        {
+          dayTitle: 'Return Departure Transfer',
+          transfers: [{ vehicleIndex: 1, time: '10:00', description: 'Johor Bahru to Changi Airport Departure', qty: 1 }],
+          attractions: [],
+          breakfast: true, lunch: false, dinner: false,
+          guides: []
+        }
+      ]
+    }
+  ])
+  const [selectedTemplateFilter, setSelectedTemplateFilter] = useState<'all' | '3' | '4' | '5'>('all')
+  const [selectedTemplateCategory, setSelectedTemplateCategory] = useState<'all' | 'popular' | 'family' | 'luxury' | 'budget' | 'mice'>('all')
+  const [templateModalItem, setTemplateModalItem] = useState<any | null>(null)
+  const [templateModalCheckinDate, setTemplateModalCheckinDate] = useState('')
 
   // UI Layout States
   const [collapsedDays, setCollapsedDays] = useState<Set<number>>(new Set(Array.from({ length: 15 }, (_, i) => i)))
@@ -557,6 +710,87 @@ export default function PrototypeBuilder() {
     const year = date.getFullYear()
     
     return `${day} ${month} ${year}`
+  }
+
+  // Duplicate Attraction Detection Hook
+  const duplicateAttractions = useMemo(() => {
+    const counts: Record<string, number[]> = {}
+    itinerary.forEach((day, dIdx) => {
+      day.attractions.forEach(attr => {
+        let attrName = ''
+        if (typeof attr.attractionIndex === 'number' && attractionsList[attr.attractionIndex]) {
+          attrName = attractionsList[attr.attractionIndex].name
+        } else if (attr.attractionName) {
+          attrName = attr.attractionName
+        }
+        if (attrName) {
+          const cleanName = attrName.trim().toLowerCase()
+          if (!counts[cleanName]) counts[cleanName] = []
+          counts[cleanName].push(dIdx + 1)
+        }
+      })
+    })
+
+    const duplicates: { name: string; days: number[] }[] = []
+    Object.entries(counts).forEach(([name, days]) => {
+      if (days.length > 1) {
+        const originalObj = attractionsList.find(a => a.name.trim().toLowerCase() === name)
+        duplicates.push({
+          name: originalObj ? originalObj.name : name,
+          days
+        })
+      }
+    })
+    return duplicates
+  }, [itinerary, attractionsList])
+
+  // Load Ready-Made Package Template into Builder Workspace
+  const handleLoadTemplateIntoBuilder = (tmpl: any, checkinDateToUse: string) => {
+    if (!tmpl) return
+    if (checkinDateToUse) setArrivalDate(checkinDateToUse)
+    setNightsCount(tmpl.nightsCount || 3)
+    setActiveTemplateName(tmpl.title)
+    setSavedProposalNum(null)
+
+    if (tmpl.itinerary && Array.isArray(tmpl.itinerary)) {
+      const mappedItinerary: DayPlan[] = tmpl.itinerary.map((day: any) => ({
+        transfers: Array.isArray(day.transfers) ? day.transfers.map((t: any) => ({
+          vehicleIndex: typeof t.vehicleIndex === 'number' ? t.vehicleIndex : 0,
+          time: t.time || '09:00',
+          description: t.description || '',
+          qty: typeof t.qty === 'number' ? t.qty : 1
+        })) : [],
+        attractions: Array.isArray(day.attractions) ? day.attractions.map((a: any) => {
+          let idx = typeof a.attractionIndex === 'number' ? a.attractionIndex : 0
+          if (a.attractionName) {
+            const found = attractionsList.findIndex(item => item.name.toLowerCase() === a.attractionName.toLowerCase())
+            if (found >= 0) idx = found
+          }
+          return {
+            attractionIndex: idx,
+            attractionName: a.attractionName || (attractionsList[idx]?.name || ''),
+            time: a.time || '10:00',
+            adultQty: typeof a.adultQty === 'number' ? a.adultQty : adults,
+            childQty: typeof a.childQty === 'number' ? a.childQty : kids,
+            pickupNotes: a.pickupNotes || ''
+          }
+        }) : [],
+        breakfast: !!day.breakfast,
+        lunch: !!day.lunch,
+        dinner: !!day.dinner,
+        guides: Array.isArray(day.guides) ? day.guides.map((g: any) => ({
+          guideType: typeof g.guideType === 'number' ? g.guideType : 0,
+          notes: g.notes || ''
+        })) : [],
+        guideRequired: Array.isArray(day.guides) && day.guides.length > 0,
+        isBreakTrip: !!day.isBreakTrip
+      }))
+      setItinerary(mappedItinerary)
+    }
+
+    setTemplateModalItem(null)
+    setActiveTab('editor')
+    alert(`✅ Loaded template "${tmpl.title}" into Builder Workspace! You can now customize every detail.`)
   }
 
   const updateDay = (dayIndex: number, key: keyof DayPlan, value: any) => {
@@ -1645,6 +1879,8 @@ export default function PrototypeBuilder() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           proposalNumber: savedProposalNum || undefined,
+          isTemplateBased: !!activeTemplateName,
+          templateName: activeTemplateName || '',
           agentEmail: activeAgent.email,
           guestName,
           adults,
@@ -2351,6 +2587,29 @@ ${proposal}
           >
             ⚙️ Builder Workspace
           </button>
+          {!hideReadyTemplatesSubpage && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('templates')}
+              style={{
+                padding: '0.45rem 1rem',
+                background: activeTab === 'templates' ? 'var(--emerald-secondary)' : 'transparent',
+                color: activeTab === 'templates' ? '#FFF' : '#4A5568',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: activeTab === 'templates' ? '0 3px 8px rgba(47,133,90,0.15)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem'
+              }}
+            >
+              <span>📦</span> Ready-Made Packages
+            </button>
+          )}
           {!hideClientPreview && (
             <button
               type="button"
@@ -2369,6 +2628,27 @@ ${proposal}
               }}
             >
               👁️ Client-Ready Preview
+            </button>
+          )}
+
+          {activeAgent?.email?.toLowerCase() === 'info.flyingwonders@gmail.com' && (
+            <button
+              type="button"
+              onClick={() => setHideReadyTemplatesSubpage(prev => !prev)}
+              title="Toggle visibility of Ready-Made Packages subpage for B2B portal"
+              style={{
+                padding: '0.35rem 0.75rem',
+                background: hideReadyTemplatesSubpage ? '#FEF2F2' : '#F0FDF4',
+                color: hideReadyTemplatesSubpage ? '#991B1B' : '#166534',
+                border: `1px solid ${hideReadyTemplatesSubpage ? '#FECACA' : '#BBF7D0'}`,
+                borderRadius: '6px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                marginLeft: 'auto'
+              }}
+            >
+              {hideReadyTemplatesSubpage ? '🙈 Subpage: Hidden' : '👁️ Subpage: Visible'}
             </button>
           )}
           <button
@@ -2468,7 +2748,178 @@ ${proposal}
           </button>
       </div>
 
-      {activeTab === 'preview' ? (
+      {activeTab === 'templates' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          
+          {/* Subpage Banner */}
+          <div style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', borderRadius: '16px', padding: '2rem 2.5rem', color: '#FFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+            <div>
+              <span style={{ background: 'rgba(212,175,55,0.2)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.4)', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                B2B Ready-Made Packages
+              </span>
+              <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.8rem', fontWeight: 800, margin: '0.4rem 0 0.2rem' }}>
+                Pre-Configured Tour Packages
+              </h2>
+              <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.9, maxWidth: '600px', fontWeight: 300 }}>
+                Select a ready-made itinerary template below to instantly pre-fill your workspace. Customize dates, transfers, hotel rooms, tickets, and meals before quoting.
+              </p>
+            </div>
+          </div>
+
+          {/* Filter Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', background: '#FFF', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Duration:</span>
+              {(['all', '3', '4', '5'] as const).map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setSelectedTemplateFilter(n)}
+                  style={{
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '20px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: selectedTemplateFilter === n ? '#0F4C3A' : '#F1F5F9',
+                    color: selectedTemplateFilter === n ? '#FFF' : '#475569'
+                  }}
+                >
+                  {n === 'all' ? 'All Durations' : `${n} Nights / ${parseInt(n) + 1} Days`}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Category:</span>
+              {(['all', 'popular', 'family', 'luxury', 'budget', 'mice'] as const).map(cat => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedTemplateCategory(cat)}
+                  style={{
+                    padding: '0.35rem 0.85rem',
+                    borderRadius: '20px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    textTransform: 'capitalize',
+                    background: selectedTemplateCategory === cat ? '#0F4C3A' : '#F1F5F9',
+                    color: selectedTemplateCategory === cat ? '#FFF' : '#475569'
+                  }}
+                >
+                  {cat === 'all' ? 'All Themes' : cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Template Cards Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.75rem' }}>
+            {readyTemplatesList
+              .filter(t => {
+                if (t.hideTemplate) return false
+                if (selectedTemplateFilter !== 'all' && String(t.nightsCount) !== selectedTemplateFilter) return false
+                if (selectedTemplateCategory !== 'all' && t.category !== selectedTemplateCategory) return false
+                return true
+              })
+              .map((tmpl: any) => (
+                <div key={tmpl._id || tmpl.title} style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', transition: 'all 0.2s ease' }}>
+                  
+                  <div>
+                    {/* Card Cover Image with Badge */}
+                    <div style={{ height: '180px', width: '100%', position: 'relative', overflow: 'hidden', background: '#1E293B' }}>
+                      <img src={tmpl.coverImage || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800'} alt={tmpl.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%)' }} />
+                      
+                      {tmpl.badgeText && (
+                        <span style={{ position: 'absolute', top: '1rem', left: '1rem', background: '#D4AF37', color: '#111', fontWeight: 800, fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }}>
+                          {tmpl.badgeText}
+                        </span>
+                      )}
+
+                      <span style={{ position: 'absolute', bottom: '1rem', right: '1rem', background: 'rgba(15,76,58,0.9)', color: '#FFF', fontWeight: 800, fontSize: '0.78rem', padding: '0.3rem 0.75rem', borderRadius: '20px', backdropFilter: 'blur(4px)' }}>
+                        🌙 {tmpl.nightsCount} Nights / {tmpl.nightsCount + 1} Days
+                      </span>
+                    </div>
+
+                    {/* Card Content */}
+                    <div style={{ padding: '1.5rem' }}>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: '0 0 0.6rem', lineHeight: 1.3 }}>
+                        {tmpl.title}
+                      </h3>
+
+                      <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
+                        {tmpl.summary}
+                      </p>
+
+                      {/* Included Highlights Pills */}
+                      {tmpl.itinerary && Array.isArray(tmpl.itinerary) && (
+                        <div style={{ background: '#F8FAFC', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F4C3A', display: 'block', marginBottom: '0.35rem' }}>
+                            Included Highlights Overview:
+                          </span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', fontSize: '0.75rem', color: '#334155' }}>
+                            {tmpl.itinerary.map((d: any, idx: number) => (
+                              <span key={idx} style={{ background: '#FFF', border: '1px solid #CBD5E1', padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                                Day {idx + 1}: {d.dayTitle || `Day ${idx + 1}`}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {tmpl.startingPriceSGD > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem', borderTop: '1px solid #E2E8F0' }}>
+                          <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Est. Starting Net Price:</span>
+                          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#059669' }}>
+                            S$ {tmpl.startingPriceSGD.toLocaleString()}{' '}
+                            <span style={{ fontSize: '0.75rem', color: '#D4AF37', fontWeight: 600 }}>
+                              (₹{Math.round(tmpl.startingPriceSGD * sgdToInrRate).toLocaleString('en-IN')})
+                            </span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card Action Button */}
+                  <div style={{ padding: '1rem 1.5rem 1.5rem', borderTop: '1px solid #F1F5F9', background: '#F8FAFC' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTemplateModalItem(tmpl)
+                        setTemplateModalCheckinDate(arrivalDate || minCheckinDate)
+                      }}
+                      style={{
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)',
+                        color: '#FFF',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        padding: '0.75rem',
+                        borderRadius: '8px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        boxShadow: '0 3px 8px rgba(5,150,105,0.2)'
+                      }}
+                    >
+                      <span>🚀</span> Customize & Quote This Package
+                    </button>
+                  </div>
+
+                </div>
+              ))}
+          </div>
+
+        </div>
+      ) : activeTab === 'preview' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
           
           {/* White-Label Customer Header */}
@@ -3052,6 +3503,47 @@ ${proposal}
         
         {/* Left: Input parameters & Day-Wise Itinerary Options */}
         <div>
+          {/* Active Template Banner */}
+          {activeTemplateName && (
+            <div style={{ background: '#FAF5FF', border: '1.5px solid #D6BCFA', borderRadius: '12px', padding: '0.85rem 1.25rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 8px rgba(107, 70, 193, 0.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span style={{ background: '#6B46C1', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '12px', textTransform: 'uppercase' }}>
+                  Template Active
+                </span>
+                <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#4C1D95' }}>
+                  📦 {activeTemplateName}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTemplateName(null)}
+                style={{ background: 'transparent', border: 'none', color: '#6B46C1', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Unlink Template
+              </button>
+            </div>
+          )}
+
+          {/* Duplicate Attraction Alert Banner */}
+          {duplicateAttractions.length > 0 && (
+            <div style={{ background: '#FFFBEB', border: '1.5px solid #F59E0B', borderRadius: '12px', padding: '0.95rem 1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem', boxShadow: '0 3px 12px rgba(245,158,11,0.12)' }}>
+              <AlertTriangle color="#D97706" size={22} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div style={{ fontSize: '0.85rem', color: '#92400E', lineHeight: 1.5 }}>
+                <strong style={{ fontSize: '0.9rem', color: '#B45309', display: 'block', marginBottom: '0.25rem' }}>
+                  ⚠️ Duplicate Attraction Alert:
+                </strong>
+                The following attraction tickets are selected on multiple days. Please review to avoid duplicate ticketing:
+                <div style={{ marginTop: '0.4rem', display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                  {duplicateAttractions.map((dup, i) => (
+                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#FEF3C7', padding: '0.25rem 0.6rem', borderRadius: '6px', border: '1px solid #FDE68A', fontWeight: 700, color: '#B45309', fontSize: '0.78rem' }}>
+                      🎟️ <strong>{dup.name}</strong> — selected on Day(s) <strong>{dup.days.join(', ')}</strong>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* General Inputs Panel (Global Hotel Selection) */}
           <div className="glass" style={{ padding: '1.25rem 1.5rem', borderRadius: '16px', marginBottom: '1.5rem', background: '#FFF', border: '1px solid #E2E8F0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.5rem' }}>
@@ -4489,6 +4981,53 @@ ${proposal}
         </div>
         );
       })()}
+      {/* TEMPLATE CONFIRMATION MODAL */}
+      {templateModalItem && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setTemplateModalItem(null)}>
+          <div style={{ background: '#FFF', borderRadius: '16px', maxWidth: '480px', width: '100%', padding: '2rem', boxShadow: '0 10px 30px rgba(0,0,0,0.2)', position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <button type="button" onClick={() => setTemplateModalItem(null)} style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', border: 'none', background: 'transparent', cursor: 'pointer' }}>
+              <X size={20} color="#64748B" />
+            </button>
+
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase' }}>Ready-Made Package Template</span>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1A365D', margin: '0.2rem 0 0.8rem' }}>
+              {templateModalItem.title}
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.25rem' }}>
+              Select your client's Check-in Date to load this template into your Builder Workspace:
+            </p>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1A365D', marginBottom: '0.35rem' }}>Check-in Date *</label>
+              <input 
+                type="date"
+                min={minCheckinDate}
+                value={templateModalCheckinDate}
+                onChange={e => setTemplateModalCheckinDate(e.target.value)}
+                style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.9rem', background: '#F8FAFC' }}
+              />
+              <span style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '0.25rem', display: 'block' }}>* Minimum T+3 days lead time enforced for bookings</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => setTemplateModalItem(null)}
+                style={{ flex: 1, background: '#F1F5F9', border: '1px solid #CBD5E1', padding: '0.75rem', borderRadius: '8px', fontWeight: 700, color: '#475569', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLoadTemplateIntoBuilder(templateModalItem, templateModalCheckinDate)}
+                style={{ flex: 1.5, background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)', border: 'none', padding: '0.75rem', borderRadius: '8px', fontWeight: 800, color: '#FFF', cursor: 'pointer' }}
+              >
+                Confirm & Load into Builder 🚀
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

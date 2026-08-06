@@ -12,20 +12,22 @@ const writeClient = createClient({
   useCdn: false,
 })
 
-// Helper to generate format: FW-2026-XXXX (4 character random uppercase alphanumeric)
-function generateProposalNumber() {
+// Helper to generate format: FW-2026-XXXX or FW-TMP-XXXX for template-based quotes
+function generateProposalNumber(isTemplateBased = false) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   let suffix = ''
   for (let i = 0; i < 4; i++) {
     suffix += chars.charAt(Math.floor(Math.random() * chars.length))
   }
-  return `FW-2026-${suffix}`
+  return isTemplateBased ? `FW-TMP-${suffix}` : `FW-2026-${suffix}`
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const {
+      isTemplateBased,
+      templateName,
       agentEmail,
       guestName,
       adults,
@@ -106,13 +108,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (!proposalNumber) {
-      proposalNumber = generateProposalNumber()
+      proposalNumber = generateProposalNumber(!!isTemplateBased)
     }
 
     // 3. Create new document in Sanity
     const doc = await writeClient.create({
       _type: 'proposal',
       proposalNumber,
+      isTemplateBased: !!isTemplateBased,
+      templateName: templateName || '',
       agent: agentRef,
       guestName: guestName || '',
       adults: Number(adults) || 2,

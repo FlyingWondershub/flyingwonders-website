@@ -28,6 +28,7 @@ import { competitorPriceSchema } from './competitorPrice'
 import { corporateTravelSchema } from './corporateTravel'
 import { travelToolsSchema } from './travelTools'
 import { eventsPageSchema } from './eventsPage'
+import { readyPackageTemplateSchema } from './readyPackageTemplate'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -57,6 +58,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     competitorPriceSchema,
     corporateTravelSchema,
     travelToolsSchema,
-    eventsPageSchema
+    eventsPageSchema,
+    readyPackageTemplateSchema
   ],
 }
