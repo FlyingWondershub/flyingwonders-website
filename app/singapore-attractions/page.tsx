@@ -19,7 +19,7 @@ async function getAttractions() {
     } catch (e) {}
 
     const res = await fetch(sheetUrl, {
-      next: { revalidate: 3600 }
+      cache: 'no-store'
     })
     if (!res.ok) throw new Error('Failed to fetch attractions sheet')
     const text = await res.text()
