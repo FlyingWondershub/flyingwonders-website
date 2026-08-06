@@ -549,6 +549,10 @@ export default function PrototypeBuilder() {
     } catch { /* noop */ }
   }, [])
 
+  // Destination Mode State ('singapore' | 'malaysia' | 'combined')
+  const [destinationMode, setDestinationMode] = useState<'singapore' | 'malaysia' | 'combined'>('singapore')
+  const [malaysiaPackageSheetUrl, setMalaysiaPackageSheetUrl] = useState<string | null>(null)
+
   // 2. Fetch published Excel Google Sheet (.xlsx format) to read all sheets
   useEffect(() => {
     if (!isAuthenticated) return // Only fetch if authenticated
@@ -560,9 +564,16 @@ export default function PrototypeBuilder() {
         try {
           const settingsRes = await fetch('/api/site-settings')
           const settingsData = await settingsRes.json()
-          const customUrl = settingsData.settings?.customPackageSheetUrl || settingsData.settings?.attractionsSheetUrl
-          if (customUrl) {
-            sheetUrl = customUrl
+          
+          if (settingsData.settings?.customPackageSheetUrl) setCustomPackageSheetUrl(settingsData.settings.customPackageSheetUrl)
+          if (settingsData.settings?.malaysiaPackageSheetUrl) setMalaysiaPackageSheetUrl(settingsData.settings.malaysiaPackageSheetUrl)
+
+          const targetUrl = destinationMode === 'malaysia'
+            ? (settingsData.settings?.malaysiaPackageSheetUrl || settingsData.settings?.customPackageSheetUrl)
+            : (settingsData.settings?.customPackageSheetUrl || settingsData.settings?.attractionsSheetUrl)
+
+          if (targetUrl) {
+            sheetUrl = targetUrl
               .replace(/\/pubhtml.*/gi, '/pub?output=xlsx')
               .replace(/output=csv/gi, 'output=xlsx')
               .replace(/output=html/gi, 'output=xlsx')
@@ -664,7 +675,7 @@ export default function PrototypeBuilder() {
       }
     }
     fetchGoogleWorkbook()
-  }, [isAuthenticated])
+  }, [isAuthenticated, destinationMode])
 
   // Fetch live SGD → INR exchange rate, site-settings and attraction meta on mount
   useEffect(() => {
@@ -2638,6 +2649,61 @@ ${proposal}
           >
             ⚙️ Builder Workspace
           </button>
+
+          {/* 🇸🇬 / 🇲🇾 Destination Mode Switcher */}
+          <div style={{ display: 'inline-flex', background: '#EDF2F7', padding: '0.15rem', borderRadius: '8px', border: '1px solid #CBD5E1', marginLeft: '0.5rem', marginRight: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => setDestinationMode('singapore')}
+              style={{
+                padding: '0.35rem 0.75rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: destinationMode === 'singapore' ? '#0F4C3A' : 'transparent',
+                color: destinationMode === 'singapore' ? '#FFF' : '#4A5568',
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              🇸🇬 Singapore DMC
+            </button>
+            <button
+              type="button"
+              onClick={() => setDestinationMode('malaysia')}
+              style={{
+                padding: '0.35rem 0.75rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: destinationMode === 'malaysia' ? '#B7791F' : 'transparent',
+                color: destinationMode === 'malaysia' ? '#FFF' : '#4A5568',
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              🇲🇾 Malaysia DMC
+            </button>
+            <button
+              type="button"
+              onClick={() => setDestinationMode('combined')}
+              style={{
+                padding: '0.35rem 0.75rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: destinationMode === 'combined' ? '#2B6CB0' : 'transparent',
+                color: destinationMode === 'combined' ? '#FFF' : '#4A5568',
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              🇸🇬+🇲🇾 Combined
+            </button>
+          </div>
           {!hideReadyTemplatesSubpage && (
             <button
               type="button"

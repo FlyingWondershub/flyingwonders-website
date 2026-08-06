@@ -21,6 +21,7 @@ export async function GET() {
       hideFaq,
       attractionsSheetUrl,
       customPackageSheetUrl,
+      malaysiaPackageSheetUrl,
       iciciUpiId,
       iciciAccountName,
       iciciBankDetails,

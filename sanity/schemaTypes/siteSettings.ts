@@ -55,9 +55,16 @@ export const siteSettingsSchema = {
     },
     {
       name: 'customPackageSheetUrl',
-      title: '📊 Custom Package Master Pricing Google Sheet CSV URL',
+      title: '📊 Custom Package Singapore Master Pricing Google Sheet URL',
       type: 'url',
-      description: 'Published Google Sheet CSV link for Custom Package Hotels, Transfers, Guides, and Meals master rates.',
+      description: 'Published Google Sheet URL for Singapore Hotels, Transfers, Guides, and Meals master rates.',
+      group: 'b2bToggles',
+    },
+    {
+      name: 'malaysiaPackageSheetUrl',
+      title: '📊 Custom Package Malaysia Master Pricing Google Sheet URL',
+      type: 'url',
+      description: 'Published Google Sheet URL for Malaysia Hotels, Transfers, Guides, and Meals master rates.',
       group: 'b2bToggles',
     },
 
