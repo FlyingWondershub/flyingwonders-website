@@ -243,6 +243,8 @@ export default function PrototypeBuilder() {
   const [isIciciModalOpen, setIsIciciModalOpen] = useState(false)
   const [customPackageSheetUrl, setCustomPackageSheetUrl] = useState<string | null>(null)
   const [hideIciciCustomPackage, setHideIciciCustomPackage] = useState(false)
+  const [hideCashfreeCustomPackage, setHideCashfreeCustomPackage] = useState(false)
+  const [hidePreviewPackageOverlay, setHidePreviewPackageOverlay] = useState(false)
   const [hideClientPreview, setHideClientPreview] = useState(false)
 
   // Dynamic Master Data fetched from Google Sheets (SGD pricing)
@@ -631,12 +633,11 @@ export default function PrototypeBuilder() {
     fetch('/api/site-settings')
       .then(res => res.json())
       .then(data => {
-        if (data.settings?.hideIciciCustomPackage) {
-          setHideIciciCustomPackage(true)
-        }
-        if (data.settings?.hideCustomPackageClientPreview) {
-          setHideClientPreview(true)
-        }
+        if (data.settings?.hideReadyTemplatesSubpage) setHideReadyTemplatesSubpage(true)
+        if (data.settings?.hideCustomPackageClientPreview) setHideClientPreview(true)
+        if (data.settings?.hidePreviewPackageOverlay) setHidePreviewPackageOverlay(true)
+        if (data.settings?.hideIciciCustomPackage) setHideIciciCustomPackage(true)
+        if (data.settings?.hideCashfreeCustomPackage) setHideCashfreeCustomPackage(true)
       })
       .catch(() => {})
 
@@ -2674,7 +2675,7 @@ ${proposal}
           >
             🔄 Clear & New Itinerary
           </button>
-          {itinerary.length > 0 && (
+          {!hidePreviewPackageOverlay && (
             <button
               type="button"
               onClick={() => setShowPreviewOverlay(true)}
@@ -2721,31 +2722,33 @@ ${proposal}
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={handleCashfreePayment}
-            disabled={cashfreeLoading}
-            style={{
-              padding: '0.35rem 0.8rem',
-              background: 'linear-gradient(135deg, #1A365D 0%, #2A4365 100%)',
-              color: '#FFF',
-              border: 'none',
-              borderRadius: '6px',
-              fontWeight: 700,
-              fontSize: '0.8rem',
-              cursor: cashfreeLoading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minWidth: '150px',
-              gap: '0.35rem',
-              boxShadow: '0 3px 8px rgba(26, 54, 93, 0.25)',
-              opacity: cashfreeLoading ? 0.7 : 1
-            }}
-          >
-            {cashfreeLoading ? <Loader2 size={16} className="animate-spin" /> : '💳 Credit Card - Pay'}
-          </button>
+          {!hideCashfreeCustomPackage && (
+            <button
+              type="button"
+              onClick={handleCashfreePayment}
+              disabled={cashfreeLoading}
+              style={{
+                padding: '0.35rem 0.8rem',
+                background: 'linear-gradient(135deg, #1A365D 0%, #2A4365 100%)',
+                color: '#FFF',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: cashfreeLoading ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '150px',
+                gap: '0.35rem',
+                boxShadow: '0 3px 8px rgba(26, 54, 93, 0.25)',
+                opacity: cashfreeLoading ? 0.7 : 1
+              }}
+            >
+              {cashfreeLoading ? <Loader2 size={16} className="animate-spin" /> : '💳 Credit Card - Pay'}
+            </button>
+          )}
       </div>
 
       {activeTab === 'templates' ? (
