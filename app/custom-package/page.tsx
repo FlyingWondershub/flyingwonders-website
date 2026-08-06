@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useMemo, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
@@ -507,10 +506,11 @@ export default function PrototypeBuilder() {
     checkSession()
   }, [])
 
-  // AI Planner draft pre-fill: detect ?from=ai-planner and load sessionStorage draft
-  const searchParams = useSearchParams()
+  // AI Planner draft pre-fill: detect ?from=ai-planner via window.location and load sessionStorage draft
   useEffect(() => {
-    if (searchParams?.get('from') !== 'ai-planner') return
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('from') !== 'ai-planner') return
     try {
       const raw = sessionStorage.getItem('ai_planner_draft')
       if (!raw) return
@@ -528,11 +528,14 @@ export default function PrototypeBuilder() {
               const dayIdx = draftDay.dayNumber - 1
               if (dayIdx >= 0 && dayIdx < updated.length && Array.isArray(draftDay.attractions)) {
                 const matchedAttractions = draftDay.attractions
-                  .map((name: string) => {
-                    // Will be refined once attractionsList is loaded
-                    return { attractionName: name, attractionIndex: -1, adultTickets: draft.adults || 2, childTickets: draft.kids || 0, time: '10:00', description: `Loaded from AI Planner: ${name}` }
-                  })
-                  .filter(Boolean)
+                  .map((name: string) => ({
+                    attractionName: name,
+                    attractionIndex: -1,
+                    adultTickets: draft.adults || 2,
+                    childTickets: draft.kids || 0,
+                    time: '10:00',
+                    description: `Loaded from AI Planner: ${name}`
+                  }))
                 if (matchedAttractions.length > 0) {
                   updated[dayIdx] = { ...updated[dayIdx], attractions: matchedAttractions }
                 }
@@ -544,7 +547,7 @@ export default function PrototypeBuilder() {
         }, 1200)
       }
     } catch { /* noop */ }
-  }, [searchParams])
+  }, [])
 
   // 2. Fetch published Excel Google Sheet (.xlsx format) to read all sheets
   useEffect(() => {
