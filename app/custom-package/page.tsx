@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
@@ -505,6 +506,45 @@ export default function PrototypeBuilder() {
     }
     checkSession()
   }, [])
+
+  // AI Planner draft pre-fill: detect ?from=ai-planner and load sessionStorage draft
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    if (searchParams?.get('from') !== 'ai-planner') return
+    try {
+      const raw = sessionStorage.getItem('ai_planner_draft')
+      if (!raw) return
+      const draft = JSON.parse(raw)
+      if (draft.adults) setAdults(draft.adults)
+      if (draft.kids !== undefined) setKids(draft.kids)
+      if (draft.numNights) setNightsCount(draft.numNights)
+      if (draft.arrivalDate) setArrivalDate(draft.arrivalDate)
+      // Pre-fill itinerary attractions after the itinerary array is initialized
+      if (Array.isArray(draft.days) && draft.days.length > 0) {
+        setTimeout(() => {
+          setItinerary(prev => {
+            const updated = [...prev]
+            draft.days.forEach((draftDay: { dayNumber: number; attractions: string[] }) => {
+              const dayIdx = draftDay.dayNumber - 1
+              if (dayIdx >= 0 && dayIdx < updated.length && Array.isArray(draftDay.attractions)) {
+                const matchedAttractions = draftDay.attractions
+                  .map((name: string) => {
+                    // Will be refined once attractionsList is loaded
+                    return { attractionName: name, attractionIndex: -1, adultTickets: draft.adults || 2, childTickets: draft.kids || 0, time: '10:00', description: `Loaded from AI Planner: ${name}` }
+                  })
+                  .filter(Boolean)
+                if (matchedAttractions.length > 0) {
+                  updated[dayIdx] = { ...updated[dayIdx], attractions: matchedAttractions }
+                }
+              }
+            })
+            return updated
+          })
+          sessionStorage.removeItem('ai_planner_draft')
+        }, 1200)
+      }
+    } catch { /* noop */ }
+  }, [searchParams])
 
   // 2. Fetch published Excel Google Sheet (.xlsx format) to read all sheets
   useEffect(() => {
