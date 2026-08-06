@@ -2635,90 +2635,91 @@ ${proposal}
             type="button"
             onClick={() => setActiveTab('editor')}
             style={{
-              padding: '0.45rem 1rem',
+              padding: '0.35rem 0.75rem',
               background: activeTab === 'editor' ? 'var(--emerald-secondary)' : 'transparent',
               color: activeTab === 'editor' ? '#FFF' : '#4A5568',
               border: 'none',
               borderRadius: '6px',
               fontWeight: 700,
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
               boxShadow: activeTab === 'editor' ? '0 3px 8px rgba(47,133,90,0.15)' : 'none'
             }}
           >
-            ⚙️ Builder Workspace
+            ⚙️ Builder
           </button>
 
           {/* 🇸🇬 / 🇲🇾 Destination Mode Switcher */}
-          <div style={{ display: 'inline-flex', background: '#EDF2F7', padding: '0.15rem', borderRadius: '8px', border: '1px solid #CBD5E1', marginLeft: '0.4rem', marginRight: '0.4rem' }}>
+          <div style={{ display: 'inline-flex', background: '#EDF2F7', padding: '0.15rem', borderRadius: '8px', border: '1px solid #CBD5E1', marginLeft: '0.25rem', marginRight: '0.25rem' }}>
             <button
               type="button"
               onClick={() => setDestinationMode('singapore')}
               title="Singapore DMC Mode"
               style={{
-                padding: '0.3rem 0.6rem',
+                padding: '0.3rem 0.55rem',
                 borderRadius: '6px',
                 border: 'none',
                 background: destinationMode === 'singapore' ? '#0F4C3A' : 'transparent',
                 color: destinationMode === 'singapore' ? '#FFF' : '#4A5568',
                 fontWeight: 800,
-                fontSize: '0.78rem',
+                fontSize: '0.85rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
             >
-              🇸🇬 SG
+              🇸🇬
             </button>
             <button
               type="button"
               onClick={() => setDestinationMode('malaysia')}
               title="Malaysia DMC Mode"
               style={{
-                padding: '0.3rem 0.6rem',
+                padding: '0.3rem 0.55rem',
                 borderRadius: '6px',
                 border: 'none',
                 background: destinationMode === 'malaysia' ? '#B7791F' : 'transparent',
                 color: destinationMode === 'malaysia' ? '#FFF' : '#4A5568',
                 fontWeight: 800,
-                fontSize: '0.78rem',
+                fontSize: '0.85rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
             >
-              🇲🇾 MY
+              🇲🇾
             </button>
             <button
               type="button"
               onClick={() => setDestinationMode('combined')}
-              title="Singapore + Malaysia Twin-Center Mode"
+              title="Twin-Center Combined Mode (Singapore + Malaysia)"
               style={{
-                padding: '0.3rem 0.6rem',
+                padding: '0.3rem 0.55rem',
                 borderRadius: '6px',
                 border: 'none',
                 background: destinationMode === 'combined' ? '#2B6CB0' : 'transparent',
                 color: destinationMode === 'combined' ? '#FFF' : '#4A5568',
                 fontWeight: 800,
-                fontSize: '0.78rem',
+                fontSize: '0.85rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
             >
-              🇸🇬+🇲🇾 SG+MY
+              🇸🇬+🇲🇾
             </button>
           </div>
+
           {!hideReadyTemplatesSubpage && (
             <button
               type="button"
               onClick={() => setActiveTab('templates')}
               style={{
-                padding: '0.45rem 1rem',
+                padding: '0.35rem 0.75rem',
                 background: activeTab === 'templates' ? 'var(--emerald-secondary)' : 'transparent',
                 color: activeTab === 'templates' ? '#FFF' : '#4A5568',
                 border: 'none',
                 borderRadius: '6px',
                 fontWeight: 700,
-                fontSize: '0.85rem',
+                fontSize: '0.82rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 boxShadow: activeTab === 'templates' ? '0 3px 8px rgba(47,133,90,0.15)' : 'none',
@@ -2727,7 +2728,7 @@ ${proposal}
                 gap: '0.35rem'
               }}
             >
-              <span>📦</span> Ready-Made Packages
+              <span>📦</span> Ready-Made
             </button>
           )}
           {!hideClientPreview && (
@@ -2735,19 +2736,19 @@ ${proposal}
               type="button"
               onClick={() => setActiveTab('preview')}
               style={{
-                padding: '0.45rem 1rem',
+                padding: '0.35rem 0.75rem',
                 background: activeTab === 'preview' ? 'var(--emerald-secondary)' : 'transparent',
                 color: activeTab === 'preview' ? '#FFF' : '#4A5568',
                 border: 'none',
                 borderRadius: '6px',
                 fontWeight: 700,
-                fontSize: '0.85rem',
+                fontSize: '0.82rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 boxShadow: activeTab === 'preview' ? '0 3px 8px rgba(47,133,90,0.15)' : 'none'
               }}
             >
-              👁️ Client-Ready Preview
+              👁️ Preview
             </button>
           )}
 
