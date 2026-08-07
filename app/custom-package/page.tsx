@@ -4435,15 +4435,29 @@ ${proposal}
                         return (
                           <div key={areaName} style={{ border: '1px solid #C6F6D5', borderRadius: '6px', overflow: 'hidden' }}>
                             {/* Area Header Bar */}
-                            <div 
-                              onClick={() => toggleAreaExpand(dIdx, areaName)}
-                              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#E6FFFA', padding: '0.35rem 0.65rem', cursor: 'pointer', userSelect: 'none' }}
-                            >
-                              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#2C7A7B' }}>📍 {areaName}</span>
-                              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#319795' }}>
-                                {isAreaExpanded ? '− Compress' : '+ Expand'}
-                              </span>
-                            </div>
+                            {(() => {
+                              const areaOriginalIndices = new Set(areaAttractions.map(a => a.originalIdx))
+                              const selectedInAreaCount = day.attractions.filter(sel => areaOriginalIndices.has(sel.attractionIndex)).length
+
+                              return (
+                                <div 
+                                  onClick={() => toggleAreaExpand(dIdx, areaName)}
+                                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#E6FFFA', padding: '0.35rem 0.65rem', cursor: 'pointer', userSelect: 'none' }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#2C7A7B' }}>📍 {areaName}</span>
+                                    {selectedInAreaCount > 0 && (
+                                      <span style={{ background: '#319795', color: '#FFF', fontSize: '0.68rem', padding: '0.1rem 0.45rem', borderRadius: '10px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                                        🎟️ {selectedInAreaCount}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#319795' }}>
+                                    {isAreaExpanded ? '− Compress' : '+ Expand'}
+                                  </span>
+                                </div>
+                              )
+                            })()}
 
                             {/* Area Attractions List */}
                             {isAreaExpanded && (
