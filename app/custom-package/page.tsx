@@ -1185,7 +1185,17 @@ export default function PrototypeBuilder() {
     if (savedProposalNum) {
       t += `  (Ref: ${savedProposalNum})`
     }
-    t += `\n${sep}\n\n`
+    t += `\n${sep}\n`
+    if (guestName) {
+      t += `👤 *Guest Name:* ${guestName}\n`
+    }
+    if (guestPhone) {
+      t += `📞 *Guest Contact:* ${guestPhone}\n`
+    }
+    if (guestName || guestPhone) {
+      t += `${sep}\n`
+    }
+    t += `\n`
 
     // Calculate summaries
     let totalTransfers = 0
@@ -1498,11 +1508,12 @@ export default function PrototypeBuilder() {
       setDraw(GOLD); doc.setLineWidth(0.6); doc.roundedRect(ML, y, CW, 38, 3, 3, 'S')
 
       const cH = 38 / 2
-      // Guest name
+      // Guest name & contact
       font('bold', 9); setTxt(CRIM)
       doc.text('PREPARED FOR', ML + 4, y + 6)
-      font('bold', 16); setTxt(NAVY)
-      doc.text(guestName || 'Valued Guest', ML + 4, y + 15)
+      font('bold', 15); setTxt(NAVY)
+      const guestDisplay = `${guestName || 'Valued Guest'}${guestPhone ? ` (${guestPhone})` : ''}`
+      doc.text(guestDisplay, ML + 4, y + 15)
 
       // Row of info chips
       const chips = [
@@ -3562,6 +3573,7 @@ ${proposal}
                       if (!query) return true
                       return (
                         (q.guestName || '').toLowerCase().includes(query) ||
+                        (q.guestPhone || '').toLowerCase().includes(query) ||
                         (q.arrivalDate || '').toLowerCase().includes(query) ||
                         (q.proposalNumber || '').toLowerCase().includes(query)
                       )
@@ -3598,7 +3610,7 @@ ${proposal}
                               <span>S$ {q.totalClientPrice?.toLocaleString()}</span>
                             </div>
                             <div style={{ fontSize: '0.8rem', color: '#4A5568', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                              <span>👤 Guest: <strong>{q.guestName || 'TBD'}</strong></span>
+                              <span>👤 Guest: <strong>{q.guestName || 'TBD'}</strong> {q.guestPhone ? `(${q.guestPhone})` : ''}</span>
                               <span>📅 Date: {q.arrivalDate || 'TBD'}</span>
                               <span>🌙 Nights: {q.nights}N</span>
                             </div>

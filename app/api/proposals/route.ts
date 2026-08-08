@@ -217,6 +217,7 @@ export async function GET(req: NextRequest) {
         _updatedAt,
         proposalNumber,
         guestName,
+        guestPhone,
         nights,
         adults,
         kids,
