@@ -1945,8 +1945,10 @@ export default function PrototypeBuilder() {
           templateName: activeTemplateName || '',
           agentEmail: activeAgent.email,
           guestName,
+          guestPhone,
           adults,
           kids,
+          childAges,
           nights: nightsCount,
           arrivalDate,
           hotelRequired,
@@ -1960,6 +1962,13 @@ export default function PrototypeBuilder() {
           customHotelSuppCost,
           miscCostPerPerson,
           miscNotes,
+          markupPercent,
+          markupAbsolute,
+          discountPerPerson,
+          customAgencyName,
+          customAgencyEmail,
+          customAgencyPhone,
+          destinationMode,
           costBreakdown,
           itinerary,
         })
@@ -1994,8 +2003,15 @@ export default function PrototypeBuilder() {
         setSavedProposalNum(prop.proposalNumber)
         // Load details back into state
         setGuestName(prop.guestName || '')
+        setGuestPhone(prop.guestPhone || '')
         setAdults(prop.adults || 2)
         setKids(prop.kids || 0)
+        if (prop.childAges) {
+          try {
+            const parsed = typeof prop.childAges === 'string' ? JSON.parse(prop.childAges) : prop.childAges
+            if (Array.isArray(parsed)) setChildAges(parsed)
+          } catch (e) {}
+        }
         setNightsCount(prop.nights || 3)
         const cleanDate = (dateStr: string) => {
           if (!dateStr) return new Date().toISOString().split('T')[0]
@@ -2033,6 +2049,15 @@ export default function PrototypeBuilder() {
         }
         setMiscCostPerPerson(prop.miscCostPerPerson || 0)
         setMiscNotes(prop.miscNotes || '')
+        setMarkupPercent(prop.markupPercent || 0)
+        setMarkupAbsolute(prop.markupAbsolute || 0)
+        setDiscountPerPerson(prop.discountPerPerson || 0)
+        if (prop.customAgencyName) setCustomAgencyName(prop.customAgencyName)
+        if (prop.customAgencyEmail) setCustomAgencyEmail(prop.customAgencyEmail)
+        if (prop.customAgencyPhone) setCustomAgencyPhone(prop.customAgencyPhone)
+        if (prop.destinationMode && ['singapore', 'malaysia', 'combined'].includes(prop.destinationMode)) {
+          setDestinationMode(prop.destinationMode as any)
+        }
         if (prop.itinerary && prop.itinerary.length > 0) {
           const sanitizeTime = (timeStr: string) => {
             if (!timeStr) return '12:00'

@@ -88,6 +88,51 @@ export const proposalSchema = defineType({
       type: 'number',
     }),
     defineField({
+      name: 'guestPhone',
+      title: 'Guest Phone / WhatsApp Number',
+      type: 'string',
+    }),
+    defineField({
+      name: 'childAges',
+      title: 'Child Ages (JSON string or comma-separated)',
+      type: 'string',
+    }),
+    defineField({
+      name: 'markupPercent',
+      title: 'Markup Percentage (%)',
+      type: 'number',
+    }),
+    defineField({
+      name: 'markupAbsolute',
+      title: 'Flat Markup Amount (S$)',
+      type: 'number',
+    }),
+    defineField({
+      name: 'discountPerPerson',
+      title: 'Discount per Person (S$)',
+      type: 'number',
+    }),
+    defineField({
+      name: 'customAgencyName',
+      title: 'Custom Agency Name',
+      type: 'string',
+    }),
+    defineField({
+      name: 'customAgencyEmail',
+      title: 'Custom Agency Email',
+      type: 'string',
+    }),
+    defineField({
+      name: 'customAgencyPhone',
+      title: 'Custom Agency Phone',
+      type: 'string',
+    }),
+    defineField({
+      name: 'destinationMode',
+      title: 'Destination Mode (singapore / malaysia / combined)',
+      type: 'string',
+    }),
+    defineField({
       name: 'miscCostPerPerson',
       title: 'Misc Cost per Person (S$)',
       type: 'number',
