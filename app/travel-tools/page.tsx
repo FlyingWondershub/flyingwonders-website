@@ -43,6 +43,8 @@ export default function TravelToolsPage() {
     sgacOfficialLink?: string
     mdacOfficialLink?: string
     sgVisaStatusLink?: string
+    airSuvidhaLink?: string
+    hideAirSuvidha?: boolean
   }>({})
 
   // AirLabs Live Flight Search State
@@ -137,6 +139,7 @@ export default function TravelToolsPage() {
   const sgacLink = sanitySettings.sgacOfficialLink || 'https://eservices.ica.gov.sg/sgarrivalcard/'
   const mdacLink = sanitySettings.mdacOfficialLink || 'https://imigresen-online.imi.gov.my/mdac/main'
   const sgVisaLink = sanitySettings.sgVisaStatusLink || 'https://eservices.ica.gov.sg/save/sso/login.xhtml'
+  const airSuvidhaLink = sanitySettings.airSuvidhaLink || 'https://www.airsuvidha.app.nic.in/'
 
   return (
     <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: '5rem' }}>
@@ -386,6 +389,46 @@ export default function TravelToolsPage() {
                 <ExternalLink size={16} />
               </a>
             </div>
+
+            {/* India AirSuvidha 2.0 Card */}
+            {!sanitySettings.hideAirSuvidha && (
+            <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 15px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '1.5rem' }}>🇮🇳</span>
+                  <div>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1A365D', margin: 0 }}>India AirSuvidha 2.0</h3>
+                    <span style={{ fontSize: '0.75rem', color: '#7C3AED', fontWeight: 700 }}>Mandatory for Inbound Flights to India</span>
+                  </div>
+                </div>
+                <p style={{ fontSize: '0.88rem', color: '#4A5568', lineHeight: 1.5, margin: '0.5rem 0 1.25rem' }}>
+                  India&apos;s official self-declaration portal for travellers arriving in India. Required for all international passengers — submit health declaration, travel history, and upload documents before boarding.
+                </p>
+              </div>
+              <a 
+                href={airSuvidhaLink} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '0.5rem', 
+                  background: 'linear-gradient(135deg, #7C3AED 0%, #9333EA 100%)', 
+                  color: '#FFF', 
+                  padding: '0.75rem 1.25rem', 
+                  borderRadius: '8px', 
+                  fontWeight: 700, 
+                  fontSize: '0.88rem', 
+                  textDecoration: 'none',
+                  boxShadow: '0 3px 8px rgba(124,58,237,0.2)'
+                }}
+              >
+                <span>Submit AirSuvidha 2.0</span>
+                <ExternalLink size={16} />
+              </a>
+            </div>
+            )}
 
             {/* ICA eVisa Status Card */}
             <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 15px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>

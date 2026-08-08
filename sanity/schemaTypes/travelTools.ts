@@ -21,7 +21,13 @@ export const travelToolsSchema = defineType({
     // SECTION HIDE TOGGLES
     defineField({
       name: 'hideOfficialPortals',
-      title: '🙈 Hide Official Entry Portals Section (SGAC / MDAC)',
+      title: '🙈 Hide Official Entry Portals Section (SGAC / MDAC / AirSuvidha)',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hideAirSuvidha',
+      title: '🙈 Hide India AirSuvidha 2.0 Card',
       type: 'boolean',
       initialValue: false,
     }),
@@ -86,6 +92,12 @@ export const travelToolsSchema = defineType({
       title: 'Official Singapore Visa Status Check URL',
       type: 'url',
       initialValue: 'https://eservices.ica.gov.sg/save/sso/login.xhtml',
+    }),
+    defineField({
+      name: 'airSuvidhaLink',
+      title: 'India AirSuvidha 2.0 Portal URL',
+      type: 'url',
+      initialValue: 'https://www.airsuvidha.app.nic.in/',
     }),
 
     // Emergency Desk Contacts
