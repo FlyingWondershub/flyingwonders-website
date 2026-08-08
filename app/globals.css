@@ -55,7 +55,7 @@
     border-color: #2D3748 !important;
   }
 
-  /* Override white background containers */
+  /* Override white & light background containers in Dark Mode */
   div[style*="background: #FFF"],
   div[style*="background:#FFF"],
   div[style*="background: white"],
@@ -64,10 +64,81 @@
   div[style*="background: rgb(255, 255, 255)"],
   div[style*="background: #F7FAFC"],
   div[style*="background:#F7FAFC"],
+  div[style*="background: #F8FAFC"],
+  div[style*="background:#F8FAFC"],
+  main[style*="background: #F8FAFC"],
   section[style*="background: #FFF"],
   section[style*="background: white"] {
     background-color: #1E1E1E !important;
     color: #F9F9F9 !important;
+    border-color: #2D3748 !important;
+  }
+
+  /* Main outer page wrapper in Dark Mode */
+  div[style*="background: #F8FAFC"] {
+    background-color: #121212 !important;
+  }
+
+  /* High contrast text overrides for headings and paragraphs inside converted dark containers */
+  div[style*="background: #FFF"] h1, div[style*="background: #FFF"] h2, div[style*="background: #FFF"] h3,
+  div[style*="background: #FFF"] h4, div[style*="background: #FFF"] h5, div[style*="background: #FFF"] h6,
+  div[style*="background: white"] h1, div[style*="background: white"] h2, div[style*="background: white"] h3,
+  div[style*="background: white"] h4, div[style*="background: white"] h5, div[style*="background: white"] h6,
+  div[style*="background: #F8FAFC"] h1, div[style*="background: #F8FAFC"] h2, div[style*="background: #F8FAFC"] h3,
+  div[style*="background: #F8FAFC"] h4, div[style*="background: #F8FAFC"] h5, div[style*="background: #F8FAFC"] h6,
+  div[style*="background: #F7FAFC"] h1, div[style*="background: #F7FAFC"] h2, div[style*="background: #F7FAFC"] h3,
+  div[style*="background: #F7FAFC"] h4, div[style*="background: #F7FAFC"] h5, div[style*="background: #F7FAFC"] h6,
+  section[style*="background: #FFF"] h1, section[style*="background: #FFF"] h2, section[style*="background: #FFF"] h3 {
+    color: #F9F9F9 !important;
+  }
+
+  div[style*="background: #FFF"] p, div[style*="background: #FFF"] span, div[style*="background: #FFF"] strong, div[style*="background: #FFF"] li,
+  div[style*="background: white"] p, div[style*="background: white"] span, div[style*="background: white"] strong, div[style*="background: white"] li,
+  div[style*="background: #F8FAFC"] p, div[style*="background: #F8FAFC"] span, div[style*="background: #F8FAFC"] strong, div[style*="background: #F8FAFC"] li,
+  div[style*="background: #F7FAFC"] p, div[style*="background: #F7FAFC"] span, div[style*="background: #F7FAFC"] strong, div[style*="background: #F7FAFC"] li {
+    color: #E2E8F0 !important;
+  }
+
+  /* Callout & Special Box Themes for Dark Mode */
+  div[style*="background: #FAF5FF"] {
+    background-color: #2D1B4E !important;
+    border-color: #553C9A !important;
+  }
+  div[style*="background: #FAF5FF"] span, div[style*="background: #FAF5FF"] strong {
+    color: #E9D5FF !important;
+  }
+
+  div[style*="background: #FFFBEB"] {
+    background-color: #362003 !important;
+    border-color: #B45309 !important;
+  }
+  div[style*="background: #FFFBEB"] strong, div[style*="background: #FFFBEB"] span, div[style*="background: #FFFBEB"] p {
+    color: #FDE68A !important;
+  }
+
+  div[style*="background: #ECFDF5"], div[style*="background: #F0FDF4"] {
+    background-color: #064E3B !important;
+    border-color: #047857 !important;
+  }
+  div[style*="background: #ECFDF5"] strong, div[style*="background: #ECFDF5"] span,
+  div[style*="background: #F0FDF4"] strong, div[style*="background: #F0FDF4"] span {
+    color: #A7F3D0 !important;
+  }
+
+  /* Example buttons & pill selectors in dark mode */
+  button[style*="background: #F1F5F9"], button[style*="background: #FFF"] {
+    background-color: #2D3748 !important;
+    color: #E2E8F0 !important;
+    border-color: #4A5568 !important;
+  }
+
+  /* Table styling in dark mode */
+  table tr {
+    background-color: #1E1E1E !important;
+    border-bottom-color: #2D3748 !important;
+  }
+  table td, table td strong, table td span {
+    color: #E2E8F0 !important;
   }
 
   /* Navigation links */
