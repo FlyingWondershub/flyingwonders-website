@@ -1958,6 +1958,8 @@ export default function PrototypeBuilder() {
           customHotelEnabled,
           customHotelPrice,
           customHotelSuppCost,
+          miscCostPerPerson,
+          miscNotes,
           costBreakdown,
           itinerary,
         })
@@ -2029,6 +2031,8 @@ export default function PrototypeBuilder() {
             setGlobalSuppCount(prop.supplementCount || 0)
           }
         }
+        setMiscCostPerPerson(prop.miscCostPerPerson || 0)
+        setMiscNotes(prop.miscNotes || '')
         if (prop.itinerary && prop.itinerary.length > 0) {
           const sanitizeTime = (timeStr: string) => {
             if (!timeStr) return '12:00'
@@ -2530,9 +2534,23 @@ ${proposal}
         events.push({ dayStr, dateStr, time: t.time || '00:00', type: 'Transfer', details: `${vehicle}${qtyStr}`, pax: `${adults + kids} Pax`, notes: t.description })
       })
       day.attractions.forEach(a => {
-        if (!scheduleFilters.attractions) return
         const attrName = attractionsList[a.attractionIndex]?.name || 'Attraction'
-        events.push({ dayStr, dateStr, time: a.time || '00:00', type: 'Attraction', details: attrName, pax: `${a.adultTickets} Ad / ${a.childTickets} Ch`, notes: a.description })
+        if (scheduleFilters.attractions) {
+          events.push({ dayStr, dateStr, time: a.time || '00:00', type: 'Attraction', details: attrName, pax: `${a.adultTickets} Ad / ${a.childTickets} Ch`, notes: a.description })
+        }
+        // Include inline attraction pickup/dropoff transfers in schedule if transfer filter is active
+        if (scheduleFilters.transfers && a.hasTransfer) {
+          if (a.pickupEnabled !== false) {
+            const vehicle = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Vehicle'
+            const pickupNote = a.pickupNotes ? `${attrName} Pickup: ${a.pickupNotes}` : `${attrName} Pickup Transfer`
+            events.push({ dayStr, dateStr, time: a.pickupTime || '09:00', type: 'Transfer', details: `Attraction Transfer (${vehicle})`, pax: `${adults + kids} Pax`, notes: pickupNote })
+          }
+          if (a.dropEnabled !== false) {
+            const vehicle = vehiclesList[a.dropVehicleIndex ?? 0]?.type || 'Vehicle'
+            const dropNote = a.dropNotes ? `${attrName} Dropoff: ${a.dropNotes}` : `${attrName} Dropoff Transfer`
+            events.push({ dayStr, dateStr, time: a.dropTime || '17:00', type: 'Transfer', details: `Attraction Transfer (${vehicle})`, pax: `${adults + kids} Pax`, notes: dropNote })
+          }
+        }
       })
       if (day.meals && Array.isArray(day.meals)) {
         day.meals.forEach(m => {

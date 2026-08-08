@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
       customHotelEnabled,
       customHotelPrice,
       customHotelSuppCost,
+      miscCostPerPerson,
+      miscNotes,
       costBreakdown,
       itinerary,
     } = body
@@ -82,6 +84,8 @@ export async function POST(req: NextRequest) {
           customHotelEnabled: customHotelEnabled !== undefined ? !!customHotelEnabled : existing.customHotelEnabled,
           customHotelPrice: Number(customHotelPrice) || existing.customHotelPrice,
           customHotelSuppCost: Number(customHotelSuppCost) || existing.customHotelSuppCost,
+          miscCostPerPerson: miscCostPerPerson !== undefined ? Number(miscCostPerPerson) : existing.miscCostPerPerson,
+          miscNotes: miscNotes !== undefined ? (miscNotes || '') : existing.miscNotes,
           costBreakdown: {
             roomCostTotal: Number(costBreakdown?.roomCostTotal) || 0,
             suppCostTotal: Number(costBreakdown?.suppCostTotal) || 0,
@@ -132,6 +136,8 @@ export async function POST(req: NextRequest) {
       customHotelEnabled: !!customHotelEnabled,
       customHotelPrice: Number(customHotelPrice) || 0,
       customHotelSuppCost: Number(customHotelSuppCost) || 0,
+      miscCostPerPerson: Number(miscCostPerPerson) || 0,
+      miscNotes: miscNotes || '',
       status: 'pending',
       costBreakdown: {
         roomCostTotal: Number(costBreakdown?.roomCostTotal) || 0,

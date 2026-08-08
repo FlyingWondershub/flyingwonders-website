@@ -88,6 +88,16 @@ export const proposalSchema = defineType({
       type: 'number',
     }),
     defineField({
+      name: 'miscCostPerPerson',
+      title: 'Misc Cost per Person (S$)',
+      type: 'number',
+    }),
+    defineField({
+      name: 'miscNotes',
+      title: 'Misc Notes',
+      type: 'string',
+    }),
+    defineField({
       name: 'costBreakdown',
       title: 'Pricing Breakdown Details',
       type: 'object',
