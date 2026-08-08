@@ -867,7 +867,10 @@ export default function PrototypeBuilder() {
   const addTransferRow = (dayIndex: number) => {
     const day = itinerary[dayIndex]
     if (!day) return
-    updateDay(dayIndex, 'transfers', [...day.transfers, { vehicleIndex: 0, time: '12:00', description: '', qty: 1 }])
+    const firstVehicle = vehiclesList[0]
+    const isSic = firstVehicle ? (firstVehicle.type || '').toLowerCase().includes('sic') || (firstVehicle.type || '').toLowerCase().includes('seat-in-coach') || (firstVehicle.type || '').toLowerCase().includes('shared') : false
+    const defaultQty = isSic ? (adults + kids) || 1 : 1
+    updateDay(dayIndex, 'transfers', [...day.transfers, { vehicleIndex: 0, time: '12:00', description: '', qty: defaultQty }])
   }
 
   const removeTransferRow = (dayIndex: number, rIdx: number) => {
@@ -881,7 +884,14 @@ export default function PrototypeBuilder() {
     const day = itinerary[dayIndex]
     if (!day) return
     const updated = [...day.transfers]
-    updated[rIdx] = { ...updated[rIdx], [field]: value }
+    if (field === 'vehicleIndex') {
+      const selectedVehicle = vehiclesList[value]
+      const isSic = selectedVehicle ? (selectedVehicle.type || '').toLowerCase().includes('sic') || (selectedVehicle.type || '').toLowerCase().includes('seat-in-coach') || (selectedVehicle.type || '').toLowerCase().includes('shared') : false
+      const newQty = isSic ? (adults + kids) || 1 : 1
+      updated[rIdx] = { ...updated[rIdx], vehicleIndex: value, qty: newQty }
+    } else {
+      updated[rIdx] = { ...updated[rIdx], [field]: value }
+    }
     updateDay(dayIndex, 'transfers', updated)
   }
 
