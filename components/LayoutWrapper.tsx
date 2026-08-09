@@ -44,7 +44,22 @@ export default function LayoutWrapper({
   const [subStatus, setSubStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [subMessage, setSubMessage] = useState('')
   const [hideNavBar, setHideNavBar] = useState(false)
+  const [loggedInCompanyName, setLoggedInCompanyName] = useState('')
   const lastScrollY = useRef(0)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('fw_b2b_agent')
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          if (parsed.companyName || parsed.agentName) {
+            setLoggedInCompanyName(parsed.companyName || parsed.agentName)
+          }
+        } catch (e) {}
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -150,8 +165,8 @@ export default function LayoutWrapper({
             {/* Left Action: Agent Portal */}
             <div style={{ flex: '1 0 150px', display: 'flex', alignItems: 'center' }}>
               {!pageVisibility?.hideCustomPackage && (
-                <Link href="/custom-package" className="nav-link" style={{ color: 'var(--emerald-secondary)', fontWeight: 700, fontSize: '0.85rem' }}>
-                  🔑 Agent Login
+                <Link href="/agent-portal" className="nav-link" style={{ color: 'var(--emerald-secondary)', fontWeight: 700, fontSize: '0.85rem' }}>
+                  {loggedInCompanyName ? `🏢 ${loggedInCompanyName}` : '🔑 Agent Login'}
                 </Link>
               )}
             </div>

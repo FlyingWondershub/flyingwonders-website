@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import Link from 'next/link'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
@@ -3699,11 +3700,9 @@ ${proposal}
 
         {/* ══ COMPACT AGENT TOOLS BAR ══ */}
         <div className="cp-agent-toolbar">
-          {activeAgent && (
-            <span style={{ fontSize: '0.75rem', color: '#4A5568', fontWeight: 600, marginRight: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', flexShrink: 0 }}>
-              👤 {activeAgent.agentName}{activeAgent.companyName ? ` · ${activeAgent.companyName}` : ''}
-            </span>
-          )}
+          <Link href="/agent-portal" className="cp-tool-btn" style={{ background: '#0F4C3A', color: '#FFF', border: 'none', fontWeight: 800, padding: '0.4rem 0.75rem' }}>
+            🏠 Home Dashboard
+          </Link>
           <button className="cp-tool-btn" onClick={() => { setShowQuotationsModal(true); handleLoadQuotations(); }} style={{ background: '#EBF8FF', border: '1px solid #BEE3F8', color: '#2B6CB0' }}>🗄️ View Proposals</button>
           <button className="cp-tool-btn" onClick={() => { const t = generateProposalText(); navigator.clipboard.writeText(t); notifyAgentActivity('clipboard_copy'); alert('Proposal copied!') }}>📋 Copy Proposal</button>
           <button className="cp-tool-btn" onClick={downloadProposalPDF}>📄 PDF</button>
@@ -3731,7 +3730,6 @@ ${proposal}
             </span>
           )}
           <button className="cp-tool-btn" onClick={() => setShowEnquiry(true)}>📧 Enquiry</button>
-          <button className="cp-tool-btn" onClick={() => setShowBranding(true)}>🎨 Branding</button>
         </div>
 
         {/* View Quotations / Proposals Listing Modal */}
