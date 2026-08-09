@@ -34,6 +34,10 @@ export default function AdminDashboard() {
   const [packageViewMode, setPackageViewMode] = useState<'list' | 'calendar'>('list')
   const [selectedProposal, setSelectedProposal] = useState<any | null>(null)
   
+  // ── Accounts & Ledger State ──
+  const [accountFilter, setAccountFilter] = useState<'all' | 'unpaid' | 'partial' | 'settled'>('all')
+  const [accountSearch, setAccountSearch] = useState('')
+  
   // Expand / Collapse row tracking
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({})
 
@@ -300,6 +304,7 @@ export default function AdminDashboard() {
   const navItems = [
     { id: 'section-metrics', label: 'KPI Overview', icon: LayoutDashboard },
     { id: 'section-packages', label: 'Packages & Calendar', icon: Package, badge: totalPackages },
+    { id: 'section-accounts', label: 'Accounts & Ledger', icon: DollarSign },
     { id: 'section-sitemap', label: 'Site Map & Links', icon: Map },
     { id: 'section-payments', label: 'Pending Payments', icon: CreditCard, badge: pendingPayments.length },
     { id: 'section-agents', label: 'Agent Approvals', icon: Users, badge: metrics.activeAgents },
@@ -982,6 +987,245 @@ export default function AdminDashboard() {
             </div>
 
           </div>
+        </div>
+
+        {/* ── ACCOUNTS & FINANCIAL LEDGER REPORT ── */}
+        <div id="section-accounts" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', border: '1px solid #E2E8F0', marginBottom: '2.5rem' }}>
+          
+          {/* Header & Export Link */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+            <div>
+              <h2 style={{ fontSize: '1.3rem', margin: 0, color: '#1E293B', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <DollarSign size={22} color="#166534" /> Accounts & Pending Balances Report
+              </h2>
+              <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600 }}>
+                Real-time tracking of confirmed proposal contract values, payments collected, and outstanding balances due.
+              </span>
+            </div>
+
+            <a 
+              href="/api/admin/export-accounts" 
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#0F4C3A', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', boxShadow: '0 2px 8px rgba(15,76,58,0.2)' }}
+            >
+              <Download size={15} /> Export Accounts CSV
+            </a>
+          </div>
+
+          {(() => {
+            const confirmedProps = proposals.filter(p => p.status === 'confirmed' || p.status === 'scheduled' || p.status === 'completed')
+            
+            let totalReceivablesDue = 0
+            let totalCollected = 0
+            let totalContractValue = 0
+
+            const enrichedProps = confirmedProps.map(p => {
+              const basePrice = Number(p.totalClientPrice) || 0
+              const totalAddons = (p.additionalCharges || []).reduce((sum: number, c: any) => {
+                const amt = Number(c.amount) || 0
+                return (c.chargeType === 'Discount' || c.chargeType === 'Refund') ? sum - amt : sum + amt
+              }, 0)
+              const adjustedPrice = basePrice + totalAddons
+              const totalPaid = (p.paymentLedger || []).reduce((sum: number, pay: any) => sum + (Number(pay.amount) || 0), 0)
+              const balanceDue = Math.max(0, adjustedPrice - totalPaid)
+
+              totalContractValue += adjustedPrice
+              totalCollected += totalPaid
+              totalReceivablesDue += balanceDue
+
+              let settlementStatus = 'unpaid'
+              if (totalPaid >= adjustedPrice && adjustedPrice > 0) settlementStatus = 'settled'
+              else if (totalPaid > 0) settlementStatus = 'partial'
+
+              return { ...p, basePrice, totalAddons, adjustedPrice, totalPaid, balanceDue, settlementStatus }
+            })
+
+            const filteredAccounts = enrichedProps.filter(p => {
+              const matchesStatus = accountFilter === 'all' ? true : p.settlementStatus === accountFilter
+              const term = accountSearch.toLowerCase().trim()
+              const matchesSearch = !term ||
+                (p.proposalNumber && p.proposalNumber.toLowerCase().includes(term)) ||
+                (p.invoiceNumber && p.invoiceNumber.toLowerCase().includes(term)) ||
+                (p.guestName && p.guestName.toLowerCase().includes(term)) ||
+                (p.agent?.companyName && p.agent.companyName.toLowerCase().includes(term))
+
+              return matchesStatus && matchesSearch
+            })
+
+            const unsettledCount = enrichedProps.filter(p => p.balanceDue > 0).length
+
+            return (
+              <div>
+                {/* Metrics Summary Row */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem', background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                  
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Outstanding Receivables</span>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: totalReceivablesDue > 0 ? '#991B1B' : '#166534', marginTop: '0.2rem' }}>
+                      S$ {totalReceivablesDue.toLocaleString()}
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Across {unsettledCount} unsettled accounts</span>
+                  </div>
+
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Total Revenue Collected</span>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#166534', marginTop: '0.2rem' }}>
+                      S$ {totalCollected.toLocaleString()}
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Total part payments received</span>
+                  </div>
+
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Confirmed Contract Value</span>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#1E293B', marginTop: '0.2rem' }}>
+                      S$ {totalContractValue.toLocaleString()}
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{confirmedProps.length} confirmed package bookings</span>
+                  </div>
+
+                </div>
+
+                {/* Filter Controls & Search */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+                  
+                  {/* Status Filter Badges */}
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    {[
+                      { id: 'all', label: `All Confirmed (${enrichedProps.length})` },
+                      { id: 'unpaid', label: `🔴 Unpaid (${enrichedProps.filter(p => p.settlementStatus === 'unpaid').length})` },
+                      { id: 'partial', label: `🟡 Partially Paid (${enrichedProps.filter(p => p.settlementStatus === 'partial').length})` },
+                      { id: 'settled', label: `🟢 Fully Settled (${enrichedProps.filter(p => p.settlementStatus === 'settled').length})` }
+                    ].map(f => (
+                      <button
+                        key={f.id}
+                        onClick={() => setAccountFilter(f.id as any)}
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '20px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          border: accountFilter === f.id ? 'none' : '1px solid #CBD5E1',
+                          background: accountFilter === f.id ? '#0F172A' : '#F8FAFC',
+                          color: accountFilter === f.id ? '#FFF' : '#475569',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Search Input */}
+                  <input
+                    type="text"
+                    placeholder="🔍 Search Invoice, Ref, Guest, or Agent..."
+                    value={accountSearch}
+                    onChange={e => setAccountSearch(e.target.value)}
+                    style={{
+                      padding: '0.45rem 0.85rem',
+                      borderRadius: '8px',
+                      border: '1px solid #CBD5E1',
+                      fontSize: '0.82rem',
+                      width: '280px',
+                      maxWidth: '100%',
+                      background: '#FFF'
+                    }}
+                  />
+
+                </div>
+
+                {/* Ledger Accounts Table */}
+                {filteredAccounts.length === 0 ? (
+                  <p style={{ textAlign: 'center', color: '#64748B', padding: '2rem 0', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                    No matching accounts or pending balances found.
+                  </p>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ background: '#F1F5F9', color: '#475569', borderBottom: '2px solid #E2E8F0' }}>
+                          <th style={{ padding: '0.65rem 0.75rem' }}>Invoice / Ref</th>
+                          <th style={{ padding: '0.65rem 0.75rem' }}>Guest Name</th>
+                          <th style={{ padding: '0.65rem 0.75rem' }}>Agent / Company</th>
+                          <th style={{ padding: '0.65rem 0.75rem' }}>Contract Price (S$)</th>
+                          <th style={{ padding: '0.65rem 0.75rem' }}>Paid (S$)</th>
+                          <th style={{ padding: '0.65rem 0.75rem' }}>Balance Due (S$)</th>
+                          <th style={{ padding: '0.65rem 0.75rem' }}>Settlement</th>
+                          <th style={{ padding: '0.65rem 0.75rem', textAlign: 'right' }}>Manage</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredAccounts.map((p, idx) => {
+                          const badge = 
+                            p.settlementStatus === 'settled' ? { label: '🟢 Fully Settled', bg: '#DCFCE7', color: '#166534' } :
+                            p.settlementStatus === 'partial' ? { label: '🟡 Partially Paid', bg: '#FEF3C7', color: '#92400E' } :
+                            { label: '🔴 Unpaid (100%)', bg: '#FEE2E2', color: '#991B1B' }
+
+                          const agentCompany = p.agent?.companyName || p.agent?.agentName || 'B2C Direct'
+
+                          return (
+                            <tr key={p._id || idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                              <td style={{ padding: '0.7rem 0.75rem' }}>
+                                <strong style={{ color: '#0F172A', display: 'block' }}>{p.invoiceNumber || 'INV Pending'}</strong>
+                                <span style={{ fontSize: '0.72rem', color: '#B83A4B', fontWeight: 700 }}>Ref: {p.proposalNumber}</span>
+                              </td>
+                              <td style={{ padding: '0.7rem 0.75rem' }}>
+                                <strong style={{ color: '#1E293B', display: 'block' }}>{p.guestName || 'Guest'}</strong>
+                                <span style={{ fontSize: '0.72rem', color: '#64748B' }}>{p.guestPhone || ''}</span>
+                              </td>
+                              <td style={{ padding: '0.7rem 0.75rem', color: '#334155', fontWeight: 600 }}>
+                                {agentCompany}
+                              </td>
+                              <td style={{ padding: '0.7rem 0.75rem', fontWeight: 700, color: '#1E293B' }}>
+                                S$ {p.adjustedPrice.toLocaleString()}
+                                {p.totalAddons !== 0 && (
+                                  <span style={{ display: 'block', fontSize: '0.68rem', color: p.totalAddons > 0 ? '#15803D' : '#B91C1C' }}>
+                                    Base S${p.basePrice} ({p.totalAddons > 0 ? `+S$${p.totalAddons}` : `-S$${Math.abs(p.totalAddons)}`})
+                                  </span>
+                                )}
+                              </td>
+                              <td style={{ padding: '0.7rem 0.75rem', fontWeight: 800, color: '#166534' }}>
+                                S$ {p.totalPaid.toLocaleString()}
+                              </td>
+                              <td style={{ padding: '0.7rem 0.75rem', fontWeight: 900, color: p.balanceDue > 0 ? '#991B1B' : '#166534' }}>
+                                S$ {p.balanceDue.toLocaleString()}
+                              </td>
+                              <td style={{ padding: '0.7rem 0.75rem' }}>
+                                <span style={{ padding: '0.2rem 0.55rem', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800, background: badge.bg, color: badge.color }}>
+                                  {badge.label}
+                                </span>
+                              </td>
+                              <td style={{ padding: '0.7rem 0.75rem', textAlign: 'right' }}>
+                                <a
+                                  href={`/custom-package?ref=${p.proposalNumber}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '6px',
+                                    background: '#0F4C3A',
+                                    color: '#FFF',
+                                    textDecoration: 'none',
+                                    fontWeight: 700,
+                                    fontSize: '0.76rem'
+                                  }}
+                                >
+                                  💳 Open Ledger
+                                </a>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
         </div>
 
         {/* ── SECTION 4 & 5 & 6: PAYMENTS, AGENTS, EXPORTS ── */}
