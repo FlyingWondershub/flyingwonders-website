@@ -27,7 +27,7 @@ export default function AdBanner({
 }: AdBannerProps) {
   const [adEnabled, setAdEnabled] = useState(true)
   const [adLoaded, setAdLoaded] = useState(false)
-  const publisherId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-7649581920491823'
+  const publisherId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-3967023851392009'
 
   useEffect(() => {
     // Check if ads are enabled for this category in local/site settings
