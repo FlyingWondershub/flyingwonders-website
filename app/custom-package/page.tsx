@@ -447,6 +447,25 @@ export default function PrototypeBuilder() {
   const [showPreviewOverlay, setShowPreviewOverlay] = useState(false)
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({})
 
+  // Admin Invoicing & Financial Ledger States
+  const [activeProposalStatus, setActiveProposalStatus] = useState<string>('pending')
+  const [activeInvoiceNumber, setActiveInvoiceNumber] = useState<string>('')
+  const [activeInvoiceDate, setActiveInvoiceDate] = useState<string>('')
+  const [activePaymentLedger, setActivePaymentLedger] = useState<any[]>([])
+  const [activeAdditionalCharges, setActiveAdditionalCharges] = useState<any[]>([])
+  const [showLedgerModal, setShowLedgerModal] = useState<boolean>(false)
+
+  // Ledger Add Forms
+  const [ledgerPaymentAmount, setLedgerPaymentAmount] = useState<string>('')
+  const [ledgerPaymentMethod, setLedgerPaymentMethod] = useState<string>('Bank Transfer (PayNow/Wire)')
+  const [ledgerPaymentRef, setLedgerPaymentRef] = useState<string>('')
+  const [ledgerPaymentNotes, setLedgerPaymentNotes] = useState<string>('')
+  
+  const [ledgerChargeDesc, setLedgerChargeDesc] = useState<string>('')
+  const [ledgerChargeAmount, setLedgerChargeAmount] = useState<string>('')
+  const [ledgerChargeType, setLedgerChargeType] = useState<string>('Add-On')
+  const [ledgerSubmitting, setLedgerSubmitting] = useState<boolean>(false)
+
   const toggleDay = (idx: number) => {
     setCollapsedDays(prev => {
       const next = new Set(prev)
@@ -2073,6 +2092,11 @@ export default function PrototypeBuilder() {
         setMarkupPercent(prop.markupPercent || 0)
         setMarkupAbsolute(prop.markupAbsolute || 0)
         setDiscountPerPerson(prop.discountPerPerson || 0)
+        setActiveProposalStatus(prop.status || 'pending')
+        setActiveInvoiceNumber(prop.invoiceNumber || '')
+        setActiveInvoiceDate(prop.invoiceDate || '')
+        setActivePaymentLedger(Array.isArray(prop.paymentLedger) ? prop.paymentLedger : [])
+        setActiveAdditionalCharges(Array.isArray(prop.additionalCharges) ? prop.additionalCharges : [])
         if (prop.customAgencyName) setCustomAgencyName(prop.customAgencyName)
         if (prop.customAgencyEmail) setCustomAgencyEmail(prop.customAgencyEmail)
         if (prop.customAgencyPhone) setCustomAgencyPhone(prop.customAgencyPhone)
@@ -2128,6 +2152,158 @@ export default function PrototypeBuilder() {
   const handleSearchProposal = async (e: React.FormEvent) => {
     e.preventDefault()
     loadProposalByNumber(searchQuery)
+  }
+
+  // Financial Ledger Handlers (Admin Only)
+  const handleAddPayment = async () => {
+    if (!savedProposalNum || !activeAgent) return
+    const amt = parseFloat(ledgerPaymentAmount)
+    if (isNaN(amt) || amt <= 0) {
+      alert('Please enter a valid payment amount.')
+      return
+    }
+    setLedgerSubmitting(true)
+    try {
+      const res = await fetch('/api/admin/ledger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalNumber: savedProposalNum,
+          adminEmail: activeAgent.email,
+          action: 'add_payment',
+          paymentData: {
+            amount: amt,
+            method: ledgerPaymentMethod,
+            referenceNo: ledgerPaymentRef,
+            notes: ledgerPaymentNotes
+          }
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setLedgerPaymentAmount('')
+        setLedgerPaymentRef('')
+        setLedgerPaymentNotes('')
+        setActivePaymentLedger(data.proposal.paymentLedger || [])
+        setActiveInvoiceNumber(data.proposal.invoiceNumber || '')
+        setActiveInvoiceDate(data.proposal.invoiceDate || '')
+        alert('Payment recorded successfully!')
+      } else {
+        alert(data.error || 'Failed to record payment.')
+      }
+    } catch (e) {
+      alert('Error recording payment.')
+    } finally {
+      setLedgerSubmitting(false)
+    }
+  }
+
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!confirm('Are you sure you want to delete this payment record?')) return
+    try {
+      const res = await fetch('/api/admin/ledger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalNumber: savedProposalNum,
+          adminEmail: activeAgent?.email,
+          action: 'delete_payment',
+          paymentData: { paymentId }
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setActivePaymentLedger(data.proposal.paymentLedger || [])
+      }
+    } catch (e) {
+      alert('Failed to delete payment.')
+    }
+  }
+
+  const handleAddCharge = async () => {
+    if (!savedProposalNum || !activeAgent) return
+    const amt = parseFloat(ledgerChargeAmount)
+    if (!ledgerChargeDesc || isNaN(amt)) {
+      alert('Please enter description and valid amount.')
+      return
+    }
+    setLedgerSubmitting(true)
+    try {
+      const res = await fetch('/api/admin/ledger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalNumber: savedProposalNum,
+          adminEmail: activeAgent.email,
+          action: 'add_charge',
+          chargeData: {
+            itemDescription: ledgerChargeDesc,
+            amount: amt,
+            chargeType: ledgerChargeType
+          }
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setLedgerChargeDesc('')
+        setLedgerChargeAmount('')
+        setActiveAdditionalCharges(data.proposal.additionalCharges || [])
+        alert('Change order / charge added successfully!')
+      } else {
+        alert(data.error || 'Failed to add charge.')
+      }
+    } catch (e) {
+      alert('Error adding charge.')
+    } finally {
+      setLedgerSubmitting(false)
+    }
+  }
+
+  const handleDeleteCharge = async (chargeId: string) => {
+    if (!confirm('Delete this charge?')) return
+    try {
+      const res = await fetch('/api/admin/ledger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalNumber: savedProposalNum,
+          adminEmail: activeAgent?.email,
+          action: 'delete_charge',
+          chargeData: { chargeId }
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setActiveAdditionalCharges(data.proposal.additionalCharges || [])
+      }
+    } catch (e) {
+      alert('Failed to delete charge.')
+    }
+  }
+
+  const handleUpdateStatus = async (newStatus: string) => {
+    if (!savedProposalNum || !activeAgent) return
+    try {
+      const res = await fetch('/api/admin/ledger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalNumber: savedProposalNum,
+          adminEmail: activeAgent.email,
+          action: 'update_status',
+          status: newStatus
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setActiveProposalStatus(newStatus)
+        if (data.proposal.invoiceNumber) setActiveInvoiceNumber(data.proposal.invoiceNumber)
+        if (data.proposal.invoiceDate) setActiveInvoiceDate(data.proposal.invoiceDate)
+        alert(`Status updated to ${newStatus.toUpperCase()}!`)
+      }
+    } catch (e) {
+      alert('Failed to update status.')
+    }
   }
 
   // Auto-load proposal when ref/proposal parameter is present in URL
@@ -3535,6 +3711,20 @@ ${proposal}
           <button className="cp-tool-btn" onClick={handleSaveProposal} style={{ background: '#FAF5FF', border: '1px solid #D6BCFA', color: '#6B46C1' }}>
             💾 {saveStatus === 'saving' ? 'Saving...' : 'Save Proposal'}
           </button>
+          {activeAgent?.email?.toLowerCase() === 'info.flyingwonders@gmail.com' && savedProposalNum && (
+            <button 
+              className="cp-tool-btn" 
+              onClick={() => setShowLedgerModal(true)} 
+              style={{ 
+                background: activeProposalStatus === 'confirmed' ? '#DCFCE7' : '#FEF3C7', 
+                border: `1px solid ${activeProposalStatus === 'confirmed' ? '#86EFAC' : '#FCD34D'}`, 
+                color: activeProposalStatus === 'confirmed' ? '#166534' : '#92400E', 
+                fontWeight: 800 
+              }}
+            >
+              💳 Ledger {activeInvoiceNumber ? `(${activeInvoiceNumber})` : ''}
+            </button>
+          )}
           {savedProposalNum && (
             <span style={{ fontSize: '0.75rem', background: '#EBF8FF', color: '#2B6CB0', fontWeight: 700, padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #BEE3F8', flexShrink: 0 }}>
               Num: {savedProposalNum}
@@ -3682,6 +3872,321 @@ ${proposal}
                   {saveStatus === 'saving' ? 'Saving...' : '💾 Save Proposal to Registry'}
                 </button>
               </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* 💳 ADMIN FINANCIAL LEDGER & INVOICING MODAL */}
+        {showLedgerModal && (
+          <div className="cp-modal-overlay" onClick={() => setShowLedgerModal(false)} style={{ zIndex: 99999 }}>
+            <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '900px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
+              
+              {/* Modal Title & Close Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: 'var(--emerald-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    💳 Admin Financial Ledger & Invoicing
+                  </h3>
+                  <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600 }}>
+                    Proposal Ref: <strong>{savedProposalNum}</strong> {activeInvoiceNumber ? `• Tax Invoice: ${activeInvoiceNumber}` : ''}
+                  </span>
+                </div>
+                <button onClick={() => setShowLedgerModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#718096' }}>✕</button>
+              </div>
+
+              {(() => {
+                const totalAddons = activeAdditionalCharges.reduce((sum, c) => {
+                  const amt = Number(c.amount) || 0
+                  return (c.chargeType === 'Discount' || c.chargeType === 'Refund') ? sum - amt : sum + amt
+                }, 0)
+                const basePrice = costBreakdown.totalClientPrice || 0
+                const adjustedPrice = basePrice + totalAddons
+                const totalPaid = activePaymentLedger.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+                const balanceDue = adjustedPrice - totalPaid
+
+                let statusBadge = { label: '🔴 Unpaid (100% Due)', bg: '#FEE2E2', color: '#991B1B' }
+                if (totalPaid >= adjustedPrice && adjustedPrice > 0) {
+                  statusBadge = { label: '🟢 Fully Settled', bg: '#DCFCE7', color: '#166534' }
+                } else if (totalPaid > 0) {
+                  statusBadge = { label: `🟡 Partially Paid (S$ ${totalPaid.toLocaleString()} paid)`, bg: '#FEF3C7', color: '#92400E' }
+                }
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    
+                    {/* 1. FINANCIAL SUMMARY BANNER & STATUS */}
+                    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.25rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', alignItems: 'center' }}>
+                        
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Package Status</span>
+                          <div style={{ marginTop: '0.25rem' }}>
+                            <select 
+                              value={activeProposalStatus} 
+                              onChange={e => handleUpdateStatus(e.target.value)}
+                              style={{ padding: '0.45rem 0.75rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', fontWeight: 800, background: '#FFF', cursor: 'pointer' }}
+                            >
+                              <option value="pending">🔵 Pending (Quotation)</option>
+                              <option value="followup">🟡 Follow-Up Needed</option>
+                              <option value="confirmed">🟢 Confirmed (Issue Invoice)</option>
+                              <option value="scheduled">💜 Scheduled (Post-Confirm)</option>
+                              <option value="completed">✅ Completed (Trip Finished)</option>
+                              <option value="ignore">⚪ Ignored / Closed</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Contract Value</span>
+                          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1E293B', marginTop: '0.2rem' }}>
+                            S$ {adjustedPrice.toLocaleString()}
+                          </div>
+                          {totalAddons !== 0 && (
+                            <span style={{ fontSize: '0.72rem', color: totalAddons > 0 ? '#15803D' : '#B91C1C' }}>
+                              Base: S$ {basePrice.toLocaleString()} ({totalAddons > 0 ? `+S$${totalAddons}` : `-S$${Math.abs(totalAddons)}`})
+                            </span>
+                          )}
+                        </div>
+
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Total Paid</span>
+                          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#166534', marginTop: '0.2rem' }}>
+                            S$ {totalPaid.toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Balance Due</span>
+                          <div style={{ fontSize: '1.3rem', fontWeight: 900, color: balanceDue > 0 ? '#991B1B' : '#166534', marginTop: '0.2rem' }}>
+                            S$ {balanceDue.toLocaleString()}
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Payment Status Badge */}
+                      <div style={{ marginTop: '1rem', paddingTop: '0.85rem', borderTop: '1px dashed #CBD5E1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <span style={{ padding: '0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 800, background: statusBadge.bg, color: statusBadge.color }}>
+                          {statusBadge.label}
+                        </span>
+                        <div style={{ fontSize: '0.8rem', color: '#475569' }}>
+                          Guest: <strong>{guestName || 'Valued Guest'}</strong> {guestPhone ? `(${guestPhone})` : ''}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. PAYMENT COLLECTION LEDGER TABLE & RECORD FORM */}
+                    <div style={{ border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.25rem', background: '#FFF' }}>
+                      <h4 style={{ margin: '0 0 1rem 0', fontSize: '1.05rem', fontWeight: 800, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        💳 Payment Collection Ledger ({activePaymentLedger.length})
+                      </h4>
+
+                      {/* Payment List Table */}
+                      {activePaymentLedger.length === 0 ? (
+                        <p style={{ fontSize: '0.85rem', color: '#64748B', fontStyle: 'italic', marginBottom: '1.25rem' }}>No payments recorded yet.</p>
+                      ) : (
+                        <div style={{ overflowX: 'auto', marginBottom: '1.25rem' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem', textAlign: 'left' }}>
+                            <thead>
+                              <tr style={{ background: '#F1F5F9', color: '#475569' }}>
+                                <th style={{ padding: '0.5rem 0.75rem' }}>Date</th>
+                                <th style={{ padding: '0.5rem 0.75rem' }}>Method</th>
+                                <th style={{ padding: '0.5rem 0.75rem' }}>Ref / UTR No.</th>
+                                <th style={{ padding: '0.5rem 0.75rem' }}>Amount (S$)</th>
+                                <th style={{ padding: '0.5rem 0.75rem' }}>Notes</th>
+                                <th style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {activePaymentLedger.map((p, idx) => (
+                                <tr key={p.paymentId || idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                  <td style={{ padding: '0.55rem 0.75rem', color: '#334155' }}>{new Date(p.date).toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                                  <td style={{ padding: '0.55rem 0.75rem', fontWeight: 700, color: '#0F4C3A' }}>{p.method}</td>
+                                  <td style={{ padding: '0.55rem 0.75rem', fontFamily: 'monospace', color: '#1E293B' }}>{p.referenceNo || '—'}</td>
+                                  <td style={{ padding: '0.55rem 0.75rem', fontWeight: 800, color: '#166534' }}>+S$ {Number(p.amount).toLocaleString()}</td>
+                                  <td style={{ padding: '0.55rem 0.75rem', color: '#64748B' }}>{p.notes || '—'}</td>
+                                  <td style={{ padding: '0.55rem 0.75rem', textAlign: 'right' }}>
+                                    <button onClick={() => handleDeletePayment(p.paymentId)} style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', borderRadius: '4px', padding: '0.2rem 0.5rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
+                                      🗑️ Delete
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {/* Add Payment Form */}
+                      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '1rem' }}>
+                        <strong style={{ fontSize: '0.85rem', color: '#1E293B', display: 'block', marginBottom: '0.65rem' }}>+ Record New Payment Entry</strong>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748B', marginBottom: '0.2rem' }}>Amount Paid (S$) *</label>
+                            <input 
+                              type="number" 
+                              placeholder="e.g. 500" 
+                              value={ledgerPaymentAmount} 
+                              onChange={e => setLedgerPaymentAmount(e.target.value)} 
+                              style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }} 
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748B', marginBottom: '0.2rem' }}>Payment Method</label>
+                            <select 
+                              value={ledgerPaymentMethod} 
+                              onChange={e => setLedgerPaymentMethod(e.target.value)}
+                              style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }}
+                            >
+                              <option value="Bank Transfer (PayNow/Wire)">Bank Transfer (PayNow / Wire)</option>
+                              <option value="Cash / Forex">Cash / Forex</option>
+                              <option value="Credit Note / Adjustment">Credit Note / Adjustment</option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748B', marginBottom: '0.2rem' }}>Ref / UTR / Txn No.</label>
+                            <input 
+                              type="text" 
+                              placeholder="e.g. UTR99881122" 
+                              value={ledgerPaymentRef} 
+                              onChange={e => setLedgerPaymentRef(e.target.value)} 
+                              style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }} 
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748B', marginBottom: '0.2rem' }}>Notes</label>
+                            <input 
+                              type="text" 
+                              placeholder="e.g. Advance deposit" 
+                              value={ledgerPaymentNotes} 
+                              onChange={e => setLedgerPaymentNotes(e.target.value)} 
+                              style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }} 
+                            />
+                          </div>
+                        </div>
+
+                        <button 
+                          type="button" 
+                          disabled={ledgerSubmitting}
+                          onClick={handleAddPayment}
+                          style={{ padding: '0.55rem 1.25rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.85rem', cursor: ledgerSubmitting ? 'not-allowed' : 'pointer' }}
+                        >
+                          {ledgerSubmitting ? 'Recording...' : 'Record Payment Entry 💵'}
+                        </button>
+                      </div>
+
+                    </div>
+
+                    {/* 3. POST-CONFIRMATION CHANGE ORDERS & ADD-ONS */}
+                    <div style={{ border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.25rem', background: '#FFF' }}>
+                      <h4 style={{ margin: '0 0 1rem 0', fontSize: '1.05rem', fontWeight: 800, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        📝 Post-Confirmation Change Orders & Add-Ons ({activeAdditionalCharges.length})
+                      </h4>
+
+                      {/* Additional Charges List */}
+                      {activeAdditionalCharges.length === 0 ? (
+                        <p style={{ fontSize: '0.85rem', color: '#64748B', fontStyle: 'italic', marginBottom: '1.25rem' }}>No change orders or add-ons added after confirmation.</p>
+                      ) : (
+                        <div style={{ overflowX: 'auto', marginBottom: '1.25rem' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem', textAlign: 'left' }}>
+                            <thead>
+                              <tr style={{ background: '#F1F5F9', color: '#475569' }}>
+                                <th style={{ padding: '0.5rem 0.75rem' }}>Date</th>
+                                <th style={{ padding: '0.5rem 0.75rem' }}>Description</th>
+                                <th style={{ padding: '0.5rem 0.75rem' }}>Type</th>
+                                <th style={{ padding: '0.5rem 0.75rem' }}>Amount (S$)</th>
+                                <th style={{ padding: '0.5rem 0.75rem', textAlign: 'right' }}>Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {activeAdditionalCharges.map((c, idx) => {
+                                const isNeg = c.chargeType === 'Discount' || c.chargeType === 'Refund'
+                                return (
+                                  <tr key={c.chargeId || idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                    <td style={{ padding: '0.55rem 0.75rem', color: '#334155' }}>{new Date(c.date).toLocaleDateString('en-SG', { day: '2-digit', month: 'short' })}</td>
+                                    <td style={{ padding: '0.55rem 0.75rem', fontWeight: 700, color: '#1E293B' }}>{c.itemDescription}</td>
+                                    <td style={{ padding: '0.55rem 0.75rem' }}>
+                                      <span style={{ padding: '0.15rem 0.45rem', borderRadius: '4px', background: isNeg ? '#FEE2E2' : '#E0E7FF', color: isNeg ? '#991B1B' : '#3730A3', fontWeight: 700, fontSize: '0.72rem' }}>
+                                        {c.chargeType}
+                                      </span>
+                                    </td>
+                                    <td style={{ padding: '0.55rem 0.75rem', fontWeight: 800, color: isNeg ? '#DC2626' : '#15803D' }}>
+                                      {isNeg ? `-S$ ${Number(c.amount).toLocaleString()}` : `+S$ ${Number(c.amount).toLocaleString()}`}
+                                    </td>
+                                    <td style={{ padding: '0.55rem 0.75rem', textAlign: 'right' }}>
+                                      <button onClick={() => handleDeleteCharge(c.chargeId)} style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', borderRadius: '4px', padding: '0.2rem 0.5rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
+                                        🗑️ Delete
+                                      </button>
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {/* Add Charge Form */}
+                      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '1rem' }}>
+                        <strong style={{ fontSize: '0.85rem', color: '#1E293B', display: 'block', marginBottom: '0.65rem' }}>+ Add Extra Charge / Activity / Discount</strong>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                          <div style={{ gridColumn: 'span 2' }}>
+                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748B', marginBottom: '0.2rem' }}>Item / Service Description *</label>
+                            <input 
+                              type="text" 
+                              placeholder="e.g. Added 2x Night Safari tickets on Day 3" 
+                              value={ledgerChargeDesc} 
+                              onChange={e => setLedgerChargeDesc(e.target.value)} 
+                              style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }} 
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748B', marginBottom: '0.2rem' }}>Amount (S$) *</label>
+                            <input 
+                              type="number" 
+                              placeholder="e.g. 120" 
+                              value={ledgerChargeAmount} 
+                              onChange={e => setLedgerChargeAmount(e.target.value)} 
+                              style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }} 
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#64748B', marginBottom: '0.2rem' }}>Type</label>
+                            <select 
+                              value={ledgerChargeType} 
+                              onChange={e => setLedgerChargeType(e.target.value)}
+                              style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }}
+                            >
+                              <option value="Add-On">Add-On Activity</option>
+                              <option value="Surcharge">Midnight / Peak Surcharge</option>
+                              <option value="Discount">Discount / Waiver (-)</option>
+                              <option value="Refund">Refund (-)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <button 
+                          type="button" 
+                          disabled={ledgerSubmitting}
+                          onClick={handleAddCharge}
+                          style={{ padding: '0.55rem 1.25rem', background: '#1A365D', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.85rem', cursor: ledgerSubmitting ? 'not-allowed' : 'pointer' }}
+                        >
+                          {ledgerSubmitting ? 'Adding...' : 'Add Charge Order 📝'}
+                        </button>
+                      </div>
+
+                    </div>
+
+                  </div>
+                )
+              })()}
 
             </div>
           </div>

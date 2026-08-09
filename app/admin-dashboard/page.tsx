@@ -794,6 +794,14 @@ export default function AdminDashboard() {
                                       href={`/custom-package?ref=${p.proposalNumber}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
+                                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.4rem 0.8rem', background: '#0F4C3A', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 700 }}
+                                    >
+                                      💳 Open Ledger
+                                    </a>
+                                    <a
+                                      href={`/custom-package?ref=${p.proposalNumber}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
                                       style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.4rem 0.8rem', background: '#2B6CB0', color: '#FFF', borderRadius: '6px', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 700 }}
                                     >
                                       <ExternalLink size={13} /> Open Link

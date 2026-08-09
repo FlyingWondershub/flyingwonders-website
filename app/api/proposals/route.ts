@@ -56,6 +56,10 @@ export async function POST(req: NextRequest) {
       destinationMode,
       costBreakdown,
       itinerary,
+      invoiceNumber: reqInvoiceNumber,
+      invoiceDate: reqInvoiceDate,
+      paymentLedger,
+      additionalCharges,
     } = body
 
     // 1. Find the B2B agent reference using email
@@ -104,6 +108,10 @@ export async function POST(req: NextRequest) {
           customAgencyEmail: customAgencyEmail !== undefined ? (customAgencyEmail || '') : existing.customAgencyEmail,
           customAgencyPhone: customAgencyPhone !== undefined ? (customAgencyPhone || '') : existing.customAgencyPhone,
           destinationMode: destinationMode || existing.destinationMode,
+          invoiceNumber: reqInvoiceNumber !== undefined ? reqInvoiceNumber : existing.invoiceNumber,
+          invoiceDate: reqInvoiceDate !== undefined ? reqInvoiceDate : existing.invoiceDate,
+          paymentLedger: paymentLedger !== undefined ? paymentLedger : existing.paymentLedger,
+          additionalCharges: additionalCharges !== undefined ? additionalCharges : existing.additionalCharges,
           costBreakdown: {
             roomCostTotal: Number(costBreakdown?.roomCostTotal) || 0,
             suppCostTotal: Number(costBreakdown?.suppCostTotal) || 0,
@@ -165,6 +173,10 @@ export async function POST(req: NextRequest) {
       customAgencyEmail: customAgencyEmail || '',
       customAgencyPhone: customAgencyPhone || '',
       destinationMode: destinationMode || 'singapore',
+      invoiceNumber: reqInvoiceNumber || '',
+      invoiceDate: reqInvoiceDate || '',
+      paymentLedger: paymentLedger || [],
+      additionalCharges: additionalCharges || [],
       status: 'pending',
       costBreakdown: {
         roomCostTotal: Number(costBreakdown?.roomCostTotal) || 0,
@@ -228,6 +240,10 @@ export async function GET(req: NextRequest) {
         totalClientPrice,
         costBreakdown,
         itinerary,
+        invoiceNumber,
+        invoiceDate,
+        paymentLedger,
+        additionalCharges,
         agent->{
           agentName,
           companyName,

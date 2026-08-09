@@ -178,6 +178,53 @@ export const proposalSchema = defineType({
       description: 'Lifecycle status of this package proposal. Sequence: Pending -> Follow-up -> Confirmed -> Scheduled -> Completed.',
     }),
     defineField({
+      name: 'invoiceNumber',
+      title: 'Invoice Number (INV-YYYY-XXXX)',
+      type: 'string',
+    }),
+    defineField({
+      name: 'invoiceDate',
+      title: 'Invoice Date',
+      type: 'string',
+    }),
+    defineField({
+      name: 'paymentLedger',
+      title: 'Payment History Ledger',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            { name: 'paymentId', type: 'string', title: 'Payment ID' },
+            { name: 'date', type: 'string', title: 'Payment Date' },
+            { name: 'amount', type: 'number', title: 'Amount Paid (S$)' },
+            { name: 'method', type: 'string', title: 'Payment Method (Bank Transfer, PayNow, Cash, Credit Note)' },
+            { name: 'referenceNo', type: 'string', title: 'Reference / UTR Number' },
+            { name: 'notes', type: 'string', title: 'Payment Notes' },
+            { name: 'recordedBy', type: 'string', title: 'Recorded By' },
+          ],
+        },
+      ],
+    }),
+    defineField({
+      name: 'additionalCharges',
+      title: 'Post-Confirmation Change Orders & Add-Ons',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            { name: 'chargeId', type: 'string', title: 'Charge ID' },
+            { name: 'date', type: 'string', title: 'Date Added' },
+            { name: 'itemDescription', type: 'string', title: 'Description / Item' },
+            { name: 'amount', type: 'number', title: 'Amount (S$)' },
+            { name: 'chargeType', type: 'string', title: 'Type (Add-On / Surcharge / Discount / Refund)' },
+            { name: 'addedBy', type: 'string', title: 'Added By' },
+          ],
+        },
+      ],
+    }),
+    defineField({
       name: 'itinerary',
       title: 'Itinerary Custom Structure (JSON)',
       type: 'text',
