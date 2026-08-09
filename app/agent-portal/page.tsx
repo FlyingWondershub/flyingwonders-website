@@ -62,31 +62,16 @@ export default function AgentPortalPage() {
           setCustomAgencyPhone(ag.phone || '')
           localStorage.setItem('fw_b2b_agent', JSON.stringify(ag))
           fetchAgentProposals(ag.email)
+          setLoading(false)
           return
         }
       } catch (e) {
         console.error(e)
       }
 
-      // Check localStorage if server check didn't return
-      const stored = localStorage.getItem('fw_b2b_agent')
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored)
-          if (parsed && parsed.email) {
-            setActiveAgent(parsed)
-            setCustomAgencyName(parsed.companyName || parsed.agentName || '')
-            setCustomAgencyEmail(parsed.email || '')
-            setCustomAgencyPhone(parsed.phone || '')
-            fetchAgentProposals(parsed.email)
-            return
-          }
-        } catch (e) {
-          console.error(e)
-        }
-      }
-
-      // If no logged in session, open Login Modal
+      // If server session is false, clear any stale client storage
+      localStorage.removeItem('fw_b2b_agent')
+      setActiveAgent(null)
       setLoading(false)
       setShowLoginModal(true)
     }
@@ -185,9 +170,15 @@ export default function AgentPortalPage() {
     alert('Agency Branding updated successfully! Applies across all white-label PDF and WhatsApp proposals.')
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm('Are you sure you want to log out of your B2B Agent Account?')) {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' })
+      } catch (e) {
+        console.error('Logout error:', e)
+      }
       localStorage.removeItem('fw_b2b_agent')
+      setActiveAgent(null)
       window.location.href = '/'
     }
   }
