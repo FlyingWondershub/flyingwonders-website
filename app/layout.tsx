@@ -140,6 +140,12 @@ export default async function RootLayout({
     <html lang="en">
       <head>
         <SeoSchema />
+        {/* Google AdSense Script for Site Ownership Verification */}
+        <Script
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3967023851392009"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
         {/* Google Analytics 4 Setup */}
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
