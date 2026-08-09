@@ -173,13 +173,18 @@ export default function AgentPortalPage() {
   const handleLogout = async () => {
     if (confirm('Are you sure you want to log out of your B2B Agent Account?')) {
       try {
-        await fetch('/api/auth/logout', { method: 'POST' })
+        await fetch('/api/auth/logout', { method: 'POST', cache: 'no-store' })
       } catch (e) {
         console.error('Logout error:', e)
       }
-      localStorage.removeItem('fw_b2b_agent')
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('fw_b2b_agent')
+        localStorage.removeItem('fw_agent_branding')
+        localStorage.removeItem('attractions_user')
+        sessionStorage.clear()
+      }
       setActiveAgent(null)
-      window.location.href = '/'
+      window.location.replace('/')
     }
   }
 

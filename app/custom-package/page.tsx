@@ -511,7 +511,7 @@ export default function PrototypeBuilder() {
   useEffect(() => {
     async function checkSession() {
       try {
-        const res = await fetch('/api/auth/check')
+        const res = await fetch(`/api/auth/check?cb=${Date.now()}`, { cache: 'no-store' })
         const data = await res.json()
         if (data.authenticated) {
           setIsAuthenticated(true)

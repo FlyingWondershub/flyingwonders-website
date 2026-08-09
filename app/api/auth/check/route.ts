@@ -13,12 +13,18 @@ const readClient = createClient({
 })
 
 export async function GET() {
+  const headers = {
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+  }
+
   try {
     const cookieStore = await cookies()
     const sessionCookie = cookieStore.get('b2b_session')
 
     if (!sessionCookie || !sessionCookie.value) {
-      return NextResponse.json({ authenticated: false })
+      return NextResponse.json({ authenticated: false }, { headers })
     }
 
     const cleanEmail = sessionCookie.value.trim().toLowerCase()
@@ -27,7 +33,7 @@ export async function GET() {
     if (!agent || !agent.isActive) {
       // Clear cookie if agent no longer exists or is deactivated
       cookieStore.delete('b2b_session')
-      return NextResponse.json({ authenticated: false })
+      return NextResponse.json({ authenticated: false }, { headers })
     }
 
     // Check if the user is explicitly marked as an admin in Sanity, or is the hardcoded default admin
@@ -42,8 +48,8 @@ export async function GET() {
         phone: agent.phone || '',
         role,
       },
-    })
+    }, { headers })
   } catch (err) {
-    return NextResponse.json({ authenticated: false })
+    return NextResponse.json({ authenticated: false }, { headers })
   }
 }

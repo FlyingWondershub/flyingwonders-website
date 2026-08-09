@@ -48,18 +48,24 @@ export default function LayoutWrapper({
   const lastScrollY = useRef(0)
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('fw_b2b_agent')
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored)
-          if (parsed.companyName || parsed.agentName) {
-            setLoggedInCompanyName(parsed.companyName || parsed.agentName)
-          }
-        } catch (e) {}
+    async function checkAuth() {
+      try {
+        const res = await fetch(`/api/auth/check?cb=${Date.now()}`)
+        const data = await res.json()
+        if (data.authenticated && data.agent) {
+          const name = data.agent.companyName || data.agent.agentName || ''
+          setLoggedInCompanyName(name)
+          return
+        }
+      } catch (e) {}
+      // If unauthenticated, clear client state
+      setLoggedInCompanyName('')
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('fw_b2b_agent')
       }
     }
-  }, [])
+    checkAuth()
+  }, [pathname])
 
   useEffect(() => {
     const handleScroll = () => {
