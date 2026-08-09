@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 
-const token = process.env.SANITY_API_TOKEN || process.env.SANITY_READ_TOKEN
+const token = process.env.SANITY_WRITE_TOKEN || process.env.SANITY_API_TOKEN
 
 const writeClient = createClient({
   projectId,
