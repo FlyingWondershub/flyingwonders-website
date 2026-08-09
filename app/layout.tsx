@@ -134,7 +134,7 @@ export default async function RootLayout({
     console.error('Error fetching layout settings from Sanity, using defaults:', err)
   }
 
-  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-F15WONDERS'
+  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-LGTV9FY74C'
 
   return (
     <html lang="en">
