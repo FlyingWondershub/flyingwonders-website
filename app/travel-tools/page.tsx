@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import AdBanner from '../../components/AdBanner'
 import { client } from '../../sanity/lib/client'
 import { 
   FileText, 
@@ -390,7 +391,10 @@ export default function TravelToolsPage() {
               </a>
             </div>
 
-            {/* India AirSuvidha 2.0 Card */}
+          {/* Sponsored Ad Banner Unit */}
+          <AdBanner category="travel-tools" slotId="travel_tools_slot_1" />
+
+          {/* India AirSuvidha 2.0 Card */}
             {!sanitySettings.hideAirSuvidha && (
             <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 15px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>

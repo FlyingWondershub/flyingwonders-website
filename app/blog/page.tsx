@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import AdBanner from '../../components/AdBanner'
 
 interface Article {
   id: string
@@ -132,6 +133,9 @@ export default function BlogFeed() {
               </div>
             </div>
           )}
+
+          {/* Sponsored Ad Unit */}
+          <AdBanner category="blog" slotId="blog_feed_slot_1" />
 
           {/* Standard Blog Articles Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '2rem' }}>

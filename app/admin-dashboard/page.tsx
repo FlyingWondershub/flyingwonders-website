@@ -7,7 +7,7 @@ import {
   DollarSign, RefreshCw, FileText, Map, ExternalLink, Zap, Package, Compass,
   Calendar, Eye, Filter, ChevronLeft, ChevronRight, AlertCircle, Clock,
   ChevronDown, ChevronUp, CalendarCheck, CheckCheck, LayoutDashboard, Database,
-  ArrowRight, ShieldCheck, CreditCard, Menu, PanelLeftClose, PanelLeftOpen
+  ArrowRight, ShieldCheck, CreditCard, Menu, PanelLeftClose, PanelLeftOpen, Megaphone
 } from 'lucide-react'
 
 export default function AdminDashboard() {
@@ -47,6 +47,32 @@ export default function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false)
   const [competitorPrices, setCompetitorPrices] = useState<any[]>([])
   const [refreshingPrices, setRefreshingPrices] = useState(false)
+
+  // Ad Management Toggles State
+  const [adBlogEnabled, setAdBlogEnabled] = useState(true)
+  const [adTravelToolsEnabled, setAdTravelToolsEnabled] = useState(true)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setAdBlogEnabled(localStorage.getItem('fw_ads_disabled_blog') !== 'true')
+      setAdTravelToolsEnabled(localStorage.getItem('fw_ads_disabled_travel-tools') !== 'true')
+    }
+  }, [])
+
+  const toggleAdCategory = (category: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus
+    if (category === 'blog') setAdBlogEnabled(newStatus)
+    if (category === 'travel-tools') setAdTravelToolsEnabled(newStatus)
+    
+    if (typeof window !== 'undefined') {
+      if (!newStatus) {
+        localStorage.setItem(`fw_ads_disabled_${category}`, 'true')
+      } else {
+        localStorage.removeItem(`fw_ads_disabled_${category}`)
+      }
+    }
+    alert(`Ad placement for ${category} is now ${newStatus ? 'ENABLED 🟢' : 'DISABLED 🔴'}`)
+  }
 
   const fetchCompetitorPrices = async () => {
     try {
@@ -310,6 +336,7 @@ export default function AdminDashboard() {
     { id: 'section-agents', label: 'Agent Approvals', icon: Users, badge: metrics.activeAgents },
     { id: 'section-exports', label: 'Data Exports', icon: Download },
     { id: 'section-competitor-pricing', label: 'Competitor Tracker', icon: Eye },
+    { id: 'section-ads', label: 'Ads & Monetization', icon: Megaphone },
     { id: 'section-audit-logs', label: 'Audit Logs', icon: ShieldCheck, badge: logs.length },
   ]
 
@@ -1362,6 +1389,69 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               )}
+            </div>
+          </div>
+
+          {/* ADS & MONETIZATION MANAGEMENT */}
+          <div id="section-ads" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1A202C', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Megaphone size={20} color="#0F4C3A" /> Ad Placement & Monetization Controls
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: '#718096', margin: '0.2rem 0 0' }}>
+                  Control Google AdSense & native travel affiliate banner visibility across website categories.
+                </p>
+              </div>
+              <a
+                href="/ads.txt"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2563EB', textDecoration: 'none', background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '0.4rem 0.85rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                <span>View Live ads.txt</span>
+                <ExternalLink size={13} />
+              </a>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+              {/* Blog Ads Toggle */}
+              <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Travel Blog Articles (/blog)</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adBlogEnabled ? '#DCFCE7' : '#FEE2E2', color: adBlogEnabled ? '#166534' : '#991B1B' }}>
+                    {adBlogEnabled ? 'ACTIVE 🟢' : 'DISABLED 🔴'}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
+                  In-article native ad slots & category feed leaderboard banners.
+                </p>
+                <button
+                  onClick={() => toggleAdCategory('blog', adBlogEnabled)}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adBlogEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                >
+                  {adBlogEnabled ? 'Disable Blog Ads' : 'Enable Blog Ads'}
+                </button>
+              </div>
+
+              {/* Travel Tools Ads Toggle */}
+              <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Travel Tools Page (/travel-tools)</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adTravelToolsEnabled ? '#DCFCE7' : '#FEE2E2', color: adTravelToolsEnabled ? '#166534' : '#991B1B' }}>
+                    {adTravelToolsEnabled ? 'ACTIVE 🟢' : 'DISABLED 🔴'}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
+                  Sidebar & inline banners on Currency Converter & Pre-Departure checklist.
+                </p>
+                <button
+                  onClick={() => toggleAdCategory('travel-tools', adTravelToolsEnabled)}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adTravelToolsEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                >
+                  {adTravelToolsEnabled ? 'Disable Tools Ads' : 'Enable Tools Ads'}
+                </button>
+              </div>
             </div>
           </div>
 
