@@ -1019,7 +1019,7 @@ export default function AdminDashboard() {
             let totalContractValue = 0
 
             const enrichedProps = confirmedProps.map(p => {
-              const basePrice = Number(p.totalClientPrice) || 0
+              const basePrice = Number(p.totalClientPrice || p.costBreakdown?.totalClientPrice) || 0
               const totalAddons = (p.additionalCharges || []).reduce((sum: number, c: any) => {
                 const amt = Number(c.amount) || 0
                 return (c.chargeType === 'Discount' || c.chargeType === 'Refund') ? sum - amt : sum + amt

@@ -35,6 +35,17 @@ export async function POST(req: NextRequest) {
 
     let updatedDoc: any = {}
 
+    // Ensure top-level totalClientPrice is set if missing
+    const resolvedPrice = proposal.totalClientPrice || proposal.costBreakdown?.totalClientPrice || 0
+
+    // Auto-assign invoice number if confirmed/scheduled/completed or missing
+    let autoInv = proposal.invoiceNumber
+    let autoInvDate = proposal.invoiceDate
+    if (!autoInv && (status === 'confirmed' || status === 'scheduled' || status === 'completed' || action === 'add_payment' || action === 'add_charge')) {
+      autoInv = `INV-${new Date().getFullYear()}-${proposalNumber.split('-').pop() || '0001'}`
+      autoInvDate = new Date().toISOString().split('T')[0]
+    }
+
     if (action === 'add_payment') {
       // paymentData: { amount, method, referenceNo, notes }
       const newPayment = {
@@ -49,18 +60,11 @@ export async function POST(req: NextRequest) {
       const existingLedger = Array.isArray(proposal.paymentLedger) ? proposal.paymentLedger : []
       const updatedLedger = [...existingLedger, newPayment]
 
-      // Auto-assign invoice number if not assigned yet
-      let autoInv = proposal.invoiceNumber
-      let autoInvDate = proposal.invoiceDate
-      if (!autoInv) {
-        autoInv = `INV-${new Date().getFullYear()}-${proposalNumber.split('-').pop() || '0001'}`
-        autoInvDate = new Date().toISOString().split('T')[0]
-      }
-
       updatedDoc = await writeClient.patch(proposal._id).set({
         paymentLedger: updatedLedger,
         invoiceNumber: autoInv,
         invoiceDate: autoInvDate,
+        totalClientPrice: resolvedPrice,
       }).commit()
 
     } else if (action === 'delete_payment') {
@@ -69,6 +73,7 @@ export async function POST(req: NextRequest) {
 
       updatedDoc = await writeClient.patch(proposal._id).set({
         paymentLedger: updatedLedger,
+        totalClientPrice: resolvedPrice,
       }).commit()
 
     } else if (action === 'add_charge') {
@@ -86,6 +91,9 @@ export async function POST(req: NextRequest) {
 
       updatedDoc = await writeClient.patch(proposal._id).set({
         additionalCharges: updatedCharges,
+        invoiceNumber: autoInv,
+        invoiceDate: autoInvDate,
+        totalClientPrice: resolvedPrice,
       }).commit()
 
     } else if (action === 'delete_charge') {
@@ -94,15 +102,18 @@ export async function POST(req: NextRequest) {
 
       updatedDoc = await writeClient.patch(proposal._id).set({
         additionalCharges: updatedCharges,
+        totalClientPrice: resolvedPrice,
       }).commit()
 
     } else if (action === 'update_status') {
-      let patchData: any = {}
+      let patchData: any = {
+        totalClientPrice: resolvedPrice
+      }
       if (status) patchData.status = status
       if (invoiceNumber) patchData.invoiceNumber = invoiceNumber
       
-      // Auto assign invoice number on confirmation if missing
-      if (status === 'confirmed' && !proposal.invoiceNumber && !invoiceNumber) {
+      // Auto assign invoice number on confirmation/scheduled/completed if missing
+      if ((status === 'confirmed' || status === 'scheduled' || status === 'completed') && !proposal.invoiceNumber && !invoiceNumber) {
         patchData.invoiceNumber = `INV-${new Date().getFullYear()}-${proposalNumber.split('-').pop() || '0001'}`
         patchData.invoiceDate = new Date().toISOString().split('T')[0]
       }
