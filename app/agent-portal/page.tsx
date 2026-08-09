@@ -42,39 +42,118 @@ export default function AgentPortalPage() {
   const [bookingFilter, setBookingFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Login modal state if unauthenticated
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [loginEmail, setLoginEmail] = useState('')
+  const [otpStep, setOtpStep] = useState<'email' | 'otp'>('email')
+  const [otpCode, setOtpCode] = useState('')
+  const [authSubmitting, setAuthSubmitting] = useState(false)
+
   useEffect(() => {
-    // Load logged-in agent session
-    if (typeof window !== 'undefined') {
+    async function initSession() {
+      try {
+        const res = await fetch(`/api/auth/check?cb=${Date.now()}`)
+        const authData = await res.json()
+        if (authData.authenticated && authData.agent) {
+          const ag = authData.agent
+          setActiveAgent(ag)
+          setCustomAgencyName(ag.companyName || ag.agentName || '')
+          setCustomAgencyEmail(ag.email || '')
+          setCustomAgencyPhone(ag.phone || '')
+          localStorage.setItem('fw_b2b_agent', JSON.stringify(ag))
+          fetchAgentProposals(ag.email)
+          return
+        }
+      } catch (e) {
+        console.error(e)
+      }
+
+      // Check localStorage if server check didn't return
       const stored = localStorage.getItem('fw_b2b_agent')
       if (stored) {
         try {
           const parsed = JSON.parse(stored)
-          setActiveAgent(parsed)
-          setCustomAgencyName(parsed.companyName || parsed.agentName || '')
-          setCustomAgencyEmail(parsed.email || '')
-          setCustomAgencyPhone(parsed.phone || '')
-          fetchAgentProposals(parsed.email)
+          if (parsed && parsed.email) {
+            setActiveAgent(parsed)
+            setCustomAgencyName(parsed.companyName || parsed.agentName || '')
+            setCustomAgencyEmail(parsed.email || '')
+            setCustomAgencyPhone(parsed.phone || '')
+            fetchAgentProposals(parsed.email)
+            return
+          }
         } catch (e) {
           console.error(e)
-          setLoading(false)
         }
-      } else {
-        // Fallback default agent for testing if none in storage
-        const defaultAgent = {
-          agentName: 'Nithin',
-          companyName: 'Flying Wonders Private Limited',
-          email: 'info.flyingwonders@gmail.com',
-          phone: '+91 9886171251',
-          createdAt: '2026-05-01'
-        }
-        setActiveAgent(defaultAgent)
-        setCustomAgencyName(defaultAgent.companyName)
-        setCustomAgencyEmail(defaultAgent.email)
-        setCustomAgencyPhone(defaultAgent.phone)
-        fetchAgentProposals(defaultAgent.email)
       }
+
+      // If no logged in session, open Login Modal
+      setLoading(false)
+      setShowLoginModal(true)
     }
+
+    initSession()
   }, [])
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!loginEmail || !loginEmail.includes('@')) {
+      alert('Please enter a valid B2B registered email address.')
+      return
+    }
+    setAuthSubmitting(true)
+    try {
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail })
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setOtpStep('otp')
+        alert(`OTP sent to ${loginEmail}!`)
+      } else {
+        alert(data.error || 'Failed to send OTP. Please ensure your email is registered as an approved B2B Agent.')
+      }
+    } catch (e) {
+      alert('Error sending OTP.')
+    } finally {
+      setAuthSubmitting(false)
+    }
+  }
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!otpCode || otpCode.length < 4) {
+      alert('Please enter a valid verification code.')
+      return
+    }
+    setAuthSubmitting(true)
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail, otp: otpCode })
+      })
+      const data = await res.json()
+      if (res.ok && data.success && data.agent) {
+        const ag = data.agent
+        setActiveAgent(ag)
+        setCustomAgencyName(ag.companyName || ag.agentName || '')
+        setCustomAgencyEmail(ag.email || '')
+        setCustomAgencyPhone(ag.phone || '')
+        localStorage.setItem('fw_b2b_agent', JSON.stringify(ag))
+        setShowLoginModal(false)
+        fetchAgentProposals(ag.email)
+        alert(`Welcome back, ${ag.agentName || ag.companyName}!`)
+      } else {
+        alert(data.error || 'Invalid OTP code.')
+      }
+    } catch (e) {
+      alert('Error verifying OTP.')
+    } finally {
+      setAuthSubmitting(false)
+    }
+  }
 
   const fetchAgentProposals = async (email: string) => {
     setRefreshing(true)
@@ -797,6 +876,91 @@ export default function AgentPortalPage() {
                 Save Branding Settings
               </button>
             </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ── 5. AGENT OTP LOGIN MODAL ── */}
+      {showLoginModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999
+        }}>
+          <div style={{
+            background: '#FFF',
+            borderRadius: '16px',
+            padding: '2.25rem 2rem',
+            width: '440px',
+            maxWidth: '92vw',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+            textAlign: 'center'
+          }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#FEE2E2', color: '#B83A4B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', fontSize: '1.5rem', fontWeight: 800 }}>
+              🔑
+            </div>
+
+            <h3 style={{ margin: '0 0 0.35rem', fontSize: '1.25rem', fontWeight: 800, color: '#0F172A' }}>
+              B2B Agent Portal Login
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.5rem', lineHeight: 1.4 }}>
+              Enter your registered B2B email to receive a single-use OTP verification code.
+            </p>
+
+            {otpStep === 'email' ? (
+              <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <input
+                  type="email"
+                  placeholder="Registered B2B Email (e.g. lee.think2000@gmail.com)"
+                  required
+                  value={loginEmail}
+                  onChange={e => setLoginEmail(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.9rem', outline: 'none' }}
+                />
+                <button
+                  type="submit"
+                  disabled={authSubmitting}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: 'none', background: '#B83A4B', color: '#FFF', fontWeight: 800, fontSize: '0.9rem', cursor: authSubmitting ? 'not-allowed' : 'pointer' }}
+                >
+                  {authSubmitting ? 'Sending OTP...' : 'Send Verification OTP 📩'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <span style={{ fontSize: '0.8rem', color: '#15803D', fontWeight: 700 }}>
+                  ✓ OTP sent to {loginEmail}
+                </span>
+                <input
+                  type="text"
+                  placeholder="Enter 6-digit OTP code"
+                  required
+                  value={otpCode}
+                  onChange={e => setOtpCode(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '1.1rem', textAlign: 'center', letterSpacing: '0.3em', fontWeight: 800, outline: 'none' }}
+                />
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setOtpStep('email')}
+                    style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#FFF', color: '#475569', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+                  >
+                    ← Change Email
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={authSubmitting}
+                    style={{ flex: 2, padding: '0.75rem', borderRadius: '8px', border: 'none', background: '#0F4C3A', color: '#FFF', fontWeight: 800, fontSize: '0.9rem', cursor: authSubmitting ? 'not-allowed' : 'pointer' }}
+                  >
+                    {authSubmitting ? 'Verifying...' : 'Verify & Log In 🔓'}
+                  </button>
+                </div>
+              </form>
+            )}
 
           </div>
         </div>
