@@ -986,11 +986,13 @@ export default function PrototypeBuilder() {
 
   // Top + Add Custom Day (Break Trip) - Inserts at beginning of itinerary
   const handleAddTopCustomBreakDay = () => {
-    let defaultTopDate = ''
     if (arrivalDate) {
       const d = new Date(arrivalDate)
       d.setDate(d.getDate() - 1)
-      defaultTopDate = d.toISOString().split('T')[0]
+      const yyyy = d.getFullYear()
+      const mm = String(d.getMonth() + 1).padStart(2, '0')
+      const dd = String(d.getDate()).padStart(2, '0')
+      setArrivalDate(`${yyyy}-${mm}-${dd}`)
     }
     setItinerary(prev => [
       {
@@ -1002,8 +1004,7 @@ export default function PrototypeBuilder() {
         guides: [],
         guideRequired: false,
         isCustomDay: true,
-        isBreakTrip: true,
-        customDate: defaultTopDate
+        isBreakTrip: true
       },
       ...prev
     ])
