@@ -1199,11 +1199,12 @@ export default function PrototypeBuilder() {
   }
 
   // Concise WhatsApp-optimised Proposal Text
-  const generateProposalText = () => {
+  const generateProposalText = (overrideNum?: string) => {
+    const pNum = overrideNum || savedProposalNum
     const sep = '━━━━━━━━━━━━━━━━━━━━━'
     let t = `✈️ *SINGAPORE ITINERARY*`
-    if (savedProposalNum) {
-      t += `  (Ref: ${savedProposalNum})`
+    if (pNum) {
+      t += `  (Ref: ${pNum})`
     }
     t += `\n${sep}\n`
     if (guestName) {
@@ -1385,8 +1386,9 @@ export default function PrototypeBuilder() {
     return t
   }
 
-  // Download Itinerary PDF helper
-  const downloadProposalPDF = () => {
+  // Download Itinerary PDF helper (auto-saves proposal if draft)
+  const downloadProposalPDF = async () => {
+    const pNum = await ensureProposalSaved(true)
     import('jspdf').then((module) => {
       const jsPDF = module.jsPDF
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
@@ -1961,9 +1963,89 @@ export default function PrototypeBuilder() {
     })
   }
 
-  // Send Itinerary on WhatsApp helper
-  const sendOnWhatsApp = () => {
-    const text = generateProposalText()
+  // Helper to ensure proposal is saved & assigned a Proposal ID before copying, sharing, or downloading
+  const ensureProposalSaved = async (quiet = true): Promise<string | null> => {
+    if (savedProposalNum) return savedProposalNum
+    if (!activeAgent) return null
+
+    try {
+      setSaveStatus('saving')
+      const h = hotelsList[globalHotelIndex]
+      const room = h?.rooms[globalRoomIndex]
+      const supp = globalSuppIndex >= 0 ? h?.rooms[globalSuppIndex] : null
+
+      const res = await fetch('/api/proposals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalNumber: undefined,
+          isTemplateBased: !!activeTemplateName,
+          templateName: activeTemplateName || '',
+          agentEmail: activeAgent.email,
+          guestName,
+          guestPhone,
+          adults,
+          kids,
+          childAges,
+          nights: nightsCount,
+          arrivalDate,
+          hotelRequired,
+          hotelName: customHotelEnabled ? customHotelName : (h?.name || ''),
+          roomType: customHotelEnabled ? customHotelRoomType : (room?.type || ''),
+          roomCount: globalRoomCount,
+          supplementType: customHotelEnabled ? customHotelSuppName : (supp?.type || ''),
+          supplementCount: globalSuppCount,
+          customHotelEnabled,
+          customHotelPrice,
+          customHotelSuppCost,
+          miscCostPerPerson,
+          miscNotes,
+          markupPercent,
+          markupAbsolute,
+          discountPerPerson,
+          customAgencyName,
+          customAgencyEmail,
+          customAgencyPhone,
+          destinationMode,
+          costBreakdown,
+          itinerary,
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.success && data.proposalNumber) {
+        setSaveStatus('success')
+        setSavedProposalNum(data.proposalNumber)
+        if (!quiet) {
+          alert(`Proposal created successfully! Proposal Number: ${data.proposalNumber}`)
+        }
+        return data.proposalNumber
+      }
+    } catch (err) {
+      console.error('Auto-save proposal error:', err)
+      setSaveStatus('error')
+    }
+    return null
+  }
+
+  // Copy Proposal handler with automatic Proposal ID assignment
+  const handleCopyProposalText = async (closeDrawer = false) => {
+    const pNum = await ensureProposalSaved(true)
+    const text = generateProposalText(pNum || undefined)
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch (e) {
+      console.error('Clipboard copy failed:', e)
+    }
+    notifyAgentActivity('clipboard_copy')
+    if (closeDrawer) setPriceDrawerOpen(false)
+    const refMsg = pNum ? ` (Ref: ${pNum})` : ''
+    alert(`Proposal copied to clipboard!${refMsg}`)
+  }
+
+  // Send Itinerary on WhatsApp helper (auto-saves proposal if draft)
+  const sendOnWhatsApp = async () => {
+    const pNum = await ensureProposalSaved(true)
+    const text = generateProposalText(pNum || undefined)
     const encodedText = encodeURIComponent(text)
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`
     window.open(whatsappUrl, '_blank')
@@ -3639,7 +3721,7 @@ ${proposal}
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
-                <button onClick={() => { const t = generateProposalText(); navigator.clipboard.writeText(t); notifyAgentActivity('clipboard_copy'); setPriceDrawerOpen(false); alert('Proposal copied!') }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.5rem' }}>📋 Copy</button>
+                <button onClick={() => handleCopyProposalText(true)} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.5rem' }}>📋 Copy</button>
                 <button onClick={() => { downloadProposalPDF(); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.5rem' }}>📄 PDF</button>
                 <button onClick={() => { sendOnWhatsApp(); setPriceDrawerOpen(false) }} className="cp-tool-btn whatsapp" style={{ justifyContent: 'center', padding: '0.65rem 0.5rem' }}>💬 WA</button>
               </div>
@@ -3707,7 +3789,7 @@ ${proposal}
             🏠 Home Dashboard
           </Link>
           <button className="cp-tool-btn" onClick={() => { setShowQuotationsModal(true); handleLoadQuotations(); }} style={{ background: '#EBF8FF', border: '1px solid #BEE3F8', color: '#2B6CB0' }}>🗄️ View Proposals</button>
-          <button className="cp-tool-btn" onClick={() => { const t = generateProposalText(); navigator.clipboard.writeText(t); notifyAgentActivity('clipboard_copy'); alert('Proposal copied!') }}>📋 Copy Proposal</button>
+          <button className="cp-tool-btn" onClick={() => handleCopyProposalText(false)}>📋 Copy Proposal</button>
           <button className="cp-tool-btn" onClick={downloadProposalPDF}>📄 PDF</button>
           <button className="cp-tool-btn whatsapp" onClick={sendOnWhatsApp}>💬 WhatsApp</button>
           <button className="cp-tool-btn" onClick={handleSaveProposal} style={{ background: '#FAF5FF', border: '1px solid #D6BCFA', color: '#6B46C1' }}>
@@ -5487,11 +5569,7 @@ ${proposal}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.25rem', marginTop: '1rem' }}>
                 <button 
                   type="button" 
-                  onClick={() => {
-                    const textSummary = generateProposalText()
-                    navigator.clipboard.writeText(textSummary)
-                    alert(`Proposal copied to clipboard successfully!`)
-                  }}
+                  onClick={() => handleCopyProposalText(false)}
                   title="Copy Proposal"
                   style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
