@@ -23,7 +23,10 @@ import {
   Bus,
   Plane,
   Search,
-  Loader2
+  Loader2,
+  Newspaper,
+  Rss,
+  EyeOff
 } from 'lucide-react'
 
 export default function TravelToolsPage() {
@@ -46,7 +49,14 @@ export default function TravelToolsPage() {
     sgVisaStatusLink?: string
     airSuvidhaLink?: string
     hideAirSuvidha?: boolean
+    hideTravelNews?: boolean
   }>({})
+
+  // Travel News Radar State
+  const [newsList, setNewsList] = useState<any[]>([])
+  const [newsLoading, setNewsLoading] = useState<boolean>(true)
+  const [newsFilter, setNewsFilter] = useState<'all' | 'aviation' | 'sea' | 'industry'>('all')
+  const [hideNewsRadar, setHideNewsRadar] = useState<boolean>(false)
 
   // AirLabs Live Flight Search State
   const [flightNumberInput, setFlightNumberInput] = useState<string>('')
@@ -96,6 +106,22 @@ export default function TravelToolsPage() {
         if (res) setSanitySettings(res)
       })
       .catch(err => console.error('Travel tools Sanity fetch error:', err))
+
+    // Check local storage for hide news radar
+    if (typeof window !== 'undefined') {
+      if (localStorage.getItem('fw_hide_travel_news') === 'true') {
+        setHideNewsRadar(true)
+      }
+    }
+
+    // Fetch Live Travel News Radar
+    fetch('/api/travel-news')
+      .then(res => res.json())
+      .then(data => {
+        if (data.news) setNewsList(data.news)
+      })
+      .catch(err => console.error('Travel news fetch error:', err))
+      .finally(() => setNewsLoading(false))
   }, [])
 
   const toggleCheck = (id: string) => {
@@ -817,6 +843,112 @@ export default function TravelToolsPage() {
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* 📰 LIVE GLOBAL TRAVEL NEWS & INDUSTRY RADAR */}
+        {(!sanitySettings.hideTravelNews && !hideNewsRadar) && (
+          <section style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', marginBottom: '3rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '1rem' }}>
+              <div>
+                <span style={{ fontSize: '0.72rem', background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.25rem 0.65rem', borderRadius: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'inline-flex', alignItems: 'center', gap: '4px', marginBottom: '0.35rem' }}>
+                  <Rss size={13} /> Live Global RSS Updates
+                </span>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1E293B', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Newspaper size={24} color="#2563EB" /> Live Travel & Tourism News Radar
+                </h3>
+              </div>
+
+              {/* Filter Pills */}
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                {[
+                  { id: 'all', label: 'All News' },
+                  { id: 'aviation', label: '🛫 Aviation & Flights' },
+                  { id: 'sea', label: '🇸🇬 Singapore & SEA' },
+                  { id: 'industry', label: '🌏 Industry & Visas' }
+                ].map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => setNewsFilter(f.id as any)}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '20px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      border: newsFilter === f.id ? 'none' : '1px solid #CBD5E1',
+                      background: newsFilter === f.id ? '#2563EB' : '#F8FAFC',
+                      color: newsFilter === f.id ? '#FFF' : '#475569',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* News Cards Grid */}
+            {newsLoading ? (
+              <div style={{ padding: '3rem', textAlign: 'center', color: '#64748B' }}>
+                <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
+                <p style={{ fontSize: '0.88rem', margin: 0 }}>Fetching latest international travel news feeds...</p>
+              </div>
+            ) : newsList.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', background: '#F8FAFC', borderRadius: '12px', color: '#64748B', fontSize: '0.88rem' }}>
+                No travel updates loaded at this moment. Please check back shortly.
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+                {newsList
+                  .filter(item => newsFilter === 'all' || item.category === newsFilter)
+                  .slice(0, 6)
+                  .map(item => (
+                    <a
+                      key={item.id}
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        background: '#F8FAFC',
+                        borderRadius: '12px',
+                        padding: '1.25rem',
+                        border: '1px solid #E2E8F0',
+                        textDecoration: 'none',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = '#93C5FD'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = '#E2E8F0'}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#DBEAFE', color: '#1E40AF', padding: '2px 8px', borderRadius: '6px' }}>
+                            {item.source}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
+                            ⏱️ {item.timeAgo}
+                          </span>
+                        </div>
+                        <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem', lineHeight: 1.4 }}>
+                          {item.title}
+                        </h4>
+                        <p style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.5, margin: 0 }}>
+                          {item.snippet}
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', fontWeight: 700, color: '#2563EB', marginTop: '1rem', borderTop: '1px solid #E2E8F0', paddingTop: '0.65rem' }}>
+                        <span>Read Full Story</span>
+                        <ExternalLink size={13} />
+                      </div>
+                    </a>
+                  ))}
+              </div>
+            )}
           </section>
         )}
 
