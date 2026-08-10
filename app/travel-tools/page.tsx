@@ -52,11 +52,24 @@ export default function TravelToolsPage() {
     hideTravelNews?: boolean
   }>({})
 
+  // Active Tool Section for Sticky Navigator Bar
+  const [activeToolSection, setActiveToolSection] = useState<string>('tool-flight-radar')
+
   // Travel News Radar State
   const [newsList, setNewsList] = useState<any[]>([])
   const [newsLoading, setNewsLoading] = useState<boolean>(true)
   const [newsFilter, setNewsFilter] = useState<'all' | 'aviation' | 'sea' | 'industry'>('all')
   const [hideNewsRadar, setHideNewsRadar] = useState<boolean>(false)
+
+  const scrollToTool = (id: string) => {
+    setActiveToolSection(id)
+    const element = document.getElementById(id)
+    if (element) {
+      const yOffset = -130 // Header height offset
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset
+      window.scrollTo({ top: y, behavior: 'smooth' })
+    }
+  }
 
   // AirLabs Live Flight Search State
   const [flightNumberInput, setFlightNumberInput] = useState<string>('')
@@ -207,11 +220,72 @@ export default function TravelToolsPage() {
         </div>
       </section>
 
-      <div style={{ maxWidth: '1200px', margin: '-2.5rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
+      {/* 🧭 STICKY TOOL NAVIGATOR BAR */}
+      <div
+        style={{
+          position: 'sticky',
+          top: '70px',
+          zIndex: 90,
+          background: 'rgba(255, 255, 255, 0.94)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid #E2E8F0',
+          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.05)',
+          padding: '0.65rem 1rem'
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap', marginRight: '0.25rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Compass size={14} color="#059669" /> Jump to:
+          </span>
+
+          {[
+            { id: 'tool-flight-radar', label: '✈️ Flight Radar', show: !sanitySettings.hideFlightTracker },
+            { id: 'tool-official-portals', label: '🇸🇬 SGAC & MDAC', show: !sanitySettings.hideOfficialPortals },
+            { id: 'tool-visa-checklist', label: '🛂 Visa Checklists', show: !sanitySettings.hideVisaChecklist },
+            { id: 'tool-currency-converter', label: '🧮 Currency & Meal Estimator', show: !sanitySettings.hideCurrencyConverter },
+            { id: 'tool-packing-checklist', label: '📋 Packing List', show: !sanitySettings.hideInteractiveChecklist },
+            { id: 'tool-news-radar', label: '📰 Travel News', show: !sanitySettings.hideTravelNews && !hideNewsRadar },
+            { id: 'tool-time-allocator', label: '⏱️ Time Allocator', show: !sanitySettings.hideAttractionAllocator }
+          ].filter(item => item.show).map(item => (
+            <button
+              key={item.id}
+              onClick={() => scrollToTool(item.id)}
+              style={{
+                padding: '0.4rem 0.85rem',
+                borderRadius: '20px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                border: activeToolSection === item.id ? '1px solid #059669' : '1px solid #CBD5E1',
+                background: activeToolSection === item.id ? '#F0FDF4' : '#F8FAFC',
+                color: activeToolSection === item.id ? '#166534' : '#475569',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: activeToolSection === item.id ? '0 2px 6px rgba(5,150,105,0.15)' : 'none'
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ maxWidth: '1200px', margin: '2rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
         
         {/* ✈️ AIRLABS LIVE FLIGHT RADAR & STATUS TRACKER */}
         {!sanitySettings.hideFlightTracker && (
-          <div style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+          <div id="tool-flight-radar" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -339,7 +413,7 @@ export default function TravelToolsPage() {
         
         {/* 2. OFFICIAL GOVERNMENT PORTALS */}
         {!sanitySettings.hideOfficialPortals && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+          <div id="tool-official-portals" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
             
             {/* ICA SGAC Portal Card */}
             <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 15px rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -528,7 +602,7 @@ export default function TravelToolsPage() {
 
         {/* 3. VISA DOCUMENTATION CHECKLIST (SG & MY) */}
         {!sanitySettings.hideVisaChecklist && (
-          <section style={{ marginBottom: '3.5rem' }}>
+          <section id="tool-visa-checklist" style={{ marginBottom: '3.5rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <span style={{ color: '#059669', fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
                 Document Verification
@@ -672,7 +746,7 @@ export default function TravelToolsPage() {
 
         {/* 4. LIVE CURRENCY CALCULATOR & MEAL BUDGET ESTIMATOR */}
         {(!sanitySettings.hideCurrencyConverter || !sanitySettings.hideMealEstimator) && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem', marginBottom: '3.5rem' }}>
+          <div id="tool-currency-converter" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem', marginBottom: '3.5rem' }}>
             
             {/* Live Currency Calculator */}
             {!sanitySettings.hideCurrencyConverter && (
@@ -787,7 +861,7 @@ export default function TravelToolsPage() {
 
         {/* 5. INTERACTIVE PRE-DEPARTURE PACKING CHECKLIST */}
         {!sanitySettings.hideInteractiveChecklist && (
-          <section style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 15px rgba(0,0,0,0.04)', marginBottom: '3.5rem' }}>
+          <section id="tool-packing-checklist" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 15px rgba(0,0,0,0.04)', marginBottom: '3.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -848,7 +922,7 @@ export default function TravelToolsPage() {
 
         {/* 📰 LIVE GLOBAL TRAVEL NEWS & INDUSTRY RADAR */}
         {(!sanitySettings.hideTravelNews && !hideNewsRadar) && (
-          <section style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', marginBottom: '3rem' }}>
+          <section id="tool-news-radar" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', marginBottom: '3rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '1rem' }}>
               <div>
                 <span style={{ fontSize: '0.72rem', background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.25rem 0.65rem', borderRadius: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'inline-flex', alignItems: 'center', gap: '4px', marginBottom: '0.35rem' }}>
@@ -954,7 +1028,7 @@ export default function TravelToolsPage() {
 
         {/* 6. ATTRACTION TIME ALLOCATOR & DURATION TABLE */}
         {!sanitySettings.hideAttractionAllocator && (
-          <section style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }}>
+          <section id="tool-time-allocator" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }}>
             <div style={{ marginBottom: '1.5rem' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Clock size={22} color="#2563EB" /> Recommended Attraction Time Allocator
