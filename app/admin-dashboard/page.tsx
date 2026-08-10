@@ -52,12 +52,14 @@ export default function AdminDashboard() {
   const [adBlogEnabled, setAdBlogEnabled] = useState(true)
   const [adTravelToolsEnabled, setAdTravelToolsEnabled] = useState(true)
   const [adTravelNewsEnabled, setAdTravelNewsEnabled] = useState(true)
+  const [adBorderTrafficEnabled, setAdBorderTrafficEnabled] = useState(true)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setAdBlogEnabled(localStorage.getItem('fw_ads_disabled_blog') !== 'true')
       setAdTravelToolsEnabled(localStorage.getItem('fw_ads_disabled_travel-tools') !== 'true')
       setAdTravelNewsEnabled(localStorage.getItem('fw_hide_travel_news') !== 'true')
+      setAdBorderTrafficEnabled(localStorage.getItem('fw_hide_border_traffic') !== 'true')
     }
   }, [])
 
@@ -87,6 +89,19 @@ export default function AdminDashboard() {
       }
     }
     alert(`Travel News Radar on /travel-tools is now ${newStatus ? 'ENABLED 🟢' : 'DISABLED / HIDDEN 🔴'}`)
+  }
+
+  const toggleBorderTraffic = () => {
+    const newStatus = !adBorderTrafficEnabled
+    setAdBorderTrafficEnabled(newStatus)
+    if (typeof window !== 'undefined') {
+      if (!newStatus) {
+        localStorage.setItem('fw_hide_border_traffic', 'true')
+      } else {
+        localStorage.removeItem('fw_hide_border_traffic')
+      }
+    }
+    alert(`Border Traffic Radar on /travel-tools is now ${newStatus ? 'ENABLED 🟢' : 'DISABLED / HIDDEN 🔴'}`)
   }
 
   const fetchCompetitorPrices = async () => {
@@ -1484,6 +1499,25 @@ export default function AdminDashboard() {
                   style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adTravelNewsEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
                 >
                   {adTravelNewsEnabled ? 'Hide News Radar' : 'Show News Radar'}
+                </button>
+              </div>
+
+              {/* Singapore-Malaysia Border Traffic Radar Toggle */}
+              <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Border Traffic & Cameras</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adBorderTrafficEnabled ? '#DCFCE7' : '#FEE2E2', color: adBorderTrafficEnabled ? '#166534' : '#991B1B' }}>
+                    {adBorderTrafficEnabled ? 'VISIBLE 🟢' : 'HIDDEN 🔴'}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
+                  Live Woodlands & Tuas LTA camera feeds and wait-times on /travel-tools.
+                </p>
+                <button
+                  onClick={toggleBorderTraffic}
+                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adBorderTrafficEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                >
+                  {adBorderTrafficEnabled ? 'Hide Border Traffic' : 'Show Border Traffic'}
                 </button>
               </div>
             </div>

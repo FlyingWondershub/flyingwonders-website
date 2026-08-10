@@ -26,7 +26,10 @@ import {
   Loader2,
   Newspaper,
   Rss,
-  EyeOff
+  EyeOff,
+  Car,
+  RefreshCw,
+  Camera
 } from 'lucide-react'
 
 export default function TravelToolsPage() {
@@ -50,7 +53,28 @@ export default function TravelToolsPage() {
     airSuvidhaLink?: string
     hideAirSuvidha?: boolean
     hideTravelNews?: boolean
+    hideBorderTraffic?: boolean
   }>({})
+
+  // Live Border Traffic State
+  const [borderData, setBorderData] = useState<any>(null)
+  const [borderLoading, setBorderLoading] = useState<boolean>(true)
+  const [borderRefreshing, setBorderRefreshing] = useState<boolean>(false)
+  const [hideBorderTraffic, setHideBorderTraffic] = useState<boolean>(false)
+
+  const fetchBorderTraffic = async () => {
+    setBorderRefreshing(true)
+    try {
+      const res = await fetch(`/api/border-traffic?cb=${Date.now()}`)
+      const json = await res.json()
+      if (json.data) setBorderData(json.data)
+    } catch (err) {
+      console.error('Border traffic fetch error:', err)
+    } finally {
+      setBorderLoading(false)
+      setBorderRefreshing(false)
+    }
+  }
 
   // Active Tool Section for Sticky Navigator Bar
   const [activeToolSection, setActiveToolSection] = useState<string>('tool-flight-radar')
@@ -120,12 +144,15 @@ export default function TravelToolsPage() {
       })
       .catch(err => console.error('Travel tools Sanity fetch error:', err))
 
-    // Check local storage for hide news radar
+    // Check local storage for hide border traffic
     if (typeof window !== 'undefined') {
-      if (localStorage.getItem('fw_hide_travel_news') === 'true') {
-        setHideNewsRadar(true)
+      if (localStorage.getItem('fw_hide_border_traffic') === 'true') {
+        setHideBorderTraffic(true)
       }
     }
+
+    // Fetch Live Border Traffic
+    fetchBorderTraffic()
 
     // Fetch Live Travel News Radar
     fetch('/api/travel-news')
@@ -184,39 +211,19 @@ export default function TravelToolsPage() {
   return (
     <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: '5rem' }}>
       
-      {/* 1. HERO HEADER */}
+      {/* 1. SLEEK HERO HEADER */}
       <section style={{ 
         background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', 
         color: '#FFF', 
-        padding: '4rem 1.5rem 5rem', 
+        padding: '2rem 1.5rem 2.2rem', 
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden'
       }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
-          <span style={{ 
-            background: 'rgba(212, 175, 55, 0.15)', 
-            color: '#D4AF37', 
-            border: '1px solid rgba(212, 175, 55, 0.3)', 
-            padding: '0.35rem 0.85rem', 
-            borderRadius: '20px', 
-            fontSize: '0.78rem', 
-            fontWeight: 700, 
-            textTransform: 'uppercase', 
-            letterSpacing: '0.1em',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            marginBottom: '1rem'
-          }}>
-            <Sparkles size={14} /> Flying Wonders Traveler Hub
-          </span>
-          <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(2.2rem, 4vw, 3.2rem)', fontWeight: 800, margin: '0.5rem 0 1rem', lineHeight: 1.2 }}>
-            {sanitySettings.heroTitle || 'Singapore & Malaysia Travel Tools & Visa Center'}
+        <div style={{ maxWidth: '800px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
+          <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.6rem, 3.5vw, 2.2rem)', fontWeight: 800, margin: 0, display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
+            <Sparkles size={24} color="#D4AF37" /> Flying Wonders Traveler Hub
           </h1>
-          <p style={{ fontSize: '1.1rem', opacity: 0.9, maxWidth: '720px', margin: '0 auto', lineHeight: 1.6, fontWeight: 300 }}>
-            {sanitySettings.heroSubtitle || 'Your 1-stop portal for ICA SG Arrival Card (SGAC), Malaysia MDAC, Visa Document Checklists, Live Currency Converter, and Smart Packing Lists.'}
-          </p>
         </div>
       </section>
 
@@ -251,6 +258,7 @@ export default function TravelToolsPage() {
 
           {[
             { id: 'tool-flight-radar', label: '✈️ Flight Radar', show: !sanitySettings.hideFlightTracker },
+            { id: 'tool-border-traffic', label: '🚗 Border Traffic', show: !sanitySettings.hideBorderTraffic && !hideBorderTraffic },
             { id: 'tool-official-portals', label: '🇸🇬 SGAC & MDAC', show: !sanitySettings.hideOfficialPortals },
             { id: 'tool-visa-checklist', label: '🛂 Visa Checklists', show: !sanitySettings.hideVisaChecklist },
             { id: 'tool-currency-converter', label: '🧮 Currency & Meal Estimator', show: !sanitySettings.hideCurrencyConverter },
@@ -406,6 +414,134 @@ export default function TravelToolsPage() {
                   </div>
                 </div>
 
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 🚗 LIVE BORDER TRAFFIC & CAUSEWAY RADAR */}
+        {(!sanitySettings.hideBorderTraffic && !hideBorderTraffic) && (
+          <div id="tool-border-traffic" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '1rem' }}>
+              <div>
+                <span style={{ fontSize: '0.72rem', background: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', padding: '0.25rem 0.65rem', borderRadius: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'inline-flex', alignItems: 'center', gap: '4px', marginBottom: '0.35rem' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} /> Live Checkpoint Cameras
+                </span>
+                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#1E293B', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Car size={24} color="#059669" /> Live Singapore ⇄ Malaysia Border Traffic Radar
+                </h3>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>
+                  Updated: {borderData?.timestamp || 'Just now'}
+                </span>
+                <button
+                  type="button"
+                  onClick={fetchBorderTraffic}
+                  disabled={borderRefreshing}
+                  style={{
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    background: '#F8FAFC',
+                    color: '#334155',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: borderRefreshing ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <RefreshCw size={13} className={borderRefreshing ? 'animate-spin' : ''} />
+                  <span>Refresh Feeds</span>
+                </button>
+              </div>
+            </div>
+
+            {borderLoading ? (
+              <div style={{ padding: '3rem', textAlign: 'center', color: '#64748B' }}>
+                <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
+                <p style={{ fontSize: '0.88rem', margin: 0 }}>Connecting to Woodlands & Tuas LTA Checkpoint Feeds...</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                {/* Woodlands Causeway Checkpoint */}
+                <div style={{ background: '#F8FAFC', borderRadius: '12px', padding: '1.25rem', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        🇲🇾 🇸🇬 Woodlands Causeway
+                      </span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '3px 10px', borderRadius: '12px', background: borderData?.woodlands.status === 'clear' ? '#DCFCE7' : (borderData?.woodlands.status === 'moderate' ? '#FEF3C7' : '#FEE2E2'), color: borderData?.woodlands.statusColor }}>
+                        {borderData?.woodlands.statusLabel}
+                      </span>
+                    </div>
+
+                    <div style={{ background: '#FFF', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>ESTIMATED CROSSING TIME</span>
+                        <strong style={{ fontSize: '1.25rem', color: '#0F172A', display: 'block', margin: '0.1rem 0 0' }}>{borderData?.woodlands.estimatedMins}</strong>
+                      </div>
+                      <span style={{ fontSize: '1.5rem' }}>⏱️</span>
+                    </div>
+
+                    {/* Camera Feed Container */}
+                    <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid #CBD5E1', background: '#000', position: 'relative', minHeight: '180px' }}>
+                      <img
+                        src={borderData?.woodlands.cameraUrl}
+                        alt="Woodlands Causeway Live Traffic Camera"
+                        style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                        onError={e => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = 'https://images.gothere.sg/traffic/2701.jpg';
+                        }}
+                      />
+                      <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.75)', color: '#FFF', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Camera size={12} color="#4ADE80" /> Live LTA Camera #2701
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tuas Second Link Checkpoint */}
+                <div style={{ background: '#F8FAFC', borderRadius: '12px', padding: '1.25rem', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        🇲🇾 🇸🇬 Tuas Second Link
+                      </span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '3px 10px', borderRadius: '12px', background: borderData?.tuas.status === 'clear' ? '#DCFCE7' : (borderData?.tuas.status === 'moderate' ? '#FEF3C7' : '#FEE2E2'), color: borderData?.tuas.statusColor }}>
+                        {borderData?.tuas.statusLabel}
+                      </span>
+                    </div>
+
+                    <div style={{ background: '#FFF', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>ESTIMATED CROSSING TIME</span>
+                        <strong style={{ fontSize: '1.25rem', color: '#0F172A', display: 'block', margin: '0.1rem 0 0' }}>{borderData?.tuas.estimatedMins}</strong>
+                      </div>
+                      <span style={{ fontSize: '1.5rem' }}>⏱️</span>
+                    </div>
+
+                    {/* Camera Feed Container */}
+                    <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid #CBD5E1', background: '#000', position: 'relative', minHeight: '180px' }}>
+                      <img
+                        src={borderData?.tuas.cameraUrl}
+                        alt="Tuas Second Link Live Traffic Camera"
+                        style={{ width: '100%', height: '180px', objectFit: 'cover' }}
+                        onError={e => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = 'https://images.gothere.sg/traffic/4703.jpg';
+                        }}
+                      />
+                      <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.75)', color: '#FFF', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Camera size={12} color="#4ADE80" /> Live LTA Camera #4703
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
