@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
-export const revalidate = 120 // Cache for 2 minutes
+export const revalidate = 60 // Cache for 1 minute
 
 interface BorderData {
   timestamp: string
@@ -27,9 +27,27 @@ export async function GET() {
   try {
     const timestampStr = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit', hour12: true })
     
-    // LTA DataMall / Gov.sg official traffic camera feeds via internal proxy (prevents flickering & CORS blocks)
-    const woodlandsCamera = '/api/border-traffic/camera?id=2701'
-    const tuasCamera = '/api/border-traffic/camera?id=4703'
+    // Default fallback image URLs
+    let woodlandsCamera = 'https://images.gothere.sg/traffic/2701.jpg'
+    let tuasCamera = 'https://images.gothere.sg/traffic/4703.jpg'
+
+    // Fetch official Singapore Gov (api.data.gov.sg) live HD traffic camera feeds
+    try {
+      const govRes = await fetch('https://api.data.gov.sg/v1/transport/traffic-images', {
+        next: { revalidate: 60 },
+        headers: { 'User-Agent': 'FlyingWonders/1.0' }
+      })
+      if (govRes.ok) {
+        const govJson = await govRes.json()
+        const cameras = govJson.items?.[0]?.cameras || []
+        const woodCamObj = cameras.find((c: any) => c.camera_id === '2701' || c.camera_id === '2702' || c.camera_id === '2704')
+        const tuasCamObj = cameras.find((c: any) => c.camera_id === '4703' || c.camera_id === '4712' || c.camera_id === '4713')
+        if (woodCamObj?.image) woodlandsCamera = woodCamObj.image
+        if (tuasCamObj?.image) tuasCamera = tuasCamObj.image
+      }
+    } catch (e) {
+      console.warn('Failed to fetch data.gov.sg traffic camera feeds:', e)
+    }
 
     // Calculate current traffic intensity based on Singapore Peak Traffic Hours
     const nowSg = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Singapore' }))
