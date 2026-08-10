@@ -52,6 +52,13 @@ const MEAL_PRICES = {
   dinner: 22
 }
 
+const isVehicleSIC = (v?: { type?: string; isSIC?: boolean }) => {
+  if (!v) return false
+  if (v.isSIC) return true
+  const t = (v.type || '').toLowerCase()
+  return t.includes('sic') || t.includes('seat-in-coach') || t.includes('seat in coach') || t.includes('shared')
+}
+
 const TIME_OPTIONS: string[] = []
 for (let h = 0; h < 24; h++) {
   const hStr = h.toString().padStart(2, '0')
@@ -1064,12 +1071,15 @@ export default function PrototypeBuilder() {
     let totalBreakfastCount = 0
     let totalGuidesCount = 0
 
+    const totalPax = (adults + kids) > 0 ? (adults + kids) : 1
+
     itinerary.forEach(day => {
       day.transfers.forEach(trans => {
         const vehicle = vehiclesList[trans.vehicleIndex]
         if (vehicle) {
           const qty = trans.qty || 1
-          transportTotal += vehicle.pricePerTransfer * qty
+          const paxMult = isVehicleSIC(vehicle) ? totalPax : 1
+          transportTotal += vehicle.pricePerTransfer * paxMult * qty
           totalTransfers += qty
         }
       })
@@ -1088,11 +1098,19 @@ export default function PrototypeBuilder() {
         if (attrRow.hasTransfer) {
           if (attrRow.pickupEnabled !== false) {
             const pv = vehiclesList[attrRow.pickupVehicleIndex ?? 0]
-            if (pv) { transportTotal += pv.pricePerTransfer; totalTransfers++; }
+            if (pv) {
+              const paxMult = isVehicleSIC(pv) ? totalPax : 1
+              transportTotal += pv.pricePerTransfer * paxMult
+              totalTransfers++
+            }
           }
           if (attrRow.dropEnabled !== false) {
             const dv = vehiclesList[attrRow.dropVehicleIndex ?? 0]
-            if (dv) { transportTotal += dv.pricePerTransfer; totalTransfers++; }
+            if (dv) {
+              const paxMult = isVehicleSIC(dv) ? totalPax : 1
+              transportTotal += dv.pricePerTransfer * paxMult
+              totalTransfers++
+            }
           }
         }
       })
@@ -3458,32 +3476,39 @@ ${proposal}
                       {(() => {
                         const items: any[] = []
                         day.transfers.forEach(t => {
+                          const vObj = vehiclesList[t.vehicleIndex]
+                          const isSic = isVehicleSIC(vObj)
+                          const totalPax = (adults + kids) > 0 ? (adults + kids) : 1
                           items.push({
                             time: t.time || '00:00',
-                            icon: '🚗',
-                            title: `Private Transfer (${vehiclesList[t.vehicleIndex]?.type})`,
-                            desc: `${t.description || 'Ground transport transfer services'} ${t.qty && t.qty > 1 ? `x ${t.qty} vehicle(s)/hour(s)` : ''}`
+                            icon: isSic ? '⚡' : '🚗',
+                            title: isSic ? `SIC Shared Transfer (${vObj?.type}) — S$${vObj?.pricePerTransfer}/pax` : `Private Transfer (${vObj?.type})`,
+                            desc: `${t.description || 'Ground transport transfer services'} ${isSic ? `(x ${totalPax} pax)` : (t.qty && t.qty > 1 ? `x ${t.qty} vehicle(s)/hour(s)` : '')}`
                           })
                         })
                         day.attractions.forEach(a => {
                           const name = attractionsList[a.attractionIndex]?.name || 'Attraction'
                           if (a.hasTransfer) {
                             if (a.pickupEnabled !== false) {
-                              const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Vehicle'
+                              const pvObj = vehiclesList[a.pickupVehicleIndex ?? 0]
+                              const isSicP = isVehicleSIC(pvObj)
+                              const pvName = pvObj?.type || 'Vehicle'
                               items.push({
                                 time: a.pickupTime || '09:00',
-                                icon: '🚗',
-                                title: `Pickup Transfer (${pvName})`,
+                                icon: isSicP ? '⚡' : '🚗',
+                                title: isSicP ? `SIC Pickup Transfer (${pvName}) — S$${pvObj?.pricePerTransfer}/pax` : `Pickup Transfer (${pvName})`,
                                 desc: a.pickupNotes || `Transport to ${name}`
                               })
                             }
                             if (a.dropEnabled !== false) {
-                              const dvName = vehiclesList[a.dropVehicleIndex ?? 0]?.type || 'Vehicle'
+                              const dvObj = vehiclesList[a.dropVehicleIndex ?? 0]
+                              const isSicD = isVehicleSIC(dvObj)
+                              const dvName = dvObj?.type || 'Vehicle'
                               items.push({
                                 time: a.dropTime || '17:00',
-                                icon: '🚗',
-                                title: `Drop Transfer (${dvName})`,
-                                desc: a.dropNotes || `Transport from ${name}`
+                                icon: isSicD ? '⚡' : '🚗',
+                                title: isSicD ? `SIC Drop Transfer (${dvName}) — S$${dvObj?.pricePerTransfer}/pax` : `Drop Transfer (${dvName})`,
+                                desc: a.dropNotes || `Return transport from ${name}`
                               })
                             }
                           }
@@ -4946,7 +4971,9 @@ ${proposal}
                               const vType = (v as any).vehicleType || v.type.split(' - ')[0] || v.type
                               const tType = (v as any).transferType || ''
                               const sName = (v as any).serviceName || (v as any).transfers || 'Transfers'
-                              const label = [vType, tType, sName].filter(Boolean).join(' - ')
+                              const isSic = isVehicleSIC(v)
+                              const tag = isSic ? `⚡ [SIC / S$${v.pricePerTransfer} per pax]` : `🚗 [Private]`
+                              const label = `${tag} ${[vType, tType, sName].filter(Boolean).join(' - ')}`
                               return (
                                 <option key={idx} value={idx}>{label}</option>
                               )
@@ -5264,9 +5291,14 @@ ${proposal}
                                                         const s = sName.toString().trim().toLowerCase()
                                                         return s === 'transfers' || s === 'transfer' || s.includes('transfer')
                                                       })
-                                                      .map(v => (
-                                                        <option key={v.vIdx} value={v.vIdx}>{v.type.split(' - ')[0] || v.type}</option>
-                                                      ))
+                                                      .map(v => {
+                                                        const isSic = isVehicleSIC(v)
+                                                        const name = v.type.split(' - ')[0] || v.type
+                                                        const label = isSic ? `⚡ SIC (${name} · S$${v.pricePerTransfer}/pax)` : `🚗 Private (${name})`
+                                                        return (
+                                                          <option key={v.vIdx} value={v.vIdx}>{label}</option>
+                                                        )
+                                                      })
                                                     }
                                                   </select>
                                                   <input
