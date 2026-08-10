@@ -25,7 +25,7 @@ export async function GET() {
   try {
     const timestampStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-    // Live aggregated promotional airfare deals for Singapore & Southeast Asia routes
+    // Live aggregated promotional airfare deals pointing directly to official carrier booking portals
     const deals: AirlinePromo[] = [
       {
         id: 'promo-sq-01',
@@ -41,7 +41,7 @@ export async function GET() {
         validUntil: 'Book by 31 Aug | Travel thru Nov 2026',
         promoCode: 'SQFLYING2026',
         category: 'sia',
-        dealUrl: '/custom-package?ref=SQ_DEAL',
+        dealUrl: 'https://www.singaporeair.com/en_UK/sg/special-offers/flight-from-India-to-Singapore/',
         description: 'Full-service luxury flight experience with 30kg baggage, complimentary gourmet meals, and KrisWorld inflight entertainment.'
       },
       {
@@ -57,7 +57,7 @@ export async function GET() {
         discountTag: 'BEST VALUE FARE',
         validUntil: 'Limited Seats Available',
         category: 'ex-india',
-        dealUrl: '/custom-package?ref=INDIGO_DEAL',
+        dealUrl: 'https://www.goindigo.in/international-flights/singapore-flights.html',
         description: 'Daily direct non-stop flights between South India and Changi Airport with seamless bag-through check-in.'
       },
       {
@@ -74,7 +74,7 @@ export async function GET() {
         validUntil: 'Valid for Travel this Month',
         promoCode: 'SCOOTISLAND',
         category: 'budget',
-        dealUrl: '/custom-package?ref=SCOOT_ISLAND',
+        dealUrl: 'https://www.flyscoot.com/en/promotions',
         description: 'Ultra-low cost regional island shuttle. Add-on 20kg checked bag and hot meals available during package customization.'
       },
       {
@@ -90,7 +90,7 @@ export async function GET() {
         discountTag: 'EXTRA 15% OFF GROUPS',
         validUntil: 'Valid for B2B & Family Bookings',
         category: 'ex-india',
-        dealUrl: '/custom-package?ref=AI_DELHI',
+        dealUrl: 'https://www.airindia.com/in/en/offers/international-flights.html',
         description: 'Direct widebody Boeing 787 Dreamliner service with hot Indian vegetarian meals and generous baggage allowance.'
       },
       {
@@ -106,7 +106,7 @@ export async function GET() {
         discountTag: 'SG-MY TRANSIT SPECIAL',
         validUntil: 'Daily Shuttle Flights',
         category: 'budget',
-        dealUrl: '/custom-package?ref=AIRASIA_KUL',
+        dealUrl: 'https://www.airasia.com/promotions/',
         description: 'Super convenient 50-minute flight hop between Changi Airport and KLIA. Ideal for Singapore + Malaysia combined itineraries.'
       }
     ]

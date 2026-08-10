@@ -550,8 +550,10 @@ export default function TravelToolsPage() {
                           <Clock size={13} /> {deal.validUntil}
                         </div>
 
-                        <Link
+                        <a
                           href={deal.dealUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -568,9 +570,9 @@ export default function TravelToolsPage() {
                             boxShadow: '0 3px 10px rgba(5,150,105,0.2)'
                           }}
                         >
-                          <span>Claim Deal & Book Package</span>
+                          <span>View Official Airline Promotion</span>
                           <ExternalLink size={14} />
-                        </Link>
+                        </a>
                       </div>
                     </div>
                   ))}
