@@ -1376,6 +1376,7 @@ export default function PrototypeBuilder() {
     t += `  • Total Attractions: ${totalAttractionsCount}\n`
     t += `  • Meals Plan: ${costBreakdown.totalLunchCount} Lunch, ${costBreakdown.totalDinnerCount} Dinner\n\n`
     t += `⚠️ *Note:* Prices may vary based on surcharges / unforeseen events\n`
+    t += `📌 FIT room rates are subject to a marginal increase\n`
     t += `${sep}\n`
     if (activeAgent) {
       t += `📞 ${activeAgent.agentName || ''}${activeAgent.phone ? ' · ' + activeAgent.phone : ''}\n`
@@ -1905,6 +1906,7 @@ export default function PrototypeBuilder() {
         'Prices are quoted in Singapore Dollars (SGD) and are indicative. Final rates will be confirmed upon booking.',
         'Exchange rates for INR are approximate and subject to change on the date of payment.',
         'Rates are subject to change due to peak seasons, public holidays, or third-party surcharges.',
+        'FIT room rates are subject to a marginal increase.',
         'Itinerary sequence may be adjusted based on operational requirements without notice.',
         'Cancellation policy and payment terms apply as per Flying Wonders\' standard terms and conditions.',
         'Valid travel documents (passport, visa) are the sole responsibility of the traveler.',
@@ -3493,8 +3495,9 @@ ${proposal}
               <h2 style={{ fontSize: '2rem', margin: '0.25rem 0 0.75rem 0', color: 'var(--gold-accent)' }}>
                 S$ {costBreakdown.totalClientPrice.toLocaleString()} <span style={{ fontSize: '1.2rem', color: '#FFF', fontWeight: 400 }}>(approx. ₹{costBreakdown.totalClientPriceINR.toLocaleString('en-IN')})</span>
               </h2>
-              <div style={{ fontSize: '0.75rem', opacity: 0.6, marginBottom: '1.5rem', fontStyle: 'italic' }}>
-                * Prices may vary based on surcharges / unforeseen events
+              <div style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '1.5rem', fontStyle: 'italic', lineHeight: 1.5 }}>
+                * Prices may vary based on surcharges / unforeseen events<br />
+                * FIT room rates are subject to a marginal increase
               </div>
               
               <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
