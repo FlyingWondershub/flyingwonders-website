@@ -134,7 +134,7 @@ export default async function RootLayout({
     console.error('Error fetching layout settings from Sanity, using defaults:', err)
   }
 
-  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-LGTV9FY74C'
+  const gaId = 'G-LGTV9FY74C'
 
   return (
     <html lang="en">
@@ -147,20 +147,22 @@ export default async function RootLayout({
           strategy="afterInteractive"
         />
         {/* Google Analytics 4 Setup */}
-        <Script
+        <script
+          async
           src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-          strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${gaId}', {
-              page_path: window.location.pathname,
-            });
-          `}
-        </Script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${gaId}', {
+                send_page_view: true
+              });
+            `,
+          }}
+        />
       </head>
       <body className={`${inter.variable} ${playfair.variable}`}>
         <LayoutWrapper initialSettings={settings} pageVisibility={pageVisibility}>
