@@ -54,7 +54,14 @@ export default function TravelToolsPage() {
     hideAirSuvidha?: boolean
     hideTravelNews?: boolean
     hideBorderTraffic?: boolean
+    hideAirlinePromotions?: boolean
   }>({})
+
+  // Airline Promotions State
+  const [airlinePromos, setAirlinePromos] = useState<any[]>([])
+  const [promoLoading, setPromoLoading] = useState<boolean>(true)
+  const [promoFilter, setPromoFilter] = useState<'all' | 'sia' | 'ex-india' | 'budget'>('all')
+  const [hideAirlinePromos, setHideAirlinePromos] = useState<boolean>(false)
 
   // Live Border Traffic State
   const [borderData, setBorderData] = useState<any>(null)
@@ -144,15 +151,27 @@ export default function TravelToolsPage() {
       })
       .catch(err => console.error('Travel tools Sanity fetch error:', err))
 
-    // Check local storage for hide border traffic
+    // Check local storage for hide border traffic & airline promos
     if (typeof window !== 'undefined') {
       if (localStorage.getItem('fw_hide_border_traffic') === 'true') {
         setHideBorderTraffic(true)
+      }
+      if (localStorage.getItem('fw_hide_airline_promos') === 'true') {
+        setHideAirlinePromos(true)
       }
     }
 
     // Fetch Live Border Traffic
     fetchBorderTraffic()
+
+    // Fetch Live Airline Promotions
+    fetch('/api/airline-promotions')
+      .then(res => res.json())
+      .then(data => {
+        if (data.deals) setAirlinePromos(data.deals)
+      })
+      .catch(err => console.error('Airline promotions fetch error:', err))
+      .finally(() => setPromoLoading(false))
 
     // Fetch Live Travel News Radar
     fetch('/api/travel-news')
@@ -258,6 +277,7 @@ export default function TravelToolsPage() {
 
           {[
             { id: 'tool-flight-radar', label: '✈️ Flight Radar', show: !sanitySettings.hideFlightTracker },
+            { id: 'tool-airline-promos', label: '🎟️ Airline Deals', show: !sanitySettings.hideAirlinePromotions && !hideAirlinePromos },
             { id: 'tool-border-traffic', label: '🚗 Border Traffic', show: !sanitySettings.hideBorderTraffic && !hideBorderTraffic },
             { id: 'tool-official-portals', label: '🇸🇬 SGAC & MDAC', show: !sanitySettings.hideOfficialPortals },
             { id: 'tool-visa-checklist', label: '🛂 Visa Checklists', show: !sanitySettings.hideVisaChecklist },
@@ -417,6 +437,146 @@ export default function TravelToolsPage() {
               </div>
             )}
           </div>
+        )}
+
+        {/* ✈️ LIVE AIRLINE PROMOTIONS & FLIGHT DEAL RADAR */}
+        {(!sanitySettings.hideAirlinePromotions && !hideAirlinePromos) && (
+          <section id="tool-airline-promos" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '1rem' }}>
+              <div>
+                <span style={{ fontSize: '0.72rem', background: '#FEF3C7', color: '#B45309', border: '1px solid #FDE68A', padding: '0.25rem 0.65rem', borderRadius: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'inline-flex', alignItems: 'center', gap: '4px', marginBottom: '0.35rem' }}>
+                  <Sparkles size={13} /> Live Promotional Fares & Flight Deals
+                </span>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1E293B', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Plane size={24} color="#D97706" /> Live Airline Promotions & Special Airfares
+                </h3>
+              </div>
+
+              {/* Filter Pills */}
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                {[
+                  { id: 'all', label: 'All Deals' },
+                  { id: 'sia', label: '🇸🇬 Singapore Airlines' },
+                  { id: 'ex-india', label: '🇮🇳 Ex-India Fares' },
+                  { id: 'budget', label: '⚡ Low-Cost Carriers' }
+                ].map(f => (
+                  <button
+                    key={f.id}
+                    onClick={() => setPromoFilter(f.id as any)}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '20px',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      border: promoFilter === f.id ? '1px solid #D97706' : '1px solid #CBD5E1',
+                      background: promoFilter === f.id ? '#FFFBEB' : '#F8FAFC',
+                      color: promoFilter === f.id ? '#B45309' : '#475569',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {promoLoading ? (
+              <div style={{ padding: '3rem', textAlign: 'center', color: '#64748B' }}>
+                <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
+                <p style={{ fontSize: '0.88rem', margin: 0 }}>Fetching live promotional flight deals...</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                {airlinePromos
+                  .filter(deal => promoFilter === 'all' || deal.category === promoFilter)
+                  .map(deal => (
+                    <div
+                      key={deal.id}
+                      style={{
+                        background: '#F8FAFC',
+                        borderRadius: '14px',
+                        padding: '1.5rem',
+                        border: '1px solid #E2E8F0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '3px 10px', borderRadius: '12px', background: '#FEF3C7', color: '#B45309', border: '1px solid #FDE68A' }}>
+                            {deal.logoBadge}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#059669', background: '#DCFCE7', padding: '3px 10px', borderRadius: '12px' }}>
+                            {deal.discountTag}
+                          </span>
+                        </div>
+
+                        <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.4rem', lineHeight: 1.3 }}>
+                          {deal.title}
+                        </h4>
+                        
+                        <div style={{ fontSize: '0.85rem', color: '#2563EB', fontWeight: 700, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <MapPin size={14} /> {deal.route}
+                        </div>
+
+                        <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.5, margin: '0 0 1rem' }}>
+                          {deal.description}
+                        </p>
+                      </div>
+
+                      <div>
+                        <div style={{ background: '#FFF', padding: '0.85rem', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>PROMOTIONAL ROUNDTRIP FARE</span>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.1rem' }}>
+                              <strong style={{ fontSize: '1.3rem', color: '#0F172A' }}>S$ {deal.priceSgd}</strong>
+                              <span style={{ fontSize: '0.85rem', color: '#059669', fontWeight: 700 }}>approx. ₹{deal.priceInr.toLocaleString('en-IN')}</span>
+                            </div>
+                          </div>
+                          {deal.promoCode && (
+                            <div style={{ textAlign: 'right' }}>
+                              <span style={{ fontSize: '0.68rem', color: '#64748B', display: 'block', fontWeight: 700 }}>PROMO CODE</span>
+                              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#D97706', background: '#FFFBEB', padding: '2px 8px', borderRadius: '4px', border: '1px solid #FCD34D' }}>
+                                {deal.promoCode}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ fontSize: '0.75rem', color: '#64748B', marginBottom: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <Clock size={13} /> {deal.validUntil}
+                        </div>
+
+                        <Link
+                          href={deal.dealUrl}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            width: '100%',
+                            padding: '0.75rem',
+                            borderRadius: '8px',
+                            background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)',
+                            color: '#FFF',
+                            fontWeight: 700,
+                            fontSize: '0.88rem',
+                            textDecoration: 'none',
+                            boxShadow: '0 3px 10px rgba(5,150,105,0.2)'
+                          }}
+                        >
+                          <span>Claim Deal & Book Package</span>
+                          <ExternalLink size={14} />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </section>
         )}
 
         {/* 🚗 LIVE BORDER TRAFFIC & CAUSEWAY RADAR */}
