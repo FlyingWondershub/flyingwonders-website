@@ -27,10 +27,9 @@ export async function GET() {
   try {
     const timestampStr = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit', hour12: true })
     
-    // LTA DataMall / Gov.sg official traffic camera feeds for Woodlands & Tuas
-    // Woodlands Causeway Camera ID: 2701, Tuas Second Link Camera ID: 4703
-    const woodlandsCamera = 'https://images.gothere.sg/traffic/2701.jpg?cb=' + Math.floor(Date.now() / 120000)
-    const tuasCamera = 'https://images.gothere.sg/traffic/4703.jpg?cb=' + Math.floor(Date.now() / 120000)
+    // LTA DataMall / Gov.sg official traffic camera feeds via internal proxy (prevents flickering & CORS blocks)
+    const woodlandsCamera = '/api/border-traffic/camera?id=2701'
+    const tuasCamera = '/api/border-traffic/camera?id=4703'
 
     // Calculate current traffic intensity based on Singapore Peak Traffic Hours
     const nowSg = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Singapore' }))

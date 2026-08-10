@@ -493,10 +493,6 @@ export default function TravelToolsPage() {
                         src={borderData?.woodlands.cameraUrl}
                         alt="Woodlands Causeway Live Traffic Camera"
                         style={{ width: '100%', height: '180px', objectFit: 'cover' }}
-                        onError={e => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = 'https://images.gothere.sg/traffic/2701.jpg';
-                        }}
                       />
                       <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.75)', color: '#FFF', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <Camera size={12} color="#4ADE80" /> Live LTA Camera #2701
@@ -531,10 +527,6 @@ export default function TravelToolsPage() {
                         src={borderData?.tuas.cameraUrl}
                         alt="Tuas Second Link Live Traffic Camera"
                         style={{ width: '100%', height: '180px', objectFit: 'cover' }}
-                        onError={e => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = 'https://images.gothere.sg/traffic/4703.jpg';
-                        }}
                       />
                       <div style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.75)', color: '#FFF', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <Camera size={12} color="#4ADE80" /> Live LTA Camera #4703
