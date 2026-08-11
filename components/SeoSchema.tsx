@@ -45,9 +45,9 @@ export default function SeoSchema() {
       'closes': '20:00'
     },
     'sameAs': [
-      'https://instagram.com',
-      'https://facebook.com',
-      'https://youtube.com'
+      'https://www.instagram.com/flyingwonders.sg/',
+      'https://www.facebook.com/profile.php?id=61585495532807',
+      'https://www.youtube.com/@flyingwonders7886'
     ],
     'areaServed': ['Singapore', 'India'],
     'description': 'Premier Destination Management Company (DMC) specializing in Singapore B2B travel agent wholesale rates, custom holiday packages, attraction e-tickets, and Changi airport transfers.'
@@ -65,16 +65,29 @@ export default function SeoSchema() {
     }
   }
 
+  const singaporeDestSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'TouristDestination',
+    'name': 'Singapore',
+    'description': 'Singapore is a global city-state known for world-class attractions, Michelin-starred food, iconic gardens, and seamless connectivity. A premier destination for Indian travellers.',
+    'url': 'https://flyingwonders.net',
+    'image': 'https://flyingwonders.net/images/hero/singapore-hero-1.jpg',
+    'touristType': ['Family', 'Couple', 'Honeymoon', 'Corporate', 'B2B Agent'],
+    'geo': { '@type': 'GeoCoordinates', 'latitude': 1.3521, 'longitude': 103.8198 },
+    'hasMap': 'https://maps.app.goo.gl/singapore',
+    'includesAttraction': [
+      { '@type': 'TouristAttraction', 'name': 'Universal Studios Singapore', 'url': 'https://flyingwonders.net/singapore-attractions' },
+      { '@type': 'TouristAttraction', 'name': 'Gardens by the Bay', 'url': 'https://flyingwonders.net/singapore-attractions' },
+      { '@type': 'TouristAttraction', 'name': 'Singapore Night Safari', 'url': 'https://flyingwonders.net/singapore-attractions' },
+      { '@type': 'TouristAttraction', 'name': 'Sentosa Island', 'url': 'https://flyingwonders.net/singapore-attractions' }
+    ]
+  }
+
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(travelAgencySchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(travelAgencySchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(singaporeDestSchema) }} />
     </>
   )
 }
