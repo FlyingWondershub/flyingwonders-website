@@ -47,9 +47,9 @@ const ATTRACTION_DESCRIPTIONS: Record<string, string> = {
 }
 
 const MEAL_PRICES = {
-  breakfast: 10,
-  lunch: 18,
-  dinner: 22
+  breakfast: 12,
+  lunch: 17,
+  dinner: 17
 }
 
 const isVehicleSIC = (v?: { type?: string; isSIC?: boolean }) => {
@@ -673,13 +673,20 @@ export default function PrototypeBuilder() {
           const mealRows: any[] = XLSX.utils.sheet_to_json(mealsSheet)
           const parsedMeals = mealRows.map(row => {
             const restName = row['Restaurant Name'] || ''
-            const mType = row['Meal Type'] || ''
-            const rate = Number(row['Price Per person']) || 0
+            const mType = row['Meal Type'] || row['Type'] || ''
+            const rate = Number(row['Price Per person'] ?? row['Price Per Person'] ?? row['Price']) || 0
+            
+            // Sync standard meal prices if found
+            const mtLower = mType.toLowerCase().trim()
+            if (mtLower === 'breakfast' && rate > 0) MEAL_PRICES.breakfast = rate
+            if (mtLower === 'lunch' && rate > 0) MEAL_PRICES.lunch = rate
+            if (mtLower === 'dinner' && rate > 0) MEAL_PRICES.dinner = rate
+
             return {
-              type: `${restName} (${mType})`,
+              type: restName ? `${restName} (${mType})` : mType,
               pricePerHead: rate
             }
-          })
+          }).filter(m => m.type && m.pricePerHead > 0)
           if (parsedMeals.length > 0) setMealsList(parsedMeals)
         }
 
