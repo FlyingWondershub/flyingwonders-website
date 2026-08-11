@@ -249,7 +249,7 @@ export default async function CorporateTravelPage() {
     <div style={{ background: 'var(--bg-main)', minHeight: '100vh', paddingBottom: '4rem', color: '#1A202C' }}>
       
       {/* 1. HERO SECTION */}
-      <section style={{
+      <section className="corp-hero-padding" style={{
         background: 'linear-gradient(135deg, #1A365D 0%, #0F4C3A 100%)',
         color: '#FFFFFF',
         padding: '4.5rem 1.5rem 5rem',
@@ -267,7 +267,7 @@ export default async function CorporateTravelPage() {
           pointerEvents: 'none'
         }} />
 
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 380px', gap: '3rem', alignItems: 'center' }}>
+        <div className="corp-hero-grid" style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 380px', gap: '3rem', alignItems: 'center' }}>
           <div>
             <span style={{
               display: 'inline-block',
@@ -285,9 +285,9 @@ export default async function CorporateTravelPage() {
               {cms.heroSubtitle}
             </span>
 
-            <h1 style={{
+            <h1 className="corp-hero-title" style={{
               fontFamily: 'var(--font-playfair), serif',
-              fontSize: 'clamp(2.2rem, 4.5vw, 3.4rem)',
+              fontSize: 'clamp(2rem, 4.5vw, 3.4rem)',
               lineHeight: 1.15,
               fontWeight: 800,
               marginBottom: '1.25rem',
@@ -465,7 +465,7 @@ export default async function CorporateTravelPage() {
           <p style={{ color: '#718096', fontSize: '0.95rem' }}>{cms.matrixSectionSubtitle}</p>
         </div>
 
-        <div style={{ overflowX: 'auto', background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
+        <div className="corp-table-wrapper" style={{ overflowX: 'auto', background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'left' }}>
             <thead>
               <tr style={{ background: '#1A365D', color: '#FFF' }}>
@@ -583,7 +583,7 @@ export default async function CorporateTravelPage() {
           ))}
         </div>
 
-        <div style={{ overflowX: 'auto', background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
+        <div className="corp-table-wrapper" style={{ overflowX: 'auto', background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', textAlign: 'center' }}>
             <thead>
               <tr style={{ background: '#1A365D', color: '#FFF' }}>
@@ -610,7 +610,7 @@ export default async function CorporateTravelPage() {
 
       {/* 9. READY TO GET STARTED / CALL TO ACTION & CONTACT */}
       <section id="discovery-call" style={{ maxWidth: '1200px', margin: '5rem auto 0', padding: '0 1.5rem' }}>
-        <div style={{
+        <div className="corp-cta-card" style={{
           background: 'linear-gradient(135deg, #1A365D 0%, #0F4C3A 100%)',
           color: '#FFF',
           borderRadius: '20px',

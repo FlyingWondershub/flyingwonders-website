@@ -602,6 +602,44 @@ a {
   .mobile-hide-nav {
     display: none !important;
   }
+
+  /* ─── Corporate Travel Desk Responsive Mobile Styles ─────────────────────── */
+  .corp-hero-grid {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+  }
+
+  .corp-section-padding {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    margin-top: 3rem !important;
+  }
+
+  .corp-hero-padding {
+    padding: 2.5rem 1rem 3rem !important;
+  }
+
+  .corp-hero-title {
+    font-size: 1.85rem !important;
+  }
+
+  .corp-table-wrapper {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    border-radius: 8px !important;
+  }
+
+  .corp-table-wrapper table th,
+  .corp-table-wrapper table td {
+    padding: 0.65rem 0.5rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  .corp-cta-card {
+    padding: 2rem 1.25rem !important;
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+  }
 }
 
 /* Association Logo Hover States */
