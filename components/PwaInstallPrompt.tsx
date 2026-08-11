@@ -21,30 +21,43 @@ export default function PwaInstallPrompt({ hidePwaPrompt }: PwaInstallPromptProp
   const isTargetPage = pathname === '/about' || pathname === '/travel-tools' || pathname?.startsWith('/about/') || pathname?.startsWith('/travel-tools/')
 
   useEffect(() => {
+    // Register Service Worker globally on mount
+    if ('serviceWorker' in navigator) {
+      if (document.readyState === 'complete') {
+        navigator.serviceWorker.register('/sw.js').catch(() => {})
+      } else {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {})
+        })
+      }
+    }
+
     if (hidePwaPrompt || !isTargetPage) {
       setIsVisible(false)
       return
     }
 
-    // 1. Register Service Worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch((err) => {
-          console.error('ServiceWorker registration failed: ', err)
-        })
-      })
+    // Check if app is already running in standalone/installed mode
+    const isStandalone = 
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as any).standalone === true
+
+    if (isStandalone) {
+      setIsVisible(false)
+      return
     }
 
-    // 2. Check if user already dismissed recently
+    // Check if user recently dismissed
     const dismissedAt = localStorage.getItem('fw_pwa_prompt_dismissed')
     if (dismissedAt) {
       const hoursPassed = (Date.now() - parseInt(dismissedAt, 10)) / (1000 * 60 * 60)
-      if (hoursPassed < 48) {
-        return // Don't show again within 48 hours if dismissed
+      if (hoursPassed < 24) {
+        setIsVisible(false)
+        return
       }
     }
 
-    // 3. Listen for native browser prompt trigger
+    // Handler for native Chrome/Android install event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
@@ -53,18 +66,30 @@ export default function PwaInstallPrompt({ hidePwaPrompt }: PwaInstallPromptProp
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
 
+    // Show prompt on target pages (/about and /travel-tools) whenever app is not installed
+    setIsVisible(true)
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
     }
-  }, [])
+  }, [pathname, isTargetPage, hidePwaPrompt])
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return
-    setIsVisible(false)
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null)
+    if (deferredPrompt) {
+      setIsVisible(false)
+      deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null)
+      }
+    } else {
+      // Fallback instruction for browsers without direct prompt API (e.g. Safari iOS or Desktop)
+      alert(
+        "To install Flying Wonders app:\n\n" +
+        "• Chrome / Edge: Click the 'Install' icon in your browser address bar (top right).\n" +
+        "• Safari (iOS): Tap the Share button below and select 'Add to Home Screen'."
+      )
+      handleDismiss()
     }
   }
 
