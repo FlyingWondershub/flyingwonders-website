@@ -27,17 +27,35 @@ export async function GET() {
   if (!(await verifyAdmin())) return new NextResponse('Unauthorized', { status: 401 })
 
   try {
-    const agents = await readClient.fetch(`*[_type == "b2bAgent"] | order(_createdAt desc)[0...100]{
+    const agents = await readClient.fetch(`*[_type in ["b2bAgent", "attractionsUser"]] | order(_createdAt desc)[0...100]{
       _id,
+      _type,
+      name,
       companyName,
+      company,
       agentName,
       email,
       phone,
+      mobile,
       isActive,
+      isApproved,
       _createdAt
     }`)
     
-    return NextResponse.json(agents)
+    // Normalize format across models
+    const normalized = agents.map((a: any) => ({
+      _id: a._id,
+      type: a._type,
+      companyName: a.companyName || a.company || 'N/A',
+      agentName: a.agentName || a.name || 'Agent',
+      email: a.email,
+      phone: a.phone || a.mobile || 'N/A',
+      isApproved: a.isApproved ?? a.isActive ?? false,
+      isActive: a.isActive ?? a.isApproved ?? false,
+      createdAt: a._createdAt
+    }))
+
+    return NextResponse.json(normalized)
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

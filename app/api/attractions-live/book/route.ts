@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import crypto from 'crypto'
 
-const API_KEY = '235ed5f665a076097bd33bbce86f29ee'
-const SECRET_KEY = '2d0558cbac58473551110d5539c31aab'
-const BASE_URL = 'https://api.attractionsg.com'
+const API_KEY = process.env.CEBU_API_KEY || '235ed5f665a076097bd33bbce86f29ee'
+const SECRET_KEY = process.env.CEBU_SECRET_KEY || '2d0558cbac58473551110d5539c31aab'
+const BASE_URL = process.env.CEBU_API_PROXY_URL || 'http://129.159.237.41/cebu'
 
 // Helper to get active Auth Token using Reseller API protocol
 async function getAuthToken(): Promise<string> {
@@ -50,14 +50,18 @@ export async function POST(req: Request) {
 
     const { skuId, quantity, bookingDate, customerName, customerEmail, customerPhone, ticketPrice } = await req.json()
 
-    if (!skuId || !quantity || !bookingDate || !customerName || !customerEmail || !customerPhone) {
+    if (!skuId || !quantity || !customerName || !customerEmail || !customerPhone) {
       return NextResponse.json({ error: 'All fields are required.' }, { status: 400 })
     }
+
+    // Default to today's date YYYY-MM-DD for open date tickets if date not selected
+    const effectiveDate = bookingDate || new Date().toISOString().split('T')[0]
 
     const token = await getAuthToken()
     const trackingNo = `FW-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`
 
     // Step A: Check availability
+    const checkBody = `item_sku_id_1=${skuId}&item_quantity_1=${quantity}&item_booking_date_1=${effectiveDate}`
     const checkAvailabilityRes = await fetch(`${BASE_URL}/order/check_availability`, {
       method: 'POST',
       headers: {
@@ -65,7 +69,7 @@ export async function POST(req: Request) {
         'X-API-Version': 'v1.10',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: `item_sku_id_1=${skuId}&item_quantity_1=${quantity}&item_booking_date_1=${bookingDate}`
+      body: checkBody
     })
 
     const checkData = await checkAvailabilityRes.json()
@@ -82,7 +86,7 @@ export async function POST(req: Request) {
         'X-API-Version': 'v1.10',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: `tracking_no=${trackingNo}&customer_name=${encodeURIComponent(customerName)}&customer_email=${customerEmail}&customer_mobile=${encodeURIComponent(customerPhone)}&item_sku_id_1=${skuId}&item_quantity_1=${quantity}&item_booking_date_1=${bookingDate}&total_amount=${totalAmount}&use_credits=1&email_voucher=1`
+      body: `tracking_no=${trackingNo}&customer_name=${encodeURIComponent(customerName)}&customer_email=${customerEmail}&customer_mobile=${encodeURIComponent(customerPhone)}&item_sku_id_1=${skuId}&item_quantity_1=${quantity}&item_booking_date_1=${effectiveDate}&total_amount=${totalAmount}&use_credits=1&email_voucher=1`
     })
 
     const createData = await createOrderRes.json()
