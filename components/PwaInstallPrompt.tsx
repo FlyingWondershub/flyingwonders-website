@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -12,11 +13,18 @@ interface PwaInstallPromptProps {
 }
 
 export default function PwaInstallPrompt({ hidePwaPrompt }: PwaInstallPromptProps) {
+  const pathname = usePathname()
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
+  // Only allow prompt on /about and /travel-tools pages
+  const isTargetPage = pathname === '/about' || pathname === '/travel-tools' || pathname?.startsWith('/about/') || pathname?.startsWith('/travel-tools/')
+
   useEffect(() => {
-    if (hidePwaPrompt) return
+    if (hidePwaPrompt || !isTargetPage) {
+      setIsVisible(false)
+      return
+    }
 
     // 1. Register Service Worker
     if ('serviceWorker' in navigator) {
@@ -65,7 +73,7 @@ export default function PwaInstallPrompt({ hidePwaPrompt }: PwaInstallPromptProp
     localStorage.setItem('fw_pwa_prompt_dismissed', Date.now().toString())
   }
 
-  if (hidePwaPrompt || !isVisible) return null
+  if (hidePwaPrompt || !isTargetPage || !isVisible) return null
 
   return (
     <div
