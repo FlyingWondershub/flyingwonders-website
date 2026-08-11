@@ -33,8 +33,10 @@ export const metadata: Metadata = {
     'Universal Studios Singapore Tickets',
     'Singapore Visa Processing'
   ],
+  manifest: '/manifest.json',
   icons: {
     icon: '/images/logo.png',
+    apple: '/images/logo.png',
   },
   openGraph: {
     title: 'Flying Wonders | Premier Singapore DMC & B2B Travel Partner',
@@ -125,7 +127,8 @@ export default async function RootLayout({
       hideReviews,
       hideBlog,
       hideContact,
-      hideChatbot
+      hideChatbot,
+      hidePwaPrompt
     }`)
     if (fetchedVisibility) {
       pageVisibility = { ...pageVisibility, ...fetchedVisibility }

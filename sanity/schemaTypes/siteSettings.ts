@@ -158,6 +158,14 @@ export const siteSettingsSchema = {
       initialValue: false,
       group: 'navigationToggles',
     },
+    {
+      name: 'hidePwaPrompt',
+      title: '🙈 Hide "Add to Home Screen" PWA Prompt',
+      type: 'boolean',
+      description: 'Toggle ON to disable/hide the PWA install prompt modal for visitors.',
+      initialValue: false,
+      group: 'navigationToggles',
+    },
 
 
     /* ══════ 3. PAYMENT & UPI GATEWAY SETTINGS ══════ */

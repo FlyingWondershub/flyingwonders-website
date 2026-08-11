@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import ChatBot from './ChatBot'
+import PwaInstallPrompt from './PwaInstallPrompt'
 
 interface LayoutSettings {
   contactEmail: string
@@ -27,6 +28,7 @@ interface PageVisibility {
   hideContact?: boolean
   hideChatbot?: boolean
   hideFaq?: boolean
+  hidePwaPrompt?: boolean
 }
 
 export default function LayoutWrapper({ 
@@ -292,6 +294,7 @@ export default function LayoutWrapper({
       </a>
 
       <ChatBot hideChatbot={pageVisibility?.hideChatbot} />
+      <PwaInstallPrompt hidePwaPrompt={pageVisibility?.hidePwaPrompt} />
     </>
   )
 }
