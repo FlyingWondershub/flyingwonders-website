@@ -132,6 +132,35 @@ export default function TravelToolsPage() {
     sim: false
   })
 
+  // Live Visa Checker State (Travel Buddy API)
+  const [visaPassport, setVisaPassport] = useState('')
+  const [visaDestination, setVisaDestination] = useState('')
+  const [visaLoading, setVisaLoading] = useState(false)
+  const [visaResult, setVisaResult] = useState<any>(null)
+  const [visaError, setVisaError] = useState<string | null>(null)
+
+  const handleVisaCheck = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!visaPassport || !visaDestination) return
+    setVisaLoading(true)
+    setVisaResult(null)
+    setVisaError(null)
+    try {
+      const res = await fetch('/api/visa-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ passport: visaPassport, destination: visaDestination })
+      })
+      const json = await res.json()
+      if (!res.ok || json.error) throw new Error(json.error || 'Failed to fetch visa data.')
+      setVisaResult(json.data)
+    } catch (err: any) {
+      setVisaError(err.message || 'Error checking visa requirements.')
+    } finally {
+      setVisaLoading(false)
+    }
+  }
+
   useEffect(() => {
     // Fetch live exchange rate
     fetch('/api/exchange-rate')
@@ -280,9 +309,10 @@ export default function TravelToolsPage() {
             { id: 'tool-airline-promos', label: '🎟️ Airline Deals', show: !sanitySettings.hideAirlinePromotions && !hideAirlinePromos },
             { id: 'tool-border-traffic', label: '🚗 Border Traffic', show: !sanitySettings.hideBorderTraffic && !hideBorderTraffic },
             { id: 'tool-official-portals', label: '🇸🇬 SGAC & MDAC', show: !sanitySettings.hideOfficialPortals },
-            { id: 'tool-visa-checklist', label: '🛂 Visa Checklists', show: !sanitySettings.hideVisaChecklist },
+            { id: 'tool-visa-checker', label: '🛂 Visa Checker', show: true },
+            { id: 'tool-visa-checklist', label: '📋 Visa Checklists', show: !sanitySettings.hideVisaChecklist },
             { id: 'tool-currency-converter', label: '🧮 Currency & Meal Estimator', show: !sanitySettings.hideCurrencyConverter },
-            { id: 'tool-packing-checklist', label: '📋 Packing List', show: !sanitySettings.hideInteractiveChecklist },
+            { id: 'tool-packing-checklist', label: '🎒 Packing List', show: !sanitySettings.hideInteractiveChecklist },
             { id: 'tool-news-radar', label: '📰 Travel News', show: !sanitySettings.hideTravelNews && !hideNewsRadar },
             { id: 'tool-time-allocator', label: '⏱️ Time Allocator', show: !sanitySettings.hideAttractionAllocator }
           ].filter(item => item.show).map(item => (
@@ -889,6 +919,142 @@ export default function TravelToolsPage() {
             </div>
           </div>
         )}
+
+        {/* LIVE VISA REQUIREMENTS CHECKER — Travel Buddy API */}
+        <section id="tool-visa-checker" style={{ marginBottom: '2.5rem' }}>
+          <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{ background: 'linear-gradient(135deg, #1A365D 0%, #0F4C3A 100%)', padding: '1.75rem 2rem', color: '#FFF' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
+                <ShieldCheck size={24} color="#D4AF37" />
+                <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>Live Visa Requirements Checker</h2>
+                <span style={{ marginLeft: 'auto', background: 'rgba(212,175,55,0.2)', color: '#D4AF37', fontSize: '0.7rem', fontWeight: 800, padding: '2px 10px', borderRadius: '20px', border: '1px solid rgba(212,175,55,0.4)', letterSpacing: '0.05em' }}>LIVE ⚡</span>
+              </div>
+              <p style={{ margin: 0, opacity: 0.8, fontSize: '0.85rem' }}>Instantly check visa requirements between any two countries — powered by Travel Buddy.</p>
+            </div>
+
+            <div style={{ padding: '1.75rem 2rem' }}>
+              <form onSubmit={handleVisaCheck} style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
+                <div style={{ flex: '1 1 220px' }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Your Passport Country (ISO code)</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={2}
+                    placeholder="e.g. IN, SG, US, MY"
+                    value={visaPassport}
+                    onChange={e => setVisaPassport(e.target.value.toUpperCase())}
+                    style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div style={{ flex: '1 1 220px' }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Destination Country (ISO code)</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={2}
+                    placeholder="e.g. SG, JP, AE, TH"
+                    value={visaDestination}
+                    onChange={e => setVisaDestination(e.target.value.toUpperCase())}
+                    style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', outline: 'none', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={visaLoading}
+                  style={{ flex: '0 0 auto', padding: '0.75rem 2rem', background: visaLoading ? '#94A3B8' : 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, fontSize: '0.95rem', cursor: visaLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap', boxShadow: visaLoading ? 'none' : '0 4px 12px rgba(5,150,105,0.3)' }}
+                >
+                  {visaLoading ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Checking...</> : <><Search size={16} /> Check Visa</>}
+                </button>
+              </form>
+
+              <p style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.75rem', margin: '0.75rem 0 0' }}>Use 2-letter ISO country codes: IN = India, SG = Singapore, MY = Malaysia, JP = Japan, US = USA, AE = UAE, etc.</p>
+
+              {/* Error State */}
+              {visaError && (
+                <div style={{ marginTop: '1.5rem', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '10px', padding: '1rem 1.25rem', color: '#B91C1C', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <AlertTriangle size={18} /> {visaError}
+                </div>
+              )}
+
+              {/* Results */}
+              {visaResult && (
+                <div style={{ marginTop: '1.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '1.5rem' }}>🛂</div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Result for</div>
+                      <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#1A365D' }}>
+                        {visaPassport} → {visaDestination} Visa Requirements
+                      </div>
+                    </div>
+                    <div style={{ marginLeft: 'auto' }}>
+                      <span style={{
+                        padding: '0.4rem 1rem',
+                        borderRadius: '20px',
+                        fontWeight: 800,
+                        fontSize: '0.85rem',
+                        background:
+                          visaResult.visa === 'visa free' ? '#F0FDF4' :
+                          visaResult.visa === 'visa on arrival' ? '#FFFBEB' :
+                          visaResult.visa === 'e-visa' ? '#EFF6FF' : '#FEF2F2',
+                        color:
+                          visaResult.visa === 'visa free' ? '#16A34A' :
+                          visaResult.visa === 'visa on arrival' ? '#D97706' :
+                          visaResult.visa === 'e-visa' ? '#2563EB' : '#DC2626',
+                        border: '1px solid',
+                        borderColor:
+                          visaResult.visa === 'visa free' ? '#BBF7D0' :
+                          visaResult.visa === 'visa on arrival' ? '#FCD34D' :
+                          visaResult.visa === 'e-visa' ? '#BFDBFE' : '#FECACA'
+                      }}>
+                        {visaResult.visa === 'visa free' ? '✅ Visa Free' :
+                         visaResult.visa === 'visa on arrival' ? '🟡 Visa on Arrival' :
+                         visaResult.visa === 'e-visa' ? '🔵 e-Visa Required' :
+                         '🔴 ' + (visaResult.visa || 'Visa Required')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                    {visaResult.dur && (
+                      <div style={{ background: '#F8FAFC', borderRadius: '10px', padding: '1rem', border: '1px solid #E2E8F0' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.35rem' }}>Max Stay</div>
+                        <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0F172A' }}>{visaResult.dur} days</div>
+                      </div>
+                    )}
+                    {visaResult.admission && (
+                      <div style={{ background: '#F8FAFC', borderRadius: '10px', padding: '1rem', border: '1px solid #E2E8F0' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.35rem' }}>Admission</div>
+                        <div style={{ fontWeight: 800, fontSize: '1rem', color: '#0F172A' }}>{visaResult.admission}</div>
+                      </div>
+                    )}
+                    {visaResult.passport_validity && (
+                      <div style={{ background: '#F8FAFC', borderRadius: '10px', padding: '1rem', border: '1px solid #E2E8F0' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.35rem' }}>Passport Validity Needed</div>
+                        <div style={{ fontWeight: 800, fontSize: '1rem', color: '#0F172A' }}>{visaResult.passport_validity}</div>
+                      </div>
+                    )}
+                    {visaResult.currency && (
+                      <div style={{ background: '#F8FAFC', borderRadius: '10px', padding: '1rem', border: '1px solid #E2E8F0' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.35rem' }}>Local Currency</div>
+                        <div style={{ fontWeight: 800, fontSize: '1rem', color: '#0F172A' }}>{visaResult.currency}</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {visaResult.notes && (
+                    <div style={{ marginTop: '1rem', background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: '10px', padding: '1rem 1.25rem', fontSize: '0.87rem', color: '#78350F' }}>
+                      <strong>📌 Notes:</strong> {visaResult.notes}
+                    </div>
+                  )}
+
+                  <p style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '1rem' }}>⚠️ Always verify with the official embassy or consulate before travel. This is indicative data only.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* 3. VISA DOCUMENTATION CHECKLIST (SG & MY) */}
         {!sanitySettings.hideVisaChecklist && (
