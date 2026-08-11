@@ -15,11 +15,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Visa API credentials not configured.' }, { status: 500 })
     }
 
-    const encodedParams = new URLSearchParams()
-    encodedParams.set('passport', passport.toUpperCase())
-    encodedParams.set('destination', destination.toUpperCase())
+    const passportUpper = passport.toUpperCase()
+    const destinationUpper = destination.toUpperCase()
 
-    const response = await fetch(`https://${apiHost}/v2/visa/check`, {
+    // --- Attempt 1: VisaRequirements endpoint (richer, more accurate data) ---
+    const encodedParams = new URLSearchParams()
+    encodedParams.set('passport', passportUpper)
+    encodedParams.set('destination', destinationUpper)
+
+    const reqResponse = await fetch(`https://${apiHost}/v2/visa/requirements`, {
       method: 'POST',
       headers: {
         'x-rapidapi-key': apiKey,
@@ -29,13 +33,48 @@ export async function POST(req: Request) {
       body: encodedParams
     })
 
-    if (!response.ok) {
-      const errText = await response.text()
-      return NextResponse.json({ error: `API Error: ${response.status} - ${errText}` }, { status: response.status })
+    if (reqResponse.ok) {
+      const reqData = await reqResponse.json()
+
+      // Normalize — VisaRequirements returns an object or array depending on version
+      const entry = Array.isArray(reqData) ? reqData[0] : reqData
+
+      if (entry) {
+        // Map various field names the API may use
+        const normalized = {
+          visa: entry.visa_type || entry.visa || entry.requirement || entry.type || null,
+          dur: entry.duration || entry.max_stay || entry.dur || null,
+          admission: entry.admission || entry.admissions || null,
+          passport_validity: entry.passport_validity || entry.passportValidity || null,
+          currency: entry.currency || null,
+          notes: entry.notes || entry.note || entry.information || null,
+          source: 'VisaRequirements'
+        }
+
+        if (normalized.visa) {
+          return NextResponse.json({ success: true, data: normalized })
+        }
+      }
     }
 
-    const data = await response.json()
-    return NextResponse.json({ success: true, data })
+    // --- Fallback: visa/check endpoint ---
+    const checkResponse = await fetch(`https://${apiHost}/v2/visa/check`, {
+      method: 'POST',
+      headers: {
+        'x-rapidapi-key': apiKey,
+        'x-rapidapi-host': apiHost,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: encodedParams
+    })
+
+    if (!checkResponse.ok) {
+      const errText = await checkResponse.text()
+      return NextResponse.json({ error: `API Error: ${checkResponse.status} - ${errText}` }, { status: checkResponse.status })
+    }
+
+    const checkData = await checkResponse.json()
+    return NextResponse.json({ success: true, data: { ...checkData, source: 'visa/check' } })
 
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Unexpected error fetching visa requirements.' }, { status: 500 })
