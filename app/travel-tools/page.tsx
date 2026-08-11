@@ -1049,7 +1049,37 @@ export default function TravelToolsPage() {
                     </div>
                   )}
 
-                  <p style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '1rem' }}>⚠️ Always verify with the official embassy or consulate before travel. This is indicative data only.</p>
+                  {/* eVisa / Info Links from DoINeedVisa */}
+                  {(visaResult.evisaLink || visaResult.infoLink) && (
+                    <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                      {visaResult.evisaLink && (
+                        <a
+                          href={visaResult.evisaLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 1.1rem', background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', textDecoration: 'none' }}
+                        >
+                          🔵 Apply e-Visa Online →
+                        </a>
+                      )}
+                      {visaResult.infoLink && (
+                        <a
+                          href={visaResult.infoLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 1.1rem', background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', textDecoration: 'none' }}
+                        >
+                          📋 Visa Information →
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {visaResult.lastVerified && (
+                    <p style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '0.75rem' }}>Data last verified: {visaResult.lastVerified}</p>
+                  )}
+
+                  <p style={{ fontSize: '0.72rem', color: '#94A3B8', marginTop: '0.5rem' }}>⚠️ Always verify with the official embassy or consulate before travel. This is indicative data only.</p>
                 </div>
               )}
             </div>
