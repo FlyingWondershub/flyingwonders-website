@@ -29,6 +29,7 @@ import { corporateTravelSchema } from './corporateTravel'
 import { travelToolsSchema } from './travelTools'
 import { eventsPageSchema } from './eventsPage'
 import { readyPackageTemplateSchema } from './readyPackageTemplate'
+import { b2bCatalogProfileSchema } from './b2bCatalogProfile'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -43,6 +44,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     bookingRequestSchema,
     contactSubmissionSchema,
     b2bAgentSchema,
+    b2bCatalogProfileSchema,
     newsletterSubscriberSchema,
     newsletterCampaignSchema,
     attractionsUserSchema,
