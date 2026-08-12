@@ -2558,16 +2558,13 @@ export default function PrototypeBuilder() {
   // Clear existing entries and start a new itinerary
   const handleRefresh = () => {
     if (confirm('Are you sure you want to clear all existing entries and start a new itinerary? This will reset all days and custom pricing fields.')) {
-      setItinerary(Array.from({ length: nightsCount + 1 }, () => ({
-        transfers: [],
-        breakfast: false,
-        lunch: false,
-        dinner: false,
-        guideRequired: false,
-        meals: [],
-        guides: [],
-        attractions: [],
-      })))
+      setAdults(2)
+      setKids(0)
+      setChildAges([])
+      setNightsCount(3)
+      setGuestName('')
+      setGuestPhone('')
+      setArrivalDate(minCheckinDate)
       setGlobalHotelIndex(0)
       setGlobalRoomIndex(0)
       setGlobalRoomCount(1)
@@ -2579,11 +2576,36 @@ export default function PrototypeBuilder() {
       setCustomHotelPrice(0)
       setCustomHotelSuppName('')
       setCustomHotelSuppCost(0)
-      setGuestName('')
       setMiscCostPerPerson(0)
       setMiscNotes('')
+      setMarkupPercent(0)
+      setMarkupAbsolute(0)
+      setDiscountPerPerson(0)
       setSavedProposalNum(null)
-      alert('Workspace cleared. You can now build a new itinerary.')
+      setActiveTemplateName(null)
+      setSearchQuery('')
+      setActiveProposalStatus('pending')
+      setActiveInvoiceNumber('')
+      setActiveInvoiceDate('')
+      setActivePaymentLedger([])
+      setActiveAdditionalCharges([])
+
+      setItinerary(Array.from({ length: 4 }, () => ({
+        transfers: [],
+        breakfast: false,
+        lunch: false,
+        dinner: false,
+        guideRequired: false,
+        meals: [],
+        guides: [],
+        attractions: [],
+      })))
+
+      if (typeof window !== 'undefined') {
+        window.history.pushState({}, '', '/custom-package')
+      }
+
+      alert('Workspace cleared. All guest details, adults, children, nights, and itinerary have been reset.')
     }
   }
 
