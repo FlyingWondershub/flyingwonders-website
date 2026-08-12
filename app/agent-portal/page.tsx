@@ -48,6 +48,11 @@ export default function AgentPortalPage() {
   const [otpStep, setOtpStep] = useState<'email' | 'otp'>('email')
   const [otpCode, setOtpCode] = useState('')
   const [authSubmitting, setAuthSubmitting] = useState(false)
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
+  const [regCompanyName, setRegCompanyName] = useState('')
+  const [regAgentName, setRegAgentName] = useState('')
+  const [regPhone, setRegPhone] = useState('')
+  const [authError, setAuthError] = useState('')
 
   useEffect(() => {
     async function initSession() {
@@ -81,8 +86,9 @@ export default function AgentPortalPage() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault()
+    setAuthError('')
     if (!loginEmail || !loginEmail.includes('@')) {
-      alert('Please enter a valid B2B registered email address.')
+      setAuthError('Please enter a valid B2B email address.')
       return
     }
     setAuthSubmitting(true)
@@ -90,17 +96,24 @@ export default function AgentPortalPage() {
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: loginEmail })
+        body: JSON.stringify({
+          email: loginEmail,
+          companyName: authMode === 'signup' ? regCompanyName : undefined,
+          agentName: authMode === 'signup' ? regAgentName : undefined,
+          phone: authMode === 'signup' ? regPhone : undefined,
+        })
       })
       const data = await res.json()
       if (res.ok && data.success) {
         setOtpStep('otp')
-        alert(`OTP sent to ${loginEmail}!`)
       } else {
-        alert(data.error || 'Failed to send OTP. Please ensure your email is registered as an approved B2B Agent.')
+        if (data.error && (data.error.toLowerCase().includes('account not found') || data.error.toLowerCase().includes('register'))) {
+          setAuthMode('signup')
+        }
+        setAuthError(data.error || 'Failed to send OTP. Please ensure your email is registered as an approved B2B Agent.')
       }
     } catch (e) {
-      alert('Error sending OTP.')
+      setAuthError('Error sending OTP.')
     } finally {
       setAuthSubmitting(false)
     }
@@ -929,22 +942,91 @@ export default function AgentPortalPage() {
               Enter your registered B2B email to receive a single-use OTP verification code.
             </p>
 
+            {/* Toggle Tab */}
+            {otpStep === 'email' && (
+              <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #E2E8F0', marginBottom: '1.5rem', paddingBottom: '2px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => { setAuthMode('login'); setAuthError(''); }}
+                  style={{ flex: 1, padding: '0.5rem', background: 'transparent', border: 'none', borderBottom: authMode === 'login' ? '3px solid #B83A4B' : 'none', color: authMode === 'login' ? '#B83A4B' : '#718096', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+                >
+                  Sign In
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => { setAuthMode('signup'); setAuthError(''); }}
+                  style={{ flex: 1, padding: '0.5rem', background: 'transparent', border: 'none', borderBottom: authMode === 'signup' ? '3px solid #B83A4B' : 'none', color: authMode === 'signup' ? '#B83A4B' : '#718096', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+                >
+                  Register Agency
+                </button>
+              </div>
+            )}
+
+            {/* Display Errors */}
+            {authError && (
+              <div style={{ background: '#FFF5F5', color: '#C53030', padding: '0.75rem 1rem', borderRadius: '6px', fontSize: '0.82rem', marginBottom: '1.25rem', borderLeft: '4px solid #C53030', textAlign: 'left' }}>
+                ⚠️ {authError}
+                {(authError.toLowerCase().includes('account not found') || authError.toLowerCase().includes('register')) && (
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('signup'); setAuthError(''); }}
+                    style={{ display: 'block', marginTop: '0.5rem', background: '#C53030', color: '#FFF', border: 'none', padding: '0.4rem 0.75rem', borderRadius: '4px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}
+                  >
+                    👉 Click here to Register Agency
+                  </button>
+                )}
+              </div>
+            )}
+
             {otpStep === 'email' ? (
-              <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <input
-                  type="email"
-                  placeholder="Registered B2B Email (e.g. lee.think2000@gmail.com)"
-                  required
-                  value={loginEmail}
-                  onChange={e => setLoginEmail(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.9rem', outline: 'none' }}
-                />
+              <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', textAlign: 'left' }}>
+                {authMode === 'signup' && (
+                  <>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.25rem', color: '#475569' }}>Company / Agency Name *</label>
+                      <input 
+                        type="text" required placeholder="e.g. Travel Wonders Inc"
+                        value={regCompanyName} onChange={e => setRegCompanyName(e.target.value)}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.25rem', color: '#475569' }}>Agent Name *</label>
+                      <input 
+                        type="text" required placeholder="e.g. Amit Kumar"
+                        value={regAgentName} onChange={e => setRegAgentName(e.target.value)}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.25rem', color: '#475569' }}>Phone / WhatsApp Number *</label>
+                      <input 
+                        type="tel" required placeholder="e.g. +91 9886171251"
+                        value={regPhone} onChange={e => setRegPhone(e.target.value)}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.25rem', color: '#475569' }}>Work Email Address *</label>
+                  <input
+                    type="email"
+                    placeholder="Registered B2B Email (e.g. agent@travelagency.com)"
+                    required
+                    value={loginEmail}
+                    onChange={e => setLoginEmail(e.target.value)}
+                    style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.9rem', outline: 'none' }}
+                  />
+                </div>
+
                 <button
                   type="submit"
                   disabled={authSubmitting}
-                  style={{ padding: '0.75rem', borderRadius: '8px', border: 'none', background: '#B83A4B', color: '#FFF', fontWeight: 800, fontSize: '0.9rem', cursor: authSubmitting ? 'not-allowed' : 'pointer' }}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: 'none', background: '#B83A4B', color: '#FFF', fontWeight: 800, fontSize: '0.9rem', cursor: authSubmitting ? 'not-allowed' : 'pointer', marginTop: '0.5rem' }}
                 >
-                  {authSubmitting ? 'Sending OTP...' : 'Send Verification OTP 📩'}
+                  {authSubmitting ? 'Sending OTP...' : (authMode === 'signup' ? 'Register & Send Code 📩' : 'Send Verification OTP 📩')}
                 </button>
               </form>
             ) : (

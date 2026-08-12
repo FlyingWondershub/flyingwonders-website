@@ -225,6 +225,9 @@ export default function InstantQuotePage() {
 
       const data = await res.json()
       if (!res.ok) {
+        if (data.error && (data.error.toLowerCase().includes('account not found') || data.error.toLowerCase().includes('register'))) {
+          setAuthMode('signup')
+        }
         throw new Error(data.error || 'Failed to dispatch verification code')
       }
 
@@ -539,6 +542,15 @@ export default function InstantQuotePage() {
           {authError && (
             <div style={{ background: '#FFF5F5', color: '#C53030', padding: '0.75rem 1rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1.5rem', borderLeft: '4px solid #C53030' }}>
               ⚠️ {authError}
+              {(authError.toLowerCase().includes('account not found') || authError.toLowerCase().includes('register')) && (
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('signup'); setAuthError(''); }}
+                  style={{ display: 'block', marginTop: '0.5rem', background: '#C53030', color: '#FFF', border: 'none', padding: '0.45rem 0.85rem', borderRadius: '4px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+                >
+                  👉 Click here to Register Agency
+                </button>
+              )}
             </div>
           )}
 
