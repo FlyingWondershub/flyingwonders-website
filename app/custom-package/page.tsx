@@ -2138,6 +2138,77 @@ export default function PrototypeBuilder() {
     }
   }
 
+  // Handle Save As Proposal to Sanity (Creates a brand new package based on current details)
+  const handleSaveAsProposal = async () => {
+    if (!activeAgent) return
+    
+    // Prompt agent for new guest/client name or default to current guest name + "(Copy)"
+    const defaultName = guestName ? `${guestName} (Copy)` : ''
+    const newGuestName = prompt('Enter Guest Name for the new cloned package:', defaultName)
+    if (newGuestName === null) return // User cancelled
+
+    setSaveStatus('saving')
+    try {
+      const h = hotelsList[globalHotelIndex]
+      const room = h?.rooms[globalRoomIndex]
+      const supp = globalSuppIndex >= 0 ? h?.rooms[globalSuppIndex] : null
+
+      const res = await fetch('/api/proposals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalNumber: undefined, // Force creation of a brand new proposal number
+          isTemplateBased: !!activeTemplateName,
+          templateName: activeTemplateName || '',
+          agentEmail: activeAgent.email,
+          guestName: newGuestName.trim() || guestName,
+          guestPhone,
+          adults,
+          kids,
+          childAges,
+          nights: nightsCount,
+          arrivalDate,
+          hotelRequired,
+          hotelName: customHotelEnabled ? customHotelName : (h?.name || ''),
+          roomType: customHotelEnabled ? customHotelRoomType : (room?.type || ''),
+          roomCount: globalRoomCount,
+          supplementType: customHotelEnabled ? customHotelSuppName : (supp?.type || ''),
+          supplementCount: globalSuppCount,
+          customHotelEnabled,
+          customHotelPrice,
+          customHotelSuppCost,
+          miscCostPerPerson,
+          miscNotes,
+          markupPercent,
+          markupAbsolute,
+          discountPerPerson,
+          customAgencyName,
+          customAgencyEmail,
+          customAgencyPhone,
+          destinationMode,
+          costBreakdown,
+          itinerary,
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setSaveStatus('success')
+        setSavedProposalNum(data.proposalNumber)
+        if (newGuestName.trim()) setGuestName(newGuestName.trim())
+        if (typeof window !== 'undefined') {
+          window.history.pushState({}, '', `/custom-package?ref=${data.proposalNumber}`)
+        }
+        alert(`New package created successfully! Proposal Number: ${data.proposalNumber}`)
+      } else {
+        throw new Error(data.error || 'Failed to save new package')
+      }
+    } catch (err) {
+      console.error(err)
+      setSaveStatus('error')
+      alert('Failed to save new package to Sanity. Check write tokens.')
+    }
+  }
+
   // Core function to load proposal details by proposal number
   const loadProposalByNumber = async (num: string, showAlert = true) => {
     const targetNum = num.trim()
@@ -3818,8 +3889,13 @@ ${proposal}
           <button className="cp-tool-btn" onClick={downloadProposalPDF}>📄 PDF</button>
           <button className="cp-tool-btn whatsapp" onClick={sendOnWhatsApp}>💬 WhatsApp</button>
           <button className="cp-tool-btn" onClick={handleSaveProposal} style={{ background: '#FAF5FF', border: '1px solid #D6BCFA', color: '#6B46C1' }}>
-            💾 {saveStatus === 'saving' ? 'Saving...' : 'Save Proposal'}
+            💾 {saveStatus === 'saving' ? 'Saving...' : (savedProposalNum ? 'Update Proposal' : 'Save Proposal')}
           </button>
+          {savedProposalNum && (
+            <button className="cp-tool-btn" onClick={handleSaveAsProposal} style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8' }} title="Save as a new proposal copy">
+              📋 Save As New
+            </button>
+          )}
           {activeAgent?.email?.toLowerCase() === 'info.flyingwonders@gmail.com' && savedProposalNum && (
             <button 
               className="cp-tool-btn" 
