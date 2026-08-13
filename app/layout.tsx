@@ -71,6 +71,9 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  other: {
+    'google-adsense-account': 'ca-pub-3967023851392009'
+  }
 }
 
 import { client } from '../sanity/lib/client'
@@ -143,7 +146,15 @@ export default async function RootLayout({
     <html lang="en">
       <head>
         <SeoSchema />
-        {/* Google AdSense Script for Site Ownership Verification */}
+        {/* Google AdSense Publisher Account & Site Verification Meta Tag */}
+        <meta name="google-adsense-account" content="ca-pub-3967023851392009" />
+        {/* Google AdSense Script for Instant Crawler Verification */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3967023851392009"
+          crossOrigin="anonymous"
+        />
+        {/* Next.js Script Fallback */}
         <Script
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3967023851392009"
           crossOrigin="anonymous"
