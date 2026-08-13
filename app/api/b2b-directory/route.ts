@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
       tagline,
       agentName,
       email,
+      secondaryEmail,
       phone,
       whatsappNumber,
       city,
@@ -121,11 +122,11 @@ export async function POST(req: NextRequest) {
       packageHighlights,
     } = body
 
-    if (!email || !companyName) {
+    if (!companyName || !email) {
       return NextResponse.json({ success: false, error: 'Company Name and Email are required.' }, { status: 400 })
     }
 
-    const normalizedEmail = email.trim().toLowerCase()
+    const normalizedEmail = email.toLowerCase().trim()
 
     // Find existing profile in Sanity
     const existing = await writeClient.fetch(
@@ -139,6 +140,7 @@ export async function POST(req: NextRequest) {
       tagline: tagline || '',
       agentName: agentName || '',
       email: normalizedEmail,
+      secondaryEmail: (secondaryEmail || '').toLowerCase().trim(),
       phone: phone || '',
       whatsappNumber: whatsappNumber || phone || '',
       city: city || '',

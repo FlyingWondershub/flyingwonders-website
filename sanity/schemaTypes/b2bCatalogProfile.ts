@@ -28,6 +28,11 @@ export const b2bCatalogProfileSchema = defineType({
       validation: (Rule) => Rule.required().email(),
     }),
     defineField({
+      name: 'secondaryEmail',
+      title: 'Secondary / Alternate Email Address',
+      type: 'string',
+    }),
+    defineField({
       name: 'phone',
       title: 'Phone Number',
       type: 'string',

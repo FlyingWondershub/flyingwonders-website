@@ -96,6 +96,7 @@ export default function B2BDirectoryPage() {
   const [editCompanyName, setEditCompanyName] = useState('')
   const [editTagline, setEditTagline] = useState('')
   const [editAgentName, setEditAgentName] = useState('')
+  const [editSecondaryEmail, setEditSecondaryEmail] = useState('')
   const [editPhone, setEditPhone] = useState('')
   const [editWhatsapp, setEditWhatsapp] = useState('')
   const [editCity, setEditCity] = useState('')
@@ -205,7 +206,7 @@ export default function B2BDirectoryPage() {
     }
   }
 
-  // Professional WhatsApp Formatted Copy Function
+  // Professional WhatsApp Formatted Copy Function (Supports Both Emails)
   const copyAllContactDetails = (p: any, e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
     
@@ -213,7 +214,8 @@ export default function B2BDirectoryPage() {
       `🏢 *${p.companyName}*`,
       p.tagline ? `_${p.tagline}_\n` : '',
       p.agentName ? `👤 *Contact Person:* ${p.agentName}` : '',
-      p.email ? `✉️ *Email:* ${p.email}` : '',
+      p.email ? `✉️ *Primary Email:* ${p.email}` : '',
+      p.secondaryEmail ? `✉️ *Secondary Email:* ${p.secondaryEmail}` : '',
       (p.whatsappNumber || p.phone) ? `📞 *Phone / WhatsApp:* ${p.whatsappNumber || p.phone}` : '',
       (p.city || p.country) ? `📍 *Location:* ${p.city ? `${p.city}, ` : ''}${p.country || ''}` : '',
       p.websiteUrl ? `🌐 *Website:* ${p.websiteUrl.startsWith('http') ? p.websiteUrl : `https://${p.websiteUrl}`}` : '',
@@ -293,6 +295,7 @@ export default function B2BDirectoryPage() {
           setEditCompanyName(existing.companyName || '')
           setEditTagline(existing.tagline || '')
           setEditAgentName(existing.agentName || '')
+          setEditSecondaryEmail(existing.secondaryEmail || '')
           setEditPhone(existing.phone || '')
           setEditWhatsapp(existing.whatsappNumber || '')
           setEditCity(existing.city || '')
@@ -330,6 +333,7 @@ export default function B2BDirectoryPage() {
         tagline: editTagline,
         agentName: editAgentName,
         email: authEmail,
+        secondaryEmail: editSecondaryEmail,
         phone: editPhone,
         whatsappNumber: editWhatsapp || editPhone,
         city: editCity,
@@ -386,7 +390,7 @@ export default function B2BDirectoryPage() {
   // Generate vCard download file
   const downloadVCard = (p: any, e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
-    const vcardData = `BEGIN:VCARD\nVERSION:3.0\nN:${p.agentName || p.companyName};;;;\nFN:${p.agentName || p.companyName}\nORG:${p.companyName}\nTITLE:B2B Travel Partner\nTEL;TYPE=CELL,VOICE:${p.phone || ''}\nEMAIL;TYPE=PREF,INTERNET:${p.email || ''}\nURL:${p.websiteUrl || ''}\nNOTE:${p.tagline || ''}\nEND:VCARD`
+    const vcardData = `BEGIN:VCARD\nVERSION:3.0\nN:${p.agentName || p.companyName};;;;\nFN:${p.agentName || p.companyName}\nORG:${p.companyName}\nTITLE:B2B Travel Partner\nTEL;TYPE=CELL,VOICE:${p.phone || ''}\nEMAIL;TYPE=PREF,INTERNET:${p.email || ''}\n${p.secondaryEmail ? `EMAIL;TYPE=WORK,INTERNET:${p.secondaryEmail}\n` : ''}URL:${p.websiteUrl || ''}\nNOTE:${p.tagline || ''}\nEND:VCARD`
     const blob = new Blob([vcardData], { type: 'text/vcard;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -663,7 +667,7 @@ export default function B2BDirectoryPage() {
         )}
       </main>
 
-      {/* ══ 📇 CLEAR INTERACTIVE CONTACT DETAILS MODAL ══ */}
+      {/* ══ 📇 CLEAR INTERACTIVE CONTACT DETAILS MODAL (SUPPORTS 2 EMAILS) ══ */}
       {contactModalProfile && (
         <div
           onClick={() => setContactModalProfile(null)}
@@ -689,7 +693,7 @@ export default function B2BDirectoryPage() {
             onClick={e => e.stopPropagation()}
             style={{
               position: 'relative',
-              width: '460px',
+              width: '480px',
               maxWidth: '92vw',
               backgroundColor: '#FFFFFF',
               color: '#0F172A',
@@ -724,17 +728,39 @@ export default function B2BDirectoryPage() {
             {/* Contact Information List */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.5rem' }}>
               
-              {/* Email Address */}
+              {/* Primary Email Address */}
               {contactModalProfile.email && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFF', border: '1px solid #E2E8F0', padding: '0.65rem 0.85rem', borderRadius: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
                     <Mail size={16} color="#0F4C3A" />
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1E293B', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{contactModalProfile.email}</span>
+                    <div>
+                      <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Primary Email</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1E293B' }}>{contactModalProfile.email}</span>
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <a href={`mailto:${contactModalProfile.email}`} style={{ background: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800, textDecoration: 'none' }}>Email</a>
                     <button onClick={e => copyToClipboard(contactModalProfile.email, 'email', e)} style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#475569', padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
                       {copiedField === 'email' ? 'Copied! ✓' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Secondary / Alternate Email Address */}
+              {contactModalProfile.secondaryEmail && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFF', border: '1px solid #E2E8F0', padding: '0.65rem 0.85rem', borderRadius: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                    <Mail size={16} color="#0F4C3A" />
+                    <div>
+                      <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Secondary Email</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1E293B' }}>{contactModalProfile.secondaryEmail}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <a href={`mailto:${contactModalProfile.secondaryEmail}`} style={{ background: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 800, textDecoration: 'none' }}>Email</a>
+                    <button onClick={e => copyToClipboard(contactModalProfile.secondaryEmail, 'secEmail', e)} style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#475569', padding: '4px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}>
+                      {copiedField === 'secEmail' ? 'Copied! ✓' : 'Copy'}
                     </button>
                   </div>
                 </div>
@@ -882,7 +908,7 @@ export default function B2BDirectoryPage() {
                 )}
               </div>
 
-              {/* 📇 DIRECT OFFICIAL CONTACT DETAILS SECTION */}
+              {/* 📇 DIRECT OFFICIAL CONTACT DETAILS SECTION (SUPPORTS 2 EMAILS) */}
               <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', borderBottom: '1px dashed #CBD5E1', paddingBottom: '0.65rem' }}>
                   <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#0F4C3A', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -906,11 +932,23 @@ export default function B2BDirectoryPage() {
 
                   {activeProfileModal.email && (
                     <div>
-                      <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Email Address</span>
+                      <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Primary Email</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <a href={`mailto:${activeProfileModal.email}`} style={{ color: '#1D4ED8', fontWeight: 700, textDecoration: 'none' }}>✉️ {activeProfileModal.email}</a>
                         <button onClick={e => copyToClipboard(activeProfileModal.email, 'email', e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: '0.72rem' }}>
                           {copiedField === 'email' ? '✓' : '📋'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeProfileModal.secondaryEmail && (
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Secondary Email</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <a href={`mailto:${activeProfileModal.secondaryEmail}`} style={{ color: '#1D4ED8', fontWeight: 700, textDecoration: 'none' }}>✉️ {activeProfileModal.secondaryEmail}</a>
+                        <button onClick={e => copyToClipboard(activeProfileModal.secondaryEmail, 'secEmail', e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: '0.72rem' }}>
+                          {copiedField === 'secEmail' ? '✓' : '📋'}
                         </button>
                       </div>
                     </div>
@@ -1045,7 +1083,7 @@ export default function B2BDirectoryPage() {
         </div>
       )}
 
-      {/* ══ PROFILE OTP EDIT / SIGNUP FLOATING MODAL ══ */}
+      {/* ══ PROFILE OTP EDIT / SIGNUP FLOATING MODAL (SUPPORTS 2 EMAILS) ══ */}
       {showEditModal && (
         <div
           onClick={() => setShowEditModal(false)}
@@ -1071,7 +1109,7 @@ export default function B2BDirectoryPage() {
             onClick={e => e.stopPropagation()}
             style={{
               position: 'relative',
-              width: '600px',
+              width: '620px',
               maxWidth: '95vw',
               maxHeight: '88vh',
               overflowY: 'auto',
@@ -1110,7 +1148,7 @@ export default function B2BDirectoryPage() {
               💼 Manage My Company Showcase Profile
             </h3>
             <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '0 0 1.25rem' }}>
-              100% open self-service. Verify your work email via OTP to create or edit your listing instantly.
+              100% open self-service. Verify your primary work email via OTP to create or edit your listing instantly.
             </p>
 
             {authError && (
@@ -1122,7 +1160,7 @@ export default function B2BDirectoryPage() {
             {otpStep === 'email' && (
               <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.3rem', color: '#334155' }}>Enter Work Email Address *</label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.3rem', color: '#334155' }}>Enter Primary Work Email Address *</label>
                   <input type="email" required placeholder="e.g. agent@travelagency.com" value={authEmail} onChange={e => setAuthEmail(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -1158,6 +1196,18 @@ export default function B2BDirectoryPage() {
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Contact Person Name</label>
                     <input type="text" value={editAgentName} onChange={e => setEditAgentName(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                  </div>
+                </div>
+
+                {/* EMAIL ADDRESSES ROW (PRIMARY + SECONDARY) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Primary Email (Verified)</label>
+                    <input type="email" disabled value={authEmail} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#F1F5F9', color: '#64748B', fontWeight: 700 }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Secondary Email ID (Optional)</label>
+                    <input type="email" placeholder="e.g. ops@travelagency.com" value={editSecondaryEmail} onChange={e => setEditSecondaryEmail(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                 </div>
 
