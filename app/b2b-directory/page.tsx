@@ -800,16 +800,50 @@ export default function B2BDirectoryPage() {
         )}
       </main>
 
-      {/* ══ PROFILE DETAIL MODAL ══ */}
+      {/* ══ PROFILE DETAIL FLOATING MODAL ══ */}
       {activeProfileModal && (
-        <div className="cp-modal-overlay" onClick={() => setActiveProfileModal(null)} style={{ background: 'rgba(15,23,42,0.7)', backdropFilter: 'blur(5px)' }}>
-          <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '840px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', borderRadius: '20px', padding: 0 }}>
-            
+        <div
+          onClick={() => setActiveProfileModal(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            overflowY: 'auto'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '840px',
+              maxWidth: '95vw',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              backgroundColor: '#FFFFFF',
+              color: '#0F172A',
+              borderRadius: '20px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #E2E8F0',
+              padding: 0
+            }}
+          >
             {/* Modal Cover Header */}
             <div style={{ height: '200px', background: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url(${activeProfileModal.coverImageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1000'})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', padding: '1.5rem', color: '#FFF' }}>
               <button
                 onClick={() => setActiveProfileModal(null)}
-                style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(0,0,0,0.5)', border: 'none', color: '#FFF', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(0,0,0,0.6)', border: 'none', color: '#FFF', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <X size={20} />
               </button>
@@ -817,14 +851,14 @@ export default function B2BDirectoryPage() {
               <div style={{ position: 'absolute', bottom: '16px', left: '24px', right: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <img src={activeProfileModal.logoUrl || 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=150'} alt="" style={{ width: '72px', height: '72px', borderRadius: '16px', border: '3px solid #FFF', objectFit: 'cover' }} />
                 <div>
-                  <h2 style={{ fontSize: '1.75rem', fontWeight: 900, margin: 0 }}>{activeProfileModal.companyName}</h2>
-                  <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: '0.9rem' }}>{activeProfileModal.tagline || activeProfileModal.city}</p>
+                  <h2 style={{ fontSize: '1.75rem', fontWeight: 900, margin: 0, color: '#FFFFFF' }}>{activeProfileModal.companyName}</h2>
+                  <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: '0.9rem', color: '#F1F5F9' }}>{activeProfileModal.tagline || activeProfileModal.city}</p>
                 </div>
               </div>
             </div>
 
             {/* Modal Body */}
-            <div style={{ padding: '2rem' }}>
+            <div style={{ padding: '2rem', backgroundColor: '#FFFFFF', color: '#0F172A' }}>
               
               {/* Quick Actions Bar */}
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1.25rem' }}>
@@ -866,7 +900,7 @@ export default function B2BDirectoryPage() {
               {/* Company Bio */}
               <div style={{ marginBottom: '2rem' }}>
                 <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.75rem' }}>About Company & Operational Expertise</h4>
-                <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
                   {activeProfileModal.aboutCompany || 'No detailed biography provided yet.'}
                 </p>
               </div>
@@ -904,7 +938,7 @@ export default function B2BDirectoryPage() {
                   ⭐ Peer Endorsements ({(activeProfileModal.recommendations || []).length})
                 </h4>
                 {(!activeProfileModal.recommendations || activeProfileModal.recommendations.length === 0) ? (
-                  <p style={{ fontSize: '0.88rem', color: '#94A3B8', fontStyle: 'italic' }}>No peer recommendations posted yet. Be the first partner to endorse this agency!</p>
+                  <p style={{ fontSize: '0.88rem', color: '#64748B', fontStyle: 'italic' }}>No peer recommendations posted yet. Be the first partner to endorse this agency!</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {activeProfileModal.recommendations.map((rec: any, idx: number) => (
@@ -924,19 +958,51 @@ export default function B2BDirectoryPage() {
         </div>
       )}
 
-      {/* ══ ENDORSEMENT FORM MODAL ══ */}
+      {/* ══ ENDORSEMENT FORM FLOATING MODAL ══ */}
       {endorseModalProfile && (
-        <div className="cp-modal-overlay" onClick={() => setEndorseModalProfile(null)}>
-          <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '500px', padding: '2rem', borderRadius: '16px' }}>
-            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.25rem', fontWeight: 800 }}>⭐ Endorse {endorseModalProfile.companyName}</h3>
+        <div
+          onClick={() => setEndorseModalProfile(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '500px',
+              maxWidth: '92vw',
+              backgroundColor: '#FFFFFF',
+              color: '#0F172A',
+              padding: '2rem',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #E2E8F0'
+            }}
+          >
+            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.25rem', fontWeight: 800, color: '#0F172A' }}>⭐ Endorse {endorseModalProfile.companyName}</h3>
             <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.25rem' }}>Post a verified peer recommendation for this travel partner.</p>
             <form onSubmit={handleSubmitEndorsement} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <input type="text" placeholder="Your Agency Name *" required value={endorserCompany} onChange={e => setEndorserCompany(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
-              <input type="text" placeholder="Your Name *" required value={endorserName} onChange={e => setEndorserName(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
-              <input type="email" placeholder="Your Work Email *" required value={endorserEmail} onChange={e => setEndorserEmail(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
-              <textarea placeholder="Recommendation Note (e.g. Great ground handling and reliable pickups)" rows={3} value={endorseComment} onChange={e => setEndorseComment(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
+              <input type="text" placeholder="Your Agency Name *" required value={endorserCompany} onChange={e => setEndorserCompany(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+              <input type="text" placeholder="Your Name *" required value={endorserName} onChange={e => setEndorserName(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+              <input type="email" placeholder="Your Work Email *" required value={endorserEmail} onChange={e => setEndorserEmail(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+              <textarea placeholder="Recommendation Note (e.g. Great ground handling and reliable pickups)" rows={3} value={endorseComment} onChange={e => setEndorseComment(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
               <div style={{ display: 'flex', gap: '10px', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => setEndorseModalProfile(null)} style={{ flex: 1, padding: '0.75rem', background: '#F1F5F9', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+                <button type="button" onClick={() => setEndorseModalProfile(null)} style={{ flex: 1, padding: '0.75rem', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
                 <button type="submit" disabled={endorseSubmitting} style={{ flex: 2, padding: '0.75rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 800, cursor: 'pointer' }}>
                   {endorseSubmitting ? 'Posting...' : 'Post Recommendation ⭐'}
                 </button>
@@ -946,30 +1012,62 @@ export default function B2BDirectoryPage() {
         </div>
       )}
 
-      {/* ══ JOINT B2B RFQ DRAWER ══ */}
+      {/* ══ JOINT B2B RFQ FLOATING DRAWER ══ */}
       {showRfqDrawer && (
-        <div className="cp-modal-overlay" onClick={() => setShowRfqDrawer(false)}>
-          <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '600px', padding: '2rem', borderRadius: '16px' }}>
-            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.3rem', fontWeight: 900 }}>📩 Joint B2B Request for Quote</h3>
+        <div
+          onClick={() => setShowRfqDrawer(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '600px',
+              maxWidth: '95vw',
+              backgroundColor: '#FFFFFF',
+              color: '#0F172A',
+              padding: '2rem',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #E2E8F0'
+            }}
+          >
+            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.3rem', fontWeight: 900, color: '#0F172A' }}>📩 Joint B2B Request for Quote</h3>
             <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.25rem' }}>
               Broadcast your inquiry to the <strong>{rfqList.length} selected partner agency(ies)</strong>.
             </p>
             <form onSubmit={handleSendJointRfq} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <input type="text" placeholder="Your Agency Name *" required value={rfqCompany} onChange={e => setRfqCompany(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
-                <input type="text" placeholder="Your Name *" required value={rfqName} onChange={e => setRfqName(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
+                <input type="text" placeholder="Your Agency Name *" required value={rfqCompany} onChange={e => setRfqCompany(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                <input type="text" placeholder="Your Name *" required value={rfqName} onChange={e => setRfqName(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <input type="email" placeholder="Your Work Email *" required value={rfqEmail} onChange={e => setRfqEmail(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
-                <input type="tel" placeholder="WhatsApp Number *" required value={rfqPhone} onChange={e => setRfqPhone(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
+                <input type="email" placeholder="Your Work Email *" required value={rfqEmail} onChange={e => setRfqEmail(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                <input type="tel" placeholder="WhatsApp Number *" required value={rfqPhone} onChange={e => setRfqPhone(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <input type="text" placeholder="Target Destination *" required value={rfqDestination} onChange={e => setRfqDestination(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
-                <input type="text" placeholder="Estimated Pax (e.g. 15 Pax)" value={rfqPax} onChange={e => setRfqPax(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
+                <input type="text" placeholder="Target Destination *" required value={rfqDestination} onChange={e => setRfqDestination(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                <input type="text" placeholder="Estimated Pax (e.g. 15 Pax)" value={rfqPax} onChange={e => setRfqPax(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
               </div>
-              <textarea placeholder="Inquiry Details / Dates / Special Requirements" rows={3} value={rfqNotes} onChange={e => setRfqNotes(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
+              <textarea placeholder="Inquiry Details / Dates / Special Requirements" rows={3} value={rfqNotes} onChange={e => setRfqNotes(e.target.value)} style={{ padding: '0.7rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
               <div style={{ display: 'flex', gap: '10px', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => setShowRfqDrawer(false)} style={{ flex: 1, padding: '0.75rem', background: '#F1F5F9', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+                <button type="button" onClick={() => setShowRfqDrawer(false)} style={{ flex: 1, padding: '0.75rem', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
                 <button type="submit" disabled={rfqStatus === 'submitting'} style={{ flex: 2, padding: '0.75rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 800, cursor: 'pointer' }}>
                   {rfqStatus === 'submitting' ? 'Broadcasting...' : 'Broadcast RFQ Inquiry 📩'}
                 </button>
@@ -979,10 +1077,176 @@ export default function B2BDirectoryPage() {
         </div>
       )}
 
-      {/* ══ PROFILE OTP EDIT / SIGNUP MODAL ══ */}
+      {/* ══ SIDE-BY-SIDE DMC COMPARISON DRAWER ══ */}
+      {showCompareDrawer && (
+        <div
+          onClick={() => setShowCompareDrawer(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '900px',
+              maxWidth: '95vw',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              backgroundColor: '#FFFFFF',
+              color: '#0F172A',
+              padding: '2rem',
+              borderRadius: '20px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #E2E8F0'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#0F4C3A' }}>📊 Side-by-Side DMC Comparison</h3>
+              <button onClick={() => setShowCompareDrawer(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B' }}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${compareList.length}, 1fr)`, gap: '1.5rem' }}>
+              {profiles.filter(p => compareList.includes(p._id)).map(p => (
+                <div key={p._id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '1.25rem', borderRadius: '12px' }}>
+                  <img src={p.logoUrl || 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=100'} style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover', marginBottom: '8px' }} />
+                  <h4 style={{ margin: '0 0 4px', fontSize: '1.1rem', fontWeight: 800, color: '#0F172A' }}>{p.companyName}</h4>
+                  <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 12px' }}>📍 {p.city}, {p.country}</p>
+                  
+                  <hr style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '10px 0' }} />
+                  <p style={{ fontSize: '0.8rem', margin: '4px 0' }}><strong>Likes:</strong> ❤️ {p.likesCount || 0}</p>
+                  <p style={{ fontSize: '0.8rem', margin: '4px 0' }}><strong>Peer Endorsements:</strong> ⭐ {(p.recommendations || []).length}</p>
+                  <p style={{ fontSize: '0.8rem', margin: '4px 0' }}><strong>Destinations:</strong> {(p.destinationsCovered || []).join(', ')}</p>
+                  <p style={{ fontSize: '0.8rem', margin: '4px 0' }}><strong>Fleet:</strong> {(p.fleetTypes || []).join(', ') || 'Standard'}</p>
+                  <p style={{ fontSize: '0.8rem', margin: '4px 0' }}><strong>Lead Time:</strong> {p.leadTimeNotice || 'Standard'}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ SAVED BOOKMARKS DRAWER ══ */}
+      {showBookmarksDrawer && (
+        <div
+          onClick={() => setShowBookmarksDrawer(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '600px',
+              maxWidth: '95vw',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              backgroundColor: '#FFFFFF',
+              color: '#0F172A',
+              padding: '2rem',
+              borderRadius: '20px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #E2E8F0'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: '#D97706', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bookmark size={20} fill="#D97706" /> Saved Partner Shortlist ({bookmarkedIds.length})
+              </h3>
+              <button onClick={() => setShowBookmarksDrawer(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B' }}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {profiles.filter(p => bookmarkedIds.includes(p._id)).map(p => (
+                <div key={p._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 2px', fontSize: '1rem', fontWeight: 800, color: '#0F172A' }}>{p.companyName}</h4>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B' }}>📍 {p.city}, {p.country}</p>
+                  </div>
+                  <button
+                    onClick={() => setActiveProfileModal(p)}
+                    style={{ background: '#0F4C3A', color: '#FFF', border: 'none', padding: '0.45rem 1rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                  >
+                    View Partner
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ PROFILE OTP EDIT / SIGNUP FLOATING MODAL ══ */}
       {showEditModal && (
-        <div className="cp-modal-overlay" onClick={() => setShowEditModal(false)}>
-          <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '640px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', borderRadius: '20px' }}>
+        <div
+          onClick={() => setShowEditModal(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '640px',
+              maxWidth: '95vw',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              backgroundColor: '#FFFFFF',
+              color: '#0F172A',
+              padding: '2rem',
+              borderRadius: '20px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #E2E8F0'
+            }}
+          >
             <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.35rem', fontWeight: 900, color: '#0F4C3A' }}>
               💼 Manage My Company Showcase Profile
             </h3>
@@ -999,8 +1263,8 @@ export default function B2BDirectoryPage() {
             {otpStep === 'email' && (
               <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.35rem' }}>Enter Work Email Address *</label>
-                  <input type="email" required placeholder="e.g. agent@travelagency.com" value={authEmail} onChange={e => setAuthEmail(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.9rem' }} />
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.35rem', color: '#334155' }}>Enter Work Email Address *</label>
+                  <input type="email" required placeholder="e.g. agent@travelagency.com" value={authEmail} onChange={e => setAuthEmail(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                 </div>
                 <button type="submit" disabled={authLoading} style={{ padding: '0.75rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>
                   {authLoading ? 'Sending OTP...' : 'Send Verification OTP Code ✉️'}
@@ -1011,8 +1275,8 @@ export default function B2BDirectoryPage() {
             {otpStep === 'otp' && (
               <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <p style={{ fontSize: '0.88rem', color: '#166534', fontWeight: 700 }}>✓ Code sent to: {authEmail}</p>
-                {debugOtp && <div style={{ background: '#FEFCBF', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem' }}>Sandbox Code: <strong>{debugOtp}</strong></div>}
-                <input type="text" required placeholder="123456" maxLength={6} value={otpCode} onChange={e => setOtpCode(e.target.value)} style={{ padding: '0.85rem', borderRadius: '8px', border: '2px solid #D97706', fontSize: '1.5rem', textAlign: 'center', letterSpacing: '0.3em', fontWeight: 800 }} />
+                {debugOtp && <div style={{ background: '#FEFCBF', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem', color: '#744210' }}>Sandbox Code: <strong>{debugOtp}</strong></div>}
+                <input type="text" required placeholder="123456" maxLength={6} value={otpCode} onChange={e => setOtpCode(e.target.value)} style={{ padding: '0.85rem', borderRadius: '8px', border: '2px solid #D97706', fontSize: '1.5rem', textAlign: 'center', letterSpacing: '0.3em', fontWeight: 800, backgroundColor: '#FFF', color: '#0F172A' }} />
                 <button type="submit" disabled={authLoading} style={{ padding: '0.75rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>
                   {authLoading ? 'Verifying...' : 'Verify OTP & Open Profile Editor 🔓'}
                 </button>
@@ -1023,59 +1287,59 @@ export default function B2BDirectoryPage() {
               <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>Company Name *</label>
-                    <input type="text" required value={editCompanyName} onChange={e => setEditCompanyName(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Company Name *</label>
+                    <input type="text" required value={editCompanyName} onChange={e => setEditCompanyName(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>Contact Person Name</label>
-                    <input type="text" value={editAgentName} onChange={e => setEditAgentName(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Contact Person Name</label>
+                    <input type="text" value={editAgentName} onChange={e => setEditAgentName(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>Tagline / Slogan</label>
-                  <input type="text" placeholder="e.g. Premier Singapore B2B Ground Handler" value={editTagline} onChange={e => setEditTagline(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }} />
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Tagline / Slogan</label>
+                  <input type="text" placeholder="e.g. Premier Singapore B2B Ground Handler" value={editTagline} onChange={e => setEditTagline(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>City</label>
-                    <input type="text" value={editCity} onChange={e => setEditCity(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>City</label>
+                    <input type="text" value={editCity} onChange={e => setEditCity(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>Country</label>
-                    <input type="text" value={editCountry} onChange={e => setEditCountry(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Country</label>
+                    <input type="text" value={editCountry} onChange={e => setEditCountry(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>WhatsApp Number</label>
-                    <input type="tel" value={editWhatsapp} onChange={e => setEditWhatsapp(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>WhatsApp Number</label>
+                    <input type="tel" value={editWhatsapp} onChange={e => setEditWhatsapp(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>About Company & Operational Bio</label>
-                  <textarea rows={3} value={editAbout} onChange={e => setEditAbout(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }} />
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>About Company & Operational Bio</label>
+                  <textarea rows={3} value={editAbout} onChange={e => setEditAbout(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>Destinations Covered (comma separated)</label>
-                    <input type="text" value={editDestinations} onChange={e => setEditDestinations(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Destinations Covered (comma separated)</label>
+                    <input type="text" value={editDestinations} onChange={e => setEditDestinations(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>Specialties (comma separated)</label>
-                    <input type="text" value={editSpecialties} onChange={e => setEditSpecialties(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Specialties (comma separated)</label>
+                    <input type="text" value={editSpecialties} onChange={e => setEditSpecialties(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>Company Logo URL</label>
-                    <input type="url" placeholder="https://..." value={editLogoUrl} onChange={e => setEditLogoUrl(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Company Logo URL</label>
+                    <input type="url" placeholder="https://..." value={editLogoUrl} onChange={e => setEditLogoUrl(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px' }}>B2B Tariff PDF Link</label>
-                    <input type="url" placeholder="https://..." value={editBrochureUrl} onChange={e => setEditBrochureUrl(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }} />
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>B2B Tariff PDF Link</label>
+                    <input type="url" placeholder="https://..." value={editBrochureUrl} onChange={e => setEditBrochureUrl(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                 </div>
 
@@ -1091,11 +1355,44 @@ export default function B2BDirectoryPage() {
         </div>
       )}
 
-      {/* ══ QR CODE GENERATOR MODAL ══ */}
+      {/* ══ QR CODE GENERATOR FLOATING MODAL ══ */}
       {qrModalProfile && (
-        <div className="cp-modal-overlay" onClick={() => setQrModalProfile(null)}>
-          <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '380px', padding: '2rem', borderRadius: '20px', textAlign: 'center' }}>
-            <h4 style={{ margin: '0 0 0.5rem', fontSize: '1.25rem', fontWeight: 900 }}>{qrModalProfile.companyName}</h4>
+        <div
+          onClick={() => setQrModalProfile(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '380px',
+              maxWidth: '92vw',
+              backgroundColor: '#FFFFFF',
+              color: '#0F172A',
+              padding: '2rem',
+              borderRadius: '20px',
+              textAlign: 'center',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              border: '1px solid #E2E8F0'
+            }}
+          >
+            <h4 style={{ margin: '0 0 0.5rem', fontSize: '1.25rem', fontWeight: 900, color: '#0F172A' }}>{qrModalProfile.companyName}</h4>
             <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.5rem' }}>Scan or share QR Code to view B2B showcase profile.</p>
             <div style={{ background: '#FFF', padding: '1rem', borderRadius: '16px', border: '2px solid #E2E8F0', display: 'inline-block', marginBottom: '1.5rem' }}>
               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/b2b-directory` : 'https://flyingwonders.net/b2b-directory')}`} alt="Profile QR Code" style={{ width: '200px', height: '200px' }} />
@@ -1104,6 +1401,7 @@ export default function B2BDirectoryPage() {
           </div>
         </div>
       )}
+
 
     </div>
   )
