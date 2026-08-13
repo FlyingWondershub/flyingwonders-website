@@ -4098,19 +4098,19 @@ ${proposal}
         {/* 💳 ADMIN FINANCIAL LEDGER & INVOICING MODAL */}
         {showLedgerModal && (
           <div className="cp-modal-overlay" onClick={() => setShowLedgerModal(false)} style={{ zIndex: 99999 }}>
-            <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '900px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
+            <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '840px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: '#FFF', borderRadius: '16px', padding: '1.25rem', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
               
               {/* Modal Title & Close Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem', marginBottom: '1rem' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800, color: 'var(--emerald-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--emerald-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     💳 Admin Financial Ledger & Invoicing
                   </h3>
-                  <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600 }}>
+                  <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>
                     Proposal Ref: <strong>{savedProposalNum}</strong> {activeInvoiceNumber ? `• Tax Invoice: ${activeInvoiceNumber}` : ''}
                   </span>
                 </div>
-                <button onClick={() => setShowLedgerModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#718096' }}>✕</button>
+                <button onClick={() => setShowLedgerModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#718096' }}>✕</button>
               </div>
 
               {(() => {
@@ -4131,52 +4131,50 @@ ${proposal}
                 }
 
                 return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     
                     {/* 1. FINANCIAL SUMMARY BANNER & STATUS */}
-                    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.25rem' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', alignItems: 'center' }}>
+                    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr 1fr 1fr', gap: '1rem', alignItems: 'flex-start' }}>
                         
-                        <div>
-                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Package Status</span>
-                          <div style={{ marginTop: '0.25rem' }}>
-                            <select 
-                              value={activeProposalStatus} 
-                              onChange={e => handleUpdateStatus(e.target.value)}
-                              style={{ padding: '0.45rem 0.75rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', fontWeight: 800, background: '#FFF', cursor: 'pointer' }}
-                            >
-                              <option value="pending">🔵 Pending (Quotation)</option>
-                              <option value="followup">🟡 Follow-Up Needed</option>
-                              <option value="confirmed">🟢 Confirmed (Issue Invoice)</option>
-                              <option value="scheduled">💜 Scheduled (Post-Confirm)</option>
-                              <option value="completed">✅ Completed (Trip Finished)</option>
-                              <option value="ignore">⚪ Ignored / Closed</option>
-                            </select>
-                          </div>
+                        <div style={{ minWidth: 0 }}>
+                          <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Package Status</span>
+                          <select 
+                            value={activeProposalStatus} 
+                            onChange={e => handleUpdateStatus(e.target.value)}
+                            style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', fontWeight: 800, background: '#FFF', cursor: 'pointer' }}
+                          >
+                            <option value="pending">🔵 Pending (Quotation)</option>
+                            <option value="followup">🟡 Follow-Up Needed</option>
+                            <option value="confirmed">🟢 Confirmed (Issue Invoice)</option>
+                            <option value="scheduled">💜 Scheduled (Post-Confirm)</option>
+                            <option value="completed">✅ Completed (Trip Finished)</option>
+                            <option value="ignore">⚪ Ignored / Closed</option>
+                          </select>
                         </div>
 
-                        <div>
-                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Contract Value</span>
-                          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1E293B', marginTop: '0.2rem' }}>
+                        <div style={{ minWidth: 0 }}>
+                          <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Contract Value</span>
+                          <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1E293B', marginTop: '0.2rem', whiteSpace: 'nowrap' }}>
                             S$ {adjustedPrice.toLocaleString()}
                           </div>
                           {totalAddons !== 0 && (
-                            <span style={{ fontSize: '0.72rem', color: totalAddons > 0 ? '#15803D' : '#B91C1C' }}>
+                            <span style={{ fontSize: '0.7rem', color: totalAddons > 0 ? '#15803D' : '#B91C1C', display: 'block', whiteSpace: 'nowrap' }}>
                               Base: S$ {basePrice.toLocaleString()} ({totalAddons > 0 ? `+S$${totalAddons}` : `-S$${Math.abs(totalAddons)}`})
                             </span>
                           )}
                         </div>
 
-                        <div>
-                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Total Paid</span>
-                          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#166534', marginTop: '0.2rem' }}>
+                        <div style={{ minWidth: 0 }}>
+                          <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Total Paid</span>
+                          <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#166534', marginTop: '0.2rem', whiteSpace: 'nowrap' }}>
                             S$ {totalPaid.toLocaleString()}
                           </div>
                         </div>
 
-                        <div>
-                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Balance Due</span>
-                          <div style={{ fontSize: '1.3rem', fontWeight: 900, color: balanceDue > 0 ? '#991B1B' : '#166534', marginTop: '0.2rem' }}>
+                        <div style={{ minWidth: 0 }}>
+                          <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Balance Due</span>
+                          <div style={{ fontSize: '1.2rem', fontWeight: 900, color: balanceDue > 0 ? '#991B1B' : '#166534', marginTop: '0.2rem', whiteSpace: 'nowrap' }}>
                             S$ {balanceDue.toLocaleString()}
                           </div>
                         </div>
@@ -4184,11 +4182,11 @@ ${proposal}
                       </div>
 
                       {/* Payment Status Badge */}
-                      <div style={{ marginTop: '1rem', paddingTop: '0.85rem', borderTop: '1px dashed #CBD5E1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <span style={{ padding: '0.35rem 0.85rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 800, background: statusBadge.bg, color: statusBadge.color }}>
+                      <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px dashed #CBD5E1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <span style={{ padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 800, background: statusBadge.bg, color: statusBadge.color }}>
                           {statusBadge.label}
                         </span>
-                        <div style={{ fontSize: '0.8rem', color: '#475569' }}>
+                        <div style={{ fontSize: '0.78rem', color: '#475569' }}>
                           Guest: <strong>{guestName || 'Valued Guest'}</strong> {guestPhone ? `(${guestPhone})` : ''}
                         </div>
                       </div>

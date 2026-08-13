@@ -30,6 +30,7 @@ import { travelToolsSchema } from './travelTools'
 import { eventsPageSchema } from './eventsPage'
 import { readyPackageTemplateSchema } from './readyPackageTemplate'
 import { b2bCatalogProfileSchema } from './b2bCatalogProfile'
+import { b2bDirectorySettingsSchema } from './b2bDirectorySettings'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -45,6 +46,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     contactSubmissionSchema,
     b2bAgentSchema,
     b2bCatalogProfileSchema,
+    b2bDirectorySettingsSchema,
     newsletterSubscriberSchema,
     newsletterCampaignSchema,
     attractionsUserSchema,
