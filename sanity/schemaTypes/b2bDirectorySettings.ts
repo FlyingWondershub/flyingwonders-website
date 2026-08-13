@@ -6,6 +6,13 @@ export const b2bDirectorySettingsSchema = defineType({
   type: 'document',
   fields: [
     defineField({
+      name: 'isPageHidden',
+      title: 'Hide Entire B2B Directory Page?',
+      type: 'boolean',
+      description: 'Toggle ON to temporarily hide/disable the B2B Directory page across the website.',
+      initialValue: false,
+    }),
+    defineField({
       name: 'heroBadgeText',
       title: 'Hero Top Badge Label',
       type: 'string',

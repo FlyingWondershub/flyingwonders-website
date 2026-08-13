@@ -50,6 +50,7 @@ const REGIONS: { [key: string]: string[] } = {
 export default function B2BDirectoryPage() {
   // Customizable Settings from Sanity
   const [settings, setSettings] = useState({
+    isPageHidden: false,
     heroBadgeText: '🌐 Global B2B DMC Directory',
     heroBadgeSubtext: '100% Open & Self-Service',
     heroTitle: 'Global DMC & B2B Partner Directory',
@@ -131,6 +132,7 @@ export default function B2BDirectoryPage() {
   const fetchDirectorySettings = async () => {
     try {
       const fetched = await client.fetch(`*[_type == "b2bDirectorySettings"][0]{
+        isPageHidden,
         heroBadgeText,
         heroBadgeSubtext,
         heroTitle,
@@ -400,6 +402,20 @@ export default function B2BDirectoryPage() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+  }
+
+  if (settings.isPageHidden) {
+    return (
+      <div style={{ background: '#F8FAFC', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center', fontFamily: 'sans-serif' }}>
+        <div style={{ background: '#FFF', padding: '3rem 2rem', borderRadius: '16px', border: '1px solid #E2E8F0', maxWidth: '460px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+          <Building2 size={48} color="#94A3B8" style={{ margin: '0 auto 1rem' }} />
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0F172A', margin: '0 0 0.5rem' }}>B2B Directory Under Maintenance</h2>
+          <p style={{ fontSize: '0.88rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+            This catalog is currently hidden by directory administrators. Please check back later.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
