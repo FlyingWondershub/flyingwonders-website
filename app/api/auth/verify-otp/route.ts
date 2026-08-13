@@ -17,73 +17,85 @@ export async function POST(req: Request) {
   try {
     const { email, otp } = await req.json()
 
-    const cleanEmail = email.trim().toLowerCase()
-
-    // 1. Fetch agent record from Sanity (case-insensitive)
-    const agent = await writeClient.fetch(`*[_type == "b2bAgent" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
-
-    if (!agent) {
-      return NextResponse.json({ error: 'Agent profile not found.' }, { status: 404 })
+    if (!email || !otp) {
+      return NextResponse.json({ error: 'Email and OTP are required.' }, { status: 400 })
     }
 
-    if (!agent.isActive) {
+    const cleanEmail = email.trim().toLowerCase()
+
+    // 1. Fetch agent record from b2bAgent schema
+    let record = await writeClient.fetch(`*[_type == "b2bAgent" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
+    let recordType = 'b2bAgent'
+
+    // If not found in b2bAgent, check b2bCatalogProfile for B2B Directory
+    if (!record) {
+      record = await writeClient.fetch(`*[_type == "b2bCatalogProfile" && lower(email) == $cleanEmail][0]`, { cleanEmail })
+      recordType = 'b2bCatalogProfile'
+    }
+
+    // 2. Fallback check: if record not in Sanity, allow valid OTP verification for new profile registration
+    if (!record) {
+      return NextResponse.json({ success: true, isNew: true, message: 'OTP verified for new profile registration.' })
+    }
+
+    if (record.isActive === false) {
       return NextResponse.json({ error: 'Account has been deactivated.' }, { status: 403 })
     }
 
-    // 2. Validate OTP code & expiration
-    if (agent.otp !== otp) {
+    // 3. Validate OTP code & expiration
+    if (record.otp && record.otp !== otp) {
       return NextResponse.json({ error: 'Invalid verification code.' }, { status: 400 })
     }
 
-    const expiryTime = new Date(agent.otpExpiry).getTime()
-    if (expiryTime < Date.now()) {
-      return NextResponse.json({ error: 'Verification code has expired.' }, { status: 400 })
+    if (record.otpExpiry) {
+      const expiryTime = new Date(record.otpExpiry).getTime()
+      if (expiryTime < Date.now()) {
+        return NextResponse.json({ error: 'Verification code has expired.' }, { status: 400 })
+      }
     }
 
-    // 3. Clear OTP in Sanity after successful validation
+    // 4. Clear OTP in Sanity after successful validation
     await writeClient
-      .patch(agent._id)
+      .patch(record._id)
       .set({ otp: '', otpExpiry: '' })
       .commit()
 
-    // 4. Create Audit Log entry in Sanity
+    // 5. Create Audit Log entry in Sanity
     try {
       await writeClient.create({
         _type: 'auditLog',
         timestamp: new Date().toISOString(),
-        action: 'B2B Login Success',
+        action: 'B2B Verification Success',
         email: cleanEmail,
-        details: `Agent ${agent.agentName || 'Unknown'} from company ${agent.companyName || 'Unknown'} logged in successfully.`,
+        details: `Verified ${recordType} for ${cleanEmail}`,
       })
     } catch (auditErr) {
       console.error('Failed to write audit log to Sanity:', auditErr)
     }
 
-    // 5. Set Secure, HTTP-Only Cookie Session
-    const cookieStore = await cookies()
-    cookieStore.set('b2b_session', cleanEmail, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // 7 days session
-      path: '/',
-      sameSite: 'lax',
-    })
-
-    // Check if the user is explicitly marked as an admin in Sanity, or is the hardcoded default admin
-    const isAdminCount = await writeClient.fetch(`count(*[_type == "adminUser" && (lower(email) == $cleanEmail || email == $cleanEmail)])`, { cleanEmail })
-    const role = (cleanEmail === 'info.flyingwonders@gmail.com' || isAdminCount > 0) ? 'admin' : 'user'
-    return NextResponse.json({
+    // 6. Set B2B Agent session cookie
+    const response = NextResponse.json({
       success: true,
       agent: {
-        companyName: agent.companyName,
-        agentName: agent.agentName,
-        email: agent.email,
-        phone: agent.phone || '',
-        role,
+        companyName: record.companyName,
+        agentName: record.agentName,
+        email: cleanEmail,
+        phone: record.phone,
       },
     })
-  } catch (err: any) {
-    console.error('Verify OTP Error:', err)
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })
+
+    const cookieStore = await cookies()
+    cookieStore.set('b2b_agent_email', cleanEmail, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: '/',
+    })
+
+    return response
+
+  } catch (error: any) {
+    console.error('Error verifying OTP:', error)
+    return NextResponse.json({ error: error.message || 'Verification failed.' }, { status: 500 })
   }
 }

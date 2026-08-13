@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from 'next-sanity'
 import nodemailer from 'nodemailer'
+import { createClient } from 'next-sanity'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
-
-export const dynamic = 'force-dynamic'
 
 const writeClient = createClient({
   apiVersion,
@@ -13,8 +11,7 @@ const writeClient = createClient({
   useCdn: false,
 })
 
-// Nodemailer SMTP Transporter
-const createTransporter = () => {
+function createTransporter() {
   const user = process.env.SMTP_USER
   const pass = process.env.SMTP_PASS
   const host = process.env.SMTP_HOST || 'smtp.gmail.com'
@@ -34,67 +31,78 @@ const createTransporter = () => {
 
 export async function POST(req: Request) {
   try {
-    const { email, companyName, agentName, phone } = await req.json()
+    const body = await req.json()
+    const { email, companyName, agentName, phone, source, isDirectory } = body
+
+    if (!email) {
+      return NextResponse.json({ error: 'Email address is required.' }, { status: 400 })
+    }
 
     const cleanEmail = email.trim().toLowerCase()
+    const isNeutralDirectory = source === 'b2b-directory' || isDirectory === true
 
     // 1. Generate 6-digit OTP code
     const otp = Math.floor(100000 + Math.random() * 900000).toString()
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes valid
 
-    // 2. Query if agent exists in Sanity (case-insensitive)
-    const agent = await writeClient.fetch(`*[_type == "b2bAgent" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
-    let isNewAgent = false
+    // 2. Query if agent or profile exists
+    if (!isNeutralDirectory) {
+      // ══ AGENT PORTAL WORKFLOW (b2bAgent schema) ══
+      const agent = await writeClient.fetch(`*[_type == "b2bAgent" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
 
-    if (agent) {
-      if (!agent.isActive) {
-        return NextResponse.json({ error: 'This agent account has been deactivated by admin.' }, { status: 403 })
-      }
-      // Update existing agent with new OTP
-      await writeClient
-        .patch(agent._id)
-        .set({ otp, otpExpiry })
-        .commit()
-    } else {
-      // If it's a sign-in attempt (no registration details provided), return error
-      if (!companyName || !agentName) {
-        return NextResponse.json({ error: "Account not found. Please click 'Register Agency' to sign up first." }, { status: 404 })
-      }
-
-      isNewAgent = true
-      // Create new agent profile (Auto-approved on verification)
-      await writeClient.create({
-        _type: 'b2bAgent',
-        companyName: companyName || 'N/A',
-        agentName: agentName || 'N/A',
-        email: cleanEmail,
-        phone: phone || 'N/A',
-        isActive: true,
-        otp,
-        otpExpiry,
-      })
-
-      // By default add all B2B agent accounts to Newsletter subscribers
-      try {
-        const existingSub = await writeClient.fetch(`*[_type == "newsletterSubscriber" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
-        if (!existingSub) {
-          await writeClient.create({
-            _type: 'newsletterSubscriber',
-            email,
-            subscribedAt: new Date().toISOString(),
-            isActive: true,
-          })
-          console.log(`Auto-subscribed B2B agent email ${email} to newsletter.`);
+      if (agent) {
+        if (!agent.isActive) {
+          return NextResponse.json({ error: 'This agent account has been deactivated by admin.' }, { status: 403 })
         }
-      } catch (subErr) {
-        console.error('Failed to auto-subscribe agent to newsletter:', subErr)
+        await writeClient
+          .patch(agent._id)
+          .set({ otp, otpExpiry })
+          .commit()
+      } else {
+        if (!companyName || !agentName) {
+          return NextResponse.json({ error: "Account not found. Please click 'Register Agency' to sign up first." }, { status: 404 })
+        }
+
+        await writeClient.create({
+          _type: 'b2bAgent',
+          companyName: companyName || 'N/A',
+          agentName: agentName || 'N/A',
+          email: cleanEmail,
+          phone: phone || 'N/A',
+          isActive: true,
+          otp,
+          otpExpiry,
+        })
+
+        try {
+          const existingSub = await writeClient.fetch(`*[_type == "newsletterSubscriber" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
+          if (!existingSub) {
+            await writeClient.create({
+              _type: 'newsletterSubscriber',
+              email: cleanEmail,
+              subscribedAt: new Date().toISOString(),
+              isActive: true,
+            })
+          }
+        } catch (subErr) {}
+      }
+    } else {
+      // ══ B2B DIRECTORY WORKFLOW (b2bCatalogProfile schema) ══
+      const existingProfile = await writeClient.fetch(`*[_type == "b2bCatalogProfile" && lower(email) == $cleanEmail][0]`, { cleanEmail })
+      if (existingProfile) {
+        await writeClient
+          .patch(existingProfile._id)
+          .set({ otp, otpExpiry })
+          .commit()
+      } else {
+        const existingAgent = await writeClient.fetch(`*[_type == "b2bAgent" && lower(email) == $cleanEmail][0]`, { cleanEmail })
+        if (existingAgent) {
+          await writeClient.patch(existingAgent._id).set({ otp, otpExpiry }).commit()
+        }
       }
     }
 
-    // 3. Dispatch OTP Email to Agent
-    const { source, isDirectory } = await req.json().catch(() => ({})) || {}
-    const isNeutralDirectory = source === 'b2b-directory' || isDirectory === true
-
+    // 3. Dispatch Notification Email
     const transporter = createTransporter()
     let emailSent = false
     let smtpError = ''
@@ -102,84 +110,71 @@ export async function POST(req: Request) {
     if (transporter) {
       try {
         const mailSubject = isNeutralDirectory
-          ? `🔐 B2B Verification Code: ${otp}`
+          ? `🔑 B2B Partner Portal Verification Passcode: ${otp}`
           : `🔐 Flying Wonders B2B Verification Code: ${otp}`
-
-        const mailHeader = isNeutralDirectory
-          ? `<h2 style="color: #0F4C3A; text-align: center;">B2B Showcase Directory</h2>`
-          : `<h2 style="color: #B83A4B; text-align: center;">Flying Wonders Singapore DMC</h2>`
-
-        const mailDesc = isNeutralDirectory
-          ? `<p>Your one-time verification code to manage your B2B Directory profile is:</p>`
-          : `<p>Your one-time verification code to access the B2B Package Cost Estimator is:</p>`
-
-        const mailFooter = isNeutralDirectory
-          ? `<p style="font-size: 0.8rem; color: #a0aec0; text-align: center;">B2B Directory Verification Service</p>`
-          : `<p style="font-size: 0.8rem; color: #a0aec0; text-align: center;">Flying Wonders Private Limited | Singapore & India Specialist DMC</p>`
 
         const mailSender = isNeutralDirectory
           ? `"B2B Directory Verification" <${process.env.SMTP_USER}>`
           : `"Flying Wonders B2B" <${process.env.SMTP_USER}>`
 
+        const mailHtml = isNeutralDirectory ? `
+          <div style="font-family: 'Helvetica Neue', Arial, sans-serif; padding: 2.5rem; max-width: 580px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); color: #1E293B;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+              <h2 style="color: #0F4C3A; font-size: 1.4rem; font-weight: 800; margin: 0 0 6px 0; letter-spacing: -0.02em;">🌐 Global B2B Partner Directory</h2>
+              <p style="color: #64748B; font-size: 0.85rem; margin: 0; font-weight: 600;">Self-Service Profile Access & Verification</p>
+            </div>
+            
+            <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 1.5rem; text-align: center; margin-bottom: 1.5rem;">
+              <p style="font-size: 0.9rem; color: #475569; margin: 0 0 1rem 0; font-weight: 600;">Your one-time verification passcode to create or edit your B2B Directory listing is:</p>
+              <div style="background-color: #0F4C3A; color: #FFFFFF; display: inline-block; padding: 0.75rem 2rem; border-radius: 10px; font-size: 2.2rem; font-weight: 900; letter-spacing: 0.35em;">
+                ${otp}
+              </div>
+              <p style="font-size: 0.78rem; color: #94A3B8; margin: 1rem 0 0 0;">Expires in 10 minutes • Keep this code confidential</p>
+            </div>
+            
+            <p style="font-size: 0.82rem; color: #64748B; line-height: 1.5; text-align: center; margin: 0 0 1.5rem 0;">
+              If you did not request this verification code, you can safely ignore this security notification.
+            </p>
+            
+            <hr style="border: 0; border-top: 1px dashed #CBD5E1; margin: 1.5rem 0;" />
+            <p style="font-size: 0.75rem; color: #94A3B8; text-align: center; margin: 0;">
+              B2B Directory Automated Verification Service • Global Travel Partner Showcase
+            </p>
+          </div>
+        ` : `
+          <div style="font-family: Arial, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h2 style="color: #B83A4B; text-align: center;">Flying Wonders Singapore DMC</h2>
+            <p>Your one-time verification code to access the B2B Package Cost Estimator is:</p>
+            <div style="background-color: #f7fafc; padding: 1rem; text-align: center; border-radius: 6px; margin: 1.5rem 0;">
+              <span style="font-size: 2.5rem; font-weight: bold; letter-spacing: 0.2em; color: #B83A4B;">${otp}</span>
+            </div>
+            <p style="font-size: 0.9rem; color: #718096;">This code is valid for 10 minutes. Do not share this code with anyone.</p>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 1.5rem 0;" />
+            <p style="font-size: 0.8rem; color: #a0aec0; text-align: center;">Flying Wonders Private Limited | Singapore & India Specialist DMC</p>
+          </div>
+        `
+
         await transporter.sendMail({
           from: mailSender,
           to: email,
           subject: mailSubject,
-          html: `
-            <div style="font-family: Arial, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-              ${mailHeader}
-              <p>Hello,</p>
-              ${mailDesc}
-              <div style="background: #f7fafc; padding: 1.5rem; text-align: center; font-size: 2.2rem; font-weight: bold; letter-spacing: 0.1em; color: #1a202c; border: 1px dashed #cbd5e0; margin: 1.5rem 0;">
-                ${otp}
-              </div>
-              <p style="font-size: 0.9rem; color: #718096; text-align: center;">This code is valid for 10 minutes. Do not share this OTP with anyone.</p>
-              <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 2rem 0;" />
-              ${mailFooter}
-            </div>
-          `,
+          html: mailHtml,
         })
         emailSent = true
-
-        // Send admin notification if it's a new registration
-        if (isNewAgent) {
-          const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.flyingwonders@gmail.com'
-          await transporter.sendMail({
-            from: `"B2B Portal" <${process.env.SMTP_USER}>`,
-            to: adminEmail,
-            subject: `💼 New B2B Agent Registered: ${agentName} (${companyName})`,
-            html: `
-              <h3>New B2B Agent Sign-Up Notification</h3>
-              <p>A new travel agent has verified their email and registered on the platform:</p>
-              <ul>
-                <li><strong>Agent Name:</strong> ${agentName}</li>
-                <li><strong>Agency/Company:</strong> ${companyName}</li>
-                <li><strong>Email:</strong> ${email}</li>
-                <li><strong>Phone:</strong> ${phone}</li>
-              </ul>
-              <p>You can manage this profile in your Sanity Studio at '/studio' under B2B Agent Accounts.</p>
-            `,
-          })
-        }
-
       } catch (err: any) {
-        console.error('SMTP Send Failed:', err)
-        smtpError = err.message || 'SMTP transport error'
+        console.error('SMTP Email Send Error:', err)
+        smtpError = err.message || 'Failed to send email via SMTP'
       }
-    } else {
-      smtpError = 'SMTP credentials not configured in environment'
     }
 
-    // 4. Return success (and the OTP in development/debug mode for testing if SMTP is not ready)
     return NextResponse.json({
       success: true,
-      emailSent,
-      smtpError,
-      // Fallback debug code to make testing easy without forcing SMTP environment variables first
-      debugOtp: !emailSent ? otp : null,
+      message: emailSent ? 'Verification code sent to your email.' : 'OTP generated.',
+      debugOtp: process.env.NODE_ENV !== 'production' || !emailSent ? otp : undefined,
     })
-  } catch (err: any) {
-    console.error('Send OTP Error:', err)
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })
+
+  } catch (error: any) {
+    console.error('Error in send-otp API:', error)
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 })
   }
 }
