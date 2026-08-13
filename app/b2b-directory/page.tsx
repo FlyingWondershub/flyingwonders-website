@@ -171,9 +171,29 @@ export default function B2BDirectoryPage() {
     }
   }
 
-  // Filter Profiles client-side when searching query or region
+  // Filter Profiles client-side in real-time on the fly
   const filteredProfiles = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim()
+
     return profiles.filter(p => {
+      // 1. Instant Real-Time Search Match (Company, Agent, City, Country, Services, Specialties, Tagline, Bio)
+      if (q) {
+        const companyMatch = (p.companyName || '').toLowerCase().includes(q)
+        const agentMatch = (p.agentName || '').toLowerCase().includes(q)
+        const cityMatch = (p.city || '').toLowerCase().includes(q)
+        const countryMatch = (p.country || '').toLowerCase().includes(q)
+        const taglineMatch = (p.tagline || '').toLowerCase().includes(q)
+        const aboutMatch = (p.aboutCompany || '').toLowerCase().includes(q)
+        const destMatch = Array.isArray(p.destinationsCovered) && p.destinationsCovered.some((d: string) => d.toLowerCase().includes(q))
+        const specMatch = Array.isArray(p.specialties) && p.specialties.some((s: string) => s.toLowerCase().includes(q))
+        const srvMatch = Array.isArray(p.servicesMatrix) && p.servicesMatrix.some((s: string) => s.toLowerCase().includes(q))
+
+        if (!companyMatch && !agentMatch && !cityMatch && !countryMatch && !taglineMatch && !aboutMatch && !destMatch && !specMatch && !srvMatch) {
+          return false
+        }
+      }
+
+      // 2. Region Filter
       if (selectedRegion !== 'all') {
         const regionCountries = REGIONS[selectedRegion] || []
         const hasDest = Array.isArray(p.destinationsCovered) && p.destinationsCovered.some((d: string) =>
@@ -182,9 +202,10 @@ export default function B2BDirectoryPage() {
         const hasCountry = regionCountries.some(rc => (p.country || '').toLowerCase().includes(rc.toLowerCase()))
         if (!hasDest && !hasCountry) return false
       }
+
       return true
     })
-  }, [profiles, selectedRegion])
+  }, [profiles, searchQuery, selectedRegion])
 
   // Toggle Bookmark
   const toggleBookmark = (profileId: string, e?: React.MouseEvent) => {
@@ -646,8 +667,13 @@ export default function B2BDirectoryPage() {
                       )}
                     </div>
 
-                    {/* Specialties Matrix */}
+                    {/* Services Provided & Specialties Matrix Badges */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 'auto' }}>
+                      {(p.servicesMatrix || []).slice(0, 3).map((srv: string, idx: number) => (
+                        <span key={idx} style={{ background: '#ECFDF5', color: '#047857', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', border: '1px solid #A7F3D0' }}>
+                          ⚡ {srv}
+                        </span>
+                      ))}
                       {(p.specialties || []).slice(0, 2).map((s: string, idx: number) => (
                         <span key={idx} style={{ background: '#F8FAFC', color: '#334155', fontSize: '0.68rem', fontWeight: 700, padding: '2px 5px', borderRadius: '4px', border: '1px solid #E2E8F0' }}>
                           💼 {s}
