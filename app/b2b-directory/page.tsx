@@ -201,14 +201,28 @@ export default function B2BDirectoryPage() {
     if (typeof window !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(text)
       setCopiedField(fieldName)
-      setTimeout(() => setCopiedField(null), 2000)
+      setTimeout(() => setCopiedField(null), 2200)
     }
   }
 
+  // Professional WhatsApp Formatted Copy Function
   const copyAllContactDetails = (p: any, e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
-    const formatted = `Company: ${p.companyName}\nContact Person: ${p.agentName || 'N/A'}\nEmail: ${p.email || 'N/A'}\nPhone/WhatsApp: ${p.whatsappNumber || p.phone || 'N/A'}\nLocation: ${p.city ? `${p.city}, ` : ''}${p.country || ''}\nWebsite: ${p.websiteUrl || 'N/A'}`
-    copyToClipboard(formatted, 'all', e)
+    
+    const lines = [
+      `🏢 *${p.companyName}*`,
+      p.tagline ? `_${p.tagline}_\n` : '',
+      p.agentName ? `👤 *Contact Person:* ${p.agentName}` : '',
+      p.email ? `✉️ *Email:* ${p.email}` : '',
+      (p.whatsappNumber || p.phone) ? `📞 *Phone / WhatsApp:* ${p.whatsappNumber || p.phone}` : '',
+      (p.city || p.country) ? `📍 *Location:* ${p.city ? `${p.city}, ` : ''}${p.country || ''}` : '',
+      p.websiteUrl ? `🌐 *Website:* ${p.websiteUrl.startsWith('http') ? p.websiteUrl : `https://${p.websiteUrl}`}` : '',
+      (p.destinationsCovered && p.destinationsCovered.length > 0) ? `🗺️ *Destinations:* ${p.destinationsCovered.join(', ')}` : '',
+      (p.specialties && p.specialties.length > 0) ? `💼 *Specialties:* ${p.specialties.join(', ')}` : '',
+      `\n🔗 *Verified B2B Directory Listing*`
+    ].filter(Boolean).join('\n')
+
+    copyToClipboard(lines, 'all', e)
   }
 
   // File Upload Handler for Logo, Cover, and Brochure
@@ -763,14 +777,14 @@ export default function B2BDirectoryPage() {
                 onClick={e => copyAllContactDetails(contactModalProfile, e)}
                 style={{ width: '100%', padding: '0.65rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
               >
-                <Copy size={15} /> {copiedField === 'all' ? 'All Details Copied to Clipboard! ✓' : 'Copy All Contact Info'}
+                <Copy size={15} /> {copiedField === 'all' ? 'Copied WhatsApp Contact Card! ✓' : 'Copy WhatsApp Format Card'}
               </button>
 
               <button
                 onClick={e => downloadVCard(contactModalProfile, e)}
                 style={{ width: '100%', padding: '0.6rem', background: '#F8FAFC', border: '1px solid #CBD5E1', color: '#475569', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
               >
-                <FileDown size={14} /> Download Mobile vCard (.vcf)
+                <FileDown size={14} /> Save to Phone Contacts (.vcf)
               </button>
             </div>
 
@@ -866,6 +880,63 @@ export default function B2BDirectoryPage() {
                     <FileDown size={15} /> Download B2B Tariff PDF
                   </a>
                 )}
+              </div>
+
+              {/* 📇 DIRECT OFFICIAL CONTACT DETAILS SECTION */}
+              <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', borderBottom: '1px dashed #CBD5E1', paddingBottom: '0.65rem' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 900, color: '#0F4C3A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📇 Official Business Contact Info
+                  </h4>
+                  <button
+                    onClick={e => copyAllContactDetails(activeProfileModal, e)}
+                    style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#0F4C3A', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <Copy size={12} /> {copiedField === 'all' ? 'Copied Card! ✓' : 'Copy WhatsApp Format Card'}
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', fontSize: '0.85rem' }}>
+                  {activeProfileModal.agentName && (
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Contact Representative</span>
+                      <strong style={{ color: '#0F172A' }}>👤 {activeProfileModal.agentName}</strong>
+                    </div>
+                  )}
+
+                  {activeProfileModal.email && (
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Email Address</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <a href={`mailto:${activeProfileModal.email}`} style={{ color: '#1D4ED8', fontWeight: 700, textDecoration: 'none' }}>✉️ {activeProfileModal.email}</a>
+                        <button onClick={e => copyToClipboard(activeProfileModal.email, 'email', e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: '0.72rem' }}>
+                          {copiedField === 'email' ? '✓' : '📋'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {(activeProfileModal.whatsappNumber || activeProfileModal.phone) && (
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Phone / WhatsApp</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <strong style={{ color: '#0F172A' }}>📞 {activeProfileModal.whatsappNumber || activeProfileModal.phone}</strong>
+                        <button onClick={e => copyToClipboard(activeProfileModal.whatsappNumber || activeProfileModal.phone, 'phone', e)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', fontSize: '0.72rem' }}>
+                          {copiedField === 'phone' ? '✓' : '📋'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeProfileModal.websiteUrl && (
+                    <div>
+                      <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Company Website</span>
+                      <a href={activeProfileModal.websiteUrl.startsWith('http') ? activeProfileModal.websiteUrl : `https://${activeProfileModal.websiteUrl}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0F4C3A', fontWeight: 700, textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        🌐 {activeProfileModal.websiteUrl} <ExternalLink size={11} />
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Company Bio */}
@@ -1090,9 +1161,15 @@ export default function B2BDirectoryPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Tagline / Slogan</label>
-                  <input type="text" placeholder="e.g. Premier Singapore B2B Ground Handler" value={editTagline} onChange={e => setEditTagline(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Tagline / Slogan</label>
+                    <input type="text" placeholder="e.g. Premier Singapore B2B Ground Handler" value={editTagline} onChange={e => setEditTagline(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Company Website URL</label>
+                    <input type="url" placeholder="https://..." value={editWebsite} onChange={e => setEditWebsite(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                  </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
