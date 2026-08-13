@@ -50,10 +50,10 @@ export default function B2BDirectoryPage() {
   const [settings, setSettings] = useState({
     heroBadgeText: '🌐 Global B2B DMC Directory',
     heroBadgeSubtext: '100% Open & Self-Service',
-    heroTitle: 'Discover Verified Global DMCs & Travel Partners',
-    heroSubtitle: 'Connect directly with verified local ground handlers, wholesale attraction suppliers, and transport providers across 70+ countries. Zero middleman fees.',
-    searchPlaceholder: 'Search by Company Name, City, Destination, or Country...',
-    addProfileButtonText: 'Add / Edit My Company Profile',
+    heroTitle: 'Global DMC & B2B Partner Directory',
+    heroSubtitle: 'Connect directly with local ground handlers, attraction suppliers, and transport providers.',
+    searchPlaceholder: 'Search company, city, country...',
+    addProfileButtonText: 'Add / Edit Profile',
     noResultsTitle: 'No B2B Partners Found',
     noResultsSubtitle: 'Try clearing filters or be the first partner to register in this region!',
   })
@@ -364,206 +364,158 @@ export default function B2BDirectoryPage() {
   }
 
   return (
-    <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', paddingBottom: '6rem' }}>
+    <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', paddingBottom: '3rem' }}>
       
-      {/* ══ HERO & BRAND HEADER BAR ══ */}
-      <section style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1E1B4B 50%, #312E81 100%)', color: '#FFF', padding: '4.5rem 1.5rem 6.5rem', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(16,185,129,0.18) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
-
-        <div style={{ maxWidth: '1240px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '2.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ background: 'rgba(255,255,255,0.15)', padding: '6px 14px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                {settings.heroBadgeText}
-              </span>
-              <span style={{ background: 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)', color: '#FFF', padding: '6px 14px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 800 }}>
-                {settings.heroBadgeSubtext}
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              {/* Bookmark Shortlist Drawer Toggle */}
-              {bookmarkedIds.length > 0 && (
-                <button
-                  onClick={() => setShowBookmarksDrawer(true)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(217, 119, 6, 0.25)', border: '1px solid #F59E0B', color: '#FEF3C7', padding: '0.55rem 1.1rem', borderRadius: '10px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
-                >
-                  <Bookmark size={15} fill="#F59E0B" color="#F59E0B" />
-                  <span>Saved Shortlist ({bookmarkedIds.length})</span>
-                </button>
-              )}
-
-              {/* Add / Manage My Company Profile */}
-              <button
-                onClick={() => { setShowEditModal(true); setOtpStep('email'); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#FFF', padding: '0.65rem 1.25rem', borderRadius: '10px', border: 'none', fontWeight: 800, fontSize: '0.9rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(16,185,129,0.3)' }}
-              >
-                <Plus size={18} />
-                <span>{settings.addProfileButtonText}</span>
-              </button>
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'center', maxWidth: '840px', margin: '0 auto' }}>
-            <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.85rem', fontWeight: 900, lineHeight: 1.2, margin: '0 0 1rem', textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}>
-              {settings.heroTitle}
+      {/* ══ 1. SLIM COMPACT HEADER STRIP ══ */}
+      <header style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1E1B4B 100%)', color: '#FFF', padding: '1.25rem 1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, letterSpacing: '-0.02em', color: '#FFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Globe size={20} color="#10B981" /> {settings.heroTitle}
             </h1>
-            <p style={{ fontSize: '1.05rem', color: '#E2E8F0', margin: '0 0 2.5rem', lineHeight: 1.6, opacity: 0.95 }}>
-              {settings.heroSubtitle}
-            </p>
+            <span style={{ background: 'rgba(255,255,255,0.15)', padding: '3px 10px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 700, backdropFilter: 'blur(6px)' }}>
+              {settings.heroBadgeSubtext}
+            </span>
+          </div>
 
-            {/* ══ 🔍 MODERN GLASSMORPHISM SEARCH CAPSULE ══ */}
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.96)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              padding: '10px',
-              borderRadius: '20px',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              flexWrap: 'wrap',
-              border: '1px solid rgba(226, 232, 240, 0.8)'
-            }}>
-              {/* Text Search Field */}
-              <div style={{ flex: '1 1 300px', display: 'flex', alignItems: 'center', gap: '12px', background: '#F8FAFC', padding: '0 16px', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
-                <Search size={19} color="#0F4C3A" />
-                <input
-                  type="text"
-                  placeholder={settings.searchPlaceholder}
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  style={{ width: '100%', background: 'transparent', border: 'none', padding: '14px 0', outline: 'none', fontSize: '0.92rem', color: '#0F172A', fontWeight: 600 }}
-                />
-              </div>
-
-              {/* Destination Filter */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#F8FAFC', padding: '0 14px', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
-                <MapPin size={16} color="#0F4C3A" />
-                <select
-                  value={selectedDestination}
-                  onChange={e => setSelectedDestination(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', padding: '14px 0', fontSize: '0.88rem', fontWeight: 700, color: '#334155', cursor: 'pointer', outline: 'none' }}
-                >
-                  <option value="all">🌍 All Destinations</option>
-                  <option value="Singapore">Singapore</option>
-                  <option value="Malaysia">Malaysia</option>
-                  <option value="Thailand">Thailand</option>
-                  <option value="Indonesia">Indonesia / Bali</option>
-                  <option value="Japan">Japan</option>
-                  <option value="India">India</option>
-                  <option value="UAE">UAE / Dubai</option>
-                </select>
-              </div>
-
-              {/* Specialty Filter */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#F8FAFC', padding: '0 14px', borderRadius: '14px', border: '1px solid #E2E8F0' }}>
-                <Briefcase size={16} color="#0F4C3A" />
-                <select
-                  value={selectedSpecialty}
-                  onChange={e => setSelectedSpecialty(e.target.value)}
-                  style={{ background: 'transparent', border: 'none', padding: '14px 0', fontSize: '0.88rem', fontWeight: 700, color: '#334155', cursor: 'pointer', outline: 'none' }}
-                >
-                  <option value="all">💼 All Specialties</option>
-                  <option value="Corporate MICE">Corporate MICE</option>
-                  <option value="FIT Travel">FIT Travel</option>
-                  <option value="VIP Transfers">VIP Transfers</option>
-                  <option value="Overland Tours">Overland Tours</option>
-                  <option value="Luxury Escapes">Luxury Escapes</option>
-                </select>
-              </div>
-
-              {/* Action Button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            {bookmarkedIds.length > 0 && (
               <button
-                onClick={fetchDirectoryProfiles}
-                style={{
-                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                  color: '#FFF',
-                  border: 'none',
-                  padding: '14px 1.75rem',
-                  borderRadius: '14px',
-                  fontWeight: 800,
-                  fontSize: '0.92rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
-                  transition: 'all 0.2s ease',
-                  whiteSpace: 'nowrap'
-                }}
+                onClick={() => setShowBookmarksDrawer(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(217, 119, 6, 0.25)', border: '1px solid #F59E0B', color: '#FEF3C7', padding: '0.4rem 0.85rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
               >
-                Search Directory
+                <Bookmark size={14} fill="#F59E0B" color="#F59E0B" />
+                <span>Shortlist ({bookmarkedIds.length})</span>
               </button>
-            </div>
-          </div>
-        </div>
-      </section>
+            )}
 
-      {/* ══ INTERACTIVE REGION FILTER TABS ══ */}
-      <div style={{ maxWidth: '1240px', margin: '-2rem auto 2.5rem', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
-        <div style={{ background: '#FFF', padding: '0.75rem', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', display: 'flex', gap: '8px', overflowX: 'auto', border: '1px solid #E2E8F0' }}>
-          <button
-            onClick={() => setSelectedRegion('all')}
-            style={{ padding: '0.65rem 1.35rem', borderRadius: '10px', border: 'none', background: selectedRegion === 'all' ? '#0F4C3A' : 'transparent', color: selectedRegion === 'all' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
-          >
-            All Regions ({profiles.length})
-          </button>
-
-          {Object.keys(REGIONS).map(reg => (
-            <button
-              key={reg}
-              onClick={() => setSelectedRegion(reg)}
-              style={{ padding: '0.65rem 1.35rem', borderRadius: '10px', border: 'none', background: selectedRegion === reg ? '#0F4C3A' : 'transparent', color: selectedRegion === reg ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
-            >
-              {reg}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ══ SORT TOOLBAR ══ */}
-      <div style={{ maxWidth: '1240px', margin: '0 auto 2rem', padding: '0 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#334155' }}>
-            Showing <strong>{filteredProfiles.length}</strong> Partner Profiles
-          </span>
-        </div>
-
-        {/* Sort Options */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ArrowUpDown size={15} color="#64748B" />
-          <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 700 }}>Sort By:</span>
-          <select
-            value={sortOption}
-            onChange={e => setSortOption(e.target.value as any)}
-            style={{ background: '#FFF', border: '1px solid #CBD5E1', padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer' }}
-          >
-            <option value="newest">Recently Listed</option>
-            <option value="company">Company Name (A-Z)</option>
-          </select>
-        </div>
-      </div>
-
-      {/* ══ CATALOG CARDS GRID ══ */}
-      <main style={{ maxWidth: '1240px', margin: '0 auto', padding: '0 1.5rem' }}>
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
-            <Sparkles className="animate-spin" size={32} color="#0F4C3A" style={{ margin: '0 auto 1rem' }} />
-            <p style={{ fontWeight: 700, color: '#64748B' }}>Loading B2B Partner Catalog...</p>
-          </div>
-        ) : filteredProfiles.length === 0 ? (
-          <div style={{ background: '#FFF', borderRadius: '16px', padding: '4rem 2rem', textAlign: 'center', border: '1px solid #E2E8F0' }}>
-            <Building2 size={48} color="#94A3B8" style={{ margin: '0 auto 1rem' }} />
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>{settings.noResultsTitle}</h3>
-            <p style={{ color: '#64748B', fontSize: '0.9rem', margin: '0 0 1.5rem' }}>{settings.noResultsSubtitle}</p>
             <button
               onClick={() => { setShowEditModal(true); setOtpStep('email'); }}
-              style={{ background: '#0F4C3A', color: '#FFF', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#FFF', padding: '0.45rem 1rem', borderRadius: '8px', border: 'none', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', boxShadow: '0 2px 10px rgba(16,185,129,0.3)' }}
+            >
+              <Plus size={15} />
+              <span>{settings.addProfileButtonText}</span>
+            </button>
+          </div>
+
+        </div>
+      </header>
+
+      {/* ══ 2. SLEEK UNIFIED COMPACT TOOLBAR (SEARCH + FILTERS + REGION CHIPS) ══ */}
+      <div style={{ maxWidth: '1280px', margin: '1rem auto 1.5rem', padding: '0 1.5rem' }}>
+        <div style={{ background: '#FFF', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          
+          {/* Top Line: Search Input + Select Dropdowns + Sort */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            
+            {/* Sleek Search Input */}
+            <div style={{ flex: '1 1 260px', display: 'flex', alignItems: 'center', gap: '8px', background: '#F8FAFC', padding: '0 12px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+              <Search size={16} color="#0F4C3A" />
+              <input
+                type="text"
+                placeholder={settings.searchPlaceholder}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{ width: '100%', background: 'transparent', border: 'none', padding: '9px 0', outline: 'none', fontSize: '0.85rem', color: '#0F172A', fontWeight: 600 }}
+              />
+            </div>
+
+            {/* Destination Select */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F8FAFC', padding: '0 10px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+              <MapPin size={14} color="#0F4C3A" />
+              <select
+                value={selectedDestination}
+                onChange={e => setSelectedDestination(e.target.value)}
+                style={{ background: 'transparent', border: 'none', padding: '9px 0', fontSize: '0.82rem', fontWeight: 700, color: '#334155', cursor: 'pointer', outline: 'none' }}
+              >
+                <option value="all">🌍 All Destinations</option>
+                <option value="Singapore">Singapore</option>
+                <option value="Malaysia">Malaysia</option>
+                <option value="Thailand">Thailand</option>
+                <option value="Indonesia">Indonesia / Bali</option>
+                <option value="Japan">Japan</option>
+                <option value="India">India</option>
+                <option value="UAE">UAE / Dubai</option>
+              </select>
+            </div>
+
+            {/* Specialty Select */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F8FAFC', padding: '0 10px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+              <Briefcase size={14} color="#0F4C3A" />
+              <select
+                value={selectedSpecialty}
+                onChange={e => setSelectedSpecialty(e.target.value)}
+                style={{ background: 'transparent', border: 'none', padding: '9px 0', fontSize: '0.82rem', fontWeight: 700, color: '#334155', cursor: 'pointer', outline: 'none' }}
+              >
+                <option value="all">💼 All Specialties</option>
+                <option value="Corporate MICE">Corporate MICE</option>
+                <option value="FIT Travel">FIT Travel</option>
+                <option value="VIP Transfers">VIP Transfers</option>
+                <option value="Overland Tours">Overland Tours</option>
+                <option value="Luxury Escapes">Luxury Escapes</option>
+              </select>
+            </div>
+
+            {/* Sort Dropdown */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F8FAFC', padding: '0 10px', borderRadius: '8px', border: '1px solid #CBD5E1', marginLeft: 'auto' }}>
+              <ArrowUpDown size={14} color="#64748B" />
+              <select
+                value={sortOption}
+                onChange={e => setSortOption(e.target.value as any)}
+                style={{ background: 'transparent', border: 'none', padding: '9px 0', fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer', outline: 'none' }}
+              >
+                <option value="newest">Recently Listed</option>
+                <option value="company">Company Name (A-Z)</option>
+              </select>
+            </div>
+
+          </div>
+
+          {/* Bottom Line: Region Filter Chips */}
+          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', borderTop: '1px solid #F1F5F9', paddingTop: '0.65rem' }}>
+            <button
+              onClick={() => setSelectedRegion('all')}
+              style={{ padding: '0.4rem 0.85rem', borderRadius: '6px', border: 'none', background: selectedRegion === 'all' ? '#0F4C3A' : '#F1F5F9', color: selectedRegion === 'all' ? '#FFF' : '#475569', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              All Regions ({profiles.length})
+            </button>
+
+            {Object.keys(REGIONS).map(reg => (
+              <button
+                key={reg}
+                onClick={() => setSelectedRegion(reg)}
+                style={{ padding: '0.4rem 0.85rem', borderRadius: '6px', border: 'none', background: selectedRegion === reg ? '#0F4C3A' : '#F1F5F9', color: selectedRegion === reg ? '#FFF' : '#475569', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                {reg}
+              </button>
+            ))}
+          </div>
+
+        </div>
+      </div>
+
+      {/* ══ 3. COMPACT SHOWCASE CARDS GRID ══ */}
+      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+            <Sparkles className="animate-spin" size={28} color="#0F4C3A" style={{ margin: '0 auto 0.75rem' }} />
+            <p style={{ fontWeight: 700, color: '#64748B', fontSize: '0.9rem' }}>Loading B2B Partner Catalog...</p>
+          </div>
+        ) : filteredProfiles.length === 0 ? (
+          <div style={{ background: '#FFF', borderRadius: '14px', padding: '3rem 2rem', textAlign: 'center', border: '1px solid #E2E8F0' }}>
+            <Building2 size={40} color="#94A3B8" style={{ margin: '0 auto 0.75rem' }} />
+            <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.4rem' }}>{settings.noResultsTitle}</h3>
+            <p style={{ color: '#64748B', fontSize: '0.85rem', margin: '0 0 1.25rem' }}>{settings.noResultsSubtitle}</p>
+            <button
+              onClick={() => { setShowEditModal(true); setOtpStep('email'); }}
+              style={{ background: '#0F4C3A', color: '#FFF', border: 'none', padding: '0.65rem 1.25rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer' }}
             >
               ➕ Create Free Listing
             </button>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
             {filteredProfiles.map(p => {
               const isBookmarked = bookmarkedIds.includes(p._id)
 
@@ -571,80 +523,78 @@ export default function B2BDirectoryPage() {
                 <div
                   key={p._id}
                   onClick={() => setActiveProfileModal(p)}
-                  style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', cursor: 'pointer', transition: 'all 0.3s ease', position: 'relative', display: 'flex', flexDirection: 'column' }}
+                  style={{ background: '#FFF', borderRadius: '14px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column' }}
                 >
-                  {/* Banner / Cover Header */}
-                  <div style={{ height: '120px', background: `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.6)), url(${p.coverImageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop'})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', padding: '12px' }}>
+                  {/* Compact Banner Header */}
+                  <div style={{ height: '90px', background: `linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.55)), url(${p.coverImageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop'})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', padding: '10px' }}>
                     
-                    {/* Top Right Action Badges */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                    {/* Top Right Actions */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
                       <button
                         onClick={e => toggleBookmark(p._id, e)}
-                        style={{ background: 'rgba(255,255,255,0.9)', border: 'none', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        style={{ background: 'rgba(255,255,255,0.92)', border: 'none', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                         title="Bookmark partner"
                       >
-                        <Bookmark size={15} fill={isBookmarked ? '#D97706' : 'none'} color={isBookmarked ? '#D97706' : '#475569'} />
+                        <Bookmark size={13} fill={isBookmarked ? '#D97706' : 'none'} color={isBookmarked ? '#D97706' : '#475569'} />
                       </button>
                       <button
                         onClick={e => { e.stopPropagation(); setQrModalProfile(p); }}
-                        style={{ background: 'rgba(255,255,255,0.9)', border: 'none', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        style={{ background: 'rgba(255,255,255,0.92)', border: 'none', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                         title="Generate QR Code"
                       >
-                        <QrCode size={15} color="#475569" />
+                        <QrCode size={13} color="#475569" />
                       </button>
                     </div>
 
-                    {/* Logo Avatar Overlay */}
-                    <div style={{ position: 'absolute', bottom: '-24px', left: '16px', width: '64px', height: '64px', borderRadius: '14px', border: '3px solid #FFF', background: '#FFF', overflow: 'hidden', boxShadow: '0 4px 10px rgba(0,0,0,0.15)' }}>
+                    {/* Logo Avatar */}
+                    <div style={{ position: 'absolute', bottom: '-18px', left: '14px', width: '52px', height: '52px', borderRadius: '12px', border: '2.5px solid #FFF', background: '#FFF', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
                       <img src={p.logoUrl || 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=150'} alt={p.companyName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                   </div>
 
                   {/* Body Content */}
-                  <div style={{ padding: '2rem 1.25rem 1.25rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ marginBottom: '0.75rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, lineHeight: 1.3 }}>
-                          {p.companyName}
-                        </h3>
-                      </div>
+                  <div style={{ padding: '1.5rem 1rem 1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0F172A', margin: 0, lineHeight: 1.25 }}>
+                        {p.companyName}
+                      </h3>
                       {p.tagline && (
-                        <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '4px 0 0', fontWeight: 600 }}>
+                        <p style={{ fontSize: '0.75rem', color: '#64748B', margin: '3px 0 0', fontWeight: 600 }}>
                           {p.tagline}
                         </p>
                       )}
                     </div>
 
-                    {/* Location & Response Speed */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.78rem', color: '#475569', marginBottom: '0.85rem' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700 }}>
-                        <MapPin size={13} color="#0F4C3A" /> {p.city ? `${p.city}, ` : ''}{p.country || 'Global'}
+                    {/* Location Badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: '#475569', marginBottom: '0.75rem' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 700 }}>
+                        <MapPin size={12} color="#0F4C3A" /> {p.city ? `${p.city}, ` : ''}{p.country || 'Global'}
                       </span>
                       {p.leadTimeNotice && (
-                        <span style={{ background: '#DCFCE7', color: '#166534', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem' }}>
+                        <span style={{ background: '#DCFCE7', color: '#166534', fontWeight: 800, padding: '1px 6px', borderRadius: '10px', fontSize: '0.68rem' }}>
                           🟢 {p.leadTimeNotice}
                         </span>
                       )}
                     </div>
 
                     {/* Destinations Covered Badges */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '1rem' }}>
-                      {(p.destinationsCovered || []).slice(0, 4).map((d: string, idx: number) => (
-                        <span key={idx} style={{ background: '#EFF6FF', color: '#1D4ED8', fontSize: '0.73rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', border: '1px solid #BFDBFE' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '0.75rem' }}>
+                      {(p.destinationsCovered || []).slice(0, 3).map((d: string, idx: number) => (
+                        <span key={idx} style={{ background: '#EFF6FF', color: '#1D4ED8', fontSize: '0.7rem', fontWeight: 700, padding: '2px 6px', borderRadius: '5px', border: '1px solid #BFDBFE' }}>
                           📍 {d}
                         </span>
                       ))}
-                      {(p.destinationsCovered || []).length > 4 && (
-                        <span style={{ background: '#F1F5F9', color: '#64748B', fontSize: '0.73rem', fontWeight: 700, padding: '2px 6px', borderRadius: '6px' }}>
-                          +{(p.destinationsCovered || []).length - 4} more
+                      {(p.destinationsCovered || []).length > 3 && (
+                        <span style={{ background: '#F1F5F9', color: '#64748B', fontSize: '0.7rem', fontWeight: 700, padding: '2px 5px', borderRadius: '5px' }}>
+                          +{(p.destinationsCovered || []).length - 3}
                         </span>
                       )}
                     </div>
 
-                    {/* Specialties / Services Matrix */}
+                    {/* Specialties Matrix */}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 'auto' }}>
-                      {(p.specialties || []).slice(0, 3).map((s: string, idx: number) => (
-                        <span key={idx} style={{ background: '#F1F5F9', color: '#334155', fontSize: '0.72rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
+                      {(p.specialties || []).slice(0, 2).map((s: string, idx: number) => (
+                        <span key={idx} style={{ background: '#F8FAFC', color: '#334155', fontSize: '0.68rem', fontWeight: 700, padding: '2px 5px', borderRadius: '4px', border: '1px solid #E2E8F0' }}>
                           💼 {s}
                         </span>
                       ))}
@@ -652,22 +602,22 @@ export default function B2BDirectoryPage() {
                   </div>
 
                   {/* Card Footer Actions */}
-                  <div style={{ background: '#F8FAFC', padding: '0.75rem 1.25rem', borderTop: '1px solid #F1F5F9', display: 'flex', gap: '8px' }}>
+                  <div style={{ background: '#F8FAFC', padding: '0.6rem 1rem', borderTop: '1px solid #F1F5F9', display: 'flex', gap: '6px' }}>
                     <a
                       href={`https://api.whatsapp.com/send?phone=${p.whatsappNumber || p.phone}&text=${encodeURIComponent(`Hi ${p.companyName}, I found your B2B profile on the DMC Directory and would like to inquire about B2B rates for ${p.destinationsCovered?.[0] || 'your destination'}.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={e => e.stopPropagation()}
-                      style={{ flex: 1, background: '#25D366', color: '#FFF', textAlign: 'center', padding: '0.5rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.8rem', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}
+                      style={{ flex: 1, background: '#25D366', color: '#FFF', textAlign: 'center', padding: '0.45rem', borderRadius: '6px', fontWeight: 800, fontSize: '0.78rem', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                     >
-                      <MessageCircle size={14} /> WhatsApp
+                      <MessageCircle size={13} /> WhatsApp
                     </a>
                     <button
                       onClick={e => downloadVCard(p, e)}
-                      style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#475569', padding: '0.5rem 0.75rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+                      style={{ background: '#FFF', border: '1px solid #CBD5E1', color: '#475569', padding: '0.45rem 0.65rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}
                       title="Download contact vCard"
                     >
-                      <FileDown size={14} />
+                      <FileDown size={13} />
                     </button>
                   </div>
                 </div>
@@ -704,48 +654,48 @@ export default function B2BDirectoryPage() {
             onClick={e => e.stopPropagation()}
             style={{
               position: 'relative',
-              width: '840px',
+              width: '780px',
               maxWidth: '95vw',
-              maxHeight: '90vh',
+              maxHeight: '88vh',
               overflowY: 'auto',
               backgroundColor: '#FFFFFF',
               color: '#0F172A',
-              borderRadius: '20px',
+              borderRadius: '16px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
               border: '1px solid #E2E8F0',
               padding: 0
             }}
           >
             {/* Modal Cover Header */}
-            <div style={{ height: '200px', background: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url(${activeProfileModal.coverImageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1000'})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', padding: '1.5rem', color: '#FFF' }}>
+            <div style={{ height: '170px', background: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url(${activeProfileModal.coverImageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1000'})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', padding: '1.25rem', color: '#FFF' }}>
               <button
                 onClick={() => setActiveProfileModal(null)}
-                style={{ position: 'absolute', top: '16px', right: '16px', background: 'rgba(0,0,0,0.6)', border: 'none', color: '#FFF', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ position: 'absolute', top: '14px', right: '14px', background: 'rgba(0,0,0,0.6)', border: 'none', color: '#FFF', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
 
-              <div style={{ position: 'absolute', bottom: '16px', left: '24px', right: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <img src={activeProfileModal.logoUrl || 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=150'} alt="" style={{ width: '72px', height: '72px', borderRadius: '16px', border: '3px solid #FFF', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', bottom: '14px', left: '20px', right: '20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <img src={activeProfileModal.logoUrl || 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=150'} alt="" style={{ width: '60px', height: '60px', borderRadius: '12px', border: '2.5px solid #FFF', objectFit: 'cover' }} />
                 <div>
-                  <h2 style={{ fontSize: '1.75rem', fontWeight: 900, margin: 0, color: '#FFFFFF' }}>{activeProfileModal.companyName}</h2>
-                  <p style={{ margin: '4px 0 0', opacity: 0.9, fontSize: '0.9rem', color: '#F1F5F9' }}>{activeProfileModal.tagline || activeProfileModal.city}</p>
+                  <h2 style={{ fontSize: '1.5rem', fontWeight: 900, margin: 0, color: '#FFFFFF' }}>{activeProfileModal.companyName}</h2>
+                  <p style={{ margin: '3px 0 0', opacity: 0.9, fontSize: '0.85rem', color: '#F1F5F9' }}>{activeProfileModal.tagline || activeProfileModal.city}</p>
                 </div>
               </div>
             </div>
 
             {/* Modal Body */}
-            <div style={{ padding: '2rem', backgroundColor: '#FFFFFF', color: '#0F172A' }}>
+            <div style={{ padding: '1.5rem', backgroundColor: '#FFFFFF', color: '#0F172A' }}>
               
               {/* Quick Actions Bar */}
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1.5rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem' }}>
                 <a
                   href={`https://api.whatsapp.com/send?phone=${activeProfileModal.whatsappNumber || activeProfileModal.phone}&text=${encodeURIComponent(`Hi ${activeProfileModal.companyName}, I would like to request B2B partner rates.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ background: '#25D366', color: '#FFF', padding: '0.65rem 1.25rem', borderRadius: '10px', fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+                  style={{ background: '#25D366', color: '#FFF', padding: '0.55rem 1.1rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <MessageCircle size={16} /> WhatsApp Partner
+                  <MessageCircle size={15} /> WhatsApp Partner
                 </a>
                 
                 {activeProfileModal.brochurePdfUrl && (
@@ -753,45 +703,45 @@ export default function B2BDirectoryPage() {
                     href={activeProfileModal.brochurePdfUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ background: '#3B82F6', color: '#FFF', padding: '0.65rem 1.25rem', borderRadius: '10px', fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    style={{ background: '#3B82F6', color: '#FFF', padding: '0.55rem 1.1rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
-                    <FileDown size={16} /> Download B2B Tariff PDF
+                    <FileDown size={15} /> Download B2B Tariff PDF
                   </a>
                 )}
               </div>
 
               {/* Company Bio */}
-              <div style={{ marginBottom: '2rem' }}>
-                <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.75rem' }}>About Company & Operational Expertise</h4>
-                <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.5rem' }}>About Company & Operational Expertise</h4>
+                <p style={{ fontSize: '0.88rem', color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                   {activeProfileModal.aboutCompany || 'No detailed biography provided yet.'}
                 </p>
               </div>
 
               {/* Operational Matrices Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                  <h5 style={{ margin: '0 0 0.75rem', color: '#0F4C3A', fontWeight: 800, fontSize: '0.9rem' }}>📍 Destinations Covered</h5>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                  <h5 style={{ margin: '0 0 0.5rem', color: '#0F4C3A', fontWeight: 800, fontSize: '0.85rem' }}>📍 Destinations Covered</h5>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                     {(activeProfileModal.destinationsCovered || []).map((d: string, i: number) => (
-                      <span key={i} style={{ background: '#EFF6FF', color: '#1D4ED8', padding: '3px 8px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700 }}>{d}</span>
+                      <span key={i} style={{ background: '#EFF6FF', color: '#1D4ED8', padding: '2px 7px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: 700 }}>{d}</span>
                     ))}
                   </div>
                 </div>
 
-                <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                  <h5 style={{ margin: '0 0 0.75rem', color: '#0F4C3A', fontWeight: 800, fontSize: '0.9rem' }}>💼 Services Provided</h5>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                  <h5 style={{ margin: '0 0 0.5rem', color: '#0F4C3A', fontWeight: 800, fontSize: '0.85rem' }}>💼 Services Provided</h5>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                     {(activeProfileModal.servicesMatrix || []).map((s: string, i: number) => (
-                      <span key={i} style={{ background: '#ECFDF5', color: '#047857', padding: '3px 8px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700 }}>✓ {s}</span>
+                      <span key={i} style={{ background: '#ECFDF5', color: '#047857', padding: '2px 7px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: 700 }}>✓ {s}</span>
                     ))}
                   </div>
                 </div>
 
-                <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                  <h5 style={{ margin: '0 0 0.75rem', color: '#0F4C3A', fontWeight: 800, fontSize: '0.9rem' }}>🚌 Transport & Languages</h5>
-                  <p style={{ fontSize: '0.85rem', color: '#334155', margin: '0 0 4px' }}><strong>Fleet:</strong> {(activeProfileModal.fleetTypes || []).join(', ') || 'Custom Fleet'}</p>
-                  <p style={{ fontSize: '0.85rem', color: '#334155', margin: 0 }}><strong>Languages:</strong> {(activeProfileModal.languagesSupported || []).join(', ') || 'English'}</p>
+                <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                  <h5 style={{ margin: '0 0 0.5rem', color: '#0F4C3A', fontWeight: 800, fontSize: '0.85rem' }}>🚌 Transport & Languages</h5>
+                  <p style={{ fontSize: '0.8rem', color: '#334155', margin: '0 0 3px' }}><strong>Fleet:</strong> {(activeProfileModal.fleetTypes || []).join(', ') || 'Custom Fleet'}</p>
+                  <p style={{ fontSize: '0.8rem', color: '#334155', margin: 0 }}><strong>Languages:</strong> {(activeProfileModal.languagesSupported || []).join(', ') || 'English'}</p>
                 </div>
               </div>
             </div>
@@ -825,37 +775,37 @@ export default function B2BDirectoryPage() {
             onClick={e => e.stopPropagation()}
             style={{
               position: 'relative',
-              width: '600px',
+              width: '560px',
               maxWidth: '95vw',
-              maxHeight: '90vh',
+              maxHeight: '85vh',
               overflowY: 'auto',
               backgroundColor: '#FFFFFF',
               color: '#0F172A',
-              padding: '2rem',
-              borderRadius: '20px',
+              padding: '1.5rem',
+              borderRadius: '16px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
               border: '1px solid #E2E8F0'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: '#D97706', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Bookmark size={20} fill="#D97706" /> Saved Partner Shortlist ({bookmarkedIds.length})
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: '#D97706', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Bookmark size={18} fill="#D97706" /> Saved Partner Shortlist ({bookmarkedIds.length})
               </h3>
               <button onClick={() => setShowBookmarksDrawer(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B' }}>
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {profiles.filter(p => bookmarkedIds.includes(p._id)).map(p => (
-                <div key={p._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <div key={p._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
                   <div>
-                    <h4 style={{ margin: '0 0 2px', fontSize: '1rem', fontWeight: 800, color: '#0F172A' }}>{p.companyName}</h4>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748B' }}>📍 {p.city}, {p.country}</p>
+                    <h4 style={{ margin: '0 0 2px', fontSize: '0.9rem', fontWeight: 800, color: '#0F172A' }}>{p.companyName}</h4>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748B' }}>📍 {p.city}, {p.country}</p>
                   </div>
                   <button
                     onClick={() => setActiveProfileModal(p)}
-                    style={{ background: '#0F4C3A', color: '#FFF', border: 'none', padding: '0.45rem 1rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                    style={{ background: '#0F4C3A', color: '#FFF', border: 'none', padding: '0.4rem 0.85rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}
                   >
                     View Partner
                   </button>
@@ -892,14 +842,14 @@ export default function B2BDirectoryPage() {
             onClick={e => e.stopPropagation()}
             style={{
               position: 'relative',
-              width: '640px',
+              width: '600px',
               maxWidth: '95vw',
-              maxHeight: '90vh',
+              maxHeight: '88vh',
               overflowY: 'auto',
               backgroundColor: '#FFFFFF',
               color: '#0F172A',
-              padding: '2rem',
-              borderRadius: '20px',
+              padding: '1.5rem',
+              borderRadius: '16px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
               border: '1px solid #E2E8F0'
             }}
@@ -909,13 +859,13 @@ export default function B2BDirectoryPage() {
               onClick={() => setShowEditModal(false)}
               style={{
                 position: 'absolute',
-                top: '16px',
-                right: '16px',
+                top: '14px',
+                right: '14px',
                 background: '#F1F5F9',
                 border: 'none',
                 color: '#475569',
-                width: '32px',
-                height: '32px',
+                width: '30px',
+                height: '30px',
                 borderRadius: '50%',
                 cursor: 'pointer',
                 display: 'flex',
@@ -924,31 +874,31 @@ export default function B2BDirectoryPage() {
               }}
               title="Close window without saving"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
 
-            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.35rem', fontWeight: 900, color: '#0F4C3A' }}>
+            <h3 style={{ margin: '0 0 0.35rem', fontSize: '1.2rem', fontWeight: 900, color: '#0F4C3A' }}>
               💼 Manage My Company Showcase Profile
             </h3>
-            <p style={{ fontSize: '0.88rem', color: '#64748B', margin: '0 0 1.5rem' }}>
+            <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '0 0 1.25rem' }}>
               100% open self-service. Verify your work email via OTP to create or edit your listing instantly.
             </p>
 
             {authError && (
-              <div style={{ background: '#FFF5F5', color: '#C53030', padding: '0.75rem 1rem', borderRadius: '6px', fontSize: '0.85rem', marginBottom: '1.25rem', borderLeft: '4px solid #C53030' }}>
+              <div style={{ background: '#FFF5F5', color: '#C53030', padding: '0.65rem 0.85rem', borderRadius: '6px', fontSize: '0.82rem', marginBottom: '1rem', borderLeft: '4px solid #C53030' }}>
                 ⚠️ {authError}
               </div>
             )}
 
             {otpStep === 'email' && (
-              <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.35rem', color: '#334155' }}>Enter Work Email Address *</label>
-                  <input type="email" required placeholder="e.g. agent@travelagency.com" value={authEmail} onChange={e => setAuthEmail(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.3rem', color: '#334155' }}>Enter Work Email Address *</label>
+                  <input type="email" required placeholder="e.g. agent@travelagency.com" value={authEmail} onChange={e => setAuthEmail(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button type="button" onClick={() => setShowEditModal(false)} style={{ flex: 1, padding: '0.75rem', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>Cancel / Close</button>
-                  <button type="submit" disabled={authLoading} style={{ flex: 2, padding: '0.75rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" onClick={() => setShowEditModal(false)} style={{ flex: 1, padding: '0.65rem', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Cancel / Close</button>
+                  <button type="submit" disabled={authLoading} style={{ flex: 2, padding: '0.65rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 800, cursor: 'pointer' }}>
                     {authLoading ? 'Sending OTP...' : 'Send Verification OTP Code ✉️'}
                   </button>
                 </div>
@@ -956,13 +906,13 @@ export default function B2BDirectoryPage() {
             )}
 
             {otpStep === 'otp' && (
-              <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <p style={{ fontSize: '0.88rem', color: '#166534', fontWeight: 700 }}>✓ Code sent to: {authEmail}</p>
-                {debugOtp && <div style={{ background: '#FEFCBF', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem', color: '#744210' }}>Sandbox Code: <strong>{debugOtp}</strong></div>}
-                <input type="text" required placeholder="123456" maxLength={6} value={otpCode} onChange={e => setOtpCode(e.target.value)} style={{ padding: '0.85rem', borderRadius: '8px', border: '2px solid #D97706', fontSize: '1.5rem', textAlign: 'center', letterSpacing: '0.3em', fontWeight: 800, backgroundColor: '#FFF', color: '#0F172A' }} />
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button type="button" onClick={() => setShowEditModal(false)} style={{ flex: 1, padding: '0.75rem', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>Cancel / Close</button>
-                  <button type="submit" disabled={authLoading} style={{ flex: 2, padding: '0.75rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>
+              <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <p style={{ fontSize: '0.82rem', color: '#166534', fontWeight: 700 }}>✓ Code sent to: {authEmail}</p>
+                {debugOtp && <div style={{ background: '#FEFCBF', padding: '0.65rem', borderRadius: '6px', fontSize: '0.82rem', color: '#744210' }}>Sandbox Code: <strong>{debugOtp}</strong></div>}
+                <input type="text" required placeholder="123456" maxLength={6} value={otpCode} onChange={e => setOtpCode(e.target.value)} style={{ padding: '0.75rem', borderRadius: '6px', border: '2px solid #D97706', fontSize: '1.35rem', textAlign: 'center', letterSpacing: '0.3em', fontWeight: 800, backgroundColor: '#FFF', color: '#0F172A' }} />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" onClick={() => setShowEditModal(false)} style={{ flex: 1, padding: '0.65rem', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>Cancel / Close</button>
+                  <button type="submit" disabled={authLoading} style={{ flex: 2, padding: '0.65rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 800, cursor: 'pointer' }}>
                     {authLoading ? 'Verifying...' : 'Verify OTP & Open Profile Editor 🔓'}
                   </button>
                 </div>
@@ -970,65 +920,65 @@ export default function B2BDirectoryPage() {
             )}
 
             {otpStep === 'form' && (
-              <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Company Name *</label>
-                    <input type="text" required value={editCompanyName} onChange={e => setEditCompanyName(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Company Name *</label>
+                    <input type="text" required value={editCompanyName} onChange={e => setEditCompanyName(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Contact Person Name</label>
-                    <input type="text" value={editAgentName} onChange={e => setEditAgentName(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Tagline / Slogan</label>
-                  <input type="text" placeholder="e.g. Premier Singapore B2B Ground Handler" value={editTagline} onChange={e => setEditTagline(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>City</label>
-                    <input type="text" value={editCity} onChange={e => setEditCity(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Country</label>
-                    <input type="text" value={editCountry} onChange={e => setEditCountry(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>WhatsApp Number</label>
-                    <input type="tel" value={editWhatsapp} onChange={e => setEditWhatsapp(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Contact Person Name</label>
+                    <input type="text" value={editAgentName} onChange={e => setEditAgentName(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>About Company & Operational Bio</label>
-                  <textarea rows={3} value={editAbout} onChange={e => setEditAbout(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Tagline / Slogan</label>
+                  <input type="text" placeholder="e.g. Premier Singapore B2B Ground Handler" value={editTagline} onChange={e => setEditTagline(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Destinations Covered (comma separated)</label>
-                    <input type="text" value={editDestinations} onChange={e => setEditDestinations(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>City</label>
+                    <input type="text" value={editCity} onChange={e => setEditCity(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Specialties (comma separated)</label>
-                    <input type="text" value={editSpecialties} onChange={e => setEditSpecialties(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Country</label>
+                    <input type="text" value={editCountry} onChange={e => setEditCountry(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>WhatsApp Number</label>
+                    <input type="tel" value={editWhatsapp} onChange={e => setEditWhatsapp(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>About Company & Operational Bio</label>
+                  <textarea rows={2.5} value={editAbout} onChange={e => setEditAbout(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Destinations Covered (comma separated)</label>
+                    <input type="text" value={editDestinations} onChange={e => setEditDestinations(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Specialties (comma separated)</label>
+                    <input type="text" value={editSpecialties} onChange={e => setEditSpecialties(e.target.value)} style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                   </div>
                 </div>
 
                 {/* File Upload / Link Inputs */}
-                <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <h5 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: '#0F4C3A' }}>📷 Media & Brochure Uploads (File Upload or URL)</h5>
+                <div style={{ background: '#F8FAFC', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <h5 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#0F4C3A' }}>📷 Media & Brochure Uploads (File Upload or URL)</h5>
 
                   {/* Logo Upload / URL */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Company Logo (Upload File or Paste Image URL)</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input type="text" placeholder="https://..." value={editLogoUrl} onChange={e => setEditLogoUrl(e.target.value)} style={{ flex: 1, padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
-                      <label style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.65rem 1rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
-                        <Upload size={14} /> {uploadingField === 'logo' ? 'Uploading...' : 'Upload Logo'}
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Company Logo</label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <input type="text" placeholder="https://..." value={editLogoUrl} onChange={e => setEditLogoUrl(e.target.value)} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                      <label style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.5rem 0.85rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        <Upload size={13} /> {uploadingField === 'logo' ? 'Uploading...' : 'Upload Logo'}
                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'logo')} />
                       </label>
                     </div>
@@ -1036,11 +986,11 @@ export default function B2BDirectoryPage() {
 
                   {/* Cover Image Upload / URL */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Banner / Cover Image (Upload File or Paste Image URL)</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input type="text" placeholder="https://..." value={editCoverUrl} onChange={e => setEditCoverUrl(e.target.value)} style={{ flex: 1, padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
-                      <label style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.65rem 1rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
-                        <Upload size={14} /> {uploadingField === 'cover' ? 'Uploading...' : 'Upload Banner'}
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>Banner Image</label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <input type="text" placeholder="https://..." value={editCoverUrl} onChange={e => setEditCoverUrl(e.target.value)} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                      <label style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.5rem 0.85rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        <Upload size={13} /> {uploadingField === 'cover' ? 'Uploading...' : 'Upload Banner'}
                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'cover')} />
                       </label>
                     </div>
@@ -1048,22 +998,22 @@ export default function B2BDirectoryPage() {
 
                   {/* PDF Tariff Upload / URL */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>B2B Tariff PDF Document (Upload PDF or Paste Link)</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input type="text" placeholder="https://..." value={editBrochureUrl} onChange={e => setEditBrochureUrl(e.target.value)} style={{ flex: 1, padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
-                      <label style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.65rem 1rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
-                        <Upload size={14} /> {uploadingField === 'brochure' ? 'Uploading...' : 'Upload Tariff PDF'}
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '3px', color: '#334155' }}>B2B Tariff PDF Document</label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <input type="text" placeholder="https://..." value={editBrochureUrl} onChange={e => setEditBrochureUrl(e.target.value)} style={{ flex: 1, padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                      <label style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.5rem 0.85rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}>
+                        <Upload size={13} /> {uploadingField === 'brochure' ? 'Uploading...' : 'Upload PDF'}
                         <input type="file" accept="application/pdf,image/*" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'brochure')} />
                       </label>
                     </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem' }}>
-                  <button type="button" onClick={handleDeleteProfile} style={{ background: '#FEE2E2', color: '#991B1B', border: 'none', padding: '0.75rem 1.25rem', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>Delete Profile</button>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button type="button" onClick={() => setShowEditModal(false)} style={{ background: '#F1F5F9', color: '#475569', border: 'none', padding: '0.75rem 1.25rem', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>Close Without Saving</button>
-                    <button type="submit" disabled={authLoading} style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#FFF', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', marginTop: '0.75rem' }}>
+                  <button type="button" onClick={handleDeleteProfile} style={{ background: '#FEE2E2', color: '#991B1B', border: 'none', padding: '0.65rem 1rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>Delete Profile</button>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button type="button" onClick={() => setShowEditModal(false)} style={{ background: '#F1F5F9', color: '#475569', border: 'none', padding: '0.65rem 1rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>Close Without Saving</button>
+                    <button type="submit" disabled={authLoading} style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#FFF', border: 'none', padding: '0.65rem 1.25rem', borderRadius: '6px', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer' }}>
                       {authLoading ? 'Publishing...' : 'Publish Profile Live 🚀'}
                     </button>
                   </div>
@@ -1100,23 +1050,23 @@ export default function B2BDirectoryPage() {
             onClick={e => e.stopPropagation()}
             style={{
               position: 'relative',
-              width: '380px',
+              width: '340px',
               maxWidth: '92vw',
               backgroundColor: '#FFFFFF',
               color: '#0F172A',
-              padding: '2rem',
-              borderRadius: '20px',
+              padding: '1.5rem',
+              borderRadius: '16px',
               textAlign: 'center',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
               border: '1px solid #E2E8F0'
             }}
           >
-            <h4 style={{ margin: '0 0 0.5rem', fontSize: '1.25rem', fontWeight: 900, color: '#0F172A' }}>{qrModalProfile.companyName}</h4>
-            <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.5rem' }}>Scan or share QR Code to view B2B showcase profile.</p>
-            <div style={{ background: '#FFF', padding: '1rem', borderRadius: '16px', border: '2px solid #E2E8F0', display: 'inline-block', marginBottom: '1.5rem' }}>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/b2b-directory` : 'https://flyingwonders.net/b2b-directory')}`} alt="Profile QR Code" style={{ width: '200px', height: '200px' }} />
+            <h4 style={{ margin: '0 0 0.35rem', fontSize: '1.15rem', fontWeight: 900, color: '#0F172A' }}>{qrModalProfile.companyName}</h4>
+            <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1.25rem' }}>Scan or share QR Code to view B2B showcase profile.</p>
+            <div style={{ background: '#FFF', padding: '0.85rem', borderRadius: '12px', border: '2px solid #E2E8F0', display: 'inline-block', marginBottom: '1.25rem' }}>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/b2b-directory` : 'https://flyingwonders.net/b2b-directory')}`} alt="Profile QR Code" style={{ width: '180px', height: '180px' }} />
             </div>
-            <button onClick={() => setQrModalProfile(null)} style={{ width: '100%', padding: '0.75rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>Close QR Viewer</button>
+            <button onClick={() => setQrModalProfile(null)} style={{ width: '100%', padding: '0.65rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer' }}>Close QR Viewer</button>
           </div>
         </div>
       )}
