@@ -92,27 +92,50 @@ export async function POST(req: Request) {
     }
 
     // 3. Dispatch OTP Email to Agent
+    const { source, isDirectory } = await req.json().catch(() => ({})) || {}
+    const isNeutralDirectory = source === 'b2b-directory' || isDirectory === true
+
     const transporter = createTransporter()
     let emailSent = false
     let smtpError = ''
 
     if (transporter) {
       try {
+        const mailSubject = isNeutralDirectory
+          ? `🔐 B2B Verification Code: ${otp}`
+          : `🔐 Flying Wonders B2B Verification Code: ${otp}`
+
+        const mailHeader = isNeutralDirectory
+          ? `<h2 style="color: #0F4C3A; text-align: center;">B2B Showcase Directory</h2>`
+          : `<h2 style="color: #B83A4B; text-align: center;">Flying Wonders Singapore DMC</h2>`
+
+        const mailDesc = isNeutralDirectory
+          ? `<p>Your one-time verification code to manage your B2B Directory profile is:</p>`
+          : `<p>Your one-time verification code to access the B2B Package Cost Estimator is:</p>`
+
+        const mailFooter = isNeutralDirectory
+          ? `<p style="font-size: 0.8rem; color: #a0aec0; text-align: center;">B2B Directory Verification Service</p>`
+          : `<p style="font-size: 0.8rem; color: #a0aec0; text-align: center;">Flying Wonders Private Limited | Singapore & India Specialist DMC</p>`
+
+        const mailSender = isNeutralDirectory
+          ? `"B2B Directory Verification" <${process.env.SMTP_USER}>`
+          : `"Flying Wonders B2B" <${process.env.SMTP_USER}>`
+
         await transporter.sendMail({
-          from: `"Flying Wonders B2B" <${process.env.SMTP_USER}>`,
+          from: mailSender,
           to: email,
-          subject: `🔐 Flying Wonders B2B Verification Code: ${otp}`,
+          subject: mailSubject,
           html: `
             <div style="font-family: Arial, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-              <h2 style="color: #B83A4B; text-align: center;">Flying Wonders Singapore DMC</h2>
+              ${mailHeader}
               <p>Hello,</p>
-              <p>Your one-time verification code to access the B2B Package Cost Estimator is:</p>
+              ${mailDesc}
               <div style="background: #f7fafc; padding: 1.5rem; text-align: center; font-size: 2.2rem; font-weight: bold; letter-spacing: 0.1em; color: #1a202c; border: 1px dashed #cbd5e0; margin: 1.5rem 0;">
                 ${otp}
               </div>
               <p style="font-size: 0.9rem; color: #718096; text-align: center;">This code is valid for 10 minutes. Do not share this OTP with anyone.</p>
               <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 2rem 0;" />
-              <p style="font-size: 0.8rem; color: #a0aec0; text-align: center;">Flying Wonders Private Limited | Singapore & India Specialist DMC</p>
+              ${mailFooter}
             </div>
           `,
         })

@@ -12,7 +12,6 @@ import {
   Phone,
   Building2,
   CheckCircle2,
-  Heart,
   Star,
   Plus,
   Share2,
@@ -32,6 +31,7 @@ import {
   Award,
   Video,
   Image as ImageIcon,
+  Upload,
   Check
 } from 'lucide-react'
 
@@ -66,17 +66,15 @@ export default function B2BDirectoryPage() {
   const [selectedDestination, setSelectedDestination] = useState<string>('all')
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('all')
   const [selectedService, setSelectedService] = useState<string>('all')
-  const [sortOption, setSortOption] = useState<'likes' | 'recommended' | 'newest'>('likes')
+  const [sortOption, setSortOption] = useState<'recommended' | 'newest'>('recommended')
   const [currency, setCurrency] = useState<string>('SGD')
 
   // Interactive Selection States
-  const [compareList, setCompareList] = useState<string[]>([])
   const [rfqList, setRfqList] = useState<string[]>([])
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>([])
   
   // Modals & Drawers
   const [activeProfileModal, setActiveProfileModal] = useState<any | null>(null)
-  const [showCompareDrawer, setShowCompareDrawer] = useState(false)
   const [showRfqDrawer, setShowRfqDrawer] = useState(false)
   const [showBookmarksDrawer, setShowBookmarksDrawer] = useState(false)
   const [qrModalProfile, setQrModalProfile] = useState<any | null>(null)
@@ -108,6 +106,7 @@ export default function B2BDirectoryPage() {
   const [authLoading, setAuthLoading] = useState(false)
   const [authError, setAuthError] = useState('')
   const [debugOtp, setDebugOtp] = useState<string | null>(null)
+  const [uploadingField, setUploadingField] = useState<string | null>(null)
 
   // Edit Form Fields
   const [editCompanyName, setEditCompanyName] = useState('')
@@ -180,23 +179,6 @@ export default function B2BDirectoryPage() {
     })
   }, [profiles, selectedRegion])
 
-  // Handle Like Increment
-  const handleLikeProfile = async (profileId: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation()
-    // Local optimistic update
-    setProfiles(prev => prev.map(p => p._id === profileId ? { ...p, likesCount: (p.likesCount || 0) + 1 } : p))
-    if (activeProfileModal && activeProfileModal._id === profileId) {
-      setActiveProfileModal((prev: any) => ({ ...prev, likesCount: (prev.likesCount || 0) + 1 }))
-    }
-    try {
-      await fetch('/api/b2b-directory/like', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId })
-      })
-    } catch (err) {}
-  }
-
   // Toggle Bookmark
   const toggleBookmark = (profileId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
@@ -209,23 +191,37 @@ export default function B2BDirectoryPage() {
     })
   }
 
-  // Toggle Compare Selection
-  const toggleCompare = (profileId: string, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation()
-    setCompareList(prev => {
-      if (prev.includes(profileId)) return prev.filter(id => id !== profileId)
-      if (prev.length >= 3) {
-        alert('You can compare a maximum of 3 DMCs side-by-side.')
-        return prev
-      }
-      return [...prev, profileId]
-    })
-  }
-
   // Toggle RFQ Selection
   const toggleRfqSelection = (profileId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
     setRfqList(prev => prev.includes(profileId) ? prev.filter(id => id !== profileId) : [...prev, profileId])
+  }
+
+  // File Upload Handler for Logo, Cover, and Brochure
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, targetField: 'logo' | 'cover' | 'brochure') => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingField(targetField)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/b2b-directory/upload', {
+        method: 'POST',
+        body: formData
+      })
+      const data = await res.json()
+      if (res.ok && data.success && data.url) {
+        if (targetField === 'logo') setEditLogoUrl(data.url)
+        if (targetField === 'cover') setEditCoverUrl(data.url)
+        if (targetField === 'brochure') setEditBrochureUrl(data.url)
+      } else {
+        alert(data.error || 'File upload failed')
+      }
+    } catch (err) {
+      alert('Error uploading file')
+    } finally {
+      setUploadingField(null)
+    }
   }
 
   // Send Peer Recommendation
@@ -301,7 +297,7 @@ export default function B2BDirectoryPage() {
     }
   }
 
-  // Self-Service OTP Login & Edit Triggers
+  // Self-Service OTP Login & Edit Triggers (Neutral Email Source)
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!authEmail) return
@@ -311,7 +307,7 @@ export default function B2BDirectoryPage() {
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: authEmail })
+        body: JSON.stringify({ email: authEmail, source: 'b2b-directory', isDirectory: true })
       })
       const data = await res.json()
       setOtpStep('otp')
@@ -597,14 +593,6 @@ export default function B2BDirectoryPage() {
           <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#334155' }}>
             Showing <strong>{filteredProfiles.length}</strong> Partner Profiles
           </span>
-          {compareList.length > 0 && (
-            <button
-              onClick={() => setShowCompareDrawer(true)}
-              style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', padding: '0.35rem 0.85rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <SlidersHorizontal size={14} /> Compare Selected ({compareList.length})
-            </button>
-          )}
           {rfqList.length > 0 && (
             <button
               onClick={() => setShowRfqDrawer(true)}
@@ -624,7 +612,6 @@ export default function B2BDirectoryPage() {
             onChange={e => setSortOption(e.target.value as any)}
             style={{ background: '#FFF', border: '1px solid #CBD5E1', padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer' }}
           >
-            <option value="likes">Most Popular (❤️ Likes)</option>
             <option value="recommended">Most Recommended (⭐ Peer Endorsed)</option>
             <option value="newest">Recently Listed</option>
           </select>
@@ -654,7 +641,6 @@ export default function B2BDirectoryPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.75rem' }}>
             {filteredProfiles.map(p => {
               const isBookmarked = bookmarkedIds.includes(p._id)
-              const isCompared = compareList.includes(p._id)
               const isRfqSelected = rfqList.includes(p._id)
               const recCount = (p.recommendations || []).length
 
@@ -743,34 +729,18 @@ export default function B2BDirectoryPage() {
                       </div>
                     )}
 
-                    {/* Social Proof Bar (Likes & Peer Recommendations) */}
+                    {/* Social Proof Bar (Peer Recommendations & RFQ) */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px dashed #E2E8F0', paddingTop: '0.75rem', marginTop: 'auto' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <button
-                          onClick={e => handleLikeProfile(p._id, e)}
-                          style={{ background: '#FFF1F2', border: '1px solid #FECDD3', color: '#E11D48', padding: '3px 10px', borderRadius: '12px', fontSize: '0.78rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
-                        >
-                          <Heart size={13} fill="#E11D48" /> {p.likesCount || 0}
-                        </button>
-                        <span style={{ fontSize: '0.78rem', color: '#D97706', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Star size={13} fill="#D97706" /> {recCount} Endorsed
-                        </span>
-                      </div>
+                      <span style={{ fontSize: '0.78rem', color: '#D97706', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Star size={13} fill="#D97706" /> {recCount} Peer Endorsed
+                      </span>
 
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button
-                          onClick={e => toggleCompare(p._id, e)}
-                          style={{ background: isCompared ? '#DBEAFE' : '#F1F5F9', color: isCompared ? '#1E40AF' : '#475569', border: 'none', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
-                        >
-                          {isCompared ? '✓ Comparing' : 'Compare'}
-                        </button>
-                        <button
-                          onClick={e => toggleRfqSelection(p._id, e)}
-                          style={{ background: isRfqSelected ? '#FEF3C7' : '#F1F5F9', color: isRfqSelected ? '#92400E' : '#475569', border: 'none', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
-                        >
-                          {isRfqSelected ? '✓ Selected' : '+ RFQ'}
-                        </button>
-                      </div>
+                      <button
+                        onClick={e => toggleRfqSelection(p._id, e)}
+                        style={{ background: isRfqSelected ? '#FEF3C7' : '#F1F5F9', color: isRfqSelected ? '#92400E' : '#475569', border: 'none', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        {isRfqSelected ? '✓ Selected for RFQ' : '+ Joint RFQ'}
+                      </button>
                     </div>
                   </div>
 
@@ -881,13 +851,6 @@ export default function B2BDirectoryPage() {
                     <FileDown size={16} /> Download B2B Tariff PDF
                   </a>
                 )}
-
-                <button
-                  onClick={() => handleLikeProfile(activeProfileModal._id)}
-                  style={{ background: '#FFF1F2', border: '1px solid #FECDD3', color: '#E11D48', padding: '0.65rem 1.25rem', borderRadius: '10px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <Heart size={16} fill="#E11D48" /> {activeProfileModal.likesCount || 0} Likes
-                </button>
 
                 <button
                   onClick={() => setEndorseModalProfile(activeProfileModal)}
@@ -1077,71 +1040,6 @@ export default function B2BDirectoryPage() {
         </div>
       )}
 
-      {/* ══ SIDE-BY-SIDE DMC COMPARISON DRAWER ══ */}
-      {showCompareDrawer && (
-        <div
-          onClick={() => setShowCompareDrawer(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(15, 23, 42, 0.75)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            zIndex: 99999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem'
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              position: 'relative',
-              width: '900px',
-              maxWidth: '95vw',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              backgroundColor: '#FFFFFF',
-              color: '#0F172A',
-              padding: '2rem',
-              borderRadius: '20px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
-              border: '1px solid #E2E8F0'
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#0F4C3A' }}>📊 Side-by-Side DMC Comparison</h3>
-              <button onClick={() => setShowCompareDrawer(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B' }}>
-                <X size={24} />
-              </button>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${compareList.length}, 1fr)`, gap: '1.5rem' }}>
-              {profiles.filter(p => compareList.includes(p._id)).map(p => (
-                <div key={p._id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '1.25rem', borderRadius: '12px' }}>
-                  <img src={p.logoUrl || 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=100'} style={{ width: '48px', height: '48px', borderRadius: '10px', objectFit: 'cover', marginBottom: '8px' }} />
-                  <h4 style={{ margin: '0 0 4px', fontSize: '1.1rem', fontWeight: 800, color: '#0F172A' }}>{p.companyName}</h4>
-                  <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 12px' }}>📍 {p.city}, {p.country}</p>
-                  
-                  <hr style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '10px 0' }} />
-                  <p style={{ fontSize: '0.8rem', margin: '4px 0' }}><strong>Likes:</strong> ❤️ {p.likesCount || 0}</p>
-                  <p style={{ fontSize: '0.8rem', margin: '4px 0' }}><strong>Peer Endorsements:</strong> ⭐ {(p.recommendations || []).length}</p>
-                  <p style={{ fontSize: '0.8rem', margin: '4px 0' }}><strong>Destinations:</strong> {(p.destinationsCovered || []).join(', ')}</p>
-                  <p style={{ fontSize: '0.8rem', margin: '4px 0' }}><strong>Fleet:</strong> {(p.fleetTypes || []).join(', ') || 'Standard'}</p>
-                  <p style={{ fontSize: '0.8rem', margin: '4px 0' }}><strong>Lead Time:</strong> {p.leadTimeNotice || 'Standard'}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ══ SAVED BOOKMARKS DRAWER ══ */}
       {showBookmarksDrawer && (
         <div
@@ -1247,6 +1145,29 @@ export default function B2BDirectoryPage() {
               border: '1px solid #E2E8F0'
             }}
           >
+            {/* Top Close Button (✕) */}
+            <button
+              onClick={() => setShowEditModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: '#F1F5F9',
+                border: 'none',
+                color: '#475569',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Close window without saving"
+            >
+              <X size={18} />
+            </button>
+
             <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.35rem', fontWeight: 900, color: '#0F4C3A' }}>
               💼 Manage My Company Showcase Profile
             </h3>
@@ -1266,9 +1187,12 @@ export default function B2BDirectoryPage() {
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '0.35rem', color: '#334155' }}>Enter Work Email Address *</label>
                   <input type="email" required placeholder="e.g. agent@travelagency.com" value={authEmail} onChange={e => setAuthEmail(e.target.value)} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.9rem', backgroundColor: '#FFF', color: '#0F172A' }} />
                 </div>
-                <button type="submit" disabled={authLoading} style={{ padding: '0.75rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>
-                  {authLoading ? 'Sending OTP...' : 'Send Verification OTP Code ✉️'}
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button type="button" onClick={() => setShowEditModal(false)} style={{ flex: 1, padding: '0.75rem', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>Cancel / Close</button>
+                  <button type="submit" disabled={authLoading} style={{ flex: 2, padding: '0.75rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>
+                    {authLoading ? 'Sending OTP...' : 'Send Verification OTP Code ✉️'}
+                  </button>
+                </div>
               </form>
             )}
 
@@ -1277,9 +1201,12 @@ export default function B2BDirectoryPage() {
                 <p style={{ fontSize: '0.88rem', color: '#166534', fontWeight: 700 }}>✓ Code sent to: {authEmail}</p>
                 {debugOtp && <div style={{ background: '#FEFCBF', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem', color: '#744210' }}>Sandbox Code: <strong>{debugOtp}</strong></div>}
                 <input type="text" required placeholder="123456" maxLength={6} value={otpCode} onChange={e => setOtpCode(e.target.value)} style={{ padding: '0.85rem', borderRadius: '8px', border: '2px solid #D97706', fontSize: '1.5rem', textAlign: 'center', letterSpacing: '0.3em', fontWeight: 800, backgroundColor: '#FFF', color: '#0F172A' }} />
-                <button type="submit" disabled={authLoading} style={{ padding: '0.75rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>
-                  {authLoading ? 'Verifying...' : 'Verify OTP & Open Profile Editor 🔓'}
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button type="button" onClick={() => setShowEditModal(false)} style={{ flex: 1, padding: '0.75rem', background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>Cancel / Close</button>
+                  <button type="submit" disabled={authLoading} style={{ flex: 2, padding: '0.75rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>
+                    {authLoading ? 'Verifying...' : 'Verify OTP & Open Profile Editor 🔓'}
+                  </button>
+                </div>
               </form>
             )}
 
@@ -1332,22 +1259,55 @@ export default function B2BDirectoryPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {/* File Upload / Link Inputs */}
+                <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <h5 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: '#0F4C3A' }}>📷 Media & Brochure Uploads (File Upload or URL)</h5>
+
+                  {/* Logo Upload / URL */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Company Logo URL</label>
-                    <input type="url" placeholder="https://..." value={editLogoUrl} onChange={e => setEditLogoUrl(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Company Logo (Upload File or Paste Image URL)</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input type="text" placeholder="https://..." value={editLogoUrl} onChange={e => setEditLogoUrl(e.target.value)} style={{ flex: 1, padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                      <label style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.65rem 1rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                        <Upload size={14} /> {uploadingField === 'logo' ? 'Uploading...' : 'Upload Logo'}
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'logo')} />
+                      </label>
+                    </div>
                   </div>
+
+                  {/* Cover Image Upload / URL */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>B2B Tariff PDF Link</label>
-                    <input type="url" placeholder="https://..." value={editBrochureUrl} onChange={e => setEditBrochureUrl(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>Banner / Cover Image (Upload File or Paste Image URL)</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input type="text" placeholder="https://..." value={editCoverUrl} onChange={e => setEditCoverUrl(e.target.value)} style={{ flex: 1, padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                      <label style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.65rem 1rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                        <Upload size={14} /> {uploadingField === 'cover' ? 'Uploading...' : 'Upload Banner'}
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'cover')} />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* PDF Tariff Upload / URL */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '4px', color: '#334155' }}>B2B Tariff PDF Document (Upload PDF or Paste Link)</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input type="text" placeholder="https://..." value={editBrochureUrl} onChange={e => setEditBrochureUrl(e.target.value)} style={{ flex: 1, padding: '0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', backgroundColor: '#FFF', color: '#0F172A' }} />
+                      <label style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.65rem 1rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                        <Upload size={14} /> {uploadingField === 'brochure' ? 'Uploading...' : 'Upload Tariff PDF'}
+                        <input type="file" accept="application/pdf,image/*" style={{ display: 'none' }} onChange={e => handleFileUpload(e, 'brochure')} />
+                      </label>
+                    </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem' }}>
                   <button type="button" onClick={handleDeleteProfile} style={{ background: '#FEE2E2', color: '#991B1B', border: 'none', padding: '0.75rem 1.25rem', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>Delete Profile</button>
-                  <button type="submit" disabled={authLoading} style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#FFF', border: 'none', padding: '0.75rem 2rem', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>
-                    {authLoading ? 'Publishing...' : 'Publish Profile Live 🚀'}
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button type="button" onClick={() => setShowEditModal(false)} style={{ background: '#F1F5F9', color: '#475569', border: 'none', padding: '0.75rem 1.25rem', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>Close Without Saving</button>
+                    <button type="submit" disabled={authLoading} style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#FFF', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', fontWeight: 800, cursor: 'pointer' }}>
+                      {authLoading ? 'Publishing...' : 'Publish Profile Live 🚀'}
+                    </button>
+                  </div>
                 </div>
               </form>
             )}
@@ -1401,7 +1361,6 @@ export default function B2BDirectoryPage() {
           </div>
         </div>
       )}
-
 
     </div>
   )
