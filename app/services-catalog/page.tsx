@@ -226,7 +226,7 @@ export default function ServicesCatalogPage() {
       console.warn('Failed to load live attractions')
     }
 
-    // 4. Fetch Sanity b2bServiceMedia items
+    // 4. Fetch Sanity b2bServiceMedia items (resolving direct uploaded files and image assets)
     try {
       const fetchedMedia = await client.fetch(`*[_type == "b2bServiceMedia"]{
         _id,
@@ -235,16 +235,25 @@ export default function ServicesCatalogPage() {
         subtitle,
         destination,
         description,
+        "coverImageFile": coverImage.asset->url,
         coverImageUrl,
+        "videoFileUrl": videoFile.asset->url,
         videoUrl,
+        "galleryUploaded": galleryImages[].asset->url,
         galleryImageUrls,
         features,
         duration,
         spokenLanguages,
         cuisineType
       }`)
+      
       if (fetchedMedia && fetchedMedia.length > 0) {
-        setMediaItems([...fetchedMedia, ...DEFAULT_MEDIA_ITEMS])
+        const normalized = fetchedMedia.map((m: any) => ({
+          ...m,
+          coverImageUrl: m.coverImageFile || m.coverImageUrl,
+          videoUrl: m.videoFileUrl || m.videoUrl,
+        }))
+        setMediaItems([...normalized, ...DEFAULT_MEDIA_ITEMS])
       } else {
         setMediaItems(DEFAULT_MEDIA_ITEMS)
       }
