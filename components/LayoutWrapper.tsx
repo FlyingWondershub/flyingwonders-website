@@ -130,8 +130,8 @@ export default function LayoutWrapper({
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // If we are in Sanity Studio, brochure, or standalone B2B Directory (/b2b-directory, /dmc, /catalog), render children without main website header/footer/floaters
-  if (pathname?.startsWith('/studio') || pathname === '/brochure' || pathname?.startsWith('/b2b-directory') || pathname === '/dmc' || pathname === '/catalog') {
+  // If we are in Sanity Studio, brochure, or standalone B2B Directory (/b2b-directory, /dmc, /catalog, /directory), render children without main website header/footer/floaters
+  if (pathname?.startsWith('/studio') || pathname === '/brochure' || pathname?.startsWith('/b2b-directory') || pathname === '/dmc' || pathname === '/catalog' || pathname === '/directory') {
     return <>{children}</>
   }
 

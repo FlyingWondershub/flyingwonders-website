@@ -27,6 +27,10 @@ const nextConfig: NextConfig = {
         source: '/catalog',
         destination: '/b2b-directory',
       },
+      {
+        source: '/directory',
+        destination: '/b2b-directory',
+      },
     ]
   },
 };
