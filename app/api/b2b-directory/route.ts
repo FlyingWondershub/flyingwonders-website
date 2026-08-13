@@ -34,8 +34,17 @@ export async function GET(req: NextRequest) {
     let sanityProfiles: any[] = []
     try {
       sanityProfiles = await client.fetch(
-        `*[_type == "b2bCatalogProfile" && isPublic != false] | order(_createdAt desc)`
+        `*[_type == "b2bCatalogProfile" && isPublic != false]{
+          ...,
+          "logoImageFile": logoImage.asset->url,
+          "coverImageFile": coverImage.asset->url
+        } | order(_createdAt desc)`
       )
+      sanityProfiles = sanityProfiles.map((p: any) => ({
+        ...p,
+        logoUrl: p.logoImageFile || p.logoUrl,
+        coverImageUrl: p.coverImageFile || p.coverImageUrl
+      }))
     } catch (err) {
       console.warn('Failed to fetch catalog profiles from Sanity, using fallback dataset.', err)
     }

@@ -53,14 +53,30 @@ export const b2bCatalogProfileSchema = defineType({
       type: 'string',
     }),
     defineField({
+      name: 'logoImage',
+      title: 'Company Logo Upload (Direct Computer Upload)',
+      type: 'image',
+      options: { hotspot: true },
+      description: 'Upload logo file directly from your computer or phone.',
+    }),
+    defineField({
       name: 'logoUrl',
-      title: 'Company Logo URL',
+      title: 'Company Logo URL (Alternative Text Link)',
       type: 'string',
+      description: 'Or paste an image URL e.g. https://...',
+    }),
+    defineField({
+      name: 'coverImage',
+      title: 'Cover Image / Banner Upload (Direct Computer Upload)',
+      type: 'image',
+      options: { hotspot: true },
+      description: 'Upload banner photo directly from your computer or phone.',
     }),
     defineField({
       name: 'coverImageUrl',
-      title: 'Cover Image / Banner URL',
+      title: 'Cover Image / Banner URL (Alternative Text Link)',
       type: 'string',
+      description: 'Or paste a banner URL e.g. https://...',
     }),
     defineField({
       name: 'aboutCompany',

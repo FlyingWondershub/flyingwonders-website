@@ -49,31 +49,17 @@ function stripHtml(htmlStr?: string) {
     .trim()
 }
 
+// Helper function to format YouTube embed URLs
+function getYouTubeEmbedUrl(url: string) {
+  if (!url) return ''
+  if (url.includes('embed/')) return url
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
+  const match = url.match(regExp)
+  return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url
+}
+
 // Fallback items if Sanity b2bServiceMedia is empty
-const DEFAULT_MEDIA_ITEMS = [
-  // Restaurants
-  {
-    _id: 'rest-1',
-    category: 'restaurant',
-    title: 'Jumbo Seafood East Coast',
-    subtitle: 'Iconic Singapore Chilli Crab & Seafood',
-    destination: 'Singapore',
-    cuisineType: 'Seafood / Local Specialty',
-    description: 'Renowned award-winning Singaporean dining spot facing the East Coast sea. Famous for Chilli Crab, Black Pepper Crab, and Cereal Prawns. Ideal for FIT and Group dining.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop',
-    features: ['Seafood Specialist', 'Halal Options Available', 'VIP Private Rooms', 'Sea Facing'],
-  },
-  {
-    _id: 'rest-2',
-    category: 'restaurant',
-    title: 'The Song of India / Royal Indian Dining',
-    subtitle: 'Authentic Fine Dining & Buffet',
-    destination: 'Singapore',
-    cuisineType: 'North & South Indian Fine Dining',
-    description: 'Luxurious Indian dining experience catering to Corporate MICE and FIT groups with custom Jain, Veg, and Non-Veg menus.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&auto=format&fit=crop',
-    features: ['Strict Pure Veg / Jain Available', 'MICE Group Buffets', 'Central Location'],
-  },
+const DEFAULT_MEDIA_ITEMS: any[] = [
   // Tour Guides
   {
     _id: 'guide-1',
@@ -253,7 +239,9 @@ export default function ServicesCatalogPage() {
           coverImageUrl: m.coverImageFile || m.coverImageUrl,
           videoUrl: m.videoFileUrl || m.videoUrl,
         }))
-        setMediaItems([...normalized, ...DEFAULT_MEDIA_ITEMS])
+        const userCategories = new Set(normalized.map((x: any) => x.category))
+        const remainingFallbacks = DEFAULT_MEDIA_ITEMS.filter((d: any) => !userCategories.has(d.category))
+        setMediaItems([...normalized, ...remainingFallbacks])
       } else {
         setMediaItems(DEFAULT_MEDIA_ITEMS)
       }
@@ -743,16 +731,60 @@ export default function ServicesCatalogPage() {
             <h3 style={{ margin: '0 0 4px', fontSize: '1.25rem', fontWeight: 900, color: '#0F4C3A' }}>{activeMediaModal.title}</h3>
             <p style={{ margin: '0 0 1rem', fontSize: '0.82rem', color: '#64748B', fontWeight: 600 }}>📍 {activeMediaModal.destination}</p>
 
-            {activeMediaModal.coverImageUrl && (
-              <img src={activeMediaModal.coverImageUrl} alt="" style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '12px', marginBottom: '1rem', border: '1px solid #E2E8F0' }} />
+            {/* Cover Image */}
+            {activeMediaModal.coverImageUrl && !activeMediaModal.videoUrl && (
+              <img src={activeMediaModal.coverImageUrl} alt="" style={{ width: '100%', height: '240px', objectFit: 'cover', borderRadius: '12px', marginBottom: '1rem', border: '1px solid #E2E8F0' }} />
             )}
 
+            {/* Video Showcase Player */}
+            {activeMediaModal.videoUrl && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Play size={16} color="#EF4444" fill="#EF4444" /> Video Showcase Tour
+                </h4>
+                {activeMediaModal.videoUrl.includes('youtube.com') || activeMediaModal.videoUrl.includes('youtu.be') ? (
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+                    <iframe
+                      src={getYouTubeEmbedUrl(activeMediaModal.videoUrl)}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : (
+                  <video
+                    controls
+                    autoPlay
+                    muted
+                    playsInline
+                    src={activeMediaModal.videoUrl}
+                    style={{ width: '100%', maxHeight: '360px', borderRadius: '12px', background: '#000', border: '1px solid #E2E8F0', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Description */}
             <div style={{ marginBottom: '1rem' }}>
               <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.4rem' }}>Overview & Highlights</h4>
               <p style={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
                 {activeMediaModal.description}
               </p>
             </div>
+
+            {/* Photo Gallery Grid */}
+            {((activeMediaModal.galleryUploaded && activeMediaModal.galleryUploaded.length > 0) || (activeMediaModal.galleryImageUrls && activeMediaModal.galleryImageUrls.length > 0)) && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <ImageIcon size={16} color="#0F4C3A" /> Photo Gallery
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
+                  {(activeMediaModal.galleryUploaded || activeMediaModal.galleryImageUrls || []).map((imgUrl: string, idx: number) => (
+                    <img key={idx} src={imgUrl} alt="" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E2E8F0' }} />
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <h5 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#0F4C3A' }}>Key Inclusions & Capabilities</h5>
