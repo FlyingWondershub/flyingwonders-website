@@ -19,6 +19,14 @@ const nextConfig: NextConfig = {
         source: '/b2b',
         destination: '/custom-package',
       },
+      {
+        source: '/dmc',
+        destination: '/b2b-directory',
+      },
+      {
+        source: '/catalog',
+        destination: '/b2b-directory',
+      },
     ]
   },
 };
