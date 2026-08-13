@@ -28,6 +28,29 @@ export default function PackageList({ initialPackages, exchangeRate = 74.81 }: {
 
   return (
     <div>
+      {/* Services Catalog Public Banner Link */}
+      <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+        <Link
+          href="/services-catalog"
+          className="hover-lift"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'linear-gradient(135deg, #0F4C3A 0%, #10B981 100%)',
+            color: '#FFFFFF',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '30px',
+            fontWeight: 800,
+            fontSize: '0.9rem',
+            textDecoration: 'none',
+            boxShadow: '0 4px 15px rgba(15, 76, 58, 0.25)'
+          }}
+        >
+          📖 Explore Singapore & Malaysia Services Catalog (Hotels, Attractions, Dining, Guides & Tours) ➔
+        </Link>
+      </div>
+
       {/* Dynamic Filter Tabs */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
         {['all', 'budget', 'premium', 'solo', 'groups'].map((tier) => (

@@ -365,6 +365,28 @@ export default function AgentPortalPage() {
             </Link>
 
             <Link
+              href="/services-catalog"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '10px',
+                color: '#0F4C3A',
+                fontWeight: 800,
+                fontSize: '0.9rem',
+                textDecoration: 'none',
+                background: '#ECFDF5',
+                border: '1px solid #A7F3D0',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Compass size={18} color="#0F4C3A" />
+              <span>Services Catalog</span>
+              <span style={{ fontSize: '0.62rem', background: '#0F4C3A', color: '#FFF', padding: '0.1rem 0.4rem', borderRadius: '4px', marginLeft: 'auto', fontWeight: 800 }}>LIVE</span>
+            </Link>
+
+            <Link
               href="/"
               style={{
                 display: 'flex',
