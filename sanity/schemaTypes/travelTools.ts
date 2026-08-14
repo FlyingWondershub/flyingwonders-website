@@ -2,7 +2,7 @@ import { defineField, defineType } from 'sanity'
 
 export const travelToolsSchema = defineType({
   name: 'travelTools',
-  title: 'Travel Tools & Visa Checklist Settings',
+  title: 'Travel Tools & Consulting Settings',
   type: 'document',
   fields: [
     defineField({
@@ -18,7 +18,7 @@ export const travelToolsSchema = defineType({
       initialValue: 'Your 1-stop portal for ICA SG Arrival Card (SGAC), Malaysia MDAC, Visa Document Checklists, Live Currency Converter, and Smart Packing Lists.',
     }),
 
-    // SECTION HIDE TOGGLES
+    // SECTION HIDE TOGGLES FOR ALL 10 TOOLS + CONSULTING BANNER
     defineField({
       name: 'hideOfficialPortals',
       title: '🙈 Hide Official Entry Portals Section (SGAC / MDAC / AirSuvidha)',
@@ -26,20 +26,38 @@ export const travelToolsSchema = defineType({
       initialValue: false,
     }),
     defineField({
-      name: 'hideAirSuvidha',
-      title: '🙈 Hide India AirSuvidha 2.0 Card',
+      name: 'hideVisaChecker',
+      title: '🙈 Hide Live Passport Visa Requirement Checker',
       type: 'boolean',
       initialValue: false,
     }),
     defineField({
-      name: 'hideScamAdvisory',
-      title: '🙈 Hide Fraud / Scam Advisory Banner',
+      name: 'hideBorderTraffic',
+      title: '🙈 Hide Live Border Traffic Cameras & Causeway Times',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hideAirlinePromotions',
+      title: '🙈 Hide Live Airline Fares & Deals Section',
       type: 'boolean',
       initialValue: false,
     }),
     defineField({
       name: 'hideVisaChecklist',
       title: '🙈 Hide Visa Document Requirements & Checklists Section',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hideFlightTracker',
+      title: '🙈 Hide AirLabs Live Flight Tracker & Changi Status',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hideAgeCalculator',
+      title: '🙈 Hide Travel & Ticket Age Calculator Widget',
       type: 'boolean',
       initialValue: false,
     }),
@@ -57,7 +75,13 @@ export const travelToolsSchema = defineType({
     }),
     defineField({
       name: 'hideInteractiveChecklist',
-      title: '🙈 Hide Interactive Pre-Departure Checklist',
+      title: '🙈 Hide Interactive Pre-Departure Packing Checklist',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'hideTravelNews',
+      title: '🙈 Hide SE Asia Travel News Radar Section',
       type: 'boolean',
       initialValue: false,
     }),
@@ -68,8 +92,8 @@ export const travelToolsSchema = defineType({
       initialValue: false,
     }),
     defineField({
-      name: 'hideFlightTracker',
-      title: '🙈 Hide AirLabs Live Flight Tracker Widget',
+      name: 'hideConsultingButton',
+      title: '🙈 Hide Travel Consulting Header Button Link',
       type: 'boolean',
       initialValue: false,
     }),

@@ -328,9 +328,11 @@ export default function TravelToolsPage() {
     heroTitle?: string
     heroSubtitle?: string
     hideOfficialPortals?: boolean
+    hideVisaChecker?: boolean
     hideScamAdvisory?: boolean
     hideVisaChecklist?: boolean
     hideCurrencyConverter?: boolean
+    hideAgeCalculator?: boolean
     hideMealEstimator?: boolean
     hideInteractiveChecklist?: boolean
     hideAttractionAllocator?: boolean
@@ -343,6 +345,7 @@ export default function TravelToolsPage() {
     hideTravelNews?: boolean
     hideBorderTraffic?: boolean
     hideAirlinePromotions?: boolean
+    hideConsultingButton?: boolean
   }>({})
 
   // Airline Promotions State
@@ -418,6 +421,84 @@ export default function TravelToolsPage() {
     forex: false,
     sim: false
   })
+
+  // Travel & Ticket Age Calculator State
+  const [dobInput, setDobInput] = useState<string>('2021-08-15')
+  const [travelDateInput, setTravelDateInput] = useState<string>(new Date().toISOString().split('T')[0])
+
+  const computedAge = useMemo(() => {
+    if (!dobInput) return null
+    const birth = new Date(dobInput)
+    const travel = travelDateInput ? new Date(travelDateInput) : new Date()
+
+    if (isNaN(birth.getTime()) || isNaN(travel.getTime()) || travel < birth) return null
+
+    let years = travel.getFullYear() - birth.getFullYear()
+    let months = travel.getMonth() - birth.getMonth()
+    let days = travel.getDate() - birth.getDate()
+
+    if (days < 0) {
+      months -= 1
+      const prevMonth = new Date(travel.getFullYear(), travel.getMonth(), 0)
+      days += prevMonth.getDate()
+    }
+    if (months < 0) {
+      years -= 1
+      months += 12
+    }
+
+    const diffTime = travel.getTime() - birth.getTime()
+    const totalDays = Math.floor(diffTime / (1000 * 3600 * 24))
+    const totalWeeks = Math.floor(totalDays / 7)
+    const totalMonths = years * 12 + months
+    const totalHours = totalDays * 24
+
+    let category = 'ADULT'
+    let categoryBadge = '🧑 Adult Rate Ticket'
+    let categoryColor = '#0F4C3A'
+    let airlineRule = 'Full Standard Airfare & Adult Seat'
+    let ussRule = 'Full Standard Adult Ticket (Ages 13 – 59)'
+    let gardensRule = 'Full Standard Adult Ticket (Ages 13 – 59)'
+
+    if (years < 2) {
+      category = 'INFANT'
+      categoryBadge = '🍼 INFANT (0 – 23 Months)'
+      categoryColor = '#D97706'
+      airlineRule = 'Free / Nominal Lap Passenger Fare (No separate seat required)'
+      ussRule = '100% Free Entry (Under 4 Years Old)'
+      gardensRule = '100% Free Entry (Under 3 Years Old)'
+    } else if (years >= 2 && years < 12) {
+      category = 'CHILD'
+      categoryBadge = '🧒 CHILD (2 – 11 / 12 Years)'
+      categoryColor = '#059669'
+      airlineRule = 'Child Fare (75% – 100% of Adult Fare with seat)'
+      ussRule = years < 4 ? '100% Free Entry (Under 4)' : 'Child Ticket Rate (Ages 4 – 12)'
+      gardensRule = years < 3 ? '100% Free Entry (Under 3)' : 'Child Ticket Rate (Ages 3 – 12)'
+    } else if (years >= 60) {
+      category = 'SENIOR'
+      categoryBadge = '👵 SENIOR CITIZEN (60+ Years)'
+      categoryColor = '#6B21A8'
+      airlineRule = 'Standard Adult Fare'
+      ussRule = 'Senior Ticket Discount Rate (60+ Years)'
+      gardensRule = 'Senior Ticket Discount Rate (60+ Years)'
+    }
+
+    return {
+      years,
+      months,
+      days,
+      totalMonths,
+      totalWeeks,
+      totalDays,
+      totalHours,
+      category,
+      categoryBadge,
+      categoryColor,
+      airlineRule,
+      ussRule,
+      gardensRule
+    }
+  }, [dobInput, travelDateInput])
 
   // Live Visa Checker State
   const [visaPassport, setVisaPassport] = useState('')
@@ -551,26 +632,53 @@ export default function TravelToolsPage() {
               <Sparkles size={24} color="#D4AF37" /> Flying Wonders Travel Tools & Community
             </h1>
 
-            {/* Saved Trip Kit Drawer Trigger */}
-            <button
-              onClick={() => setShowTripKitModal(true)}
-              style={{
-                background: '#F59E0B',
-                color: '#FFF',
-                border: 'none',
-                padding: '0.55rem 1.1rem',
-                borderRadius: '20px',
-                fontWeight: 800,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)'
-              }}
-            >
-              <Star size={16} fill="#FFF" /> My Saved Trip Kit ({savedKitIds.length})
-            </button>
+            {/* Header Action Buttons Container */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {/* Saved Trip Kit Drawer Trigger */}
+              <button
+                onClick={() => setShowTripKitModal(true)}
+                style={{
+                  background: '#F59E0B',
+                  color: '#FFF',
+                  border: 'none',
+                  padding: '0.55rem 1.1rem',
+                  borderRadius: '20px',
+                  fontWeight: 800,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)'
+                }}
+              >
+                <Star size={16} fill="#FFF" /> My Saved Trip Kit ({savedKitIds.length})
+              </button>
+
+              {/* Travel Consulting Header Link Button */}
+              {!sanitySettings.hideConsultingButton && (
+                <Link
+                  href="/travel-consulting"
+                  style={{
+                    background: 'linear-gradient(135deg, #059669 0%, #0F4C3A 100%)',
+                    color: '#FFF',
+                    border: '1px solid #34D399',
+                    padding: '0.55rem 1.1rem',
+                    borderRadius: '20px',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 15px rgba(5, 150, 105, 0.4)'
+                  }}
+                >
+                  <Sparkles size={16} color="#FDE68A" /> 💡 Travel Consulting
+                </Link>
+              )}
+            </div>
           </div>
 
           <p style={{ fontSize: '0.95rem', color: '#E2E8F0', margin: 0, opacity: 0.9, lineHeight: 1.5 }}>
@@ -650,6 +758,7 @@ export default function TravelToolsPage() {
               { id: 'tool-visa-checklist', label: '📋 Visa Checklists', show: !sanitySettings.hideVisaChecklist },
               { id: 'tool-flight-radar', label: '✈️ Flight Radar', show: !sanitySettings.hideFlightTracker },
               { id: 'tool-currency-converter', label: '🧮 Currency & Meal Estimator', show: !sanitySettings.hideCurrencyConverter },
+              { id: 'tool-age-calculator', label: '🎂 Ticket Age Calculator', show: !sanitySettings.hideAgeCalculator },
               { id: 'tool-packing-checklist', label: '🎒 Packing List', show: !sanitySettings.hideInteractiveChecklist },
               { id: 'tool-news-radar', label: '📰 Travel News', show: !sanitySettings.hideTravelNews && !hideNewsRadar },
               { id: 'tool-time-allocator', label: '⏱️ Time Allocator', show: !sanitySettings.hideAttractionAllocator }
@@ -1043,7 +1152,7 @@ export default function TravelToolsPage() {
         )}
 
         {/* 4. 🛂 LIVE PASSPORT VISA CHECKER */}
-        {matchesSearch('visa checker passport requirement entry guidelines india china us uk australia malaysia indonesia singapore') && (
+        {!sanitySettings.hideVisaChecker && matchesSearch('visa checker passport requirement entry guidelines india china us uk australia malaysia indonesia singapore') && (
           <div id="tool-visa-checker" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
               <div>
@@ -1258,6 +1367,129 @@ export default function TravelToolsPage() {
             </div>
 
             <ToolCommunityFooter toolId="currency-converter" toolName="Live Currency & Meal Estimator" summaryText="Calculate live SGD to INR rates and estimate daily food expenses for Singapore & Malaysia." />
+          </div>
+        )}
+
+        {/* 🎂 TRAVEL & TICKET AGE CALCULATOR TOOL */}
+        {!sanitySettings.hideAgeCalculator && matchesSearch('age calculator child infant adult ticket date of birth dob travel date Singapore attractions flight age limit') && (
+          <div id="tool-age-calculator" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Calculator size={22} color="#059669" /> Travel & Ticket Age Category Calculator
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '0.25rem 0 0' }}>
+                  Calculate exact passenger age on travel date & classify ticket category for Airlines, USS, Gardens by the Bay, and Singapore Zoo.
+                </p>
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#FEF3C7', color: '#B45309', border: '1px solid #FDE68A', padding: '0.25rem 0.65rem', borderRadius: '12px', fontWeight: 800 }}>
+                Airlines & Attraction Rules 2026
+              </span>
+            </div>
+
+            {/* Inputs Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem', background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Passenger Date of Birth (DOB) *</label>
+                <input
+                  type="date"
+                  value={dobInput}
+                  onChange={e => setDobInput(e.target.value)}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.9rem', fontWeight: 700, outline: 'none', background: '#FFF' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Target Travel / Entry Date *</label>
+                <input
+                  type="date"
+                  value={travelDateInput}
+                  onChange={e => setTravelDateInput(e.target.value)}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.9rem', fontWeight: 700, outline: 'none', background: '#FFF' }}
+                />
+              </div>
+            </div>
+
+            {/* Computed Age & Ticket Classification Results */}
+            {computedAge && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                
+                {/* Highlight Ticket Classification Badge */}
+                <div style={{ background: '#F0FDF4', border: '1.5px solid #A7F3D0', padding: '1.25rem', borderRadius: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Official Ticket Category Classification
+                    </span>
+                    <h4 style={{ fontSize: '1.3rem', fontWeight: 900, color: computedAge.categoryColor, margin: '0.2rem 0 0.1rem' }}>
+                      {computedAge.categoryBadge}
+                    </h4>
+                    <p style={{ fontSize: '0.85rem', color: '#166534', margin: 0, fontWeight: 700 }}>
+                      Exact Age on Travel Date: <strong>{computedAge.years} Years, {computedAge.months} Months, {computedAge.days} Days</strong>
+                    </p>
+                  </div>
+
+                  <div style={{ background: '#FFF', padding: '0.6rem 1.1rem', borderRadius: '10px', border: '1px solid #BBF7D0', textAlign: 'right' }}>
+                    <span style={{ fontSize: '0.72rem', color: '#475569', display: 'block', fontWeight: 700 }}>Total Age in Months</span>
+                    <strong style={{ fontSize: '1.2rem', color: '#0F4C3A' }}>{computedAge.totalMonths} Months</strong>
+                  </div>
+                </div>
+
+                {/* Comprehensive Age Breakdown Grid (ALL Formats) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
+                  <div style={{ background: '#F8FAFC', padding: '0.85rem', borderRadius: '10px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, display: 'block' }}>Total Years</span>
+                    <strong style={{ fontSize: '1.1rem', color: '#0F172A' }}>{computedAge.years} Yrs</strong>
+                  </div>
+
+                  <div style={{ background: '#F8FAFC', padding: '0.85rem', borderRadius: '10px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, display: 'block' }}>Total Months</span>
+                    <strong style={{ fontSize: '1.1rem', color: '#0F172A' }}>{computedAge.totalMonths} Mos</strong>
+                  </div>
+
+                  <div style={{ background: '#F8FAFC', padding: '0.85rem', borderRadius: '10px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, display: 'block' }}>Total Weeks</span>
+                    <strong style={{ fontSize: '1.1rem', color: '#0F172A' }}>{computedAge.totalWeeks.toLocaleString()} Wks</strong>
+                  </div>
+
+                  <div style={{ background: '#F8FAFC', padding: '0.85rem', borderRadius: '10px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, display: 'block' }}>Total Days</span>
+                    <strong style={{ fontSize: '1.1rem', color: '#0F172A' }}>{computedAge.totalDays.toLocaleString()} Days</strong>
+                  </div>
+
+                  <div style={{ background: '#F8FAFC', padding: '0.85rem', borderRadius: '10px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, display: 'block' }}>Total Hours</span>
+                    <strong style={{ fontSize: '1.1rem', color: '#0F172A' }}>{computedAge.totalHours.toLocaleString()} Hrs</strong>
+                  </div>
+                </div>
+
+                {/* Specific Attraction & Airline Rules Reference Card */}
+                <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                  <strong style={{ fontSize: '0.9rem', color: '#0F4C3A', display: 'block', marginBottom: '0.6rem' }}>
+                    ✈️ & 🎟️ Official Fare Rules for Passenger's Age ({computedAge.years} Yrs)
+                  </strong>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem', fontSize: '0.82rem', color: '#334155' }}>
+                    <div style={{ background: '#FFF', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <strong style={{ color: '#0F172A', display: 'block' }}>✈️ Airlines (SQ, 6E, AI):</strong>
+                      <span>{computedAge.airlineRule}</span>
+                    </div>
+
+                    <div style={{ background: '#FFF', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <strong style={{ color: '#0F172A', display: 'block' }}>🏰 Universal Studios Singapore:</strong>
+                      <span>{computedAge.ussRule}</span>
+                    </div>
+
+                    <div style={{ background: '#FFF', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <strong style={{ color: '#0F172A', display: 'block' }}>🌿 Gardens by the Bay / Zoo:</strong>
+                      <span>{computedAge.gardensRule}</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            <ToolCommunityFooter toolId="age-calculator" toolName="Travel & Ticket Age Calculator" summaryText="Calculate exact passenger age on travel date & classify ticket category for Airlines, USS & Gardens by the Bay." />
           </div>
         )}
 

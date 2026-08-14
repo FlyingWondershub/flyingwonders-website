@@ -34,6 +34,10 @@ import { b2bDirectorySettingsSchema } from './b2bDirectorySettings'
 import { b2bServiceCatalogSettingsSchema } from './b2bServiceCatalogSettings'
 import { b2bServiceMediaSchema } from './b2bServiceMedia'
 import { b2bTravelToolCommentSchema } from './b2bTravelToolComment'
+import { travelConsultantSchema } from './travelConsultant'
+import { travelConsultingPackageSchema } from './travelConsultingPackage'
+import { travelConsultingSettingsSchema } from './travelConsultingSettings'
+import { travelConsultingBookingSchema } from './travelConsultingBooking'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -53,6 +57,10 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     b2bServiceCatalogSettingsSchema,
     b2bServiceMediaSchema,
     b2bTravelToolCommentSchema,
+    travelConsultantSchema,
+    travelConsultingPackageSchema,
+    travelConsultingSettingsSchema,
+    travelConsultingBookingSchema,
     newsletterSubscriberSchema,
     newsletterCampaignSchema,
     attractionsUserSchema,
