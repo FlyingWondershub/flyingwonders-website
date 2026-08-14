@@ -35,6 +35,13 @@ export const travelConsultingSettingsSchema = defineType({
       ],
     }),
     defineField({
+      name: 'defaultMeetingLink',
+      title: 'Default Company Google Meet / Video Call Link',
+      type: 'url',
+      initialValue: 'https://meet.google.com/flyingwonders-consulting',
+      description: 'Global default Google Meet link used when no specific consultant meeting link is provided.',
+    }),
+    defineField({
       name: 'availableLanguages',
       title: 'Available Languages',
       type: 'array',

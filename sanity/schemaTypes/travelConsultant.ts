@@ -46,6 +46,8 @@ export const travelConsultantSchema = defineType({
       name: 'meetingLink',
       title: 'Default Google Meet / Video Call Link',
       type: 'url',
+      initialValue: 'https://meet.google.com/flyingwonders-consulting',
+      description: 'Permanent Google Meet / Zoom link assigned to this consultant.',
     }),
     defineField({
       name: 'isActive',

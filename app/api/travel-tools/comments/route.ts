@@ -99,14 +99,40 @@ export async function POST(req: NextRequest) {
       isFeatured: false,
     }
 
+    let createdDoc = null
     if (process.env.SANITY_WRITE_TOKEN) {
-      const created = await writeClient.create(doc)
-      return NextResponse.json({ success: true, comment: created })
+      createdDoc = await writeClient.create(doc)
+    }
+
+    // DISPATCH INSTANT ADMIN EMAIL ALERT VIA WEB3FORMS API
+    try {
+      await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_key: process.env.WEB3FORMS_ACCESS_KEY || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          subject: `💬 New Travel Tools Comment / Tip on ${toolId}: ${authorName.trim()}`,
+          from_name: 'Flying Wonders Travel Tools Hub',
+          to_email: 'flyingwonders2024@gmail.com',
+          message: `
+NEW TRAVEL TOOLS COMMENT SUBMITTED!
+----------------------------------
+Tool ID: ${toolId}
+Author Name: ${authorName.trim()}
+Role: ${authorRole || 'Traveler'}
+Comment / Tip: ${commentText.trim()}
+
+View & Moderate on Travel Tools: https://flyingwonders.net/travel-tools#${toolId}
+          `
+        })
+      })
+    } catch (emailErr) {
+      console.error('Failed to send comment admin email alert:', emailErr)
     }
 
     return NextResponse.json({ 
       success: true, 
-      comment: { ...doc, _id: `temp-${Date.now()}`, _createdAt: new Date().toISOString() } 
+      comment: createdDoc || { ...doc, _id: `temp-${Date.now()}`, _createdAt: new Date().toISOString() } 
     })
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })

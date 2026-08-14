@@ -48,6 +48,28 @@ export default function AdminDashboard() {
   const [competitorPrices, setCompetitorPrices] = useState<any[]>([])
   const [refreshingPrices, setRefreshingPrices] = useState(false)
 
+  // ── Travel Consulting Requests State ──
+  const [consultingBookings, setConsultingBookings] = useState<any[]>([])
+  const [loadingConsulting, setLoadingConsulting] = useState(false)
+
+  const fetchConsultingBookings = async () => {
+    setLoadingConsulting(true)
+    try {
+      const res = await fetch('/api/admin/travel-consulting')
+      const json = await res.json()
+      if (json.success && Array.isArray(json.bookings)) {
+        setConsultingBookings(json.bookings)
+      }
+    } catch (e) {
+    } finally {
+      setLoadingConsulting(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchConsultingBookings()
+  }, [])
+
   // Ad Management Toggles State
   const [adBlogEnabled, setAdBlogEnabled] = useState(true)
   const [adTravelToolsEnabled, setAdTravelToolsEnabled] = useState(true)
@@ -378,6 +400,7 @@ export default function AdminDashboard() {
     { id: 'section-accounts', label: 'Accounts & Ledger', icon: DollarSign },
     { id: 'section-sitemap', label: 'Site Map & Links', icon: Map },
     { id: 'section-payments', label: 'Pending Payments', icon: CreditCard, badge: pendingPayments.length },
+    { id: 'section-consulting', label: 'Travel Consulting Leads', icon: Calendar },
     { id: 'section-agents', label: 'Agent Approvals', icon: Users, badge: metrics.activeAgents },
     { id: 'section-exports', label: 'Data Exports', icon: Download },
     { id: 'section-competitor-pricing', label: 'Competitor Tracker', icon: Eye },
@@ -1334,6 +1357,81 @@ export default function AdminDashboard() {
                     ))}
                   </tbody>
                 </table>
+              )}
+            </div>
+
+            {/* TRAVEL CONSULTING LEADS MANAGEMENT */}
+            <div id="section-consulting" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem' }}>
+                <h2 style={{ fontSize: '1.2rem', color: '#2D3748', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Calendar size={18} color="#059669" /> Travel Consulting Requests ({consultingBookings.length})
+                </h2>
+                <button onClick={fetchConsultingBookings} style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <RefreshCw size={13} /> Refresh
+                </button>
+              </div>
+
+              {consultingBookings.length === 0 ? (
+                <p style={{ fontSize: '0.85rem', color: '#718096', margin: 0 }}>No consulting requests received yet.</p>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
+                        <th style={{ padding: '0.65rem 0' }}>Ref / Client</th>
+                        <th style={{ padding: '0.65rem 0' }}>Package & Fee</th>
+                        <th style={{ padding: '0.65rem 0' }}>Requested Slot</th>
+                        <th style={{ padding: '0.65rem 0' }}>Assigned Specialist</th>
+                        <th style={{ padding: '0.65rem 0' }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {consultingBookings.map(b => (
+                        <tr key={b._id} style={{ borderBottom: '1px solid #EDF2F7' }}>
+                          <td style={{ padding: '0.75rem 0' }}>
+                            <strong style={{ display: 'block', color: '#0F172A' }}>{b.bookingId || b._id.slice(0, 8)}</strong>
+                            <span>{b.clientName} ({b.userRole || 'Traveler'})</span><br/>
+                            <a href={`https://wa.me/${b.clientPhone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: '#059669', textDecoration: 'none', fontWeight: 700 }}>
+                              💬 {b.clientPhone}
+                            </a>
+                          </td>
+
+                          <td style={{ padding: '0.75rem 0' }}>
+                            <strong style={{ display: 'block', color: '#0F4C3A' }}>{b.packageTitle}</strong>
+                            <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{b.packagePrice}</span>
+                          </td>
+
+                          <td style={{ padding: '0.75rem 0' }}>
+                            <span style={{ fontWeight: 700, color: '#334155' }}>{b.preferredDate || 'Date TBD'}</span><br/>
+                            <span style={{ fontSize: '0.72rem', color: '#64748B' }}>{b.preferredTimeWindow}</span><br/>
+                            <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700 }}>🌐 {b.preferredLanguage}</span>
+                          </td>
+
+                          <td style={{ padding: '0.75rem 0' }}>
+                            {b.assignedConsultant ? (
+                              <span style={{ fontWeight: 700, color: '#0F4C3A' }}>👤 {b.assignedConsultant.name}</span>
+                            ) : (
+                              <span style={{ color: '#D97706', fontSize: '0.75rem', fontWeight: 700 }}>⚠️ Unassigned</span>
+                            )}
+                          </td>
+
+                          <td style={{ padding: '0.75rem 0' }}>
+                            <span style={{
+                              padding: '0.2rem 0.6rem',
+                              borderRadius: '12px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              background: b.status === 'completed' || b.status === 'fee_credited' ? '#ECFDF5' : b.status === 'assigned' ? '#EFF6FF' : '#FEF3C7',
+                              color: b.status === 'completed' || b.status === 'fee_credited' ? '#047857' : b.status === 'assigned' ? '#1D4ED8' : '#B45309'
+                            }}>
+                              {b.status === 'assigned' ? '✅ Assigned' : b.status === 'completed' ? '🎉 Completed' : b.status === 'fee_credited' ? '🏷️ Fee Credited' : '⏳ Pending'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
 

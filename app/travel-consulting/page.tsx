@@ -204,38 +204,38 @@ export default function TravelConsultingPage() {
       <section style={{
         background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)',
         color: '#FFF',
-        padding: '3.5rem 1.5rem 4rem',
+        padding: '1.75rem 1.25rem 2rem',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden'
       }}>
-        <div style={{ maxWidth: '960px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
           
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(212, 175, 55, 0.2)', border: '1px solid #D4AF37', padding: '0.4rem 1rem', borderRadius: '30px', fontSize: '0.82rem', fontWeight: 800, color: '#FDE68A', marginBottom: '1.25rem' }}>
-            <BadgePercent size={16} color="#FDE68A" /> 100% Consulting Fee Credited Back Upon Package Booking
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(212, 175, 55, 0.2)', border: '1px solid #D4AF37', padding: '0.3rem 0.85rem', borderRadius: '30px', fontSize: '0.78rem', fontWeight: 800, color: '#FDE68A', marginBottom: '0.85rem' }}>
+            <BadgePercent size={14} color="#FDE68A" /> 100% Fee Credited Back Upon Booking
           </div>
 
-          <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.9rem, 4.5vw, 3rem)', fontWeight: 800, margin: '0 0 1rem', lineHeight: 1.2 }}>
+          <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.5rem, 3.5vw, 2.2rem)', fontWeight: 800, margin: '0 0 0.5rem', lineHeight: 1.2 }}>
             {sanitySettings.heroTitle || 'Tailored Travel Consulting for Singapore & Malaysia'}
           </h1>
 
-          <p style={{ fontSize: '1.05rem', color: '#E2E8F0', margin: '0 auto 2rem', opacity: 0.9, lineHeight: 1.6, maxWidth: '780px' }}>
-            {sanitySettings.heroSubtitle || 'Get 1-on-1 bespoke itinerary planning, VIP on-ground support, and B2B circuit strategies from licensed Singapore & Malaysia DMC experts. Book with confidence: 100% of your fee is credited back on your final booking balance.'}
+          <p style={{ fontSize: '0.92rem', color: '#E2E8F0', margin: '0 auto 1.25rem', opacity: 0.9, lineHeight: 1.5, maxWidth: '720px' }}>
+            {sanitySettings.heroSubtitle || 'Bespoke 1-on-1 itinerary planning, VIP on-ground support, and B2B circuit strategies from local DMC experts. 100% of your fee is credited back on your final booking balance.'}
           </p>
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button
               onClick={() => handleOpenBookingModal(defaultPackages[0])}
-              style={{ background: '#D4AF37', color: '#0F172A', border: 'none', padding: '0.85rem 2rem', borderRadius: '30px', fontWeight: 900, fontSize: '0.95rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 20px rgba(212, 175, 55, 0.4)' }}
+              style={{ background: '#D4AF37', color: '#0F172A', border: 'none', padding: '0.65rem 1.5rem', borderRadius: '30px', fontWeight: 900, fontSize: '0.88rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 15px rgba(212, 175, 55, 0.3)' }}
             >
-              <span>Schedule 1-on-1 Call</span> <ArrowRight size={18} />
+              <span>Schedule 1-on-1 Call</span> <ArrowRight size={16} />
             </button>
 
             <a
               href="https://api.whatsapp.com/send?phone=919886171251&text=Hi%20Flying%20Wonders,%20I%20would%20like%20to%20inquire%20about%20Travel%20Consulting."
               target="_blank"
               rel="noreferrer"
-              style={{ background: 'rgba(255, 255, 255, 0.15)', color: '#FFF', border: '1px solid rgba(255, 255, 255, 0.3)', backdropFilter: 'blur(10px)', padding: '0.85rem 1.75rem', borderRadius: '30px', fontWeight: 800, fontSize: '0.95rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              style={{ background: 'rgba(255, 255, 255, 0.15)', color: '#FFF', border: '1px solid rgba(255, 255, 255, 0.3)', backdropFilter: 'blur(10px)', padding: '0.65rem 1.35rem', borderRadius: '30px', fontWeight: 800, fontSize: '0.88rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
               <span>WhatsApp DMC Desk</span>
             </a>
@@ -245,91 +245,91 @@ export default function TravelConsultingPage() {
       </section>
 
       {/* 2. DUAL AUDIENCE SEGMENT SWITCHER */}
-      <div style={{ maxWidth: '1140px', margin: '-1.5rem auto 2.5rem', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
-        <div style={{ background: '#FFF', padding: '0.5rem', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+      <div style={{ maxWidth: '1140px', margin: '-1.25rem auto 1.75rem', padding: '0 1.25rem', position: 'relative', zIndex: 10 }}>
+        <div style={{ background: '#FFF', padding: '0.4rem', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 8px 25px rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
           
           <button
             onClick={() => setActiveSegment('all')}
             style={{
-              padding: '0.65rem 1.25rem',
-              borderRadius: '12px',
+              padding: '0.5rem 1rem',
+              borderRadius: '10px',
               border: 'none',
               background: activeSegment === 'all' ? '#0F4C3A' : 'transparent',
               color: activeSegment === 'all' ? '#FFF' : '#475569',
               fontWeight: 800,
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px'
             }}
           >
-            <Globe size={16} /> All Consulting Tiers
+            <Globe size={15} /> All Tiers
           </button>
 
           <button
             onClick={() => setActiveSegment('b2c')}
             style={{
-              padding: '0.65rem 1.25rem',
-              borderRadius: '12px',
+              padding: '0.5rem 1rem',
+              borderRadius: '10px',
               border: 'none',
               background: activeSegment === 'b2c' ? '#0F4C3A' : 'transparent',
               color: activeSegment === 'b2c' ? '#FFF' : '#475569',
               fontWeight: 800,
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px'
             }}
           >
-            🧳 Leisure & Family Travelers
+            🧳 Leisure & Family
           </button>
 
           <button
             onClick={() => setActiveSegment('b2b')}
             style={{
-              padding: '0.65rem 1.25rem',
-              borderRadius: '12px',
+              padding: '0.5rem 1rem',
+              borderRadius: '10px',
               border: 'none',
               background: activeSegment === 'b2b' ? '#0F4C3A' : 'transparent',
               color: activeSegment === 'b2b' ? '#FFF' : '#475569',
               fontWeight: 800,
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px'
             }}
           >
-            🛡️ Registered Travel Agents (B2B)
+            🛡️ Travel Agents (B2B)
           </button>
 
         </div>
       </div>
 
       {/* 3. TIERED CONSULTING PACKAGES GRID */}
-      <div style={{ maxWidth: '1140px', margin: '0 auto', padding: '0 1.5rem' }}>
+      <div style={{ maxWidth: '1140px', margin: '0 auto', padding: '0 1.25rem' }}>
         
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.3rem' }}>
             Select Your Consultation Tier
           </h2>
-          <p style={{ fontSize: '0.9rem', color: '#64748B', margin: 0 }}>
+          <p style={{ fontSize: '0.85rem', color: '#64748B', margin: 0 }}>
             Every rupee & dollar paid is 100% credited back when you book your trip or tickets with Flying Wonders.
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
           {filteredPackages.map(pkg => (
             <div
               key={pkg._id || pkg.id}
               style={{
                 background: '#FFF',
-                borderRadius: '20px',
+                borderRadius: '16px',
                 border: '1px solid #E2E8F0',
-                padding: '2rem',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+                padding: '1.5rem',
+                boxShadow: '0 6px 20px rgba(0,0,0,0.04)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -337,32 +337,33 @@ export default function TravelConsultingPage() {
               }}
             >
               {pkg.badgeText && (
-                <span style={{ position: 'absolute', top: '-14px', right: '20px', background: 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)', color: '#FFF', fontSize: '0.72rem', fontWeight: 900, padding: '4px 12px', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <span style={{ position: 'absolute', top: '-12px', right: '16px', background: 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)', color: '#FFF', fontSize: '0.7rem', fontWeight: 900, padding: '3px 10px', borderRadius: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   {pkg.badgeText}
                 </span>
               )}
 
               <div>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#0F4C3A', margin: '0 0 0.4rem' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0F4C3A', margin: '0 0 0.3rem' }}>
                   {pkg.title}
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.5rem', lineHeight: 1.45 }}>
+                <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '0 0 1.25rem', lineHeight: 1.4 }}>
                   {pkg.subtitle}
                 </p>
 
-                <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '1.5rem', display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                  <strong style={{ fontSize: '1.8rem', color: '#0F172A', fontWeight: 900 }}>
-                    SGD ${pkg.priceSgd}
+                {/* PRICING BOX: INR MAIN FONT, SGD SMALL FONT SECONDARY */}
+                <div style={{ background: '#F8FAFC', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '1.25rem', display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
+                  <strong style={{ fontSize: '1.6rem', color: '#0F172A', fontWeight: 900 }}>
+                    ₹{pkg.priceInr.toLocaleString()} INR
                   </strong>
-                  <span style={{ fontSize: '1rem', color: '#059669', fontWeight: 800 }}>
-                    (₹{pkg.priceInr.toLocaleString()} INR)
+                  <span style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 700 }}>
+                    (${pkg.priceSgd} SGD)
                   </span>
                 </div>
 
-                <ul style={{ margin: '0 0 1.75rem', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                <ul style={{ margin: '0 0 1.5rem', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                   {pkg.inclusions?.map((inc: string, i: number) => (
-                    <li key={i} style={{ fontSize: '0.85rem', color: '#334155', display: 'flex', alignItems: 'flex-start', gap: '8px', lineHeight: 1.4 }}>
-                      <CheckCircle2 size={16} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <li key={i} style={{ fontSize: '0.82rem', color: '#334155', display: 'flex', alignItems: 'flex-start', gap: '8px', lineHeight: 1.35 }}>
+                      <CheckCircle2 size={15} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
                       <span>{inc}</span>
                     </li>
                   ))}

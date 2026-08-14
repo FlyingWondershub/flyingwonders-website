@@ -57,15 +57,49 @@ export async function POST(req: NextRequest) {
       status: 'pending',
     }
 
+    let createdDoc = null
     if (process.env.SANITY_WRITE_TOKEN) {
-      const created = await writeClient.create(doc)
-      return NextResponse.json({ success: true, bookingId, booking: created })
+      createdDoc = await writeClient.create(doc)
+    }
+
+    // DISPATCH INSTANT ADMIN EMAIL ALERT VIA WEB3FORMS API
+    try {
+      await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_key: process.env.WEB3FORMS_ACCESS_KEY || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          subject: `🚨 New Travel Consulting Request: ${bookingId} - ${clientName.trim()}`,
+          from_name: 'Flying Wonders Travel Consulting',
+          to_email: 'flyingwonders2024@gmail.com',
+          message: `
+NEW TRAVEL CONSULTING REQUEST SUBMITTED!
+---------------------------------------
+Booking Reference: ${bookingId}
+Client Name: ${clientName.trim()}
+Category: ${userRole || 'Traveler'}
+Email: ${clientEmail.trim()}
+Phone / WhatsApp: ${clientPhone.trim()}
+Package: ${packageTitle} (${packagePrice})
+Preferred Date: ${preferredDate || 'Flexible / Date TBD'}
+Preferred Time Window: ${preferredTimeWindow}
+Preferred Language: ${preferredLanguage}
+Trip Notes: ${tripDetails || 'None provided'}
+
+MANAGE LEAD & ASSIGN CONSULTANT:
+1. Admin Dashboard: https://flyingwonders.net/admin-dashboard
+2. Sanity Studio: https://flyingwonders.net/studio
+          `
+        })
+      })
+    } catch (emailErr) {
+      console.error('Failed to send admin email alert:', emailErr)
     }
 
     return NextResponse.json({ 
       success: true, 
       bookingId,
-      booking: { ...doc, _id: `temp-${Date.now()}` } 
+      booking: createdDoc || { ...doc, _id: `temp-${Date.now()}` } 
     })
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })
