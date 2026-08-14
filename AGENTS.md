@@ -7,4 +7,5 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # Post-Task Workflow Rules
 - Every time code changes are completed, always ask the user if deployment is required.
 - If the user agrees/confirms deployment, automatically commit and push the changes to `origin/main`.
+- Whenever new pages, routes, or features are created, always ensure SEO metadata, `sitemap.ts` entries, and search indexing configurations are automatically updated.
 
