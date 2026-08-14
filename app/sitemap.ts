@@ -39,6 +39,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/currency-converter', priority: 0.95, freq: 'daily' },
     { path: '/border-traffic', priority: 0.9, freq: 'hourly' },
     { path: '/flight-tracker', priority: 0.9, freq: 'hourly' },
+    { path: '/age-calculator', priority: 0.95, freq: 'daily' },
   ]
 
   return [...coreRoutes, ...toolRoutes].map(({ path, priority, freq }) => ({

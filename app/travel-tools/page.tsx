@@ -111,8 +111,19 @@ function ToolCommunityFooter({ toolId, toolName, summaryText }: { toolId: string
     window.dispatchEvent(new Event('storage'))
   }
 
+  const [copiedLink, setCopiedLink] = useState<boolean>(false)
+
+  const handleCopyLink = () => {
+    if (typeof window !== 'undefined') {
+      const toolUrl = `${window.location.origin}/travel-tools#${toolId}`
+      navigator.clipboard.writeText(toolUrl)
+      setCopiedLink(true)
+      setTimeout(() => setCopiedLink(false), 2500)
+    }
+  }
+
   const handleShareWhatsApp = () => {
-    const text = `*Flying Wonders Travel Tool - ${toolName}*\n\n${summaryText}\n\nExplore live travel tools here: https://flyingwonders.net/travel-tools#${toolId}`
+    const text = `*Flying Wonders Travel Tool - ${toolName}*\n\n${summaryText}\n\nExplore tool directly: https://flyingwonders.net/travel-tools#${toolId}`
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank')
   }
 
@@ -203,6 +214,25 @@ function ToolCommunityFooter({ toolId, toolName, summaryText }: { toolId: string
           >
             <Star size={13} color={isSaved ? '#B45309' : '#475569'} fill={isSaved ? '#B45309' : 'none'} />
             {isSaved ? 'Saved in Trip Kit' : 'Save to Trip Kit'}
+          </button>
+
+          <button
+            onClick={handleCopyLink}
+            style={{
+              padding: '0.4rem 0.85rem',
+              borderRadius: '20px',
+              border: copiedLink ? '1px solid #10B981' : '1px solid #CBD5E1',
+              background: copiedLink ? '#ECFDF5' : '#F8FAFC',
+              color: copiedLink ? '#047857' : '#475569',
+              fontWeight: 800,
+              fontSize: '0.78rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+          >
+            {copiedLink ? '✓ Link Copied!' : '🔗 Copy Direct Link'}
           </button>
 
           <button
