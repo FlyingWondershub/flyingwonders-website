@@ -39,7 +39,9 @@ import {
   Bookmark,
   CheckCircle2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Percent,
+  Tag
 } from 'lucide-react'
 
 // Helper function to format YouTube embed URLs
@@ -53,7 +55,7 @@ function getYouTubeEmbedUrl(url: string) {
 
 // ══ REUSABLE COMMUNITY LIKES, COMMENTS, SHARE & SAVE FOOTER FOR EVERY TOOL ══
 function ToolCommunityFooter({ toolId, toolName, summaryText }: { toolId: string; toolName: string; summaryText: string }) {
-  const [likes, setLikes] = useState<number>(35)
+  const [likes, setLikes] = useState<number>(38)
   const [isLiked, setIsLiked] = useState<boolean>(false)
   const [comments, setComments] = useState<any[]>([])
   const [showComments, setShowComments] = useState<boolean>(false)
@@ -525,6 +527,12 @@ export default function TravelToolsPage() {
   const sgVisaLink = sanitySettings.sgVisaStatusLink || 'https://eservices.ica.gov.sg/save/sso/login.xhtml'
   const airSuvidhaLink = sanitySettings.airSuvidhaLink || 'https://www.airsuvidha.app.nic.in/'
 
+  // Search filter helper
+  const matchesSearch = (text: string) => {
+    if (!searchFilter.trim()) return true
+    return text.toLowerCase().includes(searchFilter.toLowerCase().trim())
+  }
+
   return (
     <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: '5rem' }}>
       
@@ -566,14 +574,14 @@ export default function TravelToolsPage() {
           </div>
 
           <p style={{ fontSize: '0.95rem', color: '#E2E8F0', margin: 0, opacity: 0.9, lineHeight: 1.5 }}>
-            Real-time Flight Radar, Official SGAC & MDAC Arrival Cards, Visa Requirement Checkers, Live Exchange Rates & Community Travel Tips.
+            Real-time Flight Radar, Official SGAC/MDAC/Air Suvidha Arrival Cards, Border Traffic Cameras, Live Exchange Rates & Community Travel Tips.
           </p>
 
           {/* Quick Search Input */}
           <div style={{ maxWidth: '520px', margin: '1.25rem auto 0', position: 'relative' }}>
             <input
               type="text"
-              placeholder="Search travel tools, SGAC, visa guides, currency or flight status..."
+              placeholder="Search travel tools, border traffic, SGAC, visa guides, currency or flights..."
               value={searchFilter}
               onChange={e => setSearchFilter(e.target.value)}
               style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.5rem', borderRadius: '30px', border: 'none', fontSize: '0.9rem', outline: 'none', background: '#FFF', color: '#0F172A', fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
@@ -635,12 +643,12 @@ export default function TravelToolsPage() {
             </span>
 
             {[
-              { id: 'tool-official-portals', label: '🇸🇬 SGAC & MDAC (Arrival Cards)', show: !sanitySettings.hideOfficialPortals },
-              { id: 'tool-visa-checker', label: '🛂 Visa Checker', show: true },
-              { id: 'tool-flight-radar', label: '✈️ Flight Radar', show: !sanitySettings.hideFlightTracker },
+              { id: 'tool-official-portals', label: '🇸🇬 SGAC, MDAC & Air Suvidha', show: !sanitySettings.hideOfficialPortals },
+              { id: 'tool-border-traffic', label: '🚗 Border Traffic Cameras', show: !sanitySettings.hideBorderTraffic && !hideBorderTraffic },
               { id: 'tool-airline-promos', label: '🎟️ Airline Deals', show: !sanitySettings.hideAirlinePromotions && !hideAirlinePromos },
-              { id: 'tool-border-traffic', label: '🚗 Border Traffic', show: !sanitySettings.hideBorderTraffic && !hideBorderTraffic },
+              { id: 'tool-visa-checker', label: '🛂 Visa Checker', show: true },
               { id: 'tool-visa-checklist', label: '📋 Visa Checklists', show: !sanitySettings.hideVisaChecklist },
+              { id: 'tool-flight-radar', label: '✈️ Flight Radar', show: !sanitySettings.hideFlightTracker },
               { id: 'tool-currency-converter', label: '🧮 Currency & Meal Estimator', show: !sanitySettings.hideCurrencyConverter },
               { id: 'tool-packing-checklist', label: '🎒 Packing List', show: !sanitySettings.hideInteractiveChecklist },
               { id: 'tool-news-radar', label: '📰 Travel News', show: !sanitySettings.hideTravelNews && !hideNewsRadar },
@@ -687,22 +695,22 @@ export default function TravelToolsPage() {
 
       <div style={{ maxWidth: '1200px', margin: '2rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
         
-        {/* 🇸🇬 OFFICIAL SGAC & MDAC ARRIVAL CARDS SECTION (ACTIVE BY DEFAULT) */}
-        {!sanitySettings.hideOfficialPortals && (
+        {/* 1. 🇸🇬 OFFICIAL SGAC, MDAC & AIR SUVIDHA ARRIVAL CARDS SECTION */}
+        {!sanitySettings.hideOfficialPortals && matchesSearch('sgac mdac arrival card air suvidha singapore malaysia india') && (
           <div id="tool-official-portals" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
             
             {/* Header & Country Tabs */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
               <div>
                 <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#0F4C3A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <ShieldCheck size={24} color="#059669" /> Official Singapore & Malaysia Arrival Cards (SGAC & MDAC)
+                  <ShieldCheck size={24} color="#059669" /> Official Arrival Cards (SGAC, MDAC & Air Suvidha)
                 </h3>
                 <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0.25rem 0 0', fontWeight: 600 }}>
-                  Mandatory zero-fee arrival card portals for all international travelers entering Singapore & Malaysia.
+                  Mandatory zero-fee arrival card portals for Singapore, Malaysia & India travel.
                 </p>
               </div>
 
-              {/* SGAC vs MDAC vs Air Suvidha Toggle Tabs (SGAC ACTIVE BY DEFAULT) */}
+              {/* SGAC vs MDAC vs Air Suvidha Toggle Tabs */}
               <div style={{ display: 'flex', gap: '6px', background: '#F1F5F9', padding: '4px', borderRadius: '10px' }}>
                 <button
                   onClick={() => setArrivalCardTab('sgac')}
@@ -761,7 +769,7 @@ export default function TravelToolsPage() {
               </div>
             </div>
 
-            {/* TAB CONTENT: 🇸🇬 SGAC SINGAPORE ARRIVAL CARD (DEFAULT) */}
+            {/* TAB CONTENT: 🇸🇬 SGAC SINGAPORE ARRIVAL CARD */}
             {arrivalCardTab === 'sgac' && (
               <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '1.5rem', borderRadius: '14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
@@ -853,7 +861,7 @@ export default function TravelToolsPage() {
               </div>
             )}
 
-            {/* TAB CONTENT: 🇮🇳 AIR SUVIDHA (INDIA TRAVEL PORTAL) */}
+            {/* TAB CONTENT: 🇮🇳 AIR SUVIDHA */}
             {arrivalCardTab === 'airsuvidha' && (
               <div style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '1.5rem', borderRadius: '14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
@@ -899,87 +907,256 @@ export default function TravelToolsPage() {
               </div>
             )}
 
-            <ToolCommunityFooter toolId="official-portals" toolName="Official SGAC & MDAC Arrival Cards" summaryText="Mandatory zero-fee electronic arrival card submission for Singapore & Malaysia." />
+            <ToolCommunityFooter toolId="official-portals" toolName="Official SGAC, MDAC & Air Suvidha Portals" summaryText="Mandatory zero-fee electronic arrival card submission for Singapore, Malaysia & India." />
           </div>
         )}
 
-        {/* 🛂 LIVE PASSPORT VISA CHECKER */}
-        <div id="tool-visa-checker" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
-            <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <ShieldCheck size={22} color="#059669" /> Live Passport Visa Requirement Checker
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: '#718096', margin: '0.25rem 0 0' }}>
-                Check instant visa rules for 190+ nationalities entering Singapore, Malaysia, Thailand, Indonesia, and UAE.
-              </p>
+        {/* 2. 🚗 LIVE BORDER TRAFFIC CAMERAS & CAUSEWAY CROSSING TIMES */}
+        {!sanitySettings.hideBorderTraffic && !hideBorderTraffic && matchesSearch('border traffic causeway tuas woodlands traffic camera checkpoint singapore malaysia crossing') && (
+          <div id="tool-border-traffic" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Car size={22} color="#059669" /> Live Singapore-Malaysia Border Traffic Cameras & Causeway Times
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '0.25rem 0 0' }}>
+                  Real-time LTA camera feeds and estimated queue wait times for Woodlands Causeway & Tuas Second Link.
+                </p>
+              </div>
+              <button
+                onClick={fetchBorderTraffic}
+                disabled={borderRefreshing}
+                style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', color: '#475569' }}
+              >
+                <RefreshCw size={14} className={borderRefreshing ? 'animate-spin' : ''} />
+                <span>Refresh Live Cameras</span>
+              </button>
             </div>
-            <span style={{ fontSize: '0.72rem', background: '#ECFDF5', color: '#047857', padding: '0.25rem 0.65rem', borderRadius: '12px', fontWeight: 700 }}>
-              Updated 2026 Regulations
-            </span>
+
+            {borderLoading ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748B' }}>
+                <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
+                <span>Fetching live checkpoint camera feeds...</span>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                
+                {/* Woodlands Causeway */}
+                <div style={{ background: '#F8FAFC', borderRadius: '12px', padding: '1.25rem', border: '1px solid #E2E8F0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <strong style={{ fontSize: '0.95rem', color: '#0F172A' }}>🚗 Woodlands Causeway</strong>
+                    <span style={{ fontSize: '0.72rem', background: borderData?.woodlands?.statusColor || '#10B981', color: '#FFF', padding: '2px 8px', borderRadius: '12px', fontWeight: 800 }}>
+                      {borderData?.woodlands?.statusLabel || 'Moderate Traffic'}
+                    </span>
+                  </div>
+                  <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', height: '180px', background: '#000', marginBottom: '0.75rem' }}>
+                    <img
+                      src={borderData?.woodlands?.cameraUrl || 'https://images.gothere.sg/traffic/2701.jpg'}
+                      alt="Woodlands Causeway Live Camera"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <span style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', color: '#FFF', fontSize: '0.68rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                      📷 LTA Cam 2701 (Woodlands)
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#475569', fontWeight: 700 }}>
+                    <span>Estimated Crossing:</span>
+                    <strong style={{ color: '#0F4C3A' }}>{borderData?.woodlands?.estimatedMins || '20 - 35 Mins'}</strong>
+                  </div>
+                </div>
+
+                {/* Tuas Second Link */}
+                <div style={{ background: '#F8FAFC', borderRadius: '12px', padding: '1.25rem', border: '1px solid #E2E8F0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <strong style={{ fontSize: '0.95rem', color: '#0F172A' }}>🚗 Tuas Second Link</strong>
+                    <span style={{ fontSize: '0.72rem', background: borderData?.tuas?.statusColor || '#10B981', color: '#FFF', padding: '2px 8px', borderRadius: '12px', fontWeight: 800 }}>
+                      {borderData?.tuas?.statusLabel || 'Clear Flow'}
+                    </span>
+                  </div>
+                  <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', height: '180px', background: '#000', marginBottom: '0.75rem' }}>
+                    <img
+                      src={borderData?.tuas?.cameraUrl || 'https://images.gothere.sg/traffic/4703.jpg'}
+                      alt="Tuas Second Link Live Camera"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <span style={{ position: 'absolute', bottom: '8px', left: '8px', background: 'rgba(0,0,0,0.7)', color: '#FFF', fontSize: '0.68rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                      📷 LTA Cam 4703 (Tuas)
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#475569', fontWeight: 700 }}>
+                    <span>Estimated Crossing:</span>
+                    <strong style={{ color: '#0F4C3A' }}>{borderData?.tuas?.estimatedMins || '10 - 20 Mins'}</strong>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            <ToolCommunityFooter toolId="border-traffic" toolName="Live Border Traffic Cameras" summaryText="Real-time Causeway & Tuas camera feeds and crossing wait times." />
           </div>
+        )}
 
-          <form onSubmit={handleVisaCheck} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-            <select
-              value={visaPassport}
-              onChange={e => setVisaPassport(e.target.value)}
-              required
-              style={{ flex: '1 1 200px', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.9rem', fontWeight: 600, outline: 'none' }}
-            >
-              <option value="">-- Select Your Passport Country --</option>
-              <option value="IN">🇮🇳 India</option>
-              <option value="CN">🇨🇳 China</option>
-              <option value="US">🇺🇸 United States</option>
-              <option value="GB">🇬🇧 United Kingdom</option>
-              <option value="AU">🇦🇺 Australia</option>
-              <option value="MY">🇲🇾 Malaysia</option>
-              <option value="ID">🇮🇩 Indonesia</option>
-            </select>
-
-            <select
-              value={visaDestination}
-              onChange={e => setVisaDestination(e.target.value)}
-              required
-              style={{ flex: '1 1 200px', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.9rem', fontWeight: 600, outline: 'none' }}
-            >
-              <option value="">-- Select Destination --</option>
-              <option value="SG">🇸🇬 Singapore</option>
-              <option value="MY">🇲🇾 Malaysia</option>
-              <option value="TH">🇹🇭 Thailand</option>
-              <option value="ID">🇮🇩 Indonesia</option>
-              <option value="AE">🇦🇪 United Arab Emirates (Dubai)</option>
-            </select>
-
-            <button
-              type="submit"
-              disabled={visaLoading}
-              style={{ padding: '0.75rem 1.75rem', borderRadius: '8px', border: 'none', background: '#0F4C3A', color: '#FFF', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer' }}
-            >
-              {visaLoading ? 'Checking...' : 'Check Visa Rules'}
-            </button>
-          </form>
-
-          {visaResult && (
-            <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '1.25rem', borderRadius: '12px', marginTop: '1rem' }}>
-              <h4 style={{ margin: '0 0 0.5rem', color: '#166534', fontSize: '1rem', fontWeight: 800 }}>
-                {visaResult.visa_required ? '🛂 Visa Required' : '🎉 Visa Free / eVoucher Entry'}
-              </h4>
-              <p style={{ margin: 0, fontSize: '0.88rem', color: '#14532D', lineHeight: 1.5 }}>
-                {visaResult.text_details || visaResult.summary || 'Official entry guidelines fetched.'}
-              </p>
+        {/* 3. 🎟️ AIRLINE DEALS & PROMOTIONS */}
+        {!sanitySettings.hideAirlinePromotions && !hideAirlinePromos && matchesSearch('airline deals promos flights sia scoot indigo airindia batik air singapore flight tickets') && (
+          <div id="tool-airline-promos" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Tag size={22} color="#059669" /> Live Airline Fares & Special B2B Promotions
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '0.25rem 0 0' }}>
+                  Curated special deals from Singapore Airlines, IndiGo, Air India, Scoot, and Batik Air.
+                </p>
+              </div>
             </div>
-          )}
 
-          <ToolCommunityFooter toolId="visa-checker" toolName="Live Visa Requirement Checker" summaryText="Instant visa rules for 190+ nationalities entering Singapore, Malaysia & SE Asia." />
-        </div>
+            {promoLoading ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#64748B' }}>
+                <Loader2 size={24} className="animate-spin" style={{ margin: '0 auto 0.5rem' }} />
+                <span>Loading latest airline promotional fares...</span>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                {(airlinePromos.length > 0 ? airlinePromos : [
+                  { airline: 'Singapore Airlines', route: 'DEL / BOM ➔ SIN (Return)', fare: '₹28,500', note: 'Includes 25kg luggage & hot meal', code: 'SQ-FW-SPECIAL' },
+                  { airline: 'IndiGo Airlines', route: 'MAA / BLR ➔ SIN (Direct)', fare: '₹18,900', note: 'Daily non-stop morning flight', code: '6E-EARLYBIRD' },
+                  { airline: 'Scoot Airlines', route: 'BOM / TRZ ➔ SIN', fare: '₹14,500', note: 'Value fare ex-South India', code: 'TR-SCOOTPROMO' }
+                ]).map((promo, idx) => (
+                  <div key={idx} style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                    <span style={{ fontSize: '0.7rem', background: '#ECFDF5', color: '#047857', padding: '2px 8px', borderRadius: '4px', fontWeight: 800, textTransform: 'uppercase' }}>
+                      ✈️ {promo.airline}
+                    </span>
+                    <h5 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', margin: '0.4rem 0 0.2rem' }}>{promo.route}</h5>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                      <strong style={{ fontSize: '1.1rem', color: '#0F4C3A' }}>{promo.fare}</strong>
+                      <span style={{ fontSize: '0.75rem', color: '#64748B', background: '#FFF', border: '1px border #CBD5E1', padding: '2px 6px', borderRadius: '4px' }}>
+                        Code: {promo.code || 'FW-PROMO'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <ToolCommunityFooter toolId="airline-promos" toolName="Live Airline Fares & Promotions" summaryText="Curated promotional flight fares for Singapore & Malaysia routes." />
+          </div>
+        )}
+
+        {/* 4. 🛂 LIVE PASSPORT VISA CHECKER */}
+        {matchesSearch('visa checker passport requirement entry guidelines india china us uk australia malaysia indonesia singapore') && (
+          <div id="tool-visa-checker" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <ShieldCheck size={22} color="#059669" /> Live Passport Visa Requirement Checker
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '0.25rem 0 0' }}>
+                  Check instant visa rules for 190+ nationalities entering Singapore, Malaysia, Thailand, Indonesia, and UAE.
+                </p>
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#ECFDF5', color: '#047857', padding: '0.25rem 0.65rem', borderRadius: '12px', fontWeight: 700 }}>
+                Updated 2026 Regulations
+              </span>
+            </div>
+
+            <form onSubmit={handleVisaCheck} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <select
+                value={visaPassport}
+                onChange={e => setVisaPassport(e.target.value)}
+                required
+                style={{ flex: '1 1 200px', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.9rem', fontWeight: 600, outline: 'none' }}
+              >
+                <option value="">-- Select Your Passport Country --</option>
+                <option value="IN">🇮🇳 India</option>
+                <option value="CN">🇨🇳 China</option>
+                <option value="US">🇺🇸 United States</option>
+                <option value="GB">🇬🇧 United Kingdom</option>
+                <option value="AU">🇦🇺 Australia</option>
+                <option value="MY">🇲🇾 Malaysia</option>
+                <option value="ID">🇮🇩 Indonesia</option>
+              </select>
+
+              <select
+                value={visaDestination}
+                onChange={e => setVisaDestination(e.target.value)}
+                required
+                style={{ flex: '1 1 200px', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.9rem', fontWeight: 600, outline: 'none' }}
+              >
+                <option value="">-- Select Destination --</option>
+                <option value="SG">🇸🇬 Singapore</option>
+                <option value="MY">🇲🇾 Malaysia</option>
+                <option value="TH">🇹🇭 Thailand</option>
+                <option value="ID">🇮🇩 Indonesia</option>
+                <option value="AE">🇦🇪 United Arab Emirates (Dubai)</option>
+              </select>
+
+              <button
+                type="submit"
+                disabled={visaLoading}
+                style={{ padding: '0.75rem 1.75rem', borderRadius: '8px', border: 'none', background: '#0F4C3A', color: '#FFF', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer' }}
+              >
+                {visaLoading ? 'Checking...' : 'Check Visa Rules'}
+              </button>
+            </form>
+
+            {visaResult && (
+              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '1.25rem', borderRadius: '12px', marginTop: '1rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem', color: '#166534', fontSize: '1rem', fontWeight: 800 }}>
+                  {visaResult.visa_required ? '🛂 Visa Required' : '🎉 Visa Free / eVoucher Entry'}
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.88rem', color: '#14532D', lineHeight: 1.5 }}>
+                  {visaResult.text_details || visaResult.summary || 'Official entry guidelines fetched.'}
+                </p>
+              </div>
+            )}
+
+            <ToolCommunityFooter toolId="visa-checker" toolName="Live Visa Requirement Checker" summaryText="Instant visa rules for 190+ nationalities entering Singapore, Malaysia & SE Asia." />
+          </div>
+        )}
+
+        {/* 5. 📋 VISA DOCUMENT CHECKLISTS */}
+        {!sanitySettings.hideVisaChecklist && matchesSearch('visa checklist documents passport photo bank statement travel agent singapore visa') && (
+          <div id="tool-visa-checklist" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: '0 0 1.25rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <FileText size={22} color="#059669" /> Official Singapore & Malaysia Visa Document Checklists
+            </h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+              <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <strong style={{ fontSize: '0.95rem', color: '#0F4C3A', display: 'block', marginBottom: '0.5rem' }}>🇸🇬 Singapore Tourist E-Visa Checklist (Form 14A)</strong>
+                <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <li>✓ Original passport with 6 months validity from departure date</li>
+                  <li>✓ Form 14A signed by applicant</li>
+                  <li>✓ 2 Recent studio photos (35x45mm, matt finish, white background)</li>
+                  <li>✓ Cover letter stating purpose & dates of travel</li>
+                  <li>✓ Confirmed round-trip flight e-tickets & hotel bookings</li>
+                  <li>✓ Last 3 months bank statements showing sufficient funds</li>
+                </ul>
+              </div>
+
+              <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                <strong style={{ fontSize: '0.95rem', color: '#1E40AF', display: 'block', marginBottom: '0.5rem' }}>🇲🇾 Malaysia Visa Exemption & MDAC Guidelines</strong>
+                <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.82rem', color: '#334155', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <li>✓ 30-Day Visa-Free entry for Indian & Chinese passport holders (2026)</li>
+                  <li>✓ Mandatory MDAC online submission within 3 days before entry</li>
+                  <li>✓ Confirmed return flight or onward ticket to 3rd country</li>
+                  <li>✓ Proof of accommodation (Hotel voucher or host invitation)</li>
+                  <li>✓ Minimum USD $500 / ₹40,000 cash or Forex card for stay</li>
+                </ul>
+              </div>
+            </div>
+
+            <ToolCommunityFooter toolId="visa-checklist" toolName="Official Visa Document Checklists" summaryText="Official document checklists for Singapore E-Visa Form 14A and Malaysia MDAC entry." />
+          </div>
+        )}
 
         {/* IN-FEED ADSENSE BANNER SPACE */}
         <div style={{ margin: '2.5rem 0' }}>
           <AdBanner slotId="7788990022" format="horizontal" />
         </div>
 
-        {/* ✈️ AIRLABS LIVE FLIGHT RADAR & STATUS TRACKER */}
-        {!sanitySettings.hideFlightTracker && (
+        {/* 6. ✈️ AIRLABS LIVE FLIGHT RADAR & STATUS TRACKER */}
+        {!sanitySettings.hideFlightTracker && matchesSearch('flight radar status tracker changi airport arrivals departures flight number sq airlabs') && (
           <div id="tool-flight-radar" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
               <div>
@@ -1016,12 +1193,26 @@ export default function TravelToolsPage() {
               </button>
             </form>
 
+            {flightResult && (
+              <div style={{ background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginTop: '1rem' }}>
+                <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F4C3A', margin: '0 0 0.5rem' }}>
+                  ✈️ Flight {flightResult.flight_iata || flightNumberInput.toUpperCase()} Status
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', fontSize: '0.85rem', color: '#334155' }}>
+                  <div><strong>Status:</strong> {flightResult.status || 'En Route / Scheduled'}</div>
+                  <div><strong>Dep:</strong> {flightResult.dep_iata || 'N/A'} ({flightResult.dep_time || '--:--'})</div>
+                  <div><strong>Arr:</strong> {flightResult.arr_iata || 'SIN'} ({flightResult.arr_time || '--:--'})</div>
+                  <div><strong>Terminal / Gate:</strong> {flightResult.arr_terminal || 'T3'} / {flightResult.arr_gate || 'B4'}</div>
+                </div>
+              </div>
+            )}
+
             <ToolCommunityFooter toolId="flight-radar" toolName="Live Flight Radar" summaryText="Track live Singapore & Malaysia flights, arrivals, departures, and gate numbers." />
           </div>
         )}
 
-        {/* 🧮 CURRENCY CONVERTER & MEAL ESTIMATOR */}
-        {!sanitySettings.hideCurrencyConverter && (
+        {/* 7. 🧮 CURRENCY CONVERTER & MEAL ESTIMATOR */}
+        {!sanitySettings.hideCurrencyConverter && matchesSearch('currency converter meal estimator exchange rate sgd inr myr food budget singapore hawker') && (
           <div id="tool-currency-converter" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: '0 0 1.25rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <Calculator size={22} color="#059669" /> Live SGD / INR / MYR Currency Converter & Daily Meal Estimator
@@ -1070,8 +1261,8 @@ export default function TravelToolsPage() {
           </div>
         )}
 
-        {/* 🎒 PACKING & TRAVEL PREPARATION CHECKLIST */}
-        {!sanitySettings.hideInteractiveChecklist && (
+        {/* 8. 🎒 PACKING & TRAVEL PREPARATION CHECKLIST */}
+        {!sanitySettings.hideInteractiveChecklist && matchesSearch('packing list checklist passport travel insurance adapter forex sim arrival card') && (
           <div id="tool-packing-checklist" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
               <div>
@@ -1123,6 +1314,69 @@ export default function TravelToolsPage() {
             </div>
 
             <ToolCommunityFooter toolId="packing-checklist" toolName="Singapore & Malaysia Packing Checklist" summaryText="Essential 8-item travel checklist for Singapore & Malaysia trips." />
+          </div>
+        )}
+
+        {/* 9. 📰 TRAVEL NEWS RADAR */}
+        {!sanitySettings.hideTravelNews && !hideNewsRadar && matchesSearch('travel news radar aviation changi airasia genting cruise singapore news') && (
+          <div id="tool-news-radar" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: '0 0 1.25rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <Newspaper size={22} color="#059669" /> SE Asia & Singapore Travel News Radar
+            </h3>
+            
+            {newsLoading ? (
+              <div style={{ textAlign: 'center', padding: '1.5rem', color: '#64748B' }}>Loading latest travel news...</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                {(newsList.length > 0 ? newsList : [
+                  { title: 'Changi Airport Terminal 2 Expansion Fully Operational', date: '2026-08-10', category: 'Aviation', summary: 'New automated immigration lanes reduce passenger processing times to under 30 seconds.' },
+                  { title: 'Genting Dream Cruise Season Announced Ex-Singapore', date: '2026-08-08', category: 'Cruises', summary: 'Resort World Cruises launches new 3N Phuket & Penang sailing itineraries.' },
+                  { title: 'Singapore LRT & MRT Visa/Mastercard Tap-and-Go Active', date: '2026-08-05', category: 'Transport', summary: 'Foreign visitors can tap contactless credit cards directly at MRT turnstiles without EZ-Link cards.' }
+                ]).map((news, idx) => (
+                  <div key={idx} style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                    <span style={{ fontSize: '0.68rem', background: '#F1F5F9', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                      {news.category || 'Industry Updates'}
+                    </span>
+                    <h5 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0.35rem 0 0.2rem' }}>{news.title}</h5>
+                    <p style={{ fontSize: '0.78rem', color: '#475569', margin: 0, lineHeight: 1.4 }}>{news.summary}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <ToolCommunityFooter toolId="news-radar" toolName="Travel News Radar" summaryText="Latest Singapore & SE Asia travel industry updates and entry notices." />
+          </div>
+        )}
+
+        {/* 10. ⏱️ ATTRACTION TIME ALLOCATOR */}
+        {!sanitySettings.hideAttractionAllocator && matchesSearch('time allocator duration hours universal studios gardens by the bay night safari Sentosa Cable Car time planner') && (
+          <div id="tool-time-allocator" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: '0 0 1.25rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <Clock size={22} color="#059669" /> Attraction Time Allocator & Visit Duration Planner
+            </h3>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
+              {[
+                { name: 'Universal Studios Singapore (USS)', time: '5 – 7 Hours', bestTime: 'Morning (10:00 AM)' },
+                { name: 'Gardens by the Bay (Domes + Supertree)', time: '3 – 4 Hours', bestTime: 'Late Afternoon (4:30 PM)' },
+                { name: 'Night Safari & Tram Ride', time: '3 – 4 Hours', bestTime: 'Evening (7:15 PM Slot)' },
+                { name: 'Sentosa Island Cable Car + SkyHelix', time: '3 – 5 Hours', bestTime: 'Afternoon (2:00 PM)' },
+                { name: 'Singapore Zoo & River Wonders', time: '5 – 6 Hours', bestTime: 'Morning (8:30 AM)' },
+                { name: 'Bird Paradise (Mandai Wildlife)', time: '3 – 4 Hours', bestTime: 'Morning (9:00 AM)' }
+              ].map((item, idx) => (
+                <div key={idx} style={{ background: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                  <strong style={{ fontSize: '0.88rem', color: '#0F172A', display: 'block', marginBottom: '4px' }}>{item.name}</strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#475569' }}>
+                    <span>⏱️ Duration: <strong>{item.time}</strong></span>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', color: '#047857', fontWeight: 700, display: 'block', marginTop: '2px' }}>
+                    💡 Best Arrival: {item.bestTime}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <ToolCommunityFooter toolId="time-allocator" toolName="Attraction Time Allocator" summaryText="Recommended visit durations and best arrival times for top Singapore attractions." />
           </div>
         )}
 
@@ -1193,7 +1447,7 @@ export default function TravelToolsPage() {
               {/* 1. Official Arrival Card Portals */}
               <div style={{ background: '#F0FDF4', padding: '1rem', borderRadius: '10px', border: '1px solid #BBF7D0' }}>
                 <strong style={{ fontSize: '0.88rem', color: '#166534', display: 'block', marginBottom: '0.4rem' }}>
-                  🇸🇬 Singapore & 🇲🇾 Malaysia Official Arrival Cards
+                  🇸🇬 Singapore, 🇲🇾 Malaysia & 🇮🇳 India Official Arrival Cards
                 </strong>
                 <p style={{ fontSize: '0.78rem', color: '#14532D', margin: '0 0 0.5rem', lineHeight: 1.55 }}>
                   • <strong>SGAC (Singapore):</strong> Submit free at <a href={sgacLink} target="_blank" rel="noreferrer" style={{ color: '#059669', fontWeight: 700 }}>ica.gov.sg</a> within 3 days before entry.

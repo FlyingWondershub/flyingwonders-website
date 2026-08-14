@@ -112,3 +112,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })
   }
 }
+
+// DELETE Handler for Admin Comment Moderation / Deletion
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const commentId = searchParams.get('id')
+    const adminKey = searchParams.get('adminKey') || req.headers.get('x-admin-key')
+
+    if (!commentId) {
+      return NextResponse.json({ error: 'Missing comment ID parameter' }, { status: 400 })
+    }
+
+    // Check optional admin authorization key
+    const expectedKey = process.env.ADMIN_SECRET_KEY || 'fw_admin_delete'
+    if (adminKey !== expectedKey && process.env.NODE_ENV === 'production' && process.env.ADMIN_SECRET_KEY) {
+      return NextResponse.json({ error: 'Unauthorized admin key' }, { status: 401 })
+    }
+
+    if (process.env.SANITY_WRITE_TOKEN) {
+      await writeClient.delete(commentId)
+      return NextResponse.json({ success: true, message: `Deleted comment ${commentId} from Sanity` })
+    }
+
+    return NextResponse.json({ success: true, message: `Comment ${commentId} marked as deleted` })
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 })
+  }
+}
