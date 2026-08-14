@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import AdBanner from '../../components/AdBanner'
 import { client } from '../../sanity/lib/client'
@@ -37,7 +37,9 @@ import {
   MessageSquare,
   X,
   Bookmark,
-  CheckCircle2
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 
 // Helper function to format YouTube embed URLs
@@ -62,7 +64,6 @@ function ToolCommunityFooter({ toolId, toolName, summaryText }: { toolId: string
   const [isSaved, setIsSaved] = useState<boolean>(false)
 
   useEffect(() => {
-    // Read local upvotes
     if (typeof window !== 'undefined') {
       const savedLikes = localStorage.getItem(`fw_tool_likes_${toolId}`)
       if (savedLikes) {
@@ -73,7 +74,6 @@ function ToolCommunityFooter({ toolId, toolName, summaryText }: { toolId: string
       if (savedKit.includes(toolId)) setIsSaved(true)
     }
 
-    // Fetch comments for this tool
     fetch(`/api/travel-tools/comments?toolId=${toolId}`)
       .then(res => res.json())
       .then(data => {
@@ -289,15 +289,25 @@ function ToolCommunityFooter({ toolId, toolName, summaryText }: { toolId: string
 }
 
 export default function TravelToolsPage() {
-  const [activeVisaTab, setActiveVisaTab] = useState<'sg' | 'my' | 'crossborder'>('sg')
+  // Official Arrival Cards Tab: SGAC (default), MDAC, or Air Suvidha
+  const [arrivalCardTab, setArrivalCardTab] = useState<'sgac' | 'mdac' | 'airsuvidha'>('sgac')
   
-  // Category Filter Tab & Real-time Search
-  const [activeCategoryTab, setActiveCategoryTab] = useState<'all' | 'visas' | 'money' | 'transport' | 'weather'>('all')
+  // Real-time Search Filter
   const [searchFilter, setSearchFilter] = useState<string>('')
   
   // Saved Trip Kit Modal Drawer State
   const [showTripKitModal, setShowTripKitModal] = useState<boolean>(false)
   const [savedKitIds, setSavedKitIds] = useState<string[]>([])
+
+  // Category Scroller Ref
+  const scrollerRef = useRef<HTMLDivElement>(null)
+
+  const scrollScroller = (direction: 'left' | 'right') => {
+    if (scrollerRef.current) {
+      const scrollAmount = direction === 'left' ? -250 : 250
+      scrollerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+    }
+  }
 
   useEffect(() => {
     const updateKit = () => {
@@ -360,12 +370,11 @@ export default function TravelToolsPage() {
   }
 
   // Active Tool Section for Sticky Navigator Bar
-  const [activeToolSection, setActiveToolSection] = useState<string>('tool-flight-radar')
+  const [activeToolSection, setActiveToolSection] = useState<string>('tool-official-portals')
 
   // Travel News Radar State
   const [newsList, setNewsList] = useState<any[]>([])
   const [newsLoading, setNewsLoading] = useState<boolean>(true)
-  const [newsFilter, setNewsFilter] = useState<'all' | 'aviation' | 'sea' | 'industry'>('all')
   const [hideNewsRadar, setHideNewsRadar] = useState<boolean>(false)
 
   const scrollToTool = (id: string) => {
@@ -557,14 +566,14 @@ export default function TravelToolsPage() {
           </div>
 
           <p style={{ fontSize: '0.95rem', color: '#E2E8F0', margin: 0, opacity: 0.9, lineHeight: 1.5 }}>
-            Real-time Flight Radar, Visa Requirement Checkers, Live Exchange Rates, Border Traffic Cameras & Community Travel Tips.
+            Real-time Flight Radar, Official SGAC & MDAC Arrival Cards, Visa Requirement Checkers, Live Exchange Rates & Community Travel Tips.
           </p>
 
           {/* Quick Search Input */}
           <div style={{ maxWidth: '520px', margin: '1.25rem auto 0', position: 'relative' }}>
             <input
               type="text"
-              placeholder="Search travel tools, visa guides, currency or flight status..."
+              placeholder="Search travel tools, SGAC, visa guides, currency or flight status..."
               value={searchFilter}
               onChange={e => setSearchFilter(e.target.value)}
               style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.5rem', borderRadius: '30px', border: 'none', fontSize: '0.9rem', outline: 'none', background: '#FFF', color: '#0F172A', fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
@@ -574,13 +583,13 @@ export default function TravelToolsPage() {
         </div>
       </section>
 
-      {/* 🧭 STICKY TOOL CATEGORY BAR */}
+      {/* 🧭 STICKY TOOL CATEGORY BAR WITH HORIZONTAL SCROLLER BUTTONS */}
       <div
         style={{
           position: 'sticky',
           top: '70px',
           zIndex: 90,
-          background: 'rgba(255, 255, 255, 0.94)',
+          background: 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(12px)',
           borderBottom: '1px solid #E2E8F0',
           boxShadow: '0 4px 15px rgba(0, 0, 0, 0.05)',
@@ -594,91 +603,303 @@ export default function TravelToolsPage() {
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch'
+            position: 'relative'
           }}
         >
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap', marginRight: '0.25rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Compass size={14} color="#059669" /> Tools:
-          </span>
+          {/* Scroll Left Button */}
+          <button
+            onClick={() => scrollScroller('left')}
+            title="Scroll Left"
+            style={{ background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 4px rgba(0,0,0,0.08)' }}
+          >
+            <ChevronLeft size={16} color="#475569" />
+          </button>
 
-          {[
-            { id: 'tool-flight-radar', label: '✈️ Flight Radar', show: !sanitySettings.hideFlightTracker },
-            { id: 'tool-airline-promos', label: '🎟️ Airline Deals', show: !sanitySettings.hideAirlinePromotions && !hideAirlinePromos },
-            { id: 'tool-border-traffic', label: '🚗 Border Traffic', show: !sanitySettings.hideBorderTraffic && !hideBorderTraffic },
-            { id: 'tool-official-portals', label: '🇸🇬 SGAC & MDAC', show: !sanitySettings.hideOfficialPortals },
-            { id: 'tool-visa-checker', label: '🛂 Visa Checker', show: true },
-            { id: 'tool-visa-checklist', label: '📋 Visa Checklists', show: !sanitySettings.hideVisaChecklist },
-            { id: 'tool-currency-converter', label: '🧮 Currency & Meal Estimator', show: !sanitySettings.hideCurrencyConverter },
-            { id: 'tool-packing-checklist', label: '🎒 Packing List', show: !sanitySettings.hideInteractiveChecklist },
-            { id: 'tool-news-radar', label: '📰 Travel News', show: !sanitySettings.hideTravelNews && !hideNewsRadar },
-            { id: 'tool-time-allocator', label: '⏱️ Time Allocator', show: !sanitySettings.hideAttractionAllocator }
-          ].filter(item => item.show).map(item => (
-            <button
-              key={item.id}
-              onClick={() => scrollToTool(item.id)}
-              style={{
-                padding: '0.4rem 0.85rem',
-                borderRadius: '20px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                whiteSpace: 'nowrap',
-                border: activeToolSection === item.id ? '1px solid #059669' : '1px solid #CBD5E1',
-                background: activeToolSection === item.id ? '#F0FDF4' : '#F8FAFC',
-                color: activeToolSection === item.id ? '#166534' : '#475569',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: activeToolSection === item.id ? '0 2px 6px rgba(5,150,105,0.15)' : 'none'
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
+          {/* Category Items Horizontal Scroller */}
+          <div
+            ref={scrollerRef}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              overflowX: 'auto',
+              scrollBehavior: 'smooth',
+              scrollbarWidth: 'thin',
+              WebkitOverflowScrolling: 'touch',
+              flex: 1,
+              padding: '2px 0'
+            }}
+          >
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap', marginRight: '0.25rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Compass size={14} color="#059669" /> Tools:
+            </span>
+
+            {[
+              { id: 'tool-official-portals', label: '🇸🇬 SGAC & MDAC (Arrival Cards)', show: !sanitySettings.hideOfficialPortals },
+              { id: 'tool-visa-checker', label: '🛂 Visa Checker', show: true },
+              { id: 'tool-flight-radar', label: '✈️ Flight Radar', show: !sanitySettings.hideFlightTracker },
+              { id: 'tool-airline-promos', label: '🎟️ Airline Deals', show: !sanitySettings.hideAirlinePromotions && !hideAirlinePromos },
+              { id: 'tool-border-traffic', label: '🚗 Border Traffic', show: !sanitySettings.hideBorderTraffic && !hideBorderTraffic },
+              { id: 'tool-visa-checklist', label: '📋 Visa Checklists', show: !sanitySettings.hideVisaChecklist },
+              { id: 'tool-currency-converter', label: '🧮 Currency & Meal Estimator', show: !sanitySettings.hideCurrencyConverter },
+              { id: 'tool-packing-checklist', label: '🎒 Packing List', show: !sanitySettings.hideInteractiveChecklist },
+              { id: 'tool-news-radar', label: '📰 Travel News', show: !sanitySettings.hideTravelNews && !hideNewsRadar },
+              { id: 'tool-time-allocator', label: '⏱️ Time Allocator', show: !sanitySettings.hideAttractionAllocator }
+            ].filter(item => item.show).map(item => (
+              <button
+                key={item.id}
+                onClick={() => scrollToTool(item.id)}
+                style={{
+                  padding: '0.45rem 0.95rem',
+                  borderRadius: '20px',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  whiteSpace: 'nowrap',
+                  border: activeToolSection === item.id ? '1px solid #059669' : '1px solid #CBD5E1',
+                  background: activeToolSection === item.id ? '#F0FDF4' : '#F8FAFC',
+                  color: activeToolSection === item.id ? '#166534' : '#475569',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: activeToolSection === item.id ? '0 2px 6px rgba(5,150,105,0.15)' : 'none'
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Scroll Right Button */}
+          <button
+            onClick={() => scrollScroller('right')}
+            title="Scroll Right"
+            style={{ background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '50%', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, boxShadow: '0 2px 4px rgba(0,0,0,0.08)' }}
+          >
+            <ChevronRight size={16} color="#475569" />
+          </button>
+
         </div>
+      </div>
+
+      {/* TOP ADSENSE BANNER SPACE */}
+      <div style={{ maxWidth: '1200px', margin: '1.5rem auto 0', padding: '0 1.5rem' }}>
+        <AdBanner slotId="7788990011" format="horizontal" />
       </div>
 
       <div style={{ maxWidth: '1200px', margin: '2rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
         
-        {/* ✈️ AIRLABS LIVE FLIGHT RADAR & STATUS TRACKER */}
-        {!sanitySettings.hideFlightTracker && (
-          <div id="tool-flight-radar" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+        {/* 🇸🇬 OFFICIAL SGAC & MDAC ARRIVAL CARDS SECTION (ACTIVE BY DEFAULT) */}
+        {!sanitySettings.hideOfficialPortals && (
+          <div id="tool-official-portals" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            
+            {/* Header & Country Tabs */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <Plane size={22} color="#059669" /> AirLabs Real-Time Flight Radar & Changi Status
+                <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#0F4C3A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <ShieldCheck size={24} color="#059669" /> Official Singapore & Malaysia Arrival Cards (SGAC & MDAC)
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '0.25rem 0 0' }}>
-                  Track live flight status, arrivals, departures, terminals, and gates in real time.
+                <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0.25rem 0 0', fontWeight: 600 }}>
+                  Mandatory zero-fee arrival card portals for all international travelers entering Singapore & Malaysia.
                 </p>
               </div>
-              <span style={{ fontSize: '0.72rem', background: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', padding: '0.25rem 0.65rem', borderRadius: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} /> Live AirLabs Data
-              </span>
+
+              {/* SGAC vs MDAC vs Air Suvidha Toggle Tabs (SGAC ACTIVE BY DEFAULT) */}
+              <div style={{ display: 'flex', gap: '6px', background: '#F1F5F9', padding: '4px', borderRadius: '10px' }}>
+                <button
+                  onClick={() => setArrivalCardTab('sgac')}
+                  style={{
+                    padding: '0.5rem 0.9rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: arrivalCardTab === 'sgac' ? '#0F4C3A' : 'transparent',
+                    color: arrivalCardTab === 'sgac' ? '#FFF' : '#475569',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  🇸🇬 SGAC (Singapore)
+                </button>
+                <button
+                  onClick={() => setArrivalCardTab('mdac')}
+                  style={{
+                    padding: '0.5rem 0.9rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: arrivalCardTab === 'mdac' ? '#0F4C3A' : 'transparent',
+                    color: arrivalCardTab === 'mdac' ? '#FFF' : '#475569',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  🇲🇾 MDAC (Malaysia)
+                </button>
+                <button
+                  onClick={() => setArrivalCardTab('airsuvidha')}
+                  style={{
+                    padding: '0.5rem 0.9rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: arrivalCardTab === 'airsuvidha' ? '#0F4C3A' : 'transparent',
+                    color: arrivalCardTab === 'airsuvidha' ? '#FFF' : '#475569',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  🇮🇳 Air Suvidha (India)
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleSearchFlight} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-              <div style={{ flex: '1 1 280px', position: 'relative' }}>
-                <input 
-                  type="text" 
-                  placeholder="Enter Flight Number (e.g. SQ423, 6E53, AI380, MH601)..." 
-                  value={flightNumberInput}
-                  onChange={e => setFlightNumberInput(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.5rem', borderRadius: '8px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.92rem', fontWeight: 600, background: '#F8FAFC' }}
-                />
-                <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />
-              </div>
-              <button 
-                type="submit"
-                disabled={flightLoading}
-                style={{ padding: '0.75rem 1.75rem', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)', color: '#FFF', fontWeight: 700, fontSize: '0.9rem', cursor: flightLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 3px 10px rgba(5,150,105,0.2)' }}
-              >
-                {flightLoading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
-                <span>Track Flight</span>
-              </button>
-            </form>
+            {/* TAB CONTENT: 🇸🇬 SGAC SINGAPORE ARRIVAL CARD (DEFAULT) */}
+            {arrivalCardTab === 'sgac' && (
+              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '1.5rem', borderRadius: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <span style={{ background: '#059669', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '5px', textTransform: 'uppercase' }}>
+                      🇸🇬 Singapore ICA Portal • 100% Free
+                    </span>
+                    <h4 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#166534', margin: '0.4rem 0 0.25rem' }}>
+                      SG Arrival Card (SGAC) Electronic Submission
+                    </h4>
+                    <p style={{ fontSize: '0.85rem', color: '#14532D', margin: '0 0 1rem', lineHeight: 1.5, maxWidth: '680px' }}>
+                      All foreign visitors (including Indian, Chinese, US, UK, & Australian passport holders) MUST submit the electronic SG Arrival Card within <strong>3 days prior to arrival</strong> in Singapore.
+                    </p>
+                    
+                    <ul style={{ margin: '0 0 1.25rem', paddingLeft: '1.2rem', fontSize: '0.82rem', color: '#166534', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <li>✓ Zero government fee (Do NOT pay scam agencies charging $30-$80).</li>
+                      <li>✓ Instant QR confirmation sent to your email.</li>
+                      <li>✓ Passport must have at least 6 months validity from entry date.</li>
+                    </ul>
+                  </div>
 
-            <ToolCommunityFooter toolId="flight-radar" toolName="Live Flight Radar" summaryText="Track live Singapore & Malaysia flights, arrivals, departures, and gate numbers." />
+                  <a
+                    href={sgacLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)',
+                      color: '#FFF',
+                      padding: '0.85rem 1.75rem',
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '0.9rem',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 15px rgba(5,150,105,0.3)'
+                    }}
+                  >
+                    <span>Submit Official SGAC</span> <ExternalLink size={16} />
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: 🇲🇾 MDAC MALAYSIA DIGITAL ARRIVAL CARD */}
+            {arrivalCardTab === 'mdac' && (
+              <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '1.5rem', borderRadius: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <span style={{ background: '#1D4ED8', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '5px', textTransform: 'uppercase' }}>
+                      🇲🇾 Malaysia Immigration Portal • 100% Free
+                    </span>
+                    <h4 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#1E40AF', margin: '0.4rem 0 0.25rem' }}>
+                      Malaysia Digital Arrival Card (MDAC) Submission
+                    </h4>
+                    <p style={{ fontSize: '0.85rem', color: '#1E3A8A', margin: '0 0 1rem', lineHeight: 1.5, maxWidth: '680px' }}>
+                      Mandatory for all foreign travelers entering Malaysia via Kuala Lumpur (KLIA), Penang, or Woodlands/Tuas land checkpoints. Submit online within <strong>3 days before arrival</strong>.
+                    </p>
+                    
+                    <ul style={{ margin: '0 0 1.25rem', paddingLeft: '1.2rem', fontSize: '0.82rem', color: '#1E40AF', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <li>✓ Zero fee on official Malaysian Immigration MDAC website.</li>
+                      <li>✓ Indian & Chinese passport holders enjoy 30-day visa exemption through 2026.</li>
+                      <li>✓ Print or save PDF PIN confirmation on mobile for border officer inspection.</li>
+                    </ul>
+                  </div>
+
+                  <a
+                    href={mdacLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: 'linear-gradient(135deg, #1E40AF 0%, #1D4ED8 100%)',
+                      color: '#FFF',
+                      padding: '0.85rem 1.75rem',
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '0.9rem',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 15px rgba(29,78,216,0.3)'
+                    }}
+                  >
+                    <span>Submit Official MDAC</span> <ExternalLink size={16} />
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: 🇮🇳 AIR SUVIDHA (INDIA TRAVEL PORTAL) */}
+            {arrivalCardTab === 'airsuvidha' && (
+              <div style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '1.5rem', borderRadius: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <span style={{ background: '#EA580C', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '5px', textTransform: 'uppercase' }}>
+                      🇮🇳 India Civil Aviation Portal • 100% Free
+                    </span>
+                    <h4 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#C2410C', margin: '0.4rem 0 0.25rem' }}>
+                      Air Suvidha Self-Declaration & Entry Guidelines
+                    </h4>
+                    <p style={{ fontSize: '0.85rem', color: '#9A3412', margin: '0 0 1rem', lineHeight: 1.5, maxWidth: '680px' }}>
+                      Official health declaration and arrival guidelines portal for passengers travelling to India (Delhi, Mumbai, Bengaluru, Chennai, Hyderabad, Kochi, Kolkata).
+                    </p>
+                    
+                    <ul style={{ margin: '0 0 1.25rem', paddingLeft: '1.2rem', fontSize: '0.82rem', color: '#C2410C', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <li>✓ Official Ministry of Civil Aviation self-declaration portal.</li>
+                      <li>✓ Check destination airport health protocols & quarantine updates.</li>
+                      <li>✓ Direct access to New Delhi Airport (MoCA) portal.</li>
+                    </ul>
+                  </div>
+
+                  <a
+                    href={airSuvidhaLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: 'linear-gradient(135deg, #C2410C 0%, #EA580C 100%)',
+                      color: '#FFF',
+                      padding: '0.85rem 1.75rem',
+                      borderRadius: '10px',
+                      fontWeight: 800,
+                      fontSize: '0.9rem',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 15px rgba(234,88,12,0.3)'
+                    }}
+                  >
+                    <span>Open Official Air Suvidha</span> <ExternalLink size={16} />
+                  </a>
+                </div>
+              </div>
+            )}
+
+            <ToolCommunityFooter toolId="official-portals" toolName="Official SGAC & MDAC Arrival Cards" summaryText="Mandatory zero-fee electronic arrival card submission for Singapore & Malaysia." />
           </div>
         )}
 
@@ -751,6 +972,53 @@ export default function TravelToolsPage() {
 
           <ToolCommunityFooter toolId="visa-checker" toolName="Live Visa Requirement Checker" summaryText="Instant visa rules for 190+ nationalities entering Singapore, Malaysia & SE Asia." />
         </div>
+
+        {/* IN-FEED ADSENSE BANNER SPACE */}
+        <div style={{ margin: '2.5rem 0' }}>
+          <AdBanner slotId="7788990022" format="horizontal" />
+        </div>
+
+        {/* ✈️ AIRLABS LIVE FLIGHT RADAR & STATUS TRACKER */}
+        {!sanitySettings.hideFlightTracker && (
+          <div id="tool-flight-radar" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Plane size={22} color="#059669" /> AirLabs Real-Time Flight Radar & Changi Status
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: '#718096', margin: '0.25rem 0 0' }}>
+                  Track live flight status, arrivals, departures, terminals, and gates in real time.
+                </p>
+              </div>
+              <span style={{ fontSize: '0.72rem', background: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', padding: '0.25rem 0.65rem', borderRadius: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} /> Live AirLabs Data
+              </span>
+            </div>
+
+            <form onSubmit={handleSearchFlight} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <div style={{ flex: '1 1 280px', position: 'relative' }}>
+                <input 
+                  type="text" 
+                  placeholder="Enter Flight Number (e.g. SQ423, 6E53, AI380, MH601)..." 
+                  value={flightNumberInput}
+                  onChange={e => setFlightNumberInput(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.5rem', borderRadius: '8px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.92rem', fontWeight: 600, background: '#F8FAFC' }}
+                />
+                <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />
+              </div>
+              <button 
+                type="submit"
+                disabled={flightLoading}
+                style={{ padding: '0.75rem 1.75rem', borderRadius: '8px', border: 'none', background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)', color: '#FFF', fontWeight: 700, fontSize: '0.9rem', cursor: flightLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 3px 10px rgba(5,150,105,0.2)' }}
+              >
+                {flightLoading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
+                <span>Track Flight</span>
+              </button>
+            </form>
+
+            <ToolCommunityFooter toolId="flight-radar" toolName="Live Flight Radar" summaryText="Track live Singapore & Malaysia flights, arrivals, departures, and gate numbers." />
+          </div>
+        )}
 
         {/* 🧮 CURRENCY CONVERTER & MEAL ESTIMATOR */}
         {!sanitySettings.hideCurrencyConverter && (
@@ -858,14 +1126,14 @@ export default function TravelToolsPage() {
           </div>
         )}
 
-        {/* Strategic AdSense Placement */}
+        {/* BOTTOM ADSENSE BANNER SPACE */}
         <div style={{ margin: '2.5rem 0' }}>
-          <AdBanner slotId="7788990011" format="horizontal" />
+          <AdBanner slotId="7788990033" format="horizontal" />
         </div>
 
       </div>
 
-      {/* ══ MY SAVED TRIP KIT MODAL DRAWER ══ */}
+      {/* ══ MY SAVED TRIP KIT MODAL DRAWER WITH FULL PRINTABLE SUMMARY ══ */}
       {showTripKitModal && (
         <div
           onClick={() => setShowTripKitModal(false)}
@@ -877,7 +1145,7 @@ export default function TravelToolsPage() {
             bottom: 0,
             width: '100vw',
             height: '100vh',
-            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backgroundColor: 'rgba(15, 23, 42, 0.8)',
             backdropFilter: 'blur(6px)',
             zIndex: 99999,
             display: 'flex',
@@ -890,13 +1158,13 @@ export default function TravelToolsPage() {
             onClick={e => e.stopPropagation()}
             style={{
               position: 'relative',
-              width: '600px',
-              maxWidth: '92vw',
-              maxHeight: '85vh',
+              width: '680px',
+              maxWidth: '94vw',
+              maxHeight: '88vh',
               overflowY: 'auto',
               backgroundColor: '#FFFFFF',
               color: '#0F172A',
-              padding: '1.75rem',
+              padding: '2rem',
               borderRadius: '20px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
               border: '1px solid #E2E8F0'
@@ -906,43 +1174,98 @@ export default function TravelToolsPage() {
               <X size={18} />
             </button>
 
-            <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.3rem', fontWeight: 900, color: '#0F4C3A', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Star size={22} color="#F59E0B" fill="#F59E0B" /> My Saved Trip Kit ({savedKitIds.length})
-            </h3>
-            <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.25rem' }}>
-              Your customized list of saved travel tools, arrival card links, and checklists for easy access during travel.
-            </p>
-
-            {savedKitIds.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
-                <Bookmark size={36} color="#94A3B8" style={{ margin: '0 auto 0.75rem' }} />
-                <p style={{ fontSize: '0.9rem', color: '#64748B', margin: 0, fontWeight: 600 }}>Your Trip Kit is empty.</p>
-                <p style={{ fontSize: '0.78rem', color: '#94A3B8', margin: '0.25rem 0 0' }}>Click "☆ Save to Trip Kit" on any tool card to add it here!</p>
+            {/* Printable Branding Header */}
+            <div style={{ borderBottom: '2px solid #0F4C3A', paddingBottom: '1rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={{ color: '#0F4C3A', fontWeight: 900, fontSize: '1.15rem', letterSpacing: '0.05em' }}>FLYING WONDERS</span>
+                <h3 style={{ margin: '0.2rem 0 0', fontSize: '1.25rem', fontWeight: 900, color: '#0F172A' }}>
+                  ⭐ My Official Travel Kit & Checklist
+                </h3>
               </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {savedKitIds.map(id => (
-                  <div key={id} style={{ background: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ fontSize: '0.9rem', color: '#0F172A', textTransform: 'capitalize' }}>
-                      {id.replace('-', ' ')} Tool
-                    </strong>
-                    <button
-                      onClick={() => scrollToTool(`tool-${id}`)}
-                      style={{ background: '#0F4C3A', color: '#FFF', border: 'none', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      Open Tool ➔
-                    </button>
+              <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, background: '#F1F5F9', padding: '4px 10px', borderRadius: '6px' }}>
+                {new Date().toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+            </div>
+
+            {/* Complete Summary Details */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              
+              {/* 1. Official Arrival Card Portals */}
+              <div style={{ background: '#F0FDF4', padding: '1rem', borderRadius: '10px', border: '1px solid #BBF7D0' }}>
+                <strong style={{ fontSize: '0.88rem', color: '#166534', display: 'block', marginBottom: '0.4rem' }}>
+                  🇸🇬 Singapore & 🇲🇾 Malaysia Official Arrival Cards
+                </strong>
+                <p style={{ fontSize: '0.78rem', color: '#14532D', margin: '0 0 0.5rem', lineHeight: 1.55 }}>
+                  • <strong>SGAC (Singapore):</strong> Submit free at <a href={sgacLink} target="_blank" rel="noreferrer" style={{ color: '#059669', fontWeight: 700 }}>ica.gov.sg</a> within 3 days before entry.
+                  <br />
+                  • <strong>MDAC (Malaysia):</strong> Submit free at <a href={mdacLink} target="_blank" rel="noreferrer" style={{ color: '#1D4ED8', fontWeight: 700 }}>imigresen.gov.my</a> within 3 days before entry.
+                  <br />
+                  • <strong>Air Suvidha (India):</strong> Official declaration portal at <a href={airSuvidhaLink} target="_blank" rel="noreferrer" style={{ color: '#EA580C', fontWeight: 700 }}>airsuvidha.gov.in</a>.
+                </p>
+              </div>
+
+              {/* 2. Packing Checklist Summary */}
+              <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <strong style={{ fontSize: '0.88rem', color: '#0F4C3A', display: 'block', marginBottom: '0.4rem' }}>
+                  🎒 Packing Readiness Status ({readinessPercent}% Completed)
+                </strong>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  {[
+                    { key: 'passport', label: 'Passport (6+ Mos Validity)' },
+                    { key: 'sgac', label: 'SG Arrival Card (SGAC)' },
+                    { key: 'mdac', label: 'Malaysia MDAC' },
+                    { key: 'insurance', label: 'Travel Insurance' },
+                    { key: 'tickets', label: 'Flight & Attraction Tickets' },
+                    { key: 'adapter', label: 'UK 3-Pin Adapter' },
+                    { key: 'forex', label: 'SGD / MYR Currency' },
+                    { key: 'sim', label: 'eSIM / Tourist SIM' }
+                  ].map(item => (
+                    <span key={item.key} style={{ fontSize: '0.75rem', color: checkedItems[item.key] ? '#047857' : '#94A3B8', fontWeight: 700 }}>
+                      {checkedItems[item.key] ? '✅' : '⬜'} {item.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Currency & Daily Meal Summary */}
+              <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <strong style={{ fontSize: '0.88rem', color: '#0F4C3A', display: 'block', marginBottom: '0.4rem' }}>
+                  💱 Currency & Estimated Food Expense Summary
+                </strong>
+                <p style={{ fontSize: '0.78rem', color: '#334155', margin: 0, lineHeight: 1.5 }}>
+                  • <strong>Exchange Rate:</strong> 1 SGD ≈ ₹{sgdToInrRate} INR
+                  <br />
+                  • <strong>Estimated Food Budget ({adults} Adults, {kids} Kids, {days} Days):</strong> SGD ${totalMealCostSgd} (Approx. ₹{totalMealCostInr.toLocaleString()})
+                </p>
+              </div>
+
+              {/* Saved Tools Specific Items */}
+              {savedKitIds.length > 0 && (
+                <div style={{ background: '#FFFBEB', padding: '1rem', borderRadius: '10px', border: '1px solid #FDE68A' }}>
+                  <strong style={{ fontSize: '0.88rem', color: '#92400E', display: 'block', marginBottom: '0.4rem' }}>
+                    ⭐ Saved Tools List ({savedKitIds.length})
+                  </strong>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {savedKitIds.map(id => (
+                      <span key={id} style={{ background: '#FEF3C7', color: '#B45309', fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', textTransform: 'capitalize' }}>
+                        ✓ {id.replace('-', ' ')}
+                      </span>
+                    ))}
                   </div>
-                ))}
+                </div>
+              )}
 
-                <button
-                  onClick={() => window.print()}
-                  style={{ marginTop: '1rem', background: '#1E293B', color: '#FFF', border: 'none', padding: '0.65rem 1.25rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                >
-                  <Printer size={16} /> Print / Save Trip Kit as PDF
-                </button>
-              </div>
-            )}
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => window.print()}
+                style={{ background: '#0F4C3A', color: '#FFF', border: 'none', padding: '0.65rem 1.4rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.88rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(15,76,58,0.25)' }}
+              >
+                <Printer size={16} /> Print / Save as PDF
+              </button>
+            </div>
           </div>
         </div>
       )}
