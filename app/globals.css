@@ -710,11 +710,25 @@ a {
   }
 }
 
-/* ─── PDF Print Quotation ─────────────────────────────────────────────── */
+/* Cross-Browser Safari & Mobile Glassmorphism Utility */
+.sticky, [style*="backdropFilter"], [style*="backdrop-filter"] {
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Touch Momentum Scrolling on WebKit & Mobile Safari */
+div[style*="overflowX"], div[style*="overflow-x"] {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── PDF & Print Trip Kit Formatting ────────────────────────────────── */
 
 @media print {
-  body > *:not(#print-quote) {
-    display: none !important;
+  body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+  }
+  .no-print, header, footer, nav, button:not([style*="display: none"]) {
+    box-shadow: none !important;
   }
   #print-quote {
     display: block !important;
@@ -724,7 +738,5 @@ a {
     padding: 2.5cm;
     font-family: Georgia, serif;
   }
-  .no-print {
-    display: none !important;
-  }
 }
+
