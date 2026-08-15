@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/directory', priority: 0.9, freq: 'daily' },
     { path: '/packages', priority: 0.9, freq: 'weekly' },
     { path: '/singapore-attractions', priority: 0.9, freq: 'daily' },
+    { path: '/singapore-attractions/promotions', priority: 0.85, freq: 'daily' },
     { path: '/ai-planner', priority: 0.9, freq: 'weekly' },
     { path: '/travel-tools', priority: 0.9, freq: 'daily' },
     { path: '/travel-consulting', priority: 0.9, freq: 'daily' },
