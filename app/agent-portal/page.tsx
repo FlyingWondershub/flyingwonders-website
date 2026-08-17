@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 import { 
   LayoutDashboard, 
   Package, 
@@ -453,6 +453,28 @@ export default function AgentPortalPage() {
             <Building2 size={16} color="#0F4C3A" />
             <span>Agency Branding</span>
           </button>
+
+          {activeAgent?.role === 'admin' && (
+            <Link
+              href="/admin-dashboard"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                padding: '0.6rem 0.85rem',
+                borderRadius: '8px',
+                background: '#FEF3C7',
+                color: '#B45309',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                textDecoration: 'none',
+                width: '100%',
+                marginBottom: '0.5rem'
+              }}
+            >
+              <span>⚙️ Admin Dashboard</span>
+            </Link>
+          )}
 
           <button
             onClick={handleLogout}
