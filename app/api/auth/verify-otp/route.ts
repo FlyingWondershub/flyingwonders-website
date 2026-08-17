@@ -85,11 +85,12 @@ export async function POST(req: Request) {
     })
 
     const cookieStore = await cookies()
-    cookieStore.set('b2b_agent_email', cleanEmail, {
+    cookieStore.set('b2b_session', cleanEmail, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 30, // 30 days
       path: '/',
+      sameSite: 'lax',
     })
 
     return response

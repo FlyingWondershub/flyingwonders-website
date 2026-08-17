@@ -967,6 +967,7 @@ export default function AgentPortalPage() {
           zIndex: 99999
         }}>
           <div style={{
+            position: 'relative',
             background: '#FFF',
             borderRadius: '16px',
             padding: '2.25rem 2rem',
@@ -975,6 +976,28 @@ export default function AgentPortalPage() {
             boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
             textAlign: 'center'
           }}>
+            <button
+              onClick={() => {
+                setShowLoginModal(false)
+                window.location.href = '/'
+              }}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'transparent',
+                border: 'none',
+                fontSize: '1.25rem',
+                cursor: 'pointer',
+                color: '#94A3B8',
+                padding: '0.25rem',
+                lineHeight: 1
+              }}
+              title="Close and return to Home"
+            >
+              ✕
+            </button>
+
             <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#FEE2E2', color: '#B83A4B', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', fontSize: '1.5rem', fontWeight: 800 }}>
               🔑
             </div>
