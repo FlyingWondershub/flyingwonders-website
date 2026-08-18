@@ -649,7 +649,7 @@ export default function PrototypeBuilder() {
               serviceName,
               pricePerTransfer: rate
             }
-          })
+          }).filter(t => t.pricePerTransfer > 0 && t.type.trim() !== '')
           if (parsedTransfers.length > 0) setVehiclesList(parsedTransfers)
         }
 
@@ -663,7 +663,7 @@ export default function PrototypeBuilder() {
             const child = Number(row['Child ($)'] ?? row['Child']) || 0
             const area = row['Area'] || ''
             return { name, adultPrice: adult, childPrice: child, area }
-          })
+          }).filter(a => a.name.trim() !== '' && (a.adultPrice > 0 || a.childPrice > 0))
           if (parsedAttractions.length > 0) setAttractionsList(parsedAttractions)
         }
 
@@ -698,7 +698,7 @@ export default function PrototypeBuilder() {
             const desc = row['Transfer Description'] || ''
             const rate = Number(row['Rate($)'] ?? row['Rate']) || 0
             return { type: desc, pricePerDay: rate }
-          })
+          }).filter(g => g.type.trim() !== '' && g.pricePerDay > 0)
           if (parsedGuides.length > 0) setGuidesList(parsedGuides)
         }
 
@@ -3143,24 +3143,6 @@ ${proposal}
             >
               🇲🇾
             </button>
-            <button
-              type="button"
-              onClick={() => setDestinationMode('combined')}
-              title="Twin-Center Combined Mode (Singapore + Malaysia)"
-              style={{
-                padding: '0.3rem 0.55rem',
-                borderRadius: '6px',
-                border: 'none',
-                background: destinationMode === 'combined' ? '#2B6CB0' : 'transparent',
-                color: destinationMode === 'combined' ? '#FFF' : '#4A5568',
-                fontWeight: 800,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              🇸🇬+🇲🇾
-            </button>
           </div>
 
           {!hideReadyTemplatesSubpage && (
@@ -4975,7 +4957,7 @@ ${proposal}
                         Break Trip {day.isBreakTrip ? '✓' : '▼'}
                       </button>
                     )}
-                    <span style={{ background: 'var(--gold-accent)', color: '#FFF', padding: '0.15rem 0.6rem', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700 }}>SGP</span>
+                    <span style={{ background: 'var(--gold-accent)', color: '#FFF', padding: '0.15rem 0.6rem', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700 }}>{destinationMode === 'malaysia' ? 'MYS' : 'SGP'}</span>
                     <span style={{ fontSize: '0.85rem', color: '#94A3B8', fontWeight: 700 }}>{isCollapsed ? '▼' : '▲'}</span>
                   </div>
                 </div>
