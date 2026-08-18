@@ -622,7 +622,7 @@ export default function PrototypeBuilder() {
           hotelRows.forEach(row => {
             const hName = row['Hotel Name']
             const rType = row['Room Type']
-            const price = Number(row['Price/ room / night ($)']) || 0
+            const price = Number(row['Price/room/night ($)'] ?? row['Price/ room / night ($)']) || 0
             if (hName && rType) {
               if (!hotelMap[hName]) {
                 hotelMap[hName] = { name: hName, rooms: [] }
@@ -643,7 +643,7 @@ export default function PrototypeBuilder() {
             const tType = row['Transfer Type'] || ''
             const transName = row['Transfers'] || ''
             const serviceName = row['Service Name'] || row['Service'] || row['Transfers'] || 'Transfers'
-            const rate = Number(row['Rate']) || 0
+            const rate = Number(row['Rate($)'] ?? row['Rate']) || 0
             return {
               type: `${vType}${tType ? ` - ${tType}` : ''}`,
               serviceName,
@@ -659,8 +659,8 @@ export default function PrototypeBuilder() {
           const attractionRows: any[] = XLSX.utils.sheet_to_json(attractionsSheet)
           const parsedAttractions = attractionRows.map(row => {
             const name = row['Attractions'] || ''
-            const adult = Number(row['Adult']) || 0
-            const child = Number(row['Child']) || 0
+            const adult = Number(row['Adult ($)'] ?? row['Adult']) || 0
+            const child = Number(row['Child ($)'] ?? row['Child']) || 0
             const area = row['Area'] || ''
             return { name, adultPrice: adult, childPrice: child, area }
           })
@@ -674,7 +674,7 @@ export default function PrototypeBuilder() {
           const parsedMeals = mealRows.map(row => {
             const restName = row['Restaurant Name'] || ''
             const mType = row['Meal Type'] || row['Type'] || ''
-            const rate = Number(row['Price Per person'] ?? row['Price Per Person'] ?? row['Price']) || 0
+            const rate = Number(row['Rate($)'] ?? row['Rate'] ?? row['Price Per person'] ?? row['Price Per Person'] ?? row['Price']) || 0
             
             // Sync standard meal prices if found
             const mtLower = mType.toLowerCase().trim()
@@ -696,7 +696,7 @@ export default function PrototypeBuilder() {
           const guideRows: any[] = XLSX.utils.sheet_to_json(guideSheet)
           const parsedGuides = guideRows.map(row => {
             const desc = row['Transfer Description'] || ''
-            const rate = Number(row['Rate']) || 0
+            const rate = Number(row['Rate($)'] ?? row['Rate']) || 0
             return { type: desc, pricePerDay: rate }
           })
           if (parsedGuides.length > 0) setGuidesList(parsedGuides)
