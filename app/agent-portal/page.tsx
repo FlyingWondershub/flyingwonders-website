@@ -642,110 +642,70 @@ export default function AgentPortalPage() {
         {/* ── METRIC CARDS SECTION (MATCHING SCREENSHOT LAYOUT) ── */}
         {activeTab === 'dashboard' && (
           <div>
-            {/* Top Cards Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
+            {/* Unified Compact Metrics Grid (One Row) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
               
-              {/* Today's Bookings (Red Highlight Card) */}
+              {/* Today's Bookings */}
               <div style={{
                 background: 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)',
                 color: '#FFF',
-                borderRadius: '16px',
-                padding: '1.5rem',
-                boxShadow: '0 8px 20px rgba(220,38,38,0.2)',
+                borderRadius: '12px',
+                padding: '1rem',
+                boxShadow: '0 4px 12px rgba(220,38,38,0.15)',
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                alignItems: 'center',
+                gap: '0.75rem'
               }}>
-                <div>
-                  <span style={{ fontSize: '0.85rem', opacity: 0.9, fontWeight: 700, display: 'block', marginBottom: '0.4rem' }}>
-                    Today&apos;s Bookings
-                  </span>
-                  <strong style={{ fontSize: '2.4rem', fontWeight: 800, lineHeight: 1 }}>{todayBookings}</strong>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Calendar size={20} color="#FFF" />
                 </div>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Calendar size={24} color="#FFF" />
+                <div>
+                  <strong style={{ fontSize: '1.6rem', fontWeight: 800, display: 'block', lineHeight: 1 }}>{todayBookings}</strong>
+                  <span style={{ fontSize: '0.75rem', opacity: 0.9, fontWeight: 600 }}>Today&apos;s Bookings</span>
                 </div>
               </div>
 
               {/* This Month */}
-              <div style={{
-                background: '#FFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: '16px',
-                padding: '1.5rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 700, display: 'block', marginBottom: '0.4rem' }}>
-                    This Month
-                  </span>
-                  <strong style={{ fontSize: '2.4rem', fontWeight: 800, color: '#0F172A', lineHeight: 1 }}>{thisMonthBookings}</strong>
+              <div style={{ background: '#FFF', borderRadius: '12px', padding: '1rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Calendar size={20} color="#166534" />
                 </div>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#F0FDF4', border: '1px solid #DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Calendar size={24} color="#166534" />
+                <div>
+                  <strong style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1 }}>{thisMonthBookings}</strong>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>This Month</span>
                 </div>
               </div>
 
               {/* Confirmed */}
-              <div style={{
-                background: '#FFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: '16px',
-                padding: '1.5rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 700, display: 'block', marginBottom: '0.4rem' }}>
-                    Confirmed
-                  </span>
-                  <strong style={{ fontSize: '2.4rem', fontWeight: 800, color: '#166534', lineHeight: 1 }}>{confirmedCount}</strong>
-                </div>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#F0FDF4', border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <CheckCircle2 size={24} color="#22C55E" />
-                </div>
-              </div>
-
-            </div>
-
-            {/* Bottom Summary Metric Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
-              
-              {/* Confirmed Count */}
-              <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.25rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <CheckCircle2 size={22} color="#15803D" />
+              <div style={{ background: '#FFF', borderRadius: '12px', padding: '1rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <CheckCircle2 size={20} color="#15803D" />
                 </div>
                 <div>
                   <strong style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1 }}>{confirmedCount}</strong>
-                  <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Confirmed</span>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>Confirmed</span>
                 </div>
               </div>
 
-              {/* Pending Count */}
-              <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.25rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Clock size={22} color="#B45309" />
+              {/* Pending */}
+              <div style={{ background: '#FFF', borderRadius: '12px', padding: '1rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Clock size={20} color="#B45309" />
                 </div>
                 <div>
                   <strong style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1 }}>{pendingCount}</strong>
-                  <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Pending</span>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>Pending</span>
                 </div>
               </div>
 
-              {/* Total Bookings Count */}
-              <div style={{ background: '#FFF', borderRadius: '16px', padding: '1.25rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <TrendingUp size={22} color="#0369A1" />
+              {/* Total Bookings */}
+              <div style={{ background: '#FFF', borderRadius: '12px', padding: '1rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <TrendingUp size={20} color="#0369A1" />
                 </div>
                 <div>
                   <strong style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1 }}>{totalCount}</strong>
-                  <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Total Bookings</span>
+                  <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>Total Bookings</span>
                 </div>
               </div>
 
