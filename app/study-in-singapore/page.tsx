@@ -43,6 +43,7 @@ import {
   ChevronLeft
 } from 'lucide-react'
 
+
 /* ─── Colour helpers ─── */
 const EMERALD = '#093E30'
 const AMBER   = '#F59E0B'
@@ -1333,31 +1334,6 @@ export default function StudyInSingaporePage() {
         </div>
       )}
 
-      {/* ─────────── WhatsApp Floating Button ─────────── */}
-      <a
-        href="https://wa.me/6596890101?text=Hi%2C%20I'm%20interested%20in%20studying%20in%20Singapore.%20Can%20you%20help%20me%3F"
-        target="_blank"
-        rel="noreferrer"
-        title="Chat with us on WhatsApp"
-        style={{
-          position: 'fixed',
-          bottom: showModal ? '-100px' : 'clamp(5rem, 12vw, 6rem)',
-          right: '1.25rem',
-          zIndex: 900,
-          width: '54px', height: '54px',
-          borderRadius: '50%',
-          background: '#25D366',
-          color: '#FFF',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 6px 20px rgba(37,211,102,0.45)',
-          transition: 'transform 0.25s, bottom 0.3s, box-shadow 0.25s',
-          textDecoration: 'none'
-        }}
-        onMouseOver={e => { (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1.12)'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 10px 28px rgba(37,211,102,0.55)' }}
-        onMouseOut={e => { (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 6px 20px rgba(37,211,102,0.45)' }}
-      >
-        <MessageCircle size={26} />
-      </a>
 
       {/* ─────────── Sticky Mobile CTA ─────────── */}
       {!showModal && (
