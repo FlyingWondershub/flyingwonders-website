@@ -511,6 +511,33 @@ export default function PrototypeBuilder() {
   const [supplementRequired, setSupplementRequired] = useState(false)
 
   const [itinerary, setItinerary] = useState<DayPlan[]>([])
+  const handleDestinationModeChange = (mode: 'singapore' | 'malaysia') => {
+    setDestinationMode(mode)
+    setGlobalHotelIndex(0)
+    setGlobalRoomIndex(0)
+    setGlobalRoomCount(1)
+    setGlobalSuppIndex(-1)
+    setGlobalSuppCount(0)
+    setCustomHotelEnabled(false)
+    setCustomHotelName('')
+    setCustomHotelRoomType('')
+    setCustomHotelPrice(0)
+    setCustomHotelSuppName('')
+    setCustomHotelSuppCost(0)
+    setSupplementRequired(false)
+    setItinerary(prev => prev.map(day => ({
+      ...day,
+      transfers: [],
+      breakfast: false,
+      lunch: false,
+      dinner: false,
+      guideRequired: false,
+      meals: [],
+      guides: [],
+      attractions: [],
+      isBreakTrip: false
+    })))
+  }
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleFilters, setScheduleFilters] = useState({ transfers: true, attractions: true, meals: true, guides: true })
 
@@ -1227,7 +1254,7 @@ export default function PrototypeBuilder() {
   const generateProposalText = (overrideNum?: string) => {
     const pNum = overrideNum || savedProposalNum
     const sep = '━━━━━━━━━━━━━━━━━━━━━'
-    let t = `✈️ *SINGAPORE ITINERARY*`
+    let t = `✈️ *${destinationMode === 'malaysia' ? 'MALAYSIA' : 'SINGAPORE'} ITINERARY*`
     if (pNum) {
       t += `  (Ref: ${pNum})`
     }
@@ -3109,7 +3136,7 @@ ${proposal}
           <div style={{ display: 'inline-flex', background: '#EDF2F7', padding: '0.15rem', borderRadius: '8px', border: '1px solid #CBD5E1', marginLeft: '0.25rem', marginRight: '0.25rem' }}>
             <button
               type="button"
-              onClick={() => setDestinationMode('singapore')}
+              onClick={() => handleDestinationModeChange('singapore')}
               title="Singapore DMC Mode"
               style={{
                 padding: '0.3rem 0.55rem',
@@ -3127,7 +3154,7 @@ ${proposal}
             </button>
             <button
               type="button"
-              onClick={() => setDestinationMode('malaysia')}
+              onClick={() => handleDestinationModeChange('malaysia')}
               title="Malaysia DMC Mode"
               style={{
                 padding: '0.3rem 0.55rem',
