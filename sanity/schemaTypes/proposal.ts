@@ -225,6 +225,27 @@ export const proposalSchema = defineType({
       ],
     }),
     defineField({
+      name: 'statusChangeRequested',
+      title: 'Status Change Requested',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'requestedStatus',
+      title: 'Requested Status',
+      type: 'string',
+    }),
+    defineField({
+      name: 'statusRequestNote',
+      title: 'Status Request Note',
+      type: 'string',
+    }),
+    defineField({
+      name: 'statusRequestAt',
+      title: 'Status Request Timestamp',
+      type: 'string',
+    }),
+    defineField({
       name: 'itinerary',
       title: 'Itinerary Custom Structure (JSON)',
       type: 'text',

@@ -53,6 +53,12 @@ export default function AgentPortalPage() {
   const [regAgentName, setRegAgentName] = useState('')
   const [regPhone, setRegPhone] = useState('')
   const [authError, setAuthError] = useState('')
+  
+  // Status change request state
+  const [statusRequestProposal, setStatusRequestProposal] = useState<any | null>(null)
+  const [statusRequestTarget, setStatusRequestTarget] = useState<'confirmed' | 'ignore'>('confirmed')
+  const [statusRequestNoteText, setStatusRequestNoteText] = useState('')
+  const [statusRequestSubmitting, setStatusRequestSubmitting] = useState(false)
 
   useEffect(() => {
     async function initSession() {
@@ -166,6 +172,37 @@ export default function AgentPortalPage() {
     } finally {
       setLoading(false)
       setRefreshing(false)
+    }
+  }
+
+  const handleRequestStatusChange = async () => {
+    if (!statusRequestProposal) return
+    setStatusRequestSubmitting(true)
+    try {
+      const res = await fetch('/api/proposals/request-status-change', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposalId: statusRequestProposal._id,
+          targetStatus: statusRequestTarget,
+          note: statusRequestNoteText
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        alert('Status change request submitted to Admin successfully!')
+        setStatusRequestProposal(null)
+        setStatusRequestNoteText('')
+        if (activeAgent) {
+          fetchAgentProposals(activeAgent.email)
+        }
+      } else {
+        alert(data.error || 'Failed to submit status request')
+      }
+    } catch (e) {
+      alert('Error submitting status request')
+    } finally {
+      setStatusRequestSubmitting(false)
     }
   }
 
@@ -561,6 +598,47 @@ export default function AgentPortalPage() {
           </div>
         </div>
 
+        {/* Admin Shortcut Banner */}
+        {activeAgent?.role === 'admin' && (
+          <div style={{
+            background: '#FEF3C7',
+            border: '1px solid #F59E0B',
+            borderRadius: '12px',
+            padding: '1rem 1.25rem',
+            marginBottom: '2rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            <div>
+              <strong style={{ color: '#92400E', fontSize: '0.95rem', display: 'block' }}>👑 Administrator Command Center</strong>
+              <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.82rem', color: '#B45309', lineHeight: 1.4 }}>
+                You have Admin privileges. You can approve package updates, status requests, view audit logs, and more.
+              </p>
+            </div>
+            <Link
+              href="/admin-dashboard"
+              style={{
+                background: '#D97706',
+                color: '#FFF',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                textDecoration: 'none',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem'
+              }}
+            >
+              Go to Admin Operations Dashboard →
+            </Link>
+          </div>
+        )}
+
         {/* ── METRIC CARDS SECTION (MATCHING SCREENSHOT LAYOUT) ── */}
         {activeTab === 'dashboard' && (
           <div>
@@ -831,12 +909,27 @@ export default function AgentPortalPage() {
                               fontSize: '0.73rem',
                               fontWeight: 800,
                               background: isConfirmed ? '#DCFCE7' : (isCompleted ? '#E0E7FF' : '#FEF3C7'),
-                              color: isConfirmed ? '#166534' : (isCompleted ? '#3730A3' : '#92400E')
+                              color: isConfirmed ? '#166534' : (isCompleted ? '#3730A3' : '#92400E'),
+                              display: 'inline-block'
                             }}>
                               {isConfirmed ? '🟢 Confirmed' : (isCompleted ? '✅ Completed' : '🔵 Pending')}
                             </span>
+                            {p.statusChangeRequested && (
+                              <div style={{
+                                fontSize: '0.68rem',
+                                color: '#D97706',
+                                fontWeight: 700,
+                                marginTop: '0.25rem',
+                                background: '#FEF3C7',
+                                padding: '0.1rem 0.35rem',
+                                borderRadius: '4px',
+                                display: 'inline-block'
+                              }}>
+                                ⏳ Pending: {p.requestedStatus === 'ignore' ? 'Closed' : 'Confirmed'}
+                              </div>
+                            )}
                           </td>
-                          <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right' }}>
+                          <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right', display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
                             <Link
                               href={`/custom-package?ref=${p.proposalNumber}`}
                               style={{
@@ -855,6 +948,30 @@ export default function AgentPortalPage() {
                             >
                               <ExternalLink size={13} /> Open
                             </Link>
+                            {!p.statusChangeRequested && (pStatus === 'pending' || pStatus === 'followup') && (
+                              <button
+                                onClick={() => {
+                                  setStatusRequestProposal(p)
+                                  setStatusRequestTarget('confirmed')
+                                  setStatusRequestNoteText('')
+                                }}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.2rem',
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '6px',
+                                  background: '#0F4C3A',
+                                  color: '#FFF',
+                                  border: 'none',
+                                  fontWeight: 700,
+                                  fontSize: '0.78rem',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                ⏳ Change Status
+                              </button>
+                            )}
                           </td>
                         </tr>
                       )
@@ -1128,6 +1245,79 @@ export default function AgentPortalPage() {
               </form>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* ── 6. STATUS CHANGE REQUEST MODAL ── */}
+      {statusRequestProposal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999
+        }}>
+          <div style={{
+            background: '#FFF',
+            borderRadius: '16px',
+            padding: '2rem',
+            width: '450px',
+            maxWidth: '90vw',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.25)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
+                Request Status Change
+              </h3>
+              <button onClick={() => setStatusRequestProposal(null)} style={{ border: 'none', background: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#64748B' }}>✕</button>
+            </div>
+
+            <p style={{ fontSize: '0.85rem', color: '#475569', marginTop: 0, marginBottom: '1rem' }}>
+              Submit a request to the administrator to update proposal <strong>{statusRequestProposal.proposalNumber}</strong> ({statusRequestProposal.guestName || 'Valued Guest'}).
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>Target Status *</label>
+                <select
+                  value={statusRequestTarget}
+                  onChange={e => setStatusRequestTarget(e.target.value as any)}
+                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.88rem', outline: 'none' }}
+                >
+                  <option value="confirmed">🟢 Confirmed</option>
+                  <option value="ignore">Ignore / Closed</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>Reason / Note for Admin</label>
+                <textarea
+                  placeholder="e.g. Guest paid booking deposit via bank transfer. Ref #998311."
+                  value={statusRequestNoteText}
+                  onChange={e => setStatusRequestNoteText(e.target.value)}
+                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.88rem', outline: 'none', height: '80px', resize: 'vertical' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setStatusRequestProposal(null)}
+                style={{ padding: '0.55rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0', background: '#FFF', color: '#475569', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRequestStatusChange}
+                disabled={statusRequestSubmitting}
+                style={{ padding: '0.55rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0F4C3A', color: '#FFF', fontWeight: 800, fontSize: '0.85rem', cursor: statusRequestSubmitting ? 'not-allowed' : 'pointer' }}
+              >
+                {statusRequestSubmitting ? 'Submitting...' : 'Submit Request'}
+              </button>
+            </div>
           </div>
         </div>
       )}

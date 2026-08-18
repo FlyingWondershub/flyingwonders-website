@@ -23,8 +23,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid status value' }, { status: 400 })
     }
 
-    // Patch proposal status in Sanity
-    await writeClient.patch(proposalId).set({ status }).commit()
+    // Patch proposal status in Sanity and clear any pending requests
+    await writeClient.patch(proposalId).set({
+      status,
+      statusChangeRequested: false,
+      requestedStatus: '',
+      statusRequestNote: '',
+      statusRequestAt: ''
+    }).commit()
 
     // Create audit log
     try {

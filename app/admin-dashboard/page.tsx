@@ -345,6 +345,8 @@ export default function AdminDashboard() {
   const followupPackages = proposals.filter(p => p.status === 'followup')
   const pendingPackages = proposals.filter(p => !p.status || p.status === 'pending')
   const ignoredPackages = proposals.filter(p => p.status === 'ignore')
+  
+  const pendingApprovalsCount = proposals.filter(p => p.statusChangeRequested).length
 
   const confirmedRevenueSGD = confirmedPackages.reduce((sum, p) => sum + (Number(p.totalClientPrice) || 0), 0)
   const confirmedRevenueINR = confirmedPackages.reduce((sum, p) => sum + (Number(p.costBreakdown?.totalClientPriceINR) || 0), 0)
@@ -397,6 +399,7 @@ export default function AdminDashboard() {
   const navItems = [
     { id: 'section-metrics', label: 'KPI Overview', icon: LayoutDashboard },
     { id: 'section-packages', label: 'Packages & Calendar', icon: Package, badge: totalPackages },
+    { id: 'section-approvals', label: 'Pending Approvals', icon: Clock, badge: pendingApprovalsCount },
     { id: 'section-accounts', label: 'Accounts & Ledger', icon: DollarSign },
     { id: 'section-sitemap', label: 'Site Map & Links', icon: Map },
     { id: 'section-payments', label: 'Pending Payments', icon: CreditCard, badge: pendingPayments.length },
@@ -1004,6 +1007,129 @@ export default function AdminDashboard() {
             </div>
           )}
 
+        </div>
+
+        {/* ── SECTION: PENDING STATUS REQUEST APPROVALS ── */}
+        <div id="section-approvals" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '2.5rem', border: '1px solid #EDF2F7' }}>
+          <h2 style={{ fontSize: '1.35rem', color: '#2D3748', margin: '0 0 0.5rem 0', fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Clock color="var(--emerald-secondary)" size={20} /> Pending Status Request Approvals ({pendingApprovalsCount})
+          </h2>
+          <p style={{ color: '#718096', fontSize: '0.82rem', margin: '0 0 1.25rem 0' }}>
+            B2B Agents can request package status updates. Review and click Accept or Deny to apply changes.
+          </p>
+
+          {pendingApprovalsCount === 0 ? (
+            <p style={{ color: '#718096', fontSize: '0.9rem', textAlign: 'center', padding: '2rem 0' }}>
+              🎉 No pending status change requests. All caught up!
+            </p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ background: '#F7FAFC', color: '#4A5568', borderBottom: '2px solid #E2E8F0' }}>
+                    <th style={{ padding: '0.75rem' }}>Proposal</th>
+                    <th style={{ padding: '0.75rem' }}>Agent</th>
+                    <th style={{ padding: '0.75rem' }}>Guest</th>
+                    <th style={{ padding: '0.75rem' }}>Current Status</th>
+                    <th style={{ padding: '0.75rem' }}>Requested Status</th>
+                    <th style={{ padding: '0.75rem' }}>Agent Note</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {proposals.filter(p => p.statusChangeRequested).map((p, idx) => {
+                    return (
+                      <tr key={p._id || idx} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                        <td style={{ padding: '0.75rem', fontWeight: 700, color: '#B83A4B' }}>
+                          {p.proposalNumber}
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <span style={{ fontWeight: 600, display: 'block', color: '#2D3748' }}>{p.agent?.companyName || p.agent?.agentName || 'B2B Partner'}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#718096' }}>{p.agent?.email || 'No email'}</span>
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <span style={{ fontWeight: 600, display: 'block', color: '#2D3748' }}>{p.guestName || 'Guest'}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#718096' }}>{p.guestPhone || 'No phone'}</span>
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          {getStatusBadge(p.status).label}
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <span style={{
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            background: p.requestedStatus === 'confirmed' ? '#DCFCE7' : '#FEE2E2',
+                            color: p.requestedStatus === 'confirmed' ? '#166534' : '#991B1B'
+                          }}>
+                            {p.requestedStatus === 'ignore' ? 'Ignore / Closed' : '🟢 Confirmed'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.75rem', color: '#4A5568', fontStyle: p.statusRequestNote ? 'normal' : 'italic' }}>
+                          {p.statusRequestNote || 'No note provided'}
+                        </td>
+                        <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={async () => {
+                                if (confirm(`Approve status change to "${p.requestedStatus}" for ${p.proposalNumber}?`)) {
+                                  try {
+                                    const res = await fetch('/api/admin/packages/approve-status-change', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ proposalId: p._id, action: 'approve' })
+                                    })
+                                    const resJson = await res.json()
+                                    if (resJson.success) {
+                                      alert('Request approved successfully!')
+                                      fetchData()
+                                    } else {
+                                      alert(resJson.error || 'Failed to approve request')
+                                    }
+                                  } catch (e) {
+                                    alert('Error approving request')
+                                  }
+                                }
+                              }}
+                              style={{ padding: '0.35rem 0.75rem', background: '#319795', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (confirm(`Deny status change request for ${p.proposalNumber}?`)) {
+                                  try {
+                                    const res = await fetch('/api/admin/packages/approve-status-change', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ proposalId: p._id, action: 'deny' })
+                                    })
+                                    const resJson = await res.json()
+                                    if (resJson.success) {
+                                      alert('Request denied successfully!')
+                                      fetchData()
+                                    } else {
+                                      alert(resJson.error || 'Failed to deny request')
+                                    }
+                                  } catch (e) {
+                                    alert('Error denying request')
+                                  }
+                                }
+                              }}
+                              style={{ padding: '0.35rem 0.75rem', background: '#E53E3E', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}
+                            >
+                              Deny
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* ── SECTION 3: SITE MAP & QUICK LINKS MATRIX ── */}
