@@ -5001,26 +5001,29 @@ ${proposal}
                       </label>
                     </div>
 
-                    <div style={{ borderLeft: '1px solid #CBD5E1', height: '1.25rem', margin: '0 0.5rem' }} />
-
-                    <label style={{ fontSize: '0.78rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', color: '#2C7A7B' }}>
-                      <input
-                        type="checkbox"
-                        checked={day.guideRequired || false}
-                        onChange={e => {
-                          updateDay(dIdx, 'guideRequired', e.target.checked)
-                          if (e.target.checked) {
-                            if (!day.guides || day.guides.length === 0) {
-                              updateDay(dIdx, 'guides', [{ guideIndex: 0, time: '09:00', description: 'Escorted tour guide services' }])
-                            }
-                          } else {
-                            updateDay(dIdx, 'guides', [])
-                          }
-                        }}
-                        style={{ cursor: 'pointer' }}
-                      />
-                      👤 Guide Required
-                    </label>
+                    {destinationMode !== 'malaysia' && (
+                      <>
+                        <div style={{ borderLeft: '1px solid #CBD5E1', height: '1.25rem', margin: '0 0.5rem' }} />
+                        <label style={{ fontSize: '0.78rem', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', color: '#2C7A7B' }}>
+                          <input
+                            type="checkbox"
+                            checked={day.guideRequired || false}
+                            onChange={e => {
+                              updateDay(dIdx, 'guideRequired', e.target.checked)
+                              if (e.target.checked) {
+                                if (!day.guides || day.guides.length === 0) {
+                                  updateDay(dIdx, 'guides', [{ guideIndex: 0, time: '09:00', description: 'Escorted tour guide services' }])
+                                }
+                              } else {
+                                updateDay(dIdx, 'guides', [])
+                              }
+                            }}
+                            style={{ cursor: 'pointer' }}
+                          />
+                          👤 Guide Required
+                        </label>
+                      </>
+                    )}
                   </div>
                 <div style={{ background: '#FAF5FF', padding: '1.25rem 1rem', borderRadius: '8px', borderLeft: '4px solid #805AD5', marginBottom: '1.5rem' }}>
 
@@ -5332,17 +5335,19 @@ ${proposal}
                                                 style={{ flex: '1 1 120px', padding: '0.15rem 0.35rem', borderRadius: '3px', border: '1px solid #CBD5E1', fontSize: '0.75rem' }}
                                               />
 
-                                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 700, color: '#6B46C1', cursor: 'pointer', marginLeft: 'auto', userSelect: 'none' }}>
-                                                <input 
-                                                  type="checkbox"
-                                                  checked={row.hasTransfer || false}
-                                                  onChange={e => updateAttractionRow(dIdx, existingIdx, 'hasTransfer', e.target.checked)}
-                                                />
-                                                🚌 Transfer?
-                                              </label>
+                                              {destinationMode !== 'malaysia' && (
+                                                <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 700, color: '#6B46C1', cursor: 'pointer', marginLeft: 'auto', userSelect: 'none' }}>
+                                                  <input 
+                                                    type="checkbox"
+                                                    checked={row.hasTransfer || false}
+                                                    onChange={e => updateAttractionRow(dIdx, existingIdx, 'hasTransfer', e.target.checked)}
+                                                  />
+                                                  🚌 Transfer?
+                                                </label>
+                                              )}
                                             </div>
-
-                                            {row.hasTransfer && (
+ 
+                                            {row.hasTransfer && destinationMode !== 'malaysia' && (
                                               <div style={{ marginTop: '0.5rem', background: '#F3E8FF', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #E9D5FF', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                                 {/* Pickup Transfer Line */}
                                                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
