@@ -106,6 +106,9 @@ export async function POST(req: NextRequest) {
 
     // DISPATCH INSTANT ADMIN EMAIL ALERT VIA WEB3FORMS API
     try {
+      const globalSettings = await client.fetch(`*[_type == "globalContact"][0]{ contactEmail }`)
+      const adminEmail = globalSettings?.contactEmail || 'info.flyingwonders@gmail.com'
+
       await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -113,7 +116,7 @@ export async function POST(req: NextRequest) {
           access_key: process.env.WEB3FORMS_ACCESS_KEY || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
           subject: `💬 New Travel Tools Comment / Tip on ${toolId}: ${authorName.trim()}`,
           from_name: 'Flying Wonders Travel Tools Hub',
-          to_email: 'flyingwonders2024@gmail.com',
+          to_email: adminEmail,
           message: `
 NEW TRAVEL TOOLS COMMENT SUBMITTED!
 ----------------------------------

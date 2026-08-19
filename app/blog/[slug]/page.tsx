@@ -29,8 +29,11 @@ export default function ArticleDetail() {
         const data = await res.json()
         if (data.success) {
           const match = data.articles.find((a: Article) => a.slug === slug)
-          setArticle(match || null)
-        }
+          setArticle(match || null);
+          // Increment view count for this article
+          if (match) {
+            fetch(`/api/blog/view/${match.slug}`, { method: 'PATCH' }).catch(console.error);
+          }        }
       } catch (err) {
         console.error('Failed to load article detail', err)
       } finally {

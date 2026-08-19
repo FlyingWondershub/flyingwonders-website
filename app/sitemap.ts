@@ -1,4 +1,7 @@
-import { MetadataRoute } from 'next'
+import { createClient } from 'next-sanity';
+import { dataset, projectId, apiVersion } from '@/sanity/env';
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://flyingwonders.net'
@@ -45,10 +48,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/age-calculator', priority: 0.95, freq: 'daily' },
   ]
 
-  return [...coreRoutes, ...toolRoutes].map(({ path, priority, freq }) => ({
-    url: `${baseUrl}${path}`,
+  // Dynamic blog routes – fetch all published slugs from Sanity
+  const client = createClient({
+    projectId,
+    dataset,
+    apiVersion,
+    useCdn: false,
+    token: process.env.SANITY_READ_TOKEN,
+  })
+  const blogSlugs: string[] = await client.fetch("*[_type == \"blogPost\" && isPublished == true].slug.current")
+  const blogRoutes = blogSlugs.map((slug) => ({
+    url: `${baseUrl}/blog/${slug}`,
     lastModified: today,
-    changeFrequency: freq as MetadataRoute.Sitemap[0]['changeFrequency'],
+    changeFrequency: 'daily' as MetadataRoute.Sitemap[0]['changeFrequency'],
+    priority: 0.7,
+  }))
+
+  return [...coreRoutes, ...toolRoutes, ...blogRoutes].map(({ url, lastModified, changeFrequency, priority }) => ({
+    url,
+    lastModified,
+    changeFrequency,
     priority,
   }))
 }

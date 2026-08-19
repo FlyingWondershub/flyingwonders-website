@@ -118,6 +118,9 @@ export async function PATCH(req: NextRequest) {
           ? new Date(confirmedMeetingTime).toLocaleString('en-SG', { dateStyle: 'full', timeStyle: 'short' })
           : fullDoc.preferredDate ? `${fullDoc.preferredDate} (${fullDoc.preferredTimeWindow})` : 'To Be Confirmed'
 
+        const globalSettings = await client.fetch(`*[_type == "globalContact"][0]{ contactEmail }`)
+        const adminEmail = globalSettings?.contactEmail || 'info.flyingwonders@gmail.com'
+
         await fetch('https://api.web3forms.com/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -126,7 +129,7 @@ export async function PATCH(req: NextRequest) {
             subject: `✅ Your Travel Consultation is Confirmed! - ${consultantName} | Flying Wonders`,
             from_name: 'Flying Wonders Travel Consulting',
             to_email: fullDoc.clientEmail,
-            cc_email: 'flyingwonders2024@gmail.com',
+            cc_email: adminEmail,
             message: `
 Dear ${fullDoc.clientName},
 

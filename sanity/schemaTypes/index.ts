@@ -33,6 +33,7 @@ import { b2bCatalogProfileSchema } from './b2bCatalogProfile'
 import { b2bDirectorySettingsSchema } from './b2bDirectorySettings'
 import { b2bServiceCatalogSettingsSchema } from './b2bServiceCatalogSettings'
 import { b2bServiceMediaSchema } from './b2bServiceMedia'
+import { blogPostSchema } from './blogPost'
 import { b2bTravelToolCommentSchema } from './b2bTravelToolComment'
 import { travelConsultantSchema } from './travelConsultant'
 import { travelConsultingPackageSchema } from './travelConsultingPackage'
@@ -88,6 +89,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     corporateTravelSchema,
     travelToolsSchema,
     eventsPageSchema,
-    readyPackageTemplateSchema
+    readyPackageTemplateSchema,
+    blogPostSchema
   ],
 }
