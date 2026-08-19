@@ -17,6 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/travel-tools', priority: 0.9, freq: 'daily' },
     { path: '/travel-consulting', priority: 0.9, freq: 'daily' },
     { path: '/study-in-singapore', priority: 0.85, freq: 'daily' },
+    { path: '/karnataka', priority: 0.9, freq: 'daily' },
     { path: '/corporate-travel', priority: 0.85, freq: 'weekly' },
     { path: '/instant-quote', priority: 0.85, freq: 'weekly' },
     { path: '/attractions-live', priority: 0.85, freq: 'daily' },
