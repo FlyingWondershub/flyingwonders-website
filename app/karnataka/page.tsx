@@ -6,19 +6,33 @@ import {
   MapPin, Clock, Calendar, Users, DollarSign, CheckCircle2, ChevronDown,
   ChevronUp, Sparkles, Compass, Bus, ShieldCheck, HeartHandshake, PhoneCall,
   Send, AlertCircle, Award, ArrowRight, Star, ExternalLink, Shield, Coffee,
-  Camera, Landmark, Trees, Waves, Mountain, Sun, Filter, X, Tag
+  Camera, Landmark, Trees, Waves, Mountain, Sun, Filter, X, Tag, ListFilter,
+  FileText, Info, AlertTriangle, ChevronRight
 } from 'lucide-react'
 import { client } from '../../sanity/lib/client'
+
+interface ItineraryItem {
+  timeOrDay: string
+  title: string
+  description?: string
+  places?: string[]
+}
 
 interface PackageCircuit {
   _id?: string
   id?: string
   title: string
   slug?: { current?: string } | string
+  kstdcUrl?: string
+  kstdcCode?: string
   subtitle: string
-  category: 'heritage' | 'hills' | 'wildlife' | 'coastal' | 'temple' | 'city'
+  category: 'city' | 'heritage' | 'hills' | 'coastal' | 'pilgrimage'
   duration: string
-  route: string
+  departureTime?: string
+  returnTime?: string
+  departureLocation?: string
+  operatingDays?: string
+  placesCovered?: string[]
   priceINR: number
   priceSGD: number
   badge?: string
@@ -27,8 +41,9 @@ interface PackageCircuit {
   imageUrl?: string
   highlights: string[]
   inclusions: string[]
-  departureCity?: string
-  kstdcCode?: string
+  exclusions?: string[]
+  importantNotes?: string[]
+  itinerary?: ItineraryItem[]
 }
 
 interface KarnatakaSettings {
@@ -44,226 +59,44 @@ interface KarnatakaSettings {
 
 const DEFAULT_SETTINGS: KarnatakaSettings = {
   whatsappNumber: '6596890101',
-  heroBadge: 'One State • Many Worlds • Official KSTDC Circuits',
-  heroTitle: 'Explore Magnificent Karnataka Tour Packages',
-  heroSubtitle: 'From royal palaces in Mysuru and 3 UNESCO heritage sites in Hampi & Hoysala temples, to lush coffee hills in Coorg, Kabini tiger safaris, and the iconic Bengaluru Double-Decker HOHO Bus.',
+  heroBadge: 'One State • Many Worlds • Official KSTDC Bengaluru Circuits',
+  heroTitle: 'Official Karnataka (KSTDC) Tour Packages from Bengaluru',
+  heroSubtitle: 'Directly synced with official KSTDC circuits. Explore royal palaces, UNESCO ruins, coffee hills, wildlife, and the Bengaluru HOHO Double-Decker bus. Instant WhatsApp booking & customized family departures.',
   hohoTitle: 'Bengaluru Hop-On Hop-Off (HOHO) Ambaari Double-Decker',
   hohoPriceINR: 180,
   hohoTimings: '10:30 AM – 8:00 PM',
   hohoBoardingHub: 'Ravindra Kalakshetra, JC Road, Bengaluru',
 }
 
-const DEFAULT_PACKAGES: PackageCircuit[] = [
-  {
-    id: 'bangalore-hoho',
-    title: 'Bengaluru HOHO City Darshan (Ambaari Double-Decker)',
-    subtitle: 'Hop-on Hop-off open-top double-decker city tour covering Bengaluru’s iconic heritage landmarks.',
-    category: 'city',
-    duration: '1 Day (10:30 AM – 8:00 PM)',
-    route: 'Ravindra Kalakshetra → Cubbon Park → Visvesvaraya Museum → Vidhana Soudha → High Court',
-    priceINR: 180,
-    priceSGD: 3,
-    badge: 'KSTDC Flagship',
-    rating: 4.8,
-    reviewsCount: 1420,
-    imageUrl: 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=800&auto=format&fit=crop&q=80',
-    highlights: [
-      'Circular double-decker bus with panoramic glass & open rooftop',
-      'Hop off and re-board at major landmark stops along the CBD',
-      'Covers Vidhana Soudha, High Court, Visvesvaraya Museum, Kasturba Road',
-      'Departures every 30-45 mins from Ravindra Kalakshetra'
-    ],
-    inclusions: ['Full-Day HOHO Bus Access', 'Audio / Conductor Guide', 'City Tourist Route Map'],
-    kstdcCode: 'KSTDC-HOHO',
-    departureCity: 'Bengaluru'
-  },
-  {
-    id: 'mysore-palace-heritage',
-    title: 'Royal Mysuru & Srirangapatna Heritage Day Tour',
-    subtitle: 'Step into the grandeur of the Wadiyar Dynasty with palaces, illuminated gardens, and historic battle sites.',
-    category: 'heritage',
-    duration: '1 Day (6:00 AM – 10:30 PM)',
-    route: 'Bengaluru → Srirangapatna → Mysore Palace → Chamundi Hills → Brindavan Gardens → Bengaluru',
-    priceINR: 850,
-    priceSGD: 14,
-    badge: 'Most Popular',
-    rating: 4.9,
-    reviewsCount: 2350,
-    imageUrl: 'https://images.unsplash.com/photo-1600100397608-f010f443b81a?w=800&auto=format&fit=crop&q=80',
-    highlights: [
-      'Guided tour of the world-famous Mysore Palace (Amba Vilas)',
-      'Darshan at Chamundeshwari Temple atop Chamundi Hills',
-      'Tipu Sultan Summer Palace & historic Srirangapatna fort',
-      'Musical fountain evening show at Brindavan Gardens (KRS)'
-    ],
-    inclusions: ['AC Coach / Private Cab', 'Experienced Driver-Guide', 'Toll, Parking & State Taxes'],
-    kstdcCode: 'KSTDC-MYS01',
-    departureCity: 'Bengaluru'
-  },
-  {
-    id: 'north-karnataka-unesco',
-    title: 'North Karnataka UNESCO Heritage Circuit (Hampi & Badami)',
-    subtitle: 'An awe-inspiring journey through the Vijayanagara ruins, Badami cave temples, and Chalukyan architecture.',
-    category: 'heritage',
-    duration: '4 Nights / 5 Days',
-    route: 'Bengaluru → Chitradurga Fort → Badami → Aihole → Pattadakal → Vijayapura (Gol Gumbaz) → Hampi → Bengaluru',
-    priceINR: 8950,
-    priceSGD: 145,
-    badge: 'UNESCO Circuit',
-    rating: 5.0,
-    reviewsCount: 980,
-    imageUrl: 'https://images.unsplash.com/photo-1609137144822-04e40562e6d9?w=800&auto=format&fit=crop&q=80',
-    highlights: [
-      'Explore Hampi Stone Chariot, Virupaksha Temple, Lotus Mahal & Tungabhadra River',
-      '6th-century rock-cut Badami Cave Temples overlooking Agastya Lake',
-      'UNESCO World Heritage monuments of Pattadakal and cradle of temple art at Aihole',
-      'Acoustic marvel at Gol Gumbaz Whispering Gallery in Vijayapura'
-    ],
-    inclusions: ['4 Nights KSTDC Mayura / 3★ Hotel Stay', 'Daily Breakfast', 'AC Transport for Entire Circuit', 'Sightseeing & Guide Assistance'],
-    kstdcCode: 'KSTDC-NKT04',
-    departureCity: 'Bengaluru'
-  },
-  {
-    id: 'coorg-coffee-valley',
-    title: 'Coorg & Chikmagalur Coffee Valley Retreat',
-    subtitle: 'Unwind in the Scotland of India amidst sprawling coffee plantations, cascading waterfalls, and misty peaks.',
-    category: 'hills',
-    duration: '3 Nights / 4 Days',
-    route: 'Bengaluru → Bylakuppe Tibetan Camp → Madikeri (Coorg) → Abbey Falls → Chikmagalur → Mullayanagiri → Bengaluru',
-    priceINR: 9200,
-    priceSGD: 150,
-    badge: 'Top Hill Station',
-    rating: 4.9,
-    reviewsCount: 1640,
-    imageUrl: 'https://images.unsplash.com/photo-1598091383021-15ddea10925d?w=800&auto=format&fit=crop&q=80',
-    highlights: [
-      'Golden Temple & Namdroling Monastery in Bylakuppe',
-      'Dubare Elephant Camp river rafting & elephant interaction',
-      'Sunset at Raja’s Seat & roaring Abbey Waterfalls',
-      'Trek to Mullayanagiri (Highest peak in Karnataka) & Baba Budangiri'
-    ],
-    inclusions: ['3 Nights Plantation Resort / 3★ Hotel', 'Breakfast Included', 'Private Sanitized AC Sedan / SUV', 'Coffee Estate Walk'],
-    kstdcCode: 'KSTDC-CRG03',
-    departureCity: 'Bengaluru'
-  },
-  {
-    id: 'coastal-gokarna-murudeshwar',
-    title: 'Coastal Karnataka & Gokarna Beach Trail',
-    subtitle: 'Golden sandy beaches, monumental coastal temples, and breathtaking Western Ghats sea views.',
-    category: 'coastal',
-    duration: '4 Nights / 5 Days',
-    route: 'Bengaluru → Udupi Sri Krishna Matha → St. Mary’s Island → Murudeshwar → Gokarna (Om Beach) → Jog Falls → Bengaluru',
-    priceINR: 11500,
-    priceSGD: 185,
-    badge: 'Beaches & Temples',
-    rating: 4.8,
-    reviewsCount: 890,
-    imageUrl: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=800&auto=format&fit=crop&q=80',
-    highlights: [
-      'Gigantic 123-ft Shiva statue and Rajagopuram at Murudeshwar Beach',
-      'Scenic Om Beach, Kudle Beach, and Mahabaleshwar Temple in Gokarna',
-      'Hexagonal volcanic rock formations on St. Mary’s Island',
-      'Spectacular Jog Falls (India’s 2nd highest plunge waterfall)'
-    ],
-    inclusions: ['4 Nights Beachfront / Mayura Resort Stays', 'Daily Breakfast', 'AC Transport & Sightseeing', 'Driver Allowances & Tolls'],
-    kstdcCode: 'KSTDC-CST05',
-    departureCity: 'Bengaluru'
-  },
-  {
-    id: 'kabini-bandipur-wildlife',
-    title: 'Kabini & Bandipur Tiger Safari Circuit',
-    subtitle: 'Encounter wild Asiatic elephants, leopards, and Royal Bengal tigers in Karnataka’s premier jungle corridors.',
-    category: 'wildlife',
-    duration: '2 Nights / 3 Days',
-    route: 'Bengaluru → Bandipur Tiger Reserve → Kabini (Nagarhole National Park) → Bengaluru',
-    priceINR: 14500,
-    priceSGD: 235,
-    badge: 'Jungle Safaris',
-    rating: 4.9,
-    reviewsCount: 750,
-    imageUrl: 'https://images.unsplash.com/photo-1575550959106-5a7defe28b56?w=800&auto=format&fit=crop&q=80',
-    highlights: [
-      '2 Jungle Jeep Safaris inside Bandipur & Nagarhole Tiger Reserves',
-      'Kabini River boat safari for elephant herds and aquatic birdlife',
-      'Stay at scenic Jungle Lodges & Resorts (JLR) or eco-wilderness retreat',
-      'Naturalist-guided forest walks and bonfire evening sessions'
-    ],
-    inclusions: ['2 Nights Eco-Resort / JLR Partner Stay', 'All Meals (Breakfast, Lunch & Dinner)', '2 Forest Safari Permits & Gypsy Rides', 'Bengaluru Transfers'],
-    kstdcCode: 'KSTDC-KBN02',
-    departureCity: 'Bengaluru'
-  },
-  {
-    id: 'hoysala-grandeur-belur',
-    title: 'Hoysala Architectural Wonders (Belur, Halebidu & Shravanabelagola)',
-    subtitle: 'Witness the zenith of ancient stone craftsmanship with 12th-century Hoysala temples and the giant monolithic Bahubali.',
-    category: 'heritage',
-    duration: '2 Days / 1 Night',
-    route: 'Bengaluru → Shravanabelagola → Belur (Chennakeshava) → Halebidu (Hoysaleswara) → Bengaluru',
-    priceINR: 3850,
-    priceSGD: 62,
-    badge: 'UNESCO 2023 Inscribed',
-    rating: 4.9,
-    reviewsCount: 1120,
-    imageUrl: 'https://images.unsplash.com/photo-1627894006066-b45785012543?w=800&auto=format&fit=crop&q=80',
-    highlights: [
-      '57-ft monolithic Gommateshwara Bahubali statue at Shravanabelagola',
-      'Intricate soapstone carvings & star-shaped base at Belur Chennakeshava Temple',
-      'Twin Hoysaleswara & Shantaleswara shrines in Halebidu',
-      'UNESCO World Heritage Sacred Ensembles of the Hoysalas'
-    ],
-    inclusions: ['1 Night Hotel Stay in Hassan / Belur', 'Breakfast Included', 'Private AC Cab / KSTDC Tour', 'Driver Allowance & Parking'],
-    kstdcCode: 'KSTDC-HYS02',
-    departureCity: 'Bengaluru'
-  },
-  {
-    id: 'bangalore-mysore-ooty-triangle',
-    title: 'Golden Triangle (Bengaluru – Mysuru – Ooty Nilgiri Hills)',
-    subtitle: 'The quintessential South India holiday combining royal palace history, lush wildlife transit, and cool hill breeze.',
-    category: 'hills',
-    duration: '4 Nights / 5 Days',
-    route: 'Bengaluru → Srirangapatna → Mysuru → Bandipur Transit → Ooty → Coonoor (Toy Train) → Bengaluru',
-    priceINR: 12800,
-    priceSGD: 205,
-    badge: 'All-Time Classic',
-    rating: 4.8,
-    reviewsCount: 3100,
-    imageUrl: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&auto=format&fit=crop&q=80',
-    highlights: [
-      'Royal Mysore Palace, Chamundi Hill & Brindavan Gardens illumination',
-      'Scenic Mudumalai / Bandipur tiger reserve forest road crossing',
-      'Ooty Botanical Gardens, Ooty Lake boating & Doddabetta Viewpoint',
-      'Historic UNESCO Nilgiri Mountain Railway Toy Train experience to Coonoor'
-    ],
-    inclusions: ['4 Nights 3★ Hotel Accommodations', 'Daily Breakfast', 'Dedicated Private AC Cab for 5 Days', 'Sightseeing as per Itinerary'],
-    kstdcCode: 'KSTDC-TRG05',
-    departureCity: 'Bengaluru'
-  }
-]
-
-// Banner Quick-Jump Navigation Items
+// Banner Quick Jump Navigation Items
 const BANNER_QUICK_LINKS = [
-  { label: '🚌 Bengaluru HOHO Bus (₹180)', targetId: 'bangalore-hoho' },
-  { label: '👑 Royal Mysuru Palace', targetId: 'mysore-palace-heritage' },
-  { label: '🏛️ Hampi & Badami UNESCO', targetId: 'north-karnataka-unesco' },
-  { label: '☕ Coorg & Chikmagalur Hills', targetId: 'coorg-coffee-valley' },
-  { label: '🏖️ Gokarna & Murudeshwar', targetId: 'coastal-gokarna-murudeshwar' },
-  { label: '🐅 Kabini Tiger Safari', targetId: 'kabini-bandipur-wildlife' },
-  { label: '🛕 Belur-Halebidu Hoysala', targetId: 'hoysala-grandeur-belur' },
-  { label: '🚂 Mysuru-Ooty Triangle', targetId: 'bangalore-mysore-ooty-triangle' },
+  { label: '🚌 HOHO Double-Decker (₹180)', targetId: 'bangalore-hoho-service' },
+  { label: '🏛️ Bengaluru City Day Tour (₹340)', targetId: 'bengaluru-city-tour' },
+  { label: '🐅 ISKCON & Bannerghatta Safari', targetId: 'bengaluru-full-day-trip' },
+  { label: '👑 Mysuru Palace & KRS (₹850)', targetId: 'mysuru-sight-seeing-from-bengaluru' },
+  { label: '🛕 Belur-Halebidu Hoysala', targetId: 'world-heritage-monuments-tour-belur-halebeedu-shravanabelagola' },
+  { label: '🏰 North Karnataka (Hampi-Badami)', targetId: 'north-karnataka-tour-hampi-badami-bijapur' },
+  { label: '☕ Coorg Nature Holiday', targetId: 'coorg-nature-holiday-bengaluru' },
+  { label: '🏖️ Goa-Gokarna-Jog Falls', targetId: 'goa-gokarna-jog-falls-tour' },
+  { label: '🚂 Mysuru-Ooty Classic', targetId: 'bengaluru-mysuru-ooty-package-tour' },
+  { label: '🙏 Tirupathi Balaji Package', targetId: 'tirupathi-balaji-package-bengaluru' },
 ]
 
 export default function KarnatakaPage() {
   const [settings, setSettings] = useState<KarnatakaSettings>(DEFAULT_SETTINGS)
-  const [packages, setPackages] = useState<PackageCircuit[]>(DEFAULT_PACKAGES)
+  const [packages, setPackages] = useState<PackageCircuit[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
   const [activeCategory, setActiveCategory] = useState<string>('all')
+  const [activeCardTabs, setActiveCardTabs] = useState<Record<string, 'details' | 'itinerary'>>({})
   const [activeModalPackage, setActiveModalPackage] = useState<PackageCircuit | null>(null)
+  const [modalTab, setModalTab] = useState<'details' | 'itinerary'>('details')
   const [selectedTravelDate, setSelectedTravelDate] = useState<string>('')
   const [selectedTravelers, setSelectedTravelers] = useState<number>(2)
   const [customNotes, setCustomNotes] = useState<string>('')
   const [activeFaqIndex, setActiveFaqIndex] = useState<number | null>(null)
   const [highlightedCardId, setHighlightedCardId] = useState<string | null>(null)
 
-  // Fetch Sanity settings & packages on mount
+  // Fetch live Sanity settings & packages on mount
   useEffect(() => {
     async function loadSanityData() {
       try {
@@ -283,6 +116,8 @@ export default function KarnatakaPage() {
         }
       } catch (err) {
         console.error('Error fetching Karnataka data from Sanity:', err)
+      } finally {
+        setLoading(false)
       }
     }
     loadSanityData()
@@ -299,29 +134,33 @@ export default function KarnatakaPage() {
     }
   }
 
+  const toggleCardTab = (cardId: string, tab: 'details' | 'itinerary') => {
+    setActiveCardTabs(prev => ({ ...prev, [cardId]: tab }))
+  }
+
   const filteredPackages = activeCategory === 'all'
     ? packages
     : packages.filter(p => p.category === activeCategory)
 
   const buildWhatsAppLink = (pkg: PackageCircuit) => {
-    let msg = `Namaskara! 🙏 I am interested in booking the *${pkg.title}* (${pkg.duration}).\n\n`
-    if (pkg.kstdcCode) msg += `🔖 *KSTDC Ref:* ${pkg.kstdcCode}\n`
-    msg += `📍 *Route:* ${pkg.route}\n`
-    msg += `💰 *Est. Price:* ₹${pkg.priceINR?.toLocaleString()} (approx S$ ${pkg.priceSGD}) per person\n`
-    if (selectedTravelDate) msg += `📅 *Preferred Date:* ${selectedTravelDate}\n`
+    let msg = `Namaskara! 🙏 I am interested in booking the official KSTDC package: *${pkg.title}* (${pkg.duration}).\n\n`
+    if (pkg.kstdcCode) msg += `🔖 *KSTDC Code:* ${pkg.kstdcCode}\n`
+    if (pkg.kstdcUrl) msg += `🔗 *Source:* ${pkg.kstdcUrl}\n`
+    msg += `💰 *Tariff:* ₹${pkg.priceINR?.toLocaleString()} (approx S$ ${pkg.priceSGD}) per person\n`
+    if (selectedTravelDate) msg += `📅 *Preferred Travel Date:* ${selectedTravelDate}\n`
     if (selectedTravelers) msg += `👥 *Number of Pax:* ${selectedTravelers} Travelers\n`
     if (customNotes) msg += `📝 *Notes/Customization:* ${customNotes}\n`
-    msg += `\nPlease share detailed itinerary, hotel options, and booking availability. Thank you!`
+    msg += `\nPlease confirm seat availability, pickup details, and hotel booking options. Thank you!`
     return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`
   }
 
   const buildGeneralWhatsAppLink = () => {
-    const msg = `Namaskara! 🙏 I would like to plan a custom Karnataka tour package with Flying Wonders.\n\nPlease connect me with your Karnataka travel specialist.`
+    const msg = `Namaskara! 🙏 I would like to enquire about official KSTDC tour packages from Bengaluru.\n\nPlease connect me with your Karnataka travel desk.`
     return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`
   }
 
   const buildHohoWhatsAppLink = () => {
-    const msg = `Namaskara! 🙏 I would like to book/enquire about the *Bengaluru Hop-On Hop-Off (HOHO) Ambaari Double-Decker Bus Tour* (₹${settings.hohoPriceINR || 180}/pax).\n\nPlease share departure timings and seat availability.`
+    const msg = `Namaskara! 🙏 I would like to book the *Bengaluru Hop-On Hop-Off (HOHO) Ambaari Double-Decker Bus Tour* (₹${settings.hohoPriceINR || 180}/pax).\n\nSource: https://kstdc.co/activities/hop-on-hop-off-service/\nPlease share boarding timings and seat reservation details.`
     return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(msg)}`
   }
 
@@ -335,7 +174,7 @@ export default function KarnatakaPage() {
           <span>/</span>
           <Link href="/services-catalog" style={{ color: '#0F4C3A', textDecoration: 'none', fontWeight: 600 }}>Services</Link>
           <span>/</span>
-          <span style={{ color: '#1E293B', fontWeight: 700 }}>Karnataka Tour Packages</span>
+          <span style={{ color: '#1E293B', fontWeight: 700 }}>Karnataka (KSTDC) Tour Packages</span>
         </div>
       </div>
 
@@ -344,10 +183,10 @@ export default function KarnatakaPage() {
         position: 'relative',
         background: 'linear-gradient(135deg, #093E30 0%, #0F4C3A 60%, #1A365D 100%)',
         color: '#FFF',
-        padding: 'clamp(2rem, 4vw, 3rem) 1.5rem',
+        padding: 'clamp(2rem, 3.5vw, 2.75rem) 1.5rem',
         overflow: 'hidden'
       }}>
-        {/* Decorative backdrop glow */}
+        {/* Subtle backdrop pattern */}
         <div style={{
           position: 'absolute',
           inset: 0,
@@ -360,33 +199,33 @@ export default function KarnatakaPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem' }}>
             
             {/* Left Header Column */}
-            <div style={{ flex: '1 1 600px' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(212,175,55,0.2)', border: '1px solid rgba(212,175,55,0.4)', padding: '0.25rem 0.75rem', borderRadius: '20px', marginBottom: '0.75rem' }}>
+            <div style={{ flex: '1 1 620px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: 'rgba(212,175,55,0.2)', border: '1px solid rgba(212,175,55,0.4)', padding: '0.25rem 0.75rem', borderRadius: '20px', marginBottom: '0.65rem' }}>
                 <span style={{ fontSize: '0.85rem' }}>🇮🇳</span>
                 <span style={{ color: '#FDE047', fontWeight: 800, fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  {settings.heroBadge || 'One State • Many Worlds • Official KSTDC Circuits'}
+                  {settings.heroBadge || 'One State • Many Worlds • Official KSTDC Bengaluru Circuits'}
                 </span>
               </div>
 
               <h1 style={{
                 fontFamily: 'var(--font-playfair), serif',
-                fontSize: 'clamp(1.8rem, 3.8vw, 2.8rem)',
+                fontSize: 'clamp(1.7rem, 3.5vw, 2.6rem)',
                 fontWeight: 900,
                 lineHeight: 1.15,
-                margin: '0 0 0.75rem'
+                margin: '0 0 0.65rem'
               }}>
-                {settings.heroTitle || 'Explore Magnificent Karnataka Tour Packages'}
+                {settings.heroTitle || 'Official Karnataka (KSTDC) Tour Packages from Bengaluru'}
               </h1>
 
               <p style={{
-                fontSize: 'clamp(0.88rem, 1.4vw, 0.98rem)',
+                fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)',
                 lineHeight: 1.5,
                 maxWidth: '680px',
                 color: '#E2E8F0',
                 fontWeight: 300,
-                margin: '0 0 1.25rem'
+                margin: '0 0 1.1rem'
               }}>
-                {settings.heroSubtitle || 'From royal palaces in Mysuru and UNESCO heritage ruins in Hampi, to misty coffee plantations in Coorg and the Bengaluru Double-Decker HOHO Bus. Book your verified Karnataka tour directly on WhatsApp.'}
+                {settings.heroSubtitle || 'Directly synced with official KSTDC circuits. Explore royal palaces, UNESCO ruins, coffee hills, wildlife, and the Bengaluru HOHO Double-Decker bus. Instant WhatsApp booking & customized family departures.'}
               </p>
 
               {/* Action Buttons */}
@@ -401,10 +240,10 @@ export default function KarnatakaPage() {
                     gap: '0.5rem',
                     background: '#25D366',
                     color: '#FFF',
-                    padding: '0.65rem 1.4rem',
+                    padding: '0.65rem 1.35rem',
                     borderRadius: '8px',
                     fontWeight: 800,
-                    fontSize: '0.88rem',
+                    fontSize: '0.85rem',
                     textDecoration: 'none',
                     boxShadow: '0 6px 18px rgba(37,211,102,0.3)',
                     transition: 'transform 0.15s'
@@ -422,44 +261,61 @@ export default function KarnatakaPage() {
                     background: 'rgba(255,255,255,0.12)',
                     border: '1px solid rgba(255,255,255,0.25)',
                     color: '#FFF',
-                    padding: '0.65rem 1.2rem',
+                    padding: '0.65rem 1.15rem',
                     borderRadius: '8px',
                     fontWeight: 700,
-                    fontSize: '0.85rem',
+                    fontSize: '0.82rem',
                     textDecoration: 'none'
                   }}
                 >
                   <span>📋</span> View All Packages ({packages.length})
                 </a>
+
+                <a
+                  href="https://kstdc.co/tour-categories/tour-packages-from-bengaluru/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    color: '#FDE047',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    textDecoration: 'none'
+                  }}
+                >
+                  <span>🔗</span> KSTDC Source Portal <ExternalLink size={12} />
+                </a>
               </div>
             </div>
 
             {/* Right Mini Trust Box */}
-            <div style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '16px', padding: '1rem 1.25rem', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+            <div style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '16px', padding: '0.9rem 1.2rem', display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#FDE047' }}>3+</div>
-                <div style={{ fontSize: '0.7rem', color: '#CBD5E1' }}>UNESCO Sites</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#FDE047' }}>11+</div>
+                <div style={{ fontSize: '0.68rem', color: '#CBD5E1' }}>KSTDC Circuits</div>
               </div>
-              <div style={{ width: '1px', height: '35px', background: 'rgba(255,255,255,0.2)' }} />
+              <div style={{ width: '1px', height: '32px', background: 'rgba(255,255,255,0.2)' }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#FDE047' }}>₹180</div>
-                <div style={{ fontSize: '0.7rem', color: '#CBD5E1' }}>HOHO Bus</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#FDE047' }}>₹180</div>
+                <div style={{ fontSize: '0.68rem', color: '#CBD5E1' }}>HOHO Bus</div>
               </div>
-              <div style={{ width: '1px', height: '35px', background: 'rgba(255,255,255,0.2)' }} />
+              <div style={{ width: '1px', height: '32px', background: 'rgba(255,255,255,0.2)' }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#FDE047' }}>4.9★</div>
-                <div style={{ fontSize: '0.7rem', color: '#CBD5E1' }}>Guest Rating</div>
+                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: '#FDE047' }}>100%</div>
+                <div style={{ fontSize: '0.68rem', color: '#CBD5E1' }}>KSTDC Verified</div>
               </div>
             </div>
 
           </div>
 
           {/* ── Banner Interactive Quick-Links to Cards ── */}
-          <div style={{ marginTop: '1.5rem', paddingTop: '1.2rem', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
-            <div style={{ fontSize: '0.72rem', color: '#CBD5E1', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-              ⚡ Quick Jump to Package Details:
+          <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+            <div style={{ fontSize: '0.7rem', color: '#CBD5E1', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
+              ⚡ Quick Jump to Package Details & Itineraries:
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
               {BANNER_QUICK_LINKS.map((link, idx) => (
                 <button
                   key={idx}
@@ -468,10 +324,10 @@ export default function KarnatakaPage() {
                   style={{
                     background: 'rgba(255,255,255,0.12)',
                     backdropFilter: 'blur(6px)',
-                    border: '1px solid rgba(255,255,255,0.22)',
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '16px',
-                    fontSize: '0.76rem',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    padding: '0.3rem 0.65rem',
+                    borderRadius: '14px',
+                    fontSize: '0.74rem',
                     fontWeight: 600,
                     color: '#F8FAFC',
                     cursor: 'pointer',
@@ -496,7 +352,7 @@ export default function KarnatakaPage() {
       </section>
 
       {/* ── SPOTLIGHT: Bengaluru Hop-On Hop-Off (HOHO) Ambaari Bus ── */}
-      <section id="bangalore-hoho" style={{ padding: 'clamp(2.5rem, 5vw, 3.5rem) 1.5rem', background: '#FFF' }}>
+      <section id="bangalore-hoho-service" style={{ padding: 'clamp(2.5rem, 5vw, 3.5rem) 1.5rem', background: '#FFF' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           
           <div style={{
@@ -513,15 +369,25 @@ export default function KarnatakaPage() {
             
             {/* Left Content */}
             <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', background: '#D97706', color: '#FFF', padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.85rem' }}>
-                <Bus size={14} /> Official KSTDC Double-Decker Service
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#D97706', color: '#FFF', padding: '0.2rem 0.65rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  <Bus size={13} /> KSTDC Activity Ref: KSTDC-HOHO
+                </span>
+                <a
+                  href="https://kstdc.co/activities/hop-on-hop-off-service/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: '0.72rem', color: '#B45309', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.2rem', textDecoration: 'none' }}
+                >
+                  Official Link on kstdc.co <ExternalLink size={11} />
+                </a>
               </div>
 
-              <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.6rem, 3vw, 2.2rem)', fontWeight: 900, color: '#78350F', margin: '0 0 0.85rem', lineHeight: 1.2 }}>
+              <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 900, color: '#78350F', margin: '0 0 0.75rem', lineHeight: 1.2 }}>
                 {settings.hohoTitle || 'Bengaluru Hop-On Hop-Off (HOHO) Ambaari Double-Decker'}
               </h2>
 
-              <p style={{ fontSize: '0.9rem', color: '#92400E', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+              <p style={{ fontSize: '0.88rem', color: '#92400E', lineHeight: 1.6, marginBottom: '1.25rem' }}>
                 Explore Bengaluru’s iconic Central Business District from the open rooftop of the <strong>KSTDC Ambaari Double-Decker bus</strong>. Enjoy complete flexibility to hop off at museums, galleries, and government heritage buildings, then board any following circular bus.
               </p>
 
@@ -536,12 +402,12 @@ export default function KarnatakaPage() {
                 <div style={{ background: '#FFF', padding: '0.75rem', borderRadius: '10px', border: '1px solid #FCD34D' }}>
                   <div style={{ fontSize: '0.68rem', color: '#B45309', fontWeight: 800, textTransform: 'uppercase' }}>Operating Hours</div>
                   <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#78350F' }}>{settings.hohoTimings || '10:30 AM – 8 PM'}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#92400E' }}>Multiple circular trips</div>
+                  <div style={{ fontSize: '0.65rem', color: '#92400E' }}>Regular circular trips</div>
                 </div>
 
                 <div style={{ background: '#FFF', padding: '0.75rem', borderRadius: '10px', border: '1px solid #FCD34D' }}>
                   <div style={{ fontSize: '0.68rem', color: '#B45309', fontWeight: 800, textTransform: 'uppercase' }}>Boarding Hub</div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#78350F' }}>Ravindra Kalakshetra</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#78350F' }}>Ravindra Kalakshetra</div>
                   <div style={{ fontSize: '0.65rem', color: '#92400E' }}>Town Hall / JC Road</div>
                 </div>
               </div>
@@ -557,7 +423,7 @@ export default function KarnatakaPage() {
                     gap: '0.5rem',
                     background: '#0F4C3A',
                     color: '#FFF',
-                    padding: '0.7rem 1.3rem',
+                    padding: '0.65rem 1.25rem',
                     borderRadius: '8px',
                     fontWeight: 800,
                     fontSize: '0.85rem',
@@ -568,8 +434,8 @@ export default function KarnatakaPage() {
                   <span>💬</span> Book HOHO Bus on WhatsApp
                 </a>
 
-                <span style={{ fontSize: '0.75rem', color: '#92400E', fontWeight: 600 }}>
-                  ⚡ Instant WhatsApp ticket reservation & route map
+                <span style={{ fontSize: '0.74rem', color: '#92400E', fontWeight: 600 }}>
+                  ⚡ Instant WhatsApp ticket reservation & seat check
                 </span>
               </div>
 
@@ -577,11 +443,11 @@ export default function KarnatakaPage() {
 
             {/* Right: Route Stops Visual Box */}
             <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #FCD34D', padding: '1.25rem', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1E293B', marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1E293B', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                 <MapPin size={17} color="#D97706" /> HOHO Ambaari Circular Stops:
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {[
                   { step: '1', title: 'Ravindra Kalakshetra', desc: 'Main Boarding & Ticket Hub (JC Road / Town Hall)' },
                   { step: '2', title: 'Corporation & Hudson Circle', desc: 'Historic Bangalore City Corporation corridor' },
@@ -593,12 +459,12 @@ export default function KarnatakaPage() {
                   { step: '8', title: 'Vidhana Soudha', desc: 'Imposing seat of Karnataka State Legislature' }
                 ].map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-                    <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#F59E0B', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
+                    <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#F59E0B', color: '#FFF', fontSize: '0.65rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '2px' }}>
                       {item.step}
                     </div>
                     <div>
-                      <strong style={{ fontSize: '0.8rem', color: '#1E293B', display: 'block' }}>{item.title}</strong>
-                      <span style={{ fontSize: '0.7rem', color: '#64748B' }}>{item.desc}</span>
+                      <strong style={{ fontSize: '0.78rem', color: '#1E293B', display: 'block' }}>{item.title}</strong>
+                      <span style={{ fontSize: '0.68rem', color: '#64748B' }}>{item.desc}</span>
                     </div>
                   </div>
                 ))}
@@ -616,38 +482,38 @@ export default function KarnatakaPage() {
           
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.72rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Handcrafted KSTDC & Custom Tours
+              Directly Synced with kstdc.co
             </span>
             <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)', fontWeight: 900, color: '#0F4C3A', margin: '0.5rem 0 0.4rem' }}>
-              Karnataka Tour Packages
+              KSTDC Tour Packages from Bengaluru
             </h2>
-            <p style={{ fontSize: '0.9rem', color: '#64748B', maxWidth: '650px', margin: '0 auto' }}>
-              Choose an official circuit below. Every tour can be booked directly or fully customized with private cabs, tempo travellers, and handpicked resort stays.
+            <p style={{ fontSize: '0.88rem', color: '#64748B', maxWidth: '650px', margin: '0 auto' }}>
+              Official government-operated and verified custom departures. View detailed places covered, timings, and day-by-day itineraries.
             </p>
           </div>
 
           {/* Category Filter Tabs */}
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '2rem' }}>
             {[
-              { id: 'all', label: '🌟 All Circuits' },
+              { id: 'all', label: `🌟 All Packages (${packages.length})` },
+              { id: 'city', label: '🚌 Bengaluru City & HOHO' },
               { id: 'heritage', label: '🏛️ Heritage & UNESCO' },
-              { id: 'hills', label: '☕ Hills & Coffee' },
-              { id: 'wildlife', label: '🐅 Wildlife & Jungle' },
-              { id: 'coastal', label: '🏖️ Coastal & Beaches' },
-              { id: 'city', label: '🚌 Bengaluru City' }
+              { id: 'hills', label: '☕ Hills & Nature' },
+              { id: 'coastal', label: '🏖️ Coastal & Waterfalls' },
+              { id: 'pilgrimage', label: '🙏 Pilgrimage & Temples' }
             ].map(tab => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveCategory(tab.id)}
                 style={{
-                  padding: '0.45rem 1rem',
+                  padding: '0.45rem 0.95rem',
                   borderRadius: '20px',
                   border: activeCategory === tab.id ? 'none' : '1px solid #CBD5E1',
                   background: activeCategory === tab.id ? '#0F4C3A' : '#FFF',
                   color: activeCategory === tab.id ? '#FFF' : '#475569',
                   fontWeight: 700,
-                  fontSize: '0.82rem',
+                  fontSize: '0.8rem',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                   boxShadow: activeCategory === tab.id ? '0 4px 12px rgba(15,76,58,0.2)' : 'none'
@@ -659,10 +525,11 @@ export default function KarnatakaPage() {
           </div>
 
           {/* Packages Cards Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.75rem' }}>
             {filteredPackages.map(pkg => {
               const cardId = pkg.id || (typeof pkg.slug === 'string' ? pkg.slug : pkg.slug?.current) || pkg._id || ''
               const isCardHighlighted = highlightedCardId === cardId
+              const currentTab = activeCardTabs[cardId] || 'details'
 
               return (
                 <div
@@ -683,36 +550,44 @@ export default function KarnatakaPage() {
                 >
                   
                   <div>
-                    {/* Card Image Banner */}
-                    <div style={{ height: '190px', width: '100%', position: 'relative', overflow: 'hidden', background: '#1E293B' }}>
-                      <img
-                        src={pkg.imageUrl || 'https://images.unsplash.com/photo-1600100397608-f010f443b81a?w=800&auto=format&fit=crop&q=80'}
-                        alt={pkg.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.7) 100%)' }} />
-                      
-                      {pkg.badge && (
-                        <span style={{ position: 'absolute', top: '0.85rem', left: '0.85rem', background: '#D4AF37', color: '#111', fontWeight: 800, fontSize: '0.7rem', padding: '0.2rem 0.6rem', borderRadius: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          {pkg.badge}
+                    {/* Card Top Banner with Official KSTDC tag */}
+                    <div style={{ padding: '0.75rem 1rem', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {pkg.kstdcCode && (
+                          <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                            {pkg.kstdcCode}
+                          </span>
+                        )}
+                        <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
+                          {pkg.duration}
                         </span>
-                      )}
+                      </div>
 
-                      {pkg.kstdcCode && (
-                        <span style={{ position: 'absolute', top: '0.85rem', right: '0.85rem', background: 'rgba(0,0,0,0.65)', color: '#FDE047', fontWeight: 800, fontSize: '0.68rem', padding: '0.2rem 0.55rem', borderRadius: '8px', backdropFilter: 'blur(4px)' }}>
-                          {pkg.kstdcCode}
-                        </span>
+                      {pkg.kstdcUrl && (
+                        <a
+                          href={pkg.kstdcUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="View on official KSTDC portal"
+                          style={{
+                            fontSize: '0.7rem',
+                            color: '#0F4C3A',
+                            fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.2rem',
+                            textDecoration: 'none'
+                          }}
+                        >
+                          kstdc.co <ExternalLink size={11} />
+                        </a>
                       )}
-
-                      <span style={{ position: 'absolute', bottom: '0.85rem', right: '0.85rem', background: 'rgba(9,62,48,0.92)', color: '#FFF', fontWeight: 800, fontSize: '0.74rem', padding: '0.25rem 0.65rem', borderRadius: '16px', backdropFilter: 'blur(4px)' }}>
-                        ⏱️ {pkg.duration}
-                      </span>
                     </div>
 
                     {/* Card Content Body */}
                     <div style={{ padding: '1.25rem' }}>
                       
-                      <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem', lineHeight: 1.3 }}>
+                      <h3 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 0.35rem', lineHeight: 1.3 }}>
                         {pkg.title}
                       </h3>
 
@@ -720,36 +595,121 @@ export default function KarnatakaPage() {
                         {pkg.subtitle}
                       </p>
 
-                      {/* Route Details Box */}
-                      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.55rem 0.75rem', marginBottom: '0.85rem' }}>
-                        <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0F4C3A', textTransform: 'uppercase', marginBottom: '0.15rem' }}>
-                          📍 Tour Circuit:
+                      {/* Timings & Departure Hub info */}
+                      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.6rem 0.75rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.74rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#334155' }}>
+                          <Clock size={13} color="#0F4C3A" />
+                          <span><strong>Dep:</strong> {pkg.departureTime || 'TBA'} | <strong>Ret:</strong> {pkg.returnTime || 'TBA'}</span>
                         </div>
-                        <div style={{ fontSize: '0.74rem', color: '#334155', lineHeight: 1.4, fontWeight: 500 }}>
-                          {pkg.route}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#64748B' }}>
+                          <MapPin size={13} color="#D97706" />
+                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {pkg.departureLocation || 'BMTC Yeshwanthpura, Bengaluru'}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Key Highlights */}
-                      <div style={{ marginBottom: '0.85rem' }}>
-                        <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                          Trip Highlights:
-                        </div>
-                        <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.76rem', color: '#475569', lineHeight: 1.45 }}>
-                          {pkg.highlights.slice(0, 3).map((hl, hIdx) => (
-                            <li key={hIdx} style={{ marginBottom: '0.2rem' }}>{hl}</li>
-                          ))}
-                        </ul>
+                      {/* Interactive Tabs within Card: Details vs Itinerary */}
+                      <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', marginBottom: '0.75rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleCardTab(cardId, 'details')}
+                          style={{
+                            flex: 1,
+                            padding: '0.4rem',
+                            border: 'none',
+                            background: 'transparent',
+                            fontSize: '0.74rem',
+                            fontWeight: 800,
+                            color: currentTab === 'details' ? '#0F4C3A' : '#64748B',
+                            borderBottom: currentTab === 'details' ? '2px solid #0F4C3A' : '2px solid transparent',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          📋 Details & Inclusions
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleCardTab(cardId, 'itinerary')}
+                          style={{
+                            flex: 1,
+                            padding: '0.4rem',
+                            border: 'none',
+                            background: 'transparent',
+                            fontSize: '0.74rem',
+                            fontWeight: 800,
+                            color: currentTab === 'itinerary' ? '#0F4C3A' : '#64748B',
+                            borderBottom: currentTab === 'itinerary' ? '2px solid #0F4C3A' : '2px solid transparent',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          🗺️ Itinerary ({pkg.itinerary?.length || 0})
+                        </button>
                       </div>
+
+                      {/* Tab 1: Details View */}
+                      {currentTab === 'details' && (
+                        <div style={{ fontSize: '0.76rem', color: '#475569' }}>
+                          {pkg.placesCovered && pkg.placesCovered.length > 0 && (
+                            <div style={{ marginBottom: '0.65rem' }}>
+                              <strong style={{ color: '#0F172A', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                                📍 Places Covered ({pkg.placesCovered.length}):
+                              </strong>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
+                                {pkg.placesCovered.map((place, pIdx) => (
+                                  <span key={pIdx} style={{ background: '#F1F5F9', color: '#334155', padding: '0.15rem 0.45rem', borderRadius: '4px', fontSize: '0.7rem' }}>
+                                    {place}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div style={{ marginBottom: '0.65rem' }}>
+                            <strong style={{ color: '#0F172A', display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
+                              ✅ Inclusions:
+                            </strong>
+                            <ul style={{ margin: 0, paddingLeft: '1rem', lineHeight: 1.4 }}>
+                              {pkg.inclusions.slice(0, 3).map((inc, iIdx) => (
+                                <li key={iIdx}>{inc}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tab 2: Itinerary Timeline View */}
+                      {currentTab === 'itinerary' && (
+                        <div style={{ fontSize: '0.74rem', color: '#475569', maxHeight: '180px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                          {pkg.itinerary && pkg.itinerary.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                              {pkg.itinerary.map((item, idx) => (
+                                <div key={idx} style={{ borderLeft: '2px solid #0F4C3A', paddingLeft: '0.5rem' }}>
+                                  <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.72rem' }}>
+                                    <span style={{ color: '#D97706' }}>{item.timeOrDay}</span> — {item.title}
+                                  </div>
+                                  {item.description && (
+                                    <div style={{ fontSize: '0.7rem', color: '#64748B', marginTop: '0.1rem' }}>
+                                      {item.description}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p style={{ fontStyle: 'italic', color: '#94A3B8' }}>Detailed itinerary available on inquiry.</p>
+                          )}
+                        </div>
+                      )}
 
                     </div>
                   </div>
 
-                  {/* Card Footer: Pricing & Action Buttons */}
-                  <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #F1F5F9', background: '#FAFBFD', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem' }}>
+                  {/* Card Footer: Tariff & Actions */}
+                  <div style={{ padding: '0.9rem 1.25rem', borderTop: '1px solid #F1F5F9', background: '#FAFBFD', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.65rem' }}>
                     
                     <div>
-                      <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Starting From</div>
+                      <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Starting Tariff</div>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
                         <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0F4C3A' }}>
                           ₹{pkg.priceINR?.toLocaleString()}
@@ -763,7 +723,10 @@ export default function KarnatakaPage() {
                     <div style={{ display: 'flex', gap: '0.35rem' }}>
                       <button
                         type="button"
-                        onClick={() => setActiveModalPackage(pkg)}
+                        onClick={() => {
+                          setActiveModalPackage(pkg)
+                          setModalTab('details')
+                        }}
                         style={{
                           padding: '0.45rem 0.75rem',
                           borderRadius: '6px',
@@ -775,7 +738,7 @@ export default function KarnatakaPage() {
                           cursor: 'pointer'
                         }}
                       >
-                        Details
+                        Full Details
                       </button>
 
                       <a
@@ -810,84 +773,13 @@ export default function KarnatakaPage() {
         </div>
       </section>
 
-      {/* ── Why Tour Karnataka with Flying Wonders ── */}
-      <section style={{ padding: 'clamp(2.5rem, 5vw, 3.5rem) 1.5rem', background: '#FFF' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <span style={{ background: '#DCFCE7', color: '#166534', fontSize: '0.72rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Why Flying Wonders
-            </span>
-            <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.6rem, 3.5vw, 2.3rem)', fontWeight: 900, color: '#0F4C3A', margin: '0.5rem 0 0.4rem' }}>
-              The Flying Wonders Difference
-            </h2>
-            <p style={{ fontSize: '0.9rem', color: '#64748B', maxWidth: '600px', margin: '0 auto' }}>
-              We bring Singapore DMC operational standards, verified KSTDC partnerships, and 24/7 dedicated trip support to your Karnataka holiday.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
-            
-            <div style={{ background: '#F8FAFC', padding: '1.5rem', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#DCFCE7', color: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', marginBottom: '1rem' }}>
-                🏛️
-              </div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.4rem' }}>
-                Official KSTDC Routes
-              </h3>
-              <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
-                Authentic government-certified routes, priority entry at historic monuments, and verified KSTDC Mayura hotel stays.
-              </p>
-            </div>
-
-            <div style={{ background: '#F8FAFC', padding: '1.5rem', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#FEF3C7', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', marginBottom: '1rem' }}>
-                🚗
-              </div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.4rem' }}>
-                Sanitized Private Cabs
-              </h3>
-              <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
-                Toyota Innova Crysta, Ertiga, and Tempo Travellers with courteous local driver-guides who know every ghat road.
-              </p>
-            </div>
-
-            <div style={{ background: '#F8FAFC', padding: '1.5rem', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#E0E7FF', color: '#4338CA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', marginBottom: '1rem' }}>
-                🌿
-              </div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.4rem' }}>
-                Jungle Lodges & Resorts (JLR)
-              </h3>
-              <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
-                Priority booking support for iconic wildlife properties like Kabini River Lodge and Bandipur Safari Lodge with assured jeep permits.
-              </p>
-            </div>
-
-            <div style={{ background: '#F8FAFC', padding: '1.5rem', borderRadius: '16px', border: '1px solid #E2E8F0' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#FCE7F3', color: '#BE185D', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', marginBottom: '1rem' }}>
-                💬
-              </div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.4rem' }}>
-                Instant WhatsApp Booking
-              </h3>
-              <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
-                No complex checkout forms or hidden fees. Chat with our Karnataka travel team on WhatsApp to confirm dates & pricing instantly.
-              </p>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
       {/* ── FAQ Section ── */}
-      <section style={{ padding: 'clamp(2.5rem, 5vw, 4rem) 1.5rem', background: '#F8FAFC', borderTop: '1px solid #E2E8F0' }}>
+      <section style={{ padding: 'clamp(2.5rem, 5vw, 4rem) 1.5rem', background: '#FFF', borderTop: '1px solid #E2E8F0' }}>
         <div style={{ maxWidth: '850px', margin: '0 auto' }}>
           
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <span style={{ background: '#E0E7FF', color: '#3730A3', fontSize: '0.72rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Got Questions?
+              KSTDC Guidelines
             </span>
             <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.6rem, 3.5vw, 2.2rem)', fontWeight: 900, color: '#0F4C3A', margin: '0.5rem 0 0.4rem' }}>
               Frequently Asked Questions
@@ -897,24 +789,24 @@ export default function KarnatakaPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             {[
               {
-                q: 'How does the Bengaluru HOHO Double-Decker bus ticket work?',
-                a: `The Bengaluru HOHO (Ambaari) bus operates on a circular route starting from Ravindra Kalakshetra (JC Road) between 10:30 AM and 8:00 PM. A single ₹${settings.hohoPriceINR || 180} ticket allows you to ride the double-decker bus, hop off at any of the designated tourist stops (like Vidhana Soudha, High Court, Visvesvaraya Museum), explore at your pace, and hop back onto any following Ambaari bus throughout the day.`
+                q: 'Where is the main boarding location for KSTDC tour packages in Bengaluru?',
+                a: 'Most KSTDC bus tour packages depart from the KSTDC Booking Counter at the BMTC Bus Stand, Yeshwanthpura, Bengaluru. The Hop-On Hop-Off (HOHO) Ambaari double-decker bus departs from Ravindra Kalakshetra on JC Road (opposite Town Hall).'
               },
               {
-                q: 'Can we customize Karnataka tour packages with private vehicles?',
-                a: 'Yes! While standard KSTDC coach tours have fixed itineraries, Flying Wonders specializes in private customized family tours. We provide dedicated AC Sedans, Toyota Innova Crysta, and 12/20-seater Tempo Travellers with flexible departure times, customized pick-up points, and resort upgrades.'
+                q: 'Are the itineraries and prices on this page identical to kstdc.co?',
+                a: 'Yes. All package descriptions, routes, departure times, places covered, and starting tariffs are directly synchronized from the official Karnataka State Tourism Development Corporation (kstdc.co) catalog. You can also click the direct "kstdc.co ↗" link on any card to view the official page.'
               },
               {
-                q: 'Are forest safari permits included in the Kabini / Bandipur packages?',
-                a: 'Yes. Our Kabini and Bandipur packages include pre-arranged forest department safari slots (Jeep Safari / Boat Safari) guided by certified naturalists, ensuring guaranteed entry into core wildlife zones.'
+                q: 'Can we customize KSTDC tours with private cabs or tempo travellers for our family?',
+                a: 'Yes! Flying Wonders provides both standard KSTDC bus bookings and private customized chauffeur-driven tours (Toyota Innova Crysta, Ertiga, Tempo Traveller) with door-to-door Bengaluru pickup and flexible sightseeing timings.'
               },
               {
-                q: 'What is the payment and booking process since API bookings are routed via WhatsApp?',
-                a: 'Simply click "Book on WhatsApp" on any package. Our dedicated Karnataka travel desk will confirm availability for your dates, share hotel options (Mayura / 3★ / 4★ / Resorts), and provide a secure digital payment link (UPI / Credit Card / Bank Transfer).'
+                q: 'What identity documents are mandatory for passengers?',
+                a: 'All passengers (including children) must carry valid original government-issued photo ID proof (Aadhaar Card, Passport, Driving License, or Voter ID). For Tirupathi packages, ID verification is strictly enforced by TTD scanning counters.'
               },
               {
-                q: 'Are guide services available in English, Hindi, and Kannada?',
-                a: 'Yes. All our tour chauffeurs and monument guides are fluent in English, Hindi, and Kannada, offering rich historical commentary at sites like Hampi, Badami, and Belur.'
+                q: 'How does the booking process work since API checkout routes to WhatsApp?',
+                a: 'Click "Book Now" or "Full Details" on any package. It generates a pre-filled WhatsApp message with the exact KSTDC tour code, route, and your preferred dates. Our team checks real-time seat availability, provides digital payment links (UPI / Cards), and sends your confirmed ticket voucher.'
               }
             ].map((faq, idx) => {
               const isOpen = activeFaqIndex === idx
@@ -922,7 +814,7 @@ export default function KarnatakaPage() {
                 <div
                   key={idx}
                   style={{
-                    background: '#FFF',
+                    background: '#F8FAFC',
                     borderRadius: '12px',
                     border: '1px solid #E2E8F0',
                     overflow: 'hidden'
@@ -972,13 +864,13 @@ export default function KarnatakaPage() {
       }}>
         <div style={{ maxWidth: '750px', margin: '0 auto' }}>
           <span style={{ background: 'rgba(212,175,55,0.2)', color: '#FDE047', fontSize: '0.72rem', fontWeight: 800, padding: '0.25rem 0.75rem', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Plan Your Journey Today
+            Book Your Karnataka Holiday
           </span>
           <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 900, margin: '0.6rem 0 0.75rem' }}>
-            Ready to Discover Karnataka?
+            Need Assistance with KSTDC Bookings?
           </h2>
           <p style={{ fontSize: '0.92rem', color: '#E2E8F0', maxWidth: '580px', margin: '0 auto 1.5rem', fontWeight: 300 }}>
-            Chat with our Karnataka tour specialists on WhatsApp. Get instant itinerary customization, transparent pricing, and hotel recommendations within 15 minutes.
+            Chat with our Karnataka tour specialists on WhatsApp. Get instant seat availability, customized vehicle options, and hotel recommendations.
           </p>
 
           <a
@@ -999,12 +891,12 @@ export default function KarnatakaPage() {
               boxShadow: '0 6px 20px rgba(37,211,102,0.35)'
             }}
           >
-            <span>💬</span> Chat with Karnataka Specialist
+            <span>💬</span> Chat on WhatsApp
           </a>
         </div>
       </section>
 
-      {/* ── Modal: Package Details & WhatsApp Quote Customizer ── */}
+      {/* ── Full Modal: Details & Itinerary Tabs with WhatsApp Customizer ── */}
       {activeModalPackage && (
         <div style={{
           position: 'fixed',
@@ -1020,7 +912,7 @@ export default function KarnatakaPage() {
           <div style={{
             background: '#FFF',
             borderRadius: '20px',
-            maxWidth: '600px',
+            maxWidth: '680px',
             width: '100%',
             maxHeight: '90vh',
             overflowY: 'auto',
@@ -1051,11 +943,28 @@ export default function KarnatakaPage() {
               <X size={18} />
             </button>
 
-            <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#0F4C3A', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-              {activeModalPackage.category.toUpperCase()} • {activeModalPackage.duration} {activeModalPackage.kstdcCode ? `• ${activeModalPackage.kstdcCode}` : ''}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+              {activeModalPackage.kstdcCode && (
+                <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.7rem', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                  {activeModalPackage.kstdcCode}
+                </span>
+              )}
+              <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
+                {activeModalPackage.duration}
+              </span>
+              {activeModalPackage.kstdcUrl && (
+                <a
+                  href={activeModalPackage.kstdcUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: '0.72rem', color: '#0F4C3A', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.2rem', textDecoration: 'none' }}
+                >
+                  Source: kstdc.co <ExternalLink size={11} />
+                </a>
+              )}
             </div>
 
-            <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#0F172A', margin: '0 0 0.4rem', lineHeight: 1.3 }}>
+            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0F172A', margin: '0 0 0.4rem', lineHeight: 1.3 }}>
               {activeModalPackage.title}
             </h3>
 
@@ -1063,23 +972,150 @@ export default function KarnatakaPage() {
               {activeModalPackage.subtitle}
             </p>
 
-            {/* Inclusions Strip */}
-            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '0.85rem 1rem', marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F4C3A', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-                Included in Package:
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.35rem', fontSize: '0.75rem', color: '#334155' }}>
-                {activeModalPackage.inclusions.map((inc, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <CheckCircle2 size={13} color="#166534" />
-                    <span>{inc}</span>
-                  </div>
-                ))}
-              </div>
+            {/* Modal Navigation Tabs: Details vs Itinerary */}
+            <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
+              <button
+                type="button"
+                onClick={() => setModalTab('details')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  color: modalTab === 'details' ? '#0F4C3A' : '#64748B',
+                  borderBottom: modalTab === 'details' ? '2.5px solid #0F4C3A' : '2.5px solid transparent',
+                  cursor: 'pointer'
+                }}
+              >
+                📋 Overview & Inclusions
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalTab('itinerary')}
+                style={{
+                  padding: '0.5rem 1rem',
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  color: modalTab === 'itinerary' ? '#0F4C3A' : '#64748B',
+                  borderBottom: modalTab === 'itinerary' ? '2.5px solid #0F4C3A' : '2.5px solid transparent',
+                  cursor: 'pointer'
+                }}
+              >
+                🗺️ Full Itinerary Timeline ({activeModalPackage.itinerary?.length || 0})
+              </button>
             </div>
 
+            {/* Modal Tab 1: Details & Inclusions */}
+            {modalTab === 'details' && (
+              <div>
+                {/* Timings & Departure Hub info */}
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#334155' }}>
+                    <Clock size={14} color="#0F4C3A" />
+                    <span><strong>Departure:</strong> {activeModalPackage.departureTime || 'TBA'} | <strong>Return:</strong> {activeModalPackage.returnTime || 'TBA'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#64748B' }}>
+                    <MapPin size={14} color="#D97706" />
+                    <span><strong>Boarding:</strong> {activeModalPackage.departureLocation || 'BMTC Yeshwanthpura, Bengaluru'}</span>
+                  </div>
+                </div>
+
+                {/* Places Covered */}
+                {activeModalPackage.placesCovered && activeModalPackage.placesCovered.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                      📍 Places Covered:
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                      {activeModalPackage.placesCovered.map((place, idx) => (
+                        <span key={idx} style={{ background: '#F1F5F9', color: '#334155', padding: '0.2rem 0.55rem', borderRadius: '4px', fontSize: '0.74rem' }}>
+                          {place}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Inclusions & Exclusions */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ background: '#F0FDF4', border: '1px solid #DCFCE7', borderRadius: '8px', padding: '0.75rem' }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+                      ✅ Inclusions:
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.74rem', color: '#166534', lineHeight: 1.4 }}>
+                      {activeModalPackage.inclusions.map((inc, i) => (
+                        <li key={i}>{inc}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div style={{ background: '#FFF5F5', border: '1px solid #FEE2E2', borderRadius: '8px', padding: '0.75rem' }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#991B1B', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+                      ❌ Exclusions:
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.74rem', color: '#991B1B', lineHeight: 1.4 }}>
+                      {(activeModalPackage.exclusions || ['Monument Entry Fees', 'Personal Meals']).map((exc, e) => (
+                        <li key={e}>{exc}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Important Notes */}
+                {activeModalPackage.importantNotes && activeModalPackage.importantNotes.length > 0 && (
+                  <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: '8px', padding: '0.65rem 0.85rem', marginBottom: '1rem', fontSize: '0.74rem', color: '#92400E' }}>
+                    <strong>⚠️ Passenger Guidelines:</strong>
+                    <ul style={{ margin: '0.2rem 0 0', paddingLeft: '1rem' }}>
+                      {activeModalPackage.importantNotes.map((note, nIdx) => (
+                        <li key={nIdx}>{note}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Modal Tab 2: Full Itinerary Timeline */}
+            {modalTab === 'itinerary' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                {activeModalPackage.itinerary && activeModalPackage.itinerary.length > 0 ? (
+                  activeModalPackage.itinerary.map((item, idx) => (
+                    <div key={idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.75rem 1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F4C3A' }}>
+                          {item.timeOrDay}
+                        </span>
+                        <strong style={{ fontSize: '0.82rem', color: '#0F172A' }}>
+                          {item.title}
+                        </strong>
+                      </div>
+                      {item.description && (
+                        <p style={{ fontSize: '0.76rem', color: '#475569', margin: '0 0 0.35rem', lineHeight: 1.45 }}>
+                          {item.description}
+                        </p>
+                      )}
+                      {item.places && item.places.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                          {item.places.map((pl, p) => (
+                            <span key={p} style={{ background: '#E2E8F0', color: '#334155', fontSize: '0.68rem', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                              📍 {pl}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p style={{ fontStyle: 'italic', color: '#94A3B8' }}>Detailed itinerary available on WhatsApp enquiry.</p>
+                )}
+              </div>
+            )}
+
             {/* Quick Customizer Fields */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.25rem', borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Preferred Travel Date</label>
@@ -1104,10 +1140,10 @@ export default function KarnatakaPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Special Requests / Vehicle Preference</label>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Special Requests / Private Vehicle Option</label>
                 <textarea
                   rows={2}
-                  placeholder="e.g. Need private Innova Crysta, 4-star resort in Madikeri, veg food only..."
+                  placeholder="e.g. Need private Innova Crysta, 4-star resort upgrade, AC sleeper coach..."
                   value={customNotes}
                   onChange={e => setCustomNotes(e.target.value)}
                   style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', outline: 'none', resize: 'none' }}
@@ -1118,7 +1154,7 @@ export default function KarnatakaPage() {
             {/* Action Bar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.85rem', borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
               <div>
-                <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Starting Price</div>
+                <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Starting Tariff</div>
                 <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F4C3A' }}>
                   ₹{activeModalPackage.priceINR?.toLocaleString()} <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 500 }}>(~S${activeModalPackage.priceSGD})</span>
                 </div>
