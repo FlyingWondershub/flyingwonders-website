@@ -7,9 +7,10 @@ import {
   ChevronUp, Sparkles, Compass, Bus, ShieldCheck, HeartHandshake, PhoneCall,
   Send, AlertCircle, Award, ArrowRight, Star, ExternalLink, Shield, Coffee,
   Camera, Landmark, Trees, Waves, Mountain, Sun, Filter, X, Tag, ListFilter,
-  FileText, Info, AlertTriangle, ChevronRight
+  FileText, Info, AlertTriangle, ChevronRight, Image as ImageIcon
 } from 'lucide-react'
 import { client } from '../../sanity/lib/client'
+import { urlForImage } from '../../sanity/lib/image'
 
 interface ItineraryItem {
   timeOrDay: string
@@ -38,6 +39,7 @@ interface PackageCircuit {
   badge?: string
   rating: number
   reviewsCount: number
+  image?: any
   imageUrl?: string
   highlights: string[]
   inclusions: string[]
@@ -124,6 +126,18 @@ export default function KarnatakaPage() {
   }, [])
 
   const whatsappPhone = (settings.whatsappNumber || '6596890101').replace(/[^0-9]/g, '')
+
+  const resolvePackageImage = (pkg: PackageCircuit): string => {
+    if (pkg.image && (pkg.image.asset || pkg.image._ref)) {
+      try {
+        const url = urlForImage(pkg.image)?.width(900).height(560).quality(85).url()
+        if (url) return url
+      } catch (e) {
+        // fallback
+      }
+    }
+    return pkg.imageUrl || 'https://images.unsplash.com/photo-1600100397608-f010f443b81a?w=900&auto=format&fit=crop&q=80'
+  }
 
   const scrollToCard = (targetId: string) => {
     const el = document.getElementById(targetId)
@@ -530,6 +544,7 @@ export default function KarnatakaPage() {
               const cardId = pkg.id || (typeof pkg.slug === 'string' ? pkg.slug : pkg.slug?.current) || pkg._id || ''
               const isCardHighlighted = highlightedCardId === cardId
               const currentTab = activeCardTabs[cardId] || 'details'
+              const coverImg = resolvePackageImage(pkg)
 
               return (
                 <div
@@ -550,19 +565,62 @@ export default function KarnatakaPage() {
                 >
                   
                   <div>
-                    {/* Card Top Banner with Official KSTDC tag */}
-                    <div style={{ padding: '0.75rem 1rem', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    {/* ── CARD HERO IMAGE SHOWCASE (16:9) ── */}
+                    <div style={{ height: '210px', width: '100%', position: 'relative', overflow: 'hidden', background: '#0F172A' }}>
+                      <img
+                        src={coverImg}
+                        alt={pkg.title}
+                        loading="lazy"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'transform 0.4s ease'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
+                      />
+
+                      {/* Scrim overlay for contrast */}
+                      <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.75) 100%)',
+                        pointerEvents: 'none'
+                      }} />
+
+                      {/* Top Left: KSTDC Code & Badge */}
+                      <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                         {pkg.kstdcCode && (
-                          <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                          <span style={{
+                            background: '#0F4C3A',
+                            color: '#FFF',
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            padding: '0.2rem 0.55rem',
+                            borderRadius: '6px',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                            letterSpacing: '0.04em'
+                          }}>
                             {pkg.kstdcCode}
                           </span>
                         )}
-                        <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
-                          {pkg.duration}
-                        </span>
+                        {pkg.badge && (
+                          <span style={{
+                            background: '#D4AF37',
+                            color: '#0F172A',
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            padding: '0.2rem 0.55rem',
+                            borderRadius: '6px',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                          }}>
+                            {pkg.badge}
+                          </span>
+                        )}
                       </div>
 
+                      {/* Top Right: Official Source Portal Link */}
                       {pkg.kstdcUrl && (
                         <a
                           href={pkg.kstdcUrl}
@@ -570,18 +628,62 @@ export default function KarnatakaPage() {
                           rel="noopener noreferrer"
                           title="View on official KSTDC portal"
                           style={{
-                            fontSize: '0.7rem',
-                            color: '#0F4C3A',
+                            position: 'absolute',
+                            top: '0.75rem',
+                            right: '0.75rem',
+                            background: 'rgba(0,0,0,0.65)',
+                            backdropFilter: 'blur(6px)',
+                            border: '1px solid rgba(255,255,255,0.25)',
+                            color: '#FDE047',
+                            fontSize: '0.68rem',
                             fontWeight: 700,
+                            padding: '0.2rem 0.55rem',
+                            borderRadius: '6px',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '0.2rem',
+                            gap: '0.25rem',
                             textDecoration: 'none'
                           }}
                         >
-                          kstdc.co <ExternalLink size={11} />
+                          kstdc.co <ExternalLink size={10} />
                         </a>
                       )}
+
+                      {/* Bottom Left: Duration Pill */}
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '0.75rem',
+                        left: '0.75rem',
+                        background: 'rgba(0,0,0,0.7)',
+                        backdropFilter: 'blur(6px)',
+                        color: '#FFF',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '12px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}>
+                        ⏱️ {pkg.duration}
+                      </span>
+
+                      {/* Bottom Right: Starting Tariff Badge */}
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '0.75rem',
+                        right: '0.75rem',
+                        background: 'rgba(9,62,48,0.92)',
+                        backdropFilter: 'blur(6px)',
+                        border: '1px solid rgba(212,175,55,0.4)',
+                        color: '#FDE047',
+                        fontSize: '0.76rem',
+                        fontWeight: 800,
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '12px'
+                      }}>
+                        ₹{pkg.priceINR?.toLocaleString()} (~S${pkg.priceSGD})
+                      </span>
                     </div>
 
                     {/* Card Content Body */}
@@ -916,270 +1018,288 @@ export default function KarnatakaPage() {
             width: '100%',
             maxHeight: '90vh',
             overflowY: 'auto',
-            padding: '1.75rem',
             position: 'relative',
             boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
           }}>
             
-            <button
-              type="button"
-              onClick={() => setActiveModalPackage(null)}
-              style={{
-                position: 'absolute',
-                top: '1.25rem',
-                right: '1.25rem',
-                background: '#F1F5F9',
-                border: 'none',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: '#475569'
-              }}
-            >
-              <X size={18} />
-            </button>
+            {/* Modal Image Header (16:9) */}
+            <div style={{ height: '230px', width: '100%', position: 'relative', overflow: 'hidden', background: '#0F172A' }}>
+              <img
+                src={resolvePackageImage(activeModalPackage)}
+                alt={activeModalPackage.title}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%)' }} />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-              {activeModalPackage.kstdcCode && (
-                <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.7rem', fontWeight: 800, padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
-                  {activeModalPackage.kstdcCode}
-                </span>
+              <button
+                type="button"
+                onClick={() => setActiveModalPackage(null)}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'rgba(0,0,0,0.6)',
+                  backdropFilter: 'blur(6px)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: '50%',
+                  width: '34px',
+                  height: '34px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#FFF',
+                  zIndex: 10
+                }}
+              >
+                <X size={18} />
+              </button>
+
+              {/* Title & Badges on Header */}
+              <div style={{ position: 'absolute', bottom: '1rem', left: '1.25rem', right: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
+                  {activeModalPackage.kstdcCode && (
+                    <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '4px' }}>
+                      {activeModalPackage.kstdcCode}
+                    </span>
+                  )}
+                  <span style={{ background: 'rgba(255,255,255,0.2)', color: '#FFF', fontSize: '0.68rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                    {activeModalPackage.duration}
+                  </span>
+                  {activeModalPackage.kstdcUrl && (
+                    <a
+                      href={activeModalPackage.kstdcUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: '0.68rem', color: '#FDE047', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.2rem', textDecoration: 'none' }}
+                    >
+                      kstdc.co Source ↗
+                    </a>
+                  )}
+                </div>
+
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#FFF', margin: 0, lineHeight: 1.25 }}>
+                  {activeModalPackage.title}
+                </h3>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '1.5rem' }}>
+              <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: '0 0 1rem' }}>
+                {activeModalPackage.subtitle}
+              </p>
+
+              {/* Modal Navigation Tabs: Details vs Itinerary */}
+              <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setModalTab('details')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '0.82rem',
+                    fontWeight: 800,
+                    color: modalTab === 'details' ? '#0F4C3A' : '#64748B',
+                    borderBottom: modalTab === 'details' ? '2.5px solid #0F4C3A' : '2.5px solid transparent',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📋 Overview & Inclusions
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalTab('itinerary')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '0.82rem',
+                    fontWeight: 800,
+                    color: modalTab === 'itinerary' ? '#0F4C3A' : '#64748B',
+                    borderBottom: modalTab === 'itinerary' ? '2.5px solid #0F4C3A' : '2.5px solid transparent',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🗺️ Full Itinerary Timeline ({activeModalPackage.itinerary?.length || 0})
+                </button>
+              </div>
+
+              {/* Modal Tab 1: Details & Inclusions */}
+              {modalTab === 'details' && (
+                <div>
+                  {/* Timings & Departure Hub info */}
+                  <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#334155' }}>
+                      <Clock size={14} color="#0F4C3A" />
+                      <span><strong>Departure:</strong> {activeModalPackage.departureTime || 'TBA'} | <strong>Return:</strong> {activeModalPackage.returnTime || 'TBA'}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#64748B' }}>
+                      <MapPin size={14} color="#D97706" />
+                      <span><strong>Boarding:</strong> {activeModalPackage.departureLocation || 'BMTC Yeshwanthpura, Bengaluru'}</span>
+                    </div>
+                  </div>
+
+                  {/* Places Covered */}
+                  {activeModalPackage.placesCovered && activeModalPackage.placesCovered.length > 0 && (
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                        📍 Places Covered:
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                        {activeModalPackage.placesCovered.map((place, idx) => (
+                          <span key={idx} style={{ background: '#F1F5F9', color: '#334155', padding: '0.2rem 0.55rem', borderRadius: '4px', fontSize: '0.74rem' }}>
+                            {place}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Inclusions & Exclusions */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    <div style={{ background: '#F0FDF4', border: '1px solid #DCFCE7', borderRadius: '8px', padding: '0.75rem' }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+                        ✅ Inclusions:
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.74rem', color: '#166534', lineHeight: 1.4 }}>
+                        {activeModalPackage.inclusions.map((inc, i) => (
+                          <li key={i}>{inc}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div style={{ background: '#FFF5F5', border: '1px solid #FEE2E2', borderRadius: '8px', padding: '0.75rem' }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#991B1B', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+                        ❌ Exclusions:
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.74rem', color: '#991B1B', lineHeight: 1.4 }}>
+                        {(activeModalPackage.exclusions || ['Monument Entry Fees', 'Personal Meals']).map((exc, e) => (
+                          <li key={e}>{exc}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Important Notes */}
+                  {activeModalPackage.importantNotes && activeModalPackage.importantNotes.length > 0 && (
+                    <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: '8px', padding: '0.65rem 0.85rem', marginBottom: '1rem', fontSize: '0.74rem', color: '#92400E' }}>
+                      <strong>⚠️ Passenger Guidelines:</strong>
+                      <ul style={{ margin: '0.2rem 0 0', paddingLeft: '1rem' }}>
+                        {activeModalPackage.importantNotes.map((note, nIdx) => (
+                          <li key={nIdx}>{note}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               )}
-              <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>
-                {activeModalPackage.duration}
-              </span>
-              {activeModalPackage.kstdcUrl && (
+
+              {/* Modal Tab 2: Full Itinerary Timeline */}
+              {modalTab === 'itinerary' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                  {activeModalPackage.itinerary && activeModalPackage.itinerary.length > 0 ? (
+                    activeModalPackage.itinerary.map((item, idx) => (
+                      <div key={idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.75rem 1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F4C3A' }}>
+                            {item.timeOrDay}
+                          </span>
+                          <strong style={{ fontSize: '0.82rem', color: '#0F172A' }}>
+                            {item.title}
+                          </strong>
+                        </div>
+                        {item.description && (
+                          <p style={{ fontSize: '0.76rem', color: '#475569', margin: '0 0 0.35rem', lineHeight: 1.45 }}>
+                            {item.description}
+                          </p>
+                        )}
+                        {item.places && item.places.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                            {item.places.map((pl, p) => (
+                              <span key={p} style={{ background: '#E2E8F0', color: '#334155', fontSize: '0.68rem', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                                📍 {pl}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p style={{ fontStyle: 'italic', color: '#94A3B8' }}>Detailed itinerary available on WhatsApp enquiry.</p>
+                  )}
+                </div>
+              )}
+
+              {/* Quick Customizer Fields */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.25rem', borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Preferred Travel Date</label>
+                    <input
+                      type="date"
+                      value={selectedTravelDate}
+                      onChange={e => setSelectedTravelDate(e.target.value)}
+                      style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Number of Travelers (Pax)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={selectedTravelers}
+                      onChange={e => setSelectedTravelers(parseInt(e.target.value) || 1)}
+                      style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Special Requests / Private Vehicle Option</label>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. Need private Innova Crysta, 4-star resort upgrade, AC sleeper coach..."
+                    value={customNotes}
+                    onChange={e => setCustomNotes(e.target.value)}
+                    style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', outline: 'none', resize: 'none' }}
+                  />
+                </div>
+              </div>
+
+              {/* Action Bar */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.85rem', borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Starting Tariff</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F4C3A' }}>
+                    ₹{activeModalPackage.priceINR?.toLocaleString()} <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 500 }}>(~S${activeModalPackage.priceSGD})</span>
+                  </div>
+                </div>
+
                 <a
-                  href={activeModalPackage.kstdcUrl}
+                  href={buildWhatsAppLink(activeModalPackage)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ fontSize: '0.72rem', color: '#0F4C3A', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.2rem', textDecoration: 'none' }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    background: '#25D366',
+                    color: '#FFF',
+                    padding: '0.7rem 1.3rem',
+                    borderRadius: '8px',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 12px rgba(37,211,102,0.3)'
+                  }}
                 >
-                  Source: kstdc.co <ExternalLink size={11} />
+                  <span>💬</span> Confirm & Enquire on WhatsApp
                 </a>
-              )}
-            </div>
-
-            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0F172A', margin: '0 0 0.4rem', lineHeight: 1.3 }}>
-              {activeModalPackage.title}
-            </h3>
-
-            <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, marginBottom: '1rem' }}>
-              {activeModalPackage.subtitle}
-            </p>
-
-            {/* Modal Navigation Tabs: Details vs Itinerary */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
-              <button
-                type="button"
-                onClick={() => setModalTab('details')}
-                style={{
-                  padding: '0.5rem 1rem',
-                  border: 'none',
-                  background: 'transparent',
-                  fontSize: '0.82rem',
-                  fontWeight: 800,
-                  color: modalTab === 'details' ? '#0F4C3A' : '#64748B',
-                  borderBottom: modalTab === 'details' ? '2.5px solid #0F4C3A' : '2.5px solid transparent',
-                  cursor: 'pointer'
-                }}
-              >
-                📋 Overview & Inclusions
-              </button>
-              <button
-                type="button"
-                onClick={() => setModalTab('itinerary')}
-                style={{
-                  padding: '0.5rem 1rem',
-                  border: 'none',
-                  background: 'transparent',
-                  fontSize: '0.82rem',
-                  fontWeight: 800,
-                  color: modalTab === 'itinerary' ? '#0F4C3A' : '#64748B',
-                  borderBottom: modalTab === 'itinerary' ? '2.5px solid #0F4C3A' : '2.5px solid transparent',
-                  cursor: 'pointer'
-                }}
-              >
-                🗺️ Full Itinerary Timeline ({activeModalPackage.itinerary?.length || 0})
-              </button>
-            </div>
-
-            {/* Modal Tab 1: Details & Inclusions */}
-            {modalTab === 'details' && (
-              <div>
-                {/* Timings & Departure Hub info */}
-                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.78rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#334155' }}>
-                    <Clock size={14} color="#0F4C3A" />
-                    <span><strong>Departure:</strong> {activeModalPackage.departureTime || 'TBA'} | <strong>Return:</strong> {activeModalPackage.returnTime || 'TBA'}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#64748B' }}>
-                    <MapPin size={14} color="#D97706" />
-                    <span><strong>Boarding:</strong> {activeModalPackage.departureLocation || 'BMTC Yeshwanthpura, Bengaluru'}</span>
-                  </div>
-                </div>
-
-                {/* Places Covered */}
-                {activeModalPackage.placesCovered && activeModalPackage.placesCovered.length > 0 && (
-                  <div style={{ marginBottom: '1rem' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                      📍 Places Covered:
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                      {activeModalPackage.placesCovered.map((place, idx) => (
-                        <span key={idx} style={{ background: '#F1F5F9', color: '#334155', padding: '0.2rem 0.55rem', borderRadius: '4px', fontSize: '0.74rem' }}>
-                          {place}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Inclusions & Exclusions */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div style={{ background: '#F0FDF4', border: '1px solid #DCFCE7', borderRadius: '8px', padding: '0.75rem' }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
-                      ✅ Inclusions:
-                    </div>
-                    <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.74rem', color: '#166534', lineHeight: 1.4 }}>
-                      {activeModalPackage.inclusions.map((inc, i) => (
-                        <li key={i}>{inc}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div style={{ background: '#FFF5F5', border: '1px solid #FEE2E2', borderRadius: '8px', padding: '0.75rem' }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#991B1B', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
-                      ❌ Exclusions:
-                    </div>
-                    <ul style={{ margin: 0, paddingLeft: '1rem', fontSize: '0.74rem', color: '#991B1B', lineHeight: 1.4 }}>
-                      {(activeModalPackage.exclusions || ['Monument Entry Fees', 'Personal Meals']).map((exc, e) => (
-                        <li key={e}>{exc}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Important Notes */}
-                {activeModalPackage.importantNotes && activeModalPackage.importantNotes.length > 0 && (
-                  <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: '8px', padding: '0.65rem 0.85rem', marginBottom: '1rem', fontSize: '0.74rem', color: '#92400E' }}>
-                    <strong>⚠️ Passenger Guidelines:</strong>
-                    <ul style={{ margin: '0.2rem 0 0', paddingLeft: '1rem' }}>
-                      {activeModalPackage.importantNotes.map((note, nIdx) => (
-                        <li key={nIdx}>{note}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Modal Tab 2: Full Itinerary Timeline */}
-            {modalTab === 'itinerary' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
-                {activeModalPackage.itinerary && activeModalPackage.itinerary.length > 0 ? (
-                  activeModalPackage.itinerary.map((item, idx) => (
-                    <div key={idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.75rem 1rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F4C3A' }}>
-                          {item.timeOrDay}
-                        </span>
-                        <strong style={{ fontSize: '0.82rem', color: '#0F172A' }}>
-                          {item.title}
-                        </strong>
-                      </div>
-                      {item.description && (
-                        <p style={{ fontSize: '0.76rem', color: '#475569', margin: '0 0 0.35rem', lineHeight: 1.45 }}>
-                          {item.description}
-                        </p>
-                      )}
-                      {item.places && item.places.length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                          {item.places.map((pl, p) => (
-                            <span key={p} style={{ background: '#E2E8F0', color: '#334155', fontSize: '0.68rem', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
-                              📍 {pl}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p style={{ fontStyle: 'italic', color: '#94A3B8' }}>Detailed itinerary available on WhatsApp enquiry.</p>
-                )}
-              </div>
-            )}
-
-            {/* Quick Customizer Fields */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.25rem', borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Preferred Travel Date</label>
-                  <input
-                    type="date"
-                    value={selectedTravelDate}
-                    onChange={e => setSelectedTravelDate(e.target.value)}
-                    style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', outline: 'none' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Number of Travelers (Pax)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={selectedTravelers}
-                    onChange={e => setSelectedTravelers(parseInt(e.target.value) || 1)}
-                    style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', outline: 'none' }}
-                  />
-                </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Special Requests / Private Vehicle Option</label>
-                <textarea
-                  rows={2}
-                  placeholder="e.g. Need private Innova Crysta, 4-star resort upgrade, AC sleeper coach..."
-                  value={customNotes}
-                  onChange={e => setCustomNotes(e.target.value)}
-                  style={{ width: '100%', padding: '0.45rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', outline: 'none', resize: 'none' }}
-                />
-              </div>
-            </div>
-
-            {/* Action Bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.85rem', borderTop: '1px solid #E2E8F0', paddingTop: '1rem' }}>
-              <div>
-                <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Starting Tariff</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F4C3A' }}>
-                  ₹{activeModalPackage.priceINR?.toLocaleString()} <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 500 }}>(~S${activeModalPackage.priceSGD})</span>
-                </div>
-              </div>
-
-              <a
-                href={buildWhatsAppLink(activeModalPackage)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  background: '#25D366',
-                  color: '#FFF',
-                  padding: '0.7rem 1.3rem',
-                  borderRadius: '8px',
-                  fontWeight: 800,
-                  fontSize: '0.88rem',
-                  textDecoration: 'none',
-                  boxShadow: '0 4px 12px rgba(37,211,102,0.3)'
-                }}
-              >
-                <span>💬</span> Confirm & Enquire on WhatsApp
-              </a>
             </div>
 
           </div>
