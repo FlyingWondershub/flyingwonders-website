@@ -480,30 +480,30 @@ export default function B2BDirectoryPage() {
 
       {/* ══ 2. SLEEK UNIFIED COMPACT TOOLBAR (SEARCH + FILTERS + REGION CHIPS) ══ */}
       <div style={{ maxWidth: '1280px', margin: '1rem auto 1.5rem', padding: '0 1.5rem' }}>
-        <div style={{ background: '#FFF', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ background: '#FFFFFF', borderRadius: '14px', border: '1px solid #CBD5E1', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           
           {/* Top Line: Search Input + Select Dropdowns + Sort */}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
             
             {/* Sleek Search Input */}
-            <div style={{ flex: '1 1 260px', display: 'flex', alignItems: 'center', gap: '8px', background: '#F8FAFC', padding: '0 12px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+            <div style={{ flex: '1 1 260px', display: 'flex', alignItems: 'center', gap: '8px', background: '#F8FAFC', padding: '0 12px', borderRadius: '8px', border: '1px solid #94A3B8' }}>
               <Search size={16} color="#0F4C3A" />
               <input
                 type="text"
                 placeholder={settings.searchPlaceholder}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                style={{ width: '100%', background: 'transparent', border: 'none', padding: '9px 0', outline: 'none', fontSize: '0.85rem', color: '#0F172A', fontWeight: 600 }}
+                style={{ width: '100%', background: 'transparent', border: 'none', padding: '9px 0', outline: 'none', fontSize: '0.85rem', color: '#0F172A', fontWeight: 600, fontFamily: 'var(--font-inter), sans-serif' }}
               />
             </div>
 
             {/* Destination Select */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F8FAFC', padding: '0 10px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F8FAFC', padding: '0 10px', borderRadius: '8px', border: '1px solid #94A3B8' }}>
               <MapPin size={14} color="#0F4C3A" />
               <select
                 value={selectedDestination}
                 onChange={e => setSelectedDestination(e.target.value)}
-                style={{ background: 'transparent', border: 'none', padding: '9px 0', fontSize: '0.82rem', fontWeight: 700, color: '#334155', cursor: 'pointer', outline: 'none' }}
+                style={{ background: 'transparent', border: 'none', padding: '9px 0', fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer', outline: 'none', fontFamily: 'var(--font-inter), sans-serif' }}
               >
                 <option value="all">🌍 All Destinations</option>
                 <option value="Singapore">Singapore</option>
@@ -517,12 +517,12 @@ export default function B2BDirectoryPage() {
             </div>
 
             {/* Specialty Select */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F8FAFC', padding: '0 10px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F8FAFC', padding: '0 10px', borderRadius: '8px', border: '1px solid #94A3B8' }}>
               <Briefcase size={14} color="#0F4C3A" />
               <select
                 value={selectedSpecialty}
                 onChange={e => setSelectedSpecialty(e.target.value)}
-                style={{ background: 'transparent', border: 'none', padding: '9px 0', fontSize: '0.82rem', fontWeight: 700, color: '#334155', cursor: 'pointer', outline: 'none' }}
+                style={{ background: 'transparent', border: 'none', padding: '9px 0', fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer', outline: 'none', fontFamily: 'var(--font-inter), sans-serif' }}
               >
                 <option value="all">💼 All Specialties</option>
                 <option value="Corporate MICE">Corporate MICE</option>
@@ -534,12 +534,12 @@ export default function B2BDirectoryPage() {
             </div>
 
             {/* Sort Dropdown */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F8FAFC', padding: '0 10px', borderRadius: '8px', border: '1px solid #CBD5E1', marginLeft: 'auto' }}>
-              <ArrowUpDown size={14} color="#64748B" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#F8FAFC', padding: '0 10px', borderRadius: '8px', border: '1px solid #94A3B8', marginLeft: 'auto' }}>
+              <ArrowUpDown size={14} color="#475569" />
               <select
                 value={sortOption}
                 onChange={e => setSortOption(e.target.value as any)}
-                style={{ background: 'transparent', border: 'none', padding: '9px 0', fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer', outline: 'none' }}
+                style={{ background: 'transparent', border: 'none', padding: '9px 0', fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer', outline: 'none', fontFamily: 'var(--font-inter), sans-serif' }}
               >
                 <option value="newest">Recently Listed</option>
                 <option value="company">Company Name (A-Z)</option>
@@ -549,10 +549,10 @@ export default function B2BDirectoryPage() {
           </div>
 
           {/* Bottom Line: Region Filter Chips */}
-          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', borderTop: '1px solid #F1F5F9', paddingTop: '0.65rem' }}>
+          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', borderTop: '1px solid #E2E8F0', paddingTop: '0.65rem' }}>
             <button
               onClick={() => setSelectedRegion('all')}
-              style={{ padding: '0.45rem 0.85rem', borderRadius: '6px', border: 'none', background: selectedRegion === 'all' ? '#0F4C3A' : '#F1F5F9', color: selectedRegion === 'all' ? '#FFF' : '#475569', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              style={{ padding: '0.45rem 0.85rem', borderRadius: '6px', border: 'none', background: selectedRegion === 'all' ? '#0F4C3A' : '#F1F5F9', color: selectedRegion === 'all' ? '#FFFFFF' : '#334155', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'var(--font-inter), sans-serif' }}
             >
               All Regions ({profiles.length})
             </button>
@@ -561,7 +561,7 @@ export default function B2BDirectoryPage() {
               <button
                 key={reg}
                 onClick={() => setSelectedRegion(reg)}
-                style={{ padding: '0.45rem 0.85rem', borderRadius: '6px', border: 'none', background: selectedRegion === reg ? '#0F4C3A' : '#F1F5F9', color: selectedRegion === reg ? '#FFF' : '#475569', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                style={{ padding: '0.45rem 0.85rem', borderRadius: '6px', border: 'none', background: selectedRegion === reg ? '#0F4C3A' : '#F1F5F9', color: selectedRegion === reg ? '#FFFFFF' : '#334155', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'var(--font-inter), sans-serif' }}
               >
                 {reg}
               </button>

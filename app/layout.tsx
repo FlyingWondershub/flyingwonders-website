@@ -143,8 +143,9 @@ export default async function RootLayout({
   const gaId = 'G-LGTV9FY74C'
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <head>
+        <meta name="color-scheme" content="light dark" />
         <SeoSchema />
         {/* Google AdSense Publisher Account & Site Verification Meta Tag */}
         <meta name="google-adsense-account" content="ca-pub-3967023851392009" />

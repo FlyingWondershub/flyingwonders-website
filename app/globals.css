@@ -21,6 +21,18 @@
   --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
 }
 
+/* ── UNIVERSAL FONT RENDERING & COLOR SCHEME ── */
+:root {
+  color-scheme: light dark;
+}
+
+html, body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+}
+
 /* ── DARK MODE & CONTRAST PROTECTION ── */
 @media (prefers-color-scheme: dark) {
   :root {
@@ -37,69 +49,42 @@
     color: #F9F9F9 !important;
   }
 
-  /* Inputs and form elements */
-  input, select, textarea {
+  /* Form inputs, select dropdowns & textareas */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
     background-color: #1E1E1E !important;
     color: #FFFFFF !important;
-    border: 1px solid #4A5568 !important;
+    border-color: #4A5568 !important;
+  }
+
+  /* Ensure <option> inside <select> is always crisp and visible on mobile & desktop */
+  select option {
+    background-color: #1E1E1E !important;
+    color: #FFFFFF !important;
   }
 
   input::placeholder, textarea::placeholder {
-    color: #A0AEC0 !important;
+    color: #94A3B8 !important;
   }
 
-  /* Dialogs, modals, drawers — NOT photo-overlay bento cards */
+  /* Dialogs, modals, drawers */
   .glass, .cp-modal, .cp-price-drawer {
     background-color: #1E1E1E !important;
     color: #F9F9F9 !important;
     border-color: #2D3748 !important;
   }
 
-  /* Override white & light background containers in Dark Mode */
-  div[style*="background: #FFF"],
-  div[style*="background:#FFF"],
-  div[style*="background: white"],
-  div[style*="background: #FFFFFF"],
-  div[style*="background:#FFFFFF"],
-  div[style*="background: rgb(255, 255, 255)"],
-  div[style*="background: #F7FAFC"],
-  div[style*="background:#F7FAFC"],
-  div[style*="background: #F8FAFC"],
-  div[style*="background:#F8FAFC"],
-  main[style*="background: #F8FAFC"],
-  section[style*="background: #FFF"],
-  section[style*="background: white"] {
-    background-color: #1E1E1E !important;
-    color: #F9F9F9 !important;
-    border-color: #2D3748 !important;
-  }
-
-  /* Main outer page wrapper in Dark Mode */
-  div[style*="background: #F8FAFC"] {
-    background-color: #121212 !important;
-  }
-
-  /* High contrast text overrides for headings and paragraphs inside converted dark containers */
-  div[style*="background: #FFF"] h1, div[style*="background: #FFF"] h2, div[style*="background: #FFF"] h3,
-  div[style*="background: #FFF"] h4, div[style*="background: #FFF"] h5, div[style*="background: #FFF"] h6,
-  div[style*="background: white"] h1, div[style*="background: white"] h2, div[style*="background: white"] h3,
-  div[style*="background: white"] h4, div[style*="background: white"] h5, div[style*="background: white"] h6,
-  div[style*="background: #F8FAFC"] h1, div[style*="background: #F8FAFC"] h2, div[style*="background: #F8FAFC"] h3,
-  div[style*="background: #F8FAFC"] h4, div[style*="background: #F8FAFC"] h5, div[style*="background: #F8FAFC"] h6,
-  div[style*="background: #F7FAFC"] h1, div[style*="background: #F7FAFC"] h2, div[style*="background: #F7FAFC"] h3,
-  div[style*="background: #F7FAFC"] h4, div[style*="background: #F7FAFC"] h5, div[style*="background: #F7FAFC"] h6,
-  section[style*="background: #FFF"] h1, section[style*="background: #FFF"] h2, section[style*="background: #FFF"] h3 {
-    color: #F9F9F9 !important;
-  }
-
-  div[style*="background: #FFF"] p, div[style*="background: #FFF"] span, div[style*="background: #FFF"] strong, div[style*="background: #FFF"] li,
-  div[style*="background: white"] p, div[style*="background: white"] span, div[style*="background: white"] strong, div[style*="background: white"] li,
-  div[style*="background: #F8FAFC"] p, div[style*="background: #F8FAFC"] span, div[style*="background: #F8FAFC"] strong, div[style*="background: #F8FAFC"] li,
-  div[style*="background: #F7FAFC"] p, div[style*="background: #F7FAFC"] span, div[style*="background: #F7FAFC"] strong, div[style*="background: #F7FAFC"] li {
+  /* High contrast text overrides for generic dark containers */
+  .bg-dark,
+  aside[style*="background: #1A202C"],
+  div[style*="background: #1A202C"],
+  div[style*="background: #111"],
+  div[style*="background: #000"] {
     color: #E2E8F0 !important;
   }
 
-  /* Callout & Special Box Themes for Dark Mode */
+  /* Callout themes in Dark Mode */
   div[style*="background: #FAF5FF"] {
     background-color: #2D1B4E !important;
     border-color: #553C9A !important;
@@ -116,79 +101,43 @@
     color: #FDE68A !important;
   }
 
-  div[style*="background: #ECFDF5"], div[style*="background: #F0FDF4"] {
-    background-color: #064E3B !important;
-    border-color: #047857 !important;
-  }
-  div[style*="background: #ECFDF5"] strong, div[style*="background: #ECFDF5"] span,
-  div[style*="background: #F0FDF4"] strong, div[style*="background: #F0FDF4"] span {
-    color: #A7F3D0 !important;
-  }
-
-  /* Example buttons & pill selectors in dark mode */
-  button[style*="background: #F1F5F9"], button[style*="background: #FFF"] {
-    background-color: #2D3748 !important;
-    color: #E2E8F0 !important;
-    border-color: #4A5568 !important;
-  }
-
-  /* Table styling in dark mode */
-  table tr {
-    background-color: #1E1E1E !important;
-    border-bottom-color: #2D3748 !important;
-  }
-  table td, table td strong, table td span {
-    color: #E2E8F0 !important;
-  }
-
   /* Navigation links */
   .nav-link {
     color: #F9F9F9 !important;
   }
-
   .nav-link:hover {
     color: var(--gold-accent) !important;
   }
-
-  /* Table cells */
-  table, tr, td, th {
-    color: #F9F9F9 !important;
-  }
 }
 
-/* ── LIGHT MODE — force dark text only on explicitly white/light containers ── */
-/* IMPORTANT: .bento-card and .bento-card-photo are intentionally excluded
-   because photo-overlay cards already have white text on dark gradient overlays */
-@media (prefers-color-scheme: light) {
-  div[style*="background: #FFF"],
-  div[style*="background:#FFF"],
-  div[style*="background: white"],
-  div[style*="background: #FFFFFF"],
-  div[style*="background:#FFFFFF"],
-  div[style*="background: rgb(255, 255, 255)"],
-  div[style*="background: #F7FAFC"],
-  div[style*="background:#F7FAFC"],
-  section[style*="background: #FFF"],
-  section[style*="background: white"],
-  main[style*="background: #F7FAFC"],
-  .bg-white,
-  table,
-  td,
-  th {
-    color: #1A202C !important;
-  }
+/* ── PRESERVE EXPLICIT BUTTON & BADGE COLORS IN ALL MODES ── */
+/* WhatsApp CTA Buttons */
+a[style*="#25D366"], button[style*="#25D366"],
+a[style*="background: #25D366"], button[style*="background: #25D366"],
+a[style*="background:#25D366"], button[style*="background:#25D366"],
+a[style*="rgb(37, 211, 102)"], button[style*="rgb(37, 211, 102)"] {
+  color: #FFFFFF !important;
+}
 
-  div[style*="background: #FFF"] h1, div[style*="background: #FFF"] h2, div[style*="background: #FFF"] h3,
-  div[style*="background: #FFF"] h4, div[style*="background: #FFF"] h5, div[style*="background: #FFF"] h6,
-  div[style*="background:#FFF"] h1, div[style*="background:#FFF"] h2, div[style*="background:#FFF"] h3,
-  div[style*="background:#FFF"] h4, div[style*="background:#FFF"] h5, div[style*="background:#FFF"] h6,
-  div[style*="background: white"] h1, div[style*="background: white"] h2, div[style*="background: white"] h3,
-  div[style*="background: white"] h4, div[style*="background: white"] h5, div[style*="background: white"] h6,
-  div[style*="background: #F7FAFC"] h1, div[style*="background: #F7FAFC"] h2, div[style*="background: #F7FAFC"] h3,
-  div[style*="background: #F7FAFC"] h4, div[style*="background: #F7FAFC"] h5, div[style*="background: #F7FAFC"] h6,
-  main[style*="background: #F7FAFC"] h1, main[style*="background: #F7FAFC"] h2, main[style*="background: #F7FAFC"] h3,
-  main[style*="background: #F7FAFC"] h4, main[style*="background: #F7FAFC"] h5, main[style*="background: #F7FAFC"] h6 {
-    color: #1A202C !important;
+/* Brand Emerald & Crimson Primary CTA Buttons */
+a[style*="#0F4C3A"], button[style*="#0F4C3A"],
+a[style*="background: #0F4C3A"], button[style*="background: #0F4C3A"],
+a[style*="#B83A4B"], button[style*="#B83A4B"],
+a[style*="background: #B83A4B"], button[style*="background: #B83A4B"],
+.btn-primary {
+  color: #FFFFFF !important;
+}
+
+/* Gold Pill Badges & Accents */
+[style*="#D4AF37"], [style*="#F59E0B"], [style*="#FDE047"] {
+  /* Retain high-contrast designed colors */
+}
+
+/* ── LIGHT MODE SELECT OPTION FIX ── */
+@media (prefers-color-scheme: light) {
+  select option {
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
   }
 }
 
@@ -199,7 +148,7 @@
 }
 
 body {
-  font-family: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-inter), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-main);
   color: var(--text-dark);
   line-height: 1.6;
