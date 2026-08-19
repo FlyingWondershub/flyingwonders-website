@@ -42,6 +42,8 @@ import { travelConsultingBookingSchema } from './travelConsultingBooking'
 import { studyUniversitySchema } from './studyUniversity'
 import { studyCourseCategorySchema } from './studyCourseCategory'
 import { studyInSingaporeSettingsSchema } from './studyInSingaporeSettings'
+import { karnatakaPackageSchema } from './karnatakaPackage'
+import { karnatakaSettingsSchema } from './karnatakaSettings'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -68,6 +70,8 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     studyUniversitySchema,
     studyCourseCategorySchema,
     studyInSingaporeSettingsSchema,
+    karnatakaPackageSchema,
+    karnatakaSettingsSchema,
     newsletterSubscriberSchema,
     newsletterCampaignSchema,
     attractionsUserSchema,
