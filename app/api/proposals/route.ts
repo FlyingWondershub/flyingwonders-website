@@ -62,10 +62,15 @@ export async function POST(req: NextRequest) {
       additionalCharges,
     } = body
 
-    // 1. Find the B2B agent reference using email
+    // 1. Find the B2B agent reference using agentId or email
     let agentRef = undefined
-    if (agentEmail) {
-      const agent = await writeClient.fetch(`*[_type == "b2bAgent" && email == $agentEmail][0]`, { agentEmail })
+    if (body.agentId && body.agentId !== 'direct') {
+      agentRef = {
+        _type: 'reference',
+        _ref: body.agentId,
+      }
+    } else if (agentEmail && agentEmail.toLowerCase() !== 'info.flyingwonders@gmail.com') {
+      const agent = await writeClient.fetch(`*[_type in ["b2bAgent", "attractionsUser"] && email == $agentEmail][0]`, { agentEmail })
       if (agent) {
         agentRef = {
           _type: 'reference',
@@ -83,6 +88,7 @@ export async function POST(req: NextRequest) {
       if (existing) {
         isUpdate = true
         await writeClient.patch(existing._id).set({
+          agent: agentRef !== undefined ? agentRef : (body.agentId === 'direct' ? null : existing.agent),
           guestName: guestName || existing.guestName,
           guestPhone: guestPhone !== undefined ? (guestPhone || '') : existing.guestPhone,
           adults: Number(adults) || existing.adults,

@@ -37,6 +37,8 @@ export default function AdminDashboard() {
   // ── Accounts & Ledger State ──
   const [accountFilter, setAccountFilter] = useState<'all' | 'unpaid' | 'partial' | 'settled'>('all')
   const [accountSearch, setAccountSearch] = useState('')
+  const [accountsViewMode, setAccountsViewMode] = useState<'agent' | 'individual'>('agent')
+  const [expandedAgents, setExpandedAgents] = useState<Record<string, boolean>>({})
   
   // Expand / Collapse row tracking
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({})
@@ -1274,6 +1276,33 @@ export default function AdminDashboard() {
 
             const unsettledCount = enrichedProps.filter(p => p.balanceDue > 0).length
 
+            // Group filtered accounts by Agent
+            const agentGroups = filteredAccounts.reduce((acc: Record<string, any>, p: any) => {
+              const agentKey = p.agent?.companyName || p.agent?.agentName || 'B2C Direct / In-House'
+              if (!acc[agentKey]) {
+                acc[agentKey] = {
+                  agentKey,
+                  companyName: p.agent?.companyName || (p.agent?.agentName ? p.agent.agentName : 'B2C Direct / In-House'),
+                  agentName: p.agent?.agentName || 'Direct Guest',
+                  email: p.agent?.email || '',
+                  phone: p.agent?.phone || '',
+                  totalBilled: 0,
+                  totalPaid: 0,
+                  totalDue: 0,
+                  totalPax: 0,
+                  proposals: [],
+                }
+              }
+              acc[agentKey].totalBilled += p.adjustedPrice
+              acc[agentKey].totalPaid += p.totalPaid
+              acc[agentKey].totalDue += p.balanceDue
+              acc[agentKey].totalPax += (Number(p.adults) || 2) + (Number(p.kids) || 0)
+              acc[agentKey].proposals.push(p)
+              return acc
+            }, {})
+
+            const agentGroupList: any[] = Object.values(agentGroups)
+
             return (
               <div>
                 {/* Metrics Summary Row */}
@@ -1305,34 +1334,75 @@ export default function AdminDashboard() {
 
                 </div>
 
-                {/* Filter Controls & Search */}
+                {/* View Mode & Filter Controls */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
                   
-                  {/* Status Filter Badges */}
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                    {[
-                      { id: 'all', label: `All Confirmed (${enrichedProps.length})` },
-                      { id: 'unpaid', label: `🔴 Unpaid (${enrichedProps.filter(p => p.settlementStatus === 'unpaid').length})` },
-                      { id: 'partial', label: `🟡 Partially Paid (${enrichedProps.filter(p => p.settlementStatus === 'partial').length})` },
-                      { id: 'settled', label: `🟢 Fully Settled (${enrichedProps.filter(p => p.settlementStatus === 'settled').length})` }
-                    ].map(f => (
+                  {/* Left: View Mode Toggle & Status Filter Badges */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    {/* View Mode Toggle */}
+                    <div style={{ display: 'inline-flex', background: '#E2E8F0', padding: '0.2rem', borderRadius: '8px' }}>
                       <button
-                        key={f.id}
-                        onClick={() => setAccountFilter(f.id as any)}
+                        type="button"
+                        onClick={() => setAccountsViewMode('agent')}
                         style={{
                           padding: '0.35rem 0.75rem',
-                          borderRadius: '20px',
+                          borderRadius: '6px',
+                          border: 'none',
                           fontSize: '0.75rem',
-                          fontWeight: 700,
-                          border: accountFilter === f.id ? 'none' : '1px solid #CBD5E1',
-                          background: accountFilter === f.id ? '#0F172A' : '#F8FAFC',
-                          color: accountFilter === f.id ? '#FFF' : '#475569',
-                          cursor: 'pointer'
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          background: accountsViewMode === 'agent' ? '#0F4C3A' : 'transparent',
+                          color: accountsViewMode === 'agent' ? '#FFF' : '#475569',
+                          transition: 'all 0.15s ease'
                         }}
                       >
-                        {f.label}
+                        🏢 Consolidated by Agent ({agentGroupList.length})
                       </button>
-                    ))}
+                      <button
+                        type="button"
+                        onClick={() => setAccountsViewMode('individual')}
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '6px',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          background: accountsViewMode === 'individual' ? '#0F4C3A' : 'transparent',
+                          color: accountsViewMode === 'individual' ? '#FFF' : '#475569',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        📋 Individual Bookings ({filteredAccounts.length})
+                      </button>
+                    </div>
+
+                    {/* Status Filter Badges */}
+                    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                      {[
+                        { id: 'all', label: `All (${enrichedProps.length})` },
+                        { id: 'unpaid', label: `🔴 Unpaid (${enrichedProps.filter(p => p.settlementStatus === 'unpaid').length})` },
+                        { id: 'partial', label: `🟡 Partial (${enrichedProps.filter(p => p.settlementStatus === 'partial').length})` },
+                        { id: 'settled', label: `🟢 Settled (${enrichedProps.filter(p => p.settlementStatus === 'settled').length})` }
+                      ].map(f => (
+                        <button
+                          key={f.id}
+                          onClick={() => setAccountFilter(f.id as any)}
+                          style={{
+                            padding: '0.3rem 0.65rem',
+                            borderRadius: '20px',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            border: accountFilter === f.id ? 'none' : '1px solid #CBD5E1',
+                            background: accountFilter === f.id ? '#0F172A' : '#F8FAFC',
+                            color: accountFilter === f.id ? '#FFF' : '#475569',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Search Input */}
@@ -1354,12 +1424,216 @@ export default function AdminDashboard() {
 
                 </div>
 
-                {/* Ledger Accounts Table */}
+                {/* Ledger Accounts Table / Agent Consolidated Cards */}
                 {filteredAccounts.length === 0 ? (
                   <p style={{ textAlign: 'center', color: '#64748B', padding: '2rem 0', fontSize: '0.85rem', fontStyle: 'italic' }}>
                     No matching accounts or pending balances found.
                   </p>
+                ) : accountsViewMode === 'agent' ? (
+                  /* ── Consolidated Agent Dues View ── */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {agentGroupList.map((ag: any, agIdx: number) => {
+                      const isExpanded = expandedAgents[ag.agentKey] ?? true
+                      const isDue = ag.totalDue > 0
+
+                      // Build WhatsApp Statement Text
+                      const waStatement = encodeURIComponent(
+                        `🏢 *STATEMENT OF DUES — ${ag.companyName}*\n` +
+                        `━━━━━━━━━━━━━━━━━━━━━\n` +
+                        `📊 *Total Confirmed Packages:* ${ag.proposals.length} Guests (${ag.totalPax} Pax)\n` +
+                        `💵 *Total Contract Value:* S$ ${ag.totalBilled.toLocaleString()}\n` +
+                        `✅ *Total Payments Received:* S$ ${ag.totalPaid.toLocaleString()}\n` +
+                        `⚠️ *NET OUTSTANDING DUE:* S$ ${ag.totalDue.toLocaleString()}\n` +
+                        `━━━━━━━━━━━━━━━━━━━━━\n` +
+                        `*Guest Breakdown:*\n` +
+                        ag.proposals.map((p: any) => 
+                          `• *${p.guestName || 'Guest'}* (Ref: ${p.proposalNumber}) — Billed: S$${p.adjustedPrice.toLocaleString()} | Paid: S$${p.totalPaid.toLocaleString()} | Due: S$${p.balanceDue.toLocaleString()}`
+                        ).join('\n') +
+                        `\n━━━━━━━━━━━━━━━━━━━━━\n` +
+                        `Flying Wonders Operations Desk`
+                      )
+
+                      return (
+                        <div 
+                          key={ag.agentKey || agIdx} 
+                          style={{
+                            background: '#FFF',
+                            borderRadius: '12px',
+                            border: `1.5px solid ${isDue ? '#FECACA' : '#E2E8F0'}`,
+                            boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          {/* Agent Header Summary Row */}
+                          <div 
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              flexWrap: 'wrap',
+                              gap: '1rem',
+                              padding: '1rem 1.25rem',
+                              background: isDue ? '#FFF5F5' : '#F8FAFC',
+                              borderBottom: isExpanded ? '1px solid #E2E8F0' : 'none'
+                            }}
+                          >
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                                <span style={{ fontSize: '1.1rem' }}>🏢</span>
+                                <strong style={{ fontSize: '1rem', color: '#0F172A' }}>{ag.companyName}</strong>
+                                <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '12px', background: isDue ? '#FEE2E2' : '#DCFCE7', color: isDue ? '#991B1B' : '#166534' }}>
+                                  {isDue ? `⚠️ S$ ${ag.totalDue.toLocaleString()} Due` : '🟢 Fully Settled'}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '0.76rem', color: '#64748B', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                <span>👤 Contact: <strong>{ag.agentName}</strong></span>
+                                {ag.email && <span>✉️ {ag.email}</span>}
+                                {ag.phone && <span>📞 {ag.phone}</span>}
+                                <span>📦 <strong>{ag.proposals.length}</strong> Bookings ({ag.totalPax} Pax)</span>
+                              </div>
+                            </div>
+
+                            {/* Financial Totals & Actions */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '0.68rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Total Billed</div>
+                                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#1E293B' }}>S$ {ag.totalBilled.toLocaleString()}</div>
+                              </div>
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '0.68rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Total Paid</div>
+                                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#166534' }}>S$ {ag.totalPaid.toLocaleString()}</div>
+                              </div>
+                              <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '0.68rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Outstanding Balance</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: isDue ? '#DC2626' : '#166534' }}>
+                                  S$ {ag.totalDue.toLocaleString()}
+                                </div>
+                              </div>
+
+                              {/* WhatsApp Reminder Button */}
+                              <a
+                                href={`https://api.whatsapp.com/send?text=${waStatement}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Send Consolidated Statement on WhatsApp"
+                                style={{
+                                  padding: '0.35rem 0.65rem',
+                                  background: '#25D366',
+                                  color: '#FFF',
+                                  borderRadius: '6px',
+                                  textDecoration: 'none',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.3rem'
+                                }}
+                              >
+                                💬 WhatsApp Dues
+                              </a>
+
+                              {/* Toggle Accordion */}
+                              <button
+                                type="button"
+                                onClick={() => setExpandedAgents(prev => ({ ...prev, [ag.agentKey]: !isExpanded }))}
+                                style={{
+                                  border: '1px solid #CBD5E1',
+                                  background: '#FFF',
+                                  color: '#334155',
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '6px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {isExpanded ? '▲ Hide Guests' : `▼ View ${ag.proposals.length} Guests`}
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Nested Guest Proposals Table */}
+                          {isExpanded && (
+                            <div style={{ overflowX: 'auto', padding: '0.5rem 1rem 1rem' }}>
+                              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                                <thead>
+                                  <tr style={{ background: '#F8FAFC', color: '#64748B', borderBottom: '1px solid #E2E8F0' }}>
+                                    <th style={{ padding: '0.5rem 0.65rem' }}>Guest Name</th>
+                                    <th style={{ padding: '0.5rem 0.65rem' }}>Ref / Invoice</th>
+                                    <th style={{ padding: '0.5rem 0.65rem' }}>Travel Dates / Pax</th>
+                                    <th style={{ padding: '0.5rem 0.65rem' }}>Contract Price</th>
+                                    <th style={{ padding: '0.5rem 0.65rem' }}>Paid</th>
+                                    <th style={{ padding: '0.5rem 0.65rem' }}>Balance Due</th>
+                                    <th style={{ padding: '0.5rem 0.65rem' }}>Settlement</th>
+                                    <th style={{ padding: '0.5rem 0.65rem', textAlign: 'right' }}>Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {ag.proposals.map((p: any, pIdx: number) => {
+                                    const badge = 
+                                      p.settlementStatus === 'settled' ? { label: '🟢 Settled', bg: '#DCFCE7', color: '#166534' } :
+                                      p.settlementStatus === 'partial' ? { label: '🟡 Partial', bg: '#FEF3C7', color: '#92400E' } :
+                                      { label: '🔴 Unpaid', bg: '#FEE2E2', color: '#991B1B' }
+
+                                    return (
+                                      <tr key={p._id || pIdx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                                        <td style={{ padding: '0.55rem 0.65rem' }}>
+                                          <strong style={{ color: '#1E293B', display: 'block' }}>{p.guestName || 'Guest'}</strong>
+                                          <span style={{ fontSize: '0.7rem', color: '#64748B' }}>{p.guestPhone || ''}</span>
+                                        </td>
+                                        <td style={{ padding: '0.55rem 0.65rem' }}>
+                                          <span style={{ fontSize: '0.72rem', color: '#B83A4B', fontWeight: 700, display: 'block' }}>Ref: {p.proposalNumber}</span>
+                                          <span style={{ fontSize: '0.7rem', color: '#475569' }}>{p.invoiceNumber || 'INV Pending'}</span>
+                                        </td>
+                                        <td style={{ padding: '0.55rem 0.65rem', color: '#475569' }}>
+                                          <div>{p.arrivalDate ? `Arr: ${p.arrivalDate}` : 'Dates TBA'}</div>
+                                          <span style={{ fontSize: '0.7rem', color: '#64748B' }}>{p.adults || 2}A {p.kids ? `${p.kids}C` : ''} ({p.nights || 3}N)</span>
+                                        </td>
+                                        <td style={{ padding: '0.55rem 0.65rem', fontWeight: 700, color: '#1E293B' }}>
+                                          S$ {p.adjustedPrice.toLocaleString()}
+                                        </td>
+                                        <td style={{ padding: '0.55rem 0.65rem', fontWeight: 700, color: '#166534' }}>
+                                          S$ {p.totalPaid.toLocaleString()}
+                                        </td>
+                                        <td style={{ padding: '0.55rem 0.65rem', fontWeight: 800, color: p.balanceDue > 0 ? '#DC2626' : '#166534' }}>
+                                          S$ {p.balanceDue.toLocaleString()}
+                                        </td>
+                                        <td style={{ padding: '0.55rem 0.65rem' }}>
+                                          <span style={{ padding: '0.15rem 0.45rem', borderRadius: '10px', fontSize: '0.68rem', fontWeight: 800, background: badge.bg, color: badge.color }}>
+                                            {badge.label}
+                                          </span>
+                                        </td>
+                                        <td style={{ padding: '0.55rem 0.65rem', textAlign: 'right' }}>
+                                          <a
+                                            href={`/custom-package?ref=${p.proposalNumber}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                              padding: '0.25rem 0.55rem',
+                                              borderRadius: '4px',
+                                              background: '#0F4C3A',
+                                              color: '#FFF',
+                                              textDecoration: 'none',
+                                              fontWeight: 700,
+                                              fontSize: '0.72rem'
+                                            }}
+                                          >
+                                            💳 Ledger
+                                          </a>
+                                        </td>
+                                      </tr>
+                                    )
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 ) : (
+                  /* ── Individual Bookings View ── */
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem', textAlign: 'left' }}>
                       <thead>

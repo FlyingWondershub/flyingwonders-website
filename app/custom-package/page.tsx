@@ -204,15 +204,64 @@ export default function PrototypeBuilder() {
     }
   }
 
+  // Admin B2B Agent Attribution States
+  const [b2bAgentsList, setB2bAgentsList] = useState<any[]>([])
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('direct')
+  const [selectedAgentDetails, setSelectedAgentDetails] = useState<{ _id?: string; companyName?: string; agentName?: string; email?: string; phone?: string } | null>(null)
+
+  // Fetch registered B2B agents if logged in as Admin
+  useEffect(() => {
+    if (activeAgent?.email?.toLowerCase() === 'info.flyingwonders@gmail.com') {
+      fetch('/api/admin/agents')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setB2bAgentsList(data.filter((a: any) => a.isApproved !== false))
+          }
+        })
+        .catch(() => {})
+    } else {
+      setB2bAgentsList([])
+    }
+  }, [activeAgent])
+
+  // Handle Admin selecting an Agent to attribute the proposal to
+  const handleAdminAgentChange = (agentId: string) => {
+    setSelectedAgentId(agentId)
+    if (!agentId || agentId === 'direct') {
+      setSelectedAgentDetails(null)
+      setAgentName('Flying Wonders DMC')
+      setAgentEmail('info.flyingwonders@gmail.com')
+      setAgentPhone('+65 9689 0101')
+      setCustomAgencyName('Flying Wonders DMC')
+      setCustomAgencyEmail('info.flyingwonders@gmail.com')
+      setCustomAgencyPhone('+65 9689 0101')
+      return
+    }
+    const found = b2bAgentsList.find(a => a._id === agentId)
+    if (found) {
+      setSelectedAgentDetails(found)
+      setAgentName(found.agentName || '')
+      setAgentEmail(found.email || '')
+      setAgentPhone(found.phone || '')
+      setCustomAgencyName(found.companyName || found.agentName || 'Partner Agency')
+      setCustomAgencyEmail(found.email || '')
+      setCustomAgencyPhone(found.phone || '')
+    }
+  }
+
   // Auto-populate enquiry form fields once agent is logged in
   useEffect(() => {
     if (activeAgent) {
-      setAgentName(activeAgent.agentName || '')
-      setAgentEmail(activeAgent.email || '')
-      setAgentPhone(activeAgent.phone || '')
-      setCustomAgencyName(activeAgent.companyName || 'My Travel Agency')
-      setCustomAgencyEmail(activeAgent.email || '')
-      setCustomAgencyPhone(activeAgent.phone || '')
+      const isAdmin = activeAgent.email?.toLowerCase() === 'info.flyingwonders@gmail.com'
+      if (!isAdmin) {
+        setAgentName(activeAgent.agentName || '')
+        setAgentEmail(activeAgent.email || '')
+        setAgentPhone(activeAgent.phone || '')
+        setCustomAgencyName(activeAgent.companyName || 'My Travel Agency')
+        setCustomAgencyEmail(activeAgent.email || '')
+        setCustomAgencyPhone(activeAgent.phone || '')
+      }
     } else {
       setAgentName('')
       setAgentEmail('')
@@ -2026,6 +2075,10 @@ export default function PrototypeBuilder() {
       const room = h?.rooms[globalRoomIndex]
       const supp = globalSuppIndex >= 0 ? h?.rooms[globalSuppIndex] : null
 
+      const isAdmin = activeAgent.email?.toLowerCase() === 'info.flyingwonders@gmail.com'
+      const targetAgentId = isAdmin ? (selectedAgentId !== 'direct' ? selectedAgentId : undefined) : undefined
+      const targetAgentEmail = isAdmin ? (selectedAgentDetails?.email || (selectedAgentId === 'direct' ? undefined : undefined)) : activeAgent.email
+
       const res = await fetch('/api/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2033,7 +2086,8 @@ export default function PrototypeBuilder() {
           proposalNumber: undefined,
           isTemplateBased: !!activeTemplateName,
           templateName: activeTemplateName || '',
-          agentEmail: activeAgent.email,
+          agentId: targetAgentId,
+          agentEmail: targetAgentEmail,
           guestName,
           guestPhone,
           adults,
@@ -2113,6 +2167,10 @@ export default function PrototypeBuilder() {
       const room = h?.rooms[globalRoomIndex]
       const supp = globalSuppIndex >= 0 ? h?.rooms[globalSuppIndex] : null
 
+      const isAdmin = activeAgent.email?.toLowerCase() === 'info.flyingwonders@gmail.com'
+      const targetAgentId = isAdmin ? (selectedAgentId !== 'direct' ? selectedAgentId : undefined) : undefined
+      const targetAgentEmail = isAdmin ? (selectedAgentDetails?.email || (selectedAgentId === 'direct' ? undefined : undefined)) : activeAgent.email
+
       const res = await fetch('/api/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2120,7 +2178,8 @@ export default function PrototypeBuilder() {
           proposalNumber: savedProposalNum || undefined,
           isTemplateBased: !!activeTemplateName,
           templateName: activeTemplateName || '',
-          agentEmail: activeAgent.email,
+          agentId: targetAgentId,
+          agentEmail: targetAgentEmail,
           guestName,
           guestPhone,
           adults,
@@ -2180,6 +2239,10 @@ export default function PrototypeBuilder() {
       const room = h?.rooms[globalRoomIndex]
       const supp = globalSuppIndex >= 0 ? h?.rooms[globalSuppIndex] : null
 
+      const isAdmin = activeAgent.email?.toLowerCase() === 'info.flyingwonders@gmail.com'
+      const targetAgentId = isAdmin ? (selectedAgentId !== 'direct' ? selectedAgentId : undefined) : undefined
+      const targetAgentEmail = isAdmin ? (selectedAgentDetails?.email || (selectedAgentId === 'direct' ? undefined : undefined)) : activeAgent.email
+
       const res = await fetch('/api/proposals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2187,7 +2250,8 @@ export default function PrototypeBuilder() {
           proposalNumber: undefined, // Force creation of a brand new proposal number
           isTemplateBased: !!activeTemplateName,
           templateName: activeTemplateName || '',
-          agentEmail: activeAgent.email,
+          agentId: targetAgentId,
+          agentEmail: targetAgentEmail,
           guestName: newGuestName.trim() || guestName,
           guestPhone,
           adults,
@@ -2305,6 +2369,13 @@ export default function PrototypeBuilder() {
         setActiveInvoiceDate(prop.invoiceDate || '')
         setActivePaymentLedger(Array.isArray(prop.paymentLedger) ? prop.paymentLedger : [])
         setActiveAdditionalCharges(Array.isArray(prop.additionalCharges) ? prop.additionalCharges : [])
+        if (prop.agent) {
+          setSelectedAgentId(prop.agent._id || 'direct')
+          setSelectedAgentDetails(prop.agent)
+        } else {
+          setSelectedAgentId('direct')
+          setSelectedAgentDetails(null)
+        }
         if (prop.customAgencyName) setCustomAgencyName(prop.customAgencyName)
         if (prop.customAgencyEmail) setCustomAgencyEmail(prop.customAgencyEmail)
         if (prop.customAgencyPhone) setCustomAgencyPhone(prop.customAgencyPhone)
@@ -4484,6 +4555,62 @@ ${proposal}
               )}
             </div>
             
+            {/* Partner Agency Attribution (Admin or Agent) */}
+            {activeAgent?.email?.toLowerCase() === 'info.flyingwonders@gmail.com' ? (
+              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '8px', padding: '0.65rem 0.85rem', marginBottom: '1.15rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.1rem' }}>🏢</span>
+                  <div>
+                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                      Partner Agency Attribution
+                    </div>
+                    <div style={{ fontSize: '0.72rem', color: '#15803D' }}>
+                      Assign this package quote to an agent's account & ledger.
+                    </div>
+                  </div>
+                </div>
+                <div style={{ minWidth: '260px', flex: '1 1 260px' }}>
+                  <select
+                    value={selectedAgentId}
+                    onChange={e => handleAdminAgentChange(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.45rem 0.75rem',
+                      borderRadius: '6px',
+                      border: '1px solid #86EFAC',
+                      background: '#FFF',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      color: '#14532D',
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="direct">🏢 Direct / In-House (Flying Wonders)</option>
+                    {b2bAgentsList.map((a: any) => (
+                      <option key={a._id} value={a._id}>
+                        {a.companyName || a.agentName} — {a.agentName} ({a.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ) : (
+              activeAgent && (
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.5rem 0.85rem', marginBottom: '1.15rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.95rem' }}>🏢</span>
+                    <span style={{ fontSize: '0.8rem', color: '#334155' }}>
+                      Partner Agency: <strong style={{ color: '#0F4C3A' }}>{activeAgent.companyName || 'Registered Agency'}</strong> ({activeAgent.agentName || 'Agent'})
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, background: '#DCFCE7', color: '#166534', padding: '0.15rem 0.55rem', borderRadius: '12px' }}>
+                    ✓ Auto-Linked to Agency Ledger
+                  </span>
+                </div>
+              )
+            )}
+
             {/* Row 1: Traveler details */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem', alignItems: 'flex-start' }}>
               <div style={{ flex: '1 1 180px' }}>
