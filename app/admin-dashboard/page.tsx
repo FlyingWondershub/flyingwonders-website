@@ -35,7 +35,7 @@ export default function AdminDashboard() {
   const [selectedProposal, setSelectedProposal] = useState<any | null>(null)
   
   // ── Accounts & Ledger State ──
-  const [accountFilter, setAccountFilter] = useState<'all' | 'unpaid' | 'partial' | 'settled'>('all')
+  const [accountFilter, setAccountFilter] = useState<'all' | 'unpaid' | 'partial' | 'settled' | 'overpaid'>('all')
   const [accountSearch, setAccountSearch] = useState('')
   const [accountsViewMode, setAccountsViewMode] = useState<'agent' | 'individual'>('agent')
   const [expandedAgents, setExpandedAgents] = useState<Record<string, boolean>>({})
@@ -1238,6 +1238,7 @@ export default function AdminDashboard() {
             const confirmedProps = proposals.filter(p => p.status === 'confirmed' || p.status === 'scheduled' || p.status === 'completed')
             
             let totalReceivablesDue = 0
+            let totalCreditBalance = 0
             let totalCollected = 0
             let totalContractValue = 0
 
@@ -1249,17 +1250,27 @@ export default function AdminDashboard() {
               }, 0)
               const adjustedPrice = basePrice + totalAddons
               const totalPaid = (p.paymentLedger || []).reduce((sum: number, pay: any) => sum + (Number(pay.amount) || 0), 0)
-              const balanceDue = Math.max(0, adjustedPrice - totalPaid)
+              
+              const rawDiff = adjustedPrice - totalPaid
+              const balanceDue = rawDiff > 0 ? rawDiff : 0
+              const excessPaid = rawDiff < 0 ? Math.abs(rawDiff) : 0
 
               totalContractValue += adjustedPrice
               totalCollected += totalPaid
               totalReceivablesDue += balanceDue
+              totalCreditBalance += excessPaid
 
-              let settlementStatus = 'unpaid'
-              if (totalPaid >= adjustedPrice && adjustedPrice > 0) settlementStatus = 'settled'
-              else if (totalPaid > 0) settlementStatus = 'partial'
+              let settlementStatus: 'unpaid' | 'partial' | 'settled' | 'overpaid' = 'unpaid'
+              if (adjustedPrice > 0) {
+                if (rawDiff === 0) settlementStatus = 'settled'
+                else if (rawDiff < 0) settlementStatus = 'overpaid'
+                else if (totalPaid > 0) settlementStatus = 'partial'
+                else settlementStatus = 'unpaid'
+              } else if (totalPaid > 0) {
+                settlementStatus = 'overpaid'
+              }
 
-              return { ...p, basePrice, totalAddons, adjustedPrice, totalPaid, balanceDue, settlementStatus }
+              return { ...p, basePrice, totalAddons, adjustedPrice, totalPaid, balanceDue, excessPaid, rawDiff, settlementStatus }
             })
 
             const filteredAccounts = enrichedProps.filter(p => {
@@ -1275,6 +1286,7 @@ export default function AdminDashboard() {
             })
 
             const unsettledCount = enrichedProps.filter(p => p.balanceDue > 0).length
+            const overpaidCount = enrichedProps.filter(p => p.excessPaid > 0).length
 
             // Group filtered accounts by Agent
             const agentGroups = filteredAccounts.reduce((acc: Record<string, any>, p: any) => {
@@ -1289,6 +1301,7 @@ export default function AdminDashboard() {
                   totalBilled: 0,
                   totalPaid: 0,
                   totalDue: 0,
+                  totalExcess: 0,
                   totalPax: 0,
                   proposals: [],
                 }
@@ -1296,6 +1309,7 @@ export default function AdminDashboard() {
               acc[agentKey].totalBilled += p.adjustedPrice
               acc[agentKey].totalPaid += p.totalPaid
               acc[agentKey].totalDue += p.balanceDue
+              acc[agentKey].totalExcess += p.excessPaid
               acc[agentKey].totalPax += (Number(p.adults) || 2) + (Number(p.kids) || 0)
               acc[agentKey].proposals.push(p)
               return acc
@@ -1305,15 +1319,23 @@ export default function AdminDashboard() {
 
             return (
               <div>
-                {/* Metrics Summary Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem', background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+                {/* Metrics Summary Row (4 Cards) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem', background: '#F8FAFC', padding: '1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
                   
                   <div>
                     <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Outstanding Receivables</span>
-                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: totalReceivablesDue > 0 ? '#991B1B' : '#166534', marginTop: '0.2rem' }}>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: totalReceivablesDue > 0 ? '#DC2626' : '#166534', marginTop: '0.2rem' }}>
                       S$ {totalReceivablesDue.toLocaleString()}
                     </div>
-                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Across {unsettledCount} unsettled accounts</span>
+                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Across {unsettledCount} pending bookings</span>
+                  </div>
+
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Excess / Credit Balance</span>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: totalCreditBalance > 0 ? '#7C3AED' : '#64748B', marginTop: '0.2rem' }}>
+                      S$ {totalCreditBalance.toLocaleString()}
+                    </div>
+                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{overpaidCount > 0 ? `${overpaidCount} overpaid / credit accounts` : 'Zero excess payments'}</span>
                   </div>
 
                   <div>
@@ -1321,7 +1343,7 @@ export default function AdminDashboard() {
                     <div style={{ fontSize: '1.4rem', fontWeight: 900, color: '#166534', marginTop: '0.2rem' }}>
                       S$ {totalCollected.toLocaleString()}
                     </div>
-                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Total part payments received</span>
+                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>All part & full payments received</span>
                   </div>
 
                   <div>
@@ -1383,7 +1405,8 @@ export default function AdminDashboard() {
                         { id: 'all', label: `All (${enrichedProps.length})` },
                         { id: 'unpaid', label: `🔴 Unpaid (${enrichedProps.filter(p => p.settlementStatus === 'unpaid').length})` },
                         { id: 'partial', label: `🟡 Partial (${enrichedProps.filter(p => p.settlementStatus === 'partial').length})` },
-                        { id: 'settled', label: `🟢 Settled (${enrichedProps.filter(p => p.settlementStatus === 'settled').length})` }
+                        { id: 'settled', label: `🟢 Settled (${enrichedProps.filter(p => p.settlementStatus === 'settled').length})` },
+                        { id: 'overpaid', label: `🔵 Credit / Excess (${enrichedProps.filter(p => p.settlementStatus === 'overpaid').length})` }
                       ].map(f => (
                         <button
                           key={f.id}
@@ -1434,7 +1457,9 @@ export default function AdminDashboard() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {agentGroupList.map((ag: any, agIdx: number) => {
                       const isExpanded = expandedAgents[ag.agentKey] ?? true
-                      const isDue = ag.totalDue > 0
+                      const netPosition = ag.totalBilled - ag.totalPaid
+                      const isDue = netPosition > 0
+                      const isCredit = netPosition < 0
 
                       // Build WhatsApp Statement Text
                       const waStatement = encodeURIComponent(
@@ -1443,12 +1468,15 @@ export default function AdminDashboard() {
                         `📊 *Total Confirmed Packages:* ${ag.proposals.length} Guests (${ag.totalPax} Pax)\n` +
                         `💵 *Total Contract Value:* S$ ${ag.totalBilled.toLocaleString()}\n` +
                         `✅ *Total Payments Received:* S$ ${ag.totalPaid.toLocaleString()}\n` +
-                        `⚠️ *NET OUTSTANDING DUE:* S$ ${ag.totalDue.toLocaleString()}\n` +
+                        (isDue ? `⚠️ *NET OUTSTANDING DUE:* S$ ${netPosition.toLocaleString()}\n` : '') +
+                        (isCredit ? `🔵 *CREDIT BALANCE ON ACCOUNT:* S$ ${Math.abs(netPosition).toLocaleString()}\n` : '') +
+                        (!isDue && !isCredit ? `🟢 *ACCOUNT STATUS:* Fully Settled (S$ 0)\n` : '') +
                         `━━━━━━━━━━━━━━━━━━━━━\n` +
                         `*Guest Breakdown:*\n` +
-                        ag.proposals.map((p: any) => 
-                          `• *${p.guestName || 'Guest'}* (Ref: ${p.proposalNumber}) — Billed: S$${p.adjustedPrice.toLocaleString()} | Paid: S$${p.totalPaid.toLocaleString()} | Due: S$${p.balanceDue.toLocaleString()}`
-                        ).join('\n') +
+                        ag.proposals.map((p: any) => {
+                          const statusStr = p.rawDiff > 0 ? `Due: S$${p.balanceDue.toLocaleString()}` : (p.rawDiff < 0 ? `Credit: +S$${p.excessPaid.toLocaleString()}` : `Settled`)
+                          return `• *${p.guestName || 'Guest'}* (Ref: ${p.proposalNumber}) — Billed: S$${p.adjustedPrice.toLocaleString()} | Paid: S$${p.totalPaid.toLocaleString()} | ${statusStr}`
+                        }).join('\n') +
                         `\n━━━━━━━━━━━━━━━━━━━━━\n` +
                         `Flying Wonders Operations Desk`
                       )
@@ -1459,7 +1487,7 @@ export default function AdminDashboard() {
                           style={{
                             background: '#FFF',
                             borderRadius: '12px',
-                            border: `1.5px solid ${isDue ? '#FECACA' : '#E2E8F0'}`,
+                            border: `1.5px solid ${isDue ? '#FECACA' : (isCredit ? '#DDD6FE' : '#E2E8F0')}`,
                             boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
                             overflow: 'hidden'
                           }}
@@ -1473,7 +1501,7 @@ export default function AdminDashboard() {
                               flexWrap: 'wrap',
                               gap: '1rem',
                               padding: '1rem 1.25rem',
-                              background: isDue ? '#FFF5F5' : '#F8FAFC',
+                              background: isDue ? '#FFF5F5' : (isCredit ? '#F5F3FF' : '#F8FAFC'),
                               borderBottom: isExpanded ? '1px solid #E2E8F0' : 'none'
                             }}
                           >
@@ -1481,8 +1509,17 @@ export default function AdminDashboard() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
                                 <span style={{ fontSize: '1.1rem' }}>🏢</span>
                                 <strong style={{ fontSize: '1rem', color: '#0F172A' }}>{ag.companyName}</strong>
-                                <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '12px', background: isDue ? '#FEE2E2' : '#DCFCE7', color: isDue ? '#991B1B' : '#166534' }}>
-                                  {isDue ? `⚠️ S$ ${ag.totalDue.toLocaleString()} Due` : '🟢 Fully Settled'}
+                                <span 
+                                  style={{
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    padding: '0.15rem 0.5rem',
+                                    borderRadius: '12px',
+                                    background: isDue ? '#FEE2E2' : (isCredit ? '#EDE9FE' : '#DCFCE7'),
+                                    color: isDue ? '#991B1B' : (isCredit ? '#6D28D9' : '#166534')
+                                  }}
+                                >
+                                  {isDue ? `⚠️ S$ ${netPosition.toLocaleString()} Due` : (isCredit ? `🔵 +S$ ${Math.abs(netPosition).toLocaleString()} Credit Balance` : '🟢 Fully Settled')}
                                 </span>
                               </div>
                               <div style={{ fontSize: '0.76rem', color: '#64748B', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -1504,9 +1541,17 @@ export default function AdminDashboard() {
                                 <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#166534' }}>S$ {ag.totalPaid.toLocaleString()}</div>
                               </div>
                               <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '0.68rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Outstanding Balance</div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 900, color: isDue ? '#DC2626' : '#166534' }}>
-                                  S$ {ag.totalDue.toLocaleString()}
+                                <div style={{ fontSize: '0.68rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>
+                                  {isCredit ? 'Credit Balance' : 'Outstanding Balance'}
+                                </div>
+                                <div 
+                                  style={{
+                                    fontSize: '1.1rem',
+                                    fontWeight: 900,
+                                    color: isDue ? '#DC2626' : (isCredit ? '#7C3AED' : '#166534')
+                                  }}
+                                >
+                                  {isCredit ? `+S$ ${Math.abs(netPosition).toLocaleString()}` : `S$ ${netPosition.toLocaleString()}`}
                                 </div>
                               </div>
 
@@ -1563,7 +1608,7 @@ export default function AdminDashboard() {
                                     <th style={{ padding: '0.5rem 0.65rem' }}>Travel Dates / Pax</th>
                                     <th style={{ padding: '0.5rem 0.65rem' }}>Contract Price</th>
                                     <th style={{ padding: '0.5rem 0.65rem' }}>Paid</th>
-                                    <th style={{ padding: '0.5rem 0.65rem' }}>Balance Due</th>
+                                    <th style={{ padding: '0.5rem 0.65rem' }}>Balance Due / Credit</th>
                                     <th style={{ padding: '0.5rem 0.65rem' }}>Settlement</th>
                                     <th style={{ padding: '0.5rem 0.65rem', textAlign: 'right' }}>Action</th>
                                   </tr>
@@ -1572,6 +1617,7 @@ export default function AdminDashboard() {
                                   {ag.proposals.map((p: any, pIdx: number) => {
                                     const badge = 
                                       p.settlementStatus === 'settled' ? { label: '🟢 Settled', bg: '#DCFCE7', color: '#166534' } :
+                                      p.settlementStatus === 'overpaid' ? { label: `🔵 +S$${p.excessPaid} Credit`, bg: '#EDE9FE', color: '#6D28D9' } :
                                       p.settlementStatus === 'partial' ? { label: '🟡 Partial', bg: '#FEF3C7', color: '#92400E' } :
                                       { label: '🔴 Unpaid', bg: '#FEE2E2', color: '#991B1B' }
 
@@ -1595,8 +1641,14 @@ export default function AdminDashboard() {
                                         <td style={{ padding: '0.55rem 0.65rem', fontWeight: 700, color: '#166534' }}>
                                           S$ {p.totalPaid.toLocaleString()}
                                         </td>
-                                        <td style={{ padding: '0.55rem 0.65rem', fontWeight: 800, color: p.balanceDue > 0 ? '#DC2626' : '#166534' }}>
-                                          S$ {p.balanceDue.toLocaleString()}
+                                        <td 
+                                          style={{ 
+                                            padding: '0.55rem 0.65rem', 
+                                            fontWeight: 800, 
+                                            color: p.balanceDue > 0 ? '#DC2626' : (p.excessPaid > 0 ? '#7C3AED' : '#166534') 
+                                          }}
+                                        >
+                                          {p.excessPaid > 0 ? `+S$ ${p.excessPaid.toLocaleString()} (Credit)` : `S$ ${p.balanceDue.toLocaleString()}`}
                                         </td>
                                         <td style={{ padding: '0.55rem 0.65rem' }}>
                                           <span style={{ padding: '0.15rem 0.45rem', borderRadius: '10px', fontSize: '0.68rem', fontWeight: 800, background: badge.bg, color: badge.color }}>
@@ -1643,7 +1695,7 @@ export default function AdminDashboard() {
                           <th style={{ padding: '0.65rem 0.75rem' }}>Agent / Company</th>
                           <th style={{ padding: '0.65rem 0.75rem' }}>Contract Price (S$)</th>
                           <th style={{ padding: '0.65rem 0.75rem' }}>Paid (S$)</th>
-                          <th style={{ padding: '0.65rem 0.75rem' }}>Balance Due (S$)</th>
+                          <th style={{ padding: '0.65rem 0.75rem' }}>Balance Due / Credit</th>
                           <th style={{ padding: '0.65rem 0.75rem' }}>Settlement</th>
                           <th style={{ padding: '0.65rem 0.75rem', textAlign: 'right' }}>Manage</th>
                         </tr>
@@ -1652,6 +1704,7 @@ export default function AdminDashboard() {
                         {filteredAccounts.map((p, idx) => {
                           const badge = 
                             p.settlementStatus === 'settled' ? { label: '🟢 Fully Settled', bg: '#DCFCE7', color: '#166534' } :
+                            p.settlementStatus === 'overpaid' ? { label: `🔵 +S$${p.excessPaid} Credit`, bg: '#EDE9FE', color: '#6D28D9' } :
                             p.settlementStatus === 'partial' ? { label: '🟡 Partially Paid', bg: '#FEF3C7', color: '#92400E' } :
                             { label: '🔴 Unpaid (100%)', bg: '#FEE2E2', color: '#991B1B' }
 
@@ -1681,8 +1734,14 @@ export default function AdminDashboard() {
                               <td style={{ padding: '0.7rem 0.75rem', fontWeight: 800, color: '#166534' }}>
                                 S$ {p.totalPaid.toLocaleString()}
                               </td>
-                              <td style={{ padding: '0.7rem 0.75rem', fontWeight: 900, color: p.balanceDue > 0 ? '#991B1B' : '#166534' }}>
-                                S$ {p.balanceDue.toLocaleString()}
+                              <td 
+                                style={{ 
+                                  padding: '0.7rem 0.75rem', 
+                                  fontWeight: 900, 
+                                  color: p.balanceDue > 0 ? '#DC2626' : (p.excessPaid > 0 ? '#7C3AED' : '#166534') 
+                                }}
+                              >
+                                {p.excessPaid > 0 ? `+S$ ${p.excessPaid.toLocaleString()} (Credit)` : `S$ ${p.balanceDue.toLocaleString()}`}
                               </td>
                               <td style={{ padding: '0.7rem 0.75rem' }}>
                                 <span style={{ padding: '0.2rem 0.55rem', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800, background: badge.bg, color: badge.color }}>

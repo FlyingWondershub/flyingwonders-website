@@ -51,6 +51,7 @@ export async function GET() {
       'Total Adjusted Contract Price (SGD)',
       'Payments Collected (SGD)',
       'Outstanding Balance Due (SGD)',
+      'Credit / Excess Paid (SGD)',
       'Settlement Status',
       'Invoice Date',
       'Created Date'
@@ -66,13 +67,19 @@ export async function GET() {
       }, 0)
       const adjustedPrice = basePrice + totalAddons
       const totalPaid = (p.paymentLedger || []).reduce((sum: number, pay: any) => sum + (Number(pay.amount) || 0), 0)
-      const balanceDue = Math.max(0, adjustedPrice - totalPaid)
+      
+      const rawDiff = adjustedPrice - totalPaid
+      const balanceDue = rawDiff > 0 ? rawDiff : 0
+      const excessPaid = rawDiff < 0 ? Math.abs(rawDiff) : 0
 
       let settlementStatus = 'Unpaid'
-      if (totalPaid >= adjustedPrice && adjustedPrice > 0) {
-        settlementStatus = 'Fully Settled'
+      if (adjustedPrice > 0) {
+        if (rawDiff === 0) settlementStatus = 'Fully Settled'
+        else if (rawDiff < 0) settlementStatus = 'Credit / Overpaid'
+        else if (totalPaid > 0) settlementStatus = 'Partially Paid'
+        else settlementStatus = 'Unpaid'
       } else if (totalPaid > 0) {
-        settlementStatus = 'Partially Paid'
+        settlementStatus = 'Credit / Overpaid'
       }
 
       const agentCompany = p.agent?.companyName || p.agent?.agentName || 'B2C Direct'
@@ -89,6 +96,7 @@ export async function GET() {
         adjustedPrice,
         totalPaid,
         balanceDue,
+        excessPaid,
         `"${settlementStatus}"`,
         `"${p.invoiceDate || ''}"`,
         `"${p._createdAt ? new Date(p._createdAt).toISOString().split('T')[0] : ''}"`
