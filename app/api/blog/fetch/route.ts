@@ -28,10 +28,12 @@ export async function GET(request: Request) {
 
   const articles = await client.fetch(query, params)
 
-  // Ensure readTime is populated
+  // Ensure readTime and flat slug string are populated
   const enriched = articles.map((a: any) => ({
     ...a,
-    readTime: a.readTime ?? `${Math.ceil((a.content?.split(/\\s+/).length || 0) / 200)} min read`,
+    id: a._id || a.id,
+    slug: typeof a.slug === 'object' && a.slug !== null ? a.slug.current : a.slug,
+    readTime: a.readTime ?? `${Math.ceil((a.content?.split(/\s+/).length || 0) / 200)} min read`,
   }))
 
   return NextResponse.json({ success: true, articles: enriched })

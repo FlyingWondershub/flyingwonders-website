@@ -55,7 +55,7 @@ export default function ArticleDetail() {
     return (
       <div style={{ textAlign: 'center', padding: '10rem 1.5rem' }}>
         <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2rem', color: 'red', marginBottom: '1rem' }}>Article Not Found</h2>
-        <p style={{ opacity: 0.8, marginBottom: '2rem' }}>We could not locate this travel story or guide in our Google Sheets sync database.</p>
+        <p style={{ opacity: 0.8, marginBottom: '2rem' }}>We could not locate this travel story or guide.</p>
         <Link href="/blog" className="btn btn-primary">Back to Blog Feed</Link>
       </div>
     )
