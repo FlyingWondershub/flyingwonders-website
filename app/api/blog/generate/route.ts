@@ -6,28 +6,95 @@ import { dataset, projectId, apiVersion } from '../../../../sanity/env';
 const TEMPLATE_POOL = [
   // 1. Sightseeing
   {
-    title: 'Gardens by the Bay Complete Guide: Supertree Grove, Flower Dome & Cloud Forest',
+    title: 'Gardens by the Bay Complete Guide: Supertree Grove, Cloud Forest Waterfall, Floral Fantasy & Light Show',
     slug: 'gardens-by-the-bay-singapore-guide',
     category: 'sightseeing',
     author: 'Aditya Sharma',
-    readTime: '6 min read',
-    imageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop',
-    excerpt: 'Everything you need to know before visiting Gardens by the Bay: timing, ticket hacks, OCBC Skyway, and the evening Garden Rhapsody light show.',
-    tags: ['Gardens by the Bay', 'Sightseeing', 'Must-Visit', 'Attractions'],
-    content: `Gardens by the Bay is Singapore’s crowning horticultural achievement. Spanning over 101 hectares in the heart of Marina Bay, it houses thousands of rare plants, monumental conservatories, and futuristic vertical gardens.
+    readTime: '8 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop',
+    excerpt: 'The ultimate 2026 visitor guide to Gardens by the Bay: ticket pricing, Supertree light show timings, Cloud Forest mist schedules, OCBC Skyway, and transport hacks.',
+    tags: ['Gardens by the Bay', 'Cloud Forest', 'Flower Dome', 'Sightseeing', 'Must-Visit'],
+    content: `Spanning over 101 hectares of reclaimed prime waterfront land in downtown Marina Bay, **Gardens by the Bay** is Singapore’s crowning national garden and an internationally acclaimed horticultural wonderland. Featuring futuristic Supertrees, colossal climate-controlled conservatories, and the world's largest indoor waterfall, it attracts over 10 million global visitors each year.
 
-### 1. Flower Dome & Cloud Forest
-The Flower Dome holds the Guinness World Record for the largest glass greenhouse, featuring seasonal floral displays from Mediterranean regions. Adjacent to it, the Cloud Forest houses a breathtaking 35-meter indoor waterfall shrouded in mist, with rare carnivorous plants and orchids along the Cloud Walk.
+Whether you are visiting Singapore with your family, on a romantic couple getaway, or as part of a corporate delegation, this comprehensive guide covers everything you need to plan a flawless visit.
 
-### 2. Supertree Grove & Garden Rhapsody
-These 25 to 50-meter iconic structures are vertical gardens that come alive at night. 
-- **Light & Sound Show (Garden Rhapsody)**: Daily at 7:45 PM and 8:45 PM. Admission is completely free!
-- **OCBC Skyway**: Stroll along the 22-meter-high walkway connecting two Supertrees for a 360-degree view of Marina Bay.
+---
 
-### 3. Practical Tips for Visitors
-- **Best Time to Visit**: Arrive around 4:00 PM to explore the air-conditioned domes before catching the sunset and Supertree light show outside.
-- **What to Wear**: Bring a light cardigan; the domes are chilled to a cool 23°C–25°C.
-- **MRT Access**: Take the Thomson-East Coast Line (TEL) directly to Gardens by the Bay MRT Station (TE22) Exit 1.`
+## 1. Cloud Forest: The 35-Meter Indoor Waterfall & Secret Garden
+
+The **Cloud Forest** conservatory replicates the cool, moist tropical montane climate found between 1,000 and 3,000 meters above sea level (such as Mount Kinabalu or South American cloud forests).
+
+![Cloud Forest 35-Meter Waterfall and Lush Aerial Walkway](https://images.unsplash.com/photo-1546708973-b339540b5162?w=900&auto=format&fit=crop)
+
+### Key Highlights inside Cloud Forest:
+- **The Waterfall**: As soon as you step through the airlock entrance, you are greeted by a roaring 35-meter-tall man-made mountain cloaked in lush ferns, orchids, pitcher plants, and delicate bromeliads.
+- **Cloud Walk & Treetop Walk**: Take the elevator to the 7th floor ("Lost World") and descend along a suspended cantilevered walkway that juts out into the misty canopy.
+- **Misting Hours**: Mist is released every 2 hours (10:00 AM, 12:00 PM, 2:00 PM, 4:00 PM, 6:00 PM, and 8:00 PM). Being on the walkway during misting makes for surreal photography!
+
+> Bring a light sweater or jacket. The temperature inside Cloud Forest is kept at a crisp 23°C to 25°C with 80%+ humidity.
+
+[CTA: Gardens by the Bay (Double Domes Admission) | Book E-Tickets | /singapore-attractions]
+
+---
+
+## 2. Flower Dome: The World’s Largest Glass Greenhouse
+
+Holding the Guinness World Record for the largest glass greenhouse on Earth, the **Flower Dome** spans 1.28 hectares under an unsupported glass roof. It showcases eight distinct gardens with over 30,000 plants representing Mediterranean and semi-arid subtropical regions from 5 continents.
+
+![Flower Dome Seasonal Exhibition and Thousand-Year Olive Trees](https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=900&auto=format&fit=crop)
+
+### What to Explore:
+- **Baobabs & Bottle Trees**: Marvel at bizarre succulent trees from Madagascar and Africa.
+- **The 1,000-Year-Old Olive Tree**: Living history originating from the Mediterranean basin.
+- **Changing Floral Displays**: The central Flower Field transforms every 6 to 8 weeks with elaborate thematic festivals (Tulipmania, Rose Romance, Orchid Extravaganza, and Christmas Wonderland).
+
+---
+
+## 3. Supertree Grove & Garden Rhapsody Light Show
+
+The **Supertree Grove** features 12 of the park's 18 monumental vertical gardens, ranging between 25 and 50 meters in height (equivalent to 9 to 16 storeys). These iconic structures are fitted with photovoltaic cells to harvest solar energy and collect rainwater to cool the conservatories.
+
+![Supertree Grove Illuminated During the Night Garden Rhapsody Show](https://images.unsplash.com/photo-1518684079-3c830dcef090?w=900&auto=format&fit=crop)
+
+### Garden Rhapsody Timings & Viewing Spots:
+- **Show Timings**: Every evening at **7:45 PM** and **8:45 PM** (Daily).
+- **Duration**: Approximately 15 minutes.
+- **Admission**: 100% Free!
+- **Best Viewing Experience**: Lie down on the grass or park benches directly underneath the tallest Supertree for an immersive soundscape and visual canopy.
+
+---
+
+## 4. OCBC Skyway & Supertree Observatory
+
+- **OCBC Skyway**: A 128-meter-long aerial bridge suspended 22 meters above ground connecting two giant Supertrees. Offers postcard views of Marina Bay Sands and the Singapore Flyer.
+- **Supertree Observatory**: Located at the canopy of the tallest 50-meter Supertree, featuring an open-air rooftop deck with 360-degree panorama of Singapore Strait.
+
+---
+
+## 5. Summary of Operating Hours & Ticket Prices
+
+| Section / Attraction | Opening Hours | Adult Price (SGD) | Child Price (SGD) |
+| :--- | :--- | :--- | :--- |
+| **Outdoor Gardens & Supertrees** | 5:00 AM – 2:00 AM | **Free** | **Free** |
+| **Cloud Forest + Flower Dome** | 9:00 AM – 9:00 PM | $32.00 | $20.00 |
+| **Floral Fantasy** | 10:00 AM – 7:00 PM | $15.00 | $10.00 |
+| **OCBC Skyway** | 9:00 AM – 9:00 PM | $14.00 | $10.00 |
+
+---
+
+## 6. How to Reach Gardens by the Bay
+
+1. **MRT Train (Recommended)**: Take the **Thomson-East Coast Line (Brown Line)** directly to **Gardens by the Bay Station (TE22)**. Take Exit 1 for an immediate 2-minute stroll into the park.
+2. **Via Marina Bay Sands**: Take the **Downtown Line (DT16)** or **Circle Line (CE1)** to **Bayfront Station**. Take Exit B, cross the Dragonfly Bridge or the Lions Bridge from inside Marina Bay Sands hotel lobby.
+3. **Taxi / Grab Drop-off**: Set drop-off to *Gardens by the Bay Main Gate / The Meadow*.
+
+---
+
+## 7. Insider Visiting Tips from Flying Wonders DMC
+
+- **Optimal Arrival Time**: Arrive at **3:30 PM**. Tour the Flower Dome and Cloud Forest during the warmest afternoon hours, step outside around 6:30 PM to catch golden hour over the lake, and finish with the 7:45 PM Supertree Light Show!
+- **Dining**: Grab local dishes at *Satay by the Bay* (open-air hawker court near the waterfront) or high-end dining at *Marguerite* inside the Flower Dome.
+- **Luggage Storage**: Lockers are available near the Main Ticketing Counter for $4–$8 SGD if arriving directly from Changi Airport.`
   },
   {
     title: 'Chinatown Heritage Walk: Temples, Shophouse Murals & Traditional Tea',
