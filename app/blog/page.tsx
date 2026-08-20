@@ -100,10 +100,14 @@ export default function BlogFeed() {
           {/* Featured Article Cover Card */}
           {featuredArticle && activeCategory === 'All' && (
             <div className="glass hover-lift" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem', borderRadius: '16px', overflow: 'hidden', background: 'var(--bg-main)', border: '1px solid var(--glass-border)', padding: '2rem', marginBottom: '4rem', boxShadow: 'var(--shadow-md)' }}>
-              <div style={{ height: '320px', borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ height: '320px', borderRadius: '12px', overflow: 'hidden', background: '#F1F5F9' }}>
                 <img 
-                  src={featuredArticle.imageUrl} 
+                  src={featuredArticle.imageUrl || '/images/hero/singapore-hero-1.jpg'} 
                   alt={featuredArticle.title} 
+                  onError={(e: any) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = '/images/hero/singapore-hero-1.jpg';
+                  }}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                 />
               </div>
@@ -141,10 +145,14 @@ export default function BlogFeed() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '2rem' }}>
             {(activeCategory === 'All' ? listArticles : filteredArticles).map((article) => (
               <div key={article.id} className="glass hover-lift" style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-main)', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--glass-border)', padding: '1rem', boxShadow: 'var(--shadow-sm)' }}>
-                <div style={{ height: '180px', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem' }}>
+                <div style={{ height: '180px', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem', background: '#F1F5F9' }}>
                   <img 
-                    src={article.imageUrl} 
+                    src={article.imageUrl || '/images/hero/singapore-hero-1.jpg'} 
                     alt={article.title} 
+                    onError={(e: any) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = '/images/hero/singapore-hero-1.jpg';
+                    }}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                   />
                 </div>

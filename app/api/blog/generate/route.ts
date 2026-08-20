@@ -405,7 +405,7 @@ Often hailed as the "Gotham Building of Singapore", Atlas houses an awe-inspirin
     category: 'photo_night',
     author: 'Priya Patel',
     readTime: '5 min read',
-    imageUrl: 'https://images.unsplash.com/photo-1506354666786-959d6d497f1a?w=800&auto=format&fit=crop',
+    imageUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop',
     excerpt: 'Level up your Instagram feed! Fort Canning Tree Tunnel, Tan Teng Niah colourful house, Old Hill Street Police Station, and Joo Chiat shophouses.',
     tags: ['Instagram Spots', 'Photography', 'Travel Photos', 'Shophouses'],
     content: `Singapore is packed with stunning architectural contrasts, vivid heritage shophouses, and lush nature photo opportunities.
@@ -451,13 +451,13 @@ export async function GET(request: Request) {
 
     for (let i = 0; i < count; i++) {
       const tmpl = pool[Math.floor(Math.random() * pool.length)]
-      const uniqueSuffix = Math.random().toString(36).substring(2, 6).toUpperCase()
+      const uniqueSuffix = Math.random().toString(36).substring(2, 6).toLowerCase()
       const today = new Date().toISOString().split('T')[0]
 
       const newDoc = {
         _type: 'blogPost',
-        title: `${tmpl.title} (${uniqueSuffix})`,
-        slug: { _type: 'slug', current: `${tmpl.slug}-${uniqueSuffix.toLowerCase()}` },
+        title: tmpl.title, // Clean editorial title without codes
+        slug: { _type: 'slug', current: `${tmpl.slug}-${uniqueSuffix}` },
         category: tmpl.category,
         author: tmpl.author,
         date: today,
