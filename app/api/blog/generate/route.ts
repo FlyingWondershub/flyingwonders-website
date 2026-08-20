@@ -422,6 +422,132 @@ Pastel-hued heritage terrace houses adorned with intricate ceramic tiles and Eur
 
 ### 4. Old Hill Street Police Station
 Features 927 rainbow-coloured louvered window shutters near Clarke Quay, stunning both by day and under nighttime illumination.`
+  },
+  // 8. Klook-Inspired Deep Travel Guides (Last 3 Months Trending Guides)
+  {
+    title: 'First Look at the New Singapore Oceanarium Sentosa: Exhibits, Zones & Visiting Guide',
+    slug: 'singapore-oceanarium-sentosa-visitor-guide',
+    category: 'sightseeing',
+    author: 'Maya Tan',
+    readTime: '7 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&auto=format&fit=crop',
+    excerpt: 'The brand-new Singapore Oceanarium at Resorts World Sentosa: 22 immersive zones, massive viewing habitats, and interactive marine conservation exhibits.',
+    tags: ['Singapore Oceanarium', 'Sentosa', 'Marine Life', 'Family Attractions', 'Tickets'],
+    content: `Formerly known as the S.E.A. Aquarium, the newly transformed and vastly expanded **Singapore Oceanarium** at Resorts World Sentosa is one of the world's most cutting-edge marine institutions. Spanning 22 distinct immersive zones, it brings visitors face-to-face with over 100,000 marine animals from more than 1,000 species.
+
+Whether traveling with curious young explorers or marine biology enthusiasts, this guide covers key exhibits, feeding timings, and ticketing details.
+
+---
+
+## 1. The 22 Immersive Oceanic Zones
+
+The new Oceanarium is designed to take visitors on a continuous voyage from shallow coastal mangroves and coral reefs down to the mysterious depths of the abyssal ocean trench.
+
+![Underwater Tunnel with Manta Rays and Giant Sharks](https://images.unsplash.com/photo-1582967788606-a171c1080cb0?w=900&auto=format&fit=crop)
+
+### Must-See Habitats:
+- **The Open Ocean Habitat**: The iconic centerpiece featuring a panoramic viewing panel over 36 meters wide. Watch majestic manta rays, giant groupers, and zebra sharks glide past in millions of gallons of crystal-clear seawater.
+- **Apex Predators Zone**: Walk through an underwater acrylic tunnel surrounded by over 12 species of apex sharks, including hammerheads and sand tiger sharks.
+- **Deep Sea & Bioluminescence Gallery**: Interactive darkened chambers displaying ethereal moon jellies, glowing deep-sea invertebrates, and hydrothermal vent creatures.
+
+> **Insider Tip**: The best photo lighting at the Open Ocean panel is between 11:30 AM and 1:00 PM when the sunlight filtering through the overhead skylights illuminates the school of golden trevally.
+
+[CTA: Singapore Oceanarium & Sentosa Passes | Instant Barcoded E-Tickets | /singapore-attractions]
+
+---
+
+## 2. Daily Feeding Sessions & Animal Encounters
+
+| Experience / Habitat | Timing | Location |
+| :--- | :--- | :--- |
+| **Open Ocean Manta Feeding** | 11:00 AM & 3:30 PM | Open Ocean Habitat Viewing Gallery |
+| **Shark Feeding Frenzy** | 2:00 PM (Tue & Thu) | Apex Predators Tunnel |
+| **Coral Reef Diversity Talk** | 1:30 PM & 4:30 PM | Coral Garden Rotunda |
+
+---
+
+## 3. Ticket Pricing & Opening Hours
+
+- **Opening Hours**: Daily from **10:00 AM – 7:00 PM** (Last admission 6:00 PM).
+- **Adult Ticket (13+ yrs)**: Approx. SGD $44.00
+- **Child Ticket (4–12 yrs)**: Approx. SGD $33.00
+- **Infants (<4 yrs)**: Free admission.
+
+---
+
+## 4. How to Get There
+
+1. **Sentosa Express Monorail**: Take the North East Line (NEL) or Circle Line (CCL) to **HarbourFront MRT Station (NE1/CC29)**. Enter VivoCity Mall (Level 3) and take the Sentosa Express to **Resorts World Station**.
+2. **Sentosa Boardwalk (Scenic Walk)**: A covered pedestrian walkway with travelators connecting VivoCity to Sentosa. Takes about 10–12 minutes and entry into the island is free!`
+  },
+  {
+    title: 'Universal Studios Singapore: Halloween Horror Nights Guide & Fast Pass Hacks',
+    slug: 'halloween-horror-nights-universal-studios-singapore-guide',
+    category: 'family',
+    author: 'Aditya Sharma',
+    readTime: '6 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1200&auto=format&fit=crop',
+    excerpt: 'Everything you need to conquer Halloween Horror Nights at Universal Studios Singapore: haunted house rankings, scare zones, ticket types, and express passes.',
+    tags: ['Universal Studios Singapore', 'Halloween Horror Nights', 'Sentosa', 'Theme Parks'],
+    content: `Universal Studios Singapore's **Halloween Horror Nights (HHN)** is Southeast Asia's premier Halloween blockbuster event. Every autumn, the park undergoes a spine-chilling transformation with elaborate haunted houses, atmospheric scare zones, immersive live shows, and night-time roller coaster thrills.
+
+---
+
+## 1. What to Expect: Haunted Houses & Scare Zones
+
+Each edition features 4 to 5 masterfully crafted haunted houses themed around Asian folklore, psychological thrillers, and global pop culture collaborations.
+
+![Universal Studios Singapore Illuminated for Night Entertainment](https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=900&auto=format&fit=crop)
+
+### Key Event Elements:
+- **Haunted Houses**: Walk through terrifying mazes featuring live scare actors, animatronics, and Hollywood-grade special effects.
+- **Scare Zones**: Open-air themed street environments throughout New York, Hollywood, and Ancient Egypt where sinister creatures roam freely.
+- **Rides Operating at Night**: Popular adrenaline coasters including *Battlestar Galactica: HUMAN vs. CYLON*, *TRANSFORMERS The Ride: The Ultimate 3D Battle*, and *Revenge of the Mummy* remain open throughout the night.
+
+> **Express Pass Warning**: Regular queue times for top haunted houses can easily exceed 90–120 minutes on peak weekend nights. We strongly advise securing an **HHN Express Pass** for priority turnstile access.
+
+[CTA: Universal Studios Singapore Tickets & Express Passes | Book with Flying Wonders | /singapore-attractions]
+
+---
+
+## 2. Practical Tips for First-Timers
+
+- **Event Timings**: Peak nights run from 7:30 PM to 1:30 AM; non-peak nights run from 7:30 PM to 12:30 AM.
+- **Dress Comfortably**: Singapore's evening humidity remains high. Wear light, breathable clothing and sturdy walking shoes as you will be on your feet for several hours.
+- **Age Advisory**: The event is not recommended for children under the age of 13 due to intense scare effects and mature horror themes.`
+  },
+  {
+    title: 'Science Centre Singapore & Omni-Theatre: Interactive Science, Mirror Maze & Snow City',
+    slug: 'science-centre-singapore-omni-theatre-guide',
+    category: 'family',
+    author: 'Priya Patel',
+    readTime: '6 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=1200&auto=format&fit=crop',
+    excerpt: 'A complete family guide to Science Centre Singapore in Jurong: Professor Crackitt’s Mirror Maze, Fire Tornado Show, Omni-Theatre 8K dome, and Snow City.',
+    tags: ['Science Centre', 'Family Travel', 'Kids Activities', 'Omni-Theatre', 'Snow City'],
+    content: `Located in Jurong East, **Science Centre Singapore** is one of the world's most acclaimed experiential science museums. Boasting more than 1,000 interactive exhibits across 14 galleries, it makes science, technology, and engineering captivating for kids and adults alike.
+
+---
+
+## 1. Top Attractions Inside Science Centre
+
+![Science Discovery Dome and Interactive Exhibitions](https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=900&auto=format&fit=crop)
+
+### Top Highlights:
+- **Professor Crackitt’s Light & Mirror Maze**: Asia’s largest mirror maze featuring 105 mirror chambers, endless corridors, and optical illusions that test your sense of direction.
+- **The Fire Tornado Show**: Witness an awe-inspiring 6-meter-high vortex of flame created inside a specialized wind chamber daily at 2:30 PM.
+- **Omni-Theatre (8K Digital Dome Cinema)**: Southeast Asia’s first 8K 3D digital dome theatre with a 23-meter seamless screen transporting you into deep space and ocean depths.
+- **Snow City Singapore**: Adjacent to the main building, Snow City offers an indoor sub-zero snow chamber with three-story snow slides and drift-on-ice bumper cars.
+
+[CTA: Science Centre & Kids Attraction Tickets | Instant Quotation | /singapore-attractions]
+
+---
+
+## 2. Ticket Prices & Nearest MRT Access
+
+- **Location**: 15 Science Centre Road, Singapore 609081.
+- **Nearest MRT**: **Jurong East MRT Station (NS1/EW24)**. From Exit A, walk 8 minutes via the sheltered walkway along Jurong Town Hall Road.
+- **Opening Hours**: Tuesday – Sunday: 10:00 AM to 5:00 PM (Closed on non-holiday Mondays).`
   }
 ]
 
