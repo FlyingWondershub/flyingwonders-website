@@ -1,5 +1,5 @@
 import { createClient } from 'next-sanity'
-import { dataset, projectId, apiVersion } from '@/sanity/env'
+import { dataset, projectId, apiVersion } from '../sanity/env.ts';
 import path from 'path'
 import fs from 'fs'
 

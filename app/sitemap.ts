@@ -1,9 +1,8 @@
+import { MetadataRoute } from 'next';
 import { createClient } from 'next-sanity';
-import { dataset, projectId, apiVersion } from '@/sanity/env';
+import { dataset, projectId, apiVersion } from '../sanity/env';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-
-export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://flyingwonders.net'
   const today = new Date().toISOString().split('T')[0]
 
@@ -48,26 +47,38 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/age-calculator', priority: 0.95, freq: 'daily' },
   ]
 
-  // Dynamic blog routes – fetch all published slugs from Sanity
-  const client = createClient({
-    projectId,
-    dataset,
-    apiVersion,
-    useCdn: false,
-    token: process.env.SANITY_READ_TOKEN,
-  })
-  const blogSlugs: string[] = await client.fetch("*[_type == \"blogPost\" && isPublished == true].slug.current")
-  const blogRoutes = blogSlugs.map((slug) => ({
-    url: `${baseUrl}/blog/${slug}`,
-    lastModified: today,
-    changeFrequency: 'daily' as MetadataRoute.Sitemap[0]['changeFrequency'],
-    priority: 0.7,
-  }))
+   // Convert core routes to sitemap entries
+   const coreSitemap = coreRoutes.map((r) => ({
+     url: `${baseUrl}${r.path}`,
+     lastModified: today,
+     changeFrequency: r.freq as MetadataRoute.Sitemap[0]['changeFrequency'],
+     priority: r.priority,
+   }))
 
-  return [...coreRoutes, ...toolRoutes, ...blogRoutes].map(({ url, lastModified, changeFrequency, priority }) => ({
-    url,
-    lastModified,
-    changeFrequency,
-    priority,
-  }))
+   // Convert tool routes to sitemap entries
+   const toolSitemap = toolRoutes.map((r) => ({
+     url: `${baseUrl}${r.path}`,
+     lastModified: today,
+     changeFrequency: r.freq as MetadataRoute.Sitemap[0]['changeFrequency'],
+     priority: r.priority,
+   }))
+
+   // Dynamic blog routes – fetch all published slugs from Sanity
+   const client = createClient({
+     projectId,
+     dataset,
+     apiVersion,
+     useCdn: false,
+     token: process.env.SANITY_READ_TOKEN,
+   })
+   const blogSlugs: string[] = await client.fetch("*[_type == \"blogPost\" && isPublished == true].slug.current")
+   const blogRoutes = blogSlugs.map((slug) => ({
+     url: `${baseUrl}/blog/${slug}`,
+     lastModified: today,
+     changeFrequency: 'daily' as MetadataRoute.Sitemap[0]['changeFrequency'],
+     priority: 0.7,
+   }))
+
+   return [...coreSitemap, ...toolSitemap, ...blogRoutes]
+
 }
