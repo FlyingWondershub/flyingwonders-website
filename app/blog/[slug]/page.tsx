@@ -82,11 +82,15 @@ function MarkdownRenderer({ content }: { content: string }) {
           const imgUrl = imageMatch[2]
           return (
             <figure key={idx} style={{ margin: '2rem 0', textAlign: 'center' }}>
-              <div style={{ borderRadius: '14px', overflow: 'hidden', boxShadow: 'var(--shadow-md)', maxHeight: '420px' }}>
+              <div style={{ borderRadius: '14px', overflow: 'hidden', boxShadow: 'var(--shadow-md)', maxHeight: '420px', background: '#F1F5F9' }}>
                 <img
-                  src={imgUrl}
+                  src={imgUrl || '/images/hero/singapore-hero-1.jpg'}
                   alt={altText}
                   loading="lazy"
+                  onError={(e: any) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = '/images/hero/singapore-hero-1.jpg';
+                  }}
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
               </div>
@@ -295,10 +299,14 @@ export default function ArticleDetail() {
           </div>
 
           {/* Hero Cover Image */}
-          <div style={{ height: '420px', borderRadius: '16px', overflow: 'hidden', marginBottom: '2.5rem', boxShadow: 'var(--shadow-md)' }}>
+          <div style={{ height: '420px', borderRadius: '16px', overflow: 'hidden', marginBottom: '2.5rem', boxShadow: 'var(--shadow-md)', background: '#F1F5F9' }}>
             <img 
-              src={article.imageUrl} 
+              src={article.imageUrl || '/images/hero/singapore-hero-1.jpg'} 
               alt={article.title} 
+              onError={(e: any) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/images/hero/singapore-hero-1.jpg';
+              }}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
             />
           </div>
