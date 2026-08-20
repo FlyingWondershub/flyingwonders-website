@@ -97,27 +97,57 @@ The **Supertree Grove** features 12 of the park's 18 monumental vertical gardens
 - **Luggage Storage**: Lockers are available near the Main Ticketing Counter for $4–$8 SGD if arriving directly from Changi Airport.`
   },
   {
-    title: 'Chinatown Heritage Walk: Temples, Shophouse Murals & Traditional Tea',
+    title: 'Chinatown Singapore Heritage & Culture Guide: Historic Temples, Shophouse Murals & Michelin Street Food',
     slug: 'chinatown-heritage-walk-singapore',
     category: 'sightseeing',
     author: 'Priya Patel',
-    readTime: '5 min read',
-    imageUrl: 'https://images.unsplash.com/photo-1543872084-c7bd3822856f?w=800&auto=format&fit=crop',
-    excerpt: 'Take an afternoon stroll down Chinatown Pagoda street, discovering historic Buddhist temples, vibrant street art, and traditional tea tasting.',
-    tags: ['Chinatown', 'Culture', 'Heritage', 'Temples'],
-    content: `Chinatown seamlessly blends rich immigrant history with hipster cafes, Michelin-recommended eateries, and colourful shophouses.
+    readTime: '9 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1543872084-c7bd3822856f?w=1200&auto=format&fit=crop',
+    excerpt: 'The definitive walking guide through historic Singapore Chinatown: Buddha Tooth Relic Temple, Sri Mariamman Hindu Temple, Yip Yew Chong murals, Michelin food stalls, and traditional tea tasting.',
+    tags: ['Chinatown', 'Culture', 'Heritage', 'Temples', 'Street Food', 'Walking Tour'],
+    content: `Nestled in the heart of downtown Singapore, **Chinatown** is a vibrant, multi-ethnic cultural tapestry where centuries-old Taoist and Buddhist shrines stand harmoniously alongside Singapore's oldest Hindu temple and historic mosques. Originally designated by Sir Stamford Raffles in the 1822 Jackson Plan as a settlement for Chinese immigrants, Chinatown has evolved into an eclectic district filled with preserved pastel-hued shophouses, Michelin-starred hawkers, hidden cocktail speakeasies, and artisanal tea houses.
 
-### 1. Buddha Tooth Relic Temple
-A magnificent 4-story Tang-style Buddhist temple. Head up to the rooftop garden to see the giant prayer wheel. Admission is free, but shoulders and knees must be covered.
+---
 
-### 2. Sri Mariamman Temple
-Singapore’s oldest Hindu temple, located right around the corner on South Bridge Road. The ornate *gopuram* (tower) is adorned with intricate deities and sculptures.
+## 1. Landmark Spiritual Sanctuaries
 
-### 3. Yip Yew Chong Street Art Murals
-Discover nostalgic street murals depicting early Chinese immigrant life across Temple Street, Pagoda Street, and Mohamed Ali Lane.
+![Buddha Tooth Relic Temple Lit Up in Downtown Chinatown](https://images.unsplash.com/photo-1543872084-c7bd3822856f?w=900&auto=format&fit=crop)
 
-### 4. Traditional Tea Tasting
-Stop by Pek Sin Choon or Tea Chapter to experience authentic kung fu tea ceremonies accompanied by handmade tea snacks.`
+### Top Temples to Visit:
+- **Buddha Tooth Relic Temple & Museum (288 South Bridge Road)**: A magnificent 4-story Tang-dynasty style Buddhist temple costing over $62 million SGD to construct. The 4th-floor Sacred Light Hall houses the sacred tooth relic within a solid gold stupa weighing 3,500 kilograms. Head up to the rooftop Orchid Garden to spin the giant Tibetan-style Vairocana prayer wheel.
+- **Sri Mariamman Temple (244 South Bridge Road)**: Founded in 1827, this is Singapore’s oldest Hindu temple. Dedicated to Goddess Mariamman (celebrated for her healing powers), its 6-tiered monumental *gopuram* (entrance tower) is intricately sculpted with vivid deities, mythical beasts, and British colonial soldiers.
+- **Jamae Chulia Mosque (218 South Bridge Road)**: Established in 1826 by Tamil Muslim immigrants (Chulias), featuring distinct Indo-Islamic architecture with neoclassical columns and minarets.
+
+> **Cultural Protocol Tip**: Admission to all three spiritual monuments is free. Visitors must remove footwear before entering Sri Mariamman and Jamae Mosque. Modest attire covering shoulders and knees is strictly required (complimentary sarongs and shawls are provided at entry).
+
+---
+
+## 2. Iconic Street Art Murals by Yip Yew Chong
+
+Chinatown is famous for large-scale nostalgic wall murals painted by renowned Singaporean artist **Yip Yew Chong**, capturing scenes of daily life in the 1960s–1980s:
+- **"My Chinatown Home" (30 Smith Street)**: Depicts a traditional shophouse interior with antique wooden furniture and red clogs.
+- **"Letter Writer" (44 Temple Street)**: Shows an elderly scribe assisting illiterate coolies and immigrants with sending remittances and letters back to Guangdong and Fujian.
+- **"Cantonese Opera" (Temple Street)**: Features actors applying theatrical makeup backstage before an open-air opera performance.
+
+---
+
+## 3. Michelin-Starred & Heritage Culinary Stops
+
+![Chinatown Complex Hawker Centre and Fragrant Local Delicacies](https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=900&auto=format&fit=crop)
+
+- **Chinatown Complex Hawker Centre (Level 2)**: Singapore's largest hawker centre with over 260 food stalls! Must-try dishes include *Lian He Ben Ji Claypot Rice* (cooked over charcoal with salted fish and lap cheong sausage), *Zhong Guo La Mian Xiao Long Bao*, and *Hawker Chan Soya Sauce Chicken*.
+- **Maxwell Food Centre (Corner of South Bridge & Maxwell Rd)**: Home to world-famous *Tian Tian Hainanese Chicken Rice*, *Jin Hua Sliced Fish Bee Hoon*, and crispy *Zhen Zhen Porridge*.
+- **Traditional Kung Fu Tea Houses**: Visit *Tea Chapter (Neil Road)* or *Pek Sin Choon (Mosque Street)*, which has supplied premium oolong and pu-erh teas to Bak Kut Teh stalls since 1925.
+
+---
+
+## 4. Practical Walking Route & Nearest MRT
+
+- **Starting Point**: **Chinatown MRT Station (NE4/DT19)**. Take Exit A to emerge directly on Pagoda Street.
+- **Duration**: 3 to 4 hours (Best explored between 10:00 AM and 3:00 PM for temple visits, followed by evening drinks along Club Street).
+- **Nearest Alternative MRT**: **Maxwell MRT Station (TE18)** on the Brown Line exits right across from the Buddha Tooth Relic Temple and Maxwell Food Centre.
+
+[CTA: Singapore Cultural & Heritage Walking Tours | Book with Flying Wonders | /singapore-attractions]`
   },
   {
     title: 'Marina Bay Sands SkyPark & Spectra Light Show Guide',
@@ -190,48 +220,107 @@ Every evening from 7:00 PM, Boon Tat Street is closed to traffic and transformed
 
   // 3. Travel Hacks
   {
-    title: 'Singapore MRT & Bus Guide: Tap & Ride with International Credit Cards',
+    title: 'Singapore MRT & Public Bus Master Guide: SimplyGo Tap-to-Ride, Fares, Routes & Travel Hacks',
     slug: 'singapore-mrt-public-transport-guide',
     category: 'travel_hacks',
     author: 'Rohan Mehta',
-    readTime: '4 min read',
-    imageUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=800&auto=format&fit=crop',
-    excerpt: 'Skip the ticketing queues! How SimplyGo enables international Visa/Mastercard tap-to-ride across Singapore’s world-class transit system.',
-    tags: ['MRT', 'Public Transport', 'SimplyGo', 'Travel Tips'],
-    content: `Singapore possesses one of the world's most modern, air-conditioned, and punctual transit networks. Navigating the island is seamless once you know these key tricks:
+    readTime: '8 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=1200&auto=format&fit=crop',
+    excerpt: 'Navigate Singapore like a seasoned local: how SimplyGo allows contactless credit card tap-and-ride, MRT line maps, station transit rules, and bus navigation tips.',
+    tags: ['MRT', 'Public Transport', 'SimplyGo', 'Travel Tips', 'Bus Routes', 'City Navigation'],
+    content: `Singapore's Mass Rapid Transit (MRT) and public bus network is universally celebrated as one of the cleanest, safest, most punctual, and fully air-conditioned transit infrastructures on the planet. With trains running every 2 to 3 minutes during peak hours and extensive underground interchanges connecting every major tourist attraction, getting around the island is exceptionally easy.
 
-### 1. No Need to Buy Tourist Transit Cards (SimplyGo)
-You do not need to queue for EZ-Link cards or purchase paper tickets. Singapore’s **SimplyGo** system allows you to tap directly at MRT gantries and bus readers using any contactless **Visa, Mastercard, Apple Pay, or Google Pay**.
-- *Note*: Ensure international contactless transactions are enabled on your card before arriving.
+---
 
-### 2. Best Navigation Apps
-- **Citymapper**: Provides real-time train timings, best carriage recommendations, and exit guides.
-- **MyTransport.SG**: Official LTA app for live bus arrival estimates and route planning.
+## 1. No Need to Buy Tourist Transit Cards (The SimplyGo Revolution)
 
-### 3. MRT Rules to Remember
-- No eating or drinking (even plain water) inside MRT stations or on trains (fines up to $500 SGD).
-- Keep left on escalators to allow rushing commuters to pass on the right.`
+![Modern Air-Conditioned Singapore MRT Train and Station Platform](https://images.unsplash.com/photo-1558981806-ec527fa84c39?w=900&auto=format&fit=crop)
+
+In the past, international tourists had to queue up at ticket kiosks to purchase physical EZ-Link cards or Singapore Tourist Passes. **You no longer need to do this!**
+
+With Singapore's **SimplyGo** system, you can tap directly in and out of all MRT gantries and public buses using:
+- **Contactless Credit/Debit Cards**: Foreign Visa, Mastercard, and JCB cards with the contactless wave symbol.
+- **Mobile Wallets**: Apple Pay, Google Wallet, Samsung Pay, or smartwatch payments linked to your debit/credit card.
+
+> **Crucial Fare Rule**: Always use the **exact same physical card or mobile device** to tap IN and tap OUT of each journey. If you tap in with your physical credit card and tap out with Apple Pay on your phone, the system cannot link the trip and will charge two maximum fare penalties!
+
+---
+
+## 2. Navigating the MRT Lines & Major Interchange Stations
+
+The Singapore MRT network is color-coded with two-letter station codes for effortless navigation:
+- **East-West Line (Green / EW)**: Direct transit from **Changi Airport (CG2)** via Expo/Tanah Merah into downtown Bugis, City Hall, and Raffles Place.
+- **North-South Line (Red / NS)**: Connects Orchard Road shopping belt, Marina Bay, and northbound hubs like Ang Mo Kio.
+- **Downtown Line (Blue / DT)**: Connects Chinatown, Bayfront (Marina Bay Sands), Little India, and Botanic Gardens.
+- **Circle Line (Orange / CC)**: Loops through HarbourFront (Sentosa transfer hub), Mount Faber, Marina Bay, and Dhoby Ghaut.
+- **Thomson-East Coast Line (Brown / TE)**: Modern driverless line linking Gardens by the Bay, Maxwell (Chinatown), Great World, and Orchard.
+
+---
+
+## 3. Essential Transit Rules & Etiquette
+
+- **Zero Tolerance for Food & Drinks**: Strictly no eating, drinking (even plain water or chewing gum), or smoking inside MRT stations or on trains. Violators face spot fines up to **$500 SGD**.
+- **Stand on the Left**: On escalators, stand strictly on the left side to allow rushing commuters to overtake on the right.
+- **Priority Seating**: Trains feature designated red and navy priority seats at each end of the carriage for pregnant women, seniors, and travelers with physical disabilities.
+- **Durians are Banned**: Due to its pungent odor, fresh durian fruit is strictly prohibited from entering any MRT trains or public buses.
+
+[CTA: Singapore Attraction Tickets & Package Quotes | Instant Booking | /singapore-attractions]`
   },
   {
-    title: 'Mustafa Centre Shopping Secrets: 24/7 Department Store in Little India',
+    title: 'Mustafa Centre Shopping Secrets: The Ultimate 24/7 Wholesale Survival Guide in Little India',
     slug: 'mustafa-centre-singapore-shopping-tips',
     category: 'travel_hacks',
     author: 'Aditya Sharma',
-    readTime: '5 min read',
-    imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&auto=format&fit=crop',
-    excerpt: 'From budget electronics, tiger balm, and duty-free perfumes to gold jewellery and imported chocolates, here is your Mustafa survival guide.',
-    tags: ['Mustafa Centre', 'Shopping', 'Little India', 'Budget Hacks'],
-    content: `Mustafa Centre on Syed Alwi Road is a legendary multi-story retail labyrinth where you can buy literally anything under the sun at unbeatable wholesale rates.
+    readTime: '9 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&auto=format&fit=crop',
+    excerpt: 'The definitive floor-by-floor shopping guide to Mustafa Centre: duty-free designer perfumes, bulk Swiss chocolates, electronics, gold jewellery, Ayurvedic medicines, and GST refund steps.',
+    tags: ['Mustafa Centre', 'Shopping', 'Little India', 'Budget Hacks', 'Travel Tips', 'Duty Free'],
+    content: `Occupying several interconnected multi-story retail blocks along Syed Alwi Road in Little India, **Mustafa Centre** is Singapore’s most legendary shopping emporium. Boasting over 300,000 inventory items across six sprawling floors, Mustafa is famous for its unbeatable wholesale prices, tax-free shopping counters, and extraordinary variety—spanning everything from diamond jewellery and 4K electronics to international cosmetics, spices, and imported chocolates.
 
-### 1. What to Buy at Mustafa
-- **Perfumes & Cosmetics**: Level 1 features one of Asia’s largest selections of genuine designer fragrances at discounted prices.
-- **Electronics & Travel Adapters**: Ground floor and basement levels carry global voltage adapters, luggage, and cameras.
-- **Chocolates & Souvenirs**: Level 2 is stocked with bulk Swiss chocolates, Merlion cookies, and Singapore kaya spreads.
-- **Ayurvedic Products & Spices**: Roam through aisles of specialty curry powders, teas, and saffron.
+---
 
-### 2. Insider Tips
-- **Best Hours to Visit**: Go late at night (after 10:00 PM) or early morning (before 10:00 AM) to avoid massive crowds.
-- **GST Refund**: Tourists spending over $100 SGD in a single receipt can process their eTRS tax refund slip at the dedicated counter on Basement 2.`
+## 1. Complete Floor-by-Floor Directory
+
+![Mustafa Centre Shopping Aisles Packed with Global Merchandise](https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=900&auto=format&fit=crop)
+
+### **Level 1: Designer Perfumes, Cosmetics, Watches & Medicated Oils**
+- **Designer Fragrances**: One of Asia’s largest perfume departments offering authentic designer brands (Chanel, Dior, Versace, Tom Ford, Bvlgari) at wholesale discounts of 20%–45% compared to airport duty-free.
+- **Traditional Medicated Balms**: Tiger Balm red/white ointments, Axe Brand Universal Oil, Eagle Brand Medicated Oil, and Salonpas pain relief patches sold in bulk multi-packs.
+- **Luxury & Daily Watches**: Casio G-Shock, Seiko, Citizen, and Swiss timepieces with international warranties.
+
+### **Basement 1 & Basement 2: Apparel, Footwear, Electronics & Luggage**
+- **Electronics & Travel Adapters**: Global multi-pin international voltage converters, high-capacity Anker/Baseus power banks, portable SSDs, and camera gear.
+- **Luggage Department**: Huge selection of Samsonite, American Tourister, and budget hardshell suitcases ideal for packing your Singapore shopping hauls.
+- **Textiles & Indian Traditional Wear**: Silk sarees, pashmina shawls, and bespoke tailoring materials.
+
+### **Level 2: Supermarket, Bulk Chocolates, Kaya Spread & Singapore Souvenirs**
+- **Imported Chocolates**: Lindt, Ferrero Rocher, Toblerone, Kinder, and Godiva sold in giant multi-kilogram party packs.
+- **Local Singapore Delicacies**: Traditional Pandan Kaya spreads, Prima Taste Singapore Laksa meal kits, Bak Kut Teh spice sachets, and Merlion-shaped chocolates.
+- **Global Tea & Coffee**: Teh Tarik sachets, TWG-style loose leaf teas, OldTown White Coffee, and Turkish coffees.
+
+### **Level 3 & Level 4: Kitchenware, Spices & Household Appliances**
+- **Ayurvedic Herbal Products**: Himalaya Herbals skincare, Medimix herbal soaps, saffron threads, and traditional Ayurvedic remedies.
+- **Precious Metals**: Mustafa Jewellery section trading 22K and 24K gold bars, coins, and bridal ornaments with daily certified live gold board rates.
+
+---
+
+## 2. Tourist Tax Refund (eTRS GST Claim)
+
+Foreign tourists visiting Singapore are entitled to claim back the **9% Goods and Services Tax (GST)** on purchases exceeding **$100 SGD** (combining up to 3 receipts from the same day):
+1. Keep your original receipts together with your physical passport.
+2. Head to the **eTRS Tax Refund Counter** on **Basement 2**.
+3. The officer will issue a digital eTRS transaction slip.
+4. Scan your passport at the automated GST Refund Kiosks at Changi Airport departure terminals before passing immigration to receive cash or credit card refunds.
+
+---
+
+## 3. Key Rules & Survival Hacks
+
+- **Bag Tagging at Entry**: Security staff will seal large backpacks and shopping bags with plastic zip-ties at the entrance to prevent shoplifting. Do not cut these ties until after exiting the checkout counters.
+- **Optimal Time to Shop**: Visit between **8:00 AM and 11:00 AM** on weekday mornings, or late at night after **10:30 PM**. Avoid Saturday and Sunday evenings between 5:00 PM and 9:00 PM when aisles are heavily congested.
+- **Nearest MRT**: **Farrer Park MRT Station (NE8)** on the North-East Purple Line (Take Exit G, 3-minute sheltered walk).
+
+[CTA: Singapore Attraction Tickets & Tour Transfers | Book Online | /singapore-attractions]`
   },
   {
     title: 'Singapore Changi Airport & Jewel Guide: The World’s Best Airport Experience',

@@ -357,10 +357,10 @@ export default function ArticleDetail() {
         </Link>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '3.5rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 280px', gap: '3rem', alignItems: 'start' }} className="blog-layout-grid">
         
-        {/* Main Content Pane */}
-        <div style={{ flex: '2' }}>
+        {/* Main Content Pane (Expansive, dominant reading area) */}
+        <div style={{ minWidth: 0 }}>
           
           {/* Article Header info */}
           <div style={{ marginBottom: '2rem' }}>
@@ -378,7 +378,7 @@ export default function ArticleDetail() {
           </div>
 
           {/* Hero Cover Image */}
-          <div style={{ height: '420px', borderRadius: '16px', overflow: 'hidden', marginBottom: '2.5rem', boxShadow: 'var(--shadow-md)', background: '#F1F5F9' }}>
+          <div style={{ height: '440px', borderRadius: '16px', overflow: 'hidden', marginBottom: '2.5rem', boxShadow: 'var(--shadow-md)', background: '#F1F5F9' }}>
             <img 
               src={article.imageUrl || '/images/hero/singapore-hero-1.jpg'} 
               alt={article.title} 
@@ -397,22 +397,22 @@ export default function ArticleDetail() {
                 background: '#F8FAFC',
                 border: '1px solid #E2E8F0',
                 borderRadius: '14px',
-                padding: '1.5rem',
+                padding: '1.25rem 1.5rem',
                 marginBottom: '2.5rem'
               }}
             >
-              <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--emerald-secondary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--emerald-secondary)', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 📑 In this Singapore Travel Guide:
               </div>
               <ul style={{ margin: 0, paddingLeft: '1.25rem', listStyle: 'none' }}>
                 {tocHeadings.map((h, hIdx) => (
-                  <li key={hIdx} style={{ marginBottom: '0.45rem', paddingLeft: h.isH2 ? 0 : '1rem' }}>
+                  <li key={hIdx} style={{ marginBottom: '0.4rem', paddingLeft: h.isH2 ? 0 : '1rem' }}>
                     <a
                       href={`#${h.id}`}
                       style={{
                         color: h.isH2 ? '#1E293B' : '#64748B',
                         fontWeight: h.isH2 ? 600 : 400,
-                        fontSize: '0.9rem',
+                        fontSize: '0.88rem',
                         textDecoration: 'none',
                         transition: 'color 0.2s'
                       }}
@@ -429,13 +429,13 @@ export default function ArticleDetail() {
           <MarkdownRenderer content={article.content} />
 
           {/* Bottom Article Author & Share footer */}
-          <div style={{ marginTop: '4rem', padding: '2rem', background: '#F8FAFC', borderRadius: '16px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--emerald-secondary)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 800 }}>
+          <div style={{ marginTop: '4rem', padding: '1.75rem', background: '#F8FAFC', borderRadius: '16px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'var(--emerald-secondary)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 800, flexShrink: 0 }}>
               {article.author.charAt(0)}
             </div>
             <div>
-              <div style={{ fontWeight: 800, color: '#1E293B' }}>{article.author}</div>
-              <div style={{ fontSize: '0.85rem', color: '#64748B', marginTop: '0.2rem' }}>
+              <div style={{ fontWeight: 800, color: '#1E293B', fontSize: '0.95rem' }}>{article.author}</div>
+              <div style={{ fontSize: '0.82rem', color: '#64748B', marginTop: '0.15rem' }}>
                 Destination Specialist at Flying Wonders Singapore. Curating luxury itineraries, corporate groups, and family holiday experiences.
               </div>
             </div>
@@ -443,78 +443,61 @@ export default function ArticleDetail() {
 
         </div>
 
-        {/* Sidebar Call To Action widgets */}
-        <div style={{ flex: '1 0 320px', position: 'sticky', top: '100px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        {/* Streamlined Super Compact Sidebar CTA (Reduced by 50%) */}
+        <aside style={{ position: 'sticky', top: '90px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
-          {/* Quick Attraction Tickets Booking Widget */}
-          <div className="glass" style={{ padding: '1.75rem', borderRadius: '16px', background: '#FFF', border: '1px solid #E2E8F0', boxShadow: 'var(--shadow-md)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--emerald-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              ⚡ Instant E-Tickets
+          {/* Consolidated Compact Action Card */}
+          <div className="glass" style={{ padding: '1.25rem', borderRadius: '14px', background: '#FFF', border: '1px solid #E2E8F0', boxShadow: 'var(--shadow-sm)' }}>
+            <span style={{ fontSize: '0.7rem', color: 'var(--emerald-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              ⚡ Direct DMC Rates
             </span>
-            <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.35rem', color: '#1A202C', margin: '0.5rem 0 0.75rem 0' }}>
-              Singapore Attractions E-Ticket Builder
+            <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.15rem', color: '#1A202C', margin: '0.35rem 0 0.5rem 0', lineHeight: '1.3' }}>
+              Singapore Attraction Tickets
             </h3>
-            <p style={{ fontSize: '0.85rem', color: '#4A5568', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-              Universal Studios, Gardens by the Bay, Night Safari & more at wholesale DMC rates. Instant barcode dispatch.
+            <p style={{ fontSize: '0.8rem', color: '#4A5568', lineHeight: 1.45, marginBottom: '0.85rem' }}>
+              Instant barcode e-tickets to USS, Gardens by the Bay, Night Safari & more at wholesale rates.
             </p>
-            <Link
-              href="/singapore-attractions"
-              className="btn btn-primary"
-              style={{ width: '100%', textAlign: 'center', display: 'block', padding: '0.75rem', fontSize: '0.85rem', fontWeight: 700 }}
-            >
-              Get Instant Attraction Quote →
-            </Link>
-          </div>
-
-          {/* Custom Package Planner CTA */}
-          <div className="glass" style={{ padding: '2rem', borderRadius: '16px', background: 'var(--bg-dark)', color: 'white', border: '1px solid #E2E8F0', boxShadow: 'var(--shadow-lg)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--gold-accent)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-              Singapore DMC Specialist
-            </span>
-            <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.4rem', color: '#FFF', margin: '0.5rem 0 1rem 0' }}>
-              Plan a Complete Singapore Holiday
-            </h3>
-            <p style={{ fontSize: '0.85rem', opacity: 0.8, lineHeight: 1.6, marginBottom: '1.5rem' }}>
-              Let our travel architects craft a custom itinerary for your family, couple trip, or corporate team.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <Link href="/packages" className="btn btn-primary" style={{ width: '100%', textAlign: 'center', background: 'var(--gold-accent)', color: '#111', fontWeight: 700 }}>
-                Explore Holiday Packages
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <Link
+                href="/singapore-attractions"
+                className="btn btn-primary"
+                style={{ width: '100%', textAlign: 'center', padding: '0.55rem', fontSize: '0.8rem', fontWeight: 700 }}
+              >
+                Instant E-Tickets →
               </Link>
-              <Link href="/ai-planner" style={{ textAlign: 'center', color: '#FFF', fontSize: '0.85rem', textDecoration: 'underline' }}>
-                ✨ Try AI Trip Planner (Free)
+              <Link
+                href="/packages"
+                style={{ width: '100%', textAlign: 'center', padding: '0.45rem', fontSize: '0.78rem', fontWeight: 600, color: 'var(--emerald-secondary)', border: '1px solid #CBD5E1', borderRadius: '6px', textDecoration: 'none' }}
+              >
+                Custom Packages
               </Link>
             </div>
           </div>
 
-          {/* Instant WhatsApp Help Widget */}
-          <div className="glass" style={{ padding: '1.5rem', borderRadius: '16px', background: '#FFF', border: '1px solid #E2E8F0', textAlign: 'center' }}>
-            <h4 style={{ color: 'var(--emerald-secondary)', margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: 700 }}>
-              Need Help Planning?
-            </h4>
-            <p style={{ fontSize: '0.8rem', color: '#4A5568', marginBottom: '1rem' }}>
-              Chat directly with our Singapore destination desk on WhatsApp.
-            </p>
-            <a 
-              href="https://wa.me/919886171251" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              style={{
-                display: 'block',
-                background: '#25D366',
-                color: '#FFF',
-                padding: '0.65rem',
-                borderRadius: '8px',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                textDecoration: 'none'
-              }}
-            >
-              💬 WhatsApp Us (+91 98861 71251)
-            </a>
-          </div>
-
-        </div>
+          {/* Quick WhatsApp Link Pill */}
+          <a 
+            href="https://wa.me/919886171251" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              background: '#25D366',
+              color: '#FFF',
+              padding: '0.6rem 0.85rem',
+              borderRadius: '10px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              textDecoration: 'none',
+              boxShadow: '0 2px 6px rgba(37,211,102,0.25)'
+            }}
+          >
+            💬 WhatsApp Singapore Desk
+          </a>
+        </aside>
 
       </div>
 
