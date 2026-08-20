@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import { dataset, projectId, apiVersion } from '../../../../sanity/env';
+import { urlForImage } from '../../../../sanity/lib/image';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
 
   const articles = await client.fetch(query, params)
 
-  // Ensure clean title, deduplicate identical titles, readTime, and flat slug string
+  // Ensure clean title, deduplicate identical titles, readTime, and resolve uploaded vs fallback image
   const seenTitles = new Set<string>()
   const enriched: any[] = []
 
@@ -41,12 +42,25 @@ export async function GET(request: Request) {
     }
     seenTitles.add(cleanTitle.toLowerCase())
 
+    // Determine cover image URL: uploaded Sanity asset > imageUrl field > fallback default
+    let resolvedImage = null
+    if (a.coverImage?.asset) {
+      try {
+        resolvedImage = urlForImage(a.coverImage)?.auto('format').width(1200).url()
+      } catch (err) {
+        resolvedImage = null
+      }
+    }
+    if (!resolvedImage) {
+      resolvedImage = a.imageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop'
+    }
+
     enriched.push({
       ...a,
       id: a._id || a.id,
       title: cleanTitle || a.title,
       slug: typeof a.slug === 'object' && a.slug !== null ? a.slug.current : a.slug,
-      imageUrl: a.imageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop',
+      imageUrl: resolvedImage,
       readTime: a.readTime ?? `${Math.ceil((a.content?.split(/\s+/).length || 0) / 200)} min read`,
     })
   }

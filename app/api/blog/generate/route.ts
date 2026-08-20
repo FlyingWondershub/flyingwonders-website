@@ -539,7 +539,7 @@ Each edition features 4 to 5 masterfully crafted haunted houses themed around As
 - **Omni-Theatre (8K Digital Dome Cinema)**: Southeast Asia’s first 8K 3D digital dome theatre with a 23-meter seamless screen transporting you into deep space and ocean depths.
 - **Snow City Singapore**: Adjacent to the main building, Snow City offers an indoor sub-zero snow chamber with three-story snow slides and drift-on-ice bumper cars.
 
-[CTA: Science Centre & Kids Attraction Tickets | Instant Quotation | /singapore-attractions]
+    [CTA: Science Centre & Kids Attraction Tickets | Instant Quotation | /singapore-attractions]
 
 ---
 
@@ -548,6 +548,228 @@ Each edition features 4 to 5 masterfully crafted haunted houses themed around As
 - **Location**: 15 Science Centre Road, Singapore 609081.
 - **Nearest MRT**: **Jurong East MRT Station (NS1/EW24)**. From Exit A, walk 8 minutes via the sheltered walkway along Jurong Town Hall Road.
 - **Opening Hours**: Tuesday – Sunday: 10:00 AM to 5:00 PM (Closed on non-holiday Mondays).`
+  },
+  // 9. Additional Top Klook Singapore Articles (Last 3 Months Trending)
+  {
+    title: 'Singapore Cable Car Sky Network Guide: Mount Faber, Sentosa Line & Sunset Views',
+    slug: 'singapore-cable-car-sky-network-guide',
+    category: 'sightseeing',
+    author: 'Aditya Sharma',
+    readTime: '6 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=1200&auto=format&fit=crop',
+    excerpt: 'Ride above the jungle canopy and harbor! Complete guide to Singapore Cable Car Mount Faber Line, Sentosa Line, and glass-bottom cabins.',
+    tags: ['Singapore Cable Car', 'Sentosa', 'Mount Faber', 'Sightseeing', 'Scenic Views'],
+    content: `Connecting mainland Singapore to Sentosa Island, the **Singapore Cable Car Sky Network** offers 360-degree aerial views of the city skyline, lush rainforest canopies, and the busy Singapore Cruise Harbour.
+
+---
+
+## 1. The Two Cable Car Lines
+
+![Singapore Cable Car Cabin Gliding Over Tropical Sentosa Island](https://images.unsplash.com/photo-1506354666786-959d6d497f1a?w=900&auto=format&fit=crop)
+
+- **Mount Faber Line**: Mount Faber Peak ↔ HarbourFront ↔ Sentosa (Flies high across the harbor channel into the island).
+- **Sentosa Line**: Merlion Station ↔ Imbiah Lookout ↔ Siloso Point (Internal aerial line across Sentosa beaches and attractions).
+
+> **Golden Hour Hack**: Board the Mount Faber line at 6:45 PM from HarbourFront to Mount Faber to watch the sunset transition into sparkling harbor lights.
+
+[CTA: Singapore Cable Car Sky Pass | Direct Turnstile E-Tickets | /singapore-attractions]`
+  },
+  {
+    title: 'Night Safari Singapore Tram Ride & Creatures of the Night Show Guide',
+    slug: 'night-safari-singapore-tram-ride-guide',
+    category: 'family',
+    author: 'Maya Tan',
+    readTime: '7 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1534188753412-3e26d0d618d6?w=1200&auto=format&fit=crop',
+    excerpt: 'The world’s first nocturnal wildlife park: tram ride routes, walking trail secret paths, booking time slots, and animal show timings.',
+    tags: ['Night Safari', 'Mandai Wildlife Reserve', 'Wildlife', 'Family Travel'],
+    content: `Nestled in the Mandai rainforest, **Night Safari Singapore** is the world’s first nocturnal animal sanctuary, housing over 900 animals from nearly 100 nocturnal species in naturalistic open-air habitats.
+
+---
+
+## 1. Guided Tram Experience vs. Walking Trails
+
+![Asian Elephants and Nocturnal Wildlife in Naturalistic Habitats](https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=900&auto=format&fit=crop)
+
+- **The 40-Minute Guided Tram**: Included in admission. Journeys through 6 geographical zones from the Himalayan Foothills to the Asian Riverine Forest.
+- **The 4 Interconnected Walking Trails**: Leopard Trail, Fishing Cat Trail, East Lodge Trail, and Tasmanian Devil Trail allow close-up encounters with free-ranging bats, flying squirrels, and clouded leopards.
+
+> **Crucial Tip**: Admission requires booking a specific entry time slot (7:15 PM, 8:15 PM, 9:15 PM, or 10:15 PM). Arrive 20 minutes prior to your allocated slot.
+
+[CTA: Night Safari Tickets with Tram Ride | Instant Confirmation | /singapore-attractions]`
+  },
+  {
+    title: 'Bird Paradise Singapore at Mandai: 8 Walk-In Aviaries & Penguin Cove Guide',
+    slug: 'bird-paradise-mandai-singapore-guide',
+    category: 'family',
+    author: 'Priya Patel',
+    readTime: '7 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=1200&auto=format&fit=crop',
+    excerpt: 'Explore Asia’s largest bird park at Mandai: 8 walk-in aviaries, Ocean Network Express Penguin Cove, and spectacular free-flight bird presentations.',
+    tags: ['Bird Paradise', 'Mandai Wildlife', 'Penguin Cove', 'Eco Tourism'],
+    content: `Replacing the historic Jurong Bird Park, **Bird Paradise** at Mandai Wildlife Reserve is home to 3,500 birds across 400 species in state-of-the-art immersive walk-in aviaries.
+
+---
+
+## 1. Highlights of the 8 Thematic Aviaries
+
+![Vibrant Macaws and Flamingos in Open Canopy Aviaries](https://images.unsplash.com/photo-1549608276-5786777e6587?w=900&auto=format&fit=crop)
+
+- **Hong Leong Foundation Crimson Wetlands**: Roaring 20-meter waterfall surrounded by hundreds of scarlet ibises and roseate spoonbills.
+- **Kuok Group Wings of Asia**: Tranquil bamboo forests housing threatened hornbills and pied imperial pigeons.
+- **Ocean Network Express Penguin Cove**: A climate-controlled indoor habitat with underwater acrylic tunnels to view gentoo, king, and Humboldt penguins swimming at high speeds.
+
+[CTA: Bird Paradise Mandai Tickets | Instant Barcoded E-Tickets | /singapore-attractions]`
+  },
+  {
+    title: 'Skyline Luge Singapore & Skyride Sentosa: Tracks, Night Luge & Ticket Hacks',
+    slug: 'skyline-luge-sentosa-singapore-guide',
+    category: 'family',
+    author: 'Rohan Mehta',
+    readTime: '5 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=1200&auto=format&fit=crop',
+    excerpt: 'Part go-kart, part toboggan! Master all 4 purpose-built downhill tracks at Skyline Luge Sentosa, including the magical Night Luge with neon lighting.',
+    tags: ['Skyline Luge', 'Sentosa', 'Adventure', 'Family Fun'],
+    content: `Invented in New Zealand and perfected in Singapore, the **Skyline Luge Sentosa** gives riders full gravity-fueled steering control down 2.6 kilometers of twisting downhill purpose-built tracks.
+
+---
+
+## 1. The 4 Downhill Tracks
+
+- **Kupu Kupu Track (638m)**: Gentle sweeping curves through the forest canopy.
+- **Expedition Track (658m)**: Hairpin turns and long straightaways with harbor views.
+- **Jungle Track (700m)**: High-speed drops through illuminated tunnel arches.
+- **Dragon Track (688m)**: The longest, most challenging track with tight switchbacks.
+
+> **Night Luge Experience**: Every Friday and Saturday evening from 7:00 PM, the tracks are illuminated in dynamic LED neon colors with pulsing music.
+
+[CTA: Skyline Luge & Skyride 3-Ride / 4-Ride Combos | Book E-Tickets | /singapore-attractions]`
+  },
+  {
+    title: 'Singapore River Cruise by WaterB & Singapore River Experience: Clarke Quay to Marina Bay',
+    slug: 'singapore-river-cruise-bumboat-guide',
+    category: 'sightseeing',
+    author: 'Aditya Sharma',
+    readTime: '5 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1506354666786-959d6d497f1a?w=1200&auto=format&fit=crop',
+    excerpt: 'Cruise Singapore’s historic waterways on an eco-friendly electric bumboat. See Clarke Quay, Boat Quay, Fullerton Hotel, and the Merlion.',
+    tags: ['River Cruise', 'Clarke Quay', 'Marina Bay', 'Sightseeing'],
+    content: `Tracing Singapore’s transformation from a sleepy fishing village to a global metropolis, the **40-minute Singapore River Cruise** provides the best waterfront perspective of historic colonial architecture juxtaposed against gleaming modern skyscrapers.
+
+---
+
+## 1. Key Landmarks along the Cruise Route
+
+- **Clarke Quay**: Restored 19th-century godowns and vibrant riverside promenades.
+- **The Historical Bridges**: Pass beneath Anderson Bridge, Cavenagh Bridge (Singapore’s oldest surviving suspension bridge), and Elgin Bridge.
+- **The Merlion Park & Marina Bay**: Emerge into the open bay for postcard shots of the water-spouting Merlion statue and Marina Bay Sands.
+
+[CTA: Singapore River Cruise Tickets | Instant Confirmation | /singapore-attractions]`
+  },
+  {
+    title: 'Museum of Ice Cream Singapore (Dempsey): Unlimited Ice Cream & Giant Sprinkle Pool',
+    slug: 'museum-of-ice-cream-singapore-guide',
+    category: 'photo_night',
+    author: 'Priya Patel',
+    readTime: '5 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=1200&auto=format&fit=crop',
+    excerpt: 'The ultimate whimsical pastel playground in Dempsey Hill: 14 multi-sensory installations, unlimited ice cream treats, and the world-famous sprinkle pool.',
+    tags: ['Museum of Ice Cream', 'Instagram Spots', 'Dempsey Hill', 'Family Travel'],
+    content: `Spanning 60,000 square feet across historic colonial barracks in Dempsey Hill, the **Museum of Ice Cream (MOIC) Singapore** is a vibrant, pastel-pink immersive wonderland dedicated to the joy of ice cream and playful photography.
+
+---
+
+## 1. Top Installations & Unlimited Treats
+
+- **The World-Famous Sprinkle Pool**: Dive into thousands of antimicrobial rainbow sprinkles for iconic photos.
+- **Dragon Playground**: A nostalgic pastel tribute to Singapore’s iconic Toa Payoh dragon playground.
+- **Unlimited Ice Cream Stations**: Savor rotating handcrafted ice cream flavors including local favorites like Pulut Hitam, Lychee Bandung, and Salted Caramel.
+
+[CTA: Museum of Ice Cream Tickets | Best Price Guarantee | /singapore-attractions]`
+  },
+  {
+    title: 'Wild Wild Wet Waterpark Singapore (Downtown East): Rides, Slides & Family Passes',
+    slug: 'wild-wild-wet-waterpark-singapore-guide',
+    category: 'family',
+    author: 'Maya Tan',
+    readTime: '6 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1582719478250-8cf4f44b2a0a?w=1200&auto=format&fit=crop',
+    excerpt: 'Beat the tropical heat at Wild Wild Wet! Free fall speed slides, Torpedo 360 loops, Shiok River lazy float, and Kidz Zone water playgrounds.',
+    tags: ['Wild Wild Wet', 'Waterpark', 'Downtown East', 'Family Travel'],
+    content: `Consistently ranked among the top 10 water parks in Asia by TripAdvisor Travellers’ Choice, **Wild Wild Wet** in Pasir Ris offers 16 adrenaline-pumping water slides and relaxing lazy river attractions.
+
+---
+
+## 1. High-Thrills vs. Family Chill
+
+- **Adrenaline Slides**: *Free Fall* (near-vertical drop at 50 km/h), *Torpedo* (free-fall capsule into a 360-degree loop), and *Ular-Lah* (raft slide down mega flumes).
+- **Relaxation**: *Shiok River* (gentle lazy river floating around the perimeter) and *Tsunami* (massive wave pool with gentle swells).
+- **Toddlers & Kids**: *Kidz Zone* and *Splash Play* with mini slides and tipping water buckets.
+
+[CTA: Wild Wild Wet Waterpark Passes | Book E-Tickets | /singapore-attractions]`
+  },
+  {
+    title: 'Singapore Flyer & Time Capsule: Giant Ferris Wheel & Immersive Heritage Journey',
+    slug: 'singapore-flyer-time-capsule-guide',
+    category: 'sightseeing',
+    author: 'Aditya Sharma',
+    readTime: '5 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop',
+    excerpt: 'Standing 165 meters tall in Marina Bay: giant observation wheel rotation guides, Time Capsule multisensory interactive exhibits, and champagne flights.',
+    tags: ['Singapore Flyer', 'Marina Bay', 'Sightseeing', 'Observation Wheel'],
+    content: `Towering 165 meters (equivalent to 42 storeys) over Marina Bay, the **Singapore Flyer** is one of the world's largest giant observation wheels, offering vistas reaching as far as Malaysia and Indonesia on clear days.
+
+---
+
+## 1. The Experience: Time Capsule & Giant Flight
+
+- **Time Capsule Exhibition**: A 2-story interactive projection exhibition guided by a time-traveling robot companion (*R65*) showcasing 700 years of Singapore's heritage.
+- **The 30-Minute Flight**: Step inside a spacious, air-conditioned UV-protected glass capsule for a rotation with 360-degree vistas over Gardens by the Bay, Marina Bay Sands, and the Singapore Strait.
+
+[CTA: Singapore Flyer & Time Capsule Tickets | Instant Booking | /singapore-attractions]`
+  },
+  {
+    title: 'Wings of Time Sentosa: Fireworks, Laser & Water Symphony Evening Spectacular',
+    slug: 'wings-of-time-sentosa-show-guide',
+    category: 'sightseeing',
+    author: 'Maya Tan',
+    readTime: '5 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=1200&auto=format&fit=crop',
+    excerpt: 'The multi-sensory night show on Siloso Beach: water fountains, 3D projection mapping, laser pyrotechnics, and show timings.',
+    tags: ['Wings of Time', 'Sentosa', 'Night Show', 'Fireworks'],
+    content: `Set against the open sea at Siloso Beach in Sentosa, **Wings of Time** is an outdoor night show featuring giant water screens, 3D video mapping, state-of-the-art lasers, and fireworks.
+
+---
+
+## 1. Story & Visual Effects
+
+Follow the heroic journey of *Shahbaz*, a prehistoric bird, as he travels through the British Industrial Revolution, Silk Road, and Mayan Pyramids alongside human friends Rachel and Felix.
+
+- **Show Timings**: Daily shows at **7:40 PM** and **8:40 PM**.
+- **Location**: Siloso Beach (Right outside Sentosa Express Beach Station).
+
+[CTA: Wings of Time Standard & Premium Seating | Instant E-Tickets | /singapore-attractions]`
+  },
+  {
+    title: 'Madame Tussauds Singapore & Images of Singapore: Marvel 4D, VR Racing & Boat Ride',
+    slug: 'madame-tussauds-singapore-sentosa-guide',
+    category: 'family',
+    author: 'Rohan Mehta',
+    readTime: '5 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=1200&auto=format&fit=crop',
+    excerpt: 'Step onto the red carpet at Imbiah Lookout Sentosa: Hollywood stars, Marvel 4D Universe cinema, Spirit of Singapore indoor boat ride, and F1 VR racing.',
+    tags: ['Madame Tussauds', 'Sentosa', 'Marvel 4D', 'Family Fun'],
+    content: `Located at Imbiah Lookout on Sentosa Island, **Madame Tussauds Singapore** brings pop icons, Bollywood legends, global sports champions, and Marvel superheroes to life in hyper-realistic wax figures.
+
+---
+
+## 1. Key 5-in-1 Experiences Included
+
+- **Spirit of Singapore Boat Ride**: A botanical boat ride gliding through tropical Singapore gardens and roaring F1 night race simulations.
+- **Marvel Universe 4D Cinema**: Feel wind, water spray, and tremors as Iron Man, Spider-Man, and Captain Marvel battle villains in Singapore.
+- **Ultimate Film Star Experience**: Step onto Bollywood dance sets with real-time green-screen interactive dance-offs!
+
+[CTA: Madame Tussauds 5-in-1 Sentosa Combo Pass | Wholesale Rates | /singapore-attractions]`
   }
 ]
 
