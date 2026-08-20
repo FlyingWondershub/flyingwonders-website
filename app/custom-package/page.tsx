@@ -5,7 +5,7 @@ import Link from 'next/link'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
-import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X } from 'lucide-react'
+import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X, Sparkles } from 'lucide-react'
 
 // Default Fallback Master Data (Configured in SGD)
 const FALLBACK_HOTELS = [
@@ -1666,11 +1666,14 @@ export default function PrototypeBuilder() {
         // Slim repeat header for continuation pages
         setFill(NAVY); doc.rect(0, 0, PW, 12, 'F')
         setFill(GOLD); doc.rect(0, 12, PW, 1.2, 'F')
-        font('bold', 8); setTxt(WHITE)
-        doc.text((customAgencyName || 'FLYING WONDERS').toUpperCase(), ML, 8.5)
+        font('bold', 7.5); setTxt(WHITE)
+        const headerAgency = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
+        const headerAgencyLines = doc.splitTextToSize(headerAgency, 62)
+        doc.text(headerAgencyLines[0], ML, 8.5)
         font('normal', 7); setTxt(GOLD)
-        doc.text('SINGAPORE TOUR PROPOSAL', PW / 2, 8.5, { align: 'center' })
+        doc.text('CUSTOM TOUR PROPOSAL', PW / 2, 8.5, { align: 'center' })
         if (savedProposalNum) {
+          font('bold', 7.5); setTxt(WHITE)
           doc.text(`Ref: ${savedProposalNum}`, MR, 8.5, { align: 'right' })
         }
       }
@@ -1693,7 +1696,7 @@ export default function PrototypeBuilder() {
         y += 3
         setFill(NAVY); doc.rect(ML, y, CW, 8, 'F')
         setFill(GOLD); doc.rect(ML, y, 3, 8, 'F')
-        font('bold', 10); setTxt(WHITE)
+        font('bold', 9.5); setTxt(WHITE)
         doc.text(label.toUpperCase(), ML + 6, y + 5.5)
         y += 12
       }
@@ -1725,16 +1728,19 @@ export default function PrototypeBuilder() {
       // Right-side accent bar
       setFill(CRIM); doc.rect(PW - 22, 0, 22, 52, 'F')
 
-      // Agency name
-      font('bold', 20); setTxt(WHITE)
-      doc.text((customAgencyName || 'FLYING WONDERS').toUpperCase(), ML, 22)
+      // Agency name (wrapped cleanly to avoid collision with badge)
+      font('bold', 15); setTxt(WHITE)
+      const fullAgencyName = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
+      const agencyLines = doc.splitTextToSize(fullAgencyName, 110)
+      const agencyStartY = agencyLines.length > 1 ? 16 : 22
+      doc.text(agencyLines, ML, agencyStartY)
 
       // Tagline
-      font('italic', 9); setTxt(GOLD)
+      font('italic', 8.5); setTxt(GOLD)
       const agencyTagline = activeAgent?.companyName
         ? `${activeAgent.companyName} · Singapore DMC Travel Partner`
         : 'Singapore DMC Travel Partner · Singapore Specialist'
-      doc.text(agencyTagline, ML, 31)
+      doc.text(agencyTagline, ML, agencyLines.length > 1 ? 33 : 31)
 
       // Document label (vertical on right accent)
       doc.setFont('Helvetica', 'bold'); doc.setFontSize(7.5); setTxt(WHITE)
@@ -1744,16 +1750,16 @@ export default function PrototypeBuilder() {
       // Contact row
       font('normal', 8); setTxt(GOLD)
       const ctLine = [
-        customAgencyPhone ? `Tel: ${customAgencyPhone}` : '',
-        customAgencyEmail ? `Email: ${customAgencyEmail}` : '',
+        customAgencyPhone ? `Tel: ${customAgencyPhone}` : (activeAgent?.phone ? `Tel: ${activeAgent.phone}` : ''),
+        customAgencyEmail ? `Email: ${customAgencyEmail}` : (activeAgent?.email ? `Email: ${activeAgent.email}` : ''),
       ].filter(Boolean).join('   |   ')
       doc.text(ctLine, ML, 43)
 
       // Proposal ref badge
       if (savedProposalNum) {
-        setFill(GOLD); doc.roundedRect(130, 8, 52, 10, 2, 2, 'F')
-        font('bold', 8); setTxt(NAVY)
-        doc.text(`PROPOSAL REF: ${savedProposalNum}`, 156, 14.5, { align: 'center' })
+        setFill(GOLD); doc.roundedRect(126, 8, 56, 10, 2, 2, 'F')
+        font('bold', 7.5); setTxt(NAVY)
+        doc.text(`PROPOSAL REF: ${savedProposalNum}`, 154, 14.5, { align: 'center' })
       }
 
       y = 62
@@ -1762,30 +1768,30 @@ export default function PrototypeBuilder() {
       setFill(GOLD_L); doc.roundedRect(ML, y, CW, 38, 3, 3, 'F')
       setDraw(GOLD); doc.setLineWidth(0.6); doc.roundedRect(ML, y, CW, 38, 3, 3, 'S')
 
-      const cH = 38 / 2
       // Guest name & contact
       font('bold', 9); setTxt(CRIM)
       doc.text('PREPARED FOR', ML + 4, y + 6)
-      font('bold', 15); setTxt(NAVY)
+      font('bold', 14); setTxt(NAVY)
       const guestDisplay = `${guestName || 'Valued Guest'}${guestPhone ? ` (${guestPhone})` : ''}`
-      doc.text(guestDisplay, ML + 4, y + 15)
+      doc.text(guestDisplay, ML + 4, y + 14)
 
-      // Row of info chips
+      // Row of info chips (ASCII labels without emoji corruption)
+      const childAgeStr = kids > 0 && childAges.length > 0 ? ` (Ages: ${childAges.slice(0, kids).join(',')})` : ''
       const chips = [
-        { icon: '👥', label: 'Pax', val: `${adults} Adult${adults>1?'s':''}${kids>0?` + ${kids} Child${kids>1?'ren':''}`:''}`},
-        { icon: '📅', label: 'Arrival', val: getItineraryDate(0) },
-        { icon: '🌙', label: 'Duration', val: `${nightsCount+1}D / ${nightsCount}N` },
-        { icon: '🏨', label: 'Hotel', val: hotelRequired ? (customHotelEnabled ? (customHotelName || 'Custom') : (hotelsList[globalHotelIndex]?.name?.split(' ').slice(0,3).join(' ') || 'TBD')) : 'Not Required' },
+        { label: 'PAX', val: `${adults} Adult${adults>1?'s':''}${kids>0?` + ${kids} Ch${childAgeStr}`:''}` },
+        { label: 'ARRIVAL', val: getItineraryDate(0) },
+        { label: 'DURATION', val: `${nightsCount+1}D / ${nightsCount}N` },
+        { label: 'HOTEL', val: hotelRequired ? (customHotelEnabled ? (customHotelName || 'Custom') : (hotelsList[globalHotelIndex]?.name?.split(' ').slice(0,3).join(' ') || 'TBD')) : 'Not Required' },
       ]
       const chipW = CW / chips.length
       chips.forEach((c, i) => {
         const cx = ML + i * chipW
-        setFill(WHITE); doc.roundedRect(cx + 2, y + 20, chipW - 4, 15, 2, 2, 'F')
+        setFill(WHITE); doc.roundedRect(cx + 2, y + 19, chipW - 4, 16, 2, 2, 'F')
         font('bold', 7); setTxt(MGRAY)
-        doc.text(c.label.toUpperCase(), cx + (chipW/2), y + 26, { align: 'center' })
-        font('bold', 8); setTxt(NAVY)
+        doc.text(c.label, cx + (chipW/2), y + 25, { align: 'center' })
+        font('bold', 7.5); setTxt(NAVY)
         const lines = doc.splitTextToSize(c.val, chipW - 6)
-        doc.text(lines, cx + (chipW/2), y + 31, { align: 'center' })
+        doc.text(lines, cx + (chipW/2), y + 30, { align: 'center' })
       })
 
       y += 44
@@ -1793,28 +1799,28 @@ export default function PrototypeBuilder() {
       // ─── QUOTATION HIGHLIGHTS BAR ─────────────────────────
       setFill(NAVY); doc.roundedRect(ML, y, CW, 22, 3, 3, 'F')
       const priceItems = [
-        { lbl: 'Per Adult (SGD)', val: `S$ ${costBreakdown.adultQuote.toLocaleString()}` },
-        { lbl: kids > 0 ? 'Per Child (SGD)' : 'Total Package', val: kids > 0 ? `S$ ${costBreakdown.childQuote.toLocaleString()}` : `S$ ${costBreakdown.totalClientPrice.toLocaleString()}` },
-        { lbl: 'INR Equivalent', val: `₹ ${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}` },
+        { lbl: 'PER ADULT (SGD)', val: `S$ ${costBreakdown.adultQuote.toLocaleString()}` },
+        { lbl: kids > 0 ? 'PER CHILD (SGD)' : 'TOTAL PACKAGE', val: kids > 0 ? `S$ ${costBreakdown.childQuote.toLocaleString()}` : `S$ ${costBreakdown.totalClientPrice.toLocaleString()}` },
+        { lbl: 'INR EQUIVALENT', val: `Rs. ${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}` },
       ]
       const piW = CW / priceItems.length
       priceItems.forEach((pi, i) => {
         const px = ML + i * piW
         if (i > 0) { setDraw(GOLD); doc.setLineWidth(0.3); doc.line(px, y + 3, px, y + 19) }
         font('normal', 7); setTxt(GOLD)
-        doc.text(pi.lbl.toUpperCase(), px + piW/2, y + 7.5, { align: 'center' })
+        doc.text(pi.lbl, px + piW/2, y + 7.5, { align: 'center' })
         font('bold', 13); setTxt(WHITE)
         doc.text(pi.val, px + piW/2, y + 17, { align: 'center' })
       })
       y += 27
 
       // ─── HOTEL SECTION ────────────────────────────────────
-      sectionTitle('🏨  Accommodation Details')
-      if (hotelRequired) {
-        const hotelName = customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || 'TBD')
-        const roomType  = customHotelEnabled ? (customHotelRoomType || 'Custom Room') : (hotelsList[globalHotelIndex]?.rooms[globalRoomIndex]?.type || 'TBD')
-        const suppType  = customHotelEnabled ? customHotelSuppName : (hotelsList[globalHotelIndex]?.rooms[globalSuppIndex]?.type || '')
+      sectionTitle('ACCOMMODATION DETAILS')
+      const effectiveHotelName = customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || 'TBD')
+      const effectiveRoomType  = customHotelEnabled ? (customHotelRoomType || 'Custom Room') : (hotelsList[globalHotelIndex]?.rooms[globalRoomIndex]?.type || 'TBD')
+      const effectiveSuppType  = customHotelEnabled ? customHotelSuppName : (hotelsList[globalHotelIndex]?.rooms[globalSuppIndex]?.type || '')
 
+      if (hotelRequired) {
         setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F')
         font('bold', 9); setTxt(NAVY)
         doc.text('Property', ML + 2, y + 5)
@@ -1824,14 +1830,14 @@ export default function PrototypeBuilder() {
         setDraw(LGRAY); doc.setLineWidth(0.2); doc.line(ML, y, MR, y)
 
         font('normal', 9); setTxt(TEXT)
-        doc.text(hotelName, ML + 2, y + 6)
-        doc.text(`${roomType} × ${globalRoomCount}`, ML + 90, y + 6)
+        doc.text(effectiveHotelName, ML + 2, y + 6)
+        doc.text(`${effectiveRoomType} x ${globalRoomCount}`, ML + 90, y + 6)
         doc.text(`${nightsCount}`, MR - 18, y + 6)
         y += 9
 
-        if (suppType && globalSuppCount > 0) {
+        if (effectiveSuppType && globalSuppCount > 0) {
           font('italic', 8.5); setTxt(SLATE)
-          doc.text(`+ Supplement: ${suppType} × ${globalSuppCount}`, ML + 2, y + 4)
+          doc.text(`+ Supplement: ${effectiveSuppType} x ${globalSuppCount}`, ML + 2, y + 4)
           y += 8
         }
       } else {
@@ -1842,17 +1848,34 @@ export default function PrototypeBuilder() {
       y += 3
 
       // ─── COST BREAKDOWN TABLE ─────────────────────────────
-      sectionTitle('💰  Price Breakdown')
-      const costRows = [
+      sectionTitle('PRICE BREAKDOWN')
+      const costRows: [string, string][] = [
         [`Rooms (${globalRoomCount})`, `S$ ${costBreakdown.roomCostTotal.toFixed(2)}`],
         [`Supp (${globalSuppCount})`, `S$ ${costBreakdown.suppCostTotal.toFixed(2)}`],
         [`Transfers (${costBreakdown.totalTransfers})`, `S$ ${costBreakdown.transportTotal.toFixed(2)}`],
         [`Tickets (${costBreakdown.totalAttractionsCount})`, `S$ ${costBreakdown.attractionTotal.toFixed(2)}`],
         [`Meals (${costBreakdown.totalLunchCount}L, ${costBreakdown.totalDinnerCount}D)`, `S$ ${costBreakdown.mealTotal.toFixed(2)}`],
         [`Guides (${costBreakdown.totalGuidesCount})`, `S$ ${costBreakdown.guideTotal.toFixed(2)}`],
-      ].filter(r => parseFloat(r[1].replace('S$ ', '')) > 0)
+      ]
+      
+      // Include Special Misc Cost if present
+      if (miscCostPerPerson > 0) {
+        const totalMisc = miscCostPerPerson * (adults + kids)
+        costRows.push([`Special Inclusions (${miscNotes || 'Misc / Pax'})`, `S$ ${totalMisc.toFixed(2)}`])
+      }
 
-      costRows.forEach((row, i) => {
+      // Include Additional Charges / Add-ons if present
+      if (Array.isArray(activeAdditionalCharges) && activeAdditionalCharges.length > 0) {
+        activeAdditionalCharges.forEach(chg => {
+          if (chg.amount) {
+            costRows.push([`Add-on: ${chg.itemDescription || 'Additional Service'}`, `S$ ${Number(chg.amount).toFixed(2)}`])
+          }
+        })
+      }
+
+      const activeCostRows = costRows.filter(r => parseFloat(r[1].replace('S$ ', '')) > 0)
+
+      activeCostRows.forEach((row, i) => {
         checkPage(8)
         if (i % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F') }
         font('normal', 8.5); setTxt(TEXT)
@@ -1885,7 +1908,7 @@ export default function PrototypeBuilder() {
       font('normal', 8); setTxt(SLATE)
       doc.text('Approx. INR Equivalent', ML + 3, y + 4.5)
       font('bold', 8); setTxt(CRIM)
-      doc.text(`₹ ${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}`, MR - 2, y + 4.5, { align: 'right' })
+      doc.text(`Rs. ${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}`, MR - 2, y + 4.5, { align: 'right' })
       y += 10
 
       if (discountPerPerson > 0) {
@@ -1895,40 +1918,129 @@ export default function PrototypeBuilder() {
         y += 8
       }
 
-      // ─── INCLUDES / EXCLUDES ─────────────────────────────
-      const hasAttr  = itinerary.some(d => d.attractions.length > 0)
-      const hasXfer  = itinerary.some(d => d.transfers.length > 0 || d.attractions.some(a => a.hasTransfer))
+      // ─── DYNAMIC DETAILED INCLUSIONS & EXCLUSIONS ────────────────
+      const hasAttr  = itinerary.some(d => d.attractions && d.attractions.length > 0)
+      const hasXfer  = itinerary.some(d => (d.transfers && d.transfers.length > 0) || d.attractions?.some(a => a.hasTransfer))
       const hasMeals = itinerary.some(d => d.breakfast || d.lunch || d.dinner || (d.meals && d.meals.length > 0))
 
-      sectionTitle('✅  Package Inclusions & Exclusions')
-      checkPage(48)
+      // Gather all distinct attractions for the inclusions summary
+      const allAttractionsSet = new Set<string>()
+      itinerary.forEach(d => {
+        d.attractions?.forEach(a => {
+          const name = attractionsList[a.attractionIndex]?.name || a.attractionName
+          if (name) allAttractionsSet.add(name)
+        })
+      })
 
-      const inclW = (CW - 4) / 2
-      // INCLUDES box
-      setFill([230, 248, 237] as [number,number,number]); doc.roundedRect(ML, y, inclW, 36, 2, 2, 'F')
-      setDraw(TEAL); doc.setLineWidth(0.5); doc.roundedRect(ML, y, inclW, 36, 2, 2, 'S')
+      // Gather all distinct vehicles
+      const allVehiclesSet = new Set<string>()
+      itinerary.forEach(d => {
+        d.transfers?.forEach(t => {
+          const v = vehiclesList[t.vehicleIndex]?.type || t.type
+          if (v) allVehiclesSet.add(v)
+        })
+        d.attractions?.forEach(a => {
+          if (a.hasTransfer) {
+            if (a.pickupVehicleType) allVehiclesSet.add(a.pickupVehicleType)
+            else if (a.pickupVehicleIndex !== undefined && vehiclesList[a.pickupVehicleIndex]) allVehiclesSet.add(vehiclesList[a.pickupVehicleIndex].type)
+          }
+        })
+      })
+
+      sectionTitle('PACKAGE INCLUSIONS & EXCLUSIONS')
+
+      const inclItems: string[] = []
+      if (hotelRequired) {
+        inclItems.push(`${nightsCount} Night${nightsCount>1?'s':''} stay at ${effectiveHotelName} (${effectiveRoomType} x${globalRoomCount})${effectiveSuppType && globalSuppCount > 0 ? ` + ${effectiveSuppType} x${globalSuppCount}` : ''}`)
+      }
+      if (hasXfer) {
+        const vNames = allVehiclesSet.size > 0 ? ` (${Array.from(allVehiclesSet).join(', ')})` : ''
+        const xferCount = costBreakdown.totalTransfers || 0
+        inclItems.push(`${xferCount > 0 ? `${xferCount} ` : ''}Point-to-Point & Airport Transfers${vNames}`)
+      }
+      if (allAttractionsSet.size > 0) {
+        inclItems.push(`Sightseeing Entries: ${Array.from(allAttractionsSet).join(', ')}`)
+      }
+      if (hasMeals) {
+        const mealParts: string[] = []
+        if (nightsCount > 0) mealParts.push(`${nightsCount} Daily Breakfast`)
+        const lCount = costBreakdown.totalLunchCount || 0
+        const dCount = costBreakdown.totalDinnerCount || 0
+        if (lCount > 0) mealParts.push(`${lCount} Lunch${lCount !== 1 ? 'es' : ''}`)
+        if (dCount > 0) mealParts.push(`${dCount} Dinner${dCount !== 1 ? 's' : ''}`)
+        inclItems.push(`Meal Plan: ${mealParts.join(', ')}`)
+      }
+      const gCount = costBreakdown.totalGuidesCount || 0
+      if (gCount > 0) {
+        inclItems.push(`${gCount} Day(s) Professional English-Speaking Guide Services`)
+      } else {
+        inclItems.push('English-speaking driver assistance for scheduled transfers')
+      }
+      if (miscNotes && miscNotes.trim()) {
+        inclItems.push(`Special Inclusions: ${miscNotes.trim()}`)
+      }
+      if (Array.isArray(activeAdditionalCharges) && activeAdditionalCharges.length > 0) {
+        activeAdditionalCharges.forEach(c => {
+          if (c.itemDescription) inclItems.push(`Add-on Service: ${c.itemDescription}`)
+        })
+      }
+
+      const exclItems = [
+        'International / Domestic Airfare',
+        'Travel Insurance (unless specified)',
+        'Personal Expenses, Laundry & Porterage',
+        'Singapore Entry Visa Fees (unless specified)',
+        'Items and services not explicitly mentioned above'
+      ]
+
+      const colW = (CW - 4) / 2
+
+      // Measure lines for dynamic box height
+      let inclTotalLines = 0
+      inclItems.forEach(item => {
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
+        inclTotalLines += lines.length
+      })
+      let exclTotalLines = 0
+      exclItems.forEach(item => {
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
+        exclTotalLines += lines.length
+      })
+
+      const maxLines = Math.max(inclTotalLines, exclTotalLines)
+      const boxH = Math.max(38, 12 + maxLines * 5)
+      checkPage(boxH + 6)
+
+      // INCLUDED Box (Left)
+      setFill([230, 248, 237] as [number,number,number]); doc.roundedRect(ML, y, colW, boxH, 2, 2, 'F')
+      setDraw(TEAL); doc.setLineWidth(0.5); doc.roundedRect(ML, y, colW, boxH, 2, 2, 'S')
       font('bold', 8.5); setTxt(TEAL)
-      doc.text('✓  INCLUDED', ML + 3, y + 6)
-      const incl: string[] = []
-      if (hotelRequired) incl.push(`${nightsCount} Night${nightsCount>1?'s':''} Hotel Accommodation`)
-      if (hasXfer) incl.push('Private Airport / Sightseeing Transfers')
-      if (hasAttr) incl.push('Entrance Tickets as per Itinerary')
-      if (hasMeals) incl.push('Meals as per Day Plan')
-      incl.push('English-Speaking Guide (where applicable)')
-      font('normal', 8); setTxt(SLATE)
-      incl.forEach((line, i) => { doc.text(`• ${line}`, ML + 3, y + 13 + i * 5.5) })
+      doc.text('INCLUDED IN THIS PACKAGE', ML + 3, y + 6)
+      
+      let curY = y + 12
+      font('normal', 7.5); setTxt(SLATE)
+      inclItems.forEach(item => {
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
+        doc.text(lines, ML + 3, curY)
+        curY += lines.length * 4.5
+      })
 
-      // EXCLUDES box
-      const ex2 = ML + inclW + 4
-      setFill([255, 240, 240] as [number,number,number]); doc.roundedRect(ex2, y, inclW, 36, 2, 2, 'F')
-      setDraw(CRIM); doc.setLineWidth(0.5); doc.roundedRect(ex2, y, inclW, 36, 2, 2, 'S')
+      // EXCLUDED Box (Right)
+      const ex2 = ML + colW + 4
+      setFill([255, 240, 240] as [number,number,number]); doc.roundedRect(ex2, y, colW, boxH, 2, 2, 'F')
+      setDraw(CRIM); doc.setLineWidth(0.5); doc.roundedRect(ex2, y, colW, boxH, 2, 2, 'S')
       font('bold', 8.5); setTxt(CRIM)
-      doc.text('✗  EXCLUDED', ex2 + 3, y + 6)
-      const excl = ['International / Domestic Airfare', 'Travel Insurance', 'Personal Expenses & Tips', 'Singapore Entry Visa Fees', 'Items Not Mentioned Above']
-      font('normal', 8); setTxt(SLATE)
-      excl.forEach((line, i) => { doc.text(`• ${line}`, ex2 + 3, y + 13 + i * 5.5) })
+      doc.text('EXCLUDED FROM THIS PACKAGE', ex2 + 3, y + 6)
 
-      y += 40
+      let curExY = y + 12
+      font('normal', 7.5); setTxt(SLATE)
+      exclItems.forEach(item => {
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
+        doc.text(lines, ex2 + 3, curExY)
+        curExY += lines.length * 4.5
+      })
+
+      y += boxH + 6
 
       // ─── PAGE BREAK BEFORE ITINERARY ─────────────────────
       addFooter()
@@ -1938,7 +2050,7 @@ export default function PrototypeBuilder() {
       y = 48
 
       // ─── DAY-BY-DAY ITINERARY ─────────────────────────────
-      sectionTitle('🗓️  Day-by-Day Itinerary')
+      sectionTitle('DAY-BY-DAY ITINERARY')
 
       itinerary.forEach((day, dIdx) => {
         // Build non-attraction items (transfers, meals, guides)
@@ -2133,7 +2245,7 @@ export default function PrototypeBuilder() {
 
 
       // ─── TERMS & IMPORTANT NOTES ──────────────────────────
-      sectionTitle('📋  Terms & Important Notes')
+      sectionTitle('TERMS & IMPORTANT NOTES')
       checkPage(60)
 
       const notes = [
@@ -2193,6 +2305,291 @@ export default function PrototypeBuilder() {
       doc.save(`FW-Proposal-${guestSlug}-${savedProposalNum || 'Draft'}.pdf`)
       notifyAgentActivity('pdf_download')
     })
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // S-PDF: Simple Magazine / Visual Scrapbook Itinerary PDF Generator
+  // ═══════════════════════════════════════════════════════════════
+  const downloadSimpleItineraryPDF = async () => {
+    const pNum = await ensureProposalSaved(true)
+    const { jsPDF } = await import('jspdf')
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+
+    const PW = 210
+    const PH = 297
+    const ML = 14
+    const MR = 196
+    const CW = MR - ML
+
+    // Color Palette
+    const CRIMSON = [184, 28, 28]   as [number,number,number] // #B81C1C Day Badge / Accent
+    const CRIM_L  = [254, 242, 242] as [number,number,number] // #FEF2F2
+    const NAVY    = [10, 34, 64]    as [number,number,number]
+    const GOLD    = [196, 156, 60]  as [number,number,number]
+    const GOLD_L  = [250, 245, 235] as [number,number,number]
+    const DARK    = [24, 24, 27]    as [number,number,number] // #18181B Title
+    const BODY    = [55, 65, 81]    as [number,number,number] // #374151 Description
+    const GRAY_L  = [243, 244, 246] as [number,number,number] // #F3F4F6
+    const WHITE   = [255, 255, 255] as [number,number,number]
+    const BORDER  = [229, 231, 235] as [number,number,number]
+
+    const setFill = (c: [number,number,number]) => doc.setFillColor(c[0], c[1], c[2])
+    const setDraw = (c: [number,number,number]) => doc.setDrawColor(c[0], c[1], c[2])
+    const setTxt  = (c: [number,number,number]) => doc.setTextColor(c[0], c[1], c[2])
+    const font    = (w: 'normal'|'bold'|'italic', s: number) => { doc.setFont('Helvetica', w); doc.setFontSize(s) }
+
+    // Helper to load image as base64 data URL with CORS fallback
+    const fetchBase64Image = async (url: string): Promise<string | null> => {
+      try {
+        const res = await fetch(url)
+        if (!res.ok) return null
+        const blob = await res.blob()
+        return new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result as string)
+          reader.onerror = () => resolve(null)
+          reader.readAsDataURL(blob)
+        })
+      } catch (e) {
+        return null
+      }
+    }
+
+    const FALLBACK_PICS: Record<string, string> = {
+      'universal': 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=800&auto=format&fit=crop&q=80',
+      'garden': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+      'dome': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+      'cable': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
+      'wings': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
+      'sentosa': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
+      'night': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
+      'safari': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
+      'zoo': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
+      'bird': 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=800&auto=format&fit=crop&q=80',
+      'merlion': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
+      'city': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
+      'marina': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
+      'jewel': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop&q=80',
+      'singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80'
+    }
+
+    // Resolve best photo for each day
+    const dayImageUrls: string[] = []
+    itinerary.forEach((day, idx) => {
+      let chosenUrl = ''
+      // 1. Try attractionMeta photoUrl
+      for (const a of day.attractions) {
+        const name = (attractionsList[a.attractionIndex]?.name || a.attractionName || '').toLowerCase().trim()
+        const meta = attractionsMeta[name]
+        if (meta?.photoUrl) {
+          chosenUrl = meta.photoUrl
+          break
+        }
+      }
+      // 2. Try keyword match in fallback pics
+      if (!chosenUrl) {
+        const allNames = [
+          ...day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || ''),
+          ...day.transfers.map(t => vehiclesList[t.vehicleIndex]?.type || t.type || ''),
+        ].join(' ').toLowerCase()
+
+        for (const [kw, url] of Object.entries(FALLBACK_PICS)) {
+          if (allNames.includes(kw)) {
+            chosenUrl = url
+            break
+          }
+        }
+      }
+      // 3. Fallback to general city pic
+      if (!chosenUrl) {
+        chosenUrl = idx === 0 ? FALLBACK_PICS.merlion : FALLBACK_PICS.singapore
+      }
+      dayImageUrls.push(chosenUrl)
+    })
+
+    // Pre-fetch all day images into base64
+    const base64Images: (string | null)[] = await Promise.all(
+      dayImageUrls.map(url => fetchBase64Image(url))
+    )
+
+    const totalDays = itinerary.length
+    const daysPerPage = 2
+    const totalPages = Math.ceil(totalDays / daysPerPage)
+
+    for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
+      if (pageIdx > 0) doc.addPage()
+
+      // Header on every page
+      setFill(NAVY); doc.rect(0, 0, PW, 12, 'F')
+      setFill(GOLD); doc.rect(0, 12, PW, 1.2, 'F')
+      font('bold', 7.5); setTxt(WHITE)
+      const headerAgency = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
+      const headerAgencyLines = doc.splitTextToSize(headerAgency, 62)
+      doc.text(headerAgencyLines[0], ML, 8.5)
+      font('normal', 7); setTxt(GOLD)
+      doc.text('VISUAL TOUR ITINERARY', PW / 2, 8.5, { align: 'center' })
+      if (savedProposalNum) {
+        font('bold', 7.5); setTxt(WHITE)
+        doc.text(`Ref: ${savedProposalNum}`, MR, 8.5, { align: 'right' })
+      }
+
+      // Render up to 2 days on this page
+      const startDayIdx = pageIdx * daysPerPage
+      const endDayIdx = Math.min(startDayIdx + daysPerPage, totalDays)
+
+      for (let dayPos = 0; dayPos < endDayIdx - startDayIdx; dayPos++) {
+        const dIdx = startDayIdx + dayPos
+        const day = itinerary[dIdx]
+        const imgData = base64Images[dIdx]
+
+        // Top slot or Bottom slot
+        const topY = dayPos === 0 ? 20 : 150
+        const cardH = 120
+
+        // Alternating layout:
+        // dayPos 0 (Top): Text on Left (x=ML, w=96), Photo on Right (x=118, w=78, h=105)
+        // dayPos 1 (Bottom): Photo on Left (x=ML, w=78, h=105), Text on Right (x=98, w=98)
+        const isPhotoRight = dIdx % 2 === 0
+        const textX = isPhotoRight ? ML : 98
+        const textW = isPhotoRight ? 96 : 98
+        const photoX = isPhotoRight ? 116 : ML
+        const photoW = 80
+        const photoH = 106
+
+        // ─── 1. Photo Polaroid Box ───
+        setFill(WHITE); doc.roundedRect(photoX, topY + 4, photoW, photoH, 3, 3, 'F')
+        setDraw(BORDER); doc.setLineWidth(0.6); doc.roundedRect(photoX, topY + 4, photoW, photoH, 3, 3, 'S')
+
+        if (imgData) {
+          try {
+            doc.addImage(imgData, 'JPEG', photoX + 3, topY + 7, photoW - 6, photoH - 12, undefined, 'MEDIUM')
+          } catch (e) {}
+        } else {
+          // Placeholder box
+          setFill(GRAY_L); doc.roundedRect(photoX + 3, topY + 7, photoW - 6, photoH - 12, 2, 2, 'F')
+          font('italic', 8); setTxt(BODY)
+          doc.text('Singapore Sightseeing', photoX + photoW / 2, topY + photoH / 2, { align: 'center' })
+        }
+
+        // ─── 2. Text Section ───
+        let curY = topY + 4
+
+        // Day Pill Badge
+        setFill(CRIMSON); doc.roundedRect(textX, curY, 28, 7, 3.5, 3.5, 'F')
+        font('bold', 8.5); setTxt(WHITE)
+        doc.text(`DAY ${dIdx + 1}`, textX + 14, curY + 4.8, { align: 'center' })
+
+        // Date subtitle next to badge
+        font('normal', 7.5); setTxt(GOLD)
+        doc.text(getItineraryDate(dIdx), textX + 32, curY + 4.8)
+
+        curY += 12
+
+        // Day Title (Constructed dynamically)
+        const dayAttrNames = day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '').filter(Boolean)
+        let dayTitle = ''
+        if (dayAttrNames.length > 0) {
+          dayTitle = dayAttrNames.slice(0, 2).join(' & ')
+        } else if (dIdx === 0) {
+          dayTitle = 'Arrival in Singapore & Hotel Check-in'
+        } else if (dIdx === nightsCount) {
+          dayTitle = 'Departure & Airport Transfer'
+        } else if (day.isBreakTrip) {
+          dayTitle = 'Free & Easy Leisure Day'
+        } else {
+          dayTitle = 'Singapore Exploration Day'
+        }
+
+        font('bold', 12); setTxt(DARK)
+        const titleLines = doc.splitTextToSize(dayTitle, textW)
+        doc.text(titleLines, textX, curY)
+        curY += titleLines.length * 5 + 2
+
+        // Day Narrative Description
+        let narrative = ''
+        if (dayAttrNames.length > 0) {
+          const firstMeta = attractionsMeta[dayAttrNames[0].toLowerCase().trim()]
+          narrative = firstMeta?.shortDescription || ATTRACTION_DESCRIPTIONS[dayAttrNames[0]] || `Experience the best of Singapore on Day ${dIdx + 1} with world-class sightseeing and memorable activities.`
+        } else if (dIdx === 0) {
+          narrative = `Arrive at Singapore Changi Airport and transfer to your hotel. Relax and enjoy the vibrant city evening at your own leisure.`
+        } else if (dIdx === nightsCount) {
+          narrative = `Enjoy your final morning in Singapore. Transfer comfortably to Changi Airport for your scheduled return flight.`
+        } else {
+          narrative = `Enjoy a relaxed day exploring Singapore's iconic neighborhoods, dining, and scenic waterfront attractions.`
+        }
+
+        font('normal', 7.5); setTxt(BODY)
+        const descLines = doc.splitTextToSize(narrative, textW)
+        doc.text(descLines.slice(0, 4), textX, curY)
+        curY += Math.min(descLines.length, 4) * 3.8 + 3
+
+        // Sights & Highlights Bullets
+        const highlights: string[] = []
+        day.transfers.forEach(t => {
+          const v = vehiclesList[t.vehicleIndex]?.type || t.type || 'Private Transfer'
+          highlights.push(t.description ? `${v} - ${t.description}` : v)
+        })
+        day.attractions.forEach(a => {
+          const name = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+          highlights.push(name)
+        })
+        day.guides.forEach(g => {
+          const gt = guidesList[g.guideIndex]?.type || g.type || 'Tour Guide'
+          highlights.push(gt)
+        })
+        if (dIdx === 0 && hotelRequired) {
+          const hName = customHotelEnabled ? customHotelName : (hotelsList[globalHotelIndex]?.name || 'Hotel')
+          highlights.push(`Overnight stay at ${hName}`)
+        }
+
+        font('normal', 7.2); setTxt(DARK)
+        const displayHighlights = highlights.slice(0, 4)
+        displayHighlights.forEach(h => {
+          const hLines = doc.splitTextToSize(`•  ${h}`, textW - 2)
+          doc.text(hLines[0], textX, curY)
+          curY += 4
+        })
+
+        curY += 2
+
+        // Meals Included Badge
+        const dayMeals: string[] = []
+        if (day.breakfast) dayMeals.push('Breakfast')
+        if (day.lunch) dayMeals.push('Lunch')
+        if (day.dinner) dayMeals.push('Dinner')
+        if (day.meals && Array.isArray(day.meals)) {
+          day.meals.forEach(m => {
+            const mt = mealsList[m.mealIndex]?.type || m.type || 'Meal'
+            dayMeals.push(mt)
+          })
+        }
+        const mealsText = dayMeals.length > 0 ? Array.from(new Set(dayMeals)).join(', ') : 'As per plan'
+
+        // Render Meals Pill
+        setFill(CRIMSON); doc.roundedRect(textX, curY, 26, 5.5, 1.5, 1.5, 'F')
+        font('bold', 6.5); setTxt(WHITE)
+        doc.text('Meals Included', textX + 13, curY + 3.8, { align: 'center' })
+
+        setFill(WHITE); doc.roundedRect(textX + 27, curY, textW - 27, 5.5, 1.5, 1.5, 'F')
+        setDraw(BORDER); doc.setLineWidth(0.4); doc.roundedRect(textX + 27, curY, textW - 27, 5.5, 1.5, 1.5, 'S')
+        font('normal', 6.8); setTxt(BODY)
+        doc.text(mealsText, textX + 29, curY + 3.8)
+      }
+
+      // Bottom Page Footer
+      const footY = PH - 10
+      setFill(NAVY); doc.rect(0, footY - 2, PW, 12, 'F')
+      setFill(GOLD); doc.rect(0, footY - 2, PW, 0.8, 'F')
+      font('bold', 8); setTxt(GOLD)
+      doc.text('WE MAKE SWEET MEMORIES', ML, footY + 4)
+      font('normal', 7); setTxt(WHITE)
+      doc.text(`Page ${pageIdx + 1} of ${totalPages}`, PW / 2, footY + 4, { align: 'center' })
+      doc.text('Singapore DMC Travel Partner', MR, footY + 4, { align: 'right' })
+    }
+
+    const guestSlug = (guestName || 'Guest').replace(/\s+/g, '-')
+    doc.save(`FW-Visual-Itinerary-${guestSlug}-${savedProposalNum || 'Draft'}.pdf`)
+    notifyAgentActivity('pdf_download')
   }
 
   // Helper to ensure proposal is saved & assigned a Proposal ID before copying, sharing, or downloading
@@ -4073,10 +4470,11 @@ ${proposal}
                   <div>{nightsCount}N / {nightsCount + 1}D</div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
-                <button onClick={() => handleCopyProposalText(true)} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.5rem' }}>📋 Copy</button>
-                <button onClick={() => { downloadProposalPDF(); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.5rem' }}>📄 PDF</button>
-                <button onClick={() => { sendOnWhatsApp(); setPriceDrawerOpen(false) }} className="cp-tool-btn whatsapp" style={{ justifyContent: 'center', padding: '0.65rem 0.5rem' }}>💬 WA</button>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem', marginTop: '1rem' }}>
+                <button onClick={() => handleCopyProposalText(true)} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>📋 Copy</button>
+                <button onClick={() => { downloadProposalPDF(); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>📄 PDF</button>
+                <button onClick={() => { downloadSimpleItineraryPDF(); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem', background: '#FFF7ED', border: '1px solid #FFEDD5', color: '#C2410C', fontWeight: 800 }} title="Download Simple Visual Itinerary (S-PDF)">📄 S-PDF</button>
+                <button onClick={() => { sendOnWhatsApp(); setPriceDrawerOpen(false) }} className="cp-tool-btn whatsapp" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>💬 WA</button>
               </div>
             </div>
           </div>
@@ -4144,6 +4542,7 @@ ${proposal}
           <button className="cp-tool-btn" onClick={() => { setShowQuotationsModal(true); handleLoadQuotations(); }} style={{ background: '#EBF8FF', border: '1px solid #BEE3F8', color: '#2B6CB0' }}>🗄️ View Proposals</button>
           <button className="cp-tool-btn" onClick={() => handleCopyProposalText(false)}>📋 Copy Proposal</button>
           <button className="cp-tool-btn" onClick={downloadProposalPDF}>📄 PDF</button>
+          <button className="cp-tool-btn" onClick={downloadSimpleItineraryPDF} style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', color: '#C2410C', fontWeight: 800 }} title="Download Simple Visual Itinerary (S-PDF)">📄 S-PDF</button>
           <button className="cp-tool-btn whatsapp" onClick={sendOnWhatsApp}>💬 WhatsApp</button>
           <button className="cp-tool-btn" onClick={handleSaveProposal} style={{ background: '#FAF5FF', border: '1px solid #D6BCFA', color: '#6B46C1' }}>
             💾 {saveStatus === 'saving' ? 'Saving...' : (savedProposalNum ? 'Update Proposal' : 'Save Proposal')}
@@ -5983,14 +6382,14 @@ ${proposal}
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.25rem', marginTop: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.2rem', marginTop: '1rem' }}>
                 <button 
                   type="button" 
                   onClick={() => handleCopyProposalText(false)}
                   title="Copy Proposal"
-                  style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
+                  style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.58rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <CopyCheck size={15} color="#FFF" />
+                  <CopyCheck size={14} color="#FFF" />
                   <span>COPY</span>
                 </button>
 
@@ -5998,19 +6397,29 @@ ${proposal}
                   type="button" 
                   onClick={downloadProposalPDF}
                   title="Download PDF"
-                  style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
+                  style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.58rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <FileDown size={15} color="#FFF" />
+                  <FileDown size={14} color="#FFF" />
                   <span>PDF</span>
+                </button>
+
+                <button 
+                  type="button" 
+                  onClick={downloadSimpleItineraryPDF}
+                  title="Download Visual Itinerary (S-PDF)"
+                  style={{ background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.58rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
+                >
+                  <Sparkles size={14} color="#FFF" />
+                  <span>S-PDF</span>
                 </button>
 
                 <button 
                   type="button" 
                   onClick={() => { setShowScheduleModal(true); setPriceDrawerOpen(false); }}
                   title="Transport Schedule"
-                  style={{ background: 'linear-gradient(135deg, #475569 0%, #334155 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
+                  style={{ background: 'linear-gradient(135deg, #475569 0%, #334155 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.58rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <CalendarDays size={15} color="#FFF" />
+                  <CalendarDays size={14} color="#FFF" />
                   <span>SCHED</span>
                 </button>
 
@@ -6018,9 +6427,9 @@ ${proposal}
                   type="button" 
                   onClick={sendOnWhatsApp}
                   title="WhatsApp Proposal"
-                  style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
+                  style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.58rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <MessageCircle size={15} color="#FFF" />
+                  <MessageCircle size={14} color="#FFF" />
                   <span>WA</span>
                 </button>
 
@@ -6029,9 +6438,9 @@ ${proposal}
                   onClick={handleSaveProposal}
                   disabled={saveStatus === 'saving'}
                   title="Save Proposal"
-                  style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.62rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer', opacity: saveStatus === 'saving' ? 0.7 : 1, boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
+                  style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.58rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer', opacity: saveStatus === 'saving' ? 0.7 : 1, boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <BookmarkCheck size={15} color="#FFF" />
+                  <BookmarkCheck size={14} color="#FFF" />
                   <span>{saveStatus === 'saving' ? '...' : 'SAVE'}</span>
                 </button>
               </div>
