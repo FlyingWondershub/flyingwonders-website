@@ -874,7 +874,14 @@ export default function PrototypeBuilder() {
   useEffect(() => {
     if (!loadedProposalRaw) return
 
-    // 1. Sync Hotel Selection
+    // 1. Sync Hotel Selection & Room Counts
+    if (loadedProposalRaw.roomCount) {
+      setGlobalRoomCount(loadedProposalRaw.roomCount)
+    }
+    if (loadedProposalRaw.supplementCount !== undefined) {
+      setGlobalSuppCount(loadedProposalRaw.supplementCount)
+    }
+
     if (!loadedProposalRaw.customHotelEnabled && loadedProposalRaw.hotelName && hotelsList.length > 0) {
       const hIdx = hotelsList.findIndex(h => h.name.toLowerCase().trim() === (loadedProposalRaw.hotelName || '').toLowerCase().trim())
       if (hIdx >= 0) {
@@ -2461,27 +2468,29 @@ export default function PrototypeBuilder() {
         }
         setArrivalDate(cleanDate(prop.arrivalDate))
         setHotelRequired(!!prop.hotelRequired)
+        setGlobalRoomCount(prop.roomCount || 1)
+        setGlobalSuppCount(prop.supplementCount || 0)
+
         const isCustom = !!prop.customHotelEnabled
         setCustomHotelEnabled(isCustom)
         if (isCustom) {
           setCustomHotelName(prop.hotelName || '')
           setCustomHotelRoomType(prop.roomType || '')
-          setGlobalRoomCount(prop.roomCount || 1)
           setCustomHotelPrice(prop.customHotelPrice || 0)
           setCustomHotelSuppName(prop.supplementType || '')
-          setGlobalSuppCount(prop.supplementCount || 0)
           setCustomHotelSuppCost(prop.customHotelSuppCost || 0)
         } else {
           // Match hotel name
-          const hIdx = hotelsList.findIndex(h => h.name === prop.hotelName)
+          const hName = (prop.hotelName || '').toLowerCase().trim()
+          const hIdx = hotelsList.findIndex(h => h.name.toLowerCase().trim() === hName)
           if (hIdx >= 0) {
             setGlobalHotelIndex(hIdx)
-            const rIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type === prop.roomType)
+            const rType = (prop.roomType || '').toLowerCase().trim()
+            const rIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === rType)
             if (rIdx >= 0) setGlobalRoomIndex(rIdx)
-            setGlobalRoomCount(prop.roomCount || 1)
-            const sIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type === prop.supplementType)
+            const sType = (prop.supplementType || '').toLowerCase().trim()
+            const sIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === sType)
             if (sIdx >= 0) setGlobalSuppIndex(sIdx)
-            setGlobalSuppCount(prop.supplementCount || 0)
           }
         }
         setMiscCostPerPerson(prop.miscCostPerPerson || 0)
@@ -2507,7 +2516,15 @@ export default function PrototypeBuilder() {
         if (prop.destinationMode && ['singapore', 'malaysia', 'combined'].includes(prop.destinationMode)) {
           setDestinationMode(prop.destinationMode as any)
         }
-        if (prop.itinerary && prop.itinerary.length > 0) {
+        let rawItin = prop.itinerary
+        if (typeof rawItin === 'string') {
+          try {
+            rawItin = JSON.parse(rawItin)
+          } catch (e) {
+            rawItin = []
+          }
+        }
+        if (Array.isArray(rawItin) && rawItin.length > 0) {
           const sanitizeTime = (timeStr: string) => {
             if (!timeStr) return '12:00'
             const clean = timeStr.trim().toUpperCase()
@@ -2523,16 +2540,17 @@ export default function PrototypeBuilder() {
             return timeStr
           }
 
-          const sanitizedItin = prop.itinerary.map((day: any) => ({
+          const sanitizedItin = rawItin.map((day: any) => ({
             ...day,
-            transfers: day.transfers?.map((t: any) => ({ ...t, time: sanitizeTime(t.time) })) || [],
-            guides: day.guides?.map((g: any) => ({ ...g, time: sanitizeTime(g.time) })) || [],
-            attractions: day.attractions?.map((a: any) => ({ 
+            transfers: Array.isArray(day.transfers) ? day.transfers.map((t: any) => ({ ...t, time: sanitizeTime(t.time) })) : [],
+            guides: Array.isArray(day.guides) ? day.guides.map((g: any) => ({ ...g, time: sanitizeTime(g.time) })) : [],
+            meals: Array.isArray(day.meals) ? day.meals.map((m: any) => ({ ...m, time: sanitizeTime(m.time) })) : [],
+            attractions: Array.isArray(day.attractions) ? day.attractions.map((a: any) => ({ 
               ...a, 
               time: sanitizeTime(a.time),
               pickupTime: sanitizeTime(a.pickupTime || '09:00'),
               dropTime: sanitizeTime(a.dropTime || '17:00')
-            })) || []
+            })) : []
           }))
           setItinerary(sanitizedItin)
         }

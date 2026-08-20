@@ -857,9 +857,9 @@ export default function AgentPortalPage() {
                             📅 {p.arrivalDate || 'TBD'}
                           </td>
                           <td style={{ padding: '0.75rem 0.85rem' }}>
-                            <strong style={{ color: '#166534', display: 'block' }}>S$ {(p.totalClientPrice || 0).toLocaleString()}</strong>
-                            {p.costBreakdown?.totalClientPriceINR && (
-                              <span style={{ fontSize: '0.72rem', color: '#64748B' }}>≈ ₹{p.costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}</span>
+                            <strong style={{ color: '#166534', display: 'block' }}>S$ {(p.costBreakdown?.totalClientPrice || p.totalClientPrice || 0).toLocaleString()}</strong>
+                            {(p.costBreakdown?.totalClientPriceINR || p.totalClientPriceINR) && (
+                              <span style={{ fontSize: '0.72rem', color: '#64748B' }}>≈ ₹{(p.costBreakdown?.totalClientPriceINR || p.totalClientPriceINR || 0).toLocaleString('en-IN')}</span>
                             )}
                           </td>
                           <td style={{ padding: '0.75rem 0.85rem' }}>
