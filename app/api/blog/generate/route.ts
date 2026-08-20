@@ -770,6 +770,226 @@ Follow the heroic journey of *Shahbaz*, a prehistoric bird, as he travels throug
 - **Ultimate Film Star Experience**: Step onto Bollywood dance sets with real-time green-screen interactive dance-offs!
 
 [CTA: Madame Tussauds 5-in-1 Sentosa Combo Pass | Wholesale Rates | /singapore-attractions]`
+  },
+  // 10. Next Set of 10 High-Value Singapore Guides (Curated from Trending Topics)
+  {
+    title: 'River Wonders Singapore: Amazon River Quest, Giant Pandas & Manatee Habitat',
+    slug: 'river-wonders-singapore-panda-amazon-guide',
+    category: 'family',
+    author: 'Maya Tan',
+    readTime: '6 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef7?w=1200&auto=format&fit=crop',
+    excerpt: 'Asia’s only river-themed wildlife park: meet giant pandas Kai Kai & Jia Jia, ride the Amazon River Quest boat, and marvel at the Amazon Flooded Forest.',
+    tags: ['River Wonders', 'Mandai Wildlife', 'Giant Panda', 'Family Travel'],
+    content: `Nestled between the Singapore Zoo and Night Safari, **River Wonders Singapore** is Asia's only river-themed wildlife park, recreating eight iconic river ecosystems including the Amazon, Nile, Ganges, Mississippi, and Yangtze.
+
+---
+
+## 1. Top Highlights Inside River Wonders
+
+![Giant Panda Jia Jia Munching Fresh Bamboo at River Wonders](https://images.unsplash.com/photo-1527118732049-c88155f2107c?w=900&auto=format&fit=crop)
+
+- **Giant Panda Forest**: A temperature-controlled biodome housing beloved giant pandas *Kai Kai* and *Jia Jia*, along with red pandas playing in elevated tree branches.
+- **Amazon River Quest Boat Ride**: A 10-minute open-air boat adventure drifting through simulated South American rainforests to spot jaguars, Brazilian tapirs, and giant anteaters.
+- **Amazon Flooded Forest**: The world's largest freshwater aquarium tank offering panoramic underwater views of gentle manatees (*sea cows*) and predatory arapaimas.
+
+> **Pro Tip**: Book your boat ride slot right upon entering the park to avoid peak afternoon wait times.
+
+[CTA: River Wonders Tickets with Amazon River Quest | Book E-Tickets | /singapore-attractions]`
+  },
+  {
+    title: 'Jewel Changi Airport Canopy Park & Attractions: Bouncing Nets, Mirror Maze & Forest Valley',
+    slug: 'jewel-changi-canopy-park-attractions-guide',
+    category: 'sightseeing',
+    author: 'Aditya Sharma',
+    readTime: '6 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1200&auto=format&fit=crop',
+    excerpt: 'Perched on level 5 of Jewel Changi: Manulife Bouncing Nets, Hedge Maze, Canopy Bridge with glass flooring, and Foggy Bowls play areas.',
+    tags: ['Jewel Changi', 'Canopy Park', 'Airport Attractions', 'Kids Activities'],
+    content: `Spanning 14,000 square meters on the top floor (Level 5) of Jewel Changi Airport, **Canopy Park** offers wonderland attractions under Jewel's iconic glass-and-steel dome.
+
+---
+
+## 1. Top Canopy Park Attractions
+
+![Canopy Park Sky Bridge and Bouncing Nets at Jewel Changi](https://images.unsplash.com/photo-1544644181-1484b3fdfc62?w=900&auto=format&fit=crop)
+
+- **Manulife Sky Nets (Bouncing & Walking)**: Suspended 25 meters above the ground, bounce weightlessly over a giant 250-meter-long net canopy.
+- **Canopy Bridge**: A 50-meter bridge suspended 23 meters up with a see-through glass floor section offering unobstructed views of the HSBC Rain Vortex.
+- **Hedge Maze & Mirror Maze**: Singapore's largest indoor hedge maze featuring decorative flower gates and motion-activated pop-up obstacles.
+
+[CTA: Jewel Changi Canopy Park & Attraction Passes | Instant Turnstile E-Tickets | /singapore-attractions]`
+  },
+  {
+    title: 'Singapore DUCKtours: Amphibious Land & Water Harbor Sightseeing Tour',
+    slug: 'singapore-ducktours-amphibious-guide',
+    category: 'sightseeing',
+    author: 'Priya Patel',
+    readTime: '5 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1506354666786-959d6d497f1a?w=1200&auto=format&fit=crop',
+    excerpt: 'Hop aboard an authentic remodeled WWII amphibious craft! Tour Singapore’s Civic District before splashing directly into Marina Bay.',
+    tags: ['DUCKtours', 'Marina Bay', 'Civic District', 'City Tour'],
+    content: `The multi-award-winning **Singapore DUCKtours** is Southeast Asia's first amphibious tour. Over 60 minutes, your repurposed Vietnam War amphibious craft drives through historic city streets before driving straight into Marina Bay with a massive splashdown!
+
+---
+
+## 1. The 60-Minute Tour Itinerary
+
+- **City Land Drive (30 mins)**: Roll through Suntec City, Singapore Flyer, the historic Supreme Court, City Hall, and the War Memorial.
+- **Marina Bay Water Splashdown (30 mins)**: Splash into the harbor waters for panoramic waterfront views of Marina Bay Sands, Gardens by the Bay, and the Merlion.
+
+> **Departure Point**: Suntec City Mall (Tower 2, #01-330). Arrive 15 minutes before departure for check-in.
+
+[CTA: Singapore DUCKtours Amphibious Passes | Direct Seat Reservation | /singapore-attractions]`
+  },
+  {
+    title: 'S.E.A. Aquarium Sentosa: 100,000 Marine Animals & Open Ocean Oceanarium Guide',
+    slug: 'sea-aquarium-singapore-sentosa-visiting-guide',
+    category: 'family',
+    author: 'Rohan Mehta',
+    readTime: '6 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&auto=format&fit=crop',
+    excerpt: 'Explore one of the world’s largest marine habitats: Open Ocean viewing panel, Shipwreck Habitat, Apex Predators shark tunnel, and touch pools.',
+    tags: ['SEA Aquarium', 'Sentosa', 'Marine Life', 'Family Fun'],
+    content: `Home to over 100,000 marine animals across 1,000+ species, **S.E.A. Aquarium** on Sentosa Island is a premier marine conservation hub and educational marine paradise.
+
+---
+
+## 1. Must-See Marine Zones
+
+- **Open Ocean Habitat**: The crown jewel of the aquarium featuring a colossal 36-meter wide viewing panel holding 18 million liters of water. Watch majestic giant manta rays, zebra sharks, and schools of goliath groupers glide by.
+- **Shark Seas (Apex Predators)**: Walk through an underwater acrylic tunnel surrounded by over 200 apex predators including silvertip and hammerhead sharks.
+- **Discovery Touch Pool**: Gently interact with sea stars, epaulette sharks, and sea cucumbers under keeper supervision.
+
+[CTA: S.E.A. Aquarium Sentosa Tickets | Instant E-Pass | /singapore-attractions]`
+  },
+  {
+    title: 'Marina Bay Sands SkyPark Observation Deck: 56 Storeys Above Singapore',
+    slug: 'marina-bay-sands-skypark-deck-guide',
+    category: 'sightseeing',
+    author: 'Aditya Sharma',
+    readTime: '5 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop',
+    excerpt: 'Stand atop the world’s largest cantilevered observation platform at 200 meters: panoramic city vistas, Spectra light show viewing, and golden hour tips.',
+    tags: ['Marina Bay Sands', 'SkyPark', 'Observation Deck', 'Skyline'],
+    content: `Perched 56 storeys (200 meters) above ground atop the three iconic hotel towers of Marina Bay Sands, the **SkyPark Observation Deck** provides unobstructed 360-degree panoramic views of Singapore.
+
+---
+
+## 1. What You Can See From the Deck
+
+- **Gardens by the Bay & Supertrees**: Look down into the world-famous bio-domes and towering Supertree Grove.
+- **The Singapore Strait**: Watch hundreds of cargo ships and cruise liners entering the busy shipping channels.
+- **Spectra Light & Water Show**: Watch the nightly Marina Bay light and fountain show from a high aerial vantage point at 8:00 PM and 9:00 PM.
+
+[CTA: MBS SkyPark Observation Deck Tickets | Instant Mobile Voucher | /singapore-attractions]`
+  },
+  {
+    title: 'Sentosa 4D AdventureLand: Immersive Simulation Rides & Interactive Shooting Games',
+    slug: 'sentosa-4d-adventureland-guide',
+    category: 'family',
+    author: 'Maya Tan',
+    readTime: '5 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=1200&auto=format&fit=crop',
+    excerpt: 'High-octane 4D thrills at Imbiah Lookout Sentosa: Journey 2 mysterious island, Extreme Log Ride roller coaster simulation, and Desperados shootout.',
+    tags: ['4D AdventureLand', 'Sentosa', 'VR Simulation', 'Family Travel'],
+    content: `Located at Imbiah Lookout in Sentosa, **4D AdventureLand** is an interactive theme park combining 3D stereoscopic visuals with sensory physical motion, water spray, and wind effects.
+
+---
+
+## 1. The 4 Interactive Experiences
+
+- **Journey 2: The Mysterious Island**: A 4D cinematic experience starring Dwayne Johnson navigating giant lizards and prehistoric dangers.
+- **Extreme Log Ride**: A 4D motion-simulator roller coaster taking you through treacherous ravines and turbulent white waters.
+- **Desperados**: An interactive motion-saddle shooting game where you compete against other riders using electronic laser pistols.
+- **Haunted Mine Ride 4D**: Plunge down abandoned underground mine shafts with sudden drops and spooky encounters.
+
+[CTA: Sentosa 4D AdventureLand All-Access Passes | Instant Confirmation | /singapore-attractions]`
+  },
+  {
+    title: 'National Gallery Singapore: Southeast Asian Modern Art in Historic City Hall & Supreme Court',
+    slug: 'national-gallery-singapore-art-guide',
+    category: 'sightseeing',
+    author: 'Priya Patel',
+    readTime: '6 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=1200&auto=format&fit=crop',
+    excerpt: 'Housed across Singapore’s former Supreme Court and City Hall: over 9,000 masterpieces of Southeast Asian art, rooftop city vistas, and architectural tours.',
+    tags: ['National Gallery', 'Art & Culture', 'Civic District', 'Museums'],
+    content: `Occupying two of Singapore's most significant national monuments—the former City Hall and Supreme Court—**National Gallery Singapore** oversees the world’s largest public collection of Singapore and Southeast Asian modern art.
+
+---
+
+## 1. Architectural Splendor & Masterpiece Galleries
+
+- **The Rotunda Library & Holding Cells**: Discover preserved historic courtrooms and criminal holding cells with iron bars beneath the central dome.
+- **DBS Singapore Gallery**: Traces the visual story of Singapore's development from colonial settlement to independence.
+- **Rooftop Rotunda & Padang Deck**: Enjoy glass-walkway vistas of the Padang, Marina Bay Sands, and modern high-rises.
+
+[CTA: National Gallery Singapore General Admission & Special Exhibitions | /singapore-attractions]`
+  },
+  {
+    title: 'Mega Adventure Park Sentosa: MegaZip 75m High Canopy Zipline & MegaClimb',
+    slug: 'mega-adventure-park-sentosa-zipline-guide',
+    category: 'family',
+    author: 'Rohan Mehta',
+    readTime: '5 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=1200&auto=format&fit=crop',
+    excerpt: 'Fly at 60 km/h over jungle canopies to Siloso Beach! Full guide to MegaZip 450m zipline, MegaClimb high ropes, and MegaJump free-fall simulator.',
+    tags: ['Mega Adventure', 'MegaZip', 'Sentosa', 'Adventure Sports'],
+    content: `Ranked among Asia’s top adventure parks, **Mega Adventure Park Sentosa** sits atop the 75-meter-high jungle peak of Mount Imbiah, offering adrenaline rushes overlooking the South China Sea.
+
+---
+
+## 1. Top High-Adrenaline Activities
+
+- **MegaZip (450m Zipline)**: Fly at speeds up to 60 km/h side-by-side with friends across three wire lines from the jungle canopy down to the sands of Siloso Beach island.
+- **MegaClimb**: A 36-obstacle high ropes course built around eucalyptus trees with three difficulty levels ranging from 5 to 15 meters above ground.
+- **MegaJump**: A 15-meter free-fall parachute simulator simulating a genuine skydive drop.
+
+[CTA: Mega Adventure Park Passes & Zipline Combos | Book with Flying Wonders | /singapore-attractions]`
+  },
+  {
+    title: 'Singapore City Sightseeing Big Bus Hop-On Hop-Off Tour: Yellow & Red Route Guide',
+    slug: 'singapore-big-bus-hop-on-hop-off-guide',
+    category: 'sightseeing',
+    author: 'Aditya Sharma',
+    readTime: '6 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop',
+    excerpt: 'The easiest way to navigate Singapore: open-top double-decker bus routes, audio commentary in 12 languages, and stops at 33+ landmarks.',
+    tags: ['Big Bus', 'Hop On Hop Off', 'City Tour', 'Sightseeing'],
+    content: `The **Big Bus Hop-On Hop-Off Singapore** tour offers an effortless sightseeing solution for travelers wanting flexibility, panoramic open-top views, and recorded multilingual audio commentary.
+
+---
+
+## 1. The Two Strategic Routes
+
+- **Yellow Line (City Route)**: Connects Marina Bay Sands, Gardens by the Bay, Fullerton Hotel, Orchard Road shopping district, and the Botanic Gardens.
+- **Red Line (Heritage Route)**: Connects Chinatown, Little India, Arab Street, and Kampong Glam for cultural deep dives.
+
+> **Validity Options**: 1-Day (Discover), 2-Day (Essential), and 2-Day with Night City Tour (Explore) tickets are available.
+
+[CTA: Singapore Big Bus 24h & 48h Passes | Wholesale Rates | /singapore-attractions]`
+  },
+  {
+    title: 'HyperDrive Sentosa: Electric Indoor Gamified Go-Karting & Game of Karts',
+    slug: 'hyperdrive-sentosa-indoor-gokart-guide',
+    category: 'family',
+    author: 'Maya Tan',
+    readTime: '5 min read',
+    imageUrl: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=1200&auto=format&fit=crop',
+    excerpt: 'Asia’s first 3-level indoor electric go-kart circuit at The Palawan @ Sentosa: virtual weapons, turbo boosts, and high-speed straightaways.',
+    tags: ['HyperDrive', 'Go Karting', 'The Palawan Sentosa', 'Family Fun'],
+    content: `Located at The Palawan @ Sentosa, **HyperDrive** is Asia’s first gamified electric indoor go-kart circuit, bringing video-game racing (*Game of Karts*) into real life.
+
+---
+
+## 1. Circuit Features & Real-Life Gaming
+
+- **3-Level Multi-Tier Track**: A 308-meter-long indoor circuit featuring 14 challenging turns and elevated straightaways.
+- **Game of Karts Gamification**: Collect virtual power-ups on the track to blast opponents with virtual rockets or unleash turbo speed boosts in real time.
+- **Eco-Friendly Electric Karts**: Zero emissions, instant torque acceleration, and ergonomically fitted for juniors and adults alike.
+
+[CTA: HyperDrive Sentosa Race Slots & Palawan Passes | /singapore-attractions]`
   }
 ]
 
