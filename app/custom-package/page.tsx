@@ -2326,12 +2326,12 @@ export default function PrototypeBuilder() {
     const CRIM_L  = [254, 242, 242] as [number,number,number] // #FEF2F2
     const NAVY    = [10, 34, 64]    as [number,number,number]
     const GOLD    = [196, 156, 60]  as [number,number,number]
-    const GOLD_L  = [250, 245, 235] as [number,number,number]
     const DARK    = [24, 24, 27]    as [number,number,number] // #18181B Title
     const BODY    = [55, 65, 81]    as [number,number,number] // #374151 Description
     const GRAY_L  = [243, 244, 246] as [number,number,number] // #F3F4F6
     const WHITE   = [255, 255, 255] as [number,number,number]
     const BORDER  = [229, 231, 235] as [number,number,number]
+    const BG_WARM = [252, 250, 246] as [number,number,number] // Warm parchment tone
 
     const setFill = (c: [number,number,number]) => doc.setFillColor(c[0], c[1], c[2])
     const setDraw = (c: [number,number,number]) => doc.setDrawColor(c[0], c[1], c[2])
@@ -2353,6 +2353,68 @@ export default function PrototypeBuilder() {
       } catch (e) {
         return null
       }
+    }
+
+    // ── Cute Vector Watermark Doodles ──
+    const drawAirplaneWithTrail = (x: number, y: number) => {
+      setDraw([225, 208, 188]); doc.setLineWidth(0.4)
+      doc.setLineDashPattern([1.5, 1.5], 0)
+      // Dashed loop trail
+      doc.lines([[14, -6], [22, 4], [8, 10], [-10, 5]], x - 28, y + 8, [1, 1], 'S', false)
+      doc.setLineDashPattern([], 0)
+
+      // Airplane body & wings
+      setFill([248, 242, 232]); setDraw([210, 190, 168]); doc.setLineWidth(0.4)
+      doc.roundedRect(x, y, 15, 3.5, 1.2, 1.2, 'FD')
+      doc.triangle(x + 5, y - 5, x + 9, y + 1.8, x + 3, y + 1.8, 'FD')
+      doc.triangle(x + 5, y + 8.5, x + 9, y + 1.8, x + 3, y + 1.8, 'FD')
+      doc.triangle(x + 12, y - 2.5, x + 15, y + 1.8, x + 11, y + 1.8, 'FD')
+    }
+
+    const drawCameraDoodle = (x: number, y: number) => {
+      setFill([250, 245, 236]); setDraw([215, 195, 175]); doc.setLineWidth(0.4)
+      doc.roundedRect(x, y, 13, 9, 1.2, 1.2, 'FD')
+      doc.rect(x + 4, y - 1.8, 4.5, 1.8, 'FD')
+      doc.circle(x + 6.5, y + 4.5, 3, 'FD')
+      doc.circle(x + 6.5, y + 4.5, 1.3, 'S')
+      doc.circle(x + 10.5, y + 2.2, 0.6, 'F')
+    }
+
+    const drawSunglassesDoodle = (x: number, y: number) => {
+      setDraw([218, 198, 178]); doc.setLineWidth(0.4); setFill([252, 248, 240])
+      doc.roundedRect(x, y, 6.5, 4.5, 1.8, 1.8, 'FD')
+      doc.roundedRect(x + 8.5, y, 6.5, 4.5, 1.8, 1.8, 'FD')
+      doc.line(x + 6.5, y + 2, x + 8.5, y + 2)
+      doc.line(x, y + 1.5, x - 2.5, y - 1)
+      doc.line(x + 15, y + 1.5, x + 17.5, y - 1)
+    }
+
+    const drawPostageStamp = (x: number, y: number) => {
+      setFill([250, 244, 235]); setDraw([215, 195, 175]); doc.setLineWidth(0.4)
+      doc.rect(x, y, 12, 15, 'FD')
+      doc.rect(x + 1.2, y + 1.2, 9.6, 12.6, 'S')
+      doc.circle(x + 6, y + 7.5, 2.8, 'S')
+      doc.line(x + 13, y + 4, x + 20, y + 4)
+      doc.line(x + 13, y + 7, x + 22, y + 7)
+      doc.line(x + 13, y + 10, x + 19, y + 10)
+    }
+
+    const drawCurvedArrow = (x: number, y: number) => {
+      setDraw([220, 200, 180]); doc.setLineWidth(0.4)
+      doc.lines([[10, 6], [16, 4]], x, y, [1, 1], 'S', false)
+      doc.line(x + 16, y + 4, x + 12.5, y + 2.5)
+      doc.line(x + 16, y + 4, x + 13.5, y + 6.5)
+    }
+
+    const drawWashiTape = (x: number, y: number, w = 24, h = 5.5) => {
+      setFill([238, 226, 202]); setDraw([218, 205, 180]); doc.setLineWidth(0.3)
+      doc.rect(x, y, w, h, 'FD')
+    }
+
+    const drawSparkleStar = (x: number, y: number, r = 2.5) => {
+      setDraw([220, 200, 175]); doc.setLineWidth(0.35)
+      doc.line(x, y - r, x, y + r)
+      doc.line(x - r, y, x + r, y)
     }
 
     const FALLBACK_PICS: Record<string, string> = {
@@ -2419,6 +2481,18 @@ export default function PrototypeBuilder() {
     for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
       if (pageIdx > 0) doc.addPage()
 
+      // Warm background canvas
+      setFill(BG_WARM); doc.rect(0, 0, PW, PH, 'F')
+
+      // Draw cute background travel watermark sketches
+      drawAirplaneWithTrail(PW - 46, 22)
+      drawCameraDoodle(20, 20)
+      drawSparkleStar(98, 24, 2.5)
+      drawSunglassesDoodle(28, 142)
+      drawCurvedArrow(PW / 2 - 10, 144)
+      drawSparkleStar(PW / 2 + 16, 146, 2.2)
+      drawPostageStamp(PW - 36, 262)
+
       // Header on every page
       setFill(NAVY); doc.rect(0, 0, PW, 12, 'F')
       setFill(GOLD); doc.rect(0, 12, PW, 1.2, 'F')
@@ -2444,11 +2518,10 @@ export default function PrototypeBuilder() {
 
         // Top slot or Bottom slot
         const topY = dayPos === 0 ? 20 : 150
-        const cardH = 120
 
         // Alternating layout:
-        // dayPos 0 (Top): Text on Left (x=ML, w=96), Photo on Right (x=118, w=78, h=105)
-        // dayPos 1 (Bottom): Photo on Left (x=ML, w=78, h=105), Text on Right (x=98, w=98)
+        // dayPos 0 (Top): Text on Left (x=ML, w=96), Photo on Right (x=116, w=80, h=106)
+        // dayPos 1 (Bottom): Photo on Left (x=ML, w=80, h=106), Text on Right (x=98, w=98)
         const isPhotoRight = dIdx % 2 === 0
         const textX = isPhotoRight ? ML : 98
         const textW = isPhotoRight ? 96 : 98
@@ -2456,7 +2529,7 @@ export default function PrototypeBuilder() {
         const photoW = 80
         const photoH = 106
 
-        // ─── 1. Photo Polaroid Box ───
+        // ─── 1. Photo Polaroid Box with Washi Tape ───
         setFill(WHITE); doc.roundedRect(photoX, topY + 4, photoW, photoH, 3, 3, 'F')
         setDraw(BORDER); doc.setLineWidth(0.6); doc.roundedRect(photoX, topY + 4, photoW, photoH, 3, 3, 'S')
 
@@ -2470,6 +2543,9 @@ export default function PrototypeBuilder() {
           font('italic', 8); setTxt(BODY)
           doc.text('Singapore Sightseeing', photoX + photoW / 2, topY + photoH / 2, { align: 'center' })
         }
+
+        // Cute washi masking tape on top edge of Polaroid
+        drawWashiTape(photoX + (photoW / 2) - 12, topY + 1.5, 24, 5)
 
         // ─── 2. Text Section ───
         let curY = topY + 4
@@ -2576,12 +2652,14 @@ export default function PrototypeBuilder() {
         doc.text(mealsText, textX + 29, curY + 3.8)
       }
 
-      // Bottom Page Footer
+      // Bottom Page Footer with Requested Tagline
       const footY = PH - 10
       setFill(NAVY); doc.rect(0, footY - 2, PW, 12, 'F')
       setFill(GOLD); doc.rect(0, footY - 2, PW, 0.8, 'F')
-      font('bold', 8); setTxt(GOLD)
-      doc.text('WE MAKE SWEET MEMORIES', ML, footY + 4)
+      
+      // User Requested Tagline: "Customizing Your Travel Choices..."
+      font('bold', 8.5); setTxt(GOLD)
+      doc.text('Customizing Your Travel Choices...', ML, footY + 4)
       font('normal', 7); setTxt(WHITE)
       doc.text(`Page ${pageIdx + 1} of ${totalPages}`, PW / 2, footY + 4, { align: 'center' })
       doc.text('Singapore DMC Travel Partner', MR, footY + 4, { align: 'right' })
