@@ -27,7 +27,7 @@ const FALLBACK_HOTELS = [
   },
 ]
 
-const FALLBACK_VEHICLES = [
+const FALLBACK_VEHICLES: { type: string; pricePerTransfer: number; serviceName?: string }[] = [
   { type: 'Private Sedan (Toyota Camry / Similar)', pricePerTransfer: 70 },
   { type: 'Private Minibus (13-Seater High Roof)', pricePerTransfer: 100 },
 ]
@@ -78,18 +78,22 @@ interface TransferEntry {
   time: string
   description: string
   qty?: number
+  type?: string
+  serviceName?: string
 }
 
 interface MealEntry {
   mealIndex: number
   time: string
   description: string
+  type?: string
 }
 
 interface GuideEntry {
   guideIndex: number
   time: string
   description: string
+  type?: string
 }
 
 interface AttractionEntry {
@@ -103,10 +107,12 @@ interface AttractionEntry {
   pickupEnabled?: boolean
   pickupTime?: string
   pickupVehicleIndex?: number
+  pickupVehicleType?: string
   pickupNotes?: string
   dropEnabled?: boolean
   dropTime?: string
   dropVehicleIndex?: number
+  dropVehicleType?: string
   dropNotes?: string
 }
 
@@ -306,7 +312,7 @@ export default function PrototypeBuilder() {
 
   // Dynamic Master Data fetched from Google Sheets (SGD pricing)
   const [hotelsList, setHotelsList] = useState(FALLBACK_HOTELS)
-  const [vehiclesList, setVehiclesList] = useState(FALLBACK_VEHICLES)
+  const [vehiclesList, setVehiclesList] = useState<{ type: string; pricePerTransfer: number; serviceName?: string }[]>(FALLBACK_VEHICLES)
   const [attractionsList, setAttractionsList] = useState<{ name: string; adultPrice: number; childPrice: number; area?: string }[]>(FALLBACK_ATTRACTIONS)
   const [attractionsMeta, setAttractionsMeta] = useState<Record<string, { shortDescription?: string; longDescription?: string; highlights?: string[]; tips?: string[]; rating?: number; category?: string; openingHours?: string; duration?: string; location?: string; photoUrl?: string | null }>>({})
   const [mealsList, setMealsList] = useState<any[]>([])
@@ -500,6 +506,7 @@ export default function PrototypeBuilder() {
   const [showQuotationsModal, setShowQuotationsModal] = useState(false)
   const [quotationsList, setQuotationsList] = useState<any[]>([])
   const [loadingQuotations, setLoadingQuotations] = useState(false)
+  const [loadedProposalRaw, setLoadedProposalRaw] = useState<any | null>(null)
   const [registrySearchQuery, setRegistrySearchQuery] = useState('')
   const [showPreviewOverlay, setShowPreviewOverlay] = useState(false)
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({})
@@ -834,6 +841,11 @@ export default function PrototypeBuilder() {
     if (!isAuthenticated) return
     const baseDaysCount = nightsCount + 1
     setItinerary(prev => {
+      // If proposal is already loaded with populated days, preserve them
+      if (prev.length > 0 && prev.some(d => (d.attractions?.length || 0) > 0 || (d.transfers?.length || 0) > 0)) {
+        if (baseDaysCount <= prev.length) return prev
+      }
+
       const customDays = prev.filter(d => d.isCustomDay)
       const baseDays = prev.filter(d => !d.isCustomDay)
       if (baseDaysCount > baseDays.length) {
@@ -857,6 +869,85 @@ export default function PrototypeBuilder() {
       return [...baseDays, ...customDays]
     })
   }, [nightsCount, isAuthenticated])
+
+  // Re-sync hotel indices, room indices, and itinerary item indices whenever master sheet data finishes loading or loaded proposal changes
+  useEffect(() => {
+    if (!loadedProposalRaw) return
+
+    // 1. Sync Hotel Selection
+    if (!loadedProposalRaw.customHotelEnabled && loadedProposalRaw.hotelName && hotelsList.length > 0) {
+      const hIdx = hotelsList.findIndex(h => h.name.toLowerCase().trim() === (loadedProposalRaw.hotelName || '').toLowerCase().trim())
+      if (hIdx >= 0) {
+        setGlobalHotelIndex(hIdx)
+        if (loadedProposalRaw.roomType) {
+          const rIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === (loadedProposalRaw.roomType || '').toLowerCase().trim())
+          if (rIdx >= 0) setGlobalRoomIndex(rIdx)
+        }
+        if (loadedProposalRaw.supplementType) {
+          const sIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === (loadedProposalRaw.supplementType || '').toLowerCase().trim())
+          if (sIdx >= 0) setGlobalSuppIndex(sIdx)
+        }
+      }
+    }
+
+    // 2. Sync Itinerary Item Indices (Attractions, Transfers, Meals, Guides)
+    setItinerary(prevItin => {
+      if (!prevItin || prevItin.length === 0) return prevItin
+      return prevItin.map(day => ({
+        ...day,
+        transfers: (day.transfers || []).map(t => {
+          if (vehiclesList.length > 0 && (t.type || t.serviceName)) {
+            const vIdx = vehiclesList.findIndex(v => 
+              (t.type && v.type.toLowerCase().trim() === t.type.toLowerCase().trim()) ||
+              (t.serviceName && v.serviceName && v.serviceName.toLowerCase().trim() === t.serviceName.toLowerCase().trim())
+            )
+            if (vIdx >= 0) return { ...t, vehicleIndex: vIdx }
+          }
+          return t
+        }),
+        attractions: (day.attractions || []).map(a => {
+          if (attractionsList.length > 0 && a.attractionName) {
+            const aName = a.attractionName.toLowerCase().trim()
+            const aIdx = attractionsList.findIndex(item => item.name.toLowerCase().trim() === aName)
+            let updated = a
+            if (aIdx >= 0) {
+              updated = { ...updated, attractionIndex: aIdx }
+            }
+            if (vehiclesList.length > 0) {
+              if (a.pickupVehicleType) {
+                const pvName = a.pickupVehicleType.toLowerCase().trim()
+                const pvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === pvName)
+                if (pvIdx >= 0) updated = { ...updated, pickupVehicleIndex: pvIdx }
+              }
+              if (a.dropVehicleType) {
+                const dvName = a.dropVehicleType.toLowerCase().trim()
+                const dvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === dvName)
+                if (dvIdx >= 0) updated = { ...updated, dropVehicleIndex: dvIdx }
+              }
+            }
+            return updated
+          }
+          return a
+        }),
+        meals: (day.meals || []).map(m => {
+          if (mealsList.length > 0 && m.type) {
+            const mName = m.type.toLowerCase().trim()
+            const mIdx = mealsList.findIndex(item => item.type.toLowerCase().trim() === mName)
+            if (mIdx >= 0) return { ...m, mealIndex: mIdx }
+          }
+          return m
+        }),
+        guides: (day.guides || []).map(g => {
+          if (guidesList.length > 0 && g.type) {
+            const gName = g.type.toLowerCase().trim()
+            const gIdx = guidesList.findIndex(item => item.type.toLowerCase().trim() === gName)
+            if (gIdx >= 0) return { ...g, guideIndex: gIdx }
+          }
+          return g
+        })
+      }))
+    })
+  }, [hotelsList, attractionsList, vehiclesList, mealsList, guidesList, loadedProposalRaw])
 
   // Custom date formatter: e.g. "24 Jul 2026"
   const getItineraryDate = (dayIndex: number) => {
@@ -1120,7 +1211,9 @@ export default function PrototypeBuilder() {
 
   // Cost Calculations
   const costBreakdown = useMemo(() => {
-    if (!isAuthenticated) return { hotelTotal: 0, roomCostTotal: 0, suppCostTotal: 0, transportTotal: 0, attractionTotal: 0, mealTotal: 0, guideTotal: 0, miscTotal: 0, netCost: 0, netCostINR: 0, totalClientPrice: 0, totalClientPriceINR: 0, adultQuote: 0, childQuote: 0 }
+    if (!isAuthenticated && isAuthenticated !== null) {
+      return { hotelTotal: 0, roomCostTotal: 0, suppCostTotal: 0, transportTotal: 0, attractionTotal: 0, mealTotal: 0, guideTotal: 0, miscTotal: 0, netCost: 0, netCostINR: 0, totalClientPrice: 0, totalClientPriceINR: 0, adultQuote: 0, childQuote: 0 }
+    }
 
     let hotelTotal = 0
     let transportTotal = 0
@@ -1130,9 +1223,19 @@ export default function PrototypeBuilder() {
     let mealTotal = 0
     let guideTotal = 0
 
-    const hotel = hotelsList[globalHotelIndex]
-    const mainRoom = hotel?.rooms[globalRoomIndex]
-    const suppRoom = globalSuppIndex >= 0 ? hotel?.rooms[globalSuppIndex] : null
+    // Resilient Hotel lookup
+    let hotel: { name: string; rooms: { type: string; price: number }[] } | undefined = hotelsList[globalHotelIndex]
+    if (!hotel && loadedProposalRaw?.hotelName && hotelsList.length > 0) {
+      hotel = hotelsList.find(h => h.name.toLowerCase().trim() === loadedProposalRaw.hotelName.toLowerCase().trim())
+    }
+    let mainRoom: { type: string; price: number } | undefined = hotel?.rooms[globalRoomIndex]
+    if (!mainRoom && hotel && loadedProposalRaw?.roomType) {
+      mainRoom = hotel.rooms.find(r => r.type.toLowerCase().trim() === loadedProposalRaw.roomType.toLowerCase().trim())
+    }
+    let suppRoom: { type: string; price: number } | null | undefined = globalSuppIndex >= 0 ? hotel?.rooms[globalSuppIndex] : null
+    if (!suppRoom && hotel && loadedProposalRaw?.supplementType) {
+      suppRoom = hotel.rooms.find(r => r.type.toLowerCase().trim() === loadedProposalRaw.supplementType.toLowerCase().trim()) || null
+    }
 
     let roomCostTotal = 0
     let suppCostTotal = 0
@@ -1158,7 +1261,13 @@ export default function PrototypeBuilder() {
 
     itinerary.forEach(day => {
       day.transfers.forEach(trans => {
-        const vehicle = vehiclesList[trans.vehicleIndex]
+        let vehicle: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[trans.vehicleIndex]
+        if (!vehicle && (trans.type || trans.serviceName)) {
+          vehicle = vehiclesList.find(v => 
+            (trans.type && v.type.toLowerCase().trim() === trans.type.toLowerCase().trim()) ||
+            (trans.serviceName && v.serviceName && v.serviceName.toLowerCase().trim() === trans.serviceName.toLowerCase().trim())
+          )
+        }
         if (vehicle) {
           const qty = trans.qty || 1
           transportTotal += vehicle.pricePerTransfer * qty
@@ -1167,7 +1276,10 @@ export default function PrototypeBuilder() {
       })
 
       day.attractions.forEach(attrRow => {
-        const attr = attractionsList[attrRow.attractionIndex]
+        let attr: { name: string; adultPrice: number; childPrice: number; area?: string } | undefined = attractionsList[attrRow.attractionIndex]
+        if (!attr && attrRow.attractionName) {
+          attr = attractionsList.find(a => a.name.toLowerCase().trim() === attrRow.attractionName?.toLowerCase().trim())
+        }
         if (attr) {
           const rowAdultCount = attrRow.adultTickets || 0
           const rowChildCount = attrRow.childTickets || 0
@@ -1179,7 +1291,10 @@ export default function PrototypeBuilder() {
         }
         if (attrRow.hasTransfer) {
           if (attrRow.pickupEnabled !== false) {
-            const pv = vehiclesList[attrRow.pickupVehicleIndex ?? 0]
+            let pv: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[attrRow.pickupVehicleIndex ?? 0]
+            if (!pv && attrRow.pickupVehicleType) {
+              pv = vehiclesList.find(v => v.type.toLowerCase().trim() === attrRow.pickupVehicleType?.toLowerCase().trim())
+            }
             if (pv) {
               const paxMult = isVehicleSIC(pv) ? totalPax : 1
               transportTotal += pv.pricePerTransfer * paxMult
@@ -1187,7 +1302,10 @@ export default function PrototypeBuilder() {
             }
           }
           if (attrRow.dropEnabled !== false) {
-            const dv = vehiclesList[attrRow.dropVehicleIndex ?? 0]
+            let dv: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[attrRow.dropVehicleIndex ?? 0]
+            if (!dv && attrRow.dropVehicleType) {
+              dv = vehiclesList.find(v => v.type.toLowerCase().trim() === attrRow.dropVehicleType?.toLowerCase().trim())
+            }
             if (dv) {
               const paxMult = isVehicleSIC(dv) ? totalPax : 1
               transportTotal += dv.pricePerTransfer * paxMult
@@ -1205,7 +1323,10 @@ export default function PrototypeBuilder() {
 
       if (day.meals && Array.isArray(day.meals)) {
         day.meals.forEach(mealRow => {
-          const meal = mealsList[mealRow.mealIndex]
+          let meal: any | undefined = mealsList[mealRow.mealIndex]
+          if (!meal && mealRow.type) {
+            meal = mealsList.find(m => m.type.toLowerCase().trim() === mealRow.type?.toLowerCase().trim())
+          }
           if (meal) {
             mealTotal += meal.pricePerHead * (adults + kids)
             const mType = (meal.type || '').toLowerCase()
@@ -1216,7 +1337,10 @@ export default function PrototypeBuilder() {
       }
 
       day.guides.forEach(guideRow => {
-        const guide = guidesList[guideRow.guideIndex]
+        let guide: { type: string; pricePerDay: number } | undefined = guidesList[guideRow.guideIndex]
+        if (!guide && guideRow.type) {
+          guide = guidesList.find(g => g.type.toLowerCase().trim() === guideRow.type?.toLowerCase().trim())
+        }
         if (guide) {
           guideTotal += guide.pricePerDay
           totalGuidesCount++
@@ -2313,6 +2437,7 @@ export default function PrototypeBuilder() {
         const prop = data.proposal
         setSearchStatus('success')
         setSavedProposalNum(prop.proposalNumber)
+        setLoadedProposalRaw(prop)
         // Load details back into state
         setGuestName(prop.guestName || '')
         setGuestPhone(prop.guestPhone || '')
