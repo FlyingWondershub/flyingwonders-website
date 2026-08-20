@@ -21,193 +21,272 @@ interface Article {
 function MarkdownRenderer({ content }: { content: string }) {
   if (!content) return null
 
-  // Split into paragraphs / sections
-  const blocks = content.split(/\n\n+/)
+  // Normalize single newlines between list items or headers
+  const lines = content.split('\n')
+  const elements: React.ReactNode[] = []
+  let currentList: string[] = []
+  let listType: 'ul' | 'ol' | null = null
 
-  return (
-    <div className="prose-container" style={{ color: '#2D3748', fontSize: '1.05rem', lineHeight: '1.85' }}>
-      {blocks.map((block, idx) => {
-        const trimmed = block.trim()
+  const flushList = () => {
+    if (currentList.length > 0) {
+      const items = [...currentList]
+      const type = listType
+      currentList = []
+      listType = null
 
-        // H2 Header
-        if (trimmed.startsWith('## ')) {
-          const text = trimmed.replace(/^##\s+/, '')
-          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-          return (
-            <h2
-              key={idx}
-              id={id}
-              style={{
-                fontFamily: 'var(--font-playfair), serif',
-                fontSize: '1.85rem',
-                color: 'var(--emerald-secondary)',
-                marginTop: '2.5rem',
-                marginBottom: '1rem',
-                paddingBottom: '0.5rem',
-                borderBottom: '2px solid rgba(47,133,90,0.15)',
-                lineHeight: '1.3',
+      if (type === 'ol') {
+        elements.push(
+          <ol key={`ol-${elements.length}`} style={{ margin: '1.25rem 0 1.75rem 1.75rem', padding: 0 }}>
+            {items.map((item, iIdx) => (
+              <li key={iIdx} style={{ marginBottom: '0.75rem', lineHeight: '1.75', color: '#374151' }}>
+                <span dangerouslySetInnerHTML={{
+                  __html: item
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" style="color:var(--emerald-secondary);font-weight:600;text-decoration:underline;">$1</a>')
+                }} />
+              </li>
+            ))}
+          </ol>
+        )
+      } else {
+        elements.push(
+          <ul key={`ul-${elements.length}`} style={{ margin: '1.25rem 0 1.75rem 1.75rem', padding: 0, listStyleType: 'disc' }}>
+            {items.map((item, iIdx) => (
+              <li key={iIdx} style={{ marginBottom: '0.75rem', lineHeight: '1.75', color: '#374151' }}>
+                <span dangerouslySetInnerHTML={{
+                  __html: item
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" style="color:var(--emerald-secondary);font-weight:600;text-decoration:underline;">$1</a>')
+                }} />
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    }
+  }
+
+  for (let idx = 0; idx < lines.length; idx++) {
+    const rawLine = lines[idx]
+    const trimmed = rawLine.trim()
+
+    if (!trimmed) {
+      flushList()
+      continue
+    }
+
+    // Horizontal Rule
+    if (trimmed === '---' || trimmed === '***') {
+      flushList()
+      elements.push(
+        <hr key={`hr-${idx}`} style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '2.5rem 0' }} />
+      )
+      continue
+    }
+
+    // H2 Header
+    if (trimmed.startsWith('## ')) {
+      flushList()
+      const text = trimmed.replace(/^##\s+/, '')
+      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      elements.push(
+        <h2
+          key={`h2-${idx}`}
+          id={id}
+          style={{
+            fontFamily: 'var(--font-playfair), serif',
+            fontSize: '1.85rem',
+            color: 'var(--emerald-secondary)',
+            marginTop: '2.75rem',
+            marginBottom: '1.25rem',
+            paddingBottom: '0.5rem',
+            borderBottom: '2px solid rgba(47,133,90,0.15)',
+            lineHeight: '1.3',
+          }}
+        >
+          {text}
+        </h2>
+      )
+      continue
+    }
+
+    // H3 Header
+    if (trimmed.startsWith('### ')) {
+      flushList()
+      const text = trimmed.replace(/^###\s+/, '')
+      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      elements.push(
+        <h3
+          key={`h3-${idx}`}
+          id={id}
+          style={{
+            fontFamily: 'var(--font-playfair), serif',
+            fontSize: '1.4rem',
+            color: '#1A202C',
+            marginTop: '2rem',
+            marginBottom: '0.85rem',
+            lineHeight: '1.35',
+          }}
+        >
+          {text}
+        </h3>
+      )
+      continue
+    }
+
+    // Inline Image ![Alt text](url)
+    const imageMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/)
+    if (imageMatch) {
+      flushList()
+      const altText = imageMatch[1]
+      const imgUrl = imageMatch[2]
+      elements.push(
+        <figure key={`fig-${idx}`} style={{ margin: '2.25rem 0', textAlign: 'center' }}>
+          <div style={{ borderRadius: '14px', overflow: 'hidden', boxShadow: 'var(--shadow-md)', maxHeight: '440px', background: '#F1F5F9' }}>
+            <img
+              src={imgUrl || '/images/hero/singapore-hero-1.jpg'}
+              alt={altText}
+              loading="lazy"
+              onError={(e: any) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/images/hero/singapore-hero-1.jpg';
               }}
-            >
-              {text}
-            </h2>
-          )
-        }
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          </div>
+          {altText && (
+            <figcaption style={{ fontSize: '0.85rem', color: '#718096', fontStyle: 'italic', marginTop: '0.65rem' }}>
+              📸 {altText}
+            </figcaption>
+          )}
+        </figure>
+      )
+      continue
+    }
 
-        // H3 Header
-        if (trimmed.startsWith('### ')) {
-          const text = trimmed.replace(/^###\s+/, '')
-          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-          return (
-            <h3
-              key={idx}
-              id={id}
-              style={{
-                fontFamily: 'var(--font-playfair), serif',
-                fontSize: '1.4rem',
-                color: '#1A202C',
-                marginTop: '2rem',
-                marginBottom: '0.75rem',
-                lineHeight: '1.35',
-              }}
-            >
-              {text}
-            </h3>
-          )
-        }
-
-        // Inline Image ![Alt text](url)
-        const imageMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/)
-        if (imageMatch) {
-          const altText = imageMatch[1]
-          const imgUrl = imageMatch[2]
-          return (
-            <figure key={idx} style={{ margin: '2rem 0', textAlign: 'center' }}>
-              <div style={{ borderRadius: '14px', overflow: 'hidden', boxShadow: 'var(--shadow-md)', maxHeight: '420px', background: '#F1F5F9' }}>
-                <img
-                  src={imgUrl || '/images/hero/singapore-hero-1.jpg'}
-                  alt={altText}
-                  loading="lazy"
-                  onError={(e: any) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = '/images/hero/singapore-hero-1.jpg';
-                  }}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
-              </div>
-              {altText && (
-                <figcaption style={{ fontSize: '0.85rem', color: '#718096', fontStyle: 'italic', marginTop: '0.6rem' }}>
-                  📸 {altText}
-                </figcaption>
-              )}
-            </figure>
-          )
-        }
-
-        // Callout Box / Tip / Alert (> text)
-        if (trimmed.startsWith('> ')) {
-          const quoteText = trimmed.replace(/^>\s+/, '').replace(/\n>\s+/g, '\n')
-          return (
-            <div
-              key={idx}
-              style={{
-                borderLeft: '4px solid var(--gold-accent)',
-                background: '#FFFDF5',
-                padding: '1.25rem 1.5rem',
-                margin: '1.75rem 0',
-                borderRadius: '0 12px 12px 0',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-              }}
-            >
-              <div style={{ fontWeight: 700, color: '#975A16', marginBottom: '0.35rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                💡 INSIDER DMC TIP
-              </div>
-              <div style={{ color: '#744210', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                {quoteText}
-              </div>
-            </div>
-          )
-        }
-
-        // Bullet List
-        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-          const items = trimmed.split(/\n[-*]\s+/).filter(Boolean).map(i => i.replace(/^[-*]\s+/, ''))
-          return (
-            <ul key={idx} style={{ margin: '1rem 0 1.5rem 1.5rem', padding: 0 }}>
-              {items.map((item, iIdx) => (
-                <li key={iIdx} style={{ marginBottom: '0.5rem', lineHeight: '1.7', color: '#374151' }}>
-                  <span dangerouslySetInnerHTML={{
-                    __html: item
-                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                  }} />
-                </li>
-              ))}
-            </ul>
-          )
-        }
-
-        // Action CTA Banner inside article
-        if (trimmed.startsWith('[CTA:')) {
-          const ctaMatch = trimmed.match(/\[CTA:\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\]/)
-          if (ctaMatch) {
-            const title = ctaMatch[1]
-            const btnText = ctaMatch[2]
-            const linkUrl = ctaMatch[3]
-            return (
-              <div
-                key={idx}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(47,133,90,0.08) 0%, rgba(212,160,23,0.12) 100%)',
-                  border: '1.5px solid var(--emerald-secondary)',
-                  borderRadius: '16px',
-                  padding: '1.5rem',
-                  margin: '2.5rem 0',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '1rem'
-                }}
-              >
-                <div>
-                  <h4 style={{ margin: '0 0 0.3rem 0', color: 'var(--emerald-secondary)', fontSize: '1.1rem', fontWeight: 800 }}>
-                    🎟️ {title}
-                  </h4>
-                  <p style={{ margin: 0, fontSize: '0.85rem', color: '#4A5568' }}>
-                    Instant barcoded e-tickets • Direct turnstile entry • Lowest wholesale price guarantee.
-                  </p>
-                </div>
-                <Link
-                  href={linkUrl}
-                  className="btn btn-primary"
-                  style={{
-                    padding: '0.65rem 1.4rem',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {btnText} →
-                </Link>
-              </div>
-            )
-          }
-        }
-
-        // Standard Paragraph
-        return (
-          <p
-            key={idx}
-            style={{ marginBottom: '1.25rem', color: '#374151', fontSize: '1.05rem', lineHeight: '1.85' }}
+    // Callout Box / Tip / Alert (> text)
+    if (trimmed.startsWith('> ')) {
+      flushList()
+      const quoteText = trimmed.replace(/^>\s+/, '')
+      elements.push(
+        <div
+          key={`quote-${idx}`}
+          style={{
+            borderLeft: '4px solid var(--gold-accent)',
+            background: '#FFFDF5',
+            padding: '1.25rem 1.5rem',
+            margin: '1.75rem 0',
+            borderRadius: '0 12px 12px 0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          }}
+        >
+          <div style={{ fontWeight: 700, color: '#975A16', marginBottom: '0.35rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            💡 INSIDER DMC TIP
+          </div>
+          <div style={{ color: '#744210', fontSize: '0.95rem', lineHeight: '1.6' }}
             dangerouslySetInnerHTML={{
-              __html: trimmed
+              __html: quoteText
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
                 .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" style="color:var(--emerald-secondary);font-weight:600;text-decoration:underline;">$1</a>')
             }}
           />
+        </div>
+      )
+      continue
+    }
+
+    // Action CTA Banner inside article [CTA: title | btnText | linkUrl]
+    if (trimmed.startsWith('[CTA:')) {
+      flushList()
+      const ctaMatch = trimmed.match(/\[CTA:\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\]/)
+      if (ctaMatch) {
+        const title = ctaMatch[1]
+        const btnText = ctaMatch[2]
+        const linkUrl = ctaMatch[3]
+        elements.push(
+          <div
+            key={`cta-${idx}`}
+            style={{
+              background: 'linear-gradient(135deg, rgba(47,133,90,0.08) 0%, rgba(212,160,23,0.12) 100%)',
+              border: '1.5px solid var(--emerald-secondary)',
+              borderRadius: '16px',
+              padding: '1.5rem',
+              margin: '2.5rem 0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '1rem'
+            }}
+          >
+            <div>
+              <h4 style={{ margin: '0 0 0.3rem 0', color: 'var(--emerald-secondary)', fontSize: '1.1rem', fontWeight: 800 }}>
+                🎟️ {title}
+              </h4>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#4A5568' }}>
+                Instant barcoded e-tickets • Direct turnstile entry • Lowest wholesale price guarantee.
+              </p>
+            </div>
+            <Link
+              href={linkUrl}
+              className="btn btn-primary"
+              style={{
+                padding: '0.65rem 1.4rem',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {btnText} →
+            </Link>
+          </div>
         )
-      })}
+        continue
+      }
+    }
+
+    // Unordered Bullet List (- or *)
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      if (listType !== 'ul') flushList()
+      listType = 'ul'
+      currentList.push(trimmed.replace(/^[-*]\s+/, ''))
+      continue
+    }
+
+    // Ordered Numbered List (1. or 2.)
+    const olMatch = trimmed.match(/^(\d+)\.\s+(.*)$/)
+    if (olMatch && !trimmed.startsWith('##') && !trimmed.startsWith('###')) {
+      // If it looks like a section item in body text
+      if (listType !== 'ol') flushList()
+      listType = 'ol'
+      currentList.push(olMatch[2])
+      continue
+    }
+
+    // Standard Paragraph
+    flushList()
+    elements.push(
+      <p
+        key={`p-${idx}`}
+        style={{ marginBottom: '1.25rem', color: '#374151', fontSize: '1.05rem', lineHeight: '1.85' }}
+        dangerouslySetInnerHTML={{
+          __html: trimmed
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" style="color:var(--emerald-secondary);font-weight:600;text-decoration:underline;">$1</a>')
+        }}
+      />
+    )
+  }
+
+  flushList()
+
+  return (
+    <div className="prose-container" style={{ color: '#2D3748', fontSize: '1.05rem', lineHeight: '1.85' }}>
+      {elements}
     </div>
   )
 }

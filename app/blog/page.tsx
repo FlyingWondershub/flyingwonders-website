@@ -99,7 +99,25 @@ export default function BlogFeed() {
           {/* Standard Blog Articles Grid (All articles direct) */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '2rem' }}>
             {filteredArticles.map((article) => (
-              <div key={article.id} className="glass hover-lift" style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-main)', borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--glass-border)', padding: '1rem', boxShadow: 'var(--shadow-sm)' }}>
+              <Link 
+                key={article.id} 
+                href={`/blog/${article.slug}`}
+                className="glass hover-lift" 
+                style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  background: 'var(--bg-main)', 
+                  borderRadius: '16px', 
+                  overflow: 'hidden', 
+                  border: '1px solid var(--glass-border)', 
+                  padding: '1rem', 
+                  boxShadow: 'var(--shadow-sm)',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+              >
                 <div style={{ height: '180px', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem', background: '#F1F5F9' }}>
                   <img 
                     src={article.imageUrl || '/images/hero/singapore-hero-1.jpg'} 
@@ -122,9 +140,7 @@ export default function BlogFeed() {
                     </div>
                     
                     <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.25rem', color: '#1A202C', margin: '0.25rem 0 0.75rem 0', lineHeight: '1.4' }}>
-                      <Link href={`/blog/${article.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                        {article.title}
-                      </Link>
+                      {article.title}
                     </h3>
                     
                     <p style={{ color: '#4A5568', fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '1rem' }}>
@@ -134,12 +150,12 @@ export default function BlogFeed() {
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F0F4F8', paddingTop: '0.75rem', marginTop: '0.5rem' }}>
                     <span style={{ fontSize: '0.75rem', color: '#718096' }}>👤 {article.author}</span>
-                    <Link href={`/blog/${article.slug}`} style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--emerald-secondary)', textDecoration: 'underline' }}>
-                      Read More
-                    </Link>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--emerald-secondary)', textDecoration: 'underline' }}>
+                      Read More →
+                    </span>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 
