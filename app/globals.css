@@ -525,31 +525,55 @@ a {
   }
 }
 
-/* Opaque Sticky Header to avoid text overlaps on scroll */
+/* Opaque Sticky Header with Android & iOS GPU Compositor Optimization */
 .main-header {
   position: sticky;
   top: 0;
   z-index: 100;
   padding: 0.45rem 0;
-  background: rgba(255, 255, 255, 0.97);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  /* Fix Android Chrome GPU Compositor flickering */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
 }
 
 @media (prefers-color-scheme: dark) {
   .main-header {
-    background: rgba(26, 26, 26, 0.97);
+    background: rgba(26, 26, 26, 0.98);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
   }
 }
 
-/* Hide header menu links and actions on mobile to keep layout compact */
+/* Smooth Navigation bar collapse on mobile without layout jitter or flashes */
+.mobile-hide-nav-container {
+  transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, padding 0.25s ease;
+  overflow: hidden;
+  max-height: 140px;
+  opacity: 1;
+}
+
 @media (max-width: 768px) {
-  .mobile-hide-nav {
-    display: none !important;
+  .main-header {
+    /* Solid opaque background on mobile eliminates Android Chromium backdrop-filter redraw flashes */
+    background: #FFFFFF !important;
+  }
+
+  .mobile-hide-nav-container.mobile-hide-nav {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin: 0 !important;
+    border-top: none !important;
+    pointer-events: none;
   }
 
   /* ─── Corporate Travel Desk Responsive Mobile Styles ─────────────────────── */
@@ -588,6 +612,12 @@ a {
     padding: 2rem 1.25rem !important;
     grid-template-columns: 1fr !important;
     gap: 2rem !important;
+  }
+}
+
+@media (max-width: 768px) and (prefers-color-scheme: dark) {
+  .main-header {
+    background: #1A1A1A !important;
   }
 }
 

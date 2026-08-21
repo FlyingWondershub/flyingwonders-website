@@ -70,30 +70,45 @@ export default function LayoutWrapper({
   }, [pathname])
 
   useEffect(() => {
+    let ticking = false
+    const SCROLL_DELTA_THRESHOLD = 20
+
     const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      const windowHeight = window.innerHeight
-      const documentHeight = document.documentElement.scrollHeight
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY
+          const windowHeight = window.innerHeight
+          const documentHeight = document.documentElement.scrollHeight
 
-      // Prevent triggering at the top
-      if (currentScrollY <= 80) {
-        setHideNavBar(false)
-        lastScrollY.current = currentScrollY
-        return
-      }
+          // Keep visible at top
+          if (currentScrollY <= 90) {
+            setHideNavBar(false)
+            lastScrollY.current = currentScrollY
+            ticking = false
+            return
+          }
 
-      // Prevent triggering/flickering at the bottom (within 120px)
-      if (currentScrollY + windowHeight >= documentHeight - 120) {
-        lastScrollY.current = currentScrollY
-        return
-      }
+          // Prevent triggering at bottom near footer
+          if (currentScrollY + windowHeight >= documentHeight - 120) {
+            lastScrollY.current = currentScrollY
+            ticking = false
+            return
+          }
 
-      if (currentScrollY > lastScrollY.current) {
-        setHideNavBar(true)
-      } else {
-        setHideNavBar(false)
+          // Only toggle when scroll movement exceeds threshold to prevent Android touch jitter
+          const diff = currentScrollY - lastScrollY.current
+          if (Math.abs(diff) >= SCROLL_DELTA_THRESHOLD) {
+            if (diff > 0) {
+              setHideNavBar(true)
+            } else {
+              setHideNavBar(false)
+            }
+            lastScrollY.current = currentScrollY
+          }
+          ticking = false
+        })
+        ticking = true
       }
-      lastScrollY.current = currentScrollY
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })
