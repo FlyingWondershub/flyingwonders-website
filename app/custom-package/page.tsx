@@ -2342,15 +2342,31 @@ export default function PrototypeBuilder() {
     // Helper to load image and crop/mask into dramatic 75% curved organic photo shape (facing text)
     const fetchBase64Image = async (url: string, isPhotoRight: boolean): Promise<string | null> => {
       try {
-        const res = await fetch(url)
-        if (!res.ok) return null
-        const blob = await res.blob()
-        const rawDataUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onloadend = () => resolve(reader.result as string)
-          reader.onerror = reject
-          reader.readAsDataURL(blob)
-        })
+        let rawDataUrl = ''
+
+        // 1. Fetch via server-side image proxy to eliminate CORS & tainted canvas security errors
+        try {
+          const proxyRes = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`)
+          if (proxyRes.ok) {
+            const proxyData = await proxyRes.json()
+            if (proxyData.success && proxyData.base64) {
+              rawDataUrl = proxyData.base64
+            }
+          }
+        } catch (e) {}
+
+        // Fallback to direct fetch if proxy unavailable
+        if (!rawDataUrl) {
+          const res = await fetch(url)
+          if (!res.ok) return null
+          const blob = await res.blob()
+          rawDataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onloadend = () => resolve(reader.result as string)
+            reader.onerror = reject
+            reader.readAsDataURL(blob)
+          })
+        }
 
         if (typeof window === 'undefined') return rawDataUrl
 
@@ -2459,15 +2475,15 @@ export default function PrototypeBuilder() {
     }
 
     // ── Rich Collection of High-Density Meaningful Vector Travel Doodles ──
-    const DOODLE_COLOR = [192, 164, 134] as [number, number, number]
+    const DOODLE_COLOR = [178, 145, 112] as [number, number, number]
 
     const drawAirplaneWithTrail = (x: number, y: number) => {
-      setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
       doc.setLineDashPattern([1.5, 1.5], 0)
       doc.lines([[14, -4], [22, 3], [8, 6], [-12, 3]], x - 24, y + 2, [1, 1], 'S', false)
       doc.setLineDashPattern([], 0)
 
-      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
       doc.roundedRect(x, y - 1.5, 13, 3, 1, 1, 'FD')
       doc.triangle(x + 4.5, y - 5.5, x + 7.5, y - 0.2, x + 2.5, y - 0.2, 'FD')
       doc.triangle(x + 4.5, y + 4.8, x + 7.5, y + 0.8, x + 2.5, y + 0.8, 'FD')
@@ -2475,7 +2491,7 @@ export default function PrototypeBuilder() {
     }
 
     const drawCameraDoodle = (x: number, y: number) => {
-      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
       doc.roundedRect(x, y, 12, 8.5, 1.2, 1.2, 'FD')
       doc.rect(x + 3.5, y - 1.8, 4.5, 1.8, 'FD')
       doc.circle(x + 6, y + 4.2, 2.8, 'FD')
@@ -2484,7 +2500,7 @@ export default function PrototypeBuilder() {
     }
 
     const drawSunglassesDoodle = (x: number, y: number) => {
-      setDraw(DOODLE_COLOR); doc.setLineWidth(0.4); setFill([254, 250, 244])
+      setDraw(DOODLE_COLOR); doc.setLineWidth(0.5); setFill([255, 252, 246])
       doc.roundedRect(x, y, 6.5, 4.5, 1.8, 1.8, 'FD')
       doc.roundedRect(x + 8.5, y, 6.5, 4.5, 1.8, 1.8, 'FD')
       doc.line(x + 6.5, y + 2, x + 8.5, y + 2)
@@ -2493,7 +2509,7 @@ export default function PrototypeBuilder() {
     }
 
     const drawSuitcaseDoodle = (x: number, y: number) => {
-      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
       doc.roundedRect(x, y, 13, 10, 1.5, 1.5, 'FD')
       doc.roundedRect(x + 4.5, y - 2.5, 4, 2.5, 0.8, 0.8, 'S')
       doc.line(x + 3.8, y, x + 3.8, y + 10)
@@ -2502,7 +2518,7 @@ export default function PrototypeBuilder() {
     }
 
     const drawCompassDoodle = (x: number, y: number) => {
-      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
       doc.circle(x + 5.5, y + 5.5, 5.2, 'FD')
       doc.circle(x + 5.5, y + 5.5, 4, 'S')
       doc.triangle(x + 5.5, y + 1.5, x + 6.8, y + 5.5, x + 4.2, y + 5.5, 'FD')
@@ -2510,7 +2526,7 @@ export default function PrototypeBuilder() {
     }
 
     const drawLuggageTagDoodle = (x: number, y: number) => {
-      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
       doc.roundedRect(x, y, 7.5, 11, 1.2, 1.2, 'FD')
       doc.circle(x + 3.75, y + 2.5, 0.9, 'S')
       doc.line(x + 1.8, y + 5.5, x + 5.7, y + 5.5)
@@ -2519,7 +2535,7 @@ export default function PrototypeBuilder() {
     }
 
     const drawCoffeeDoodle = (x: number, y: number) => {
-      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
       doc.roundedRect(x, y, 8, 6.5, 1.2, 1.2, 'FD')
       doc.roundedRect(x + 8, y + 1.2, 2.4, 4, 0.8, 0.8, 'S')
       doc.line(x + 2.8, y - 1, x + 2.8, y - 2.8)
@@ -2527,7 +2543,7 @@ export default function PrototypeBuilder() {
     }
 
     const drawPalmFrondDoodle = (x: number, y: number) => {
-      setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
       doc.lines([[6, 12], [8, 16]], x, y, [1, 1], 'S', false)
       doc.line(x + 2, y + 3, x - 4, y + 1)
       doc.line(x + 3.5, y + 6, x + 9, y + 4)
@@ -2536,7 +2552,7 @@ export default function PrototypeBuilder() {
     }
 
     const drawPostageStamp = (x: number, y: number) => {
-      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
       doc.rect(x, y, 12, 15, 'FD')
       doc.rect(x + 1.2, y + 1.2, 9.6, 12.6, 'S')
       doc.circle(x + 6, y + 7.5, 2.6, 'S')
@@ -2546,20 +2562,20 @@ export default function PrototypeBuilder() {
     }
 
     const drawCurvedArrow = (x: number, y: number) => {
-      setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
       doc.lines([[10, 5], [16, 3]], x, y, [1, 1], 'S', false)
       doc.line(x + 16, y + 3, x + 12.5, y + 1.5)
       doc.line(x + 16, y + 3, x + 13.5, y + 5.5)
     }
 
     const drawSparkleStar = (x: number, y: number, r = 2.4) => {
-      setDraw(DOODLE_COLOR); doc.setLineWidth(0.35)
+      setDraw(DOODLE_COLOR); doc.setLineWidth(0.45)
       doc.line(x, y - r, x, y + r)
       doc.line(x - r, y, x + r, y)
     }
 
     const drawHeartDoodle = (x: number, y: number) => {
-      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.35)
+      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.45)
       doc.circle(x + 2, y + 2, 1.8, 'S')
       doc.circle(x + 5, y + 2, 1.8, 'S')
       doc.line(x + 0.4, y + 2.8, x + 3.5, y + 6.5)
