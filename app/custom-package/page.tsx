@@ -2339,32 +2339,120 @@ export default function PrototypeBuilder() {
     const setTxt  = (c: [number,number,number]) => doc.setTextColor(c[0], c[1], c[2])
     const font    = (w: 'normal'|'bold'|'italic', s: number) => { doc.setFont('Helvetica', w); doc.setFontSize(s) }
 
-    // Helper to load image as base64 data URL with CORS fallback
+    // Helper to load image and crop/mask into curved organic photo shape (keeping 90%+ image area)
     const fetchBase64Image = async (url: string): Promise<string | null> => {
       try {
         const res = await fetch(url)
         if (!res.ok) return null
         const blob = await res.blob()
-        return new Promise((resolve) => {
+        const rawDataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader()
           reader.onloadend = () => resolve(reader.result as string)
-          reader.onerror = () => resolve(null)
+          reader.onerror = reject
           reader.readAsDataURL(blob)
+        })
+
+        if (typeof window === 'undefined') return rawDataUrl
+
+        // Process via Canvas to create organic curved mask with soft white halo
+        return new Promise((resolve) => {
+          const img = new Image()
+          img.crossOrigin = 'anonymous'
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas')
+              const targetW = 600
+              const targetH = 750
+              canvas.width = targetW
+              canvas.height = targetH
+              const ctx = canvas.getContext('2d')
+              if (!ctx) return resolve(rawDataUrl)
+
+              ctx.clearRect(0, 0, targetW, targetH)
+
+              // Build smooth organic curved mask (keeping 90%+ of photo)
+              ctx.save()
+              ctx.beginPath()
+              
+              const pad = 14
+              const w = targetW - pad * 2
+              const h = targetH - pad * 2
+              const x = pad
+              const y = pad
+              const r = 28 // rounded corner base
+
+              // Organic smooth curved path around the image
+              ctx.moveTo(x + r, y)
+              ctx.bezierCurveTo(x + w * 0.35, y - 4, x + w * 0.65, y + 3, x + w - r, y)
+              ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+              ctx.bezierCurveTo(x + w + 4, y + h * 0.35, x + w - 3, y + h * 0.7, x + w, y + h - r)
+              ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+              ctx.bezierCurveTo(x + w * 0.65, y + h + 4, x + w * 0.35, y + h - 3, x + r, y + h)
+              ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+              ctx.bezierCurveTo(x - 3, y + h * 0.7, x + 4, y + h * 0.35, x, y + r)
+              ctx.quadraticCurveTo(x, y, x + r, y)
+              ctx.closePath()
+
+              // Clip and draw image cover
+              ctx.clip()
+
+              const imgAspect = img.width / img.height
+              const targetAspect = targetW / targetH
+              let dw = targetW
+              let dh = targetH
+              let dx = 0
+              let dy = 0
+              if (imgAspect > targetAspect) {
+                dw = targetH * imgAspect
+                dx = (targetW - dw) / 2
+              } else {
+                dh = targetW / imgAspect
+                dy = (targetH - dh) / 2
+              }
+              ctx.drawImage(img, dx, dy, dw, dh)
+              ctx.restore()
+
+              // Draw soft double white highlight border
+              ctx.save()
+              ctx.beginPath()
+              ctx.moveTo(x + r, y)
+              ctx.bezierCurveTo(x + w * 0.35, y - 4, x + w * 0.65, y + 3, x + w - r, y)
+              ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+              ctx.bezierCurveTo(x + w + 4, y + h * 0.35, x + w - 3, y + h * 0.7, x + w, y + h - r)
+              ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+              ctx.bezierCurveTo(x + w * 0.65, y + h + 4, x + w * 0.35, y + h - 3, x + r, y + h)
+              ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+              ctx.bezierCurveTo(x - 3, y + h * 0.7, x + 4, y + h * 0.35, x, y + r)
+              ctx.quadraticCurveTo(x, y, x + r, y)
+              ctx.closePath()
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)'
+              ctx.lineWidth = 10
+              ctx.stroke()
+              ctx.strokeStyle = 'rgba(215, 195, 170, 0.45)'
+              ctx.lineWidth = 2
+              ctx.stroke()
+              ctx.restore()
+
+              resolve(canvas.toDataURL('image/png'))
+            } catch (err) {
+              resolve(rawDataUrl)
+            }
+          }
+          img.onerror = () => resolve(rawDataUrl)
+          img.src = rawDataUrl
         })
       } catch (e) {
         return null
       }
     }
 
-    // ── Cute Vector Watermark Doodles ──
+    // ── Rich Collection of Meaningful Vector Travel Doodles ──
     const drawAirplaneWithTrail = (x: number, y: number) => {
       setDraw([215, 195, 170]); doc.setLineWidth(0.35)
       doc.setLineDashPattern([1.5, 1.5], 0)
-      // Dashed loop trail
       doc.lines([[12, -3], [20, 2], [8, 5], [-10, 2]], x - 22, y + 2, [1, 1], 'S', false)
       doc.setLineDashPattern([], 0)
 
-      // Airplane body & wings
       setFill([254, 250, 242]); setDraw([205, 185, 160]); doc.setLineWidth(0.35)
       doc.roundedRect(x, y - 1.5, 12, 2.8, 1, 1, 'FD')
       doc.triangle(x + 4, y - 5, x + 7, y - 0.2, x + 2, y - 0.2, 'FD')
@@ -2390,6 +2478,47 @@ export default function PrototypeBuilder() {
       doc.line(x + 12.5, y + 1.2, x + 14.5, y - 0.8)
     }
 
+    const drawSuitcaseDoodle = (x: number, y: number) => {
+      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
+      doc.roundedRect(x, y, 12, 9, 1.2, 1.2, 'FD')
+      // Handle
+      doc.roundedRect(x + 4, y - 2, 4, 2, 0.6, 0.6, 'S')
+      // Straps
+      doc.line(x + 3.5, y, x + 3.5, y + 9)
+      doc.line(x + 8.5, y, x + 8.5, y + 9)
+      // Center lock
+      doc.circle(x + 6, y + 4.5, 0.6, 'FD')
+    }
+
+    const drawCompassDoodle = (x: number, y: number) => {
+      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
+      doc.circle(x + 5, y + 5, 4.8, 'FD')
+      doc.circle(x + 5, y + 5, 3.6, 'S')
+      // North/South needle
+      doc.triangle(x + 5, y + 1.2, x + 6.2, y + 5, x + 3.8, y + 5, 'FD')
+      doc.triangle(x + 5, y + 8.8, x + 6.2, y + 5, x + 3.8, y + 5, 'S')
+    }
+
+    const drawLuggageTagDoodle = (x: number, y: number) => {
+      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
+      doc.roundedRect(x, y, 6.5, 10, 1, 1, 'FD')
+      doc.circle(x + 3.25, y + 2.2, 0.8, 'S')
+      doc.line(x + 1.5, y + 5, x + 5, y + 5)
+      doc.line(x + 1.5, y + 7, x + 5, y + 7)
+      // String
+      doc.line(x + 3.25, y + 1.4, x + 3.25, y - 2)
+    }
+
+    const drawCoffeeDoodle = (x: number, y: number) => {
+      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
+      doc.roundedRect(x, y, 7.5, 6, 1, 1, 'FD')
+      // Handle
+      doc.roundedRect(x + 7.5, y + 1.2, 2.2, 3.5, 0.8, 0.8, 'S')
+      // Steam lines
+      doc.line(x + 2.5, y - 1, x + 2.5, y - 2.5)
+      doc.line(x + 5, y - 1.2, x + 5, y - 2.8)
+    }
+
     const drawPostageStamp = (x: number, y: number) => {
       setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
       doc.rect(x, y, 11, 13.5, 'FD')
@@ -2405,11 +2534,6 @@ export default function PrototypeBuilder() {
       doc.lines([[8, 4], [14, 2]], x, y, [1, 1], 'S', false)
       doc.line(x + 14, y + 2, x + 11, y + 0.8)
       doc.line(x + 14, y + 2, x + 12, y + 4.2)
-    }
-
-    const drawWashiTape = (x: number, y: number, w = 24, h = 5.5) => {
-      setFill([238, 226, 202]); setDraw([218, 205, 180]); doc.setLineWidth(0.3)
-      doc.rect(x, y, w, h, 'FD')
     }
 
     const drawSparkleStar = (x: number, y: number, r = 2.2) => {
@@ -2536,38 +2660,40 @@ export default function PrototypeBuilder() {
         const isPhotoRight = dIdx % 2 === 0
         const textX = isPhotoRight ? ML + 8 : ML + 92
         const textW = 88
-        const photoX = isPhotoRight ? ML + 100 : ML + 8
-        const photoW = 78
-        const photoH = 104
+        const photoX = isPhotoRight ? ML + 98 : ML + 6
+        const photoW = 82
+        const photoH = 108
 
-        // ─── Card Corner Doodle Accents (Safe empty corners) ───
+        // ─── Meaningful Card Interior Doodles (Subtle watermark accents) ───
         if (isPhotoRight) {
-          // Top Day: Camera doodle in upper-right corner of text column
+          // Top Day: Camera doodle + Suitcase in safe empty spaces
           drawCameraDoodle(ML + 78, topY + 4.5)
+          drawSuitcaseDoodle(ML + textW - 2, topY + cardH - 16)
           drawSparkleStar(ML + 93, topY + 8.5, 2)
         } else {
-          // Bottom Day: Sunglasses doodle in upper-right corner of card
+          // Bottom Day: Sunglasses + Compass + Luggage tag in safe empty spaces
           drawSunglassesDoodle(ML + CW - 22, topY + 4.5)
+          drawCompassDoodle(ML + 4, topY + cardH - 16)
+          drawLuggageTagDoodle(ML + 86, topY + 5)
           drawSparkleStar(ML + CW - 5, topY + 8.5, 2)
         }
 
-        // ─── 1. Photo Polaroid Box with Washi Tape ───
-        const polaroidY = topY + 11
-        setFill([250, 250, 250]); doc.roundedRect(photoX, polaroidY, photoW, photoH, 3, 3, 'F')
-        setDraw(BORDER); doc.setLineWidth(0.5); doc.roundedRect(photoX, polaroidY, photoW, photoH, 3, 3, 'S')
-
+        // ─── 1. Organic Curved Photo Display ───
+        const polaroidY = topY + 9
         if (imgData) {
           try {
-            doc.addImage(imgData, 'JPEG', photoX + 3, polaroidY + 5, photoW - 6, photoH - 12, undefined, 'MEDIUM')
-          } catch (e) {}
+            doc.addImage(imgData, 'PNG', photoX, polaroidY, photoW, photoH, undefined, 'MEDIUM')
+          } catch (e) {
+            // Fallback photo box
+            setFill(GRAY_L); doc.roundedRect(photoX, polaroidY, photoW, photoH, 3, 3, 'F')
+            font('italic', 8); setTxt(BODY)
+            doc.text('Singapore Sightseeing', photoX + photoW / 2, polaroidY + photoH / 2, { align: 'center' })
+          }
         } else {
-          setFill(GRAY_L); doc.roundedRect(photoX + 3, polaroidY + 5, photoW - 6, photoH - 12, 2, 2, 'F')
+          setFill(GRAY_L); doc.roundedRect(photoX, polaroidY, photoW, photoH, 3, 3, 'F')
           font('italic', 8); setTxt(BODY)
           doc.text('Singapore Sightseeing', photoX + photoW / 2, polaroidY + photoH / 2, { align: 'center' })
         }
-
-        // Cute washi masking tape on top edge of Polaroid
-        drawWashiTape(photoX + (photoW / 2) - 12, polaroidY - 3, 24, 6)
 
         // ─── 2. Text Section ───
         let curY = topY + 9
