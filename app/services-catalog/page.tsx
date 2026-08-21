@@ -142,112 +142,159 @@ export default function ServicesCatalogPage() {
   const [loading, setLoading] = useState(true)
   const [hotels, setHotels] = useState<any[]>([])
   const [attractions, setAttractions] = useState<any[]>([])
-  const [mediaItems, setMediaItems] = useState<any[]>([])
+  const [mediaItems, setMediaItems] = useState<any[]>(DEFAULT_MEDIA_ITEMS)
   const [activeMediaModal, setActiveMediaModal] = useState<any | null>(null)
   const [activeAttractionModal, setActiveAttractionModal] = useState<any | null>(null)
 
-  // Fetch Sanity Settings, Google Sheets Hotels, Live Attractions API, and Sanity Media Items
+  // Fetch Sanity Settings, Google Sheets Hotels, Live Attractions API, and Sanity Media Items in parallel with caching
   useEffect(() => {
+    // 1. Fast hydrate from session storage cache for instant sub-second render
+    try {
+      const cached = sessionStorage.getItem('fw_services_catalog_cache')
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        if (parsed.hotels?.length) setHotels(parsed.hotels)
+        if (parsed.attractions?.length) setAttractions(parsed.attractions)
+        if (parsed.mediaItems?.length) setMediaItems(parsed.mediaItems)
+        if (parsed.settings) setSettings(parsed.settings)
+        setLoading(false)
+      }
+    } catch (e) {}
+
+    // 2. Fetch fresh data in parallel in the background
     loadAllCatalogData()
   }, [])
 
   const loadAllCatalogData = async () => {
-    setLoading(true)
-
-    // 1. Fetch Sanity Settings & Section Toggles
-    try {
-      const fetchedSettings = await client.fetch(`*[_type == "b2bServiceCatalogSettings"][0]{
-        isPageHidden,
-        hideHotels,
-        hideAttractions,
-        hideRestaurants,
-        hideGuides,
-        hideTours,
-        hidePackages,
-        heroTitle,
-        heroSubtitle
-      }`)
-      if (fetchedSettings) {
-        setSettings(prev => ({ ...prev, ...fetchedSettings }))
+    // Define individual parallel fetchers
+    const fetchSettings = async () => {
+      try {
+        const fetchedSettings = await client.fetch(`*[_type == "b2bServiceCatalogSettings"][0]{
+          isPageHidden,
+          hideHotels,
+          hideAttractions,
+          hideRestaurants,
+          hideGuides,
+          hideTours,
+          hidePackages,
+          heroTitle,
+          heroSubtitle
+        }`)
+        if (fetchedSettings) {
+          setSettings(prev => ({ ...prev, ...fetchedSettings }))
+          return fetchedSettings
+        }
+      } catch (e) {
+        console.warn('Using default catalog settings')
       }
-    } catch (e) {
-      console.warn('Using default catalog settings')
+      return null
     }
 
-    // 2. Fetch Hotels from Google Sheets Workbook (Hotel sheet)
-    try {
-      const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlNHAbUt7ldY7my-EXF1VZq4s2eQ7y3YzZm8z6vFLfUH4KYKHw3G03FK60DlgQ_fGUN1Hz1qIBFqUT/pub?output=xlsx'
-      const response = await fetch(sheetUrl)
-      if (response.ok) {
-        const buffer = await response.arrayBuffer()
-        const wb = XLSX.read(buffer, { type: 'array' })
-        const hotelSheet = wb.Sheets['Hotel'] || wb.Sheets['HOTEL'] || wb.Sheets['Hotels']
-        if (hotelSheet) {
-          const rawHotels: any[] = XLSX.utils.sheet_to_json(hotelSheet)
-          const parsed = rawHotels.map((h, idx) => ({
-            id: `hotel-${idx}`,
-            name: h['Hotel Name'] || h['Hotel'] || h['NAME'] || `Partner Hotel ${idx + 1}`,
-            star: h['Star Rating'] || h['Star'] || h['Category'] || '4-Star',
-            location: h['City'] || h['Location'] || h['Area'] || 'Singapore',
-            roomType: h['Room Category'] || h['Room Type'] || 'Deluxe Room',
-            amenities: [h['Breakfast'] ? 'Breakfast Included' : 'Buffet Breakfast Available', 'Free Wi-Fi', 'Swimming Pool'].filter(Boolean)
+    const fetchHotels = async () => {
+      try {
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlNHAbUt7ldY7my-EXF1VZq4s2eQ7y3YzZm8z6vFLfUH4KYKHw3G03FK60DlgQ_fGUN1Hz1qIBFqUT/pub?output=xlsx'
+        const response = await fetch(sheetUrl)
+        if (response.ok) {
+          const buffer = await response.arrayBuffer()
+          const wb = XLSX.read(buffer, { type: 'array' })
+          const hotelSheet = wb.Sheets['Hotel'] || wb.Sheets['HOTEL'] || wb.Sheets['Hotels']
+          if (hotelSheet) {
+            const rawHotels: any[] = XLSX.utils.sheet_to_json(hotelSheet)
+            const parsed = rawHotels.map((h, idx) => ({
+              id: `hotel-${idx}`,
+              name: h['Hotel Name'] || h['Hotel'] || h['NAME'] || `Partner Hotel ${idx + 1}`,
+              star: h['Star Rating'] || h['Star'] || h['Category'] || '4-Star',
+              location: h['City'] || h['Location'] || h['Area'] || 'Singapore',
+              roomType: h['Room Category'] || h['Room Type'] || 'Deluxe Room',
+              amenities: [h['Breakfast'] ? 'Breakfast Included' : 'Buffet Breakfast Available', 'Free Wi-Fi', 'Swimming Pool'].filter(Boolean)
+            }))
+            setHotels(parsed)
+            return parsed
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load Google Sheets hotel list')
+      }
+      return null
+    }
+
+    const fetchAttractions = async () => {
+      try {
+        const res = await fetch('/api/attractions-live')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.success && Array.isArray(data.tickets)) {
+            setAttractions(data.tickets)
+            return data.tickets
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load live attractions')
+      }
+      return null
+    }
+
+    const fetchMedia = async () => {
+      try {
+        const fetchedMedia = await client.fetch(`*[_type == "b2bServiceMedia"]{
+          _id,
+          category,
+          title,
+          subtitle,
+          destination,
+          description,
+          "coverImageFile": coverImage.asset->url,
+          coverImageUrl,
+          "videoFileUrl": videoFile.asset->url,
+          videoUrl,
+          "galleryUploaded": galleryImages[].asset->url,
+          galleryImageUrls,
+          features,
+          duration,
+          spokenLanguages,
+          cuisineType
+        }`)
+        
+        if (fetchedMedia && fetchedMedia.length > 0) {
+          const normalized = fetchedMedia.map((m: any) => ({
+            ...m,
+            coverImageUrl: m.coverImageFile || m.coverImageUrl,
+            videoUrl: m.videoFileUrl || m.videoUrl,
           }))
-          setHotels(parsed)
+          const userCategories = new Set(normalized.map((x: any) => x.category))
+          const remainingFallbacks = DEFAULT_MEDIA_ITEMS.filter((d: any) => !userCategories.has(d.category))
+          const finalMedia = [...normalized, ...remainingFallbacks]
+          setMediaItems(finalMedia)
+          return finalMedia
+        } else {
+          setMediaItems(DEFAULT_MEDIA_ITEMS)
+          return DEFAULT_MEDIA_ITEMS
         }
-      }
-    } catch (e) {
-      console.warn('Failed to load Google Sheets hotel list')
-    }
-
-    // 3. Fetch Live Attractions from API (INFORMATIONAL ONLY MODE)
-    try {
-      const res = await fetch('/api/attractions-live')
-      if (res.ok) {
-        const data = await res.json()
-        if (data.success && Array.isArray(data.tickets)) {
-          setAttractions(data.tickets)
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to load live attractions')
-    }
-
-    // 4. Fetch Sanity b2bServiceMedia items (resolving direct uploaded files and image assets)
-    try {
-      const fetchedMedia = await client.fetch(`*[_type == "b2bServiceMedia"]{
-        _id,
-        category,
-        title,
-        subtitle,
-        destination,
-        description,
-        "coverImageFile": coverImage.asset->url,
-        coverImageUrl,
-        "videoFileUrl": videoFile.asset->url,
-        videoUrl,
-        "galleryUploaded": galleryImages[].asset->url,
-        galleryImageUrls,
-        features,
-        duration,
-        spokenLanguages,
-        cuisineType
-      }`)
-      
-      if (fetchedMedia && fetchedMedia.length > 0) {
-        const normalized = fetchedMedia.map((m: any) => ({
-          ...m,
-          coverImageUrl: m.coverImageFile || m.coverImageUrl,
-          videoUrl: m.videoFileUrl || m.videoUrl,
-        }))
-        const userCategories = new Set(normalized.map((x: any) => x.category))
-        const remainingFallbacks = DEFAULT_MEDIA_ITEMS.filter((d: any) => !userCategories.has(d.category))
-        setMediaItems([...normalized, ...remainingFallbacks])
-      } else {
+      } catch (e) {
         setMediaItems(DEFAULT_MEDIA_ITEMS)
+        return DEFAULT_MEDIA_ITEMS
       }
-    } catch (e) {
-      setMediaItems(DEFAULT_MEDIA_ITEMS)
     }
+
+    // Execute all 4 queries concurrently in parallel
+    const [settledSettings, settledHotels, settledAttractions, settledMedia] = await Promise.allSettled([
+      fetchSettings(),
+      fetchHotels(),
+      fetchAttractions(),
+      fetchMedia()
+    ])
+
+    // Save snapshot to sessionStorage for instant next visits
+    try {
+      const cachePayload = {
+        settings: settledSettings.status === 'fulfilled' ? settledSettings.value : null,
+        hotels: settledHotels.status === 'fulfilled' ? settledHotels.value : null,
+        attractions: settledAttractions.status === 'fulfilled' ? settledAttractions.value : null,
+        mediaItems: settledMedia.status === 'fulfilled' ? settledMedia.value : null,
+        timestamp: Date.now()
+      }
+      sessionStorage.setItem('fw_services_catalog_cache', JSON.stringify(cachePayload))
+    } catch (e) {}
 
     setLoading(false)
   }
