@@ -2358,53 +2358,53 @@ export default function PrototypeBuilder() {
 
     // ── Cute Vector Watermark Doodles ──
     const drawAirplaneWithTrail = (x: number, y: number) => {
-      setDraw([225, 208, 188]); doc.setLineWidth(0.4)
+      setDraw([215, 195, 170]); doc.setLineWidth(0.35)
       doc.setLineDashPattern([1.5, 1.5], 0)
       // Dashed loop trail
-      doc.lines([[14, -6], [22, 4], [8, 10], [-10, 5]], x - 28, y + 8, [1, 1], 'S', false)
+      doc.lines([[12, -3], [20, 2], [8, 5], [-10, 2]], x - 22, y + 2, [1, 1], 'S', false)
       doc.setLineDashPattern([], 0)
 
       // Airplane body & wings
-      setFill([248, 242, 232]); setDraw([210, 190, 168]); doc.setLineWidth(0.4)
-      doc.roundedRect(x, y, 15, 3.5, 1.2, 1.2, 'FD')
-      doc.triangle(x + 5, y - 5, x + 9, y + 1.8, x + 3, y + 1.8, 'FD')
-      doc.triangle(x + 5, y + 8.5, x + 9, y + 1.8, x + 3, y + 1.8, 'FD')
-      doc.triangle(x + 12, y - 2.5, x + 15, y + 1.8, x + 11, y + 1.8, 'FD')
+      setFill([254, 250, 242]); setDraw([205, 185, 160]); doc.setLineWidth(0.35)
+      doc.roundedRect(x, y - 1.5, 12, 2.8, 1, 1, 'FD')
+      doc.triangle(x + 4, y - 5, x + 7, y - 0.2, x + 2, y - 0.2, 'FD')
+      doc.triangle(x + 4, y + 4.2, x + 7, y + 0.8, x + 2, y + 0.8, 'FD')
+      doc.triangle(x + 9.5, y - 3, x + 12, y - 0.2, x + 8.5, y - 0.2, 'FD')
     }
 
     const drawCameraDoodle = (x: number, y: number) => {
-      setFill([250, 245, 236]); setDraw([215, 195, 175]); doc.setLineWidth(0.4)
-      doc.roundedRect(x, y, 13, 9, 1.2, 1.2, 'FD')
-      doc.rect(x + 4, y - 1.8, 4.5, 1.8, 'FD')
-      doc.circle(x + 6.5, y + 4.5, 3, 'FD')
-      doc.circle(x + 6.5, y + 4.5, 1.3, 'S')
-      doc.circle(x + 10.5, y + 2.2, 0.6, 'F')
+      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
+      doc.roundedRect(x, y, 11, 7.5, 1, 1, 'FD')
+      doc.rect(x + 3.2, y - 1.5, 3.8, 1.5, 'FD')
+      doc.circle(x + 5.5, y + 3.8, 2.5, 'FD')
+      doc.circle(x + 5.5, y + 3.8, 1.1, 'S')
+      doc.circle(x + 8.8, y + 1.8, 0.5, 'F')
     }
 
     const drawSunglassesDoodle = (x: number, y: number) => {
-      setDraw([218, 198, 178]); doc.setLineWidth(0.4); setFill([252, 248, 240])
-      doc.roundedRect(x, y, 6.5, 4.5, 1.8, 1.8, 'FD')
-      doc.roundedRect(x + 8.5, y, 6.5, 4.5, 1.8, 1.8, 'FD')
-      doc.line(x + 6.5, y + 2, x + 8.5, y + 2)
-      doc.line(x, y + 1.5, x - 2.5, y - 1)
-      doc.line(x + 15, y + 1.5, x + 17.5, y - 1)
+      setDraw([210, 190, 165]); doc.setLineWidth(0.35); setFill([254, 250, 244])
+      doc.roundedRect(x, y, 5.5, 3.8, 1.5, 1.5, 'FD')
+      doc.roundedRect(x + 7, y, 5.5, 3.8, 1.5, 1.5, 'FD')
+      doc.line(x + 5.5, y + 1.6, x + 7, y + 1.6)
+      doc.line(x, y + 1.2, x - 2, y - 0.8)
+      doc.line(x + 12.5, y + 1.2, x + 14.5, y - 0.8)
     }
 
     const drawPostageStamp = (x: number, y: number) => {
-      setFill([250, 244, 235]); setDraw([215, 195, 175]); doc.setLineWidth(0.4)
-      doc.rect(x, y, 12, 15, 'FD')
-      doc.rect(x + 1.2, y + 1.2, 9.6, 12.6, 'S')
-      doc.circle(x + 6, y + 7.5, 2.8, 'S')
-      doc.line(x + 13, y + 4, x + 20, y + 4)
-      doc.line(x + 13, y + 7, x + 22, y + 7)
-      doc.line(x + 13, y + 10, x + 19, y + 10)
+      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
+      doc.rect(x, y, 11, 13.5, 'FD')
+      doc.rect(x + 1, y + 1, 9, 11.5, 'S')
+      doc.circle(x + 5.5, y + 6.8, 2.4, 'S')
+      doc.line(x + 12, y + 3.5, x + 18, y + 3.5)
+      doc.line(x + 12, y + 6.2, x + 20, y + 6.2)
+      doc.line(x + 12, y + 8.9, x + 17, y + 8.9)
     }
 
     const drawCurvedArrow = (x: number, y: number) => {
-      setDraw([220, 200, 180]); doc.setLineWidth(0.4)
-      doc.lines([[10, 6], [16, 4]], x, y, [1, 1], 'S', false)
-      doc.line(x + 16, y + 4, x + 12.5, y + 2.5)
-      doc.line(x + 16, y + 4, x + 13.5, y + 6.5)
+      setDraw([210, 190, 165]); doc.setLineWidth(0.35)
+      doc.lines([[8, 4], [14, 2]], x, y, [1, 1], 'S', false)
+      doc.line(x + 14, y + 2, x + 11, y + 0.8)
+      doc.line(x + 14, y + 2, x + 12, y + 4.2)
     }
 
     const drawWashiTape = (x: number, y: number, w = 24, h = 5.5) => {
@@ -2412,8 +2412,8 @@ export default function PrototypeBuilder() {
       doc.rect(x, y, w, h, 'FD')
     }
 
-    const drawSparkleStar = (x: number, y: number, r = 2.5) => {
-      setDraw([220, 200, 175]); doc.setLineWidth(0.35)
+    const drawSparkleStar = (x: number, y: number, r = 2.2) => {
+      setDraw([215, 195, 170]); doc.setLineWidth(0.3)
       doc.line(x, y - r, x, y + r)
       doc.line(x - r, y, x + r, y)
     }
@@ -2485,14 +2485,16 @@ export default function PrototypeBuilder() {
       // Warm background canvas
       setFill(BG_WARM); doc.rect(0, 0, PW, PH, 'F')
 
-      // Draw cute background travel watermark sketches
-      drawAirplaneWithTrail(PW - 46, 22)
-      drawCameraDoodle(20, 20)
-      drawSparkleStar(98, 24, 2.5)
-      drawSunglassesDoodle(28, 142)
-      drawCurvedArrow(PW / 2 - 10, 144)
-      drawSparkleStar(PW / 2 + 16, 146, 2.2)
-      drawPostageStamp(PW - 36, 262)
+      // ─── Consistent Page-Level Decorative Travel Doodles (Safe Zero-Overlap Bands) ───
+      // Center divider flight trail between Day 1 & Day 2 cards
+      drawAirplaneWithTrail(PW / 2 + 6, 146)
+      drawSparkleStar(24, 147, 2)
+      drawSparkleStar(PW - 24, 147, 2)
+
+      // Bottom margin decorations
+      drawCurvedArrow(ML + 8, 279)
+      drawPostageStamp(PW - 32, 274)
+      drawSparkleStar(PW / 2, 280, 1.8)
 
       // Header on every page
       setFill(NAVY); doc.rect(0, 0, PW, 12, 'F')
@@ -2517,48 +2519,67 @@ export default function PrototypeBuilder() {
         const day = itinerary[dIdx]
         const imgData = base64Images[dIdx]
 
-        // Top slot or Bottom slot
-        const topY = dayPos === 0 ? 20 : 150
+        // Top slot (y = 18) or Bottom slot (y = 150)
+        const topY = dayPos === 0 ? 18 : 150
+        const cardH = 126
 
-        // Alternating layout:
-        // dayPos 0 (Top): Text on Left (x=ML, w=96), Photo on Right (x=116, w=80, h=106)
-        // dayPos 1 (Bottom): Photo on Left (x=ML, w=80, h=106), Text on Right (x=98, w=98)
+        // ─── Enclosed White Day Card Container ───
+        setFill(WHITE); doc.roundedRect(ML, topY, CW, cardH, 4, 4, 'F')
+        setDraw(BORDER); doc.setLineWidth(0.5); doc.roundedRect(ML, topY, CW, cardH, 4, 4, 'S')
+
+        // Decorative side accent strip
+        setFill(GOLD); doc.roundedRect(ML, topY, 3, cardH, 1.5, 1.5, 'F')
+
+        // Alternating layout inside the card:
+        // Even day index: Text on Left, Photo on Right
+        // Odd day index: Photo on Left, Text on Right
         const isPhotoRight = dIdx % 2 === 0
-        const textX = isPhotoRight ? ML : 98
-        const textW = isPhotoRight ? 96 : 98
-        const photoX = isPhotoRight ? 116 : ML
-        const photoW = 80
-        const photoH = 106
+        const textX = isPhotoRight ? ML + 8 : ML + 92
+        const textW = 88
+        const photoX = isPhotoRight ? ML + 100 : ML + 8
+        const photoW = 78
+        const photoH = 104
+
+        // ─── Card Corner Doodle Accents (Safe empty corners) ───
+        if (isPhotoRight) {
+          // Top Day: Camera doodle in upper-right corner of text column
+          drawCameraDoodle(ML + 78, topY + 4.5)
+          drawSparkleStar(ML + 93, topY + 8.5, 2)
+        } else {
+          // Bottom Day: Sunglasses doodle in upper-right corner of card
+          drawSunglassesDoodle(ML + CW - 22, topY + 4.5)
+          drawSparkleStar(ML + CW - 5, topY + 8.5, 2)
+        }
 
         // ─── 1. Photo Polaroid Box with Washi Tape ───
-        setFill(WHITE); doc.roundedRect(photoX, topY + 4, photoW, photoH, 3, 3, 'F')
-        setDraw(BORDER); doc.setLineWidth(0.6); doc.roundedRect(photoX, topY + 4, photoW, photoH, 3, 3, 'S')
+        const polaroidY = topY + 11
+        setFill([250, 250, 250]); doc.roundedRect(photoX, polaroidY, photoW, photoH, 3, 3, 'F')
+        setDraw(BORDER); doc.setLineWidth(0.5); doc.roundedRect(photoX, polaroidY, photoW, photoH, 3, 3, 'S')
 
         if (imgData) {
           try {
-            doc.addImage(imgData, 'JPEG', photoX + 3, topY + 7, photoW - 6, photoH - 12, undefined, 'MEDIUM')
+            doc.addImage(imgData, 'JPEG', photoX + 3, polaroidY + 5, photoW - 6, photoH - 12, undefined, 'MEDIUM')
           } catch (e) {}
         } else {
-          // Placeholder box
-          setFill(GRAY_L); doc.roundedRect(photoX + 3, topY + 7, photoW - 6, photoH - 12, 2, 2, 'F')
+          setFill(GRAY_L); doc.roundedRect(photoX + 3, polaroidY + 5, photoW - 6, photoH - 12, 2, 2, 'F')
           font('italic', 8); setTxt(BODY)
-          doc.text('Singapore Sightseeing', photoX + photoW / 2, topY + photoH / 2, { align: 'center' })
+          doc.text('Singapore Sightseeing', photoX + photoW / 2, polaroidY + photoH / 2, { align: 'center' })
         }
 
         // Cute washi masking tape on top edge of Polaroid
-        drawWashiTape(photoX + (photoW / 2) - 12, topY + 1.5, 24, 5)
+        drawWashiTape(photoX + (photoW / 2) - 12, polaroidY - 3, 24, 6)
 
         // ─── 2. Text Section ───
-        let curY = topY + 4
+        let curY = topY + 9
 
         // Day Pill Badge
-        setFill(CRIMSON); doc.roundedRect(textX, curY, 28, 7, 3.5, 3.5, 'F')
-        font('bold', 8.5); setTxt(WHITE)
-        doc.text(`DAY ${dIdx + 1}`, textX + 14, curY + 4.8, { align: 'center' })
+        setFill(CRIMSON); doc.roundedRect(textX, curY, 26, 6.5, 3.2, 3.2, 'F')
+        font('bold', 8); setTxt(WHITE)
+        doc.text(`DAY ${dIdx + 1}`, textX + 13, curY + 4.5, { align: 'center' })
 
         // Date subtitle next to badge
         font('normal', 7.5); setTxt(GOLD)
-        doc.text(getItineraryDate(dIdx), textX + 32, curY + 4.8)
+        doc.text(getItineraryDate(dIdx), textX + 30, curY + 4.5)
 
         curY += 12
 
@@ -2577,10 +2598,10 @@ export default function PrototypeBuilder() {
           dayTitle = 'Singapore Exploration Day'
         }
 
-        font('bold', 12); setTxt(DARK)
+        font('bold', 11); setTxt(DARK)
         const titleLines = doc.splitTextToSize(dayTitle, textW)
-        doc.text(titleLines, textX, curY)
-        curY += titleLines.length * 5 + 2
+        doc.text(titleLines.slice(0, 2), textX, curY)
+        curY += Math.min(titleLines.length, 2) * 5 + 2
 
         // Day Narrative Description
         let narrative = ''
@@ -2588,7 +2609,7 @@ export default function PrototypeBuilder() {
           const firstMeta = attractionsMeta[dayAttrNames[0].toLowerCase().trim()]
           narrative = firstMeta?.shortDescription || ATTRACTION_DESCRIPTIONS[dayAttrNames[0]] || `Experience the best of Singapore on Day ${dIdx + 1} with world-class sightseeing and memorable activities.`
         } else if (dIdx === 0) {
-          narrative = `Arrive at Singapore Changi Airport and transfer to your hotel. Relax and enjoy the vibrant city evening at your own leisure.`
+          narrative = `Arrive at Singapore Changi Airport and transfer comfortably to your hotel. Relax and enjoy the vibrant city at your own leisure.`
         } else if (dIdx === nightsCount) {
           narrative = `Enjoy your final morning in Singapore. Transfer comfortably to Changi Airport for your scheduled return flight.`
         } else {
@@ -2597,8 +2618,8 @@ export default function PrototypeBuilder() {
 
         font('normal', 7.5); setTxt(BODY)
         const descLines = doc.splitTextToSize(narrative, textW)
-        doc.text(descLines.slice(0, 4), textX, curY)
-        curY += Math.min(descLines.length, 4) * 3.8 + 3
+        doc.text(descLines.slice(0, 3), textX, curY)
+        curY += Math.min(descLines.length, 3) * 3.8 + 3
 
         // Sights & Highlights Bullets
         const highlights: string[] = []
@@ -2609,6 +2630,10 @@ export default function PrototypeBuilder() {
         day.attractions.forEach(a => {
           const name = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
           highlights.push(name)
+          if (a.hasTransfer) {
+            if (a.pickupEnabled !== false) highlights.push(`Pickup Transfer for ${name}`)
+            if (a.dropEnabled !== false) highlights.push(`Drop-off Transfer from ${name}`)
+          }
         })
         day.guides.forEach(g => {
           const gt = guidesList[g.guideIndex]?.type || g.type || 'Tour Guide'
@@ -4687,22 +4712,27 @@ ${proposal}
                 {/* 2. TRANSFERS BREAKDOWN */}
                 {breakdownModalType === 'transfers' && (
                   <>
-                    {itinerary.some(d => d.transfers && d.transfers.length > 0) ? (
+                    {itinerary.some(d => (d.transfers && d.transfers.length > 0) || (d.attractions && d.attractions.some(a => a.hasTransfer))) ? (
                       itinerary.map((day, dIdx) => {
-                        if (!day.transfers || day.transfers.length === 0) return null
+                        const hasStandalone = day.transfers && day.transfers.length > 0
+                        const hasInterline = day.attractions && day.attractions.some(a => a.hasTransfer)
+                        if (!hasStandalone && !hasInterline) return null
+
                         return (
                           <div key={dIdx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.75rem 0.9rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                               <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#B81C1C' }}>DAY {dIdx + 1}</span>
                               <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{getItineraryDate(dIdx)}</span>
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                              {day.transfers.map((t, tIdx) => {
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              
+                              {/* Standalone Day Transfers */}
+                              {day.transfers && day.transfers.map((t, tIdx) => {
                                 const vObj = vehiclesList[t.vehicleIndex]
                                 const typeName = vObj?.type || t.type || 'Private Transfer'
                                 const price = (vObj?.pricePerTransfer || 0) * (t.qty || 1)
                                 return (
-                                  <div key={tIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', borderTop: tIdx > 0 ? '1px dashed #E2E8F0' : 'none', paddingTop: tIdx > 0 ? '0.35rem' : 0 }}>
+                                  <div key={`st_${tIdx}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', borderTop: tIdx > 0 ? '1px dashed #E2E8F0' : 'none', paddingTop: tIdx > 0 ? '0.35rem' : 0 }}>
                                     <div>
                                       <div style={{ fontWeight: 600, color: '#1E293B' }}>{typeName}</div>
                                       {t.description && <div style={{ fontSize: '0.72rem', color: '#64748B' }}>{t.description}</div>}
@@ -4713,6 +4743,57 @@ ${proposal}
                                   </div>
                                 )
                               })}
+
+                              {/* Interline Attraction Transfers (Pickup & Drop) */}
+                              {day.attractions && day.attractions.map((a, aIdx) => {
+                                if (!a.hasTransfer) return null
+                                const attrName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+                                
+                                const pv = vehiclesList[a.pickupVehicleIndex ?? 0] || (a.pickupVehicleType ? vehiclesList.find(v => v.type.toLowerCase().trim() === a.pickupVehicleType?.toLowerCase().trim()) : undefined)
+                                const pvName = pv?.type || a.pickupVehicleType || 'Private Vehicle'
+                                const pvPrice = pv ? (isVehicleSIC(pv) ? (adults + kids) * pv.pricePerTransfer : pv.pricePerTransfer) : 0
+
+                                const dv = vehiclesList[a.dropVehicleIndex ?? 0] || (a.dropVehicleType ? vehiclesList.find(v => v.type.toLowerCase().trim() === a.dropVehicleType?.toLowerCase().trim()) : undefined)
+                                const dvName = dv?.type || a.dropVehicleType || 'Private Vehicle'
+                                const dvPrice = dv ? (isVehicleSIC(dv) ? (adults + kids) * dv.pricePerTransfer : dv.pricePerTransfer) : 0
+
+                                const isFirstItem = !hasStandalone && aIdx === 0
+
+                                return (
+                                  <div key={`attr_xfer_${aIdx}`} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', borderTop: isFirstItem ? 'none' : '1px dashed #E2E8F0', paddingTop: isFirstItem ? 0 : '0.35rem' }}>
+                                    {a.pickupEnabled !== false && (
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
+                                        <div>
+                                          <div style={{ fontWeight: 600, color: '#1E293B' }}>{pvName} (Pickup)</div>
+                                          <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                                            🚗 Pickup Transfer for {attrName}{a.pickupNotes ? ` → ${a.pickupNotes}` : ''}
+                                            {isVehicleSIC(pv) ? ` (${adults + kids} Pax SIC)` : ''}
+                                          </div>
+                                        </div>
+                                        <div style={{ fontWeight: 700, color: '#0F4C3A', whiteSpace: 'nowrap' }}>
+                                          S$ {pvPrice.toLocaleString()}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {a.dropEnabled !== false && (
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', borderTop: a.pickupEnabled !== false ? '1px dotted #F1F5F9' : 'none', paddingTop: a.pickupEnabled !== false ? '0.25rem' : 0 }}>
+                                        <div>
+                                          <div style={{ fontWeight: 600, color: '#1E293B' }}>{dvName} (Drop-off)</div>
+                                          <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                                            🚗 Drop-off Transfer from {attrName}{a.dropNotes ? ` → ${a.dropNotes}` : ''}
+                                            {isVehicleSIC(dv) ? ` (${adults + kids} Pax SIC)` : ''}
+                                          </div>
+                                        </div>
+                                        <div style={{ fontWeight: 700, color: '#0F4C3A', whiteSpace: 'nowrap' }}>
+                                          S$ {dvPrice.toLocaleString()}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })}
+
                             </div>
                           </div>
                         )
