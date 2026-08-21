@@ -332,6 +332,7 @@ export default function PrototypeBuilder() {
   const [customAgencyEmail, setCustomAgencyEmail] = useState('')
   const [customAgencyPhone, setCustomAgencyPhone] = useState('')
   const [hideNetPricing, setHideNetPricing] = useState(true)
+  const [breakdownModalType, setBreakdownModalType] = useState<'rooms' | 'transfers' | 'tickets' | 'meals' | 'guides' | null>(null)
   const [activeTab, setActiveTab] = useState<'editor' | 'preview' | 'templates'>('editor')
   const [hideReadyTemplatesSubpage, setHideReadyTemplatesSubpage] = useState(false)
   const [activeTemplateName, setActiveTemplateName] = useState<string | null>(null)
@@ -4524,12 +4525,59 @@ ${proposal}
             <div className="cp-price-drawer" onClick={e => e.stopPropagation()}>
               <div className="cp-modal-handle" />
               <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-dark)', margin: '0 0 1rem', fontFamily: 'var(--font-playfair), serif' }}>💰 Quotation Breakdown</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', fontSize: '0.88rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem', marginBottom: '1rem' }}>
-                {hotelRequired && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ opacity: 0.65 }}>Accommodation</span><span style={{ fontWeight: 600 }}>S$ {costBreakdown.hotelTotal.toLocaleString()}</span></div>}
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ opacity: 0.65 }}>Transfers</span><span style={{ fontWeight: 600 }}>S$ {costBreakdown.transportTotal.toLocaleString()}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ opacity: 0.65 }}>Attractions</span><span style={{ fontWeight: 600 }}>S$ {costBreakdown.attractionTotal.toLocaleString()}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ opacity: 0.65 }}>Meals</span><span style={{ fontWeight: 600 }}>S$ {costBreakdown.mealTotal.toLocaleString()}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ opacity: 0.65 }}>Guides</span><span style={{ fontWeight: 600 }}>S$ {costBreakdown.guideTotal.toLocaleString()}</span></div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.88rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem', marginBottom: '1rem' }}>
+                {hotelRequired && (
+                  <div 
+                    onClick={() => setBreakdownModalType('rooms')} 
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.2rem 0.35rem', borderRadius: '6px', background: '#F8FAFC' }}
+                    title="Click to view Accommodation details"
+                  >
+                    <span style={{ opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      🏨 Accommodation <span style={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 600 }}>👁️ view</span>
+                    </span>
+                    <span style={{ fontWeight: 700, color: '#0F4C3A' }}>S$ {costBreakdown.hotelTotal.toLocaleString()}</span>
+                  </div>
+                )}
+                <div 
+                  onClick={() => setBreakdownModalType('transfers')} 
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.2rem 0.35rem', borderRadius: '6px', background: '#F8FAFC' }}
+                  title="Click to view all included Transfers"
+                >
+                  <span style={{ opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    🚐 Transfers ({costBreakdown.totalTransfers}) <span style={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 600 }}>👁️ view</span>
+                  </span>
+                  <span style={{ fontWeight: 700, color: '#0F4C3A' }}>S$ {costBreakdown.transportTotal.toLocaleString()}</span>
+                </div>
+                <div 
+                  onClick={() => setBreakdownModalType('tickets')} 
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.2rem 0.35rem', borderRadius: '6px', background: '#F8FAFC' }}
+                  title="Click to view all included Attraction Tickets"
+                >
+                  <span style={{ opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    🎟️ Tickets ({costBreakdown.totalAttractionsCount}) <span style={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 600 }}>👁️ view</span>
+                  </span>
+                  <span style={{ fontWeight: 700, color: '#0F4C3A' }}>S$ {costBreakdown.attractionTotal.toLocaleString()}</span>
+                </div>
+                <div 
+                  onClick={() => setBreakdownModalType('meals')} 
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.2rem 0.35rem', borderRadius: '6px', background: '#F8FAFC' }}
+                  title="Click to view included Meal Plan"
+                >
+                  <span style={{ opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    🍽️ Meals ({costBreakdown.totalLunchCount}L, {costBreakdown.totalDinnerCount}D) <span style={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 600 }}>👁️ view</span>
+                  </span>
+                  <span style={{ fontWeight: 700, color: '#0F4C3A' }}>S$ {costBreakdown.mealTotal.toLocaleString()}</span>
+                </div>
+                <div 
+                  onClick={() => setBreakdownModalType('guides')} 
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.2rem 0.35rem', borderRadius: '6px', background: '#F8FAFC' }}
+                  title="Click to view included Tour Guides"
+                >
+                  <span style={{ opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    🚩 Guides ({costBreakdown.totalGuidesCount}) <span style={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 600 }}>👁️ view</span>
+                  </span>
+                  <span style={{ fontWeight: 700, color: '#0F4C3A' }}>S$ {costBreakdown.guideTotal.toLocaleString()}</span>
+                </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                 <span>Net Cost</span><span>S$ {costBreakdown.netCost.toLocaleString()}</span>
@@ -4553,6 +4601,286 @@ ${proposal}
                 <button onClick={() => { downloadProposalPDF(); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>📄 PDF</button>
                 <button onClick={() => { downloadSimpleItineraryPDF(); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem', background: '#FFF7ED', border: '1px solid #FFEDD5', color: '#C2410C', fontWeight: 800 }} title="Download Simple Visual Itinerary (S-PDF)">📄 S-PDF</button>
                 <button onClick={() => { sendOnWhatsApp(); setPriceDrawerOpen(false) }} className="cp-tool-btn whatsapp" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>💬 WA</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══ BREAKDOWN INSPECTOR MODAL ══ */}
+        {breakdownModalType && (
+          <div className="cp-modal-overlay" onClick={() => setBreakdownModalType(null)}>
+            <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '540px' }}>
+              <div className="cp-modal-handle" />
+              
+              {/* Modal Title Bar */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.3rem' }}>
+                    {breakdownModalType === 'rooms' && '🏨'}
+                    {breakdownModalType === 'transfers' && '🚐'}
+                    {breakdownModalType === 'tickets' && '🎟️'}
+                    {breakdownModalType === 'meals' && '🍽️'}
+                    {breakdownModalType === 'guides' && '🚩'}
+                  </span>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>
+                    {breakdownModalType === 'rooms' && 'Included Accommodation'}
+                    {breakdownModalType === 'transfers' && 'Included Transfers & Transport'}
+                    {breakdownModalType === 'tickets' && 'Included Attraction Tickets'}
+                    {breakdownModalType === 'meals' && 'Included Meal Plan'}
+                    {breakdownModalType === 'guides' && 'Included Guides & Assistance'}
+                  </h3>
+                </div>
+                <button 
+                  onClick={() => setBreakdownModalType(null)} 
+                  style={{ border: 'none', background: '#F1F5F9', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', cursor: 'pointer', color: '#64748B', fontWeight: 700 }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal Body Container */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '55vh', overflowY: 'auto', paddingRight: '4px' }}>
+                
+                {/* 1. ROOMS BREAKDOWN */}
+                {breakdownModalType === 'rooms' && (
+                  <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.98rem', color: '#0F172A', marginBottom: '0.6rem' }}>
+                      🏨 {customHotelEnabled ? customHotelName : (hotelsList[globalHotelIndex]?.name || 'Selected Hotel')}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#64748B' }}>Room Category:</span>
+                        <span style={{ fontWeight: 600, color: '#1E293B' }}>{hotelsList[globalHotelIndex]?.rooms[globalRoomIndex]?.type || 'Standard Room'}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#64748B' }}>Rooms Count & Nights:</span>
+                        <span style={{ fontWeight: 600, color: '#1E293B' }}>{globalRoomCount} Room{globalRoomCount > 1 ? 's' : ''} × {nightsCount} Night{nightsCount > 1 ? 's' : ''}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#64748B' }}>Rate per Room / Night:</span>
+                        <span style={{ fontWeight: 600, color: '#1E293B' }}>S$ {(hotelsList[globalHotelIndex]?.rooms[globalRoomIndex]?.price || 0).toLocaleString()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #CBD5E1', paddingTop: '0.4rem' }}>
+                        <span style={{ fontWeight: 600, color: '#475569' }}>Room Total:</span>
+                        <span style={{ fontWeight: 700, color: '#0F4C3A' }}>S$ {costBreakdown.roomCostTotal.toLocaleString()}</span>
+                      </div>
+                      {globalSuppIndex >= 0 && globalSuppCount > 0 && (
+                        <>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed #CBD5E1', paddingTop: '0.4rem' }}>
+                            <span style={{ color: '#64748B' }}>Extra Bed / Supplement:</span>
+                            <span style={{ fontWeight: 600, color: '#1E293B' }}>{globalSuppCount} Bed{globalSuppCount > 1 ? 's' : ''} × {nightsCount} Night{nightsCount > 1 ? 's' : ''}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#64748B' }}>Supplement Rate / Night:</span>
+                            <span style={{ fontWeight: 600, color: '#1E293B' }}>S$ {(hotelsList[globalHotelIndex]?.rooms[globalSuppIndex]?.price || 0).toLocaleString()}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontWeight: 600, color: '#475569' }}>Supplement Total:</span>
+                            <span style={{ fontWeight: 700, color: '#0F4C3A' }}>S$ {costBreakdown.suppCostTotal.toLocaleString()}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. TRANSFERS BREAKDOWN */}
+                {breakdownModalType === 'transfers' && (
+                  <>
+                    {itinerary.some(d => d.transfers && d.transfers.length > 0) ? (
+                      itinerary.map((day, dIdx) => {
+                        if (!day.transfers || day.transfers.length === 0) return null
+                        return (
+                          <div key={dIdx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.75rem 0.9rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                              <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#B81C1C' }}>DAY {dIdx + 1}</span>
+                              <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{getItineraryDate(dIdx)}</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                              {day.transfers.map((t, tIdx) => {
+                                const vObj = vehiclesList[t.vehicleIndex]
+                                const typeName = vObj?.type || t.type || 'Private Transfer'
+                                const price = (vObj?.pricePerTransfer || 0) * (t.qty || 1)
+                                return (
+                                  <div key={tIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', borderTop: tIdx > 0 ? '1px dashed #E2E8F0' : 'none', paddingTop: tIdx > 0 ? '0.35rem' : 0 }}>
+                                    <div>
+                                      <div style={{ fontWeight: 600, color: '#1E293B' }}>{typeName}</div>
+                                      {t.description && <div style={{ fontSize: '0.72rem', color: '#64748B' }}>{t.description}</div>}
+                                    </div>
+                                    <div style={{ fontWeight: 700, color: '#0F4C3A', whiteSpace: 'nowrap' }}>
+                                      S$ {price.toLocaleString()}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '1.5rem', color: '#64748B', fontSize: '0.85rem' }}>
+                        No transfers scheduled in this package.
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* 3. TICKETS BREAKDOWN */}
+                {breakdownModalType === 'tickets' && (
+                  <>
+                    {itinerary.some(d => d.attractions && d.attractions.length > 0) ? (
+                      itinerary.map((day, dIdx) => {
+                        if (!day.attractions || day.attractions.length === 0) return null
+                        return (
+                          <div key={dIdx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.75rem 0.9rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                              <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#B81C1C' }}>DAY {dIdx + 1}</span>
+                              <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{getItineraryDate(dIdx)}</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                              {day.attractions.map((a, aIdx) => {
+                                const attrObj = attractionsList[a.attractionIndex]
+                                const name = attrObj?.name || a.attractionName || 'Attraction'
+                                const adultP = attrObj?.adultPrice || 0
+                                const childP = attrObj?.childPrice || 0
+                                const subTotal = (adults * adultP) + (kids * childP)
+                                return (
+                                  <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontSize: '0.8rem', borderTop: aIdx > 0 ? '1px dashed #E2E8F0' : 'none', paddingTop: aIdx > 0 ? '0.4rem' : 0 }}>
+                                    <div style={{ paddingRight: '0.5rem' }}>
+                                      <div style={{ fontWeight: 600, color: '#1E293B' }}>{name}</div>
+                                      <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>
+                                        {adults} Adult{adults > 1 ? 's' : ''} (S${adultP})
+                                        {kids > 0 ? ` + ${kids} Child${kids > 1 ? 'ren' : ''} (S$${childP})` : ''}
+                                      </div>
+                                    </div>
+                                    <div style={{ fontWeight: 700, color: '#0F4C3A', whiteSpace: 'nowrap' }}>
+                                      S$ {subTotal.toLocaleString()}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '1.5rem', color: '#64748B', fontSize: '0.85rem' }}>
+                        No attraction tickets selected in this itinerary.
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* 4. MEALS BREAKDOWN */}
+                {breakdownModalType === 'meals' && (
+                  <>
+                    {itinerary.some(d => d.breakfast || d.lunch || d.dinner || (d.meals && d.meals.length > 0)) ? (
+                      itinerary.map((day, dIdx) => {
+                        const hasMeals = day.breakfast || day.lunch || day.dinner || (day.meals && day.meals.length > 0)
+                        if (!hasMeals) return null
+                        return (
+                          <div key={dIdx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.75rem 0.9rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                              <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#B81C1C' }}>DAY {dIdx + 1}</span>
+                              <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{getItineraryDate(dIdx)}</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.8rem' }}>
+                              {day.breakfast && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#1E293B' }}>
+                                  <span>🍳 Breakfast</span>
+                                  <span style={{ color: '#059669', fontWeight: 600 }}>Included (Hotel)</span>
+                                </div>
+                              )}
+                              {day.lunch && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#1E293B' }}>
+                                  <span>🍛 Lunch ({adults + kids} Pax)</span>
+                                  <span style={{ fontWeight: 700, color: '#0F4C3A' }}>S$ {((adults + kids) * MEAL_PRICES.lunch).toLocaleString()}</span>
+                                </div>
+                              )}
+                              {day.dinner && (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#1E293B' }}>
+                                  <span>🍲 Dinner ({adults + kids} Pax)</span>
+                                  <span style={{ fontWeight: 700, color: '#0F4C3A' }}>S$ {((adults + kids) * MEAL_PRICES.dinner).toLocaleString()}</span>
+                                </div>
+                              )}
+                              {day.meals && day.meals.map((m: any, mIdx: number) => {
+                                const mObj = mealsList[m.mealIndex]
+                                const typeName = mObj?.type || m.type || 'Special Meal'
+                                const price = (mObj?.price || 0) * (adults + kids)
+                                return (
+                                  <div key={mIdx} style={{ display: 'flex', justifyContent: 'space-between', color: '#1E293B' }}>
+                                    <span>🍽️ {typeName} ({adults + kids} Pax)</span>
+                                    <span style={{ fontWeight: 700, color: '#0F4C3A' }}>S$ {price.toLocaleString()}</span>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '1.5rem', color: '#64748B', fontSize: '0.85rem' }}>
+                        No meals selected in this package.
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* 5. GUIDES BREAKDOWN */}
+                {breakdownModalType === 'guides' && (
+                  <>
+                    {itinerary.some(d => d.guides && d.guides.length > 0) ? (
+                      itinerary.map((day, dIdx) => {
+                        if (!day.guides || day.guides.length === 0) return null
+                        return (
+                          <div key={dIdx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.75rem 0.9rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                              <span style={{ fontWeight: 700, fontSize: '0.8rem', color: '#B81C1C' }}>DAY {dIdx + 1}</span>
+                              <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{getItineraryDate(dIdx)}</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                              {day.guides.map((g, gIdx) => {
+                                const guideObj = guidesList[g.guideIndex]
+                                const typeName = guideObj?.type || g.type || 'Tour Guide'
+                                const price = guideObj?.pricePerDay || 0
+                                return (
+                                  <div key={gIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
+                                    <div>
+                                      <div style={{ fontWeight: 600, color: '#1E293B' }}>{typeName}</div>
+                                      {g.description && <div style={{ fontSize: '0.72rem', color: '#64748B' }}>{g.description}</div>}
+                                    </div>
+                                    <div style={{ fontWeight: 700, color: '#0F4C3A', whiteSpace: 'nowrap' }}>
+                                      S$ {price.toLocaleString()}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '1.5rem', color: '#64748B', fontSize: '0.85rem' }}>
+                        No tour guide services selected in this package.
+                      </div>
+                    )}
+                  </>
+                )}
+
+              </div>
+
+              {/* Modal Footer Total */}
+              <div style={{ marginTop: '1.25rem', paddingTop: '0.85rem', borderTop: '2px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>Total Net Subtotal:</span>
+                <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>
+                  S$ {
+                    breakdownModalType === 'rooms' ? (costBreakdown.roomCostTotal + costBreakdown.suppCostTotal).toLocaleString() :
+                    breakdownModalType === 'transfers' ? costBreakdown.transportTotal.toLocaleString() :
+                    breakdownModalType === 'tickets' ? costBreakdown.attractionTotal.toLocaleString() :
+                    breakdownModalType === 'meals' ? costBreakdown.mealTotal.toLocaleString() :
+                    costBreakdown.guideTotal.toLocaleString()
+                  }
+                </span>
               </div>
             </div>
           </div>
@@ -6376,39 +6704,75 @@ ${proposal}
             <div style={{ padding: '1rem 1.15rem' }}>
               
               {/* Itemized Net Cost (SGD) */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.78rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.78rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.75rem' }}>
                 {hotelRequired && (
                   <>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ opacity: 0.7 }}>Rooms ({globalRoomCount}):</span>
+                    <div 
+                      onClick={() => setBreakdownModalType('rooms')}
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.15rem 0.35rem', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', transition: 'background 0.15s' }}
+                      title="Click to view Accommodation breakdown"
+                    >
+                      <span style={{ opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        🏨 Rooms ({globalRoomCount}): <span style={{ fontSize: '0.68rem', color: 'var(--gold-accent)', fontWeight: 600 }}>👁️ view</span>
+                      </span>
                       <span>S$ {costBreakdown.roomCostTotal.toLocaleString()}</span>
                     </div>
                     {globalSuppIndex >= 0 && globalSuppCount > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ opacity: 0.7 }}>Supp ({globalSuppCount}):</span>
+                      <div 
+                        onClick={() => setBreakdownModalType('rooms')}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.15rem 0.35rem', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', transition: 'background 0.15s' }}
+                        title="Click to view Supplement breakdown"
+                      >
+                        <span style={{ opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          🛏️ Supp ({globalSuppCount}): <span style={{ fontSize: '0.68rem', color: 'var(--gold-accent)', fontWeight: 600 }}>👁️ view</span>
+                        </span>
                         <span>S$ {costBreakdown.suppCostTotal.toLocaleString()}</span>
                       </div>
                     )}
                   </>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ opacity: 0.7 }}>Transfers ({costBreakdown.totalTransfers}):</span>
+                <div 
+                  onClick={() => setBreakdownModalType('transfers')}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.15rem 0.35rem', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', transition: 'background 0.15s' }}
+                  title="Click to view all included Transfers"
+                >
+                  <span style={{ opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    🚐 Transfers ({costBreakdown.totalTransfers}): <span style={{ fontSize: '0.68rem', color: 'var(--gold-accent)', fontWeight: 600 }}>👁️ view</span>
+                  </span>
                   <span>S$ {costBreakdown.transportTotal.toLocaleString()}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ opacity: 0.7 }}>Tickets ({costBreakdown.totalAttractionsCount}):</span>
+                <div 
+                  onClick={() => setBreakdownModalType('tickets')}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.15rem 0.35rem', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', transition: 'background 0.15s' }}
+                  title="Click to view all included Attraction Tickets"
+                >
+                  <span style={{ opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    🎟️ Tickets ({costBreakdown.totalAttractionsCount}): <span style={{ fontSize: '0.68rem', color: 'var(--gold-accent)', fontWeight: 600 }}>👁️ view</span>
+                  </span>
                   <span>S$ {costBreakdown.attractionTotal.toLocaleString()}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ opacity: 0.7 }}>Meals ({costBreakdown.totalLunchCount}L, {costBreakdown.totalDinnerCount}D):</span>
+                <div 
+                  onClick={() => setBreakdownModalType('meals')}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.15rem 0.35rem', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', transition: 'background 0.15s' }}
+                  title="Click to view included Meal Plan"
+                >
+                  <span style={{ opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    🍽️ Meals ({costBreakdown.totalLunchCount}L, {costBreakdown.totalDinnerCount}D): <span style={{ fontSize: '0.68rem', color: 'var(--gold-accent)', fontWeight: 600 }}>👁️ view</span>
+                  </span>
                   <span>S$ {costBreakdown.mealTotal.toLocaleString()}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ opacity: 0.7 }}>Guides ({costBreakdown.totalGuidesCount}):</span>
+                <div 
+                  onClick={() => setBreakdownModalType('guides')}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: '0.15rem 0.35rem', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', transition: 'background 0.15s' }}
+                  title="Click to view included Tour Guides"
+                >
+                  <span style={{ opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    🚩 Guides ({costBreakdown.totalGuidesCount}): <span style={{ fontSize: '0.68rem', color: 'var(--gold-accent)', fontWeight: 600 }}>👁️ view</span>
+                  </span>
                   <span>S$ {costBreakdown.guideTotal.toLocaleString()}</span>
                 </div>
                 {(costBreakdown.miscTotal > 0 || miscNotes) && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.15rem 0.35rem' }}>
                     <span style={{ opacity: 0.7 }} title={miscNotes}>Misc ({miscNotes || 'Addons'}):</span>
                     <span>S$ {costBreakdown.miscTotal.toLocaleString()}</span>
                   </div>
