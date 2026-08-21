@@ -2339,8 +2339,8 @@ export default function PrototypeBuilder() {
     const setTxt  = (c: [number,number,number]) => doc.setTextColor(c[0], c[1], c[2])
     const font    = (w: 'normal'|'bold'|'italic', s: number) => { doc.setFont('Helvetica', w); doc.setFontSize(s) }
 
-    // Helper to load image and crop/mask into curved organic photo shape (keeping 90%+ image area)
-    const fetchBase64Image = async (url: string): Promise<string | null> => {
+    // Helper to load image and crop/mask into dramatic 75% curved organic photo shape (facing text)
+    const fetchBase64Image = async (url: string, isPhotoRight: boolean): Promise<string | null> => {
       try {
         const res = await fetch(url)
         if (!res.ok) return null
@@ -2354,7 +2354,7 @@ export default function PrototypeBuilder() {
 
         if (typeof window === 'undefined') return rawDataUrl
 
-        // Process via Canvas to create organic curved mask with soft white halo
+        // Process via Canvas to create dramatic 75% organic curved mask with thick white deckle border
         return new Promise((resolve) => {
           const img = new Image()
           img.crossOrigin = 'anonymous'
@@ -2370,30 +2370,51 @@ export default function PrototypeBuilder() {
 
               ctx.clearRect(0, 0, targetW, targetH)
 
-              // Build smooth organic curved mask (keeping 90%+ of photo)
-              ctx.save()
-              ctx.beginPath()
-              
-              const pad = 14
+              const pad = 18
               const w = targetW - pad * 2
               const h = targetH - pad * 2
               const x = pad
               const y = pad
-              const r = 28 // rounded corner base
 
-              // Organic smooth curved path around the image
-              ctx.moveTo(x + r, y)
-              ctx.bezierCurveTo(x + w * 0.35, y - 4, x + w * 0.65, y + 3, x + w - r, y)
-              ctx.quadraticCurveTo(x + w, y, x + w, y + r)
-              ctx.bezierCurveTo(x + w + 4, y + h * 0.35, x + w - 3, y + h * 0.7, x + w, y + h - r)
-              ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
-              ctx.bezierCurveTo(x + w * 0.65, y + h + 4, x + w * 0.35, y + h - 3, x + r, y + h)
-              ctx.quadraticCurveTo(x, y + h, x, y + h - r)
-              ctx.bezierCurveTo(x - 3, y + h * 0.7, x + 4, y + h * 0.35, x, y + r)
-              ctx.quadraticCurveTo(x, y, x + r, y)
-              ctx.closePath()
+              // Build dramatic 75% organic curved path
+              const buildCurvedPath = (c: CanvasRenderingContext2D) => {
+                c.beginPath()
+                if (isPhotoRight) {
+                  // Photo on Right: Left edge curves dramatically inward towards image
+                  c.moveTo(x + 40, y)
+                  c.bezierCurveTo(x + w * 0.4, y - 8, x + w * 0.7, y + 6, x + w - 36, y)
+                  c.quadraticCurveTo(x + w, y, x + w, y + 36)
+                  // Right outer edge
+                  c.bezierCurveTo(x + w + 8, y + h * 0.35, x + w - 6, y + h * 0.7, x + w, y + h - 36)
+                  c.quadraticCurveTo(x + w, y + h, x + w - 36, y + h)
+                  // Bottom edge
+                  c.bezierCurveTo(x + w * 0.7, y + h + 8, x + w * 0.35, y + h - 6, x + 40, y + h)
+                  c.quadraticCurveTo(x + 10, y + h, x + 16, y + h - 36)
+                  // Dramatic 75% organic inner wave facing text
+                  c.bezierCurveTo(x + 55, y + h * 0.75, x - 18, y + h * 0.48, x + 48, y + h * 0.22)
+                  c.bezierCurveTo(x + 18, y + h * 0.08, x - 8, y + 36, x + 40, y)
+                } else {
+                  // Photo on Left: Right edge curves dramatically inward towards image
+                  c.moveTo(x + 36, y)
+                  c.bezierCurveTo(x + w * 0.3, y - 8, x + w * 0.6, y + 6, x + w - 40, y)
+                  c.quadraticCurveTo(x + w - 10, y, x + w - 16, y + 36)
+                  // Dramatic 75% organic inner wave facing text
+                  c.bezierCurveTo(x + w - 55, y + h * 0.22, x + w + 18, y + h * 0.48, x + w - 48, y + h * 0.75)
+                  c.bezierCurveTo(x + w - 18, y + h * 0.92, x + w + 8, y + h - 36, x + w - 40, y + h)
+                  c.quadraticCurveTo(x + w - 10, y + h, x + w - 36, y + h)
+                  // Bottom edge
+                  c.bezierCurveTo(x + w * 0.65, y + h + 8, x + w * 0.35, y + h - 6, x + 36, y + h)
+                  c.quadraticCurveTo(x, y + h, x, y + h - 36)
+                  // Left outer edge
+                  c.bezierCurveTo(x - 8, y + h * 0.7, x + 6, y + h * 0.35, x, y + 36)
+                  c.quadraticCurveTo(x, y, x + 36, y)
+                }
+                c.closePath()
+              }
 
               // Clip and draw image cover
+              ctx.save()
+              buildCurvedPath(ctx)
               ctx.clip()
 
               const imgAspect = img.width / img.height
@@ -2412,24 +2433,15 @@ export default function PrototypeBuilder() {
               ctx.drawImage(img, dx, dy, dw, dh)
               ctx.restore()
 
-              // Draw soft double white highlight border
+              // Draw thick solid white deckle halo border + soft shadow outline
               ctx.save()
-              ctx.beginPath()
-              ctx.moveTo(x + r, y)
-              ctx.bezierCurveTo(x + w * 0.35, y - 4, x + w * 0.65, y + 3, x + w - r, y)
-              ctx.quadraticCurveTo(x + w, y, x + w, y + r)
-              ctx.bezierCurveTo(x + w + 4, y + h * 0.35, x + w - 3, y + h * 0.7, x + w, y + h - r)
-              ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
-              ctx.bezierCurveTo(x + w * 0.65, y + h + 4, x + w * 0.35, y + h - 3, x + r, y + h)
-              ctx.quadraticCurveTo(x, y + h, x, y + h - r)
-              ctx.bezierCurveTo(x - 3, y + h * 0.7, x + 4, y + h * 0.35, x, y + r)
-              ctx.quadraticCurveTo(x, y, x + r, y)
-              ctx.closePath()
-              ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)'
-              ctx.lineWidth = 10
+              buildCurvedPath(ctx)
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.98)'
+              ctx.lineWidth = 14
               ctx.stroke()
-              ctx.strokeStyle = 'rgba(215, 195, 170, 0.45)'
-              ctx.lineWidth = 2
+
+              ctx.strokeStyle = 'rgba(205, 180, 150, 0.55)'
+              ctx.lineWidth = 2.5
               ctx.stroke()
               ctx.restore()
 
@@ -2446,100 +2458,112 @@ export default function PrototypeBuilder() {
       }
     }
 
-    // ── Rich Collection of Meaningful Vector Travel Doodles ──
+    // ── Rich Collection of High-Density Meaningful Vector Travel Doodles ──
+    const DOODLE_COLOR = [192, 164, 134] as [number, number, number]
+
     const drawAirplaneWithTrail = (x: number, y: number) => {
-      setDraw([215, 195, 170]); doc.setLineWidth(0.35)
+      setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
       doc.setLineDashPattern([1.5, 1.5], 0)
-      doc.lines([[12, -3], [20, 2], [8, 5], [-10, 2]], x - 22, y + 2, [1, 1], 'S', false)
+      doc.lines([[14, -4], [22, 3], [8, 6], [-12, 3]], x - 24, y + 2, [1, 1], 'S', false)
       doc.setLineDashPattern([], 0)
 
-      setFill([254, 250, 242]); setDraw([205, 185, 160]); doc.setLineWidth(0.35)
-      doc.roundedRect(x, y - 1.5, 12, 2.8, 1, 1, 'FD')
-      doc.triangle(x + 4, y - 5, x + 7, y - 0.2, x + 2, y - 0.2, 'FD')
-      doc.triangle(x + 4, y + 4.2, x + 7, y + 0.8, x + 2, y + 0.8, 'FD')
-      doc.triangle(x + 9.5, y - 3, x + 12, y - 0.2, x + 8.5, y - 0.2, 'FD')
+      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      doc.roundedRect(x, y - 1.5, 13, 3, 1, 1, 'FD')
+      doc.triangle(x + 4.5, y - 5.5, x + 7.5, y - 0.2, x + 2.5, y - 0.2, 'FD')
+      doc.triangle(x + 4.5, y + 4.8, x + 7.5, y + 0.8, x + 2.5, y + 0.8, 'FD')
+      doc.triangle(x + 10, y - 3.5, x + 13, y - 0.2, x + 9, y - 0.2, 'FD')
     }
 
     const drawCameraDoodle = (x: number, y: number) => {
-      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
-      doc.roundedRect(x, y, 11, 7.5, 1, 1, 'FD')
-      doc.rect(x + 3.2, y - 1.5, 3.8, 1.5, 'FD')
-      doc.circle(x + 5.5, y + 3.8, 2.5, 'FD')
-      doc.circle(x + 5.5, y + 3.8, 1.1, 'S')
-      doc.circle(x + 8.8, y + 1.8, 0.5, 'F')
+      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      doc.roundedRect(x, y, 12, 8.5, 1.2, 1.2, 'FD')
+      doc.rect(x + 3.5, y - 1.8, 4.5, 1.8, 'FD')
+      doc.circle(x + 6, y + 4.2, 2.8, 'FD')
+      doc.circle(x + 6, y + 4.2, 1.2, 'S')
+      doc.circle(x + 9.8, y + 2, 0.6, 'F')
     }
 
     const drawSunglassesDoodle = (x: number, y: number) => {
-      setDraw([210, 190, 165]); doc.setLineWidth(0.35); setFill([254, 250, 244])
-      doc.roundedRect(x, y, 5.5, 3.8, 1.5, 1.5, 'FD')
-      doc.roundedRect(x + 7, y, 5.5, 3.8, 1.5, 1.5, 'FD')
-      doc.line(x + 5.5, y + 1.6, x + 7, y + 1.6)
-      doc.line(x, y + 1.2, x - 2, y - 0.8)
-      doc.line(x + 12.5, y + 1.2, x + 14.5, y - 0.8)
+      setDraw(DOODLE_COLOR); doc.setLineWidth(0.4); setFill([254, 250, 244])
+      doc.roundedRect(x, y, 6.5, 4.5, 1.8, 1.8, 'FD')
+      doc.roundedRect(x + 8.5, y, 6.5, 4.5, 1.8, 1.8, 'FD')
+      doc.line(x + 6.5, y + 2, x + 8.5, y + 2)
+      doc.line(x, y + 1.5, x - 2.5, y - 1)
+      doc.line(x + 15, y + 1.5, x + 17.5, y - 1)
     }
 
     const drawSuitcaseDoodle = (x: number, y: number) => {
-      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
-      doc.roundedRect(x, y, 12, 9, 1.2, 1.2, 'FD')
-      // Handle
-      doc.roundedRect(x + 4, y - 2, 4, 2, 0.6, 0.6, 'S')
-      // Straps
-      doc.line(x + 3.5, y, x + 3.5, y + 9)
-      doc.line(x + 8.5, y, x + 8.5, y + 9)
-      // Center lock
-      doc.circle(x + 6, y + 4.5, 0.6, 'FD')
+      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      doc.roundedRect(x, y, 13, 10, 1.5, 1.5, 'FD')
+      doc.roundedRect(x + 4.5, y - 2.5, 4, 2.5, 0.8, 0.8, 'S')
+      doc.line(x + 3.8, y, x + 3.8, y + 10)
+      doc.line(x + 9.2, y, x + 9.2, y + 10)
+      doc.circle(x + 6.5, y + 5, 0.7, 'FD')
     }
 
     const drawCompassDoodle = (x: number, y: number) => {
-      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
-      doc.circle(x + 5, y + 5, 4.8, 'FD')
-      doc.circle(x + 5, y + 5, 3.6, 'S')
-      // North/South needle
-      doc.triangle(x + 5, y + 1.2, x + 6.2, y + 5, x + 3.8, y + 5, 'FD')
-      doc.triangle(x + 5, y + 8.8, x + 6.2, y + 5, x + 3.8, y + 5, 'S')
+      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      doc.circle(x + 5.5, y + 5.5, 5.2, 'FD')
+      doc.circle(x + 5.5, y + 5.5, 4, 'S')
+      doc.triangle(x + 5.5, y + 1.5, x + 6.8, y + 5.5, x + 4.2, y + 5.5, 'FD')
+      doc.triangle(x + 5.5, y + 9.5, x + 6.8, y + 5.5, x + 4.2, y + 5.5, 'S')
     }
 
     const drawLuggageTagDoodle = (x: number, y: number) => {
-      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
-      doc.roundedRect(x, y, 6.5, 10, 1, 1, 'FD')
-      doc.circle(x + 3.25, y + 2.2, 0.8, 'S')
-      doc.line(x + 1.5, y + 5, x + 5, y + 5)
-      doc.line(x + 1.5, y + 7, x + 5, y + 7)
-      // String
-      doc.line(x + 3.25, y + 1.4, x + 3.25, y - 2)
+      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      doc.roundedRect(x, y, 7.5, 11, 1.2, 1.2, 'FD')
+      doc.circle(x + 3.75, y + 2.5, 0.9, 'S')
+      doc.line(x + 1.8, y + 5.5, x + 5.7, y + 5.5)
+      doc.line(x + 1.8, y + 7.8, x + 5.7, y + 7.8)
+      doc.line(x + 3.75, y + 1.6, x + 3.75, y - 2.5)
     }
 
     const drawCoffeeDoodle = (x: number, y: number) => {
-      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
-      doc.roundedRect(x, y, 7.5, 6, 1, 1, 'FD')
-      // Handle
-      doc.roundedRect(x + 7.5, y + 1.2, 2.2, 3.5, 0.8, 0.8, 'S')
-      // Steam lines
-      doc.line(x + 2.5, y - 1, x + 2.5, y - 2.5)
-      doc.line(x + 5, y - 1.2, x + 5, y - 2.8)
+      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      doc.roundedRect(x, y, 8, 6.5, 1.2, 1.2, 'FD')
+      doc.roundedRect(x + 8, y + 1.2, 2.4, 4, 0.8, 0.8, 'S')
+      doc.line(x + 2.8, y - 1, x + 2.8, y - 2.8)
+      doc.line(x + 5.4, y - 1.2, x + 5.4, y - 3)
+    }
+
+    const drawPalmFrondDoodle = (x: number, y: number) => {
+      setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      doc.lines([[6, 12], [8, 16]], x, y, [1, 1], 'S', false)
+      doc.line(x + 2, y + 3, x - 4, y + 1)
+      doc.line(x + 3.5, y + 6, x + 9, y + 4)
+      doc.line(x + 5, y + 9, x - 3, y + 8)
+      doc.line(x + 6.5, y + 12, x + 11, y + 11)
     }
 
     const drawPostageStamp = (x: number, y: number) => {
-      setFill([252, 248, 240]); setDraw([210, 190, 165]); doc.setLineWidth(0.35)
-      doc.rect(x, y, 11, 13.5, 'FD')
-      doc.rect(x + 1, y + 1, 9, 11.5, 'S')
-      doc.circle(x + 5.5, y + 6.8, 2.4, 'S')
-      doc.line(x + 12, y + 3.5, x + 18, y + 3.5)
-      doc.line(x + 12, y + 6.2, x + 20, y + 6.2)
-      doc.line(x + 12, y + 8.9, x + 17, y + 8.9)
+      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      doc.rect(x, y, 12, 15, 'FD')
+      doc.rect(x + 1.2, y + 1.2, 9.6, 12.6, 'S')
+      doc.circle(x + 6, y + 7.5, 2.6, 'S')
+      doc.line(x + 13, y + 4, x + 20, y + 4)
+      doc.line(x + 13, y + 7, x + 22, y + 7)
+      doc.line(x + 13, y + 10, x + 19, y + 10)
     }
 
     const drawCurvedArrow = (x: number, y: number) => {
-      setDraw([210, 190, 165]); doc.setLineWidth(0.35)
-      doc.lines([[8, 4], [14, 2]], x, y, [1, 1], 'S', false)
-      doc.line(x + 14, y + 2, x + 11, y + 0.8)
-      doc.line(x + 14, y + 2, x + 12, y + 4.2)
+      setDraw(DOODLE_COLOR); doc.setLineWidth(0.4)
+      doc.lines([[10, 5], [16, 3]], x, y, [1, 1], 'S', false)
+      doc.line(x + 16, y + 3, x + 12.5, y + 1.5)
+      doc.line(x + 16, y + 3, x + 13.5, y + 5.5)
     }
 
-    const drawSparkleStar = (x: number, y: number, r = 2.2) => {
-      setDraw([215, 195, 170]); doc.setLineWidth(0.3)
+    const drawSparkleStar = (x: number, y: number, r = 2.4) => {
+      setDraw(DOODLE_COLOR); doc.setLineWidth(0.35)
       doc.line(x, y - r, x, y + r)
       doc.line(x - r, y, x + r, y)
+    }
+
+    const drawHeartDoodle = (x: number, y: number) => {
+      setFill([254, 250, 242]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.35)
+      doc.circle(x + 2, y + 2, 1.8, 'S')
+      doc.circle(x + 5, y + 2, 1.8, 'S')
+      doc.line(x + 0.4, y + 2.8, x + 3.5, y + 6.5)
+      doc.line(x + 6.6, y + 2.8, x + 3.5, y + 6.5)
     }
 
     const FALLBACK_PICS: Record<string, string> = {
@@ -2561,10 +2585,9 @@ export default function PrototypeBuilder() {
     }
 
     // Resolve best photo for each day
-    const dayImageUrls: string[] = []
+    const dayImageUrls: { url: string; isPhotoRight: boolean }[] = []
     itinerary.forEach((day, idx) => {
       let chosenUrl = ''
-      // 1. Try attractionMeta photoUrl
       for (const a of day.attractions) {
         const name = (attractionsList[a.attractionIndex]?.name || a.attractionName || '').toLowerCase().trim()
         const meta = attractionsMeta[name]
@@ -2573,7 +2596,6 @@ export default function PrototypeBuilder() {
           break
         }
       }
-      // 2. Try keyword match in fallback pics
       if (!chosenUrl) {
         const allNames = [
           ...day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || ''),
@@ -2587,16 +2609,15 @@ export default function PrototypeBuilder() {
           }
         }
       }
-      // 3. Fallback to general city pic
       if (!chosenUrl) {
         chosenUrl = idx === 0 ? FALLBACK_PICS.merlion : FALLBACK_PICS.singapore
       }
-      dayImageUrls.push(chosenUrl)
+      dayImageUrls.push({ url: chosenUrl, isPhotoRight: idx % 2 === 0 })
     })
 
-    // Pre-fetch all day images into base64
+    // Pre-fetch all day images into base64 with directional 75% curved organic mask
     const base64Images: (string | null)[] = await Promise.all(
-      dayImageUrls.map(url => fetchBase64Image(url))
+      dayImageUrls.map(item => fetchBase64Image(item.url, item.isPhotoRight))
     )
 
     const totalDays = itinerary.length
@@ -2606,19 +2627,32 @@ export default function PrototypeBuilder() {
     for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
       if (pageIdx > 0) doc.addPage()
 
-      // Warm background canvas
+      // Warm parchment background canvas
       setFill(BG_WARM); doc.rect(0, 0, PW, PH, 'F')
 
-      // ─── Consistent Page-Level Decorative Travel Doodles (Safe Zero-Overlap Bands) ───
-      // Center divider flight trail between Day 1 & Day 2 cards
-      drawAirplaneWithTrail(PW / 2 + 6, 146)
-      drawSparkleStar(24, 147, 2)
-      drawSparkleStar(PW - 24, 147, 2)
+      // ─── Dense, Rich Scrapbook Vector Travel Doodles (Background Ambient Layer) ───
+      // Top section ambient doodles
+      drawAirplaneWithTrail(PW - 42, 20)
+      drawCameraDoodle(18, 19)
+      drawSparkleStar(92, 18, 2.5)
+      drawPalmFrondDoodle(PW - 16, 68)
+      drawCoffeeDoodle(6, 72)
+      drawHeartDoodle(98, 74)
 
-      // Bottom margin decorations
+      // Center divider band between Day 1 & Day 2 cards
+      drawAirplaneWithTrail(PW / 2 + 10, 146)
+      drawSunglassesDoodle(24, 144)
+      drawSuitcaseDoodle(PW - 44, 143)
+      drawSparkleStar(PW / 2 - 28, 147, 2.2)
+      drawSparkleStar(PW / 2 + 38, 147, 2.2)
+
+      // Lower section ambient doodles
+      drawCompassDoodle(10, 208)
+      drawLuggageTagDoodle(PW - 16, 214)
+      drawHeartDoodle(96, 210)
       drawCurvedArrow(ML + 8, 279)
-      drawPostageStamp(PW - 32, 274)
-      drawSparkleStar(PW / 2, 280, 1.8)
+      drawPostageStamp(PW - 34, 272)
+      drawSparkleStar(PW / 2, 280, 2)
 
       // Header on every page
       setFill(NAVY); doc.rect(0, 0, PW, 12, 'F')
@@ -2660,26 +2694,26 @@ export default function PrototypeBuilder() {
         const isPhotoRight = dIdx % 2 === 0
         const textX = isPhotoRight ? ML + 8 : ML + 92
         const textW = 88
-        const photoX = isPhotoRight ? ML + 98 : ML + 6
-        const photoW = 82
-        const photoH = 108
+        const photoX = isPhotoRight ? ML + 96 : ML + 4
+        const photoW = 86
+        const photoH = 110
 
-        // ─── Meaningful Card Interior Doodles (Subtle watermark accents) ───
+        // ─── Card Interior Ambient Doodles ───
         if (isPhotoRight) {
-          // Top Day: Camera doodle + Suitcase in safe empty spaces
-          drawCameraDoodle(ML + 78, topY + 4.5)
-          drawSuitcaseDoodle(ML + textW - 2, topY + cardH - 16)
-          drawSparkleStar(ML + 93, topY + 8.5, 2)
+          drawCameraDoodle(ML + 76, topY + 4.5)
+          drawSuitcaseDoodle(ML + textW - 4, topY + cardH - 18)
+          drawCoffeeDoodle(ML + 68, topY + cardH - 18)
+          drawSparkleStar(ML + 93, topY + 8.5, 2.2)
         } else {
-          // Bottom Day: Sunglasses + Compass + Luggage tag in safe empty spaces
-          drawSunglassesDoodle(ML + CW - 22, topY + 4.5)
-          drawCompassDoodle(ML + 4, topY + cardH - 16)
+          drawSunglassesDoodle(ML + CW - 24, topY + 4.5)
+          drawCompassDoodle(ML + 6, topY + cardH - 18)
           drawLuggageTagDoodle(ML + 86, topY + 5)
-          drawSparkleStar(ML + CW - 5, topY + 8.5, 2)
+          drawHeartDoodle(ML + CW - 18, topY + cardH - 18)
+          drawSparkleStar(ML + CW - 6, topY + 8.5, 2.2)
         }
 
-        // ─── 1. Organic Curved Photo Display ───
-        const polaroidY = topY + 9
+        // ─── 1. Dramatic 75% Organic Curved Photo Display ───
+        const polaroidY = topY + 8
         if (imgData) {
           try {
             doc.addImage(imgData, 'PNG', photoX, polaroidY, photoW, photoH, undefined, 'MEDIUM')
