@@ -2,8 +2,7 @@ import Link from 'next/link'
 import { client } from '../../../sanity/lib/client'
 import PromotionInquiryForm from './PromotionInquiryForm'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const revalidate = 600
 
 async function getPromotions() {
   try {

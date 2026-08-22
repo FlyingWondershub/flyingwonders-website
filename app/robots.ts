@@ -6,17 +6,21 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/studio', '/api/'],
+        disallow: ['/studio', '/api/', '/admin-dashboard', '/agent-portal'],
+      },
+      {
+        userAgent: ['GPTBot', 'CCBot', 'ClaudeBot', 'Bytespider', 'PetalBot', 'Amazonbot', 'Diffbot', 'anthropic-ai'],
+        disallow: ['/'],
       },
       {
         userAgent: 'Mediapartners-Google',
         allow: '/',
-        disallow: ['/studio', '/api/'],
+        disallow: ['/studio', '/api/', '/admin-dashboard', '/agent-portal'],
       },
       {
         userAgent: 'Googlebot',
         allow: '/',
-        disallow: ['/studio', '/api/'],
+        disallow: ['/studio', '/api/', '/admin-dashboard', '/agent-portal'],
       },
     ],
     sitemap: 'https://flyingwonders.net/sitemap.xml',

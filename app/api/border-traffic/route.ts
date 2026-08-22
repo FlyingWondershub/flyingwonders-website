@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
 export const revalidate = 60 // Cache for 1 minute
 
 interface BorderData {
@@ -92,7 +91,11 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ success: true, data }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
+      }
+    })
   } catch (error: any) {
     return NextResponse.json({ success: false, error: 'Failed to fetch live border traffic data.' })
   }

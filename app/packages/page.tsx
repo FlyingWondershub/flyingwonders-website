@@ -13,7 +13,7 @@ export const metadata = {
   }
 }
 
-export const revalidate = 60
+export const revalidate = 600
 
 const DEFAULT_PACKAGES = [
   {

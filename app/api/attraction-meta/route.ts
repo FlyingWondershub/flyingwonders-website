@@ -12,6 +12,8 @@ const client = createClient({
 
 const imageBuilder = createImageUrlBuilder({ projectId: projectId || '', dataset: dataset || '' })
 
+export const revalidate = 600
+
 export async function GET() {
   try {
     const meta = await client.fetch(
@@ -34,7 +36,7 @@ export async function GET() {
         isTrending
       }`,
       {},
-      { cache: 'no-store' }
+      { next: { revalidate: 600 } }
     )
 
     const resolved = (meta || []).map((m: any) => ({
@@ -44,7 +46,11 @@ export async function GET() {
         : null,
     }))
 
-    return NextResponse.json({ success: true, meta: resolved })
+    return NextResponse.json({ success: true, meta: resolved }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200'
+      }
+    })
   } catch (err) {
     console.error('Error fetching attraction meta:', err)
     return NextResponse.json({ success: false, meta: [] })

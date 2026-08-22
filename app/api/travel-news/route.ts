@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
 export const revalidate = 900 // Cache for 15 minutes
 
 interface NewsItem {
@@ -99,6 +98,10 @@ export async function GET() {
       success: true,
       count: allNews.length,
       news: allNews
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=1800'
+      }
     })
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message || 'Failed to parse travel news.' })

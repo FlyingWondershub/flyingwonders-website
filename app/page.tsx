@@ -4,7 +4,7 @@ import MetricsCounter from '../components/MetricsCounter'
 import HeroBackground from '../components/HeroBackground'
 import { getLiveExchangeRate } from '../utils/exchange'
 
-export const revalidate = 60 // Revalidate home page every minute
+export const revalidate = 600 // Revalidate home page every 10 minutes
 
 export default async function Home() {
   let settings = {

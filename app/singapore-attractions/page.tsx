@@ -19,7 +19,7 @@ async function getAttractions() {
     } catch (e) {}
 
     const res = await fetch(sheetUrl, {
-      cache: 'no-store'
+      next: { revalidate: 600 }
     })
     if (!res.ok) throw new Error('Failed to fetch attractions sheet')
     const text = await res.text()
@@ -66,8 +66,7 @@ export const metadata = {
   }
 }
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const revalidate = 600
 
 export default async function SingaporeAttractionsPage() {
   const attractions = await getAttractions()
@@ -83,7 +82,7 @@ export default async function SingaporeAttractionsPage() {
       attractionsBannerText,
       attractionsBannerActive,
       attractionsBannerWhatsappMessage
-    }`, {}, { cache: 'no-store' })
+    }`, {}, { next: { revalidate: 600 } })
     if (fetched) bannerSettings = { ...bannerSettings, ...fetched }
   } catch (err) {
     console.error('Error fetching banner settings:', err)
@@ -94,7 +93,7 @@ export default async function SingaporeAttractionsPage() {
   try {
     const rawBundles = await client.fetch(`*[_type == "attractionBundle" && isActive == true] | order(sortOrder asc) {
       _id, label, emoji, description, adultQty, childQty, attractionKeywords
-    }`, {}, { cache: 'no-store' })
+    }`, {}, { next: { revalidate: 600 } })
     sanityBundles = rawBundles || []
   } catch (err) {
     console.error('Error fetching attraction bundles from Sanity:', err)
@@ -105,7 +104,7 @@ export default async function SingaporeAttractionsPage() {
   try {
     const rawMeta = await client.fetch(`*[_type == "attractionMeta"] {
       _id, name, matchKeyword, photo, officialWebsite, shortDescription, openingHours, rating, category, isPopular, isTrending, longDescription, highlights, tips, duration, location, ageRecommendation
-    }`, {}, { cache: 'no-store' })
+    }`, {}, { next: { revalidate: 600 } })
     // Resolve photo URLs
     sanityMeta = (rawMeta || []).map((m: any) => ({
       ...m,

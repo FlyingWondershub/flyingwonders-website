@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
 export const revalidate = 1800 // Cache for 30 minutes
 
 export interface AirlinePromo {
@@ -116,6 +115,10 @@ export async function GET() {
       timestamp: timestampStr,
       count: deals.length,
       deals
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600'
+      }
     })
   } catch (error: any) {
     return NextResponse.json({ success: false, error: 'Failed to fetch airline promotions.' })
