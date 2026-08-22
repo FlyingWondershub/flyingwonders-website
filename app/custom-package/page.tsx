@@ -837,16 +837,11 @@ export default function PrototypeBuilder() {
       .catch(() => {})
   }, [])
 
-  // Initialize itinerary array when nightsCount changes to show number of nights + 1 days
+  // Adjust itinerary array when nightsCount changes to show number of nights + 1 days
   useEffect(() => {
     if (!isAuthenticated) return
     const baseDaysCount = nightsCount + 1
     setItinerary(prev => {
-      // If proposal is already loaded with populated days, preserve them
-      if (prev.length > 0 && prev.some(d => (d.attractions?.length || 0) > 0 || (d.transfers?.length || 0) > 0)) {
-        if (baseDaysCount <= prev.length) return prev
-      }
-
       const customDays = prev.filter(d => d.isCustomDay)
       const baseDays = prev.filter(d => !d.isCustomDay)
       if (baseDaysCount > baseDays.length) {
