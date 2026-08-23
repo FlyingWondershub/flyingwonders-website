@@ -173,6 +173,7 @@ function MarkdownRenderer({ content }: { content: string }) {
       elements.push(
         <div
           key={`quote-${idx}`}
+          className="blog-tip-box"
           style={{
             borderLeft: '4px solid var(--gold-accent)',
             background: '#FFFDF5',
@@ -182,10 +183,10 @@ function MarkdownRenderer({ content }: { content: string }) {
             boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
           }}
         >
-          <div style={{ fontWeight: 700, color: '#975A16', marginBottom: '0.35rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="tip-title" style={{ fontWeight: 700, color: '#975A16', marginBottom: '0.35rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
             💡 INSIDER DMC TIP
           </div>
-          <div style={{ color: '#744210', fontSize: '0.95rem', lineHeight: '1.6' }}
+          <div className="tip-content" style={{ color: '#744210', fontSize: '0.95rem', lineHeight: '1.6' }}
             dangerouslySetInnerHTML={{
               __html: quoteText
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -209,11 +210,12 @@ function MarkdownRenderer({ content }: { content: string }) {
         elements.push(
           <div
             key={`cta-${idx}`}
+            className="glass"
             style={{
               background: 'linear-gradient(135deg, rgba(47,133,90,0.08) 0%, rgba(212,160,23,0.12) 100%)',
               border: '1.5px solid var(--emerald-secondary)',
               borderRadius: '16px',
-              padding: '1.5rem',
+              padding: '1.25rem 1.5rem',
               margin: '2.5rem 0',
               display: 'flex',
               justifyContent: 'space-between',
@@ -223,10 +225,10 @@ function MarkdownRenderer({ content }: { content: string }) {
             }}
           >
             <div>
-              <h4 style={{ margin: '0 0 0.3rem 0', color: 'var(--emerald-secondary)', fontSize: '1.1rem', fontWeight: 800 }}>
+              <h4 style={{ margin: '0 0 0.3rem 0', color: 'var(--emerald-secondary)', fontSize: '1.05rem', fontWeight: 800 }}>
                 🎟️ {title}
               </h4>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#4A5568' }}>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-dark)', opacity: 0.85 }}>
                 Instant barcoded e-tickets • Direct turnstile entry • Lowest wholesale price guarantee.
               </p>
             </div>
@@ -234,8 +236,8 @@ function MarkdownRenderer({ content }: { content: string }) {
               href={linkUrl}
               className="btn btn-primary"
               style={{
-                padding: '0.65rem 1.4rem',
-                fontSize: '0.85rem',
+                padding: '0.55rem 1.25rem',
+                fontSize: '0.8rem',
                 fontWeight: 700,
                 whiteSpace: 'nowrap'
               }}
@@ -259,7 +261,6 @@ function MarkdownRenderer({ content }: { content: string }) {
     // Ordered Numbered List (1. or 2.)
     const olMatch = trimmed.match(/^(\d+)\.\s+(.*)$/)
     if (olMatch && !trimmed.startsWith('##') && !trimmed.startsWith('###')) {
-      // If it looks like a section item in body text
       if (listType !== 'ol') flushList()
       listType = 'ol'
       currentList.push(olMatch[2])
@@ -271,7 +272,7 @@ function MarkdownRenderer({ content }: { content: string }) {
     elements.push(
       <p
         key={`p-${idx}`}
-        style={{ marginBottom: '1.25rem', color: '#374151', fontSize: '1.05rem', lineHeight: '1.85' }}
+        style={{ marginBottom: '1.25rem', color: 'var(--text-dark)', opacity: 0.9, fontSize: '1.05rem', lineHeight: '1.85' }}
         dangerouslySetInnerHTML={{
           __html: trimmed
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -285,7 +286,7 @@ function MarkdownRenderer({ content }: { content: string }) {
   flushList()
 
   return (
-    <div className="prose-container" style={{ color: '#2D3748', fontSize: '1.05rem', lineHeight: '1.85' }}>
+    <div className="prose-container">
       {elements}
     </div>
   )
@@ -304,7 +305,6 @@ export default function ArticleDetail() {
         if (data.success) {
           const match = data.articles.find((a: Article) => a.slug === slug)
           setArticle(match || null)
-          // Increment view count for this article
           if (match) {
             fetch(`/api/blog/view/${match.slug}`, { method: 'PATCH' }).catch(console.error)
           }
@@ -348,29 +348,29 @@ export default function ArticleDetail() {
     })
 
   return (
-    <div className="container" style={{ padding: '4rem 1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="container" style={{ padding: '2.5rem 1.5rem 4rem', maxWidth: '1200px', margin: '0 auto' }}>
       
       {/* Back button link */}
-      <div style={{ marginBottom: '2rem' }}>
-        <Link href="/blog" style={{ color: 'var(--emerald-secondary)', fontWeight: 700, fontSize: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <Link href="/blog" style={{ color: 'var(--emerald-secondary)', fontWeight: 700, fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
           ← Back to Blog Feed
         </Link>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 280px', gap: '3rem', alignItems: 'start' }} className="blog-layout-grid">
+      <div className="blog-layout-grid">
         
-        {/* Main Content Pane (Expansive, dominant reading area) */}
+        {/* Main Content Pane */}
         <div style={{ minWidth: 0 }}>
           
           {/* Article Header info */}
-          <div style={{ marginBottom: '2rem' }}>
-            <span style={{ fontSize: '0.8rem', background: 'rgba(47,133,90,0.1)', color: 'var(--emerald-secondary)', padding: '0.3rem 0.85rem', borderRadius: '15px', fontWeight: 700, textTransform: 'uppercase' }}>
+          <div style={{ marginBottom: '1.75rem' }}>
+            <span style={{ fontSize: '0.75rem', background: 'rgba(47,133,90,0.12)', color: 'var(--emerald-secondary)', padding: '0.25rem 0.75rem', borderRadius: '12px', fontWeight: 700, textTransform: 'uppercase' }}>
               {article.category}
             </span>
-            <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.5rem', color: '#1A202C', marginTop: '1rem', marginBottom: '1rem', lineHeight: '1.25' }}>
+            <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.75rem, 5vw, 2.5rem)', color: 'var(--text-dark)', marginTop: '0.75rem', marginBottom: '0.85rem', lineHeight: '1.25' }}>
               {article.title}
             </h1>
-            <div style={{ display: 'flex', gap: '1.5rem', color: '#718096', fontSize: '0.85rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '1.25rem', color: 'var(--text-dark)', opacity: 0.75, fontSize: '0.82rem', flexWrap: 'wrap' }}>
               <span>✍️ Written by: <strong>{article.author}</strong></span>
               <span>📅 Published: {article.date}</span>
               <span>⏱️ Read Time: {article.readTime}</span>
@@ -378,7 +378,7 @@ export default function ArticleDetail() {
           </div>
 
           {/* Hero Cover Image */}
-          <div style={{ height: '440px', borderRadius: '16px', overflow: 'hidden', marginBottom: '2.5rem', boxShadow: 'var(--shadow-md)', background: '#F1F5F9' }}>
+          <div style={{ height: 'clamp(240px, 45vw, 440px)', borderRadius: '16px', overflow: 'hidden', marginBottom: '2rem', boxShadow: 'var(--shadow-md)', background: 'rgba(0,0,0,0.05)' }}>
             <img 
               src={article.imageUrl || '/images/hero/singapore-hero-1.jpg'} 
               alt={article.title} 
@@ -390,12 +390,13 @@ export default function ArticleDetail() {
             />
           </div>
 
-          {/* Table of Contents Box (Mobile/In-line) */}
+          {/* Table of Contents Box */}
           {tocHeadings.length > 0 && (
             <div
+              className="blog-toc-box"
               style={{
-                background: '#F8FAFC',
-                border: '1px solid #E2E8F0',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '14px',
                 padding: '1.25rem 1.5rem',
                 marginBottom: '2.5rem'
@@ -410,7 +411,8 @@ export default function ArticleDetail() {
                     <a
                       href={`#${h.id}`}
                       style={{
-                        color: h.isH2 ? '#1E293B' : '#64748B',
+                        color: h.isH2 ? 'var(--text-dark)' : 'var(--text-dark)',
+                        opacity: h.isH2 ? 1 : 0.8,
                         fontWeight: h.isH2 ? 600 : 400,
                         fontSize: '0.88rem',
                         textDecoration: 'none',
@@ -429,13 +431,13 @@ export default function ArticleDetail() {
           <MarkdownRenderer content={article.content} />
 
           {/* Bottom Article Author & Share footer */}
-          <div style={{ marginTop: '4rem', padding: '1.75rem', background: '#F8FAFC', borderRadius: '16px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-            <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: 'var(--emerald-secondary)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 800, flexShrink: 0 }}>
+          <div className="blog-author-box" style={{ marginTop: '4rem', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'var(--emerald-secondary)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 800, flexShrink: 0 }}>
               {article.author.charAt(0)}
             </div>
             <div>
-              <div style={{ fontWeight: 800, color: '#1E293B', fontSize: '0.95rem' }}>{article.author}</div>
-              <div style={{ fontSize: '0.82rem', color: '#64748B', marginTop: '0.15rem' }}>
+              <div style={{ fontWeight: 800, color: 'var(--text-dark)', fontSize: '0.95rem' }}>{article.author}</div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-dark)', opacity: 0.75, marginTop: '0.15rem' }}>
                 Destination Specialist at Flying Wonders Singapore. Curating luxury itineraries, corporate groups, and family holiday experiences.
               </div>
             </div>
@@ -443,18 +445,18 @@ export default function ArticleDetail() {
 
         </div>
 
-        {/* Streamlined Super Compact Sidebar CTA (Reduced by 50%) */}
+        {/* Streamlined Super Compact Sidebar CTA */}
         <aside style={{ position: 'sticky', top: '90px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
           {/* Consolidated Compact Action Card */}
-          <div className="glass" style={{ padding: '1.25rem', borderRadius: '14px', background: '#FFF', border: '1px solid #E2E8F0', boxShadow: 'var(--shadow-sm)' }}>
+          <div className="glass" style={{ padding: '1.25rem', borderRadius: '14px', background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)' }}>
             <span style={{ fontSize: '0.7rem', color: 'var(--emerald-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               ⚡ Direct DMC Rates
             </span>
-            <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.15rem', color: '#1A202C', margin: '0.35rem 0 0.5rem 0', lineHeight: '1.3' }}>
+            <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.15rem', color: 'var(--text-dark)', margin: '0.35rem 0 0.5rem 0', lineHeight: '1.3' }}>
               Singapore Attraction Tickets
             </h3>
-            <p style={{ fontSize: '0.8rem', color: '#4A5568', lineHeight: 1.45, marginBottom: '0.85rem' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-dark)', opacity: 0.8, lineHeight: 1.45, marginBottom: '0.85rem' }}>
               Instant barcode e-tickets to USS, Gardens by the Bay, Night Safari & more at wholesale rates.
             </p>
             
@@ -468,7 +470,7 @@ export default function ArticleDetail() {
               </Link>
               <Link
                 href="/packages"
-                style={{ width: '100%', textAlign: 'center', padding: '0.45rem', fontSize: '0.78rem', fontWeight: 600, color: 'var(--emerald-secondary)', border: '1px solid #CBD5E1', borderRadius: '6px', textDecoration: 'none' }}
+                style={{ width: '100%', textAlign: 'center', padding: '0.45rem', fontSize: '0.78rem', fontWeight: 600, color: 'var(--emerald-secondary)', border: '1px solid var(--glass-border)', borderRadius: '6px', textDecoration: 'none' }}
               >
                 Custom Packages
               </Link>
@@ -486,7 +488,7 @@ export default function ArticleDetail() {
               justifyContent: 'center',
               gap: '6px',
               background: '#25D366',
-              color: '#FFF',
+              color: '#FFFFFF',
               padding: '0.6rem 0.85rem',
               borderRadius: '10px',
               fontSize: '0.8rem',
