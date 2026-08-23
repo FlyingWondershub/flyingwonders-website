@@ -39,7 +39,7 @@ html, body {
     --bg-main: #121212;
     --bg-secondary: #1E1E1E;
     --text-dark: #F9F9F9;
-    --text-light: #1A1A1A;
+    --text-light: #F9F9F9; /* MUST stay light text for dark footer & dark containers */
     --glass-bg: rgba(0, 0, 0, 0.4);
     --glass-border: rgba(255, 255, 255, 0.1);
   }

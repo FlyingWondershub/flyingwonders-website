@@ -262,37 +262,37 @@ export default function LayoutWrapper({
           </div>
 
           {/* Standard Footer Links */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem', color: '#F9F9F9' }}>
             <div>
-              <h3 style={{ color: 'var(--gold-accent)', marginBottom: '1rem', fontSize: '1.5rem' }}>Flying Wonders</h3>
-              <p style={{ opacity: 0.8, fontSize: '0.9rem', whiteSpace: 'pre-line' }}>
+              <h3 style={{ color: 'var(--gold-accent)', marginBottom: '1rem', fontSize: '1.5rem', fontFamily: 'var(--font-playfair), serif' }}>Flying Wonders</h3>
+              <p style={{ color: '#E2E8F0', opacity: 0.95, fontSize: '0.9rem', lineHeight: '1.7', whiteSpace: 'pre-line' }}>
                 {initialSettings?.officeAddress || '#74, 4th Cross, SBM Colony,\nBSK 1st Stage, Bangalore, India - 560050'}
               </p>
             </div>
             <div>
-              <h3 style={{ color: 'var(--gold-accent)', marginBottom: '1rem', fontSize: '1.5rem' }}>Contact</h3>
-              <p style={{ opacity: 0.8, fontSize: '0.9rem' }}>
-                Mobile: {initialSettings?.contactPhoneSingapore || '+65 94722830'} / {initialSettings?.contactPhoneIndia || '+91 9886171251'}<br />
-                Email: {initialSettings?.contactEmail || 'info.flyingwonders@gmail.com'}
+              <h3 style={{ color: 'var(--gold-accent)', marginBottom: '1rem', fontSize: '1.5rem', fontFamily: 'var(--font-playfair), serif' }}>Contact</h3>
+              <p style={{ color: '#E2E8F0', opacity: 0.95, fontSize: '0.9rem', lineHeight: '1.7' }}>
+                Mobile: <a href={`tel:${initialSettings?.contactPhoneSingapore || '+6594722830'}`} style={{ color: '#FFF', textDecoration: 'underline' }}>{initialSettings?.contactPhoneSingapore || '+65 94722830'}</a> / <a href={`tel:${initialSettings?.contactPhoneIndia || '+919886171251'}`} style={{ color: '#FFF', textDecoration: 'underline' }}>{initialSettings?.contactPhoneIndia || '+91 9886171251'}</a><br />
+                Email: <a href={`mailto:${initialSettings?.contactEmail || 'info.flyingwonders@gmail.com'}`} style={{ color: '#FFF', textDecoration: 'underline' }}>{initialSettings?.contactEmail || 'info.flyingwonders@gmail.com'}</a>
               </p>
             </div>
             <div>
-              <h3 style={{ color: 'var(--gold-accent)', marginBottom: '1rem', fontSize: '1.5rem' }}>Follow Us</h3>
-              <div style={{ display: 'flex', gap: '1rem', color: 'var(--emerald-secondary)' }}>
-                {initialSettings?.youtubeUrl && <a href={initialSettings.youtubeUrl} target="_blank" rel="noreferrer" style={{ transition: 'color 0.2s' }}>YouTube</a>}
-                {initialSettings?.instagramUrl && <a href={initialSettings.instagramUrl} target="_blank" rel="noreferrer" style={{ transition: 'color 0.2s' }}>Instagram</a>}
-                {initialSettings?.facebookUrl && <a href={initialSettings.facebookUrl} target="_blank" rel="noreferrer" style={{ transition: 'color 0.2s' }}>Facebook</a>}
+              <h3 style={{ color: 'var(--gold-accent)', marginBottom: '1rem', fontSize: '1.5rem', fontFamily: 'var(--font-playfair), serif' }}>Follow Us</h3>
+              <div style={{ display: 'flex', gap: '1rem', color: '#F9F9F9' }}>
+                {initialSettings?.youtubeUrl && <a href={initialSettings.youtubeUrl} target="_blank" rel="noreferrer" style={{ color: '#E2E8F0', textDecoration: 'underline', transition: 'color 0.2s' }}>YouTube</a>}
+                {initialSettings?.instagramUrl && <a href={initialSettings.instagramUrl} target="_blank" rel="noreferrer" style={{ color: '#E2E8F0', textDecoration: 'underline', transition: 'color 0.2s' }}>Instagram</a>}
+                {initialSettings?.facebookUrl && <a href={initialSettings.facebookUrl} target="_blank" rel="noreferrer" style={{ color: '#E2E8F0', textDecoration: 'underline', transition: 'color 0.2s' }}>Facebook</a>}
               </div>
             </div>
           </div>
         </div>
-        <div className="container" style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', opacity: 0.5, fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="container" style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.15)', textAlign: 'center', color: '#CBD5E1', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <span>© {new Date().getFullYear()} Flying Wonders Pvt Ltd. All rights reserved.</span>
           <div style={{ display: 'flex', gap: '1.5rem' }}>
-            {!pageVisibility?.hideFaq && <Link href="/faq" style={{ textDecoration: 'underline', color: '#FFF' }}>FAQ</Link>}
-            <Link href="/privacy" style={{ textDecoration: 'underline', color: '#FFF' }}>Privacy Policy</Link>
-            <Link href="/terms" style={{ textDecoration: 'underline', color: '#FFF' }}>Terms of Service</Link>
-            <Link href="/refund" style={{ textDecoration: 'underline', color: '#FFF' }}>Refund & Cancellation</Link>
+            {!pageVisibility?.hideFaq && <Link href="/faq" style={{ textDecoration: 'underline', color: '#E2E8F0' }}>FAQ</Link>}
+            <Link href="/privacy" style={{ textDecoration: 'underline', color: '#E2E8F0' }}>Privacy Policy</Link>
+            <Link href="/terms" style={{ textDecoration: 'underline', color: '#E2E8F0' }}>Terms of Service</Link>
+            <Link href="/refund" style={{ textDecoration: 'underline', color: '#E2E8F0' }}>Refund & Cancellation</Link>
           </div>
         </div>
       </footer>
