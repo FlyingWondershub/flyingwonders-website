@@ -1,0 +1,20 @@
+{
+  "name": "flyingwonders-wa-gateway",
+  "version": "1.0.0",
+  "description": "24/7 WhatsApp Group Inquiries Webhook Gateway for Oracle Free VM",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "pm2:start": "pm2 start server.js --name fw-whatsapp-gateway",
+    "pm2:logs": "pm2 logs fw-whatsapp-gateway",
+    "pm2:restart": "pm2 restart fw-whatsapp-gateway",
+    "pm2:stop": "pm2 stop fw-whatsapp-gateway"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.8",
+    "dotenv": "^16.4.5",
+    "pino": "^9.0.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

@@ -45,6 +45,8 @@ import { studyCourseCategorySchema } from './studyCourseCategory'
 import { studyInSingaporeSettingsSchema } from './studyInSingaporeSettings'
 import { karnatakaPackageSchema } from './karnatakaPackage'
 import { karnatakaSettingsSchema } from './karnatakaSettings'
+import { b2bLeadInquirySchema } from './b2bLeadInquiry'
+import { b2bLeadsSettingsSchema } from './b2bLeadsSettings'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -90,6 +92,8 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     travelToolsSchema,
     eventsPageSchema,
     readyPackageTemplateSchema,
-    blogPostSchema
+    blogPostSchema,
+    b2bLeadInquirySchema,
+    b2bLeadsSettingsSchema
   ],
 }
