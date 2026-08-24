@@ -598,163 +598,160 @@ export default function AgentPortalPage() {
           </div>
         </div>
 
-        {/* Admin Shortcut Banner */}
-        {activeAgent?.role === 'admin' && (
-          <div style={{
-            background: '#FEF3C7',
-            border: '1px solid #F59E0B',
-            borderRadius: '12px',
-            padding: '1rem 1.25rem',
-            marginBottom: '2rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '1rem'
-          }}>
-            <div>
-              <strong style={{ color: '#92400E', fontSize: '0.95rem', display: 'block' }}>👑 Administrator Command Center</strong>
-              <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.82rem', color: '#B45309', lineHeight: 1.4 }}>
-                You have Admin privileges. You can approve package updates, status requests, view audit logs, and more.
-              </p>
-            </div>
-            <Link
-              href="/admin-dashboard"
-              style={{
-                background: '#D97706',
-                color: '#FFF',
-                padding: '0.5rem 1rem',
-                borderRadius: '8px',
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                textDecoration: 'none',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.3rem'
-              }}
-            >
-              Go to Admin Operations Dashboard →
-            </Link>
-          </div>
-        )}
-
-        {/* ── METRIC CARDS SECTION (MATCHING SCREENSHOT LAYOUT) ── */}
+        {/* ── UNIFIED COMPACT DASHBOARD ACTION & KPI BAR (ALL IN 1 LINE) ── */}
         {activeTab === 'dashboard' && (
-          <div>
-            {/* Unified Compact Metrics Grid (One Row) */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-              
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+            flexWrap: 'wrap',
+            background: '#FFF',
+            border: '1px solid #E2E8F0',
+            borderRadius: '14px',
+            padding: '0.65rem 0.85rem',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+            marginBottom: '1.75rem'
+          }}>
+            {/* Left Button: Operations Dashboard (if admin) */}
+            {activeAgent?.role === 'admin' && (
+              <Link
+                href="/admin-dashboard"
+                style={{
+                  background: 'linear-gradient(135deg, #D97706 0%, #B45309 100%)',
+                  color: '#FFF',
+                  padding: '0.55rem 0.95rem',
+                  borderRadius: '9px',
+                  fontWeight: 800,
+                  fontSize: '0.8rem',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  boxShadow: '0 2px 6px rgba(217,119,6,0.25)',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
+                }}
+                title="Admin Operations Dashboard (Audit Logs, Package Approvals, Master Settings)"
+              >
+                <span>👑</span>
+                <span>Operations Dashboard</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>→</span>
+              </Link>
+            )}
+
+            {/* Center: 5 Compact KPI Chips / Stat Badges */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              flex: '1 1 auto',
+              justifyContent: 'center'
+            }}>
               {/* Today's Bookings */}
               <div style={{
                 background: 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)',
                 color: '#FFF',
-                borderRadius: '12px',
-                padding: '1rem',
-                boxShadow: '0 4px 12px rgba(220,38,38,0.15)',
-                display: 'flex',
+                borderRadius: '8px',
+                padding: '0.4rem 0.75rem',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.75rem'
+                gap: '0.45rem',
+                boxShadow: '0 2px 5px rgba(220,38,38,0.2)'
               }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Calendar size={20} color="#FFF" />
-                </div>
-                <div>
-                  <strong style={{ fontSize: '1.6rem', fontWeight: 800, display: 'block', lineHeight: 1 }}>{todayBookings}</strong>
-                  <span style={{ fontSize: '0.75rem', opacity: 0.9, fontWeight: 600 }}>Today&apos;s Bookings</span>
-                </div>
+                <Calendar size={14} color="#FFF" />
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, opacity: 0.95 }}>Today:</span>
+                <strong style={{ fontSize: '1.05rem', fontWeight: 900, lineHeight: 1 }}>{todayBookings}</strong>
               </div>
 
               {/* This Month */}
-              <div style={{ background: '#FFF', borderRadius: '12px', padding: '1rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Calendar size={20} color="#166534" />
-                </div>
-                <div>
-                  <strong style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1 }}>{thisMonthBookings}</strong>
-                  <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>This Month</span>
-                </div>
+              <div style={{
+                background: '#F0FDF4',
+                border: '1px solid #BBF7D0',
+                color: '#166534',
+                borderRadius: '8px',
+                padding: '0.4rem 0.75rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem'
+              }}>
+                <Calendar size={14} color="#166534" />
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#166534' }}>This Month:</span>
+                <strong style={{ fontSize: '1.05rem', fontWeight: 900, color: '#166534', lineHeight: 1 }}>{thisMonthBookings}</strong>
               </div>
 
               {/* Confirmed */}
-              <div style={{ background: '#FFF', borderRadius: '12px', padding: '1rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <CheckCircle2 size={20} color="#15803D" />
-                </div>
-                <div>
-                  <strong style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1 }}>{confirmedCount}</strong>
-                  <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>Confirmed</span>
-                </div>
+              <div style={{
+                background: '#DCFCE7',
+                border: '1px solid #86EFAC',
+                color: '#15803D',
+                borderRadius: '8px',
+                padding: '0.4rem 0.75rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem'
+              }}>
+                <CheckCircle2 size={14} color="#15803D" />
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#15803D' }}>Confirmed:</span>
+                <strong style={{ fontSize: '1.05rem', fontWeight: 900, color: '#15803D', lineHeight: 1 }}>{confirmedCount}</strong>
               </div>
 
               {/* Pending */}
-              <div style={{ background: '#FFF', borderRadius: '12px', padding: '1rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Clock size={20} color="#B45309" />
-                </div>
-                <div>
-                  <strong style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1 }}>{pendingCount}</strong>
-                  <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>Pending</span>
-                </div>
+              <div style={{
+                background: '#FEF3C7',
+                border: '1px solid #FDE68A',
+                color: '#B45309',
+                borderRadius: '8px',
+                padding: '0.4rem 0.75rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem'
+              }}>
+                <Clock size={14} color="#B45309" />
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#B45309' }}>Pending:</span>
+                <strong style={{ fontSize: '1.05rem', fontWeight: 900, color: '#B45309', lineHeight: 1 }}>{pendingCount}</strong>
               </div>
 
               {/* Total Bookings */}
-              <div style={{ background: '#FFF', borderRadius: '12px', padding: '1rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <TrendingUp size={20} color="#0369A1" />
-                </div>
-                <div>
-                  <strong style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1 }}>{totalCount}</strong>
-                  <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>Total Bookings</span>
-                </div>
+              <div style={{
+                background: '#E0F2FE',
+                border: '1px solid #BAE6FD',
+                color: '#0369A1',
+                borderRadius: '8px',
+                padding: '0.4rem 0.75rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem'
+              }}>
+                <TrendingUp size={14} color="#0369A1" />
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0369A1' }}>Total:</span>
+                <strong style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0369A1', lineHeight: 1 }}>{totalCount}</strong>
               </div>
-
             </div>
 
-            {/* ── QUICK START BUILDER PROMPT BANNER ── */}
-            <div style={{
-              background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)',
-              color: '#FFF',
-              borderRadius: '16px',
-              padding: '1.75rem 2rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1.25rem',
-              marginBottom: '2.5rem',
-              boxShadow: '0 10px 25px rgba(15,76,58,0.15)'
-            }}>
-              <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.35rem', fontFamily: 'system-ui, sans-serif' }}>
-                  Ready to build a new custom Singapore or Malaysia package?
-                </h3>
-                <p style={{ fontSize: '0.88rem', opacity: 0.9, margin: 0, fontWeight: 300 }}>
-                  Generate white-label PDF itineraries and instant B2B quotes in under 2 minutes.
-                </p>
-              </div>
-
-              <Link
-                href="/custom-package"
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  borderRadius: '10px',
-                  background: '#B83A4B',
-                  color: '#FFF',
-                  fontWeight: 800,
-                  fontSize: '0.9rem',
-                  textDecoration: 'none',
-                  boxShadow: '0 4px 12px rgba(184,58,75,0.3)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
-              >
-                <Package size={18} />
-                <span>Launch Package Builder ⚙️</span>
-              </Link>
-            </div>
-
+            {/* Right Button: Launch Package Builder */}
+            <Link
+              href="/custom-package"
+              style={{
+                padding: '0.55rem 1.05rem',
+                borderRadius: '9px',
+                background: 'linear-gradient(135deg, #B83A4B 0%, #9F1239 100%)',
+                color: '#FFF',
+                fontWeight: 800,
+                fontSize: '0.8rem',
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(184,58,75,0.25)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              <Package size={15} />
+              <span>Launch Package Builder ⚙️</span>
+            </Link>
           </div>
         )}
 
