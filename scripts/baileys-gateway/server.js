@@ -78,6 +78,7 @@ async function startWhatsAppGateway() {
 
       const remoteJid = msg.key.remoteJid || ''
       const isGroup = remoteJid.endsWith('@g.us')
+      if (!isGroup) continue // Ignore direct messages sent to the bot phone number
 
       // Extract message text from conversation, extendedTextMessage, or image caption
       const messageContent = msg.message

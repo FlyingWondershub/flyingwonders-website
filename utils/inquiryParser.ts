@@ -239,21 +239,57 @@ export function parseWhatsAppMessage(
     title = title.substring(0, 67) + '...'
   }
 
-  // Final check: is it an inquiry?
-  // It is likely an inquiry if it has a destination, or categorized, or mentions inquiry/supplier/transport/deal/looking for, or has phone number
-  const isLikelyInquiry = Boolean(
+  // 8. Retail / Product / Non-travel spam filter
+  const isRetailSpam =
+    lower.includes('size s to') ||
+    lower.includes('size m to') ||
+    lower.includes('size l to') ||
+    lower.includes('size xl') ||
+    lower.includes('kurti') ||
+    lower.includes('saree') ||
+    lower.includes('dress material') ||
+    lower.includes('cotton fabric') ||
+    lower.includes('wholesale cloth') ||
+    lower.includes('shirt') ||
+    lower.includes('tshirt') ||
+    lower.includes('shoes') ||
+    lower.includes('jewellery') ||
+    lower.includes('replica')
+
+  if (isRetailSpam) {
+    return {
+      title: 'Non-Travel Product / Spam',
+      destination: '',
+      category: 'other',
+      rawMessage: cleaned,
+      requesterName: requesterName || 'Sender',
+      phoneNumber: phone,
+      city: '',
+      urgency: 'normal',
+      isLikelyInquiry: false,
+      rejectionReason: 'Filtered non-travel retail / product post.',
+    }
+  }
+
+  // Final check: is it an actual travel inquiry?
+  const hasTravelIntent = Boolean(
     destination ||
     category !== 'other' ||
     lower.includes('looking for') ||
-    lower.includes('anyone') ||
-    lower.includes('any ') ||
-    lower.includes('need ') ||
-    lower.includes('require') ||
+    lower.includes('anyone operating') ||
+    lower.includes('any supplier') ||
+    lower.includes('need supplier') ||
     lower.includes('inquiry') ||
+    lower.includes('enquiry') ||
     lower.includes('dmc') ||
-    lower.includes('rate') ||
-    lower.includes('cost') ||
-    phone
+    lower.includes('fixed departure') ||
+    lower.includes('package') ||
+    lower.includes('rates') ||
+    lower.includes('tariff') ||
+    lower.includes('pax') ||
+    lower.includes('airport') ||
+    lower.includes('transporter') ||
+    lower.includes('transportor')
   )
 
   return {
@@ -265,6 +301,7 @@ export function parseWhatsAppMessage(
     phoneNumber: phone,
     city,
     urgency: isUrgent ? 'urgent' : 'normal',
-    isLikelyInquiry,
+    isLikelyInquiry: hasTravelIntent,
+    rejectionReason: hasTravelIntent ? undefined : 'Message lacks travel or supplier inquiry intent.',
   }
 }

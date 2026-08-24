@@ -30,23 +30,50 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Message text is required' }, { status: 400 })
     }
 
-    // 2. Fetch Dynamic Settings from Sanity
-    const settingsQuery = `*[_type == "b2bLeadsSettings"][0]{
+    // 2. Automatically ignore private 1-on-1 Direct Messages to the bot
+    if (groupName === 'Direct Message') {
+      return NextResponse.json({
+        status: 'ignored',
+        reason: 'Direct 1-on-1 messages to the bot are ignored.'
+      }, { status: 200 })
+    }
+
+    // 3. Fetch Dynamic Settings from Sanity (with fresh fetch)
+    const writeClient = getSanityWriteClient()
+    const settingsQuery = `*[_type == "b2bLeadsSettings"] | order(_updatedAt desc)[0]{
       allowedGroups,
       authorizedBotNumbers,
       isPageHidden
     }`
-    const settings = await client.fetch(settingsQuery).catch(() => null)
+    const settings = writeClient 
+      ? await writeClient.fetch(settingsQuery).catch(() => null)
+      : await client.fetch(settingsQuery).catch(() => null)
+
+    // Helper to strip emojis, symbols, and extra spaces for resilient group name matching
+    const normalizeGroupName = (name: string) =>
+      (name || '')
+        .replace(/[^\p{L}\p{N}\s]/gu, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase()
+
+    const cleanIncomingGroup = normalizeGroupName(groupName)
 
     // Check Allowed Groups filter
     if (settings?.allowedGroups && Array.isArray(settings.allowedGroups) && settings.allowedGroups.length > 0) {
-      const isGroupAllowed = settings.allowedGroups.some((g: string) =>
-        g.toLowerCase().trim() === groupName.toLowerCase().trim()
-      )
+      const isGroupAllowed = settings.allowedGroups.some((g: string) => {
+        const cleanAllowed = normalizeGroupName(g)
+        if (!cleanAllowed) return false
+        return (
+          cleanIncomingGroup === cleanAllowed ||
+          cleanIncomingGroup.includes(cleanAllowed) ||
+          cleanAllowed.includes(cleanIncomingGroup)
+        )
+      })
       if (!isGroupAllowed) {
         return NextResponse.json({
           status: 'ignored',
-          reason: `Group '${groupName}' is not in the allowed groups whitelist.`
+          reason: `Group '${groupName}' does not match allowed groups whitelist.`
         }, { status: 200 })
       }
     }
