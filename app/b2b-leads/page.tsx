@@ -289,7 +289,7 @@ export default function B2BLeadsPage() {
                 placeholder="Enter 4-digit PIN"
                 value={bypassPin}
                 onChange={(e) => setBypassPin(e.target.value)}
-                style={{ flex: 1, padding: '8px 12px', fontSize: '0.8rem', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', outline: 'none' }}
+                style={{ flex: 1, padding: '8px 12px', fontSize: '0.8rem', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', outline: 'none', color: '#0F172A' }}
               />
               <button
                 onClick={() => {
@@ -310,55 +310,101 @@ export default function B2BLeadsPage() {
     )
   }
 
+  const openCount = inquiries.filter(i => i.status === 'open').length
+  const closedCount = inquiries.filter(i => i.status === 'closed').length
+
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC', color: '#0F172A', fontFamily: 'var(--font-inter), sans-serif' }}>
       
-      {/* Ultra-Compact Top Header Bar */}
+      {/* Top Header Bar with Search + Status + Actions on 1 Line */}
       <header style={{ position: 'sticky', top: 0, zIndex: 40, background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 12px' }}>
-        <div style={{ maxWidth: '1440px', margin: '0 auto', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+        <div style={{ maxWidth: '1440px', margin: '0 auto', minHeight: '50px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', padding: '6px 0' }}>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: '#0F4C3A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontWeight: 900, fontSize: '0.85rem' }}>
+          {/* Left: Brand & Verified DMC Link */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+              <div style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#0F4C3A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontWeight: 900, fontSize: '0.8rem' }}>
                 FW
               </div>
-              <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.88rem' }}>
+              <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
                 B2B Live Inquiries
               </span>
             </Link>
 
-            <span style={{ height: '16px', width: '1px', background: '#E2E8F0' }}></span>
+            <span style={{ height: '14px', width: '1px', background: '#CBD5E1' }}></span>
 
             <Link
               href="/b2b-directory"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.74rem', fontWeight: 700, color: '#0F4C3A', textDecoration: 'none', padding: '3px 8px', borderRadius: '6px', background: '#ECFDF5' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', fontWeight: 700, color: '#0F4C3A', textDecoration: 'none', padding: '3px 7px', borderRadius: '5px', background: '#ECFDF5', border: '1px solid #A7F3D0', whiteSpace: 'nowrap' }}
             >
-              <Building2 size={12} color="#0F4C3A" />
+              <Building2 size={11} color="#0F4C3A" />
               Verified DMCs
             </Link>
           </div>
 
-          {/* Inline Live Metrics & Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.74rem', fontWeight: 700, marginRight: '4px' }}>
-              <span style={{ color: '#059669' }}>● {inquiries.filter(i => i.status === 'open').length} Open</span>
-              <span style={{ color: '#64748B' }}>● {inquiries.filter(i => i.status === 'closed').length} Cleared</span>
+          {/* Center: Compact Search Box + Status Filter Next to it */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '1 1 auto', maxWidth: '640px', minWidth: '260px' }}>
+            
+            {/* Search Box */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: '1 1 200px', minWidth: '160px' }}>
+              <Search size={14} color="#64748B" style={{ position: 'absolute', left: '9px' }} />
+              <input
+                type="text"
+                placeholder="Search destination, hotel, cab, agent..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ width: '100%', padding: '6px 26px 6px 28px', fontSize: '0.78rem', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', outline: 'none', color: '#0F172A', fontWeight: 600 }}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  style={{ position: 'absolute', right: '7px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B' }}
+                >
+                  <X size={13} />
+                </button>
+              )}
             </div>
 
+            {/* Status Switcher (Open / Cleared / All) */}
+            <div style={{ display: 'inline-flex', background: '#F1F5F9', padding: '2px', borderRadius: '7px', flexShrink: 0, border: '1px solid #E2E8F0' }}>
+              <button
+                onClick={() => setStatusFilter('open')}
+                style={{ padding: '4px 10px', borderRadius: '5px', border: 'none', background: statusFilter === 'open' ? '#0F4C3A' : 'transparent', color: statusFilter === 'open' ? '#FFFFFF' : '#334155', fontWeight: 800, fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                🟢 Open ({openCount})
+              </button>
+              <button
+                onClick={() => setStatusFilter('closed')}
+                style={{ padding: '4px 10px', borderRadius: '5px', border: 'none', background: statusFilter === 'closed' ? '#334155' : 'transparent', color: statusFilter === 'closed' ? '#FFFFFF' : '#334155', fontWeight: 800, fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                ⚪ Cleared ({closedCount})
+              </button>
+              <button
+                onClick={() => setStatusFilter('all')}
+                style={{ padding: '4px 8px', borderRadius: '5px', border: 'none', background: statusFilter === 'all' ? '#334155' : 'transparent', color: statusFilter === 'all' ? '#FFFFFF' : '#334155', fontWeight: 800, fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              >
+                All
+              </button>
+            </div>
+
+          </div>
+
+          {/* Right: Refresh & Post Button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
             <button
               onClick={() => fetchData()}
               disabled={loading}
               title="Refresh Inquiries"
-              style={{ width: '30px', height: '30px', borderRadius: '7px', border: '1px solid #E2E8F0', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#475569' }}
+              style={{ width: '28px', height: '28px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#334155' }}
             >
               <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
             </button>
 
             <button
               onClick={() => setIsPasteModalOpen(true)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 12px', background: '#0F4C3A', color: '#FFFFFF', fontWeight: 700, fontSize: '0.76rem', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 11px', background: '#0F4C3A', color: '#FFFFFF', fontWeight: 800, fontSize: '0.74rem', borderRadius: '7px', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
-              <Plus size={14} />
+              <Plus size={13} />
               <span>+ Paste Post</span>
             </button>
           </div>
@@ -367,63 +413,16 @@ export default function B2BLeadsPage() {
       </header>
 
       {/* Main Container */}
-      <main style={{ maxWidth: '1440px', margin: '0 auto', padding: '10px 12px 48px' }}>
+      <main style={{ maxWidth: '1440px', margin: '0 auto', padding: '8px 12px 48px' }}>
 
-        {/* Compact Filters & Controls Bar */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '10px', marginBottom: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+        {/* Compact Secondary Filter Bar (Category Pills & Hot Destinations) */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '8px 10px', marginBottom: '10px', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
           
-          {/* Top Search + Status Switcher Row */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-            
-            {/* Search Box */}
-            <div style={{ flex: 1, minWidth: '220px', position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Search size={15} color="#94A3B8" style={{ position: 'absolute', left: '10px' }} />
-              <input
-                type="text"
-                placeholder="Search destination, hotel, transport, agent..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ width: '100%', padding: '7px 28px 7px 32px', fontSize: '0.8rem', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', outline: 'none', color: '#0F172A', fontWeight: 500 }}
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  style={{ position: 'absolute', right: '8px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-
-            {/* Status Switcher */}
-            <div style={{ display: 'inline-flex', background: '#F1F5F9', padding: '2px', borderRadius: '8px' }}>
-              <button
-                onClick={() => setStatusFilter('open')}
-                style={{ padding: '5px 12px', borderRadius: '6px', border: 'none', background: statusFilter === 'open' ? '#0F4C3A' : 'transparent', color: statusFilter === 'open' ? '#FFFFFF' : '#475569', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}
-              >
-                🟢 Open ({inquiries.filter(i => i.status === 'open').length})
-              </button>
-              <button
-                onClick={() => setStatusFilter('closed')}
-                style={{ padding: '5px 12px', borderRadius: '6px', border: 'none', background: statusFilter === 'closed' ? '#334155' : 'transparent', color: statusFilter === 'closed' ? '#FFFFFF' : '#475569', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}
-              >
-                ⚪ Cleared ({inquiries.filter(i => i.status === 'closed').length})
-              </button>
-              <button
-                onClick={() => setStatusFilter('all')}
-                style={{ padding: '5px 10px', borderRadius: '6px', border: 'none', background: statusFilter === 'all' ? '#334155' : 'transparent', color: statusFilter === 'all' ? '#FFFFFF' : '#475569', fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer' }}
-              >
-                All
-              </button>
-            </div>
-
-          </div>
-
-          {/* Category Filter Pills (Compact 1-line horizontal scroll) */}
-          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+          {/* Category Filter Pills */}
+          <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '4px', alignItems: 'center' }}>
             <button
               onClick={() => setSelectedCategory('all')}
-              style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid', borderColor: selectedCategory === 'all' ? '#0F4C3A' : '#E2E8F0', background: selectedCategory === 'all' ? '#0F4C3A' : '#FFFFFF', color: selectedCategory === 'all' ? '#FFFFFF' : '#334155', fontWeight: 700, fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              style={{ padding: '3px 9px', borderRadius: '5px', border: '1px solid', borderColor: selectedCategory === 'all' ? '#0F4C3A' : '#CBD5E1', background: selectedCategory === 'all' ? '#0F4C3A' : '#FFFFFF', color: selectedCategory === 'all' ? '#FFFFFF' : '#1E293B', fontWeight: 800, fontSize: '0.7rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
               All Types
             </button>
@@ -434,9 +433,9 @@ export default function B2BLeadsPage() {
                 <button
                   key={key}
                   onClick={() => setSelectedCategory(key)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 9px', borderRadius: '6px', border: '1px solid', borderColor: isSelected ? '#0F4C3A' : '#E2E8F0', background: isSelected ? '#0F4C3A' : '#FFFFFF', color: isSelected ? '#FFFFFF' : '#334155', fontWeight: 700, fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '3px 8px', borderRadius: '5px', border: '1px solid', borderColor: isSelected ? '#0F4C3A' : '#E2E8F0', background: isSelected ? '#0F4C3A' : '#FFFFFF', color: isSelected ? '#FFFFFF' : '#1E293B', fontWeight: 700, fontSize: '0.7rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
-                  <Icon size={12} />
+                  <Icon size={11} />
                   <span>{cat.label}</span>
                 </button>
               )
@@ -445,11 +444,11 @@ export default function B2BLeadsPage() {
 
           {/* Hot Destination Filter Chips */}
           {availableDestinations.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px', fontSize: '0.7rem', paddingTop: '6px', borderTop: '1px solid #F8FAFC' }}>
-              <span style={{ color: '#94A3B8', fontWeight: 700 }}>Destinations:</span>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px', fontSize: '0.68rem', paddingTop: '5px', borderTop: '1px solid #F1F5F9' }}>
+              <span style={{ color: '#475569', fontWeight: 800 }}>Destinations:</span>
               <button
                 onClick={() => setSelectedDestination('all')}
-                style={{ padding: '2px 8px', borderRadius: '4px', border: 'none', background: selectedDestination === 'all' ? '#E2E8F0' : 'transparent', color: '#1E293B', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '2px 7px', borderRadius: '4px', border: 'none', background: selectedDestination === 'all' ? '#CBD5E1' : 'transparent', color: '#0F172A', fontWeight: 800, cursor: 'pointer' }}
               >
                 All
               </button>
@@ -457,9 +456,9 @@ export default function B2BLeadsPage() {
                 <button
                   key={dest}
                   onClick={() => setSelectedDestination(dest === selectedDestination ? 'all' : dest)}
-                  style={{ padding: '2px 7px', borderRadius: '4px', border: '1px solid', borderColor: selectedDestination === dest ? '#0F4C3A' : '#E2E8F0', background: selectedDestination === dest ? '#E6F4EA' : '#FFFFFF', color: selectedDestination === dest ? '#0F4C3A' : '#475569', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                  style={{ padding: '2px 6px', borderRadius: '4px', border: '1px solid', borderColor: selectedDestination === dest ? '#0F4C3A' : '#E2E8F0', background: selectedDestination === dest ? '#E6F4EA' : '#FFFFFF', color: selectedDestination === dest ? '#0F4C3A' : '#334155', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
                 >
-                  <MapPin size={10} color="#0F4C3A" />
+                  <MapPin size={9} color="#0F4C3A" />
                   <span>{dest}</span>
                 </button>
               ))}
@@ -470,18 +469,18 @@ export default function B2BLeadsPage() {
 
         {/* High-Density Inquiries Cards Grid */}
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '10px' }}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} style={{ height: '180px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0' }}></div>
+              <div key={i} style={{ height: '160px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0' }}></div>
             ))}
           </div>
         ) : filteredInquiries.length === 0 ? (
-          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '14px', padding: '32px 16px', textAlign: 'center', maxWidth: '420px', margin: '24px auto' }}>
-            <Search size={28} color="#94A3B8" style={{ margin: '0 auto 8px' }} />
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '28px 16px', textAlign: 'center', maxWidth: '400px', margin: '20px auto' }}>
+            <Search size={24} color="#94A3B8" style={{ margin: '0 auto 6px' }} />
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
               No requirements found
             </h3>
-            <p style={{ fontSize: '0.78rem', color: '#64748B', marginBottom: '14px' }}>
+            <p style={{ fontSize: '0.76rem', color: '#475569', marginBottom: '12px' }}>
               {searchQuery || selectedCategory !== 'all' || selectedDestination !== 'all'
                 ? 'Try clearing some search keywords or category filters.'
                 : 'No active inquiries logged yet. Inquiries will stream here automatically!'}
@@ -493,13 +492,13 @@ export default function B2BLeadsPage() {
                 setSelectedDestination('all')
                 setStatusFilter('all')
               }}
-              style={{ padding: '6px 14px', background: '#0F4C3A', color: '#FFFFFF', fontWeight: 700, borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '0.75rem' }}
+              style={{ padding: '5px 12px', background: '#0F4C3A', color: '#FFFFFF', fontWeight: 800, borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.72rem' }}
             >
               Reset Filters
             </button>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(315px, 1fr))', gap: '10px' }}>
             {filteredInquiries.map((inquiry) => {
               const catConfig = CATEGORY_MAP[inquiry.category] || CATEGORY_MAP.other
               const CatIcon = catConfig.icon
@@ -518,65 +517,65 @@ export default function B2BLeadsPage() {
                     background: '#FFFFFF',
                     border: '1px solid',
                     borderColor: isClosed ? '#E2E8F0' : inquiry.urgency === 'urgent' ? '#FBBF24' : '#E2E8F0',
-                    borderRadius: '14px',
-                    padding: '14px',
+                    borderRadius: '12px',
+                    padding: '12px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                    opacity: isClosed ? 0.7 : 1
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+                    opacity: isClosed ? 0.75 : 1
                   }}
                 >
                   <div>
                     {/* Compact Top Tag Row */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px', marginBottom: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexWrap: 'wrap' }}>
                         {/* Category */}
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 7px', borderRadius: '5px', background: catConfig.bg, color: catConfig.color, border: `1px solid ${catConfig.border}`, fontSize: '0.68rem', fontWeight: 700 }}>
-                          <CatIcon size={11} />
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 6px', borderRadius: '4px', background: catConfig.bg, color: catConfig.color, border: `1px solid ${catConfig.border}`, fontSize: '0.66rem', fontWeight: 800 }}>
+                          <CatIcon size={10} />
                           <span>{catConfig.label}</span>
                         </span>
 
                         {/* Destination */}
                         {inquiry.destination && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 7px', borderRadius: '5px', background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', fontSize: '0.68rem', fontWeight: 700 }}>
-                            <MapPin size={10} color="#059669" />
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', padding: '2px 6px', borderRadius: '4px', background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', fontSize: '0.66rem', fontWeight: 800 }}>
+                            <MapPin size={9} color="#059669" />
                             <span>{inquiry.destination}</span>
                           </span>
                         )}
 
                         {/* Urgent */}
                         {inquiry.urgency === 'urgent' && (
-                          <span style={{ padding: '2px 6px', borderRadius: '4px', background: '#F59E0B', color: '#FFFFFF', fontSize: '0.65rem', fontWeight: 800 }}>
+                          <span style={{ padding: '2px 5px', borderRadius: '3px', background: '#F59E0B', color: '#FFFFFF', fontSize: '0.62rem', fontWeight: 900 }}>
                             ⚡ Urgent
                           </span>
                         )}
                       </div>
 
-                      <span style={{ fontSize: '0.68rem', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
-                        <Clock size={11} />
+                      <span style={{ fontSize: '0.66rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: 700 }}>
+                        <Clock size={10} />
                         {formatTimeAgo(inquiry.postedAt)}
                       </span>
                     </div>
 
                     {/* Headline */}
-                    <h3 style={{ fontSize: '0.88rem', fontWeight: 800, color: isClosed ? '#64748B' : '#0F172A', marginBottom: '6px', lineHeight: 1.3, textDecoration: isClosed ? 'line-through' : 'none' }}>
+                    <h3 style={{ fontSize: '0.86rem', fontWeight: 800, color: isClosed ? '#64748B' : '#0F172A', marginBottom: '6px', lineHeight: 1.3, textDecoration: isClosed ? 'line-through' : 'none' }}>
                       {inquiry.title}
                     </h3>
 
-                    {/* Raw Message Card (Compact scrollable) */}
-                    <div style={{ background: '#F8FAFC', border: '1px solid #F1F5F9', borderRadius: '10px', padding: '8px 10px', fontSize: '0.74rem', color: '#334155', lineHeight: 1.45, fontFamily: 'monospace', whiteSpace: 'pre-wrap', maxHeight: '110px', overflowY: 'auto', marginBottom: '8px' }}>
+                    {/* Raw Message Card (No awkward horizontal scroll, clean text wrap) */}
+                    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '7px 9px', fontSize: '0.74rem', color: '#1E293B', lineHeight: 1.45, fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'break-word', overflowX: 'hidden', maxHeight: '110px', overflowY: 'auto', marginBottom: '8px' }}>
                       {inquiry.rawMessage}
                     </div>
 
                     {/* Requester Info */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748B', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.68rem', color: '#475569', marginBottom: '8px' }}>
                       <div>
-                        <strong style={{ color: '#0F172A' }}>{inquiry.requesterName || 'Agent'}</strong>
-                        {inquiry.city && <span> • {inquiry.city}</span>}
+                        <strong style={{ color: '#0F172A', fontWeight: 800 }}>{inquiry.requesterName || 'Agent'}</strong>
+                        {inquiry.city && <span style={{ color: '#64748B' }}> • {inquiry.city}</span>}
                       </div>
                       {inquiry.groupName && (
-                        <span style={{ fontSize: '0.66rem', color: '#94A3B8', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '0.64rem', color: '#64748B', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {inquiry.groupName}
                         </span>
                       )}
@@ -584,14 +583,14 @@ export default function B2BLeadsPage() {
 
                     {/* Cleared Note */}
                     {isClosed && (
-                      <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '8px', padding: '6px 8px', fontSize: '0.7rem', color: '#065F46', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700 }}>
-                          <CheckCircle2 size={12} color="#059669" />
+                      <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '6px', padding: '5px 7px', fontSize: '0.68rem', color: '#065F46', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 800 }}>
+                          <CheckCircle2 size={11} color="#059669" />
                           <span>Cleared: {inquiry.closedBy || 'Handled'}</span>
                         </div>
                         <button
                           onClick={() => handleReopen(inquiry._id)}
-                          style={{ background: 'transparent', border: 'none', color: '#059669', fontWeight: 800, fontSize: '0.66rem', textTransform: 'uppercase', cursor: 'pointer' }}
+                          style={{ background: 'transparent', border: 'none', color: '#059669', fontWeight: 800, fontSize: '0.64rem', textTransform: 'uppercase', cursor: 'pointer' }}
                         >
                           Reopen
                         </button>
@@ -600,21 +599,21 @@ export default function B2BLeadsPage() {
                   </div>
 
                   {/* Compact Bottom Action Bar */}
-                  <div style={{ paddingTop: '8px', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                  <div style={{ paddingTop: '6px', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
                     <button
                       onClick={() => handleCopyMessage(inquiry._id, inquiry.rawMessage)}
                       title="Copy raw text"
-                      style={{ padding: '5px 8px', borderRadius: '6px', border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#475569', cursor: 'pointer', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}
+                      style={{ padding: '4px 7px', borderRadius: '5px', border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#334155', cursor: 'pointer', fontSize: '0.68rem', display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 700 }}
                     >
-                      {copiedId === inquiry._id ? <Check size={12} color="#16A34A" /> : <Copy size={12} />}
+                      {copiedId === inquiry._id ? <Check size={11} color="#16A34A" /> : <Copy size={11} />}
                       <span>Copy</span>
                     </button>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       {!isClosed && (
                         <button
                           onClick={() => setClosingInquiry(inquiry)}
-                          style={{ padding: '5px 9px', borderRadius: '6px', border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#475569', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 700 }}
+                          style={{ padding: '4px 8px', borderRadius: '5px', border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#334155', cursor: 'pointer', fontSize: '0.68rem', fontWeight: 800 }}
                         >
                           Mark Cleared
                         </button>
@@ -625,13 +624,13 @@ export default function B2BLeadsPage() {
                           href={waLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 11px', background: '#25D366', color: '#FFFFFF', borderRadius: '7px', textDecoration: 'none', fontSize: '0.72rem', fontWeight: 800, boxShadow: '0 1px 3px rgba(37, 211, 102, 0.3)' }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '4px 10px', background: '#16A34A', color: '#FFFFFF', borderRadius: '6px', textDecoration: 'none', fontSize: '0.7rem', fontWeight: 900, boxShadow: '0 1px 3px rgba(22, 163, 74, 0.3)' }}
                         >
-                          <MessageCircle size={12} />
+                          <MessageCircle size={11} />
                           <span>WhatsApp</span>
                         </a>
                       ) : (
-                        <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>No phone</span>
+                        <span style={{ fontSize: '0.66rem', color: '#94A3B8' }}>No phone</span>
                       )}
                     </div>
                   </div>
@@ -647,25 +646,25 @@ export default function B2BLeadsPage() {
       {/* MODAL 1: Paste WhatsApp Inquiry Modal */}
       {isPasteModalOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)' }}>
-          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '18px', maxWidth: '480px', width: '100%', padding: '20px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '14px', maxWidth: '460px', width: '100%', padding: '18px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Sparkles size={16} color="#0F4C3A" />
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A' }}>
+                <Sparkles size={15} color="#0F4C3A" />
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A' }}>
                   Paste WhatsApp Inquiry
                 </h3>
               </div>
               <button
                 onClick={() => setIsPasteModalOpen(false)}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B' }}
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
             <form onSubmit={handlePasteSubmit}>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+              <div style={{ marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
                   Raw WhatsApp Message Text *
                 </label>
                 <textarea
@@ -674,13 +673,13 @@ export default function B2BLeadsPage() {
                   value={rawPasteText}
                   onChange={(e) => setRawPasteText(e.target.value)}
                   placeholder={`Paste message here, e.g.:\n\nAgent Inquiry\nAnyone have good deal for Ayodhya Ramayana Hotel ?\n+91 94299 65850\nDipika`}
-                  style={{ width: '100%', padding: '10px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '10px', fontSize: '0.76rem', fontFamily: 'monospace', outline: 'none', color: '#0F172A' }}
+                  style={{ width: '100%', padding: '8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.74rem', fontFamily: 'monospace', outline: 'none', color: '#0F172A' }}
                 />
               </div>
 
               {/* Live Preview */}
               {parsedPreview && (
-                <div style={{ padding: '10px', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '10px', fontSize: '0.72rem', marginBottom: '10px', color: '#065F46' }}>
+                <div style={{ padding: '8px', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '8px', fontSize: '0.7rem', marginBottom: '8px', color: '#065F46' }}>
                   <strong style={{ display: 'block', marginBottom: '2px' }}>✨ Auto-Extracted:</strong>
                   <div><strong>Title:</strong> {parsedPreview.title}</div>
                   {parsedPreview.destination && <div><strong>Destination:</strong> {parsedPreview.destination}</div>}
@@ -689,15 +688,15 @@ export default function B2BLeadsPage() {
                 </div>
               )}
 
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
                   Source Group Name
                 </label>
                 <input
                   type="text"
                   value={pasteGroupName}
                   onChange={(e) => setPasteGroupName(e.target.value)}
-                  style={{ width: '100%', padding: '7px 10px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.76rem', outline: 'none', color: '#0F172A' }}
+                  style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A' }}
                 />
               </div>
 
@@ -705,14 +704,14 @@ export default function B2BLeadsPage() {
                 <button
                   type="button"
                   onClick={() => setIsPasteModalOpen(false)}
-                  style={{ padding: '7px 14px', fontSize: '0.75rem', fontWeight: 700, background: '#F1F5F9', border: 'none', borderRadius: '8px', cursor: 'pointer', color: '#475569' }}
+                  style={{ padding: '6px 12px', fontSize: '0.72rem', fontWeight: 800, background: '#F1F5F9', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#334155' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingPaste || !rawPasteText.trim()}
-                  style={{ padding: '7px 16px', fontSize: '0.75rem', fontWeight: 800, background: '#0F4C3A', border: 'none', borderRadius: '8px', cursor: 'pointer', color: '#FFFFFF' }}
+                  style={{ padding: '6px 14px', fontSize: '0.72rem', fontWeight: 900, background: '#0F4C3A', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#FFFFFF' }}
                 >
                   {isSubmittingPaste ? 'Saving...' : 'Publish to Board'}
                 </button>
@@ -725,49 +724,49 @@ export default function B2BLeadsPage() {
       {/* MODAL 2: Mark as Cleared Modal */}
       {closingInquiry && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)' }}>
-          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '18px', maxWidth: '400px', width: '100%', padding: '22px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <CheckCircle2 size={18} color="#059669" />
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '14px', maxWidth: '380px', width: '100%', padding: '18px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <CheckCircle2 size={16} color="#059669" />
+                <h3 style={{ fontSize: '0.98rem', fontWeight: 800, color: '#0F172A' }}>
                   Mark as Cleared
                 </h3>
               </div>
               <button
                 onClick={() => setClosingInquiry(null)}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B' }}
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
-            <p style={{ fontSize: '0.76rem', color: '#475569', marginBottom: '12px' }}>
+            <p style={{ fontSize: '0.74rem', color: '#334155', marginBottom: '10px' }}>
               Mark <strong>&ldquo;{closingInquiry.title}&rdquo;</strong> as fulfilled.
             </p>
 
             {closeError && (
-              <div style={{ padding: '8px 10px', background: '#FFE4E6', border: '1px solid #FECDD3', borderRadius: '8px', fontSize: '0.72rem', color: '#9F1239', marginBottom: '10px' }}>
+              <div style={{ padding: '7px 9px', background: '#FFE4E6', border: '1px solid #FECDD3', borderRadius: '7px', fontSize: '0.7rem', color: '#9F1239', marginBottom: '8px' }}>
                 {closeError}
               </div>
             )}
 
             <form onSubmit={handleCloseSubmit}>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+              <div style={{ marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
                   Fulfilled By / Handled By (Optional)
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Flying Wonders DMC / Ramayana Hotel Partner"
+                  placeholder="e.g. Flying Wonders DMC / Partner"
                   value={solverName}
                   onChange={(e) => setSolverName(e.target.value)}
-                  style={{ width: '100%', padding: '7px 10px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.76rem', outline: 'none', color: '#0F172A' }}
+                  style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A' }}
                 />
               </div>
 
               {settings?.requirePinToClose && (
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
                     4-Digit Team Closure PIN *
                   </label>
                   <input
@@ -776,23 +775,23 @@ export default function B2BLeadsPage() {
                     placeholder="Enter 4-digit PIN"
                     value={closePin}
                     onChange={(e) => setClosePin(e.target.value)}
-                    style={{ width: '100%', padding: '7px 10px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.76rem', outline: 'none', color: '#0F172A' }}
+                    style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A' }}
                   />
                 </div>
               )}
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
                 <button
                   type="button"
                   onClick={() => setClosingInquiry(null)}
-                  style={{ padding: '7px 14px', fontSize: '0.75rem', fontWeight: 700, background: '#F1F5F9', border: 'none', borderRadius: '8px', cursor: 'pointer', color: '#475569' }}
+                  style={{ padding: '6px 12px', fontSize: '0.72rem', fontWeight: 800, background: '#F1F5F9', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#334155' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isClosingSubmitting}
-                  style={{ padding: '7px 16px', fontSize: '0.75rem', fontWeight: 800, background: '#0F4C3A', border: 'none', borderRadius: '8px', cursor: 'pointer', color: '#FFFFFF' }}
+                  style={{ padding: '6px 14px', fontSize: '0.72rem', fontWeight: 900, background: '#0F4C3A', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#FFFFFF' }}
                 >
                   {isClosingSubmitting ? 'Closing...' : 'Confirm Cleared'}
                 </button>
