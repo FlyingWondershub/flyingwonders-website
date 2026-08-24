@@ -340,7 +340,7 @@ export default function B2BLeadsPage() {
 
           {/* Inline Live Metrics & Actions */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ display: 'none', md: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.74rem', fontWeight: 700, marginRight: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.74rem', fontWeight: 700, marginRight: '4px' }}>
               <span style={{ color: '#059669' }}>● {inquiries.filter(i => i.status === 'open').length} Open</span>
               <span style={{ color: '#64748B' }}>● {inquiries.filter(i => i.status === 'closed').length} Cleared</span>
             </div>
