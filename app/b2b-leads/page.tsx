@@ -60,14 +60,14 @@ interface LeadsSettings {
   closurePin?: string
 }
 
-const CATEGORY_MAP: Record<string, { label: string; icon: any; color: string }> = {
-  hotels: { label: 'Hotels & Stays', icon: Building2, color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
-  transport: { label: 'Transport & Cabs', icon: Car, color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
-  dmc_package: { label: 'DMC Ground Package', icon: Palmtree, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
-  visa_fairs: { label: 'Trade Fairs & Visas', icon: Ticket, color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' },
-  activities: { label: 'Sightseeing & Passes', icon: Ticket, color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' },
-  flights: { label: 'Flight Tickets', icon: Plane, color: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20' },
-  other: { label: 'General Requirement', icon: HelpCircle, color: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20' },
+const CATEGORY_MAP: Record<string, { label: string; icon: any; bg: string; color: string; border: string }> = {
+  hotels: { label: 'Hotels & Stays', icon: Building2, bg: '#FEF3C7', color: '#92400E', border: '#FDE68A' },
+  transport: { label: 'Transport & Cabs', icon: Car, bg: '#DBEAFE', color: '#1E40AF', border: '#BFDBFE' },
+  dmc_package: { label: 'DMC Ground Package', icon: Palmtree, bg: '#D1FAE5', color: '#065F46', border: '#A7F3D0' },
+  visa_fairs: { label: 'Trade Fairs & Visas', icon: Ticket, bg: '#EDE9FE', color: '#5B21B6', border: '#DDD6FE' },
+  activities: { label: 'Sightseeing & Passes', icon: Ticket, bg: '#FFE4E6', color: '#9F1239', border: '#FECDD3' },
+  flights: { label: 'Flight Tickets', icon: Plane, bg: '#E0F2FE', color: '#0369A1', border: '#BAE6FD' },
+  other: { label: 'General Requirement', icon: HelpCircle, bg: '#F1F5F9', color: '#334155', border: '#CBD5E1' },
 }
 
 export default function B2BLeadsPage() {
@@ -211,13 +211,13 @@ export default function B2BLeadsPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  // Extract unique popular destinations for filter pills
+  // Extract unique destinations
   const availableDestinations = useMemo(() => {
     const set = new Set<string>()
     inquiries.forEach((item) => {
       if (item.destination) set.add(item.destination)
     })
-    return Array.from(set).slice(0, 10)
+    return Array.from(set).slice(0, 12)
   }, [inquiries])
 
   // Filtered inquiries list
@@ -251,7 +251,7 @@ export default function B2BLeadsPage() {
     })
   }, [inquiries, statusFilter, selectedCategory, selectedDestination, searchQuery])
 
-  // Calculate relative time
+  // Format relative time
   const formatTimeAgo = (dateStr: string) => {
     try {
       const diffSec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
@@ -269,28 +269,27 @@ export default function B2BLeadsPage() {
   // Handle hidden page protection
   if (settings?.isPageHidden && !adminBypass) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 text-center shadow-xl">
-          <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-8 h-8" />
+      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ maxWidth: '440px', width: '100%', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '36px 24px', textAlign: 'center', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.05)' }}>
+          <div style={{ width: '56px', height: '56px', background: '#FEF3C7', color: '#D97706', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <Lock size={28} />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
-            Portal Offline
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px', fontFamily: 'var(--font-inter), sans-serif' }}>
+            Portal Maintenance
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+          <p style={{ fontSize: '0.88rem', color: '#64748B', marginBottom: '24px', lineHeight: 1.6 }}>
             {settings.hiddenMessage || 'The B2B Leads Board is currently undergoing routine maintenance. Please check back shortly.'}
           </p>
 
-          {/* Admin Unlock Box */}
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-            <p className="text-xs text-slate-500 dark:text-slate-500 mb-2">Team Access Key:</p>
-            <div className="flex gap-2">
+          <div style={{ paddingTop: '16px', borderTop: '1px solid #F1F5F9' }}>
+            <p style={{ fontSize: '0.75rem', color: '#94A3B8', marginBottom: '8px' }}>Team Access Key:</p>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <input
                 type="password"
                 placeholder="Enter 4-digit PIN"
                 value={bypassPin}
                 onChange={(e) => setBypassPin(e.target.value)}
-                className="flex-1 px-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                style={{ flex: 1, padding: '10px 14px', fontSize: '0.85rem', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '12px', outline: 'none' }}
               />
               <button
                 onClick={() => {
@@ -300,7 +299,7 @@ export default function B2BLeadsPage() {
                     alert('Invalid Team PIN')
                   }
                 }}
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm transition-colors"
+                style={{ padding: '10px 18px', background: '#0F4C3A', color: '#FFFFFF', fontWeight: 700, borderRadius: '12px', border: 'none', cursor: 'pointer', fontSize: '0.85rem' }}
               >
                 Unlock
               </button>
@@ -312,162 +311,151 @@ export default function B2BLeadsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100" style={{ fontFamily: 'var(--font-inter)' }}>
-      {/* Top Standalone Header Bar */}
-      <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-black text-lg shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+    <div style={{ minHeight: '100vh', background: '#F8FAFC', color: '#0F172A', fontFamily: 'var(--font-inter), sans-serif' }}>
+      
+      {/* Top Custom Header */}
+      <header style={{ position: 'sticky', top: 0, zIndex: 40, background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderBottom: '1px solid #E2E8F0', padding: '0 16px' }}>
+        <div style={{ maxWidth: '1240px', margin: '0 auto', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #0F4C3A 0%, #166534 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontWeight: 900, fontSize: '1.05rem', boxShadow: '0 4px 6px rgba(15, 76, 58, 0.2)' }}>
                 FW
               </div>
-              <div className="hidden sm:block">
-                <span className="font-bold text-slate-900 dark:text-white text-base tracking-tight block leading-none">
+              <div>
+                <span style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem', display: 'block', lineHeight: 1.1 }}>
                   Flying Wonders
                 </span>
-                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tracking-wider uppercase">
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#0F4C3A', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                   B2B Lead Board
                 </span>
               </div>
             </Link>
 
-            <span className="h-5 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block"></span>
+            <span style={{ height: '20px', width: '1px', background: '#E2E8F0' }}></span>
 
             <Link
               href="/b2b-directory"
-              className="hidden md:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 700, color: '#475569', textDecoration: 'none', padding: '6px 12px', borderRadius: '8px', background: '#F1F5F9' }}
             >
-              <Building2 className="w-3.5 h-3.5" />
+              <Building2 size={14} color="#0F4C3A" />
               Verified DMC Directory
             </Link>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
               onClick={() => fetchData()}
               disabled={loading}
               title="Refresh Inquiries"
-              className="p-2.5 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              style={{ width: '38px', height: '38px', borderRadius: '10px', border: '1px solid #E2E8F0', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#475569' }}
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             </button>
 
             <button
               onClick={() => setIsPasteModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md shadow-emerald-600/20 hover:shadow-lg transition-all active:scale-95"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 18px', background: 'linear-gradient(135deg, #0F4C3A 0%, #166534 100%)', color: '#FFFFFF', fontWeight: 700, fontSize: '0.84rem', borderRadius: '12px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 10px rgba(15, 76, 58, 0.25)' }}
             >
-              <Plus className="w-4 h-4" />
+              <Plus size={16} />
               <span>Paste WhatsApp Post</span>
             </button>
           </div>
+
         </div>
       </header>
 
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-emerald-950/20 via-transparent to-transparent py-10 sm:py-14 border-b border-slate-200/60 dark:border-slate-800/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold mb-4">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              {settings?.heroBadge || '🔥 Live WhatsApp Agent Requirements'}
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3">
-              {settings?.heroTitle || 'Live B2B Inquiries & Supplier Exchange'}
-            </h1>
-            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-              {settings?.heroSubtitle || 'Real-time verified travel requirements from WhatsApp partner groups. Connect directly with requesting agents, pitch your contracted rates, or mark fulfilled.'}
-            </p>
+      {/* Hero Banner Section */}
+      <div style={{ background: 'linear-gradient(180deg, #EDF7F4 0%, #F8FAFC 100%)', borderBottom: '1px solid #E2E8F0', padding: '36px 16px' }}>
+        <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: '20px', background: 'rgba(15, 76, 58, 0.1)', color: '#0F4C3A', fontSize: '0.75rem', fontWeight: 700, marginBottom: '12px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16A34A', display: 'inline-block' }}></span>
+            {settings?.heroBadge || '🔥 Live WhatsApp Agent Requirements'}
+          </div>
 
-            {/* Quick Metrics Bar */}
-            <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-6 pt-6 border-t border-slate-200/70 dark:border-slate-800 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                <span><strong>{inquiries.filter(i => i.status === 'open').length}</strong> Active Requirements</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
-                <span><strong>{inquiries.filter(i => i.status === 'closed').length}</strong> Resolved / Cleared</span>
-              </div>
-              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Zero Middleman Fees</span>
-              </div>
+          <h1 style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.02em', marginBottom: '8px' }}>
+            {settings?.heroTitle || 'Live B2B Inquiries & Supplier Exchange'}
+          </h1>
+          <p style={{ fontSize: '0.95rem', color: '#475569', maxWidth: '780px', lineHeight: 1.6, marginBottom: '20px' }}>
+            {settings?.heroSubtitle || 'Real-time verified travel requirements from WhatsApp partner groups. Connect directly with requesting agents, pitch your contracted rates, or mark fulfilled.'}
+          </p>
+
+          {/* Quick Metrics */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', fontSize: '0.82rem', color: '#64748B', fontWeight: 600, paddingTop: '16px', borderTop: '1px solid #E2E8F0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16A34A' }}></span>
+              <span style={{ color: '#0F172A', fontWeight: 800 }}>{inquiries.filter(i => i.status === 'open').length}</span> Active Requirements
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#94A3B8' }}></span>
+              <span style={{ color: '#0F172A', fontWeight: 800 }}>{inquiries.filter(i => i.status === 'closed').length}</span> Resolved / Cleared
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#0F4C3A' }}>
+              <ShieldCheck size={16} />
+              <span>Zero Middleman Fees • 100% Direct</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search & Main Filter Controls */}
-        <div className="space-y-4 mb-8">
-          <div className="flex flex-col md:flex-row gap-3">
-            {/* Search Box */}
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+      {/* Main Container */}
+      <main style={{ maxWidth: '1240px', margin: '0 auto', padding: '28px 16px 64px' }}>
+
+        {/* Filter Controls Bar */}
+        <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '20px', padding: '18px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.03)', marginBottom: '24px' }}>
+          
+          {/* Top Search & Status Row */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
+            
+            {/* Search Input */}
+            <div style={{ flex: 1, minWidth: '260px', position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '14px' }} />
               <input
                 type="text"
-                placeholder="Search by destination (e.g. Andaman, Ayodhya), requirement, agent name, or phone..."
+                placeholder="Search destination (e.g. Andaman, Ayodhya), requirement, agent name, or phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-10 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base shadow-sm"
+                style={{ width: '100%', padding: '12px 38px 12px 42px', fontSize: '0.88rem', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '12px', outline: 'none', color: '#0F172A', fontWeight: 500 }}
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  style={{ position: 'absolute', right: '12px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
                 >
-                  <X className="w-4 h-4" />
+                  <X size={16} />
                 </button>
               )}
             </div>
 
-            {/* Status Switcher Toggle */}
-            <div className="inline-flex p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm self-start md:self-auto">
+            {/* Status Switcher */}
+            <div style={{ display: 'inline-flex', background: '#F1F5F9', padding: '4px', borderRadius: '12px' }}>
               <button
                 onClick={() => setStatusFilter('open')}
-                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 ${
-                  statusFilter === 'open'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                style={{ padding: '8px 16px', borderRadius: '9px', border: 'none', background: statusFilter === 'open' ? '#0F4C3A' : 'transparent', color: statusFilter === 'open' ? '#FFFFFF' : '#475569', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-300"></span>
-                <span>Open Leads</span>
+                🟢 Open Leads
               </button>
               <button
                 onClick={() => setStatusFilter('closed')}
-                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 ${
-                  statusFilter === 'closed'
-                    ? 'bg-slate-800 text-white shadow-sm dark:bg-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                style={{ padding: '8px 16px', borderRadius: '9px', border: 'none', background: statusFilter === 'closed' ? '#334155' : 'transparent', color: statusFilter === 'closed' ? '#FFFFFF' : '#475569', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
               >
-                <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" />
-                <span>Cleared</span>
+                ⚪ Cleared
               </button>
               <button
                 onClick={() => setStatusFilter('all')}
-                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-                  statusFilter === 'all'
-                    ? 'bg-slate-800 text-white shadow-sm dark:bg-slate-700'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                style={{ padding: '8px 14px', borderRadius: '9px', border: 'none', background: statusFilter === 'all' ? '#334155' : 'transparent', color: statusFilter === 'all' ? '#FFFFFF' : '#475569', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
               >
                 All
               </button>
             </div>
+
           </div>
 
           {/* Category Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '10px' }}>
             <button
               onClick={() => setSelectedCategory('all')}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap border transition-all ${
-                selectedCategory === 'all'
-                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
-              }`}
+              style={{ padding: '7px 14px', borderRadius: '8px', border: '1px solid', borderColor: selectedCategory === 'all' ? '#0F4C3A' : '#E2E8F0', background: selectedCategory === 'all' ? '#0F4C3A' : '#FFFFFF', color: selectedCategory === 'all' ? '#FFFFFF' : '#334155', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
               All Categories
             </button>
@@ -478,70 +466,57 @@ export default function B2BLeadsPage() {
                 <button
                   key={key}
                   onClick={() => setSelectedCategory(key)}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap border transition-all ${
-                    isSelected
-                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                      : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
-                  }`}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', borderRadius: '8px', border: '1px solid', borderColor: isSelected ? '#0F4C3A' : '#E2E8F0', background: isSelected ? '#0F4C3A' : '#FFFFFF', color: isSelected ? '#FFFFFF' : '#334155', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon size={14} />
                   <span>{cat.label}</span>
                 </button>
               )
             })}
           </div>
 
-          {/* Quick Destination Pills */}
+          {/* Hot Destination Filter Chips */}
           {availableDestinations.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
-              <span className="text-slate-500 dark:text-slate-400 font-medium">Hot Regions:</span>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px', fontSize: '0.76rem', paddingTop: '10px', borderTop: '1px solid #F1F5F9' }}>
+              <span style={{ color: '#64748B', fontWeight: 700 }}>Popular Destinations:</span>
               <button
                 onClick={() => setSelectedDestination('all')}
-                className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
-                  selectedDestination === 'all'
-                    ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-white'
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'
-                }`}
+                style={{ padding: '4px 10px', borderRadius: '6px', border: 'none', background: selectedDestination === 'all' ? '#E2E8F0' : 'transparent', color: '#1E293B', fontWeight: 700, cursor: 'pointer' }}
               >
-                All Locations
+                All
               </button>
               {availableDestinations.map((dest) => (
                 <button
                   key={dest}
                   onClick={() => setSelectedDestination(dest === selectedDestination ? 'all' : dest)}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1 ${
-                    selectedDestination === dest
-                      ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-                      : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
-                  }`}
+                  style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid', borderColor: selectedDestination === dest ? '#0F4C3A' : '#E2E8F0', background: selectedDestination === dest ? '#E6F4EA' : '#FFFFFF', color: selectedDestination === dest ? '#0F4C3A' : '#475569', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
-                  <MapPin className="w-3 h-3 text-emerald-500" />
+                  <MapPin size={12} color="#0F4C3A" />
                   <span>{dest}</span>
                 </button>
               ))}
             </div>
           )}
+
         </div>
 
-        {/* Inquiries Grid / Feed */}
+        {/* Inquiries Cards Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl animate-pulse p-6"></div>
+              <div key={i} style={{ height: '240px', background: '#FFFFFF', borderRadius: '20px', border: '1px solid #E2E8F0' }}></div>
             ))}
           </div>
         ) : filteredInquiries.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center max-w-lg mx-auto shadow-sm">
-            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400">
-              <Search className="w-8 h-8" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
-              No inquiries found
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '24px', padding: '48px 24px', textAlign: 'center', maxWidth: '480px', margin: '36px auto' }}>
+            <Search size={36} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
+            <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', marginBottom: '6px' }}>
+              No requirements found
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+            <p style={{ fontSize: '0.86rem', color: '#64748B', marginBottom: '20px' }}>
               {searchQuery || selectedCategory !== 'all' || selectedDestination !== 'all'
-                ? 'Try adjusting your filters or search keywords.'
-                : 'No active inquiries logged yet.'}
+                ? 'Try clearing some search keywords or category filters.'
+                : 'No active inquiries logged yet. Paste your first requirement above!'}
             </p>
             <button
               onClick={() => {
@@ -550,13 +525,13 @@ export default function B2BLeadsPage() {
                 setSelectedDestination('all')
                 setStatusFilter('all')
               }}
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition-colors"
+              style={{ padding: '9px 18px', background: '#0F4C3A', color: '#FFFFFF', fontWeight: 700, borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '0.82rem' }}
             >
-              Reset All Filters
+              Reset Filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
             {filteredInquiries.map((inquiry) => {
               const catConfig = CATEGORY_MAP[inquiry.category] || CATEGORY_MAP.other
               const CatIcon = catConfig.icon
@@ -571,84 +546,84 @@ export default function B2BLeadsPage() {
               return (
                 <div
                   key={inquiry._id}
-                  className={`relative flex flex-col justify-between bg-white dark:bg-slate-900 border rounded-3xl p-6 transition-all hover:shadow-lg ${
-                    isClosed
-                      ? 'border-slate-200 dark:border-slate-800/80 opacity-75 hover:opacity-100'
-                      : inquiry.urgency === 'urgent'
-                      ? 'border-amber-300 dark:border-amber-700/60 shadow-amber-500/5'
-                      : 'border-slate-200 dark:border-slate-800 hover:border-emerald-500/40'
-                  }`}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid',
+                    borderColor: isClosed ? '#E2E8F0' : inquiry.urgency === 'urgent' ? '#FBBF24' : '#E2E8F0',
+                    borderRadius: '20px',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.03)',
+                    opacity: isClosed ? 0.75 : 1
+                  }}
                 >
-                  {/* Top Badges */}
                   <div>
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {/* Category Badge */}
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold border ${catConfig.color}`}>
-                          <CatIcon className="w-3 h-3" />
+                    {/* Top Tag Row */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        {/* Category */}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '6px', background: catConfig.bg, color: catConfig.color, border: `1px solid ${catConfig.border}`, fontSize: '0.74rem', fontWeight: 700 }}>
+                          <CatIcon size={12} />
                           <span>{catConfig.label}</span>
                         </span>
 
-                        {/* Destination Badge */}
+                        {/* Destination */}
                         {inquiry.destination && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                            <MapPin className="w-3 h-3 text-emerald-500" />
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 9px', borderRadius: '6px', background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', fontSize: '0.74rem', fontWeight: 700 }}>
+                            <MapPin size={11} color="#059669" />
                             <span>{inquiry.destination}</span>
                           </span>
                         )}
 
-                        {/* Urgent Badge */}
+                        {/* Urgent */}
                         {inquiry.urgency === 'urgent' && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-white shadow-xs">
+                          <span style={{ padding: '3px 8px', borderRadius: '6px', background: '#F59E0B', color: '#FFFFFF', fontSize: '0.7rem', fontWeight: 800 }}>
                             ⚡ Urgent
                           </span>
                         )}
                       </div>
 
-                      {/* Status indicator */}
-                      <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
+                      <span style={{ fontSize: '0.74rem', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                        <Clock size={12} />
                         {formatTimeAgo(inquiry.postedAt)}
                       </span>
                     </div>
 
-                    {/* Headline */}
-                    <h3 className={`text-base font-bold text-slate-900 dark:text-white mb-2 leading-snug ${isClosed ? 'line-through text-slate-500 dark:text-slate-400' : ''}`}>
+                    {/* Requirement Title */}
+                    <h3 style={{ fontSize: '1rem', fontWeight: 800, color: isClosed ? '#64748B' : '#0F172A', marginBottom: '10px', lineHeight: 1.35, textDecoration: isClosed ? 'line-through' : 'none' }}>
                       {inquiry.title}
                     </h3>
 
                     {/* Raw Message Card */}
-                    <div className="bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-3.5 mb-4 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-mono whitespace-pre-wrap">
+                    <div style={{ background: '#F8FAFC', border: '1px solid #F1F5F9', borderRadius: '14px', padding: '12px 14px', fontSize: '0.78rem', color: '#334155', lineHeight: 1.55, fontFamily: 'monospace', whiteSpace: 'pre-wrap', maxHeight: '180px', overflowY: 'auto', marginBottom: '14px' }}>
                       {inquiry.rawMessage}
                     </div>
 
-                    {/* Requester & City Info */}
-                    <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 mb-4 px-1">
+                    {/* Requester & Group info */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.76rem', color: '#64748B', marginBottom: '14px' }}>
                       <div>
-                        <span className="font-semibold text-slate-900 dark:text-white">
-                          {inquiry.requesterName || 'Agent'}
-                        </span>
-                        {inquiry.city && (
-                          <span className="text-slate-400 dark:text-slate-500"> • {inquiry.city}</span>
-                        )}
+                        <strong style={{ color: '#0F172A' }}>{inquiry.requesterName || 'Agent'}</strong>
+                        {inquiry.city && <span> • {inquiry.city}</span>}
                       </div>
                       {inquiry.groupName && (
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate max-w-[140px]">
+                        <span style={{ fontSize: '0.72rem', color: '#94A3B8', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           via {inquiry.groupName}
                         </span>
                       )}
                     </div>
 
-                    {/* Cleared Note Banner if closed */}
+                    {/* Cleared Note Banner */}
                     {isClosed && (
-                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2.5 mb-4 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 font-medium">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                          <span>Cleared: {inquiry.closedBy || 'Fulfilled by Supplier'}</span>
+                      <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '10px', padding: '10px 12px', fontSize: '0.76rem', color: '#065F46', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700 }}>
+                          <CheckCircle2 size={14} color="#059669" />
+                          <span>Cleared: {inquiry.closedBy || 'Handled'}</span>
                         </div>
                         <button
                           onClick={() => handleReopen(inquiry._id)}
-                          className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 hover:underline"
+                          style={{ background: 'transparent', border: 'none', color: '#059669', fontWeight: 800, fontSize: '0.72rem', textTransform: 'uppercase', cursor: 'pointer' }}
                         >
                           Reopen
                         </button>
@@ -656,104 +631,98 @@ export default function B2BLeadsPage() {
                     )}
                   </div>
 
-                  {/* Bottom Action Row */}
-                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
-                    {/* Copy Button */}
+                  {/* Bottom Action Footer */}
+                  <div style={{ paddingTop: '14px', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                     <button
                       onClick={() => handleCopyMessage(inquiry._id, inquiry.rawMessage)}
                       title="Copy raw text"
-                      className="p-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-xs flex items-center gap-1"
+                      style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#475569', cursor: 'pointer', fontSize: '0.76rem', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}
                     >
-                      {copiedId === inquiry._id ? (
-                        <Check className="w-4 h-4 text-emerald-500" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
+                      {copiedId === inquiry._id ? <Check size={14} color="#16A34A" /> : <Copy size={14} />}
+                      <span>Copy</span>
                     </button>
 
-                    <div className="flex items-center gap-2">
-                      {/* Mark as Closed / Cleared Button */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       {!isClosed && (
                         <button
                           onClick={() => setClosingInquiry(inquiry)}
-                          className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                          style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid #E2E8F0', background: '#FFFFFF', color: '#475569', cursor: 'pointer', fontSize: '0.76rem', fontWeight: 700 }}
                         >
                           Mark Cleared
                         </button>
                       )}
 
-                      {/* WhatsApp 1-Click Connect Button */}
                       {waLink ? (
                         <a
                           href={waLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs font-semibold rounded-xl shadow-xs shadow-emerald-600/30 transition-all hover:scale-[1.02]"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', background: '#25D366', color: '#FFFFFF', borderRadius: '10px', textDecoration: 'none', fontSize: '0.8rem', fontWeight: 800, boxShadow: '0 2px 5px rgba(37, 211, 102, 0.3)' }}
                         >
-                          <MessageCircle className="w-3.5 h-3.5" />
+                          <MessageCircle size={14} />
                           <span>WhatsApp</span>
                         </a>
                       ) : (
-                        <span className="text-[11px] text-slate-400 px-2">No phone</span>
+                        <span style={{ fontSize: '0.74rem', color: '#94A3B8', padding: '0 6px' }}>No direct phone</span>
                       )}
                     </div>
                   </div>
+
                 </div>
               )
             })}
           </div>
         )}
 
-        {/* Bottom Cross-Promotion to B2B Directory */}
-        <div className="mt-14 bg-gradient-to-r from-emerald-900 to-teal-900 text-white rounded-3xl p-8 sm:p-10 shadow-xl relative overflow-hidden">
-          <div className="max-w-2xl relative z-10">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-emerald-200 text-xs font-semibold mb-3">
-              <Building2 className="w-3.5 h-3.5" />
+        {/* Bottom Banner */}
+        <div style={{ marginTop: '48px', background: 'linear-gradient(135deg, #0F4C3A 0%, #064E3B 100%)', borderRadius: '24px', padding: '36px 28px', color: '#FFFFFF', boxShadow: '0 20px 25px -5px rgba(15, 76, 58, 0.2)' }}>
+          <div style={{ maxWidth: '680px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '20px', background: 'rgba(255, 255, 255, 0.15)', fontSize: '0.74rem', fontWeight: 700, marginBottom: '12px' }}>
+              <Building2 size={12} />
               Verified Supplier Network
             </span>
-            <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 900, marginBottom: '8px', letterSpacing: '-0.01em' }}>
               Are you a DMC, Hotel, or Transport Operator?
             </h3>
-            <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed mb-6">
-              Create your free verified company profile on our B2B Directory to receive direct leads, display contracted supplier rates, and connect with 5,000+ travel agents worldwide.
+            <p style={{ fontSize: '0.88rem', color: '#D1FAE5', lineHeight: 1.6, marginBottom: '20px' }}>
+              Create your verified company profile on our B2B Directory to receive direct leads, display contracted supplier rates, and connect with 5,000+ travel agents worldwide.
             </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/b2b-directory"
-                className="px-6 py-3 bg-white text-emerald-950 hover:bg-emerald-50 text-xs sm:text-sm font-bold rounded-2xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
-              >
-                <span>Browse & Add Profile to Directory</span>
-                <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
+            <Link
+              href="/b2b-directory"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '12px 22px', background: '#FFFFFF', color: '#0F4C3A', borderRadius: '12px', textDecoration: 'none', fontWeight: 800, fontSize: '0.86rem', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}
+            >
+              <span>Browse & Add Profile to Directory</span>
+              <ChevronRight size={16} />
+            </Link>
           </div>
         </div>
+
       </main>
 
       {/* MODAL 1: Paste WhatsApp Inquiry Modal */}
       {isPasteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4" />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '24px', maxWidth: '520px', width: '100%', padding: '28px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#ECFDF5', color: '#0F4C3A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={16} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
                   Paste WhatsApp Inquiry
                 </h3>
               </div>
               <button
                 onClick={() => setIsPasteModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
               >
-                <X className="w-5 h-5" />
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handlePasteSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <form onSubmit={handlePasteSubmit}>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                   Raw WhatsApp Message Text *
                 </label>
                 <textarea
@@ -762,55 +731,46 @@ export default function B2BLeadsPage() {
                   value={rawPasteText}
                   onChange={(e) => setRawPasteText(e.target.value)}
                   placeholder={`Paste message here, e.g.:\n\nAgent Inquiry\nAnyone have good deal for Ayodhya Ramayana Hotel ?\n+91 94299 65850\nDipika`}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl text-xs sm:text-sm text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  style={{ width: '100%', padding: '12px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '12px', fontSize: '0.82rem', fontFamily: 'monospace', outline: 'none', color: '#0F172A' }}
                 />
               </div>
 
-              {/* Live Auto-Parsed Preview */}
+              {/* Live Preview */}
               {parsedPreview && (
-                <div className="p-3.5 bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-xs space-y-1.5">
-                  <div className="font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Auto-Extracted Details:</span>
-                  </div>
-                  <p className="text-slate-700 dark:text-slate-300"><strong>Title:</strong> {parsedPreview.title}</p>
-                  {parsedPreview.destination && (
-                    <p className="text-slate-700 dark:text-slate-300"><strong>Destination:</strong> {parsedPreview.destination}</p>
-                  )}
-                  <p className="text-slate-700 dark:text-slate-300"><strong>Category:</strong> {CATEGORY_MAP[parsedPreview.category]?.label || 'General'}</p>
-                  {parsedPreview.phoneNumber && (
-                    <p className="text-slate-700 dark:text-slate-300"><strong>WhatsApp:</strong> {parsedPreview.phoneNumber}</p>
-                  )}
-                  {parsedPreview.requesterName && (
-                    <p className="text-slate-700 dark:text-slate-300"><strong>Agent:</strong> {parsedPreview.requesterName}</p>
-                  )}
+                <div style={{ padding: '12px', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '12px', fontSize: '0.78rem', marginBottom: '14px', color: '#065F46' }}>
+                  <strong style={{ display: 'block', marginBottom: '4px' }}>✨ Auto-Extracted Details:</strong>
+                  <div><strong>Title:</strong> {parsedPreview.title}</div>
+                  {parsedPreview.destination && <div><strong>Destination:</strong> {parsedPreview.destination}</div>}
+                  <div><strong>Category:</strong> {CATEGORY_MAP[parsedPreview.category]?.label || 'General'}</div>
+                  {parsedPreview.phoneNumber && <div><strong>Phone:</strong> {parsedPreview.phoneNumber}</div>}
+                  {parsedPreview.requesterName && <div><strong>Agent:</strong> {parsedPreview.requesterName}</div>}
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                   Source Group Name
                 </label>
                 <input
                   type="text"
                   value={pasteGroupName}
                   onChange={(e) => setPasteGroupName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  style={{ width: '100%', padding: '9px 12px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '10px', fontSize: '0.82rem', outline: 'none', color: '#0F172A' }}
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
                 <button
                   type="button"
                   onClick={() => setIsPasteModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+                  style={{ padding: '9px 16px', fontSize: '0.8rem', fontWeight: 700, background: '#F1F5F9', border: 'none', borderRadius: '10px', cursor: 'pointer', color: '#475569' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingPaste || !rawPasteText.trim()}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-md shadow-emerald-600/20 transition-colors"
+                  style={{ padding: '9px 20px', fontSize: '0.8rem', fontWeight: 800, background: '#0F4C3A', border: 'none', borderRadius: '10px', cursor: 'pointer', color: '#FFFFFF' }}
                 >
                   {isSubmittingPaste ? 'Parsing & Saving...' : 'Publish to Board'}
                 </button>
@@ -820,41 +780,38 @@ export default function B2BLeadsPage() {
         </div>
       )}
 
-      {/* MODAL 2: Mark as Cleared / Closed Modal */}
+      {/* MODAL 2: Mark as Cleared Modal */}
       {closingInquiry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '24px', maxWidth: '440px', width: '100%', padding: '28px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 size={20} color="#059669" />
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
                   Mark as Cleared
                 </h3>
               </div>
               <button
                 onClick={() => setClosingInquiry(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94A3B8' }}
               >
-                <X className="w-5 h-5" />
+                <X size={20} />
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-400 mb-4">
-              You are marking <strong>&ldquo;{closingInquiry.title}&rdquo;</strong> as fulfilled.
+            <p style={{ fontSize: '0.82rem', color: '#475569', marginBottom: '16px' }}>
+              You are marking <strong>&ldquo;{closingInquiry.title}&rdquo;</strong> as resolved.
             </p>
 
             {closeError && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-600 dark:text-rose-400 mb-4 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{closeError}</span>
+              <div style={{ padding: '10px 12px', background: '#FFE4E6', border: '1px solid #FECDD3', borderRadius: '10px', fontSize: '0.78rem', color: '#9F1239', marginBottom: '14px' }}>
+                {closeError}
               </div>
             )}
 
-            <form onSubmit={handleCloseSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <form onSubmit={handleCloseSubmit}>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                   Fulfilled By / Handled By (Optional)
                 </label>
                 <input
@@ -862,13 +819,13 @@ export default function B2BLeadsPage() {
                   placeholder="e.g. Flying Wonders DMC / Ramayana Hotel Partner"
                   value={solverName}
                   onChange={(e) => setSolverName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  style={{ width: '100%', padding: '9px 12px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '10px', fontSize: '0.82rem', outline: 'none', color: '#0F172A' }}
                 />
               </div>
 
               {settings?.requirePinToClose && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                     4-Digit Team Closure PIN *
                   </label>
                   <input
@@ -877,23 +834,23 @@ export default function B2BLeadsPage() {
                     placeholder="Enter 4-digit PIN"
                     value={closePin}
                     onChange={(e) => setClosePin(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    style={{ width: '100%', padding: '9px 12px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '10px', fontSize: '0.82rem', outline: 'none', color: '#0F172A' }}
                   />
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
                 <button
                   type="button"
                   onClick={() => setClosingInquiry(null)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+                  style={{ padding: '9px 16px', fontSize: '0.8rem', fontWeight: 700, background: '#F1F5F9', border: 'none', borderRadius: '10px', cursor: 'pointer', color: '#475569' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isClosingSubmitting}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-md shadow-emerald-600/20 transition-colors"
+                  style={{ padding: '9px 20px', fontSize: '0.8rem', fontWeight: 800, background: '#0F4C3A', border: 'none', borderRadius: '10px', cursor: 'pointer', color: '#FFFFFF' }}
                 >
                   {isClosingSubmitting ? 'Closing...' : 'Confirm Cleared'}
                 </button>
@@ -902,6 +859,7 @@ export default function B2BLeadsPage() {
           </div>
         </div>
       )}
+
     </div>
   )
 }
