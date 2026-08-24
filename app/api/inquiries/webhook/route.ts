@@ -116,7 +116,6 @@ export async function POST(request: Request) {
     }
 
     // 5. Save to Sanity
-    const writeClient = getSanityWriteClient()
     if (!writeClient) {
       return NextResponse.json({
         error: 'Sanity write client is not configured (SANITY_WRITE_TOKEN is missing).'
