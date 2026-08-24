@@ -1,0 +1,5 @@
+# Vercel Ignore
+scripts/
+scratch/
+*.md
+EOF
