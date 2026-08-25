@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { client } from '../../sanity/lib/client'
+import AdBanner from '../../components/AdBanner'
 import {
   Sparkles,
   CheckCircle2,
@@ -850,8 +851,13 @@ export default function StudyInSingaporePage() {
         </div>
       </section>
 
+      {/* AdSense Unit */}
+      <div style={{ maxWidth: '1100px', margin: '2rem auto 0', padding: '0 1.5rem' }}>
+        <AdBanner slotId="study_singapore_mid_slot" category="education" />
+      </div>
+
       {/* ─────────── TESTIMONIALS ─────────── */}
-      <section style={{ maxWidth: '1100px', margin: '5rem auto', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1100px', margin: '3rem auto 5rem', padding: '0 1.5rem' }}>
         {sectionTitle('What Our Students Say')}
         {sectionSubtitle('Real experiences from students we helped successfully enroll in Singapore\'s top institutions.')}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>

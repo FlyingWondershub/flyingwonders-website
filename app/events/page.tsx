@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { client } from '../../sanity/lib/client'
 import { urlForImage } from '../../sanity/lib/image'
+import AdBanner from '../../components/AdBanner'
 import { 
   Calendar, 
   MapPin, 
@@ -497,6 +498,9 @@ export default function EventsPage() {
         )}
 
         {/* 3. INTERACTIVE MEDIA & EVENT RECAPS (SEO & SOCIAL PROOF ENGINE) */}
+        {/* AdSense Unit */}
+        <AdBanner slotId="events_mid_slot" category="events" />
+
         {!sanityData?.hidePastHighlights && (selectedTab === 'all' || selectedTab === 'past') && (
           <section id="past-highlights" style={{ marginBottom: '4rem' }}>
             <div style={{ marginBottom: '2rem' }}>

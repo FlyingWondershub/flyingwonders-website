@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import AdBanner from '../../../components/AdBanner'
 
 interface Article {
   id: string
@@ -91,6 +92,20 @@ function MarkdownRenderer({ content }: { content: string }) {
       flushList()
       const text = trimmed.replace(/^##\s+/, '')
       const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+      const h2Count = elements.filter(el => (el as any)?.type === 'h2').length
+      
+      // Inject a native ad banner right before the 3rd major section (H2)
+      if (h2Count === 2) {
+        elements.push(
+          <AdBanner 
+            key={`in-article-ad-${idx}`} 
+            slotId="blog_in_article_slot" 
+            category="blog"
+            style={{ margin: '2.5rem 0' }}
+          />
+        )
+      }
+
       elements.push(
         <h2
           key={`h2-${idx}`}
@@ -430,8 +445,15 @@ export default function ArticleDetail() {
           {/* Render Full Rich Markdown Content with Photos & Callouts */}
           <MarkdownRenderer content={article.content} />
 
+          {/* Bottom End-of-Article Sponsored Unit */}
+          <AdBanner 
+            slotId="blog_article_end_slot" 
+            category="blog"
+            style={{ marginTop: '2.5rem', marginBottom: '1rem' }}
+          />
+
           {/* Bottom Article Author & Share footer */}
-          <div className="blog-author-box" style={{ marginTop: '4rem', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div className="blog-author-box" style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'var(--emerald-secondary)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 800, flexShrink: 0 }}>
               {article.author.charAt(0)}
             </div>

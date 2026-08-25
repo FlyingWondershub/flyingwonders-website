@@ -2,6 +2,8 @@ import { MetadataRoute } from 'next';
 import { createClient } from 'next-sanity';
 import { dataset, projectId, apiVersion } from '../sanity/env';
 
+import { getAllPackages, normalizeSlug } from '../utils/packages';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://flyingwonders.net'
   const today = new Date().toISOString().split('T')[0]
@@ -64,22 +66,43 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
      priority: r.priority,
    }))
 
-   // Dynamic blog routes – fetch all published slugs from Sanity
-   const client = createClient({
-     projectId,
-     dataset,
-     apiVersion,
-     useCdn: false,
-     token: process.env.SANITY_READ_TOKEN,
-   })
-   const blogSlugs: string[] = await client.fetch("*[_type == \"blogPost\" && isPublished == true].slug.current")
-   const blogRoutes = blogSlugs.map((slug) => ({
-     url: `${baseUrl}/blog/${slug}`,
-     lastModified: today,
-     changeFrequency: 'daily' as MetadataRoute.Sitemap[0]['changeFrequency'],
-     priority: 0.7,
-   }))
+   // Dynamic individual tour package routes
+   let packageSitemap: MetadataRoute.Sitemap = []
+   try {
+     const packages = await getAllPackages()
+     packageSitemap = packages.map((pkg) => ({
+       url: `${baseUrl}/packages/${pkg.slug || normalizeSlug(pkg._id)}`,
+       lastModified: today,
+       changeFrequency: 'weekly' as MetadataRoute.Sitemap[0]['changeFrequency'],
+       priority: 0.85,
+     }))
+   } catch (err) {
+     console.error('Failed to get packages for sitemap:', err)
+   }
 
-   return [...coreSitemap, ...toolSitemap, ...blogRoutes]
+   // Dynamic blog routes – fetch all published slugs from Sanity
+   let blogRoutes: MetadataRoute.Sitemap = []
+   try {
+     const client = createClient({
+       projectId,
+       dataset,
+       apiVersion,
+       useCdn: false,
+       token: process.env.SANITY_READ_TOKEN,
+     })
+     const blogSlugs: string[] = await client.fetch("*[_type == \"blogPost\" && isPublished == true].slug.current")
+     if (Array.isArray(blogSlugs)) {
+       blogRoutes = blogSlugs.map((slug) => ({
+         url: `${baseUrl}/blog/${slug}`,
+         lastModified: today,
+         changeFrequency: 'daily' as MetadataRoute.Sitemap[0]['changeFrequency'],
+         priority: 0.7,
+       }))
+     }
+   } catch (err) {
+     console.error('Failed to get blog slugs for sitemap:', err)
+   }
+
+   return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...blogRoutes]
 
 }

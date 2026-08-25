@@ -61,10 +61,11 @@ export default function AdBanner({
         margin: '2rem 0',
         padding: '1.25rem',
         borderRadius: '16px',
-        background: 'linear-gradient(135deg, rgba(15, 76, 58, 0.04) 0%, rgba(184, 58, 75, 0.04) 100%)',
-        border: '1px dashed #CBD5E1',
+        background: 'var(--card-bg, rgba(15, 76, 58, 0.03))',
+        border: '1px dashed var(--glass-border, #CBD5E1)',
         position: 'relative',
         overflow: 'hidden',
+        fontFamily: 'var(--font-inter), sans-serif',
         ...style
       }}
     >
@@ -82,11 +83,11 @@ export default function AdBanner({
             fontWeight: 800,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color: '#94A3B8',
-            background: 'rgba(255,255,255,0.7)',
+            color: 'var(--text-muted, #94A3B8)',
+            background: 'var(--bg-secondary, rgba(255,255,255,0.7))',
             padding: '2px 8px',
             borderRadius: '4px',
-            border: '1px solid #E2E8F0'
+            border: '1px solid var(--glass-border, #E2E8F0)'
           }}
         >
           Sponsored / Advertisement
@@ -118,10 +119,10 @@ export default function AdBanner({
             }}
           >
             <div style={{ flex: '1 1 300px' }}>
-              <h4 style={{ margin: '0 0 0.25rem', fontSize: '1.05rem', fontWeight: 800, color: '#0F172A' }}>
+              <h4 style={{ margin: '0 0 0.25rem', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-dark, #0F172A)' }}>
                 {fallbackTitle}
               </h4>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748B', lineHeight: 1.4 }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted, #64748B)', lineHeight: 1.4 }}>
                 {fallbackSub}
               </p>
             </div>
@@ -133,7 +134,7 @@ export default function AdBanner({
                 gap: '0.5rem',
                 padding: '0.65rem 1.25rem',
                 borderRadius: '10px',
-                background: '#0F4C3A',
+                background: 'var(--emerald-secondary, #0F4C3A)',
                 color: '#FFF',
                 fontWeight: 700,
                 fontSize: '0.85rem',

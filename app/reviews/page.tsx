@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import reviewsData from '../../data/reviews_segmented.json'
+import AdBanner from '../../components/AdBanner'
 
 interface B2BReview {
   agent_company: string
@@ -331,6 +332,9 @@ export default function ReviewsPage() {
           </button>
         ))}
       </div>
+
+      {/* AdSense Unit */}
+      <AdBanner slotId="reviews_mid_slot" category="reviews" />
 
       {/* Testimonials Grid */}
       <div style={{ 

@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { client } from '../../sanity/lib/client'
+import AdBanner from '../../components/AdBanner'
 
 export const revalidate = 60 // Revalidate page every minute
 
@@ -314,6 +315,11 @@ export default async function AboutPage() {
           </div>
         </div>
       </section>
+
+      {/* AdSense Unit */}
+      <div className="container" style={{ padding: '2rem 1.5rem 0' }}>
+        <AdBanner slotId="about_bottom_slot" category="general" />
+      </div>
       
     </div>
   )

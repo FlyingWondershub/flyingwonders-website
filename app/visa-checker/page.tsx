@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import VisaCheckerTool from './VisaCheckerTool'
+import AdBanner from '../../components/AdBanner'
 
 export const metadata: Metadata = {
   title: 'Visa Requirements Checker — Do I Need a Visa? | Flying Wonders',
@@ -92,6 +93,9 @@ export default function VisaCheckerPage() {
         <div style={{ maxWidth: '820px', margin: '0 auto', padding: '2rem 1.5rem' }}>
           {/* Tool Widget */}
           <VisaCheckerTool />
+
+          {/* AdSense Unit below tool */}
+          <AdBanner slotId="visa_checker_slot" category="travel-tools" />
 
           {/* Info Section */}
           <section style={{ marginTop: '2.5rem' }}>

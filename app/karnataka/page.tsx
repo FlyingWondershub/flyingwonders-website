@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { client } from '../../sanity/lib/client'
 import { urlForImage } from '../../sanity/lib/image'
+import AdBanner from '../../components/AdBanner'
 
 interface ItineraryItem {
   timeOrDay: string
@@ -818,6 +819,9 @@ export default function KarnatakaPage() {
               )
             })}
           </div>
+
+          {/* AdSense Unit */}
+          <AdBanner slotId="karnataka_mid_slot" category="karnataka" style={{ marginTop: '3rem' }} />
 
         </div>
       </section>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import BorderTrafficTool from './BorderTrafficTool'
+import AdBanner from '../../components/AdBanner'
 
 export const metadata: Metadata = {
   title: 'JB Singapore Border Traffic Live — Woodlands & Tuas Checkpoint | Flying Wonders',
@@ -71,6 +72,9 @@ export default function BorderTrafficPage() {
 
         <div style={{ maxWidth: '820px', margin: '0 auto', padding: '2rem 1.5rem' }}>
           <BorderTrafficTool />
+
+          {/* AdSense Unit below tool */}
+          <AdBanner slotId="border_traffic_slot" category="travel-tools" />
 
           <section style={{ marginTop: '2.5rem' }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1A365D', marginBottom: '1rem' }}>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import CurrencyConverterTool from './CurrencyConverterTool'
+import AdBanner from '../../components/AdBanner'
 
 export const metadata: Metadata = {
   title: 'SGD to INR Converter — Live Rate Today 2025 | Flying Wonders',
@@ -71,6 +72,9 @@ export default function CurrencyConverterPage() {
 
         <div style={{ maxWidth: '820px', margin: '0 auto', padding: '2rem 1.5rem' }}>
           <CurrencyConverterTool />
+
+          {/* AdSense Unit below tool */}
+          <AdBanner slotId="currency_converter_slot" category="travel-tools" />
 
           <section style={{ marginTop: '2.5rem' }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1A365D', marginBottom: '1rem' }}>

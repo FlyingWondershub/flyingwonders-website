@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import FlightTrackerTool from './FlightTrackerTool'
+import AdBanner from '../../components/AdBanner'
 
 export const metadata: Metadata = {
   title: 'Singapore Flight Tracker — Changi Airport Live Status | Flying Wonders',
@@ -72,6 +73,9 @@ export default function FlightTrackerPage() {
 
         <div style={{ maxWidth: '820px', margin: '0 auto', padding: '2rem 1.5rem' }}>
           <FlightTrackerTool />
+
+          {/* AdSense Unit below tool */}
+          <AdBanner slotId="flight_tracker_slot" category="travel-tools" />
 
           <section style={{ marginTop: '2.5rem' }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1A365D', marginBottom: '1rem' }}>

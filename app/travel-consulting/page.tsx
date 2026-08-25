@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { client } from '../../sanity/lib/client'
+import AdBanner from '../../components/AdBanner'
 import { 
   Sparkles, 
   CheckCircle2, 
@@ -397,8 +398,13 @@ export default function TravelConsultingPage() {
 
       </div>
 
+      {/* AdSense Unit */}
+      <div style={{ maxWidth: '1140px', margin: '3rem auto 0', padding: '0 1.5rem' }}>
+        <AdBanner slotId="travel_consulting_mid_slot" category="consulting" />
+      </div>
+
       {/* 4. MEET OUR DMC CONSULTANTS SHOWCASE */}
-      <div style={{ maxWidth: '1140px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+      <div style={{ maxWidth: '1140px', margin: '3rem auto 0', padding: '0 1.5rem' }}>
         <div style={{ background: '#FFF', borderRadius: '24px', padding: '2.5rem 2rem', border: '1px solid #E2E8F0', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
           
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>

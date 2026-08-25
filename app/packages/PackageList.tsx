@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { urlForImage } from '../../sanity/lib/image'
 import Link from 'next/link'
 import IciciQrModal from '../../components/IciciQrModal'
+import AdBanner from '../../components/AdBanner'
 
 export default function PackageList({ initialPackages, exchangeRate = 74.81 }: { initialPackages: any[], exchangeRate?: number }) {
   const [activeTier, setActiveTier] = useState('all')
@@ -68,8 +69,9 @@ export default function PackageList({ initialPackages, exchangeRate = 74.81 }: {
       {/* Package Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
         {filteredPackages.length > 0 ? (
-          filteredPackages.map((pkg) => (
-            <div key={pkg._id} className="glass" style={{ borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--bg-main)', border: '1px solid var(--glass-border)', padding: '1.5rem' }}>
+          filteredPackages.map((pkg, pIdx) => (
+            <div key={pkg._id} style={{ display: 'contents' }}>
+            <div className="glass" style={{ borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--bg-main)', border: '1px solid var(--glass-border)', padding: '1.5rem' }}>
               <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'start' }}>
                 
                 {/* Image Section */}
@@ -124,22 +126,42 @@ export default function PackageList({ initialPackages, exchangeRate = 74.81 }: {
                   </div>
 
                   <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-                    <button
-                      onClick={() => setExpandedPackageId(expandedPackageId === pkg._id ? null : pkg._id)}
+                    {/* Direct Page Link */}
+                    <Link
+                      href={`/packages/${pkg.slug || pkg._id.replace(/_/g, '-')}`}
                       style={{
-                        background: expandedPackageId === pkg._id ? 'var(--emerald-secondary)' : 'transparent',
+                        background: 'var(--emerald-secondary)',
                         border: '1px solid var(--emerald-secondary)',
-                        color: expandedPackageId === pkg._id ? '#FFF' : 'var(--emerald-secondary)',
+                        color: '#FFF',
                         padding: '0.6rem 1.25rem',
                         borderRadius: '6px',
                         fontSize: '0.85rem',
                         fontWeight: 700,
-                        cursor: 'pointer',
+                        textAlign: 'center',
+                        textDecoration: 'none',
                         transition: 'all 0.2s',
                         flexGrow: 1
                       }}
                     >
-                      {expandedPackageId === pkg._id ? '🔼 Hide Detailed Itinerary' : '📆 View Detailed Itinerary'}
+                      📖 View Full Package Page ➔
+                    </Link>
+
+                    {/* Quick Itinerary Accordion Toggle */}
+                    <button
+                      onClick={() => setExpandedPackageId(expandedPackageId === pkg._id ? null : pkg._id)}
+                      style={{
+                        background: expandedPackageId === pkg._id ? 'var(--bg-secondary)' : 'transparent',
+                        border: '1px solid var(--glass-border, #CBD5E1)',
+                        color: 'var(--text-dark)',
+                        padding: '0.6rem 1rem',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {expandedPackageId === pkg._id ? '▲ Quick Summary' : '▼ Quick Summary'}
                     </button>
                     
                     <Link 
@@ -147,7 +169,7 @@ export default function PackageList({ initialPackages, exchangeRate = 74.81 }: {
                       className="btn btn-primary" 
                       style={{ padding: '0.6rem 1.5rem', fontSize: '0.85rem', fontWeight: 700, textAlign: 'center', display: 'inline-block', textDecoration: 'none' }}
                     >
-                      Book / Customize ✈️
+                      Book Online ✈️
                     </Link>
 
                     {!hideIciciPackages && (
@@ -220,6 +242,20 @@ export default function PackageList({ initialPackages, exchangeRate = 74.81 }: {
                 </div>
               )}
 
+            </div>
+
+            {/* In-Feed Sponsored Card after 2nd Package */}
+            {pIdx === 1 && (
+              <AdBanner 
+                key="packages-infeed-ad"
+                slotId="packages_infeed_slot" 
+                category="packages" 
+                fallbackTitle="🇸🇬 Singapore Attraction E-Tickets & B2B Rates"
+                fallbackSub="Discounted passes for Universal Studios, Gardens by the Bay, Singapore Zoo & Night Safari."
+                fallbackLink="/singapore-attractions"
+                fallbackCta="View Attractions & Prices →"
+              />
+            )}
             </div>
           ))
         ) : (

@@ -3,6 +3,7 @@ import { client } from '../sanity/lib/client'
 import MetricsCounter from '../components/MetricsCounter'
 import HeroBackground from '../components/HeroBackground'
 import { getLiveExchangeRate } from '../utils/exchange'
+import AdBanner from '../components/AdBanner'
 
 export const revalidate = 600 // Revalidate home page every 10 minutes
 
@@ -385,6 +386,9 @@ export default async function Home() {
               </div>
             ))}
           </div>
+
+          {/* AdSense Unit */}
+          <AdBanner slotId="home_mid_slot" category="general" style={{ marginTop: '3.5rem' }} />
         </div>
       </section>
 

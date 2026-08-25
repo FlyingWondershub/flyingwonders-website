@@ -24,6 +24,7 @@ import {
   ShieldCheck
 } from 'lucide-react'
 import { client } from '../../sanity/lib/client'
+import AdBanner from '../../components/AdBanner'
 
 // Helper function to strip raw HTML tags and format clean text
 function stripHtml(htmlStr?: string) {
@@ -533,6 +534,9 @@ export default function ServicesCatalogPage() {
                 )}
               </section>
             )}
+
+            {/* AdSense Unit */}
+            <AdBanner slotId="services_catalog_mid_slot" category="b2b" style={{ margin: '2rem 0' }} />
 
             {/* ══ SECTION B: ATTRACTIONS (LIVE SUPPLIER API - INFORMATIONAL ONLY NO BOOKING/PRICE) ══ */}
             {(!settings.hideAttractions && (activeTab === 'all' || activeTab === 'attractions')) && (

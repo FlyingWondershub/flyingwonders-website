@@ -1,6 +1,7 @@
 import AttractionsForm from './AttractionsForm'
 import { client } from '../../sanity/lib/client'
 import { urlForImage } from '../../sanity/lib/image'
+import AdBanner from '../../components/AdBanner'
 
 async function getAttractions() {
   try {
@@ -186,6 +187,9 @@ export default async function SingaporeAttractionsPage() {
         sanityBundles={sanityBundles}
         sanityMeta={sanityMeta}
       />
+
+      {/* AdSense Unit */}
+      <AdBanner slotId="attractions_bottom_slot" category="attractions" style={{ marginTop: '3rem' }} />
 
     </div>
   )

@@ -1,4 +1,5 @@
 import { client } from '../../sanity/lib/client'
+import AdBanner from '../../components/AdBanner'
 
 export const revalidate = 60 // Revalidate page every minute
 
@@ -374,6 +375,10 @@ export default async function CorporateTravelPage() {
         </div>
       </section>
 
+      {/* AdSense Unit */}
+      <div className="container" style={{ padding: '4rem 1.5rem 0' }}>
+        <AdBanner slotId="corporate_travel_mid_slot" category="b2b" />
+      </div>
 
       {/* 3. FOUR PILLARS / DIFFERENCE */}
       <section style={{ maxWidth: '1200px', margin: '5rem auto 0', padding: '0 1.5rem' }}>

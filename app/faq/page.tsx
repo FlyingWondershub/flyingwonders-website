@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { client } from '../../sanity/lib/client'
+import AdBanner from '../../components/AdBanner'
 
 interface FAQItem {
   id: string
@@ -327,6 +328,9 @@ export default function FAQPage() {
               </button>
             </div>
           )}
+
+          {/* AdSense Unit */}
+          <AdBanner slotId="faq_mid_slot" category="faq" style={{ marginBottom: '2.5rem' }} />
 
           {/* Rapid Response Contact Box */}
           <div
