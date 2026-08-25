@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 
 interface Traveler {
   id: number
+  dob: string
   age: number
 }
 
@@ -58,15 +59,30 @@ export default function InsurancePage() {
   })
   const [durationDays, setDurationDays] = useState<number>(14)
 
-  // Travelers in calculator
-  const [travelers, setTravelers] = useState<Traveler[]>([{ id: 1, age: 30 }])
+  // Helper to calculate exact age from Date of Birth
+  const calculateAgeFromDOB = (dobStr: string): number => {
+    if (!dobStr) return 30
+    const birthDate = new Date(dobStr)
+    const today = new Date()
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const m = today.getMonth() - birthDate.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    return Math.max(1, Math.min(99, age))
+  }
 
-  // Passenger KYC Details for Modal (Synchronized with travelers)
-  const [passengers, setPassengers] = useState<PassengerDetail[]>([
-    { id: 1, name: '', passport: '', dob: '1992-05-15', gender: 'Male', age: 30, preExistingMedicalCondition: 'None' },
+  // Travelers in calculator (Store Date of Birth and Auto-calculated Age)
+  const [travelers, setTravelers] = useState<Traveler[]>([
+    { id: 1, dob: '1996-05-15', age: 30 },
   ])
 
-  // Synchronize passengers array whenever travelers count or ages change
+  // Passenger KYC Details for Modal (Pre-populated with selected DOBs)
+  const [passengers, setPassengers] = useState<PassengerDetail[]>([
+    { id: 1, name: '', passport: '', dob: '1996-05-15', gender: 'Male', age: 30, preExistingMedicalCondition: 'None' },
+  ])
+
+  // Synchronize passengers array whenever travelers change on first page
   useEffect(() => {
     setPassengers((prev) => {
       return travelers.map((t, idx) => {
@@ -75,9 +91,9 @@ export default function InsurancePage() {
           id: t.id,
           name: existing?.name || '',
           passport: existing?.passport || '',
-          dob: existing?.dob || '1992-05-15',
+          dob: t.dob || existing?.dob || '1996-05-15',
           gender: existing?.gender || 'Male',
-          age: t.age || 30,
+          age: t.age || calculateAgeFromDOB(t.dob),
           preExistingMedicalCondition: existing?.preExistingMedicalCondition || 'None',
         }
       })
@@ -139,7 +155,7 @@ export default function InsurancePage() {
     }
   }, [startDate, endDate])
 
-  // Fetch / Calculate Quotes
+  // Fetch / Calculate Quotes based on Exact Date of Births
   const fetchQuotes = async () => {
     setLoading(true)
     try {
@@ -151,7 +167,7 @@ export default function InsurancePage() {
           startDate,
           endDate,
           durationDays,
-          travelers,
+          travelers: travelers.map(t => ({ id: t.id, age: t.age })),
           sumInsuredUSD,
           adventureSports,
           pedCover,
@@ -174,11 +190,13 @@ export default function InsurancePage() {
     fetchQuotes()
   }, [destination, durationDays, travelers, sumInsuredUSD, adventureSports, pedCover, tripCancellationAddon])
 
-  // Add / Remove Traveler
+  // Add / Remove Traveler on first page
   const addTraveler = () => {
     if (travelers.length < 8) {
       const newId = Date.now()
-      setTravelers([...travelers, { id: newId, age: 28 }])
+      const defaultDob = '1998-05-15'
+      const defaultAge = calculateAgeFromDOB(defaultDob)
+      setTravelers([...travelers, { id: newId, dob: defaultDob, age: defaultAge }])
     }
   }
 
@@ -188,8 +206,9 @@ export default function InsurancePage() {
     }
   }
 
-  const updateTravelerAge = (id: number, age: number) => {
-    setTravelers(travelers.map(t => (t.id === id ? { ...t, age: Math.max(1, Math.min(99, age)) } : t)))
+  const updateTravelerDOB = (id: number, newDob: string) => {
+    const computedAge = calculateAgeFromDOB(newDob)
+    setTravelers(travelers.map(t => (t.id === id ? { ...t, dob: newDob, age: computedAge } : t)))
   }
 
   const updatePassenger = (idx: number, field: keyof PassengerDetail, value: any) => {
@@ -202,10 +221,85 @@ export default function InsurancePage() {
     })
   }
 
+  const handleModalDOBChange = (idx: number, newDob: string) => {
+    const computedAge = calculateAgeFromDOB(newDob)
+    updatePassenger(idx, 'dob', newDob)
+    updatePassenger(idx, 'age', computedAge)
+    if (travelers[idx]) {
+      updateTravelerDOB(travelers[idx].id, newDob)
+    }
+  }
+
   const handleOpenModal = (plan: InsurancePlan) => {
     setSelectedPlan(plan)
     setIssuedPolicy(null)
     setModalOpen(true)
+  }
+
+  // Bulletproof 1-Page Print Trigger
+  const handlePrintCertificate = () => {
+    const certElement = document.getElementById('insurance-certificate-print')
+    if (!certElement) {
+      window.print()
+      return
+    }
+
+    const printWindow = window.open('', '_blank', 'width=900,height=1200')
+    if (!printWindow) {
+      window.print()
+      return
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Official Certificate of Travel Insurance</title>
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 8mm;
+            }
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              color: #0F172A;
+              background: #FFFFFF;
+              padding: 10px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            th, td {
+              text-align: left;
+            }
+            .no-print {
+              display: none !important;
+            }
+          </style>
+        </head>
+        <body>
+          ${certElement.outerHTML}
+          <script>
+            window.onload = function() {
+              window.focus();
+              window.print();
+              setTimeout(function() {
+                window.close();
+              }, 600);
+            };
+          </script>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
   }
 
   const handlePolicyIssuanceSubmit = async (e: React.FormEvent) => {
@@ -287,7 +381,7 @@ export default function InsurancePage() {
       `🛡️ Plan: ${plan.name} (${plan.sumInsured})\n` +
       `🌍 Destination: ${destination.replace(/_/g, ' ').toUpperCase()}\n` +
       `📅 Dates: ${startDate} to ${endDate} (${durationDays} Days)\n` +
-      `👥 Travelers: ${travelers.length} (${travelers.map(t => `${t.age} yrs`).join(', ')})\n` +
+      `👥 Travelers: ${travelers.length} (${travelers.map(t => `${t.dob} (${t.age} yrs)`).join(', ')})\n` +
       `💰 Quoted Premium: ₹${plan.pricing.totalINR.toLocaleString('en-IN')} (incl. GST)\n\n` +
       `Please assist me with instant policy issuance.`
     )
@@ -320,50 +414,6 @@ export default function InsurancePage() {
   return (
     <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: '5rem', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}>
       
-      {/* ── Strict 1-Page Dedicated Print Stylesheet ── */}
-      <style jsx global>{`
-        @media print {
-          @page {
-            size: A4 portrait;
-            margin: 8mm;
-          }
-          body {
-            background: #FFFFFF !important;
-            color: #000000 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            font-size: 10pt !important;
-          }
-          /* Hide all screen components */
-          body * {
-            visibility: hidden !important;
-          }
-          /* Show ONLY the official certificate document */
-          #insurance-certificate-print,
-          #insurance-certificate-print * {
-            visibility: visible !important;
-          }
-          #insurance-certificate-print {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 10px !important;
-            border: 2px solid #0F4C3A !important;
-            border-radius: 6px !important;
-            background: #FFFFFF !important;
-            box-shadow: none !important;
-            page-break-after: avoid !important;
-            page-break-inside: avoid !important;
-          }
-          .no-print {
-            display: none !important;
-          }
-        }
-      `}</style>
-
       {/* ── Hero Section ── */}
       <section style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 60%, #0B192C 100%)', color: '#FFFFFF', padding: '2rem 1.25rem 3.25rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ maxWidth: '920px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
@@ -426,7 +476,7 @@ export default function InsurancePage() {
                 <span>⚡</span> Instant Travel Insurance Premium Calculator
               </h2>
               <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0.35rem 0 0' }}>
-                Select your destination zone, dates, and travelers to compare live premiums.
+                Select destination, dates, and traveler date of birth for instant verified premiums.
               </p>
             </div>
             <div style={{ background: '#DCFCE7', color: '#166534', padding: '0.35rem 0.85rem', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -501,12 +551,17 @@ export default function InsurancePage() {
             </div>
           </div>
 
-          {/* Travelers Age Controls */}
+          {/* Travelers Count & Date of Birth Picker */}
           <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #EEF2F6' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                4. Travelers Count ({travelers.length}) & Ages
-              </span>
+              <div>
+                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  4. Travelers Count ({travelers.length}) & Date of Birth
+                </span>
+                <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '0.1rem' }}>
+                  Select each traveler's date of birth for instant verified actuarial pricing.
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={addTraveler}
@@ -517,24 +572,31 @@ export default function InsurancePage() {
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.75rem' }}>
               {travelers.map((t, idx) => (
-                <div key={t.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.5rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'relative' }}>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B' }}>P{idx + 1}:</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={t.age}
-                    onChange={(e) => updateTravelerAge(t.id, parseInt(e.target.value) || 1)}
-                    style={{ width: '48px', padding: '0.25rem 0.35rem', borderRadius: '6px', border: '1px solid #CBD5E1', textAlign: 'center', fontWeight: 800, fontSize: '0.9rem', color: '#0F172A' }}
-                  />
-                  <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>yrs</span>
+                <div key={t.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.65rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F4C3A', marginBottom: '0.25rem' }}>
+                      Traveler #{idx + 1} {idx === 0 ? '(Lead)' : ''}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <input
+                        type="date"
+                        max={new Date().toISOString().split('T')[0]}
+                        value={t.dob}
+                        onChange={(e) => updateTravelerDOB(t.id, e.target.value)}
+                        style={{ padding: '0.35rem 0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF', fontWeight: 700, fontSize: '0.82rem', color: '#0F172A' }}
+                      />
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#15803D', background: '#DCFCE7', padding: '0.2rem 0.45rem', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+                        {t.age} yrs
+                      </span>
+                    </div>
+                  </div>
                   {travelers.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeTraveler(t.id)}
-                      style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '50%', width: '18px', height: '18px', fontSize: '10px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '50%', width: '22px', height: '22px', fontSize: '11px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
                       ✕
                     </button>
@@ -1066,11 +1128,11 @@ export default function InsurancePage() {
 
                 </div>
 
-                {/* On-Screen Action Buttons (Hidden when printing) */}
-                <div className="no-print" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '1.25rem' }}>
+                {/* On-Screen Action Buttons */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '1.25rem' }}>
                   <button
                     type="button"
-                    onClick={() => window.print()}
+                    onClick={handlePrintCertificate}
                     style={{ padding: '0.85rem 1rem', borderRadius: '10px', background: '#0F4C3A', color: '#FFF', fontWeight: 800, fontSize: '0.88rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 4px 10px rgba(15, 76, 58, 0.2)' }}
                   >
                     <span>🖨️</span> Print / Save Clean 1-Page PDF
@@ -1086,7 +1148,7 @@ export default function InsurancePage() {
                   </a>
                 </div>
 
-                <div className="no-print" style={{ textAlign: 'center', marginTop: '0.85rem' }}>
+                <div style={{ textAlign: 'center', marginTop: '0.85rem' }}>
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
@@ -1163,7 +1225,7 @@ export default function InsurancePage() {
                               type="date"
                               required
                               value={p.dob}
-                              onChange={(e) => updatePassenger(idx, 'dob', e.target.value)}
+                              onChange={(e) => handleModalDOBChange(idx, e.target.value)}
                               style={{ width: '100%', padding: '0.6rem 0.5rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#FFFFFF', fontSize: '0.8rem', color: '#0F172A' }}
                             />
                           </div>
