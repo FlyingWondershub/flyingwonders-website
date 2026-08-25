@@ -9,7 +9,21 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/studio', '/api/', '/admin-dashboard', '/agent-portal'],
       },
       {
-        userAgent: ['GPTBot', 'CCBot', 'ClaudeBot', 'Bytespider', 'PetalBot', 'Amazonbot', 'Diffbot', 'anthropic-ai'],
+        userAgent: [
+          'GPTBot',
+          'OAI-SearchBot',
+          'ClaudeBot',
+          'anthropic-ai',
+          'PerplexityBot',
+          'Google-Extended',
+          'Applebot-Extended',
+          'cohere-ai',
+        ],
+        allow: '/',
+        disallow: ['/studio', '/api/', '/admin-dashboard', '/agent-portal'],
+      },
+      {
+        userAgent: ['CCBot', 'Bytespider', 'PetalBot', 'Amazonbot', 'Diffbot'],
         disallow: ['/'],
       },
       {

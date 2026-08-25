@@ -49,7 +49,42 @@ export default function SeoSchema() {
       'https://www.facebook.com/profile.php?id=61585495532807',
       'https://www.youtube.com/@flyingwonders7886'
     ],
-    'areaServed': ['Singapore', 'India'],
+    'areaServed': [
+      { '@type': 'Country', 'name': 'Singapore' },
+      { '@type': 'Country', 'name': 'India' },
+      { '@type': 'Country', 'name': 'Malaysia' }
+    ],
+    'knowsAbout': [
+      'Singapore Destination Management Company (DMC)',
+      'B2B Travel Agent Wholesale Packages',
+      'Universal Studios Singapore Attraction E-Tickets',
+      'Singapore Visa Processing & Consultation',
+      'Karnataka Heritage & Wildlife Safari Tours',
+      'Changi Airport Transfers & Private Transport',
+      'Corporate Travel & MICE Management'
+    ],
+    'hasOfferCatalog': {
+      '@type': 'OfferCatalog',
+      'name': 'DMC & B2B Travel Services',
+      'itemListElement': [
+        {
+          '@type': 'Offer',
+          'itemOffered': {
+            '@type': 'Service',
+            'name': 'B2B Wholesale Travel Agent Packages',
+            'description': 'Direct ground handling, nett rates, and white-label itineraries for travel agents.'
+          }
+        },
+        {
+          '@type': 'Offer',
+          'itemOffered': {
+            '@type': 'Service',
+            'name': 'Singapore Attraction E-Tickets',
+            'description': 'Instant e-tickets for major Singapore attractions with zero transaction fees.'
+          }
+        }
+      ]
+    },
     'description': 'Premier Destination Management Company (DMC) specializing in Singapore B2B travel agent wholesale rates, custom holiday packages, attraction e-tickets, and Changi airport transfers.'
   }
 
