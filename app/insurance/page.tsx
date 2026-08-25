@@ -144,6 +144,20 @@ export default function InsurancePage() {
   const [submittingInquiry, setSubmittingInquiry] = useState<boolean>(false)
   const [issuedPolicy, setIssuedPolicy] = useState<any | null>(null)
 
+  // Sanity Site Settings & Custom Toggles
+  const [siteSettings, setSiteSettings] = useState<any>(null)
+
+  useEffect(() => {
+    fetch('/api/site-settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.success && data?.settings) {
+          setSiteSettings(data.settings)
+        }
+      })
+      .catch(err => console.warn('Could not load insurance site settings:', err))
+  }, [])
+
   // Calculate days whenever dates change
   useEffect(() => {
     if (startDate && endDate) {
@@ -388,6 +402,7 @@ export default function InsurancePage() {
   }
 
   const generateWhatsAppUrl = (plan: InsurancePlan) => {
+    const waPhone = siteSettings?.insuranceWhatsappNumber || '6591234567'
     const text = encodeURIComponent(
       `Hello Flying Wonders! I would like to purchase/inquire about Travel Insurance:\n\n` +
       `🛡️ Plan: ${plan.name} (${plan.sumInsured})\n` +
@@ -397,7 +412,7 @@ export default function InsurancePage() {
       `💰 Quoted Premium: ₹${plan.pricing.totalINR.toLocaleString('en-IN')} (incl. GST)\n\n` +
       `Please assist me with instant policy issuance.`
     )
-    return `https://wa.me/6591234567?text=${text}`
+    return `https://wa.me/${waPhone}?text=${text}`
   }
 
   const faqs = [
@@ -423,6 +438,31 @@ export default function InsurancePage() {
     },
   ]
 
+  // If page is toggled OFF in Sanity CMS, show maintenance message
+  if (siteSettings?.hideInsurance) {
+    return (
+      <div style={{ background: '#F8FAFC', minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+        <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '3rem 2rem', maxWidth: '540px', width: '100%', textAlign: 'center', border: '1px solid #E2E8F0', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🛡️</div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
+            Travel Insurance Desk
+          </h1>
+          <p style={{ color: '#64748B', fontSize: '0.92rem', lineHeight: 1.6, margin: '0 auto 1.5rem' }}>
+            Our online travel insurance desk is temporarily undergoing system maintenance. Please contact our 24/7 representative directly on WhatsApp for instant assistance and quotes.
+          </p>
+          <a
+            href={`https://wa.me/${siteSettings?.insuranceWhatsappNumber || '6591234567'}?text=${encodeURIComponent('Hello Flying Wonders, I would like to inquire about Overseas Travel Insurance.')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'inline-block', background: '#0F4C3A', color: '#FFFFFF', padding: '0.85rem 1.5rem', borderRadius: '10px', fontWeight: 800, fontSize: '0.9rem', textDecoration: 'none' }}
+          >
+            💬 Contact WhatsApp Insurance Desk
+          </a>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: '5rem', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}>
       
@@ -430,15 +470,17 @@ export default function InsurancePage() {
       <section style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 60%, #0B192C 100%)', color: '#FFFFFF', padding: '2rem 1.25rem 3.25rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ maxWidth: '920px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.25rem 0.75rem', borderRadius: '50px', background: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.35)', color: '#FCD34D', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>
-            <span>🛡️</span> Official Travel Insurance Desk
+            <span>🛡️</span> {siteSettings?.insurancePartnerName ? `Official Partner · ${siteSettings.insurancePartnerName}` : 'Official Travel Insurance Desk'}
           </div>
 
           <h1 style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)', fontWeight: 800, margin: '0 0 0.65rem', fontFamily: 'var(--font-playfair), serif', lineHeight: 1.2, color: '#FFFFFF' }}>
-            Travel the World with <span style={{ color: '#FCD34D' }}>Complete Peace of Mind</span>
+            {siteSettings?.insuranceHeroTitle || (
+              <>Travel the World with <span style={{ color: '#FCD34D' }}>Complete Peace of Mind</span></>
+            )}
           </h1>
 
           <p style={{ fontSize: '0.92rem', opacity: 0.9, maxWidth: '680px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
-            Schengen visa approved, up to <strong>$1,000,000 USD</strong> medical cover, 24/7 cashless hospital networks in 180+ countries, baggage delay protection & instant certificate delivery.
+            {siteSettings?.insuranceHeroSubtitle || 'Schengen visa approved, up to $1,000,000 USD medical cover, 24/7 cashless hospital networks in 180+ countries, baggage delay protection & instant certificate delivery.'}
           </p>
 
           {/* Quick Hero Badges — Compact Pills */}
@@ -479,184 +521,186 @@ export default function InsurancePage() {
       </section>
 
       {/* ── Interactive Quote Calculator Box ── */}
-      <div style={{ maxWidth: '1120px', margin: '-1.75rem auto 0', padding: '0 1.25rem', position: 'relative', zIndex: 10 }}>
-        <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '1.5rem 1.75rem', boxShadow: '0 15px 35px -10px rgba(0, 0, 0, 0.08)', border: '1px solid #E2E8F0' }}>
-          
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #EEF2F6', paddingBottom: '1.25rem', marginBottom: '1.5rem', gap: '0.75rem' }}>
-            <div>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F4C3A', margin: 0, fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span>⚡</span> Instant Travel Insurance Premium Calculator
-              </h2>
-              <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0.35rem 0 0' }}>
-                Select destination, dates, and traveler date of birth for instant verified premiums.
-              </p>
-            </div>
-            <div style={{ background: '#DCFCE7', color: '#166534', padding: '0.35rem 0.85rem', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              ● Live Verified Rates
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
-            {/* Destination */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
-                1. Destination Zone
-              </label>
-              <select
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.9rem', outline: 'none' }}
-              >
-                <option value="schengen_europe">Schengen & Europe (Visa Compliant)</option>
-                <option value="worldwide_without_us_ca">Worldwide (Excl. USA & Canada)</option>
-                <option value="worldwide_with_us_ca">Worldwide (Incl. USA & Canada)</option>
-                <option value="asia">Asia Pacific & Middle East</option>
-                <option value="domestic">Domestic Travel (India)</option>
-              </select>
-            </div>
-
-            {/* Travel Dates */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
-                2. Travel Dates ({durationDays} Days Trip)
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                <div>
-                  <input
-                    type="date"
-                    value={startDate}
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    style={{ width: '100%', padding: '0.7rem 0.6rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.85rem' }}
-                  />
-                  <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '0.2rem', paddingLeft: '0.25rem' }}>Departure</div>
-                </div>
-                <div>
-                  <input
-                    type="date"
-                    value={endDate}
-                    min={startDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    style={{ width: '100%', padding: '0.7rem 0.6rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.85rem' }}
-                  />
-                  <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '0.2rem', paddingLeft: '0.25rem' }}>Return</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Medical Sum Insured */}
-            <div>
-              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
-                3. Medical Sum Insured
-              </label>
-              <select
-                value={sumInsuredUSD}
-                onChange={(e) => setSumInsuredUSD(Number(e.target.value))}
-                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.9rem', outline: 'none' }}
-              >
-                <option value={50000}>$50,000 USD (Essential)</option>
-                <option value={100000}>$100,000 USD (Recommended - Popular)</option>
-                <option value={250000}>$250,000 USD (Gold Protection)</option>
-                <option value={500000}>$500,000 USD (Comprehensive)</option>
-                <option value={1000000}>$1,000,000 USD (Ultra Shield)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Travelers Count & Date of Birth Picker */}
-          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #EEF2F6' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+      {!siteSettings?.hideInsuranceCalculator && (
+        <div style={{ maxWidth: '1120px', margin: '-1.75rem auto 0', padding: '0 1.25rem', position: 'relative', zIndex: 10 }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '1.5rem 1.75rem', boxShadow: '0 15px 35px -10px rgba(0, 0, 0, 0.08)', border: '1px solid #E2E8F0' }}>
+            
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #EEF2F6', paddingBottom: '1.25rem', marginBottom: '1.5rem', gap: '0.75rem' }}>
               <div>
-                <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  4. Travelers Count ({travelers.length}) & Date of Birth
-                </span>
-                <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '0.1rem' }}>
-                  Select each traveler's date of birth for instant verified actuarial pricing.
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F4C3A', margin: 0, fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span>⚡</span> Instant Travel Insurance Premium Calculator
+                </h2>
+                <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0.35rem 0 0' }}>
+                  Select destination, dates, and traveler date of birth for instant verified premiums.
+                </p>
+              </div>
+              <div style={{ background: '#DCFCE7', color: '#166534', padding: '0.35rem 0.85rem', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                ● Live Verified Rates
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+              {/* Destination */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
+                  1. Destination Zone
+                </label>
+                <select
+                  value={destination}
+                  onChange={(e) => setDestination(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.9rem', outline: 'none' }}
+                >
+                  <option value="schengen_europe">Schengen & Europe (Visa Compliant)</option>
+                  <option value="worldwide_without_us_ca">Worldwide (Excl. USA & Canada)</option>
+                  <option value="worldwide_with_us_ca">Worldwide (Incl. USA & Canada)</option>
+                  <option value="asia">Asia Pacific & Middle East</option>
+                  <option value="domestic">Domestic Travel (India)</option>
+                </select>
+              </div>
+
+              {/* Travel Dates */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
+                  2. Travel Dates ({durationDays} Days Trip)
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <div>
+                    <input
+                      type="date"
+                      value={startDate}
+                      min={new Date().toISOString().split('T')[0]}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem 0.6rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.85rem' }}
+                    />
+                    <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '0.2rem', paddingLeft: '0.25rem' }}>Departure</div>
+                  </div>
+                  <div>
+                    <input
+                      type="date"
+                      value={endDate}
+                      min={startDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      style={{ width: '100%', padding: '0.7rem 0.6rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.85rem' }}
+                    />
+                    <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '0.2rem', paddingLeft: '0.25rem' }}>Return</div>
+                  </div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={addTraveler}
-                disabled={travelers.length >= 8}
-                style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.35rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
-              >
-                + Add Traveler
-              </button>
+
+              {/* Medical Sum Insured */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
+                  3. Medical Sum Insured
+                </label>
+                <select
+                  value={sumInsuredUSD}
+                  onChange={(e) => setSumInsuredUSD(Number(e.target.value))}
+                  style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.9rem', outline: 'none' }}
+                >
+                  <option value={50000}>$50,000 USD (Essential)</option>
+                  <option value={100000}>$100,000 USD (Recommended - Popular)</option>
+                  <option value={250000}>$250,000 USD (Gold Protection)</option>
+                  <option value={500000}>$500,000 USD (Comprehensive)</option>
+                  <option value={1000000}>$1,000,000 USD (Ultra Shield)</option>
+                </select>
+              </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.75rem' }}>
-              {travelers.map((t, idx) => (
-                <div key={t.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.65rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F4C3A', marginBottom: '0.25rem' }}>
-                      Traveler #{idx + 1} {idx === 0 ? '(Lead)' : ''}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <input
-                        type="date"
-                        max={new Date().toISOString().split('T')[0]}
-                        value={t.dob}
-                        onChange={(e) => updateTravelerDOB(t.id, e.target.value)}
-                        style={{ padding: '0.35rem 0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF', fontWeight: 700, fontSize: '0.82rem', color: '#0F172A' }}
-                      />
-                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#15803D', background: '#DCFCE7', padding: '0.2rem 0.45rem', borderRadius: '4px', whiteSpace: 'nowrap' }}>
-                        {t.age} yrs
-                      </span>
-                    </div>
+            {/* Travelers Count & Date of Birth Picker */}
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #EEF2F6' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.1rem' }}>
+                    4. Travelers Count ({travelers.length}) & Date of Birth
+                  </span>
+                  <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '0.1rem' }}>
+                    Select each traveler's date of birth for instant verified actuarial pricing.
                   </div>
-                  {travelers.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeTraveler(t.id)}
-                      style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '50%', width: '22px', height: '22px', fontSize: '11px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      ✕
-                    </button>
-                  )}
                 </div>
-              ))}
+                <button
+                  type="button"
+                  onClick={addTraveler}
+                  disabled={travelers.length >= 8}
+                  style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.35rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  + Add Traveler
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.75rem' }}>
+                {travelers.map((t, idx) => (
+                  <div key={t.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.65rem 0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F4C3A', marginBottom: '0.25rem' }}>
+                        Traveler #{idx + 1} {idx === 0 ? '(Lead)' : ''}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <input
+                          type="date"
+                          max={new Date().toISOString().split('T')[0]}
+                          value={t.dob}
+                          onChange={(e) => updateTravelerDOB(t.id, e.target.value)}
+                          style={{ padding: '0.35rem 0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF', fontWeight: 700, fontSize: '0.82rem', color: '#0F172A' }}
+                        />
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#15803D', background: '#DCFCE7', padding: '0.2rem 0.45rem', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+                          {t.age} yrs
+                        </span>
+                      </div>
+                    </div>
+                    {travelers.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeTraveler(t.id)}
+                        style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '50%', width: '22px', height: '22px', fontSize: '11px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
+
+            {/* Optional Riders */}
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #EEF2F6', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.5rem' }}>
+                Optional Riders:
+              </span>
+
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#334155', background: '#F1F5F9', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={adventureSports}
+                  onChange={(e) => setAdventureSports(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: '#0F4C3A' }}
+                />
+                <span>⛷️ Adventure Sports Rider</span>
+              </label>
+
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#334155', background: '#F1F5F9', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={pedCover}
+                  onChange={(e) => setPedCover(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: '#0F4C3A' }}
+                />
+                <span>❤️ Pre-existing Condition (PED) Emergency Life-Threatening Cover</span>
+              </label>
+
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#334155', background: '#F1F5F9', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={tripCancellationAddon}
+                  onChange={(e) => setTripCancellationAddon(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: '#0F4C3A' }}
+                />
+                <span>✈️ Trip Cancellation Any Reason Cover</span>
+              </label>
+            </div>
+
           </div>
-
-          {/* Optional Riders */}
-          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #EEF2F6', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.5rem' }}>
-              Optional Riders:
-            </span>
-
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#334155', background: '#F1F5F9', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={adventureSports}
-                onChange={(e) => setAdventureSports(e.target.checked)}
-                style={{ width: '16px', height: '16px', accentColor: '#0F4C3A' }}
-              />
-              <span>⛷️ Adventure Sports Rider</span>
-            </label>
-
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#334155', background: '#F1F5F9', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={pedCover}
-                onChange={(e) => setPedCover(e.target.checked)}
-                style={{ width: '16px', height: '16px', accentColor: '#0F4C3A' }}
-              />
-              <span>❤️ Pre-existing Condition (PED) Emergency Life-Threatening Cover</span>
-            </label>
-
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#334155', background: '#F1F5F9', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={tripCancellationAddon}
-                onChange={(e) => setTripCancellationAddon(e.target.checked)}
-                style={{ width: '16px', height: '16px', accentColor: '#0F4C3A' }}
-              />
-              <span>✈️ Trip Cancellation Any Reason Cover</span>
-            </label>
-          </div>
-
         </div>
-      </div>
+      )}
 
       {/* ── Plans Display Grid ── */}
       <section style={{ maxWidth: '1120px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
@@ -808,163 +852,169 @@ export default function InsurancePage() {
       </section>
 
       {/* ── Comparison Table ── */}
-      <section style={{ maxWidth: '1120px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
-        <div style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.03)' }}>
-          <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.35rem' }}>
-            Detailed Plan Benefits Comparison
-          </h3>
-          <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.5rem' }}>
-            Compare key limits and deductibles across our travel insurance tiers.
-          </p>
+      {!siteSettings?.hideInsuranceComparisonTable && (
+        <section style={{ maxWidth: '1120px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.03)' }}>
+            <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.35rem' }}>
+              Detailed Plan Benefits Comparison
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.5rem' }}>
+              Compare key limits and deductibles across our travel insurance tiers.
+            </p>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
-              <thead>
-                <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#334155' }}>Coverage Benefit</th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#334155' }}>Standard Essential</th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#D97706' }}>Silver Comprehensive</th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#0F4C3A' }}>Gold Elite</th>
-                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#7C3AED' }}>Student Elite</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Medical Expenses & Hospitalization</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>$50,000 / $100,000</td>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: '#D97706' }}>Up to $100,000</td>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: '#0F4C3A' }}>Up to $250,000+</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>Up to $250,000</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Cashless Hospital Network</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>✓ Worldwide</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>✓ Worldwide</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>✓ Priority TPA</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>✓ University Network</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Deductible / Excess per claim</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>$100</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>$50</td>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 800, color: '#16A34A' }}>$0 (Zero Deductible)</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>$50</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Trip Cancellation / Interruption</td>
-                  <td style={{ padding: '0.75rem 1rem', color: '#94A3B8' }}>—</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>Up to $1,500</td>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Up to $3,500</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>Up to $1,500</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Loss of Checked Baggage</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>Up to $500</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>Up to $1,000</td>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Up to $2,000</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>Up to $1,000</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Baggage Delay Reimbursement</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>Up to $150</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>Up to $250</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>Up to $500</td>
-                  <td style={{ padding: '0.75rem 1rem' }}>Up to $250</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
-                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Schengen Visa Compliance</td>
-                  <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
-                  <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
-                  <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
-                  <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
-                </tr>
-              </tbody>
-            </table>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                <thead>
+                  <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
+                    <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#334155' }}>Coverage Benefit</th>
+                    <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#334155' }}>Standard Essential</th>
+                    <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#D97706' }}>Silver Comprehensive</th>
+                    <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#0F4C3A' }}>Gold Elite</th>
+                    <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#7C3AED' }}>Student Elite</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Medical Expenses & Hospitalization</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>$50,000 / $100,000</td>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: '#D97706' }}>Up to $100,000</td>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: '#0F4C3A' }}>Up to $250,000+</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>Up to $250,000</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Cashless Hospital Network</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>✓ Worldwide</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>✓ Worldwide</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>✓ Priority TPA</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>✓ University Network</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Deductible / Excess per claim</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>$100</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>$50</td>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 800, color: '#16A34A' }}>$0 (Zero Deductible)</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>$50</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Trip Cancellation / Interruption</td>
+                    <td style={{ padding: '0.75rem 1rem', color: '#94A3B8' }}>—</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>Up to $1,500</td>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Up to $3,500</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>Up to $1,500</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Loss of Checked Baggage</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>Up to $500</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>Up to $1,000</td>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Up to $2,000</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>Up to $1,000</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Baggage Delay Reimbursement</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>Up to $150</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>Up to $250</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>Up to $500</td>
+                    <td style={{ padding: '0.75rem 1rem' }}>Up to $250</td>
+                  </tr>
+                  <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Schengen Visa Compliance</td>
+                    <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
+                    <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
+                    <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
+                    <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── 4-Step Claim Process ── */}
-      <section style={{ maxWidth: '1120px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
-            How to File an Overseas Claim
-          </h2>
-          <p style={{ color: '#64748B', fontSize: '1rem' }}>
-            24/7 International assistance team ready to back you up anywhere in the world.
-          </p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
-          <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#EFF6FF', color: '#2563EB', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-              1
-            </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Emergency Intimation</h4>
-            <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
-              Call the 24/7 emergency toll-free number or contact our claims desk immediately upon admission or flight event.
+      {!siteSettings?.hideInsuranceClaimProcess && (
+        <section style={{ maxWidth: '1120px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+            <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
+              How to File an Overseas Claim
+            </h2>
+            <p style={{ color: '#64748B', fontSize: '1rem' }}>
+              24/7 International assistance team ready to back you up anywhere in the world.
             </p>
           </div>
 
-          <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FEF3C7', color: '#D97706', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-              2
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+            <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#EFF6FF', color: '#2563EB', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                1
+              </div>
+              <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Emergency Intimation</h4>
+              <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+                Call the 24/7 emergency toll-free number or contact our claims desk immediately upon admission or flight event.
+              </p>
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Cashless Guarantee (GOP)</h4>
-            <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
-              Our TPA desk sends a direct Guarantee of Payment (GOP) to the treating hospital for seamless cashless medical care.
-            </p>
-          </div>
 
-          <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#F3E8FF', color: '#7C3AED', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-              3
+            <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FEF3C7', color: '#D97706', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                2
+              </div>
+              <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Cashless Guarantee (GOP)</h4>
+              <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+                Our TPA desk sends a direct Guarantee of Payment (GOP) to the treating hospital for seamless cashless medical care.
+              </p>
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Document Collection</h4>
-            <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
-              Retain doctor prescriptions, medical diagnosis reports, airline PIR, and original invoices.
-            </p>
-          </div>
 
-          <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#DCFCE7', color: '#15803D', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-              4
+            <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#F3E8FF', color: '#7C3AED', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                3
+              </div>
+              <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Document Collection</h4>
+              <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+                Retain doctor prescriptions, medical diagnosis reports, airline PIR, and original invoices.
+              </p>
             </div>
-            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Direct Settlement</h4>
-            <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
-              Fast claims processing with direct bank transfer settlement for non-cashless expenses within 7 to 10 working days.
-            </p>
+
+            <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#DCFCE7', color: '#15803D', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                4
+              </div>
+              <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Direct Settlement</h4>
+              <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+                Fast claims processing with direct bank transfer settlement for non-cashless expenses within 7 to 10 working days.
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── FAQ Section ── */}
-      <section style={{ maxWidth: '820px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
-            Frequently Asked Questions
-          </h2>
-          <p style={{ color: '#64748B', fontSize: '0.9rem' }}>
-            Quick answers about international coverage and claims.
-          </p>
-        </div>
+      {!siteSettings?.hideInsuranceFaq && (
+        <section style={{ maxWidth: '820px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
+              Frequently Asked Questions
+            </h2>
+            <p style={{ color: '#64748B', fontSize: '0.9rem' }}>
+              Quick answers about international coverage and claims.
+            </p>
+          </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {faqs.map((faq, fIdx) => (
-            <details
-              key={fIdx}
-              style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
-            >
-              <summary style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem', cursor: 'pointer', outline: 'none' }}>
-                {faq.q}
-              </summary>
-              <p style={{ color: '#475569', fontSize: '0.85rem', lineHeight: 1.6, marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9', margin: '0.75rem 0 0' }}>
-                {faq.a}
-              </p>
-            </details>
-          ))}
-        </div>
-      </section>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {faqs.map((faq, fIdx) => (
+              <details
+                key={fIdx}
+                style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
+              >
+                <summary style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem', cursor: 'pointer', outline: 'none' }}>
+                  {faq.q}
+                </summary>
+                <p style={{ color: '#475569', fontSize: '0.85rem', lineHeight: 1.6, marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9', margin: '0.75rem 0 0' }}>
+                  {faq.a}
+                </p>
+              </details>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Policy Issuance & Certificate Modal ── */}
       {modalOpen && (

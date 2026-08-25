@@ -18,6 +18,19 @@ export async function GET() {
       hideContact,
       hideChatbot,
       hideFaq,
+      hideInsurance,
+      hideInsuranceCalculator,
+      hideInsuranceComparisonTable,
+      hideInsuranceClaimProcess,
+      hideInsuranceFaq,
+      insuranceSheetUrl,
+      insurancePartnerName,
+      insuranceEmergencyHelpline,
+      insuranceWhatsappNumber,
+      insuranceGstPercentage,
+      insuranceInrToUsdRate,
+      insuranceHeroTitle,
+      insuranceHeroSubtitle,
       attractionsSheetUrl,
       customPackageSheetUrl,
       malaysiaPackageSheetUrl,
@@ -51,6 +64,11 @@ export async function GET() {
         hideBlog: false,
         hideContact: false,
         hideChatbot: false,
+        hideInsurance: false,
+        hideInsuranceCalculator: false,
+        hideInsuranceComparisonTable: false,
+        hideInsuranceClaimProcess: false,
+        hideInsuranceFaq: false,
       }
     }, {
       headers: {
@@ -72,6 +90,11 @@ export async function GET() {
         hideBlog: false,
         hideContact: false,
         hideChatbot: false,
+        hideInsurance: false,
+        hideInsuranceCalculator: false,
+        hideInsuranceComparisonTable: false,
+        hideInsuranceClaimProcess: false,
+        hideInsuranceFaq: false,
       }
     })
   }

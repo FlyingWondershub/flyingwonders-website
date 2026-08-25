@@ -104,6 +104,7 @@ export default async function RootLayout({
     hideBlog: false,
     hideContact: false,
     hideChatbot: false,
+    hideInsurance: false,
   }
 
   try {
@@ -131,6 +132,7 @@ export default async function RootLayout({
       hideBlog,
       hideContact,
       hideChatbot,
+      hideInsurance,
       hidePwaPrompt
     }`)
     if (fetchedVisibility) {
