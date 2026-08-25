@@ -128,6 +128,7 @@ interface DayPlan {
   isBreakTrip?: boolean
   isCustomDay?: boolean
   customDate?: string
+  dayTitle?: string
 }
 
 // Default fallback rate until live API responds (overridden on mount)
@@ -1593,7 +1594,8 @@ export default function PrototypeBuilder() {
       // Sort items time-wise
       dayItems.sort((a, b) => a.time.localeCompare(b.time))
 
-      t += `\n*Day ${dIdx + 1} · ${getItineraryDate(dIdx)}*\n`
+      const dayTag = day.dayTitle ? ` (${day.dayTitle})` : ''
+      t += `\n*Day ${dIdx + 1} · ${getItineraryDate(dIdx)}${dayTag}*\n`
       if (dayItems.length > 0) t += dayItems.map(i => `  ${i.text}`).join('\n') + '\n'
       else t += `  _(Rest day / TBD)_\n`
     })
@@ -2097,7 +2099,7 @@ export default function PrototypeBuilder() {
         doc.text(`DAY ${dIdx + 1}`, ML + 4, y + 6.2)
         font('normal', 8.5); setTxt(NAVY)
         doc.text(getItineraryDate(dIdx), ML + 22, y + 6.2)
-        const dayLabel = dIdx === 0 ? 'Arrival Day' : dIdx === nightsCount ? 'Departure Day' : 'Tour Day'
+        const dayLabel = day.dayTitle ? day.dayTitle : (dIdx === 0 ? 'Arrival Day' : dIdx === nightsCount ? 'Departure Day' : 'Tour Day')
         font('italic', 8); setTxt(NAVY)
         doc.text(dayLabel, MR - 2, y + 6.2, { align: 'right' })
         y += 11
@@ -2754,10 +2756,12 @@ export default function PrototypeBuilder() {
 
         curY += 12
 
-        // Day Title (Constructed dynamically)
+        // Day Title (Constructed dynamically or custom entered)
         const dayAttrNames = day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '').filter(Boolean)
         let dayTitle = ''
-        if (dayAttrNames.length > 0) {
+        if (day.dayTitle && day.dayTitle.trim()) {
+          dayTitle = day.dayTitle.trim()
+        } else if (dayAttrNames.length > 0) {
           dayTitle = dayAttrNames.slice(0, 2).join(' & ')
         } else if (dIdx === 0) {
           dayTitle = 'Arrival in Singapore & Hotel Check-in'
@@ -6253,9 +6257,34 @@ ${proposal}
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.25rem', cursor: 'pointer', background: isCollapsed ? '#FFFDF5' : '#FFF', userSelect: 'none', gap: '0.5rem', flexWrap: 'wrap' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <h4 style={{ color: 'var(--emerald-secondary)', fontSize: '1.05rem', fontFamily: 'var(--font-playfair), serif', margin: 0 }}>
+                    <h4 style={{ color: 'var(--emerald-secondary)', fontSize: '1.05rem', fontFamily: 'var(--font-playfair), serif', margin: 0, whiteSpace: 'nowrap' }}>
                       Day {dIdx + 1} · {getItineraryDate(dIdx)}
                     </h4>
+                    {/* Free Text Custom Day Title / Tag (e.g. City Tour, Universal Studios Day, Arrival Day) */}
+                    <div 
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }} 
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="text"
+                        placeholder="Tag (e.g. City Tour, USS Day, Arrival)"
+                        value={day.dayTitle || ''}
+                        onChange={(e) => updateDay(dIdx, 'dayTitle', e.target.value)}
+                        style={{
+                          padding: '0.22rem 0.6rem',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          fontSize: '0.78rem',
+                          outline: 'none',
+                          background: '#FFF',
+                          color: '#1E293B',
+                          fontWeight: 600,
+                          minWidth: '180px',
+                          maxWidth: '280px',
+                          boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)'
+                        }}
+                      />
+                    </div>
                     {day.isCustomDay && (
                       <>
                         <button
