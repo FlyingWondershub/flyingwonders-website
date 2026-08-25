@@ -62,16 +62,25 @@ export default function InsurancePage() {
   const [loading, setLoading] = useState<boolean>(false)
   const [selectedPlan, setSelectedPlan] = useState<InsurancePlan | null>(null)
 
-  // Inquiry / Booking Modal
+  // Inquiry / Policy Issuance State
   const [modalOpen, setModalOpen] = useState<boolean>(false)
   const [submittingInquiry, setSubmittingInquiry] = useState<boolean>(false)
-  const [inquirySuccess, setInquirySuccess] = useState<boolean>(false)
-  const [inquiryRef, setInquiryRef] = useState<string>('')
+  const [issuedPolicy, setIssuedPolicy] = useState<any | null>(null)
   const [formData, setFormData] = useState({
     fullName: '',
+    passportNumber: '',
+    dob: '1992-05-15',
+    gender: 'Male',
     email: '',
     phone: '',
-    passportNumber: '',
+    nominee: '',
+    relation: 'Spouse',
+    emergencyContactPerson: '',
+    emergencyContactNumber: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
     notes: '',
   })
 
@@ -140,39 +149,59 @@ export default function InsurancePage() {
 
   const handleOpenModal = (plan: InsurancePlan) => {
     setSelectedPlan(plan)
-    setInquirySuccess(false)
+    setIssuedPolicy(null)
     setModalOpen(true)
   }
 
-  const handleInquirySubmit = async (e: React.FormEvent) => {
+  const handlePolicyIssuanceSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.fullName || !formData.phone || !formData.email) return
+    if (!formData.fullName || !formData.phone || !formData.email || !formData.passportNumber) return
 
     setSubmittingInquiry(true)
     try {
-      const res = await fetch('/api/insurance/inquiry', {
+      const res = await fetch('/api/insurance/issue-policy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
           destination,
           startDate,
           endDate,
           durationDays,
-          planName: selectedPlan?.name || 'Selected Plan',
-          sumInsured: selectedPlan?.sumInsured || `$${sumInsuredUSD}`,
+          planId: selectedPlan?.id || 'standard_essential',
+          planName: selectedPlan?.name || 'Selected Travel Insurance Plan',
+          sumInsured: selectedPlan?.sumInsured || `$${sumInsuredUSD.toLocaleString()} USD`,
+          sumInsuredVal: selectedPlan?.sumInsuredVal || sumInsuredUSD,
+          deductible: selectedPlan?.deductible || '$50',
           premiumTotalINR: selectedPlan?.pricing.totalINR || 0,
-          travelersCount: travelers.length,
-          travelerAges: travelers.map(t => t.age).join(', '),
+          approxUSD: selectedPlan?.pricing.approxUSD || 0,
+          traveler: {
+            name: formData.fullName,
+            passport: formData.passportNumber.toUpperCase().trim(),
+            dob: formData.dob,
+            gender: formData.gender,
+            age: travelers[0]?.age || 30,
+            email: formData.email,
+            mobileNo: formData.phone,
+            address: formData.address || 'Traveler Address',
+            city: formData.city || 'Bengaluru',
+            state: formData.state || 'Karnataka',
+            pincode: formData.pincode || '560001',
+            nominee: formData.nominee || formData.fullName,
+            relation: formData.relation || 'Self / Spouse',
+            emergencyContactPerson: formData.emergencyContactPerson || formData.nominee || formData.fullName,
+            emergencyContactNumber: formData.emergencyContactNumber || formData.phone,
+          },
         }),
       })
       const result = await res.json()
-      if (result.success) {
-        setInquirySuccess(true)
-        setInquiryRef(result.referenceId || 'FW-INS-REQ')
+      if (result.success && result.policy) {
+        setIssuedPolicy(result.policy)
+      } else {
+        alert(result.error || 'Failed to issue policy certificate. Please check all details.')
       }
     } catch (err) {
-      console.error('Inquiry submission failed:', err)
+      console.error('Policy issuance failed:', err)
+      alert('An unexpected error occurred while generating policy. Please try again.')
     } finally {
       setSubmittingInquiry(false)
     }
@@ -745,88 +774,199 @@ export default function InsurancePage() {
         </div>
       </section>
 
-      {/* ── Inquiry Modal ── */}
+      {/* ── Policy Issuance & Certificate Modal ── */}
       {modalOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-          <div style={{ background: '#FFFFFF', borderRadius: '18px', maxWidth: '520px', width: '100%', padding: '2rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15, 23, 42, 0.8)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '18px', maxWidth: '640px', width: '100%', padding: '1.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3)', position: 'relative', maxHeight: '92vh', overflowY: 'auto' }}>
             
             <button
               onClick={() => setModalOpen(false)}
-              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', fontSize: '1.25rem', fontWeight: 800, color: '#94A3B8', cursor: 'pointer' }}
+              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: '#F1F5F9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', fontSize: '1rem', fontWeight: 800, color: '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               ✕
             </button>
 
-            {inquirySuccess ? (
-              <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#DCFCE7', color: '#16A34A', fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
-                  ✓
-                </div>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
-                  Quote Request Received!
-                </h3>
-                <p style={{ fontSize: '0.9rem', color: '#64748B', margin: '0 0 1rem' }}>
-                  Reference: <strong style={{ color: '#0F4C3A' }}>{inquiryRef}</strong>
-                </p>
-                <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: '0 0 1.5rem' }}>
-                  Our travel insurance specialist will review your details and email your official policy draft and secure payment link immediately.
-                </p>
+            {issuedPolicy ? (
+              /* ── Official Issued Certificate Display ── */
+              <div style={{ padding: '0.5rem 0' }}>
+                <div style={{ border: '2px solid #0F4C3A', borderRadius: '14px', background: '#FFFFFF', padding: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+                  
+                  {/* Certificate Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0F4C3A', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        Official Policy Issued
+                      </div>
+                      <h3 style={{ fontSize: '1.4rem', fontWeight: 900, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0.2rem 0' }}>
+                        Certificate of Travel Insurance
+                      </h3>
+                      <div style={{ fontSize: '0.78rem', color: '#64748B' }}>
+                        Compliance: Regulation (EC) No 810/2009 (Schengen Visa Approved)
+                      </div>
+                    </div>
+                    <div style={{ background: '#DCFCE7', border: '1px solid #86EFAC', color: '#166534', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800 }}>
+                      ✓ ACTIVE
+                    </div>
+                  </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {selectedPlan && (
+                  {/* Policy Summary Details Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem', fontSize: '0.82rem', marginBottom: '1.25rem' }}>
+                    <div style={{ background: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Policy Number</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0F4C3A' }}>{issuedPolicy.policyNumber}</div>
+                    </div>
+
+                    <div style={{ background: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Certificate Ref</div>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#1D4ED8' }}>{issuedPolicy.certificateNumber}</div>
+                    </div>
+
+                    <div style={{ background: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Insured Traveler</div>
+                      <div style={{ fontWeight: 800, color: '#0F172A' }}>{issuedPolicy.traveler.name}</div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748B' }}>Passport: <strong>{issuedPolicy.traveler.passport}</strong></div>
+                    </div>
+
+                    <div style={{ background: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Medical Sum Insured</div>
+                      <div style={{ fontWeight: 900, color: '#15803D', fontSize: '0.95rem' }}>{issuedPolicy.sumInsured}</div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748B' }}>Excess: {issuedPolicy.deductible}</div>
+                    </div>
+
+                    <div style={{ background: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Travel Destination</div>
+                      <div style={{ fontWeight: 800, color: '#0F172A' }}>{issuedPolicy.destination}</div>
+                    </div>
+
+                    <div style={{ background: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Cover Period</div>
+                      <div style={{ fontWeight: 800, color: '#0F172A' }}>{issuedPolicy.startDate} to {issuedPolicy.endDate}</div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748B' }}>Duration: {issuedPolicy.durationDays} Days</div>
+                    </div>
+                  </div>
+
+                  {/* 24/7 Helpline notice */}
+                  <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '0.65rem 0.85rem', marginBottom: '1.25rem', fontSize: '0.78rem' }}>
+                    <span style={{ color: '#DC2626', fontWeight: 800 }}>🚨 24/7 International Emergency Helpline:</span>{' '}
+                    <span style={{ fontWeight: 700, color: '#991B1B' }}>{issuedPolicy.emergencyHelpline}</span>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      style={{ padding: '0.75rem 1rem', borderRadius: '10px', background: '#0F4C3A', color: '#FFF', fontWeight: 800, fontSize: '0.85rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    >
+                      <span>🖨️</span> Print / Save PDF
+                    </button>
+
                     <a
-                      href={generateWhatsAppUrl(selectedPlan)}
+                      href={`https://wa.me/6591234567?text=${encodeURIComponent(`Hello Flying Wonders, I have generated Policy ${issuedPolicy.policyNumber} for ${issuedPolicy.traveler.name} (${issuedPolicy.destination}). Please send me the official signed certificate.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ padding: '0.85rem 1rem', borderRadius: '10px', background: '#16A34A', color: '#FFF', fontWeight: 800, fontSize: '0.9rem', textDecoration: 'none', display: 'block' }}
+                      style={{ padding: '0.75rem 1rem', borderRadius: '10px', background: '#16A34A', color: '#FFF', fontWeight: 800, fontSize: '0.85rem', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textAlign: 'center' }}
                     >
-                      💬 Chat on WhatsApp for Instant Issuance
+                      <span>💬</span> WhatsApp Policy
                     </a>
-                  )}
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                   <button
+                    type="button"
                     onClick={() => setModalOpen(false)}
-                    style={{ padding: '0.75rem 1rem', borderRadius: '10px', background: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
+                    style={{ background: 'none', border: 'none', color: '#64748B', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
                   >
-                    Close
+                    Close Window
                   </button>
                 </div>
               </div>
             ) : (
+              /* ── Traveler Details & Issuance Form ── */
               <div>
-                <div style={{ borderBottom: '1px solid #EEF2F6', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F4C3A', textTransform: 'uppercase' }}>
-                    Policy Issuance Desk
+                <div style={{ borderBottom: '1px solid #EEF2F6', paddingBottom: '0.85rem', marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F4C3A', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Official Policy Issuance
                   </div>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: '0.25rem 0', fontFamily: 'var(--font-playfair), serif' }}>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: '0.2rem 0', fontFamily: 'var(--font-playfair), serif' }}>
                     {selectedPlan?.name || 'Travel Insurance Plan'}
                   </h3>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#64748B', marginTop: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#64748B', marginTop: '0.35rem' }}>
                     <span>Sum Insured: <strong>{selectedPlan?.sumInsured}</strong></span>
                     <span style={{ color: '#16A34A', fontWeight: 800, fontSize: '0.95rem' }}>
-                      Total: ₹{selectedPlan?.pricing.totalINR.toLocaleString('en-IN')}
+                      Premium: ₹{selectedPlan?.pricing.totalINR.toLocaleString('en-IN')} (incl. GST)
                     </span>
                   </div>
                 </div>
 
-                <form onSubmit={handleInquirySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <form onSubmit={handlePolicyIssuanceSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  
+                  {/* Lead Traveler Name */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                      Lead Traveler Full Name (as on Passport) *
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                      1. Traveler Full Name (as per Passport) *
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Rahul Sharma"
+                      placeholder="e.g. Rahul Ramesh Sharma"
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      style={{ width: '100%', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.9rem', color: '#0F172A' }}
+                      style={{ width: '100%', padding: '0.65rem 0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.88rem', color: '#0F172A' }}
                     />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  {/* Passport & Date of Birth & Gender */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr', gap: '0.65rem' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                        Email Address *
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                        2. Passport Number *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Z1234567"
+                        value={formData.passportNumber}
+                        onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A', textTransform: 'uppercase' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                        3. Date of Birth *
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={formData.dob}
+                        onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.6rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.82rem', color: '#0F172A' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                        4. Gender *
+                      </label>
+                      <select
+                        value={formData.gender}
+                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.5rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.82rem', color: '#0F172A' }}
+                      >
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Email & Mobile */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                        5. Email Address (for Certificate PDF) *
                       </label>
                       <input
                         type="email"
@@ -834,13 +974,13 @@ export default function InsurancePage() {
                         placeholder="you@example.com"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        style={{ width: '100%', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
+                        style={{ width: '100%', padding: '0.65rem 0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
                       />
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                        Phone / WhatsApp *
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                        6. Mobile / WhatsApp Number *
                       </label>
                       <input
                         type="tel"
@@ -848,35 +988,72 @@ export default function InsurancePage() {
                         placeholder="+91 98765 43210"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        style={{ width: '100%', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
+                        style={{ width: '100%', padding: '0.65rem 0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                      Passport Number (Optional - for visa certificate)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Z1234567"
-                      value={formData.passportNumber}
-                      onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
-                      style={{ width: '100%', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
-                    />
+                  {/* Nominee & Relation */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                        7. Nominee Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Priya Sharma"
+                        value={formData.nominee}
+                        onChange={(e) => setFormData({ ...formData, nominee: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                        8. Nominee Relationship
+                      </label>
+                      <select
+                        value={formData.relation}
+                        onChange={(e) => setFormData({ ...formData, relation: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.5rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.82rem', color: '#0F172A' }}
+                      >
+                        <option value="Spouse">Spouse</option>
+                        <option value="Father">Father</option>
+                        <option value="Mother">Mother</option>
+                        <option value="Child">Child</option>
+                        <option value="Sibling">Sibling</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                      Additional Notes / Destination Details
-                    </label>
-                    <textarea
-                      rows={2}
-                      placeholder="e.g. Schengen visa appointment on Friday, need urgent certificate"
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
-                    />
+                  {/* Address & City */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '0.65rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                        9. City & State
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Bengaluru, Karnataka"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                        10. Pincode
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 560001"
+                        value={formData.pincode}
+                        onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
+                      />
+                    </div>
                   </div>
 
                   <button
@@ -884,18 +1061,19 @@ export default function InsurancePage() {
                     disabled={submittingInquiry}
                     style={{
                       width: '100%',
-                      padding: '0.9rem',
+                      padding: '0.85rem',
                       borderRadius: '10px',
-                      background: '#0F4C3A',
+                      background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)',
                       color: '#FFF',
                       fontWeight: 800,
                       fontSize: '0.95rem',
                       border: 'none',
                       cursor: 'pointer',
-                      marginTop: '0.5rem',
+                      marginTop: '0.35rem',
+                      boxShadow: '0 4px 12px rgba(15, 76, 58, 0.25)',
                     }}
                   >
-                    {submittingInquiry ? 'Submitting Request...' : 'Request Official Policy Certificate'}
+                    {submittingInquiry ? '⚡ Generating Official Certificate...' : '⚡ Generate Official Policy Certificate'}
                   </button>
                 </form>
               </div>
@@ -908,3 +1086,4 @@ export default function InsurancePage() {
     </div>
   )
 }
+
