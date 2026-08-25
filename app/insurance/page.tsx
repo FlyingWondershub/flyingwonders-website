@@ -218,51 +218,51 @@ export default function InsurancePage() {
     <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: '5rem', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}>
       
       {/* ── Hero Section ── */}
-      <section style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 60%, #0B192C 100%)', color: '#FFFFFF', padding: '3.5rem 1.5rem 4.5rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ maxWidth: '960px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 1rem', borderRadius: '50px', background: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.4)', color: '#FCD34D', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1.25rem' }}>
+      <section style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 60%, #0B192C 100%)', color: '#FFFFFF', padding: '2rem 1.25rem 3.25rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ maxWidth: '920px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.25rem 0.75rem', borderRadius: '50px', background: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.35)', color: '#FCD34D', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>
             <span>🛡️</span> Official Travel Insurance Desk
           </div>
 
-          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)', fontWeight: 800, margin: '0 0 1.25rem', fontFamily: 'var(--font-playfair), serif', lineHeight: 1.2, color: '#FFFFFF' }}>
+          <h1 style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)', fontWeight: 800, margin: '0 0 0.65rem', fontFamily: 'var(--font-playfair), serif', lineHeight: 1.2, color: '#FFFFFF' }}>
             Travel the World with <span style={{ color: '#FCD34D' }}>Complete Peace of Mind</span>
           </h1>
 
-          <p style={{ fontSize: 'clamp(1rem, 2vw, 1.15rem)', opacity: 0.9, maxWidth: '720px', margin: '0 auto 2.5rem', lineHeight: 1.6 }}>
-            Embassy-approved Schengen visa compliance, up to <strong>$1,000,000 USD</strong> medical cover, 24/7 cashless hospital networks across 180+ countries, flight delay & baggage protection, and instant policy certificate issuance.
+          <p style={{ fontSize: '0.92rem', opacity: 0.9, maxWidth: '680px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
+            Schengen visa approved, up to <strong>$1,000,000 USD</strong> medical cover, 24/7 cashless hospital networks in 180+ countries, baggage delay protection & instant certificate delivery.
           </p>
 
-          {/* Quick Hero Badges */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', textAlign: 'left' }}>
-            <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-              <span style={{ fontSize: '1.75rem' }}>🏥</span>
+          {/* Quick Hero Badges — Compact Pills */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.65rem', textAlign: 'left' }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.07)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '10px', padding: '0.55rem 0.75rem', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span style={{ fontSize: '1.25rem' }}>🏥</span>
               <div>
-                <div style={{ fontSize: '0.72rem', color: '#93C5FD', textTransform: 'uppercase', fontWeight: 700 }}>Cashless Care</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#FFF' }}>Global Hospital Network</div>
+                <div style={{ fontSize: '0.65rem', color: '#93C5FD', textTransform: 'uppercase', fontWeight: 700, lineHeight: 1 }}>Cashless Care</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#FFF', marginTop: '0.15rem' }}>Global Hospitals</div>
               </div>
             </div>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-              <span style={{ fontSize: '1.75rem' }}>🇪🇺</span>
+            <div style={{ background: 'rgba(255, 255, 255, 0.07)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '10px', padding: '0.55rem 0.75rem', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span style={{ fontSize: '1.25rem' }}>🇪🇺</span>
               <div>
-                <div style={{ fontSize: '0.72rem', color: '#86EFAC', textTransform: 'uppercase', fontWeight: 700 }}>Visa Approved</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#FFF' }}>100% Schengen Guaranteed</div>
+                <div style={{ fontSize: '0.65rem', color: '#86EFAC', textTransform: 'uppercase', fontWeight: 700, lineHeight: 1 }}>Visa Approved</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#FFF', marginTop: '0.15rem' }}>100% Schengen</div>
               </div>
             </div>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-              <span style={{ fontSize: '1.75rem' }}>🧳</span>
+            <div style={{ background: 'rgba(255, 255, 255, 0.07)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '10px', padding: '0.55rem 0.75rem', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span style={{ fontSize: '1.25rem' }}>🧳</span>
               <div>
-                <div style={{ fontSize: '0.72rem', color: '#FDE047', textTransform: 'uppercase', fontWeight: 700 }}>Transit Shield</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#FFF' }}>Baggage & Delay Cover</div>
+                <div style={{ fontSize: '0.65rem', color: '#FDE047', textTransform: 'uppercase', fontWeight: 700, lineHeight: 1 }}>Transit Shield</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#FFF', marginTop: '0.15rem' }}>Baggage & Delay</div>
               </div>
             </div>
 
-            <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-              <span style={{ fontSize: '1.75rem' }}>⚡</span>
+            <div style={{ background: 'rgba(255, 255, 255, 0.07)', border: '1px solid rgba(255, 255, 255, 0.12)', borderRadius: '10px', padding: '0.55rem 0.75rem', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span style={{ fontSize: '1.25rem' }}>⚡</span>
               <div>
-                <div style={{ fontSize: '0.72rem', color: '#D8B4FE', textTransform: 'uppercase', fontWeight: 700 }}>Instant Certificate</div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#FFF' }}>Issued in 2 Minutes</div>
+                <div style={{ fontSize: '0.65rem', color: '#D8B4FE', textTransform: 'uppercase', fontWeight: 700, lineHeight: 1 }}>Instant Policy</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#FFF', marginTop: '0.15rem' }}>Issued in 2 Mins</div>
               </div>
             </div>
           </div>
@@ -270,8 +270,8 @@ export default function InsurancePage() {
       </section>
 
       {/* ── Interactive Quote Calculator Box ── */}
-      <div style={{ maxWidth: '1120px', margin: '-2.5rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
-        <div style={{ background: '#FFFFFF', borderRadius: '18px', padding: '2rem', boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.08)', border: '1px solid #E2E8F0' }}>
+      <div style={{ maxWidth: '1120px', margin: '-1.75rem auto 0', padding: '0 1.25rem', position: 'relative', zIndex: 10 }}>
+        <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '1.5rem 1.75rem', boxShadow: '0 15px 35px -10px rgba(0, 0, 0, 0.08)', border: '1px solid #E2E8F0' }}>
           
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #EEF2F6', paddingBottom: '1.25rem', marginBottom: '1.5rem', gap: '0.75rem' }}>
             <div>
