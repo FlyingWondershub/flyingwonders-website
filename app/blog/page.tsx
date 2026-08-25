@@ -20,6 +20,7 @@ export default function BlogFeed() {
   const [articles, setArticles] = useState<Article[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
+  const [sortOrder, setSortOrder] = useState<string>('newest')
 
   useEffect(() => {
     async function loadArticles() {
@@ -38,14 +39,29 @@ export default function BlogFeed() {
     loadArticles()
   }, [])
 
-  const categories = ['All', 'Sightseeing', 'Food', 'Hotels', 'Travel Hacks']
+  const categories = ['All', 'Sightseeing', 'Food', 'Hotels', 'Travel Hacks', 'Hidden Gems', 'Family']
 
-  const filteredArticles = activeCategory === 'All'
+  const categoryFiltered = activeCategory === 'All'
     ? articles
-    : articles.filter(a => a.category.toLowerCase() === activeCategory.toLowerCase())
+    : articles.filter(a => a.category.toLowerCase().replace(/_/g, ' ') === activeCategory.toLowerCase())
 
-  const featuredArticle = filteredArticles[0]
-  const listArticles = filteredArticles.slice(1)
+  // Apply sorting
+  const filteredArticles = [...categoryFiltered].sort((a, b) => {
+    switch (sortOrder) {
+      case 'oldest':
+        return new Date(a.date).getTime() - new Date(b.date).getTime()
+      case 'newest':
+        return new Date(b.date).getTime() - new Date(a.date).getTime()
+      case 'title-az':
+        return a.title.localeCompare(b.title)
+      case 'title-za':
+        return b.title.localeCompare(a.title)
+      case 'read-time':
+        return (parseInt(a.readTime) || 0) - (parseInt(b.readTime) || 0)
+      default:
+        return 0
+    }
+  })
 
   return (
     <div className="container" style={{ padding: '2.5rem 1.5rem', minHeight: '80vh', maxWidth: '1200px', margin: '0 auto' }}>
@@ -60,27 +76,55 @@ export default function BlogFeed() {
         </p>
       </div>
 
-      {/* Category Filter Navigation */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '2rem', flexWrap: 'wrap', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1rem' }}>
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
+      {/* Category Filter + Sort Controls */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              style={{
+                padding: '0.45rem 1.1rem',
+                background: activeCategory === cat ? 'var(--emerald-secondary)' : 'var(--bg-secondary)',
+                color: activeCategory === cat ? '#FFFFFF' : 'var(--text-dark)',
+                border: activeCategory === cat ? '1px solid var(--emerald-secondary)' : '1px solid var(--glass-border)',
+                borderRadius: '20px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-dark)', opacity: 0.7, whiteSpace: 'nowrap' }}>Sort by:</span>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
             style={{
-              padding: '0.45rem 1.1rem',
-              background: activeCategory === cat ? 'var(--emerald-secondary)' : 'var(--bg-secondary)',
-              color: activeCategory === cat ? '#FFFFFF' : 'var(--text-dark)',
-              border: activeCategory === cat ? '1px solid var(--emerald-secondary)' : '1px solid var(--glass-border)',
-              borderRadius: '20px',
+              padding: '0.4rem 0.75rem',
               fontSize: '0.8rem',
-              fontWeight: 700,
+              fontWeight: 600,
+              fontFamily: 'var(--font-inter), sans-serif',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-dark)',
+              border: '1px solid var(--glass-border)',
+              borderRadius: '8px',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              outline: 'none',
+              minWidth: '140px',
             }}
           >
-            {cat}
-          </button>
-        ))}
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="title-az">Title A → Z</option>
+            <option value="title-za">Title Z → A</option>
+            <option value="read-time">Read Time ↑</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
