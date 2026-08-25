@@ -25,6 +25,11 @@ interface IssuePolicyRequest {
   premiumTotalINR: number
   approxUSD: number
   travelers: TravelerItem[]
+  riders?: {
+    adventureSports?: boolean
+    pedCover?: boolean
+    tripCancellationAddon?: boolean
+  }
   flightDetails?: {
     flightNumber?: string
     pnrNumber?: string
@@ -70,6 +75,7 @@ export async function POST(req: NextRequest) {
       premiumTotalINR,
       approxUSD,
       travelers,
+      riders,
       flightDetails,
       studentDetails,
       contact,
@@ -90,13 +96,47 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Generate unique official policy numbers and verification hash
+    // Dynamic destination labeling and certificate prefixing
     const timestamp = Date.now()
     const randomSuffix = Math.floor(1000 + Math.random() * 9000)
+    const suffixNum = timestamp.toString().slice(-8)
+
+    let certPrefix = 'COI-WW'
+    let humanDestination = 'Worldwide International'
+    let complianceText = 'Comprehensive Overseas Travel Shield · 24/7 International Cashless Hospital Network'
+
+    if (destination === 'schengen_europe') {
+      certPrefix = 'COI-SCHENGEN'
+      humanDestination = 'Schengen & European Territory'
+      complianceText = 'Regulation (EC) No 810/2009 Compliant · Approved for all 29 Schengen Member States (€30,000+ / $50,000+ Emergency Medical & Repatriation Cover)'
+    } else if (destination === 'asia') {
+      certPrefix = 'COI-APAC'
+      humanDestination = 'Asia Pacific & Middle East'
+      complianceText = 'Asia Pacific & Middle East Travel Shield · Direct TPA Cashless Hospital Network'
+    } else if (destination === 'worldwide_with_us_ca') {
+      certPrefix = 'COI-WW-USCA'
+      humanDestination = 'Worldwide (Including USA & Canada)'
+      complianceText = 'Worldwide Comprehensive Travel Protection · US/Canada Priority PPO Hospital Network'
+    } else if (destination === 'worldwide_without_us_ca') {
+      certPrefix = 'COI-WW'
+      humanDestination = 'Worldwide (Excluding USA & Canada)'
+      complianceText = 'Worldwide Overseas Travel Shield · International Cashless Hospital Network'
+    } else if (destination === 'domestic') {
+      certPrefix = 'COI-DOM'
+      humanDestination = 'Domestic Travel (Pan India)'
+      complianceText = 'National Travel Medical Emergency Reimbursement & Transit Protection'
+    }
+
     const policyNumber = `FW-ASG-${new Date().getFullYear()}-${randomSuffix}`
-    const certificateNumber = `COI-SCHENGEN-${timestamp.toString().slice(-8)}`
+    const certificateNumber = `${certPrefix}-${suffixNum}`
     const verificationHash = `VRF-${Buffer.from(policyNumber + timestamp).toString('base64').slice(0, 12).toUpperCase()}`
     const issueDate = new Date().toISOString().split('T')[0]
+
+    // Active Endorsed Riders List
+    const activeRidersList: string[] = []
+    if (riders?.adventureSports) activeRidersList.push('⛷️ Adventure & Winter Sports Endorsement (Active)')
+    if (riders?.pedCover) activeRidersList.push('❤️ Pre-existing Condition Emergency Life-Threatening Cover (Active)')
+    if (riders?.tripCancellationAddon) activeRidersList.push('✈️ Trip Cancellation (Any Reason) Endorsement (Active)')
 
     // Background sync to Asego UAT endpoint
     try {
@@ -114,7 +154,7 @@ export async function POST(req: NextRequest) {
           startDate,
           endDate,
           duration: durationDays,
-          destination: destLabel || destination,
+          destination: destLabel || humanDestination,
         },
         selectedPlan: {
           insurerId: 'INS-ASEGO-01',
@@ -144,7 +184,7 @@ export async function POST(req: NextRequest) {
           emergencyContactNumber: contact.emergencyContactNumber || contact.mobileNo,
           emergencyEmailId: contact.emergencyEmailId || contact.email,
           finalPremium: Math.round(premiumTotalINR / travelers.length),
-          riderTotalAmt: 0,
+          riderTotalAmt: activeRidersList.length * 500,
           flightNumber: flightDetails?.flightNumber || '',
           pnrNumber: flightDetails?.pnrNumber || '',
           departureAirportCode: flightDetails?.departureAirportCode || '',
@@ -213,13 +253,13 @@ export async function POST(req: NextRequest) {
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 680px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
             <div style="background: linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%); padding: 2rem; color: #ffffff;">
               <h1 style="margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: 0.02em;">🛡️ Certificate of Travel Insurance</h1>
-              <p style="margin: 0.4rem 0 0; opacity: 0.9; font-size: 0.95rem; color: #FCD34D;">Policy Number: ${policyNumber} · ${travelers.length} Insured Traveler(s)</p>
+              <p style="margin: 0.4rem 0 0; opacity: 0.9; font-size: 0.95rem; color: #FCD34D;">Policy Number: ${policyNumber} · ${certificateNumber}</p>
             </div>
             
             <div style="padding: 2rem; color: #334155;">
               <p style="margin: 0 0 1.25rem; font-size: 1rem; line-height: 1.6;">
                 Dear <strong>${leadTraveler.name}</strong>,<br/>
-                Your official travel insurance certificate for <strong>${destLabel || destination}</strong> has been issued.
+                Your official travel insurance certificate for <strong>${destLabel || humanDestination}</strong> has been issued.
               </p>
 
               <h3 style="font-size: 1.05rem; margin: 1.25rem 0 0.5rem; color: #0F4C3A;">Insured Travelers (${travelers.length})</h3>
@@ -243,34 +283,47 @@ export async function POST(req: NextRequest) {
                   <td style="padding: 0.75rem 1rem; font-weight: 800; color: #0F4C3A;">${policyNumber}</td>
                 </tr>
                 <tr style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 0.75rem 1rem; font-weight: 700;">Verification Code:</td>
-                  <td style="padding: 0.75rem 1rem; font-weight: 700; color: #1D4ED8;">${verificationHash}</td>
+                  <td style="padding: 0.75rem 1rem; font-weight: 700;">Certificate Ref:</td>
+                  <td style="padding: 0.75rem 1rem; font-weight: 800; color: #1D4ED8;">${certificateNumber}</td>
                 </tr>
                 <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 0.75rem 1rem; font-weight: 700;">Destination Territory:</td>
+                  <td style="padding: 0.75rem 1rem; font-weight: 700; color: #0F172A;">${humanDestination}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
                   <td style="padding: 0.75rem 1rem; font-weight: 700;">Coverage Plan:</td>
                   <td style="padding: 0.75rem 1rem; font-weight: 700; color: #1D4ED8;">${planName}</td>
                 </tr>
-                <tr style="border-bottom: 1px solid #e2e8f0;">
-                  <td style="padding: 0.75rem 1rem; font-weight: 700;">Medical Sum Insured:</td>
-                  <td style="padding: 0.75rem 1rem; font-weight: 800; color: #15803D;">${sumInsured} USD per traveler (Zero Excess)</td>
-                </tr>
                 <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 0.75rem 1rem; font-weight: 700;">Medical Sum Insured:</td>
+                  <td style="padding: 0.75rem 1rem; font-weight: 800; color: #15803D;">${sumInsured} USD (Deductible: ${deductible})</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
                   <td style="padding: 0.75rem 1rem; font-weight: 700;">Cover Period:</td>
                   <td style="padding: 0.75rem 1rem;">${startDate} to ${endDate} (${durationDays} Days)</td>
                 </tr>
-                <tr style="border-bottom: 1px solid #e2e8f0;">
+                <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
                   <td style="padding: 0.75rem 1rem; font-weight: 700;">Total Premium Paid:</td>
                   <td style="padding: 0.75rem 1rem; font-weight: 800; color: #0F172A;">₹${premiumTotalINR.toLocaleString('en-IN')} (incl. 18% GST)</td>
                 </tr>
-                <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                <tr style="border-bottom: 1px solid #e2e8f0;">
                   <td style="padding: 0.75rem 1rem; font-weight: 700;">24/7 Global Helpline:</td>
                   <td style="padding: 0.75rem 1rem; font-weight: 700; color: #DC2626;">+91 22 6600 5500 / +1 (800) 555-0199</td>
                 </tr>
               </table>
 
+              ${activeRidersList.length > 0 ? `
+                <div style="background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1.25rem;">
+                  <strong style="color: #92400E; font-size: 0.85rem;">Active Policy Endorsements / Riders:</strong>
+                  <ul style="margin: 0.35rem 0 0 1.2rem; padding: 0; font-size: 0.82rem; color: #78350F;">
+                    ${activeRidersList.map(r => `<li>${r}</li>`).join('')}
+                  </ul>
+                </div>
+              ` : ''}
+
               <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
                 <p style="margin: 0; font-size: 0.85rem; color: #166534; font-weight: 600;">
-                  ✓ Official Embassy Guarantee: Valid for all Schengen, UK, US, Canada and worldwide visas under Regulation (EC) No 810/2009 with cashless hospitalisation and emergency evacuation.
+                  ✓ ${complianceText}
                 </p>
               </div>
 
@@ -284,7 +337,7 @@ export async function POST(req: NextRequest) {
         await transporter.sendMail({
           from: `"Flying Wonders Travel Insurance" <${user}>`,
           to: `${contact.email}, ${process.env.ADMIN_EMAIL || 'info@flyingwonders.net'}`,
-          subject: `🛡️ Official Policy Issued: ${policyNumber} - ${leadTraveler.name} (${travelers.length} Travelers)`,
+          subject: `🛡️ Official Policy Issued: ${policyNumber} (${certificateNumber}) - ${leadTraveler.name}`,
           html: emailHtml,
         })
       }
@@ -300,14 +353,17 @@ export async function POST(req: NextRequest) {
         verificationHash,
         issueDate,
         status: 'ISSUED_AND_VERIFIED',
-        schengenApproved: true,
-        destination: destLabel || destination,
+        destination: humanDestination,
+        destinationKey: destination,
+        complianceText,
+        schengenApproved: destination === 'schengen_europe' || destination === 'worldwide_with_us_ca' || destination === 'worldwide_without_us_ca',
         startDate,
         endDate,
         durationDays,
         planName,
         sumInsured,
         deductible,
+        activeRiders: activeRidersList,
         premiumTotalINR,
         approxUSD,
         travelers: travelers.map(t => ({

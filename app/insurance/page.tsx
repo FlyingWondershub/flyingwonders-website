@@ -236,7 +236,7 @@ export default function InsurancePage() {
     setModalOpen(true)
   }
 
-  // Bulletproof 1-Page Print Trigger
+  // Comprehensive Multi-Page Official Policy Document Print Trigger
   const handlePrintCertificate = () => {
     const certElement = document.getElementById('insurance-certificate-print')
     if (!certElement) {
@@ -244,7 +244,7 @@ export default function InsurancePage() {
       return
     }
 
-    const printWindow = window.open('', '_blank', 'width=900,height=1200')
+    const printWindow = window.open('', '_blank', 'width=950,height=1200')
     if (!printWindow) {
       window.print()
       return
@@ -254,11 +254,11 @@ export default function InsurancePage() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Official Certificate of Travel Insurance</title>
+          <title>Official Travel Insurance Policy Document - ${issuedPolicy?.policyNumber || 'Flying Wonders'}</title>
           <style>
             @page {
               size: A4 portrait;
-              margin: 8mm;
+              margin: 12mm 10mm;
             }
             * {
               box-sizing: border-box;
@@ -280,6 +280,13 @@ export default function InsurancePage() {
             th, td {
               text-align: left;
             }
+            .page-break {
+              page-break-before: always;
+              break-before: page;
+              margin-top: 24px;
+              padding-top: 16px;
+              border-top: 1px dashed #CBD5E1;
+            }
             .no-print {
               display: none !important;
             }
@@ -293,7 +300,7 @@ export default function InsurancePage() {
               window.print();
               setTimeout(function() {
                 window.close();
-              }, 600);
+              }, 800);
             };
           </script>
         </body>
@@ -335,6 +342,11 @@ export default function InsurancePage() {
           deductible: selectedPlan?.deductible || '$50',
           premiumTotalINR: selectedPlan?.pricing.totalINR || 0,
           approxUSD: selectedPlan?.pricing.approxUSD || 0,
+          riders: {
+            adventureSports,
+            pedCover,
+            tripCancellationAddon,
+          },
           travelers: passengers.map(p => ({
             name: p.name.trim(),
             passport: p.passport.toUpperCase().trim(),
@@ -968,161 +980,330 @@ export default function InsurancePage() {
             </button>
 
             {issuedPolicy ? (
-              /* ── Official Single-Page Certificate Document ── */
+              /* ── Official Comprehensive Multi-Section Policy Document ── */
               <div style={{ padding: '0.25rem 0' }}>
-                <div id="insurance-certificate-print" style={{ border: '2px solid #0F4C3A', borderRadius: '12px', background: '#FFFFFF', padding: '1.25rem', color: '#0F172A', fontFamily: 'var(--font-inter), sans-serif' }}>
+                <div id="insurance-certificate-print" style={{ border: '2px solid #0F4C3A', borderRadius: '12px', background: '#FFFFFF', padding: '1.5rem', color: '#0F172A', fontFamily: 'var(--font-inter), sans-serif' }}>
                   
-                  {/* Certificate Top Brand & Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0F4C3A', paddingBottom: '0.75rem', marginBottom: '0.85rem' }}>
-                    <div>
-                      <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                        FLYING WONDERS TRAVEL INSURANCE · ASEGO PARTNER
-                      </div>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0.15rem 0' }}>
-                        Certificate of Travel Insurance
-                      </h3>
-                      <div style={{ fontSize: '0.72rem', color: '#475569' }}>
-                        Compliant with Regulation (EC) No 810/2009 (European Parliament Schengen Visa Standard)
-                      </div>
-                    </div>
-
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'inline-block', background: '#DCFCE7', border: '1px solid #86EFAC', color: '#166534', padding: '0.25rem 0.65rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 800 }}>
-                        ✓ POLICY ACTIVE & VERIFIED
-                      </div>
-                      <div style={{ fontSize: '0.68rem', color: '#64748B', marginTop: '0.25rem' }}>
-                        Security Hash: <strong style={{ color: '#1D4ED8' }}>{issuedPolicy.verificationHash}</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Core Reference Details Bar */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.55rem 0.75rem', marginBottom: '0.85rem', fontSize: '0.75rem' }}>
-                    <div>
-                      <div style={{ fontSize: '0.62rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Policy Number</div>
-                      <div style={{ fontWeight: 900, color: '#0F4C3A', fontSize: '0.82rem' }}>{issuedPolicy.policyNumber}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.62rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Certificate Ref</div>
-                      <div style={{ fontWeight: 800, color: '#1D4ED8', fontSize: '0.82rem' }}>{issuedPolicy.certificateNumber}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.62rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Plan Type</div>
-                      <div style={{ fontWeight: 800, color: '#0F172A' }}>{issuedPolicy.planName}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.62rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Medical Sum Insured</div>
-                      <div style={{ fontWeight: 900, color: '#15803D', fontSize: '0.82rem' }}>{issuedPolicy.sumInsured}</div>
-                    </div>
-                  </div>
-
-                  {/* Trip Details & Flight Routing */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.5rem', marginBottom: '0.85rem', fontSize: '0.75rem' }}>
-                    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '0.5rem 0.75rem' }}>
-                      <span style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Destination: </span>
-                      <strong style={{ color: '#0F172A' }}>{issuedPolicy.destination}</strong>
-                      {issuedPolicy.flightDetails?.flightNumber && (
-                        <div style={{ fontSize: '0.68rem', color: '#475569', marginTop: '0.15rem' }}>
-                          Flight: {issuedPolicy.flightDetails.flightNumber} ({issuedPolicy.flightDetails.route})
+                  {/* ════════════════════ PAGE 1: POLICY SCHEDULE ════════════════════ */}
+                  <div>
+                    {/* Header & Compliance Accreditation */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0F4C3A', paddingBottom: '0.85rem', marginBottom: '1rem' }}>
+                      <div>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                          FLYING WONDERS TRAVEL INSURANCE · ASEGO UNDERWRITING DESK
                         </div>
-                      )}
-                    </div>
-                    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '0.5rem 0.75rem' }}>
-                      <span style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Cover Period: </span>
-                      <strong style={{ color: '#0F172A' }}>{issuedPolicy.startDate} to {issuedPolicy.endDate} ({issuedPolicy.durationDays} Days)</strong>
-                      {issuedPolicy.studentDetails?.universityName && (
-                        <div style={{ fontSize: '0.68rem', color: '#7C3AED', marginTop: '0.15rem' }}>
-                          University: {issuedPolicy.studentDetails.universityName}
+                        <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0.2rem 0' }}>
+                          Official Certificate of Travel Insurance (Policy Schedule)
+                        </h3>
+                        <div style={{ fontSize: '0.75rem', color: '#475569' }}>
+                          {issuedPolicy.complianceText || 'Regulation (EC) No 810/2009 Compliant · Worldwide Embassy Approved'}
                         </div>
-                      )}
+                      </div>
+
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'inline-block', background: '#DCFCE7', border: '1px solid #86EFAC', color: '#166534', padding: '0.3rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800 }}>
+                          ✓ POLICY ACTIVE & VERIFIED
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748B', marginTop: '0.3rem' }}>
+                          Security Hash: <strong style={{ color: '#1D4ED8' }}>{issuedPolicy.verificationHash}</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Core Reference Details Bar */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.65rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.65rem 0.85rem', marginBottom: '1rem', fontSize: '0.78rem' }}>
+                      <div>
+                        <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Policy Number</div>
+                        <div style={{ fontWeight: 900, color: '#0F4C3A', fontSize: '0.85rem' }}>{issuedPolicy.policyNumber}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Certificate Ref</div>
+                        <div style={{ fontWeight: 800, color: '#1D4ED8', fontSize: '0.85rem' }}>{issuedPolicy.certificateNumber}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Plan Type</div>
+                        <div style={{ fontWeight: 800, color: '#0F172A' }}>{issuedPolicy.planName}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Medical Sum Insured</div>
+                        <div style={{ fontWeight: 900, color: '#15803D', fontSize: '0.85rem' }}>{issuedPolicy.sumInsured}</div>
+                        <div style={{ fontSize: '0.65rem', color: '#0F4C3A', fontWeight: 700 }}>Excess: {issuedPolicy.deductible}</div>
+                      </div>
+                    </div>
+
+                    {/* Trip Details & Flight Routing */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '0.65rem', marginBottom: '1rem', fontSize: '0.78rem' }}>
+                      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '0.6rem 0.85rem' }}>
+                        <span style={{ fontSize: '0.68rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Destination Territory: </span>
+                        <strong style={{ color: '#0F172A' }}>{issuedPolicy.destination}</strong>
+                        {issuedPolicy.flightDetails?.flightNumber && (
+                          <div style={{ fontSize: '0.72rem', color: '#475569', marginTop: '0.2rem' }}>
+                            Flight: {issuedPolicy.flightDetails.flightNumber} ({issuedPolicy.flightDetails.route}) · PNR: {issuedPolicy.flightDetails.pnrNumber}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '0.6rem 0.85rem' }}>
+                        <span style={{ fontSize: '0.68rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Cover Period: </span>
+                        <strong style={{ color: '#0F172A' }}>{issuedPolicy.startDate} to {issuedPolicy.endDate} ({issuedPolicy.durationDays} Days)</strong>
+                        {issuedPolicy.studentDetails?.universityName && (
+                          <div style={{ fontSize: '0.72rem', color: '#7C3AED', marginTop: '0.2rem' }}>
+                            University: {issuedPolicy.studentDetails.universityName}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Active Riders Endorsements Banner */}
+                    {issuedPolicy.activeRiders && issuedPolicy.activeRiders.length > 0 && (
+                      <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: '6px', padding: '0.55rem 0.85rem', marginBottom: '1rem', fontSize: '0.75rem' }}>
+                        <strong style={{ color: '#92400E' }}>Endorsed Policy Riders (Active): </strong>
+                        <span style={{ color: '#78350F' }}>
+                          {issuedPolicy.activeRiders.join(' · ')}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Table of Insured Travelers */}
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F4C3A', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>
+                        Insured Travelers Schedule ({issuedPolicy.travelers.length})
+                      </div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem', border: '1px solid #CBD5E1', borderRadius: '6px', overflow: 'hidden' }}>
+                        <thead>
+                          <tr style={{ background: '#F1F5F9', borderBottom: '1px solid #CBD5E1', textAlign: 'left' }}>
+                            <th style={{ padding: '0.5rem 0.65rem', fontWeight: 800 }}>#</th>
+                            <th style={{ padding: '0.5rem 0.65rem', fontWeight: 800 }}>Traveler Full Name</th>
+                            <th style={{ padding: '0.5rem 0.65rem', fontWeight: 800 }}>Passport No.</th>
+                            <th style={{ padding: '0.5rem 0.65rem', fontWeight: 800 }}>Date of Birth</th>
+                            <th style={{ padding: '0.5rem 0.65rem', fontWeight: 800 }}>Gender</th>
+                            <th style={{ padding: '0.5rem 0.65rem', fontWeight: 800 }}>Age</th>
+                            <th style={{ padding: '0.5rem 0.65rem', fontWeight: 800 }}>Pre-existing Condition</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {issuedPolicy.travelers.map((t: any, idx: number) => (
+                            <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9', background: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}>
+                              <td style={{ padding: '0.5rem 0.65rem', fontWeight: 700 }}>{idx + 1}</td>
+                              <td style={{ padding: '0.5rem 0.65rem', fontWeight: 800, color: '#0F172A' }}>{t.name}</td>
+                              <td style={{ padding: '0.5rem 0.65rem', fontWeight: 800, color: '#0F4C3A' }}>{t.passport}</td>
+                              <td style={{ padding: '0.5rem 0.65rem' }}>{t.dob}</td>
+                              <td style={{ padding: '0.5rem 0.65rem' }}>{t.gender}</td>
+                              <td style={{ padding: '0.5rem 0.65rem' }}>{t.age} yrs</td>
+                              <td style={{ padding: '0.5rem 0.65rem', color: '#64748B' }}>{t.preExistingMedicalCondition || 'None declared'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Policyholder & Billing Details */}
+                    <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.65rem 0.85rem', marginBottom: '1rem', fontSize: '0.75rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                      <div>
+                        <span style={{ color: '#64748B' }}>Nominee:</span> <strong>{issuedPolicy.contact.nominee} ({issuedPolicy.contact.relation})</strong>
+                      </div>
+                      <div>
+                        <span style={{ color: '#64748B' }}>Emergency Contact:</span> <strong>{issuedPolicy.contact.emergencyContactPerson} ({issuedPolicy.contact.emergencyContactNumber})</strong>
+                      </div>
+                      <div>
+                        <span style={{ color: '#64748B' }}>Address / City:</span> <strong>{issuedPolicy.contact.city}, {issuedPolicy.contact.pincode}</strong>
+                      </div>
+                    </div>
+
+                    {/* Premium & Legal Endorsement Footer */}
+                    <div style={{ borderTop: '1px solid #CBD5E1', paddingTop: '0.65rem', fontSize: '0.72rem', color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <span style={{ color: '#15803D', fontWeight: 800 }}>Total Premium Paid: </span>
+                        <strong style={{ color: '#0F172A', fontSize: '0.85rem' }}>₹{issuedPolicy.premiumTotalINR.toLocaleString('en-IN')} (incl. 18% GST / ≈ ${issuedPolicy.approxUSD} USD)</strong>
+                        <div style={{ marginTop: '0.15rem', color: '#64748B' }}>
+                          Primary Insured: {issuedPolicy.contact.email} · {issuedPolicy.contact.mobileNo}
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 800, color: '#0F4C3A' }}>Flying Wonders Travel Services Pvt Ltd</div>
+                        <div style={{ fontSize: '0.65rem', color: '#94A3B8' }}>Authorised Overseas Travel Insurance Desk · Official Partner</div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Table of Insured Travelers */}
-                  <div style={{ marginBottom: '0.85rem' }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#0F4C3A', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
-                      Insured Travelers ({issuedPolicy.travelers.length})
+                  {/* ════════════════════ PAGE 2: SCHEDULE OF BENEFITS ════════════════════ */}
+                  <div className="page-break" style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px dashed #CBD5E1' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0F4C3A', paddingBottom: '0.5rem', marginBottom: '0.75rem' }}>
+                      <div>
+                        <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#D97706', textTransform: 'uppercase' }}>Section II · Coverage Breakdown</div>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F4C3A', margin: '0.1rem 0' }}>Comprehensive Schedule of Covered Benefits & Deductibles</h4>
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700 }}>
+                        Policy: <strong style={{ color: '#0F4C3A' }}>{issuedPolicy.policyNumber}</strong>
+                      </div>
                     </div>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem', border: '1px solid #E2E8F0', borderRadius: '6px', overflow: 'hidden' }}>
+
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem', border: '1px solid #CBD5E1', borderRadius: '6px', overflow: 'hidden', marginBottom: '0.85rem' }}>
                       <thead>
-                        <tr style={{ background: '#F1F5F9', borderBottom: '1px solid #CBD5E1', textAlign: 'left' }}>
-                          <th style={{ padding: '0.4rem 0.55rem', fontWeight: 800 }}>#</th>
-                          <th style={{ padding: '0.4rem 0.55rem', fontWeight: 800 }}>Traveler Full Name</th>
-                          <th style={{ padding: '0.4rem 0.55rem', fontWeight: 800 }}>Passport No.</th>
-                          <th style={{ padding: '0.4rem 0.55rem', fontWeight: 800 }}>Date of Birth</th>
-                          <th style={{ padding: '0.4rem 0.55rem', fontWeight: 800 }}>Gender</th>
-                          <th style={{ padding: '0.4rem 0.55rem', fontWeight: 800 }}>Age</th>
+                        <tr style={{ background: '#F1F5F9', borderBottom: '1.5px solid #CBD5E1', textAlign: 'left' }}>
+                          <th style={{ padding: '0.45rem 0.65rem', fontWeight: 800 }}>#</th>
+                          <th style={{ padding: '0.45rem 0.65rem', fontWeight: 800 }}>Coverage Section / Insured Event</th>
+                          <th style={{ padding: '0.45rem 0.65rem', fontWeight: 800 }}>Sum Insured / Benefit Limit</th>
+                          <th style={{ padding: '0.45rem 0.65rem', fontWeight: 800 }}>Deductible / Excess</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {issuedPolicy.travelers.map((t: any, idx: number) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9', background: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}>
-                            <td style={{ padding: '0.4rem 0.55rem', fontWeight: 700 }}>{idx + 1}</td>
-                            <td style={{ padding: '0.4rem 0.55rem', fontWeight: 800, color: '#0F172A' }}>{t.name}</td>
-                            <td style={{ padding: '0.4rem 0.55rem', fontWeight: 800, color: '#0F4C3A' }}>{t.passport}</td>
-                            <td style={{ padding: '0.4rem 0.55rem' }}>{t.dob}</td>
-                            <td style={{ padding: '0.4rem 0.55rem' }}>{t.gender}</td>
-                            <td style={{ padding: '0.4rem 0.55rem' }}>{t.age} yrs</td>
-                          </tr>
-                        ))}
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#FFFFFF' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>1</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Emergency Medical & In-Patient Hospitalization</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 800, color: '#15803D' }}>{issuedPolicy.sumInsured}</td>
+                          <td style={{ padding: '0.45rem 0.65rem' }}>{issuedPolicy.deductible}</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#F8FAFC' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>2</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Emergency Medical Evacuation & Air Ambulance</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>Up to $50,000 – $100,000 USD</td>
+                          <td style={{ padding: '0.45rem 0.65rem', color: '#16A34A', fontWeight: 700 }}>NIL</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#FFFFFF' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>3</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Repatriation of Mortal Remains</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>Up to $25,000 – $50,000 USD</td>
+                          <td style={{ padding: '0.45rem 0.65rem', color: '#16A34A', fontWeight: 700 }}>NIL</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#F8FAFC' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>4</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Out-Patient Medical Treatment & Doctor Consultation</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>Covered under Medical Sum Insured</td>
+                          <td style={{ padding: '0.45rem 0.65rem' }}>{issuedPolicy.deductible}</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#FFFFFF' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>5</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Emergency Dental Pain Relief</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>Up to $500 – $1,000 USD</td>
+                          <td style={{ padding: '0.45rem 0.65rem' }}>$25</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#F8FAFC' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>6</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Total Loss of Checked-in Baggage</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>Up to $1,000 – $2,000 USD</td>
+                          <td style={{ padding: '0.45rem 0.65rem', color: '#16A34A', fontWeight: 700 }}>NIL</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#FFFFFF' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>7</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Delay of Checked-in Baggage (&gt;6-12 hrs)</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>Up to $250 – $500 USD</td>
+                          <td style={{ padding: '0.45rem 0.65rem', color: '#16A34A', fontWeight: 700 }}>NIL (Time Excess 6 hrs)</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#F8FAFC' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>8</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Loss of International Passport & Travel Documents</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>Up to $500 – $1,000 USD</td>
+                          <td style={{ padding: '0.45rem 0.65rem' }}>$25</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#FFFFFF' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>9</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Trip Cancellation & Non-Refundable Surcharges</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>Up to $1,500 – $3,500 USD</td>
+                          <td style={{ padding: '0.45rem 0.65rem', color: '#16A34A', fontWeight: 700 }}>NIL</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#F8FAFC' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>10</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Trip Delay (&gt;6 hrs) / Missed Connection</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>Up to $300 – $500 USD</td>
+                          <td style={{ padding: '0.45rem 0.65rem', color: '#16A34A', fontWeight: 700 }}>NIL (Time Excess 6 hrs)</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#FFFFFF' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>11</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Personal Liability & Third-Party Legal Defence</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>Up to $100,000 – $250,000 USD</td>
+                          <td style={{ padding: '0.45rem 0.65rem' }}>$100</td>
+                        </tr>
+                        <tr style={{ borderBottom: '1px solid #F1F5F9', background: '#F8FAFC' }}>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>12</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700, color: '#0F172A' }}>Compassionate Visit (Family Member Airfare)</td>
+                          <td style={{ padding: '0.45rem 0.65rem', fontWeight: 700 }}>Roundtrip Economy Ticket Included</td>
+                          <td style={{ padding: '0.45rem 0.65rem', color: '#16A34A', fontWeight: 700 }}>NIL</td>
+                        </tr>
                       </tbody>
                     </table>
-                  </div>
 
-                  {/* Comprehensive Schedule of Covered Benefits Table */}
-                  <div style={{ marginBottom: '0.85rem' }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#0F4C3A', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>
-                      Schedule of Covered Benefits (Zero Deductible / Excess)
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', fontSize: '0.68rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px', padding: '0.5rem 0.65rem' }}>
-                      <div>
-                        <span style={{ color: '#64748B' }}>Medical & Hospitalization:</span><br/>
-                        <strong style={{ color: '#15803D' }}>{issuedPolicy.sumInsured}</strong>
-                      </div>
-                      <div>
-                        <span style={{ color: '#64748B' }}>Medical Evacuation / Air Ambulance:</span><br/>
-                        <strong style={{ color: '#0F172A' }}>Up to $50,000 USD</strong>
-                      </div>
-                      <div>
-                        <span style={{ color: '#64748B' }}>Repatriation of Mortal Remains:</span><br/>
-                        <strong style={{ color: '#0F172A' }}>Up to $25,000 USD</strong>
-                      </div>
-                      <div>
-                        <span style={{ color: '#64748B' }}>Trip Cancellation & Interruption:</span><br/>
-                        <strong style={{ color: '#0F172A' }}>Up to $1,500 – $3,500 USD</strong>
-                      </div>
-                      <div>
-                        <span style={{ color: '#64748B' }}>Loss of Passport & Documents:</span><br/>
-                        <strong style={{ color: '#0F172A' }}>Up to $500 – $1,000 USD</strong>
-                      </div>
-                      <div>
-                        <span style={{ color: '#64748B' }}>Baggage Loss & Delay (&gt;12h):</span><br/>
-                        <strong style={{ color: '#0F172A' }}>Up to $1,500 USD</strong>
-                      </div>
+                    <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '6px', padding: '0.55rem 0.85rem', fontSize: '0.72rem', color: '#166534' }}>
+                      <strong>Cashless Service Guarantee: </strong>
+                      All in-patient hospitalization benefits are delivered via direct Guarantee of Payment (GOP) to accredited overseas hospitals without requiring out-of-pocket settlement by the traveler.
                     </div>
                   </div>
 
-                  {/* Assistance Services List */}
-                  <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '6px', padding: '0.45rem 0.65rem', marginBottom: '0.75rem', fontSize: '0.68rem' }}>
-                    <strong style={{ color: '#166534' }}>Included Assistance Services: </strong>
-                    <span style={{ color: '#15803D' }}>
-                      24/7 Cashless Hospital Network · Doctor on Call / Teleconsultation · Emergency Cash Advance · Compassionate Family Visit · Embassy Visa Assistance Guarantee
-                    </span>
-                  </div>
-
-                  {/* Emergency Contact & Legal Endorsement Footer */}
-                  <div style={{ borderTop: '1px solid #CBD5E1', paddingTop: '0.55rem', fontSize: '0.68rem', color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <span style={{ color: '#DC2626', fontWeight: 800 }}>🚨 24/7 International Emergency TPA: </span>
-                      <strong style={{ color: '#991B1B' }}>{issuedPolicy.emergencyHelpline}</strong>
-                      <div style={{ marginTop: '0.15rem', color: '#64748B' }}>
-                        Lead Contact: {issuedPolicy.contact.mobileNo} · {issuedPolicy.contact.email} · Premium: ₹{issuedPolicy.premiumTotalINR.toLocaleString('en-IN')} (PAID)
+                  {/* ════════════════════ PAGE 3: CLAIMS & 24/7 ASSISTANCE ════════════════════ */}
+                  <div className="page-break" style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px dashed #CBD5E1' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1.5px solid #0F4C3A', paddingBottom: '0.5rem', marginBottom: '0.75rem' }}>
+                      <div>
+                        <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#D97706', textTransform: 'uppercase' }}>Section III · Assistance & Claims Guide</div>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F4C3A', margin: '0.1rem 0' }}>24/7 International Emergency Assistance & Claims Protocol</h4>
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700 }}>
+                        Policy: <strong style={{ color: '#0F4C3A' }}>{issuedPolicy.policyNumber}</strong>
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 800, color: '#0F4C3A' }}>Flying Wonders Travel Services Pvt Ltd</div>
-                      <div style={{ fontSize: '0.62rem', color: '#94A3B8' }}>Authorised Overseas Travel Insurance Desk</div>
+                    {/* Emergency Helplines Box */}
+                    <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1rem' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#991B1B', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                        🚨 24/7 International Emergency Assistance Helplines
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem', fontSize: '0.75rem' }}>
+                        <div>
+                          <span style={{ color: '#7F1D1D', fontWeight: 700 }}>Worldwide Toll-Free / India:</span><br/>
+                          <strong style={{ color: '#DC2626', fontSize: '0.85rem' }}>+91 22 6600 5500 / +91 1800 209 5858</strong>
+                        </div>
+                        <div>
+                          <span style={{ color: '#7F1D1D', fontWeight: 700 }}>USA & Canada (Toll-Free):</span><br/>
+                          <strong style={{ color: '#DC2626', fontSize: '0.85rem' }}>+1 (800) 555-0199 / +1 888 247 1363</strong>
+                        </div>
+                        <div>
+                          <span style={{ color: '#7F1D1D', fontWeight: 700 }}>Europe & Schengen Desk:</span><br/>
+                          <strong style={{ color: '#DC2626', fontSize: '0.85rem' }}>+44 20 8603 9853</strong>
+                        </div>
+                        <div>
+                          <span style={{ color: '#7F1D1D', fontWeight: 700 }}>Claims Email:</span><br/>
+                          <strong style={{ color: '#1D4ED8', fontSize: '0.82rem' }}>claims@asego.in / assist@flyingwonders.net</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2-Column Process Guide */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem', fontSize: '0.75rem' }}>
+                      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.75rem' }}>
+                        <div style={{ fontWeight: 800, color: '#0F4C3A', marginBottom: '0.35rem', fontSize: '0.8rem' }}>
+                          🏥 Cashless Hospitalization Procedure
+                        </div>
+                        <ol style={{ margin: 0, paddingLeft: '1.1rem', color: '#475569', lineHeight: 1.5 }}>
+                          <li>Call the 24/7 International Emergency Assistance TPA immediately upon hospital admission.</li>
+                          <li>Provide Policy No. <strong>{issuedPolicy.policyNumber}</strong> and Passport Number.</li>
+                          <li>The medical team sends a Guarantee of Payment (GOP) directly to the hospital within 2 to 4 hours.</li>
+                        </ol>
+                      </div>
+
+                      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.75rem' }}>
+                        <div style={{ fontWeight: 800, color: '#0F4C3A', marginBottom: '0.35rem', fontSize: '0.8rem' }}>
+                          📄 Reimbursement Claims Checklist
+                        </div>
+                        <ul style={{ margin: 0, paddingLeft: '1.1rem', color: '#475569', lineHeight: 1.5 }}>
+                          <li><strong>Medical:</strong> Doctor diagnosis, original discharge summary, itemized pharmacy bills.</li>
+                          <li><strong>Baggage:</strong> Airline Property Irregularity Report (PIR) and boarding passes.</li>
+                          <li><strong>Passport Loss:</strong> Local police report (FIR) & consular emergency travel certificate.</li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Statutory Disclosures & Verification Endorsement */}
+                    <div style={{ borderTop: '1px solid #CBD5E1', paddingTop: '0.65rem', fontSize: '0.68rem', color: '#64748B', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <strong>Statutory Notice: </strong>
+                        Insurance is underwritten by authorized underwriting partners under IRDAI regulations and international reinsurance agreements.
+                        <div style={{ marginTop: '0.15rem' }}>
+                          Official Verification Link: <code>https://flyingwonders.net/verify/{issuedPolicy.verificationHash}</code>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 900, color: '#0F4C3A', fontSize: '0.75rem' }}>FLYING WONDERS TRAVEL DESK</div>
+                        <div style={{ fontSize: '0.62rem', color: '#166534', fontWeight: 800 }}>DIGITALLY SIGNED & AUTHORISED</div>
+                      </div>
                     </div>
                   </div>
 
@@ -1135,7 +1316,7 @@ export default function InsurancePage() {
                     onClick={handlePrintCertificate}
                     style={{ padding: '0.85rem 1rem', borderRadius: '10px', background: '#0F4C3A', color: '#FFF', fontWeight: 800, fontSize: '0.88rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', boxShadow: '0 4px 10px rgba(15, 76, 58, 0.2)' }}
                   >
-                    <span>🖨️</span> Print / Save Clean 1-Page PDF
+                    <span>🖨️</span> Print / Save Full Official Policy Document (PDF)
                   </button>
 
                   <a
@@ -1144,7 +1325,7 @@ export default function InsurancePage() {
                     rel="noopener noreferrer"
                     style={{ padding: '0.85rem 1rem', borderRadius: '10px', background: '#16A34A', color: '#FFF', fontWeight: 800, fontSize: '0.88rem', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textAlign: 'center' }}
                   >
-                    <span>💬</span> WhatsApp Policy Certificate
+                    <span>💬</span> WhatsApp Policy Document
                   </a>
                 </div>
 
