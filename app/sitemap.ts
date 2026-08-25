@@ -20,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/singapore-attractions/promotions', priority: 0.85, freq: 'daily' },
     { path: '/ai-planner', priority: 0.9, freq: 'weekly' },
     { path: '/travel-tools', priority: 0.9, freq: 'daily' },
+    { path: '/insurance', priority: 0.9, freq: 'daily' },
     { path: '/travel-consulting', priority: 0.9, freq: 'daily' },
     { path: '/study-in-singapore', priority: 0.85, freq: 'daily' },
     { path: '/karnataka', priority: 0.9, freq: 'daily' },

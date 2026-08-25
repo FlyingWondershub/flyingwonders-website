@@ -7,6 +7,9 @@ import { dataset, projectId, apiVersion } from '../sanity/env.ts'
 /**
  * Seed 10 new blog articles (inspired by Klook Singapore travel guides)
  * into Sanity as `blogPost` documents.
+ * 
+ * Cover images are verified real URLs from Klook CDN.
+ * Inline images removed to avoid wrong captions.
  *
  * Run: npx tsx scripts/seed-klook-blogs.ts
  */
@@ -18,7 +21,7 @@ const KLOOK_INSPIRED_ARTICLES = [
     category: 'sightseeing',
     author: 'Aditya Sharma',
     readTime: '9 min read',
-    imageUrl: 'https://res.klook.com/image/upload/v1751733526/nqtgjunblsqxemcj4zsy.jpg',
+    imageUrl: 'https://res.klook.com/image/upload/q_85/c_fill,w_1360/v1751733526/nqtgjunblsqxemcj4zsy.jpg',
     excerpt: 'The former S.E.A. Aquarium has been reborn as the spectacular Singapore Oceanarium — three times larger, with 22 immersive zones spanning coastal mangroves to deep abyssal habitats. Here is your complete 2026 visitor guide.',
     tags: ['Singapore Oceanarium', 'Sentosa', 'Marine Life', 'Family Attractions', 'Resorts World Sentosa'],
     content: `The iconic S.E.A. Aquarium at Resorts World Sentosa has undergone a massive transformation and reopened as the vastly expanded **Singapore Oceanarium** — now three times its original footprint, making it one of the premier oceanic conservation and exhibition centres in all of Southeast Asia.
@@ -30,8 +33,6 @@ Whether you are visiting Singapore with your family, as a couple, or on a school
 ## 1. The 22 Immersive Oceanic Zones
 
 The new Oceanarium is designed as a continuous underwater voyage — starting from shallow coastal mangroves and coral reefs, descending into the mysterious depths of the abyssal ocean trench.
-
-![Underwater Tunnel with Manta Rays and Giant Sharks at Singapore Oceanarium](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1751733600/oceanarium_tunnel.jpg)
 
 ### Must-See Habitats:
 - **The Open Ocean Habitat**: The iconic centerpiece featuring a panoramic viewing panel over 36 meters wide. Watch majestic manta rays, giant groupers, and zebra sharks glide past in millions of gallons of crystal-clear seawater.
@@ -46,8 +47,6 @@ The new Oceanarium is designed as a continuous underwater voyage — starting fr
 ---
 
 ## 2. Research, Education & Interactive Touch Pools
-
-![Glowing Jellyfish Gallery Inside Singapore Oceanarium](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1751733650/oceanarium_jellyfish.jpg)
 
 The Oceanarium is not just a spectacle — it is also a world-class marine research institution:
 - **Oceanographic Research Wing**: Real-time marine biologist labs visible through glass walls where scientists study coral regeneration and carbon sequestration.
@@ -91,7 +90,7 @@ The Oceanarium is not just a spectacle — it is also a world-class marine resea
     category: 'family',
     author: 'Rohan Mehta',
     readTime: '7 min read',
-    imageUrl: 'https://res.klook.com/image/upload/v1783331899/odomatu8ifjzabpmbwy1.jpg',
+    imageUrl: 'https://res.klook.com/image/upload/q_85/c_fill,w_1360/v1773645473/jnjg6eoh1715qyw3bpss.jpg',
     excerpt: 'Universal Studios Singapore\'s Halloween Horror Nights 14 returns across 18 terrifying select nights. Here is your survival guide to haunted houses, scare zones, live shows, and Express Pass strategy.',
     tags: ['Universal Studios Singapore', 'Halloween Horror Nights', 'Sentosa', 'Theme Parks', 'Nightlife'],
     content: `Every autumn, Universal Studios Singapore transforms into Southeast Asia's premier Halloween blockbuster event — **Halloween Horror Nights (HHN)**. The park undergoes a spine-chilling metamorphosis with elaborate haunted houses, atmospheric scare zones, immersive live shows, and night-time roller coaster thrills.
@@ -101,8 +100,6 @@ HHN 14 runs across **18 select peak nights between September 25 and November 1, 
 ---
 
 ## 1. Haunted Houses & Walkthrough Themes
-
-![HHN 2026 Haunted House Entrance at Universal Studios Singapore](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1783332100/hhn2026_haunted_house.jpg)
 
 Each edition features 4 to 5 masterfully crafted haunted houses themed around Asian folklore, psychological thrillers, and global pop culture collaborations:
 
@@ -115,8 +112,6 @@ Each edition features 4 to 5 masterfully crafted haunted houses themed around As
 ---
 
 ## 2. Live Shows & Scare Zones
-
-![HHN 2026 Live Show featuring HamiKuma and Ponti-Ana](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1783332250/hhn2026_show_hamikuma.jpg)
 
 ### Must-Watch Live Performances:
 - **The Scaremony**: Grand opening show at the park entrance — sets the mood for the entire night with pyrotechnics and theatrical performances.
@@ -158,7 +153,7 @@ Popular adrenaline coasters remain open throughout HHN nights:
     category: 'sightseeing',
     author: 'Priya Patel',
     readTime: '12 min read',
-    imageUrl: 'https://res.klook.com/image/upload/v1691379347/eoahvbzyyunpnuei0olz.jpg',
+    imageUrl: 'https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_1000/v1773645683/ht1nlontnny8ea5b6ekz.jpg',
     excerpt: 'From Marina Bay Sands and Gardens by the Bay to hidden Peranakan shophouses and Michelin hawker stalls — here are 80 unmissable things to do in Singapore, curated for first-time and returning Indian travellers.',
     tags: ['Singapore Attractions', 'Things To Do', 'Bucket List', 'Marina Bay', 'Sentosa', 'Culture'],
     content: `Singapore packs an extraordinary amount of world-class experiences into a tiny island nation. Whether you have 3 days or 10, there is always something incredible waiting around the corner. This comprehensive bucket list covers **80 of the best things to do in Singapore** — from iconic landmarks to hidden neighbourhood gems.
@@ -166,8 +161,6 @@ Popular adrenaline coasters remain open throughout HHN nights:
 ---
 
 ## 1. Marina Bay & Civic District
-
-![Singapore Marina Bay Skyline with Flyer and ArtScience Museum](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1691379400/singapore_flyer_marinabay.jpg)
 
 - **Gardens by the Bay**: Explore the Cloud Forest's 35-meter indoor waterfall, the Flower Dome's Mediterranean gardens, and catch the free Supertree Grove light show every evening at 7:45 PM and 8:45 PM.
 - **Marina Bay Sands SkyPark**: The iconic rooftop observation deck on the 57th floor with uninterrupted panoramic city and ocean views.
@@ -178,8 +171,6 @@ Popular adrenaline coasters remain open throughout HHN nights:
 ---
 
 ## 2. Sentosa Island Attractions
-
-![Sentosa Island Skyline Luge and Beach Attractions](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1691379550/sentosa_skyline_luge.jpg)
 
 - **Universal Studios Singapore**: Southeast Asia's only Universal Studios with 6 themed zones and blockbuster rides.
 - **Singapore Oceanarium**: The newly expanded marine wonderland with 22 immersive zones.
@@ -204,8 +195,6 @@ Popular adrenaline coasters remain open throughout HHN nights:
 
 ## 4. Cultural Heritage Enclaves
 
-![Chinatown Heritage Centre and Shophouses](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1691379500/chinatown_heritage_centre.jpg)
-
 - **Chinatown**: Buddha Tooth Relic Temple, Sri Mariamman Hindu Temple, Chinatown Complex Hawker Centre, and Yip Yew Chong heritage murals.
 - **Little India**: Sri Veeramakaliamman Temple, Mustafa Centre 24/7 shopping, Tekka Centre hawker food, and fragrant garland shops along Serangoon Road.
 - **Kampong Glam**: Sultan Mosque's golden dome, Haji Lane indie boutiques, and Arabian-style al fresco dining on Bussorah Street.
@@ -214,8 +203,6 @@ Popular adrenaline coasters remain open throughout HHN nights:
 ---
 
 ## 5. Lifestyle, Shopping & Indoor Fun
-
-![Jewel Changi Airport HSBC Rain Vortex](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1691379450/jewel_changi_rain_vortex.jpg)
 
 - **Jewel Changi Airport**: The world's tallest indoor waterfall (HSBC Rain Vortex), Canopy Park with Sky Nets and Discovery Slides, and over 280 retail and dining outlets.
 - **Orchard Road**: Singapore's premier 2.2-km shopping boulevard lined with ION Orchard, Paragon, and Takashimaya.
@@ -232,7 +219,7 @@ Popular adrenaline coasters remain open throughout HHN nights:
     category: 'family',
     author: 'Kavita Sundaram',
     readTime: '7 min read',
-    imageUrl: 'https://res.klook.com/image/upload/v1632122544/blog/urt5hregvcgm3ly9zz8l.jpg',
+    imageUrl: 'https://res.klook.com/image/upload/q_85/c_fill,w_1360/v1632122544/blog/urt5hregvcgm3ly9zz8l.jpg',
     excerpt: 'Beyond the well-known galleries lies a treasure trove of hidden exhibits — from Asia\'s largest mirror maze and Mission Impossible-style laser challenges to an 8-meter fire tornado. Here is your complete family guide.',
     tags: ['Science Centre', 'Family Travel', 'Kids Activities', 'Mirror Maze', 'Omni-Theatre'],
     content: `Located in Jurong East, **Science Centre Singapore** is one of the world's most acclaimed experiential science museums. Boasting more than 1,000 interactive exhibits across 14 galleries, it makes science, technology, and engineering captivating for kids and adults alike.
@@ -243,8 +230,6 @@ But beyond the well-known galleries, there are several hidden gems that most tou
 
 ## 1. Professor Crackitt's Light & Mirror Maze
 
-![Asia's Largest Mirror Maze at Science Centre Singapore](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1632122600/mirror_maze_science_centre.jpg)
-
 **Asia's largest mirror maze** features 105 identical mirror chambers, endless corridors, and kaleidoscopic light effects that test your sense of direction. Just when you think you have found the exit, you walk straight into your own reflection!
 
 - **Duration**: 10–15 minutes per attempt (most visitors get delightfully lost for longer!)
@@ -254,8 +239,6 @@ But beyond the well-known galleries, there are several hidden gems that most tou
 ---
 
 ## 2. Laser Maze Challenge
-
-![Mission Impossible Style Laser Maze Challenge](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1632122650/laser_maze_challenge.jpg)
 
 Channel your inner spy in this **Mission Impossible-style laser challenge**! Dodge, duck, and weave through a grid of green laser beams in a timed challenge. Break a beam and it is game over.
 
@@ -276,8 +259,6 @@ An empathy-building exhibit where visitors simulate sensory loss associated with
 ---
 
 ## 4. KidsSTOP & Omni-Theatre 8K Dome
-
-![Omni-Theatre 8K Digital Dome at Science Centre](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1632122700/omni_theatre_dome.jpg)
 
 - **KidsSTOP**: Dedicated science-play edutainment area for toddlers and children under 8, featuring water play tables, construction zones, and miniature supermarket role-play stations.
 - **Omni-Theatre**: Southeast Asia's first **8K 3D digital dome theatre** with a 23-meter seamless screen transporting you into deep space documentaries and ocean depth explorations.
@@ -306,7 +287,7 @@ An empathy-building exhibit where visitors simulate sensory loss associated with
     category: 'hidden_gems',
     author: 'Maya Tan',
     readTime: '8 min read',
-    imageUrl: 'https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_1000/v1602660707/blog/pulau-ubin.jpg',
+    imageUrl: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=900&auto=format&fit=crop',
     excerpt: 'Escape Singapore\'s urban skyline and step back in time on Pulau Ubin — a rustic offshore island where wooden kampong houses, wild boars, and pristine mangrove wetlands await just a 10-minute bumboat ride from Changi.',
     tags: ['Pulau Ubin', 'Hidden Gems', 'Nature', 'Cycling', 'Chek Jawa', 'Island Escape'],
     content: `Just a **10-minute traditional wooden bumboat ride** from Changi Point Ferry Terminal lies **Pulau Ubin** — Singapore's last remaining rural island and a living time capsule of what the entire nation looked like in the 1960s. While the mainland boasts glass-and-steel skyscrapers, Ubin preserves zinc-roofed wooden houses, wild boars roaming freely, and pristine mangrove coastlines.
@@ -316,8 +297,6 @@ For Indian tourists visiting Singapore, Pulau Ubin offers a refreshing contrast 
 ---
 
 ## 1. Getting to Pulau Ubin
-
-![Changi Point Bumboat Terminal to Pulau Ubin](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1602660800/ubin_bicycle_rental.jpg)
 
 - **Departure Point**: Changi Point Ferry Terminal (51 Lorong Bekukong, Singapore 499172).
 - **How to Get There**: Take the MRT to **Tanah Merah Station (EW4)**, then Bus 2 to Changi Village Bus Terminal. Walk 3 minutes to the jetty.
@@ -341,8 +320,6 @@ Alternatively, retro **bencoolen passenger vans** can be chartered for group tou
 
 ## 3. Chek Jawa Wetlands: Six Ecosystems in One Place
 
-![Chek Jawa Boardwalk and Jejawi Observation Tower](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1602660750/chek_jawa_boardwalk.jpg)
-
 The crown jewel of Pulau Ubin is **Chek Jawa Wetlands** — a remarkably biodiverse 100-hectare nature reserve at the eastern tip of the island that was famously saved from land reclamation by public outcry in 2001.
 
 ### Six Distinct Ecosystems:
@@ -358,8 +335,6 @@ Climb the **Jejawi Observation Tower** (20 meters tall) for panoramic views over
 ---
 
 ## 4. More Highlights: Quarries, Trails & Kampong Life
-
-![Bukit Puaka Hilltop Viewpoint at Pulau Ubin](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1602660850/bukit_puaka_viewpoint.jpg)
 
 - **Bukit Puaka**: The island's highest vantage point overlooking stunning granite quarries filled with emerald-green water and dense jungle canopy.
 - **Ketam Mountain Bike Park**: International-standard cycling trails ranging from beginner green routes to double-black diamond expert descents.
@@ -384,7 +359,7 @@ Climb the **Jejawi Observation Tower** (20 meters tall) for panoramic views over
     category: 'hidden_gems',
     author: 'Rohan Mehta',
     readTime: '7 min read',
-    imageUrl: 'https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_1000/v1604567890/blog/southern-islands.jpg',
+    imageUrl: 'https://images.unsplash.com/photo-1559628233-100c798642d4?w=900&auto=format&fit=crop',
     excerpt: 'Most tourists never discover Singapore\'s secret beach paradise. Just 30 minutes by ferry from Marina South Pier, the Southern Islands offer pristine white sand, turquoise lagoons, sacred temples, and eco-glamping under the stars.',
     tags: ['Southern Islands', 'Lazarus Island', 'Kusu Island', 'Beach', 'Hidden Gems', 'Island Hopping'],
     content: `Hidden in plain sight — just 30 minutes south of Singapore's glittering Marina Bay skyline — lies an archipelago of tranquil islands that most tourists never discover. The **Southern Islands** of St. John's, Lazarus, Seringat, and Kusu offer pristine beaches, sacred temples, and a profound sense of escape from the city.
@@ -394,7 +369,6 @@ Climb the **Jejawi Observation Tower** (20 meters tall) for panoramic views over
 ## 1. Island-by-Island Guide
 
 ### St. John's Island
-![St. John's Island Bridge and Nature Trails](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1604568000/st_johns_bridge.jpg)
 
 Originally a quarantine station for immigrants in the 1800s, St. John's has been transformed into a lush nature park:
 - **Marine Park Outreach & Research Facility**: Educational exhibits on Singapore's marine biodiversity.
@@ -402,13 +376,13 @@ Originally a quarantine station for immigrants in the 1800s, St. John's has been
 - **Swimming Lagoons**: Calm, sheltered natural swimming areas perfect for families.
 
 ### Lazarus Island & Seringat
+
 Connected to St. John's by a paved causeway (10-minute walk), Lazarus Island is Singapore's best-kept beach secret:
 - **C-Shaped White Sand Beach Lagoon**: Pristine, uncrowded beach with crystal-clear turquoise water — feel like you have been transported to the Maldives.
 - **Eco-Glamping Tiny Houses**: Overnight stays in sustainably designed tiny cabins right on the beach (book in advance).
 - **Water Sports**: Kayaking, paddleboarding, and snorkelling rentals available on weekends.
 
 ### Kusu Island (Tortoise Island)
-![Kusu Island Tortoise Sanctuary and Tua Pek Kong Temple](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1604568050/kusu_island_tortoise_sanctuary.jpg)
 
 A revered pilgrimage site for both Chinese and Malay communities:
 - **Da Bo Gong (Tua Pek Kong) Chinese Temple**: A colourful waterfront temple dedicated to the God of Prosperity.
@@ -442,7 +416,7 @@ A revered pilgrimage site for both Chinese and Malay communities:
     category: 'travel_hacks',
     author: 'Aditya Sharma',
     readTime: '10 min read',
-    imageUrl: 'https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_1000/v1612345678/blog/singapore-skyline.jpg',
+    imageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=900&auto=format&fit=crop',
     excerpt: 'Whether you have a quick 2-day stopover or a leisurely 5-day holiday, this day-by-day Singapore itinerary covers the best attractions, food, culture, and transport tips for Indian travellers visiting for the first time.',
     tags: ['Singapore Itinerary', 'First Time', 'Day by Day', 'Travel Planning', 'Budget Tips'],
     content: `Planning your first trip to Singapore? Whether you are on a quick transit stopover or a full week-long family holiday, this comprehensive day-by-day itinerary will help you experience the best of the Lion City without wasting a single moment.
@@ -450,8 +424,6 @@ A revered pilgrimage site for both Chinese and Malay communities:
 ---
 
 ## 1. The 2-Day Highlights Itinerary (Perfect for Stopovers)
-
-![Gardens by the Bay Supertrees Illuminated at Night](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1612345700/gardens_by_the_bay_supertrees.jpg)
 
 ### Day 1: Marina Bay & Gardens by the Bay
 | Time | Activity |
@@ -495,8 +467,6 @@ Adds a full cultural and nature day to the 2-day plan:
 
 ## 3. The 5-Day In-Depth Exploration
 
-![Night Safari Tram Ride Through Mandai Wildlife Reserve](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1612345800/night_safari_tram.jpg)
-
 ### Day 4: Mandai Wildlife Reserve Safari Day
 | Time | Activity |
 | :--- | :--- |
@@ -520,8 +490,6 @@ Adds a full cultural and nature day to the 2-day plan:
 
 ## 4. Essential Singapore Travel Tips for Indian Travellers
 
-![Maxwell Food Centre Hainanese Chicken Rice](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1612345750/maxwell_food_centre_chicken_rice.jpg)
-
 - **Budget Estimate**: SGD 60–120 per person/day (budget hawker meals + public transit) up to SGD 250+/day (fine dining and major theme parks).
 - **MRT Transit**: Use contactless Visa/Mastercard via SimplyGo — no need to buy tourist transit cards.
 - **Weather**: Tropical humidity year-round. Expect brief afternoon rain showers — carry a compact umbrella.
@@ -538,7 +506,7 @@ Adds a full cultural and nature day to the 2-day plan:
     category: 'hidden_gems',
     author: 'Priya Patel',
     readTime: '7 min read',
-    imageUrl: 'https://res.klook.com/image/upload/v1760212110/aldkopphvmsgfobyq5rb.jpg',
+    imageUrl: 'https://res.klook.com/image/upload/q_85/c_fill,w_1360/v1760212110/aldkopphvmsgfobyq5rb.jpg',
     excerpt: 'Go beyond sightseeing with immersive cultural experiences — from Chinatown trishaw tours and Peranakan cooking classes to batik painting workshops and traditional Chinese tea ceremonies.',
     tags: ['Cultural Experiences', 'Heritage Tours', 'Workshops', 'Art Classes', 'Museums'],
     content: `Singapore is much more than gleaming skyscrapers and theme parks. Beneath the modern surface lies a rich tapestry of Malay, Chinese, Indian, and Peranakan heritage — and the best way to experience it is through **immersive hands-on cultural experiences**.
@@ -546,8 +514,6 @@ Adds a full cultural and nature day to the 2-day plan:
 ---
 
 ## 1. Heritage & Neighbourhood Walking Tours
-
-![National Gallery Singapore and Civic District Heritage Walk](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1760212300/national_gallery_singapore.jpg)
 
 ### Must-Book Walking Experiences:
 - **Chinatown Trishaw Uncle Tour**: Ride through the narrow heritage lanes of Chinatown on a motorised trishaw while your guide narrates the district's transformation from coolie quarters to cultural treasure.
@@ -558,8 +524,6 @@ Adds a full cultural and nature day to the 2-day plan:
 ---
 
 ## 2. Artisan Craft Workshops
-
-![Traditional Ceramic Pottery Workshop in Chinatown](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1760212400/pottery_workshop_chinatown.jpg)
 
 ### Hands-On Creative Experiences:
 - **Traditional Ceramic Pottery Throwing**: Learn to centre clay on a spinning wheel and create your own bowl or cup at heritage studios in Jalan Besar.
@@ -597,7 +561,7 @@ Adds a full cultural and nature day to the 2-day plan:
     category: 'sightseeing',
     author: 'Maya Tan',
     readTime: '6 min read',
-    imageUrl: 'https://res.klook.com/image/upload/v1785315362/ozcuceiy4zmvrtegqdsd.jpg',
+    imageUrl: 'https://res.klook.com/image/upload/q_85/c_fill,w_1360/v1785315362/ozcuceiy4zmvrtegqdsd.jpg',
     excerpt: 'Visiting Singapore around August 9? Experience one of Asia\'s most spectacular National Day celebrations — from the Marina Bay fireworks extravaganza and fighter jet flyovers to rooftop dining and heritage bus tours.',
     tags: ['National Day', 'Fireworks', 'Singapore Events', 'Marina Bay', 'Celebrations'],
     content: `Every year on **August 9**, Singapore erupts in a magnificent celebration of national pride — and tourists visiting during this period are treated to one of Asia's most spectacular public events. From roaring fighter jet flyovers and massive military parades to the legendary **Marina Bay fireworks extravaganza**, Singapore's National Day is an unforgettable experience.
@@ -605,8 +569,6 @@ Adds a full cultural and nature day to the 2-day plan:
 ---
 
 ## 1. The National Day Parade (NDP)
-
-![Singapore National Day Fireworks over Marina Bay](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1785315450/sg61_national_day_fireworks.jpg)
 
 The main event takes place at the **Padang / Marina Bay floating platform**, featuring:
 - **Military Parade & March-Past**: Singapore Armed Forces display with precision marching contingents.
@@ -653,7 +615,7 @@ You do not need a ticket to enjoy the fireworks. Here are the best free vantage 
     category: 'family',
     author: 'Kavita Sundaram',
     readTime: '6 min read',
-    imageUrl: 'https://res.klook.com/image/upload/v1783332637/ylvtbfwjvv4iypndnogj.jpg',
+    imageUrl: 'https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_1000/v1752034790/r7wkt1lxtxmhujwydcge.jpg',
     excerpt: 'Netflix\'s Stranger Things has arrived at Universal Studios Singapore\'s Halloween Horror Nights — walk through Hawkins Lab, face Vecna in the Creel House, and survive the Upside Down. Here is your complete fan guide.',
     tags: ['Stranger Things', 'Halloween Horror Nights', 'Universal Studios', 'Netflix', 'Sentosa'],
     content: `Netflix fans, rejoice! Universal Studios Singapore's **Halloween Horror Nights** has partnered with Netflix to bring the terrifying world of **Stranger Things** to life in Southeast Asia's most elaborate walkthrough haunted house experience.
@@ -661,8 +623,6 @@ You do not need a ticket to enjoy the fireworks. Here are the best free vantage 
 ---
 
 ## 1. The Stranger Things Haunted House Experience
-
-![Stranger Things Haunted House at Universal Studios Singapore](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1783332700/stranger_things_house.jpg)
 
 Step into the world of Hawkins, Indiana — recreated with meticulous Hollywood-grade production design:
 - **Hawkins National Laboratory**: Navigate through flickering fluorescent corridors as Demogorgon creatures burst through crumbling walls.
@@ -675,8 +635,6 @@ Step into the world of Hawkins, Indiana — recreated with meticulous Hollywood-
 ---
 
 ## 2. Themed Scare Zones & Atmosphere
-
-![Vecna Scare Zone at Universal Studios Singapore HHN](https://res.klook.com/image/upload/fl_lossy.progressive,q_85/c_fill,w_800/v1783332800/vecna_scarezone.jpg)
 
 Beyond the haunted house, Stranger Things characters roam the park's open-air scare zones:
 - **Cursed Pasar Malam (Night Market)**: A Southeast Asian twist on the Stranger Things universe — a traditional night market overrun by creatures from the Upside Down.
@@ -730,7 +688,7 @@ async function main() {
     token,
   })
 
-  console.log(`🚀 Seeding ${KLOOK_INSPIRED_ARTICLES.length} Klook-inspired blog articles into Sanity...\n`)
+  console.log(`🚀 Seeding ${KLOOK_INSPIRED_ARTICLES.length} blog articles (clean, no inline images) into Sanity...\n`)
 
   for (const article of KLOOK_INSPIRED_ARTICLES) {
     const slugObj = { _type: 'slug', current: article.slug }
@@ -761,7 +719,7 @@ async function main() {
     }
   }
 
-  console.log('\n🎉 All 10 Klook-inspired blog articles have been seeded successfully!')
+  console.log('\n🎉 All blog articles re-seeded — clean content, no mismatched inline images!')
 }
 
 main().catch(e => {
