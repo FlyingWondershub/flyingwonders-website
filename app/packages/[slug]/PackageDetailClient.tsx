@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { urlForImage } from '../../../sanity/lib/image'
 import IciciQrModal from '../../../components/IciciQrModal'
 import AdBanner from '../../../components/AdBanner'
+import PackageShortsCarousel from '../../../components/PackageShortsCarousel'
+import TripScheduleMatrix from '../../../components/TripScheduleMatrix'
 import type { TravelPackage } from '../../../utils/packages'
 
 interface Props {
@@ -261,6 +263,13 @@ export default function PackageDetailClient({ pkg, exchangeRate, inrPrice, clean
           </div>
         )}
 
+        {/* ── At-a-glance Trip Schedule Matrix & Download (Sanity Toggleable) ── */}
+        {pkg.showTripSchedule !== false && (
+          <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
+            <TripScheduleMatrix pkg={pkg} />
+          </div>
+        )}
+
         {/* ── Day-by-Day Comprehensive Itinerary Timeline ── */}
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
@@ -330,6 +339,14 @@ export default function PackageDetailClient({ pkg, exchangeRate, inrPrice, clean
               </div>
             ))}
           </div>
+
+          {/* ── In-Depth Experience Shorts Carousel (Sanity Toggleable) ── */}
+          {pkg.showShorts !== false && (
+            <PackageShortsCarousel 
+              destination={pkg.destination || 'Singapore'} 
+              curatedShorts={pkg.shorts} 
+            />
+          )}
 
           {/* ── Bottom Booking Action Box ── */}
           <div style={{ 

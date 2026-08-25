@@ -11,6 +11,15 @@ export interface ItineraryDay {
   activities: ItineraryActivity[]
 }
 
+export interface TravelShort {
+  id: string
+  title: string
+  creator: string
+  views?: string
+  thumbnailUrl: string
+  youtubeVideoId: string
+}
+
 export interface TravelPackage {
   _id: string
   slug?: string
@@ -20,8 +29,55 @@ export interface TravelPackage {
   description: string
   image: string | any
   hotelOptions?: string
+  destination?: string
   itinerary: ItineraryDay[]
+  shorts?: TravelShort[]
+  showTripSchedule?: boolean
+  showShorts?: boolean
 }
+
+export const DEFAULT_SINGAPORE_SHORTS: TravelShort[] = [
+  {
+    id: 'sg-short-1',
+    title: 'Jewel Changi Airport Rain Vortex & Canopy Park 🇸🇬',
+    creator: 'VisitSingapore',
+    views: '1.8M views',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=600&q=80',
+    youtubeVideoId: 'x6d3XQc0G4s'
+  },
+  {
+    id: 'sg-short-2',
+    title: 'Gardens by the Bay Light Show Spectacular ✨',
+    creator: 'Explore The World',
+    views: '890K views',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1506351421178-63b52a2d2562?auto=format&fit=crop&w=600&q=80',
+    youtubeVideoId: 'dO1zZ9c3N90'
+  },
+  {
+    id: 'sg-short-3',
+    title: 'Marina Bay Sands SkyPark & Infinity Pool Vibe 🌆',
+    creator: 'Travel Asia Today',
+    views: '1.2M views',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?auto=format&fit=crop&w=600&q=80',
+    youtubeVideoId: 'r53Q6P6h0dY'
+  },
+  {
+    id: 'sg-short-4',
+    title: 'Sentosa Island Cable Car & Beach Club Guide 🏖️',
+    creator: 'Jake & Kaylee Travel',
+    views: '650K views',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=600&q=80',
+    youtubeVideoId: 'V9P7b9mZtqU'
+  },
+  {
+    id: 'sg-short-5',
+    title: 'Famous Singapore Hainanese Chicken Rice & Street Food 🍜',
+    creator: 'Foodie Explorer',
+    views: '2.4M views',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=600&q=80',
+    youtubeVideoId: 'Jb2z8c2k5y0'
+  }
+]
 
 export const DEFAULT_PACKAGES: TravelPackage[] = [
   {
@@ -304,6 +360,8 @@ export async function getAllPackages(): Promise<TravelPackage[]> {
       description,
       image,
       hotelOptions,
+      showTripSchedule,
+      showShorts,
       itinerary
     }`
     sanityPackages = await client.fetch(query)

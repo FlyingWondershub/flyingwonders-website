@@ -40,6 +40,20 @@ export const packageSchema = {
       },
     },
     {
+      name: 'showTripSchedule',
+      title: 'Show Trip Schedule Matrix',
+      type: 'boolean',
+      description: 'Toggle on/off to display or hide the at-a-glance Trip Schedule matrix table on the package page.',
+      initialValue: true,
+    },
+    {
+      name: 'showShorts',
+      title: 'Show In-Depth Experience Shorts',
+      type: 'boolean',
+      description: 'Toggle on/off to display or hide the YouTube shorts carousel on the package page.',
+      initialValue: true,
+    },
+    {
       name: 'hotelOptions',
       title: 'Hotel Options',
       type: 'string',
