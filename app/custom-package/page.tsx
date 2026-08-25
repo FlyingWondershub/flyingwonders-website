@@ -2168,7 +2168,7 @@ export default function PrototypeBuilder() {
               } catch (e) { /* image may not load in PDF context */ }
             }
 
-            const textW = hasPhoto ? CW - 50 : CW - 10
+            const textW = hasPhoto ? CW - 50 : CW - 12
 
             // Attraction name + time badge
             font('bold', 10); setTxt(NAVY)
@@ -2184,7 +2184,7 @@ export default function PrototypeBuilder() {
             if (rating) {
               const ratingStr = `Rating: ${rating.toFixed(1)} / 5.0`
               font('bold', 7.5); setTxt([180, 130, 20] as [number,number,number])
-              doc.text(ratingStr, ML + textW - 2, cy, { align: 'right' })
+              doc.text(ratingStr, ML + textW, cy, { align: 'right' })
             }
             cy += 5
 
@@ -2202,20 +2202,24 @@ export default function PrototypeBuilder() {
               cy += nl.length * 3.5 + 1
             }
 
-            // Highlights as pills
+            // Highlights as pills (Strictly constrained within textW to prevent colliding into right-side photo)
             if (highlights.length > 0) {
               font('bold', 7); setTxt(NAVY)
               doc.text('Highlights:', ML + 6, cy)
               cy += 4
+
+              const hlAvailW = textW - 4
+              const pillW = (hlAvailW - 4) / 2
+
               highlights.forEach((h, hi) => {
-                const col = hi % 2 === 0 ? ML + 6 : ML + (CW / 2)
+                const colX = hi % 2 === 0 ? ML + 6 : ML + 6 + pillW + 4
                 if (hi % 2 === 0 && hi > 0) cy += 5.5
-                setFill(GOLD_L); doc.roundedRect(col, cy - 3, (CW / 2) - 8, 5, 1, 1, 'F')
-                font('normal', 6.5); setTxt(NAVY)
-                doc.text(`• ${h}`, col + 1.5, cy + 0.5, { maxWidth: (CW / 2) - 10 })
+                setFill(GOLD_L)
+                doc.roundedRect(colX, cy - 3, pillW, 5, 1, 1, 'F')
+                font('normal', 6.2); setTxt(NAVY)
+                doc.text(`• ${h}`, colX + 1.5, cy + 0.5, { maxWidth: pillW - 3 })
               })
-              if (highlights.length % 2 !== 0) cy += 5.5
-              else cy += 5.5
+              cy += 6
             }
 
             // Opening hours / duration / location metadata row — ASCII-safe labels only
@@ -2233,7 +2237,7 @@ export default function PrototypeBuilder() {
               cy += metaParts.length * 4.5 + 2
             }
 
-            y += cardH + 4
+            y += Math.max(cardH, cy - y + 2) + 4
           })
         }
 
