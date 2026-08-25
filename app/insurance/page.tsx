@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
 
 interface Traveler {
   id: number
@@ -189,10 +188,9 @@ export default function InsurancePage() {
       `💰 Quoted Premium: ₹${plan.pricing.totalINR.toLocaleString('en-IN')} (incl. GST)\n\n` +
       `Please assist me with instant policy issuance.`
     )
-    return `https://wa.me/6591234567?text=${text}` // Update with official WhatsApp number if configured
+    return `https://wa.me/6591234567?text=${text}`
   }
 
-  // FAQ list
   const faqs = [
     {
       q: 'Is this travel insurance compliant with Schengen Visa requirements?',
@@ -217,91 +215,88 @@ export default function InsurancePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: '5rem', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}>
       
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-900 via-indigo-950 to-slate-950 text-white pt-24 pb-20 px-4 sm:px-6 lg:px-8">
-        {/* Glow overlay */}
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
-        
-        <div className="max-w-6xl mx-auto relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-400/30 text-blue-300 text-xs sm:text-sm font-semibold tracking-wide uppercase mb-6 backdrop-blur-md">
+      {/* ── Hero Section ── */}
+      <section style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 60%, #0B192C 100%)', color: '#FFFFFF', padding: '3.5rem 1.5rem 4.5rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 1rem', borderRadius: '50px', background: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.4)', color: '#FCD34D', fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1.25rem' }}>
             <span>🛡️</span> Official Travel Insurance Desk
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white mb-6 font-playfair">
-            Travel the World with <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-teal-300 to-amber-300">Complete Peace of Mind</span>
+          <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.2rem)', fontWeight: 800, margin: '0 0 1.25rem', fontFamily: 'var(--font-playfair), serif', lineHeight: 1.2, color: '#FFFFFF' }}>
+            Travel the World with <span style={{ color: '#FCD34D' }}>Complete Peace of Mind</span>
           </h1>
 
-          <p className="max-w-3xl mx-auto text-base sm:text-lg text-slate-300 leading-relaxed mb-8">
+          <p style={{ fontSize: 'clamp(1rem, 2vw, 1.15rem)', opacity: 0.9, maxWidth: '720px', margin: '0 auto 2.5rem', lineHeight: 1.6 }}>
             Embassy-approved Schengen visa compliance, up to <strong>$1,000,000 USD</strong> medical cover, 24/7 cashless hospital networks across 180+ countries, flight delay & baggage protection, and instant policy certificate issuance.
           </p>
 
-          {/* Quick Badges */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto text-left">
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-sm">
-              <div className="p-2 rounded-lg bg-sky-500/20 text-sky-400 text-xl">🏥</div>
+          {/* Quick Hero Badges */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', textAlign: 'left' }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <span style={{ fontSize: '1.75rem' }}>🏥</span>
               <div>
-                <div className="text-xs text-slate-400 uppercase font-medium">Cashless Care</div>
-                <div className="text-sm font-bold text-white">Global Hospital Network</div>
+                <div style={{ fontSize: '0.72rem', color: '#93C5FD', textTransform: 'uppercase', fontWeight: 700 }}>Cashless Care</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#FFF' }}>Global Hospital Network</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-sm">
-              <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 text-xl">🇪🇺</div>
+            <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <span style={{ fontSize: '1.75rem' }}>🇪🇺</span>
               <div>
-                <div className="text-xs text-slate-400 uppercase font-medium">Visa Approved</div>
-                <div className="text-sm font-bold text-white">100% Schengen Guaranteed</div>
+                <div style={{ fontSize: '0.72rem', color: '#86EFAC', textTransform: 'uppercase', fontWeight: 700 }}>Visa Approved</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#FFF' }}>100% Schengen Guaranteed</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-sm">
-              <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 text-xl">🧳</div>
+            <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <span style={{ fontSize: '1.75rem' }}>🧳</span>
               <div>
-                <div className="text-xs text-slate-400 uppercase font-medium">Transit Shield</div>
-                <div className="text-sm font-bold text-white">Baggage & Flight Delay</div>
+                <div style={{ fontSize: '0.72rem', color: '#FDE047', textTransform: 'uppercase', fontWeight: 700 }}>Transit Shield</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#FFF' }}>Baggage & Delay Cover</div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-sm">
-              <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400 text-xl">⚡</div>
+            <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '1rem', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <span style={{ fontSize: '1.75rem' }}>⚡</span>
               <div>
-                <div className="text-xs text-slate-400 uppercase font-medium">Instant Certificate</div>
-                <div className="text-sm font-bold text-white">Delivered in 2 Minutes</div>
+                <div style={{ fontSize: '0.72rem', color: '#D8B4FE', textTransform: 'uppercase', fontWeight: 700 }}>Instant Certificate</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#FFF' }}>Issued in 2 Minutes</div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Quote Calculator & Filter Section */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 relative z-20">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 sm:p-8">
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 mb-6">
+      {/* ── Interactive Quote Calculator Box ── */}
+      <div style={{ maxWidth: '1120px', margin: '-2.5rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
+        <div style={{ background: '#FFFFFF', borderRadius: '18px', padding: '2rem', boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.08)', border: '1px solid #E2E8F0' }}>
+          
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #EEF2F6', paddingBottom: '1.25rem', marginBottom: '1.5rem', gap: '0.75rem' }}>
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F4C3A', margin: 0, fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span>⚡</span> Instant Travel Insurance Premium Calculator
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Customize your trip details and compare comprehensive coverage tiers instantly.
+              <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0.35rem 0 0' }}>
+                Select your destination zone, dates, and travelers to compare live premiums.
               </p>
             </div>
-            <span className="hidden sm:inline-block px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 rounded-full text-xs font-semibold">
-              Live Rates
-            </span>
+            <div style={{ background: '#DCFCE7', color: '#166534', padding: '0.35rem 0.85rem', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              ● Live Verified Rates
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Destination Selection */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+            {/* Destination */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
                 1. Destination Zone
               </label>
               <select
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.9rem', outline: 'none' }}
               >
                 <option value="schengen_europe">Schengen & Europe (Visa Compliant)</option>
                 <option value="worldwide_without_us_ca">Worldwide (Excl. USA & Canada)</option>
@@ -313,19 +308,19 @@ export default function InsurancePage() {
 
             {/* Travel Dates */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                2. Travel Dates ({durationDays} Days)
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
+                2. Travel Dates ({durationDays} Days Trip)
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                 <div>
                   <input
                     type="date"
                     value={startDate}
                     min={new Date().toISOString().split('T')[0]}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    style={{ width: '100%', padding: '0.7rem 0.6rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.85rem' }}
                   />
-                  <span className="text-[10px] text-slate-400 ml-1">Departure</span>
+                  <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '0.2rem', paddingLeft: '0.25rem' }}>Departure</div>
                 </div>
                 <div>
                   <input
@@ -333,25 +328,25 @@ export default function InsurancePage() {
                     value={endDate}
                     min={startDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    style={{ width: '100%', padding: '0.7rem 0.6rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.85rem' }}
                   />
-                  <span className="text-[10px] text-slate-400 ml-1">Return</span>
+                  <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginTop: '0.2rem', paddingLeft: '0.25rem' }}>Return</div>
                 </div>
               </div>
             </div>
 
-            {/* Sum Insured */}
+            {/* Medical Sum Insured */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+              <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.45rem' }}>
                 3. Medical Sum Insured
               </label>
               <select
                 value={sumInsuredUSD}
                 onChange={(e) => setSumInsuredUSD(Number(e.target.value))}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#0F172A', fontWeight: 600, fontSize: '0.9rem', outline: 'none' }}
               >
                 <option value={50000}>$50,000 USD (Essential)</option>
-                <option value={100000}>$100,000 USD (Recommended)</option>
+                <option value={100000}>$100,000 USD (Recommended - Popular)</option>
                 <option value={250000}>$250,000 USD (Gold Protection)</option>
                 <option value={500000}>$500,000 USD (Comprehensive)</option>
                 <option value={1000000}>$1,000,000 USD (Ultra Shield)</option>
@@ -359,44 +354,40 @@ export default function InsurancePage() {
             </div>
           </div>
 
-          {/* Travelers Age Section */}
-          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+          {/* Travelers Age Controls */}
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #EEF2F6' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 4. Travelers ({travelers.length}) & Age
-              </label>
+              </span>
               <button
                 type="button"
                 onClick={addTraveler}
                 disabled={travelers.length >= 8}
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 rounded-lg text-xs font-semibold transition"
+                style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', padding: '0.35rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
               >
-                <span>+ Add Traveler</span>
+                + Add Traveler
               </button>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
               {travelers.map((t, idx) => (
-                <div key={t.id} className="relative bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-center">
-                  <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                    Person {idx + 1}
-                  </div>
-                  <div className="flex items-center justify-center gap-1">
-                    <input
-                      type="number"
-                      min={1}
-                      max={99}
-                      value={t.age}
-                      onChange={(e) => updateTravelerAge(t.id, parseInt(e.target.value) || 1)}
-                      className="w-14 text-center bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg py-1 text-sm font-bold text-slate-900 dark:text-white"
-                    />
-                    <span className="text-xs text-slate-400">yrs</span>
-                  </div>
+                <div key={t.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.5rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'relative' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#64748B' }}>P{idx + 1}:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={t.age}
+                    onChange={(e) => updateTravelerAge(t.id, parseInt(e.target.value) || 1)}
+                    style={{ width: '48px', padding: '0.25rem 0.35rem', borderRadius: '6px', border: '1px solid #CBD5E1', textAlign: 'center', fontWeight: 800, fontSize: '0.9rem', color: '#0F172A' }}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>yrs</span>
                   {travelers.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeTraveler(t.id)}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] shadow hover:bg-rose-600"
+                      style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', borderRadius: '50%', width: '18px', height: '18px', fontSize: '10px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
                       ✕
                     </button>
@@ -406,167 +397,186 @@ export default function InsurancePage() {
             </div>
           </div>
 
-          {/* Add-on Filters */}
-          <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-wrap gap-4 items-center">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mr-2">
+          {/* Optional Riders */}
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #EEF2F6', display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '0.5rem' }}>
               Optional Riders:
             </span>
 
-            <label className="flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3.5 py-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#334155', background: '#F1F5F9', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={adventureSports}
                 onChange={(e) => setAdventureSports(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                style={{ width: '16px', height: '16px', accentColor: '#0F4C3A' }}
               />
               <span>⛷️ Adventure Sports Rider</span>
             </label>
 
-            <label className="flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3.5 py-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#334155', background: '#F1F5F9', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={pedCover}
                 onChange={(e) => setPedCover(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                style={{ width: '16px', height: '16px', accentColor: '#0F4C3A' }}
               />
               <span>❤️ Pre-existing Condition (PED) Emergency Life-Threatening Cover</span>
             </label>
 
-            <label className="flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3.5 py-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#334155', background: '#F1F5F9', padding: '0.45rem 0.85rem', borderRadius: '8px', cursor: 'pointer' }}>
               <input
                 type="checkbox"
                 checked={tripCancellationAddon}
                 onChange={(e) => setTripCancellationAddon(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                style={{ width: '16px', height: '16px', accentColor: '#0F4C3A' }}
               />
               <span>✈️ Trip Cancellation Any Reason Cover</span>
             </label>
           </div>
-        </div>
-      </section>
 
-      {/* Plans Grid Section */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white font-playfair">
-            Choose Your Travel Insurance Protection Plan
+        </div>
+      </div>
+
+      {/* ── Plans Display Grid ── */}
+      <section style={{ maxWidth: '1120px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
+            Choose Your Protection Plan
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mt-2 max-w-2xl mx-auto text-sm sm:text-base">
-            Transparent pricing with 100% cashless emergency care, zero hidden costs, and compliant certificate delivery.
+          <p style={{ color: '#64748B', fontSize: '1rem', maxWidth: '600px', margin: '0 auto' }}>
+            Transparent pricing with 100% cashless emergency care, zero hidden deductions, and instant visa certificates.
           </p>
         </div>
 
         {loading ? (
-          <div className="py-20 text-center">
-            <div className="inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="text-slate-500 dark:text-slate-400 font-medium">Recalculating live plans and benefits...</p>
+          <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+            <div style={{ width: '40px', height: '40px', border: '4px solid #0F4C3A', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 1rem', animation: 'spin 1s linear infinite' }} />
+            <p style={{ color: '#64748B', fontWeight: 600 }}>Calculating tailored insurance options...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
             {plans.map((plan) => {
               const isPopular = plan.popular
               return (
                 <div
                   key={plan.id}
-                  className={`relative flex flex-col justify-between rounded-2xl bg-white dark:bg-slate-900 border ${
-                    isPopular
-                      ? 'border-amber-500 dark:border-amber-500 ring-2 ring-amber-500/20 shadow-2xl scale-[1.02]'
-                      : 'border-slate-200 dark:border-slate-800 shadow-lg'
-                  } p-6 transition-all duration-200 hover:shadow-xl`}
+                  style={{
+                    background: '#FFFFFF',
+                    borderRadius: '16px',
+                    border: isPopular ? '2px solid #D97706' : '1px solid #E2E8F0',
+                    padding: '1.75rem 1.5rem',
+                    boxShadow: isPopular ? '0 20px 30px -10px rgba(217, 119, 6, 0.15)' : '0 10px 25px -5px rgba(0, 0, 0, 0.04)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    position: 'relative',
+                  }}
                 >
                   {isPopular && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
-                      ★ MOST POPULAR CHOICE
+                    <div style={{ position: 'absolute', top: '-13px', left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #D97706 0%, #B45309 100%)', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '0.25rem 0.85rem', borderRadius: '50px', letterSpacing: '0.05em', whiteSpace: 'nowrap', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
+                      ★ MOST POPULAR
                     </div>
                   )}
 
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.25rem 0.65rem', borderRadius: '50px', background: '#F1F5F9', color: '#475569' }}>
                         {plan.badge}
                       </span>
                       {plan.schengenApproved && (
-                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#16A34A' }}>
                           ✓ Schengen Valid
                         </span>
                       )}
                     </div>
 
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.85rem', fontFamily: 'var(--font-playfair), serif' }}>
                       {plan.name}
                     </h3>
 
-                    {/* Sum Insured display */}
-                    <div className="mt-3 p-3 bg-blue-50/50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 rounded-xl">
-                      <div className="text-[11px] text-blue-600 dark:text-blue-400 uppercase font-semibold">
-                        Medical Sum Insured
-                      </div>
-                      <div className="text-2xl font-black text-blue-950 dark:text-blue-200">
-                        {plan.sumInsured}
-                      </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    {/* Medical sum insured badge */}
+                    <div style={{ background: '#F0FDF4', border: '1px solid #DCFCE7', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '1.25rem' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#15803D', fontWeight: 700, textTransform: 'uppercase' }}>Medical Sum Insured</div>
+                      <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#14532D' }}>{plan.sumInsured}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.15rem' }}>
                         Deductible: <strong>{plan.deductible}</strong>
                       </div>
                     </div>
 
-                    {/* Pricing */}
-                    <div className="my-5 pb-5 border-b border-slate-100 dark:border-slate-800">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-black text-slate-900 dark:text-white">
+                    {/* Premium */}
+                    <div style={{ borderBottom: '1px solid #F1F5F9', paddingBottom: '1.25rem', marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem' }}>
+                        <span style={{ fontSize: '1.85rem', fontWeight: 900, color: '#0F172A' }}>
                           ₹{plan.pricing.totalINR.toLocaleString('en-IN')}
                         </span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          (incl. GST)
-                        </span>
+                        <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>(incl. GST)</span>
                       </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex justify-between">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#64748B', marginTop: '0.35rem' }}>
                         <span>≈ ${plan.pricing.approxUSD} USD</span>
-                        <span className="font-semibold text-blue-600 dark:text-blue-400">
-                          ₹{plan.pricing.perDayINR}/day
-                        </span>
+                        <span style={{ color: '#0F4C3A', fontWeight: 700 }}>₹{plan.pricing.perDayINR}/day</span>
                       </div>
                     </div>
 
-                    {/* Key features */}
-                    <div className="space-y-2.5 mb-6 text-xs sm:text-sm">
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                    {/* Benefits bullet points */}
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.65rem' }}>
                         Coverage Highlights
                       </div>
-                      {plan.features.slice(0, 6).map((f, fIdx) => (
-                        <div key={fIdx} className="flex items-start justify-between gap-2">
-                          <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                            <span className="text-emerald-500">✓</span> {f.name}
-                          </span>
-                          <span className="font-bold text-slate-900 dark:text-slate-100 shrink-0 text-right">
-                            {f.limit}
-                          </span>
-                        </div>
-                      ))}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {plan.features.slice(0, 6).map((f, fIdx) => (
+                          <div key={fIdx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', gap: '0.5rem' }}>
+                            <span style={{ color: '#475569' }}>
+                              <span style={{ color: '#16A34A', fontWeight: 900, marginRight: '0.35rem' }}>✓</span>
+                              {f.name}
+                            </span>
+                            <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right', flexShrink: 0 }}>
+                              {f.limit}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* CTA Buttons */}
-                  <div className="space-y-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                  {/* Actions */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingTop: '1rem', borderTop: '1px solid #F1F5F9' }}>
                     <button
                       type="button"
                       onClick={() => handleOpenModal(plan)}
-                      className={`w-full py-3 px-4 rounded-xl font-bold text-sm shadow-md transition flex items-center justify-center gap-2 ${
-                        isPopular
-                          ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
-                      }`}
+                      style={{
+                        width: '100%',
+                        padding: '0.85rem 1rem',
+                        borderRadius: '10px',
+                        background: isPopular ? 'linear-gradient(135deg, #D97706 0%, #B45309 100%)' : '#0F4C3A',
+                        color: '#FFFFFF',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.08)',
+                      }}
                     >
-                      <span>Get Policy / Quote</span>
-                      <span>→</span>
+                      Get Policy / Quote →
                     </button>
 
                     <a
                       href={generateWhatsAppUrl(plan)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full py-2 px-3 rounded-xl font-semibold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center justify-center gap-1.5"
+                      style={{
+                        width: '100%',
+                        padding: '0.65rem 1rem',
+                        borderRadius: '10px',
+                        background: '#F1F5F9',
+                        color: '#334155',
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        textDecoration: 'none',
+                        textAlign: 'center',
+                        display: 'block',
+                      }}
                     >
-                      <span>💬 WhatsApp Policy Desk</span>
+                      💬 WhatsApp Policy Desk
                     </a>
                   </div>
                 </div>
@@ -576,92 +586,76 @@ export default function InsurancePage() {
         )}
       </section>
 
-      {/* Detailed Comparison Table */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm overflow-hidden">
-          <div className="mb-6">
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white font-playfair">
-              Detailed Plan Benefits Comparison
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Compare inclusions across all tiers to choose the optimal cover for your journey.
-            </p>
-          </div>
+      {/* ── Comparison Table ── */}
+      <section style={{ maxWidth: '1120px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+        <div style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.03)' }}>
+          <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.35rem' }}>
+            Detailed Plan Benefits Comparison
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.5rem' }}>
+            Compare key limits and deductibles across our travel insurance tiers.
+          </p>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs sm:text-sm">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                  <th className="py-3.5 px-4 font-bold text-slate-800 dark:text-slate-200">Coverage Benefit</th>
-                  <th className="py-3.5 px-4 font-bold text-slate-800 dark:text-slate-200">Standard Essential</th>
-                  <th className="py-3.5 px-4 font-bold text-amber-600 dark:text-amber-400">Silver Comprehensive</th>
-                  <th className="py-3.5 px-4 font-bold text-emerald-600 dark:text-emerald-400">Gold Elite</th>
-                  <th className="py-3.5 px-4 font-bold text-purple-600 dark:text-purple-400">Student Elite</th>
+                <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#334155' }}>Coverage Benefit</th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#334155' }}>Standard Essential</th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#D97706' }}>Silver Comprehensive</th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#0F4C3A' }}>Gold Elite</th>
+                  <th style={{ padding: '0.85rem 1rem', fontWeight: 800, color: '#7C3AED' }}>Student Elite</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                <tr>
-                  <td className="py-3 px-4 font-semibold">Medical Expenses & Hospitalization</td>
-                  <td className="py-3 px-4">$50,000 / $100,000</td>
-                  <td className="py-3 px-4 font-bold text-amber-600 dark:text-amber-400">Up to $100,000</td>
-                  <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">Up to $250,000+</td>
-                  <td className="py-3 px-4">Up to $250,000</td>
+              <tbody>
+                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Medical Expenses & Hospitalization</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>$50,000 / $100,000</td>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: '#D97706' }}>Up to $100,000</td>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700, color: '#0F4C3A' }}>Up to $250,000+</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>Up to $250,000</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold">Cashless Hospital Network</td>
-                  <td className="py-3 px-4">✓ Worldwide</td>
-                  <td className="py-3 px-4">✓ Worldwide</td>
-                  <td className="py-3 px-4">✓ Priority TPA</td>
-                  <td className="py-3 px-4">✓ University Network</td>
+                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Cashless Hospital Network</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>✓ Worldwide</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>✓ Worldwide</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>✓ Priority TPA</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>✓ University Network</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold">Deductible / Excess per claim</td>
-                  <td className="py-3 px-4">$100</td>
-                  <td className="py-3 px-4">$50</td>
-                  <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">$0 (Zero Deductible)</td>
-                  <td className="py-3 px-4">$50</td>
+                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Deductible / Excess per claim</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>$100</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>$50</td>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 800, color: '#16A34A' }}>$0 (Zero Deductible)</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>$50</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold">Trip Cancellation / Interruption</td>
-                  <td className="py-3 px-4 text-slate-400">—</td>
-                  <td className="py-3 px-4">Up to $1,500</td>
-                  <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">Up to $3,500</td>
-                  <td className="py-3 px-4">Up to $1,500</td>
+                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Trip Cancellation / Interruption</td>
+                  <td style={{ padding: '0.75rem 1rem', color: '#94A3B8' }}>—</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>Up to $1,500</td>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Up to $3,500</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>Up to $1,500</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold">Loss of Checked Baggage</td>
-                  <td className="py-3 px-4">Up to $500</td>
-                  <td className="py-3 px-4">Up to $1,000</td>
-                  <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">Up to $2,000</td>
-                  <td className="py-3 px-4">Up to $1,000</td>
+                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Loss of Checked Baggage</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>Up to $500</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>Up to $1,000</td>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Up to $2,000</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>Up to $1,000</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold">Baggage Delay Reimbursement</td>
-                  <td className="py-3 px-4">Up to $150</td>
-                  <td className="py-3 px-4">Up to $250</td>
-                  <td className="py-3 px-4">Up to $500</td>
-                  <td className="py-3 px-4">Up to $250</td>
+                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Baggage Delay Reimbursement</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>Up to $150</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>Up to $250</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>Up to $500</td>
+                  <td style={{ padding: '0.75rem 1rem' }}>Up to $250</td>
                 </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold">Loss of Passport & Documents</td>
-                  <td className="py-3 px-4">Up to $250</td>
-                  <td className="py-3 px-4">Up to $500</td>
-                  <td className="py-3 px-4">Up to $1,000</td>
-                  <td className="py-3 px-4">Up to $500</td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold">Emergency Evacuation & Repatriation</td>
-                  <td className="py-3 px-4">Up to $40,000</td>
-                  <td className="py-3 px-4">Up to $75,000</td>
-                  <td className="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">Up to $100,000</td>
-                  <td className="py-3 px-4">Up to $75,000</td>
-                </tr>
-                <tr>
-                  <td className="py-3 px-4 font-semibold">Schengen Embassy Acceptance</td>
-                  <td className="py-3 px-4 text-emerald-600 font-bold">100% Guaranteed</td>
-                  <td className="py-3 px-4 text-emerald-600 font-bold">100% Guaranteed</td>
-                  <td className="py-3 px-4 text-emerald-600 font-bold">100% Guaranteed</td>
-                  <td className="py-3 px-4 text-emerald-600 font-bold">100% Guaranteed</td>
+                <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: 700 }}>Schengen Visa Compliance</td>
+                  <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
+                  <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
+                  <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
+                  <td style={{ padding: '0.75rem 1rem', color: '#16A34A', fontWeight: 800 }}>100% Guaranteed</td>
                 </tr>
               </tbody>
             </table>
@@ -669,86 +663,81 @@ export default function InsurancePage() {
         </div>
       </section>
 
-      {/* Emergency Claims Assistance Section */}
-      <section className="bg-slate-100 dark:bg-slate-900/60 py-16 border-y border-slate-200 dark:border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white font-playfair">
-              How to File a Claim in 4 Simple Steps
-            </h2>
-            <p className="text-slate-600 dark:text-slate-400 mt-2 text-sm sm:text-base">
-              24/7 International assistance team ready to back you up anywhere in the world.
+      {/* ── 4-Step Claim Process ── */}
+      <section style={{ maxWidth: '1120px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
+            How to File an Overseas Claim
+          </h2>
+          <p style={{ color: '#64748B', fontSize: '1rem' }}>
+            24/7 International assistance team ready to back you up anywhere in the world.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#EFF6FF', color: '#2563EB', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+              1
+            </div>
+            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Emergency Intimation</h4>
+            <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+              Call the 24/7 emergency toll-free number or contact our claims desk immediately upon admission or flight event.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 font-black rounded-2xl flex items-center justify-center mx-auto mb-4 text-lg">
-                1
-              </div>
-              <h4 className="font-bold text-slate-900 dark:text-white mb-2">Emergency Intimation</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Call the 24/7 international emergency toll-free number or message our claims desk immediately upon admission or flight event.
-              </p>
+          <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FEF3C7', color: '#D97706', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+              2
             </div>
+            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Cashless Guarantee (GOP)</h4>
+            <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+              Our TPA desk sends a direct Guarantee of Payment (GOP) to the treating hospital for seamless cashless medical care.
+            </p>
+          </div>
 
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
-              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 font-black rounded-2xl flex items-center justify-center mx-auto mb-4 text-lg">
-                2
-              </div>
-              <h4 className="font-bold text-slate-900 dark:text-white mb-2">Cashless Letter of Guarantee</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Our TPA desk sends a direct Guarantee of Payment (GOP) to the treating hospital for seamless cashless medical care.
-              </p>
+          <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#F3E8FF', color: '#7C3AED', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+              3
             </div>
+            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Document Collection</h4>
+            <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+              Retain doctor prescriptions, medical diagnosis reports, airline PIR, and original invoices.
+            </p>
+          </div>
 
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 font-black rounded-2xl flex items-center justify-center mx-auto mb-4 text-lg">
-                3
-              </div>
-              <h4 className="font-bold text-slate-900 dark:text-white mb-2">Document Collection</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Retain doctor prescriptions, medical diagnosis reports, airline PIR (Property Irregularity Report), and original bills.
-              </p>
+          <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '1.75rem 1.25rem', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#DCFCE7', color: '#15803D', fontWeight: 900, fontSize: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+              4
             </div>
-
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 text-center">
-              <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 font-black rounded-2xl flex items-center justify-center mx-auto mb-4 text-lg">
-                4
-              </div>
-              <h4 className="font-bold text-slate-900 dark:text-white mb-2">Direct Settlement</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Fast claims processing with direct bank transfer settlement for non-cashless expenses within 7 to 10 business days.
-              </p>
-            </div>
+            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Direct Settlement</h4>
+            <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: 0 }}>
+              Fast claims processing with direct bank transfer settlement for non-cashless expenses within 7 to 10 working days.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* FAQs Section */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white font-playfair">
+      {/* ── FAQ Section ── */}
+      <section style={{ maxWidth: '820px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
             Frequently Asked Questions
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mt-2 text-sm">
-            Everything you need to know about international travel coverage and claim processing.
+          <p style={{ color: '#64748B', fontSize: '0.9rem' }}>
+            Quick answers about international coverage and claims.
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {faqs.map((faq, fIdx) => (
             <details
               key={fIdx}
-              className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm open:ring-1 open:ring-blue-500/20"
+              style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
             >
-              <summary className="flex items-center justify-between font-bold text-slate-900 dark:text-white cursor-pointer text-sm sm:text-base select-none">
-                <span>{faq.q}</span>
-                <span className="text-blue-500 group-open:rotate-180 transition-transform duration-200 ml-3">
-                  ▼
-                </span>
+              <summary style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem', cursor: 'pointer', outline: 'none' }}>
+                {faq.q}
               </summary>
-              <p className="mt-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
+              <p style={{ color: '#475569', fontSize: '0.85rem', lineHeight: 1.6, marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9', margin: '0.75rem 0 0' }}>
                 {faq.a}
               </p>
             </details>
@@ -756,46 +745,47 @@ export default function InsurancePage() {
         </div>
       </section>
 
-      {/* Inquiry / Policy Issuance Modal */}
+      {/* ── Inquiry Modal ── */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '18px', maxWidth: '520px', width: '100%', padding: '2rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
+            
             <button
               onClick={() => setModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold"
+              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem', background: 'none', border: 'none', fontSize: '1.25rem', fontWeight: 800, color: '#94A3B8', cursor: 'pointer' }}
             >
               ✕
             </button>
 
             {inquirySuccess ? (
-              <div className="text-center py-6">
-                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 rounded-full flex items-center justify-center mx-auto text-3xl mb-4">
+              <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#DCFCE7', color: '#16A34A', fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
                   ✓
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white font-playfair">
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
                   Quote Request Received!
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300 mt-2 mb-4">
-                  Reference: <strong className="text-blue-600 dark:text-blue-400">{inquiryRef}</strong>
+                <p style={{ fontSize: '0.9rem', color: '#64748B', margin: '0 0 1rem' }}>
+                  Reference: <strong style={{ color: '#0F4C3A' }}>{inquiryRef}</strong>
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
-                  Our insurance specialist will verify your details and email your official policy draft and payment link immediately.
+                <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.5, margin: '0 0 1.5rem' }}>
+                  Our travel insurance specialist will review your details and email your official policy draft and secure payment link immediately.
                 </p>
 
-                <div className="flex flex-col gap-3">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {selectedPlan && (
                     <a
                       href={generateWhatsAppUrl(selectedPlan)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition flex items-center justify-center gap-2"
+                      style={{ padding: '0.85rem 1rem', borderRadius: '10px', background: '#16A34A', color: '#FFF', fontWeight: 800, fontSize: '0.9rem', textDecoration: 'none', display: 'block' }}
                     >
-                      <span>💬 Chat on WhatsApp for Instant Issuance</span>
+                      💬 Chat on WhatsApp for Instant Issuance
                     </a>
                   )}
                   <button
                     onClick={() => setModalOpen(false)}
-                    className="w-full py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-200"
+                    style={{ padding: '0.75rem 1rem', borderRadius: '10px', background: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.85rem', border: 'none', cursor: 'pointer' }}
                   >
                     Close
                   </button>
@@ -803,24 +793,24 @@ export default function InsurancePage() {
               </div>
             ) : (
               <div>
-                <div className="border-b border-slate-100 dark:border-slate-800 pb-4 mb-5">
-                  <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                <div style={{ borderBottom: '1px solid #EEF2F6', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F4C3A', textTransform: 'uppercase' }}>
                     Policy Issuance Desk
-                  </span>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white font-playfair mt-0.5">
+                  </div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: '0.25rem 0', fontFamily: 'var(--font-playfair), serif' }}>
                     {selectedPlan?.name || 'Travel Insurance Plan'}
                   </h3>
-                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mt-2">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#64748B', marginTop: '0.5rem' }}>
                     <span>Sum Insured: <strong>{selectedPlan?.sumInsured}</strong></span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                    <span style={{ color: '#16A34A', fontWeight: 800, fontSize: '0.95rem' }}>
                       Total: ₹{selectedPlan?.pricing.totalINR.toLocaleString('en-IN')}
                     </span>
                   </div>
                 </div>
 
-                <form onSubmit={handleInquirySubmit} className="space-y-4">
+                <form onSubmit={handleInquirySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
                       Lead Traveler Full Name (as on Passport) *
                     </label>
                     <input
@@ -829,13 +819,13 @@ export default function InsurancePage() {
                       placeholder="e.g. Rahul Sharma"
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      style={{ width: '100%', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.9rem', color: '#0F172A' }}
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
                         Email Address *
                       </label>
                       <input
@@ -844,12 +834,12 @@ export default function InsurancePage() {
                         placeholder="you@example.com"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        style={{ width: '100%', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
                         Phone / WhatsApp *
                       </label>
                       <input
@@ -858,26 +848,26 @@ export default function InsurancePage() {
                         placeholder="+91 98765 43210"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        style={{ width: '100%', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Passport Number (Optional - for embassy visa certificate)
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
+                      Passport Number (Optional - for visa certificate)
                     </label>
                     <input
                       type="text"
                       placeholder="e.g. Z1234567"
                       value={formData.passportNumber}
                       onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      style={{ width: '100%', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
                       Additional Notes / Destination Details
                     </label>
                     <textarea
@@ -885,29 +875,36 @@ export default function InsurancePage() {
                       placeholder="e.g. Schengen visa appointment on Friday, need urgent certificate"
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#F8FAFC', fontSize: '0.85rem', color: '#0F172A' }}
                     />
                   </div>
 
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      disabled={submittingInquiry}
-                      className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2"
-                    >
-                      {submittingInquiry ? (
-                        <span>Submitting Request...</span>
-                      ) : (
-                        <span>Request Official Policy Certificate</span>
-                      )}
-                    </button>
-                  </div>
+                  <button
+                    type="submit"
+                    disabled={submittingInquiry}
+                    style={{
+                      width: '100%',
+                      padding: '0.9rem',
+                      borderRadius: '10px',
+                      background: '#0F4C3A',
+                      color: '#FFF',
+                      fontWeight: 800,
+                      fontSize: '0.95rem',
+                      border: 'none',
+                      cursor: 'pointer',
+                      marginTop: '0.5rem',
+                    }}
+                  >
+                    {submittingInquiry ? 'Submitting Request...' : 'Request Official Policy Certificate'}
+                  </button>
                 </form>
               </div>
             )}
+
           </div>
         </div>
       )}
+
     </div>
   )
 }
