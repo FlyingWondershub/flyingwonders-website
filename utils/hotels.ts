@@ -20,13 +20,76 @@ export interface HotelData {
   isDisplayed?: boolean
 }
 
+/**
+ * Normalizes raw hotel names from Google Sheets / legacy data:
+ * - Extracts and removes leading star prefixes ("4* V Hotel lavendar" -> "V Hotel Lavender")
+ * - Corrects known spelling variants ("lavendar" -> "Lavender", "tyrwhitt" -> "Tyrwhitt", "Boss Hotel" -> "Hotel Boss Singapore")
+ */
+export function cleanHotelName(rawName: string): { cleanName: string; detectedStar?: string } {
+  if (!rawName) return { cleanName: 'Partner Hotel' }
+
+  let name = rawName.trim()
+  let detectedStar: string | undefined = undefined
+
+  // Detect star rating from name prefixes like "5*", "4*", "3*", "4 Star", "5-Star"
+  const starMatch = name.match(/^([1-5])\s*(\*|-star|star)\s*/i)
+  if (starMatch) {
+    detectedStar = `${starMatch[1]}-Star`
+    name = name.replace(/^([1-5])\s*(\*|-star|star)\s*/i, '').trim()
+  } else if (/^budget\s*\/\s*value\s*hotel/i.test(name)) {
+    detectedStar = '3-Star'
+    name = name.replace(/^budget\s*\/\s*value\s*hotel\s*-\s*/i, 'Budget Hotel ').trim()
+  }
+
+  // Normalize common naming typos and variations
+  name = name
+    .replace(/\blavendar\b/gi, 'Lavender')
+    .replace(/\btyrwhitt\b/gi, 'Tyrwhitt')
+    .replace(/\bBoss Hotel\b/gi, 'Hotel Boss Singapore')
+    .replace(/^Hotel Boss$/i, 'Hotel Boss Singapore')
+    .replace(/^Marina Bay Sands$/i, 'Marina Bay Sands Singapore')
+    .replace(/\bAlbert Court\b/gi, 'Village Hotel Albert Court')
+    .replace(/\bVillage Hotel Village Hotel\b/gi, 'Village Hotel')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  return { cleanName: name, detectedStar }
+}
+
+/**
+ * Generates a clean URL slug from any hotel name or slug input:
+ * - Strips leading star prefixes ("4-v-hotel-lavendar" -> "v-hotel-lavender")
+ * - Corrects spelling variants ("lavendar" -> "lavender")
+ */
 export function slugifyHotelName(name: string): string {
-  return name
+  if (!name) return 'partner-hotel'
+  
+  const { cleanName } = cleanHotelName(name)
+  
+  let slug = cleanName
     .toLowerCase()
     .trim()
+    .replace(/\blavendar\b/g, 'lavender')
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '')
+
+  // Remove leading numbers followed by hyphen if it represents a star prefix (e.g. "4-v-hotel-lavender" -> "v-hotel-lavender")
+  slug = slug.replace(/^[1-5]-(hotel-boss|v-hotel|marina-bay|village-hotel|dorsett|grand-copthorne|holiday-inn|ibis|aqueen|hotel-mi|mercure|serangoon|one-farrer)/i, '$1')
+
+  return slug
+}
+
+export function normalizeHotelSlug(rawSlug: string): string {
+  if (!rawSlug) return ''
+  let s = rawSlug.toLowerCase().trim()
+  s = s.replace(/^[1-5]-star-/i, '')
+  s = s.replace(/^[1-5]-/i, '')
+  s = s.replace(/lavendar/g, 'lavender')
+  if (s === 'boss-hotel' || s === 'hotel-boss') return 'hotel-boss-singapore'
+  if (s === 'albert-court' || s === 'ibis-styles-albert-court') return 'village-hotel-albert-court'
+  if (s === 'marina-bay-sands') return 'marina-bay-sands-singapore'
+  return s
 }
 
 export const DEFAULT_HOTELS: HotelData[] = [
@@ -162,6 +225,67 @@ export const DEFAULT_HOTELS: HotelData[] = [
     isDisplayed: true
   },
   {
+    _id: 'village-hotel-albert-court',
+    slug: 'village-hotel-albert-court',
+    name: 'Village Hotel Albert Court by Far East Hospitality',
+    subtitle: 'Straits Heritage Hotel · 3 Mins Walk to Rochor & Little India MRT',
+    star: '4-Star',
+    location: 'Singapore',
+    roomType: 'Superior Room / Deluxe Heritage Room',
+    hotelAddress: '180 Albert Street, Rochor / Little India Heritage Enclave, Singapore 189971',
+    description: 'Imbued with rich Straits Chinese and Peranakan heritage charm, Village Hotel Albert Court is a distinguished 4-star boutique-style sanctuary situated in the vibrant cultural corridor of Rochor and Little India. Featuring charming restored shophouses, 210 elegant guestrooms with timber furnishings, outdoor relaxation courtyard, twin indoor jacuzzis, fitness gymnasium, and celebrated international dining.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    galleryImageUrls: [
+      'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
+    ],
+    features: ['Peranakan Straits Heritage Architecture', '3 Mins Walk to Rochor MRT', '3 Mins to Little India MRT', 'Twin Indoor Relaxation Jacuzzis', '24/7 Fitness Center', 'Free High-Speed Wi-Fi', 'Daily Buffet Breakfast'],
+    roomCategories: ['Superior Room', 'Deluxe Room with Heritage Décor', 'Premier Room', 'Family Quad Room'],
+    shorts: [
+      {
+        id: 'vhac-short-1',
+        title: 'Village Hotel Albert Court Heritage & MRT Walk 🇸🇬',
+        creator: 'SingaporeHotels',
+        views: '195K views',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&auto=format&fit=crop',
+        youtubeVideoId: 'kYJzX9Qz8oM'
+      }
+    ],
+    isDisplayed: true
+  },
+  {
+    _id: 'dorsett-singapore',
+    slug: 'dorsett-singapore',
+    name: 'Dorsett Singapore',
+    subtitle: 'Direct Outram Park MRT Access (3 Train Lines) · Chinatown Heritage Hub',
+    star: '4-Star',
+    location: 'Singapore',
+    roomType: 'Dorsett Room / Deluxe Balcony',
+    hotelAddress: '333 New Bridge Road, Chinatown / Outram Park, Singapore 088765',
+    description: 'Strategically situated directly above Outram Park MRT interchange station (connecting the East-West, North-East, and Thomson-East Coast Lines), Dorsett Singapore is a sophisticated 4-star upscale hotel nestled at the historic cultural crossroad of Chinatown. Featuring 285 stylishly designed modern guestrooms with full-height windows, a sparkling 30-meter outdoor swimming pool with integrated jacuzzi, modern fitness center, and high-speed Wi-Fi.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    galleryImageUrls: [
+      'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop'
+    ],
+    features: ['Direct Outram Park MRT Link (3 Lines)', '30m Outdoor Swimming Pool & Jacuzzi', 'Chinatown Heritage & Dining', '24/7 Gym', 'Free High-Speed Wi-Fi', 'Daily Buffet Breakfast'],
+    roomCategories: ['Dorsett Room', 'Deluxe Room with Balcony', 'Loft Room with High Ceiling', 'Executive King Suite'],
+    shorts: [
+      {
+        id: 'ds-short-1',
+        title: 'Direct MRT Link & Room Tour at Dorsett Singapore 🚇✨',
+        creator: 'SingaporeTraveler',
+        views: '145K views',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop',
+        youtubeVideoId: 'kYJzX9Qz8oM'
+      }
+    ],
+    isDisplayed: true
+  },
+  {
     _id: 'grand-copthorne-waterfront',
     slug: 'grand-copthorne-waterfront-hotel',
     name: 'Grand Copthorne Waterfront Hotel',
@@ -226,36 +350,69 @@ export async function getAllHotels(): Promise<HotelData[]> {
       isDisplayed
     }`)
 
-    const normalizedSanity: HotelData[] = (sanityHotels || []).map(h => ({
-      _id: h._id,
-      slug: h.slug || slugifyHotelName(h.title),
-      name: h.title,
-      subtitle: h.subtitle,
-      star: h.starRating || '4-Star',
-      location: h.destination || 'Singapore',
-      hotelAddress: h.hotelAddress,
-      description: h.description || `${h.title} partner hotel in ${h.destination || 'Singapore'}.`,
-      coverImageUrl: h.coverImageFile || h.coverImageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
-      videoUrl: h.videoFileUrl || h.videoUrl,
-      galleryImageUrls: h.galleryUploaded || h.galleryImageUrls || [],
-      features: h.features || [],
-      roomCategories: h.roomCategories || [],
-      shorts: h.shorts || [],
-      isDisplayed: h.isDisplayed !== false
-    }))
+    const normalizedSanity: HotelData[] = (sanityHotels || []).map(h => {
+      const { cleanName, detectedStar } = cleanHotelName(h.title)
+      return {
+        _id: h._id,
+        slug: h.slug || slugifyHotelName(cleanName),
+        name: cleanName,
+        subtitle: h.subtitle,
+        star: h.starRating || detectedStar || '4-Star',
+        location: h.destination || 'Singapore',
+        hotelAddress: h.hotelAddress,
+        description: h.description || `${cleanName} partner hotel in ${h.destination || 'Singapore'}.`,
+        coverImageUrl: h.coverImageFile || h.coverImageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+        videoUrl: h.videoFileUrl || h.videoUrl,
+        galleryImageUrls: h.galleryUploaded || h.galleryImageUrls || [],
+        features: h.features || [],
+        roomCategories: h.roomCategories || [],
+        shorts: h.shorts || [],
+        isDisplayed: h.isDisplayed !== false
+      }
+    })
 
     // Combine with DEFAULT_HOTELS for any missing ones
-    const sanityNames = new Set(normalizedSanity.map(h => h.name.toLowerCase().trim()))
-    const missingDefaults = DEFAULT_HOTELS.filter(d => !sanityNames.has(d.name.toLowerCase().trim()))
+    const sanitySlugs = new Set(normalizedSanity.map(h => normalizeHotelSlug(h.slug)))
+    const missingDefaults = DEFAULT_HOTELS.filter(d => !sanitySlugs.has(normalizeHotelSlug(d.slug)))
     return [...normalizedSanity, ...missingDefaults]
   } catch (err) {
     return DEFAULT_HOTELS
   }
 }
 
-export async function getHotelBySlug(slug: string): Promise<HotelData | null> {
+export async function getHotelBySlug(rawSlug: string): Promise<HotelData | null> {
   const all = await getAllHotels()
-  const cleanSlug = slug.toLowerCase().trim()
-  const found = all.find(h => h.slug.toLowerCase() === cleanSlug || slugifyHotelName(h.name) === cleanSlug)
-  return found || null
+  const targetSlug = normalizeHotelSlug(rawSlug)
+  
+  // 1. Direct match on normalized slug
+  const directMatch = all.find(h => 
+    normalizeHotelSlug(h.slug) === targetSlug || 
+    slugifyHotelName(h.name) === targetSlug
+  )
+  if (directMatch) return directMatch
+
+  // 2. Fuzzy substring match (e.g. "lavendar" matching "v-hotel-lavender", "boss" matching "hotel-boss-singapore")
+  const fuzzyMatch = all.find(h => {
+    const s = normalizeHotelSlug(h.slug)
+    return s.includes(targetSlug) || targetSlug.includes(s)
+  })
+  if (fuzzyMatch) return fuzzyMatch
+
+  // 3. Fallback: Check if it's a generic partner hotel from the spreadsheet
+  const { cleanName, detectedStar } = cleanHotelName(rawSlug.replace(/-/g, ' '))
+  return {
+    _id: `dynamic-${rawSlug}`,
+    slug: rawSlug,
+    name: cleanName,
+    subtitle: `${detectedStar || '4-Star'} Partner Hotel · Singapore`,
+    star: detectedStar || '4-Star',
+    location: 'Singapore',
+    roomType: 'Deluxe Room / Twin Room',
+    hotelAddress: 'Singapore / Malaysia Destination Network',
+    description: `${cleanName} is a verified partner hotel offering comfortable accommodations, daily buffet breakfast options, high-speed Wi-Fi, and convenient transit links for leisure and corporate travelers.`,
+    coverImageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop',
+    features: ['Daily Buffet Breakfast Available', 'Free High-Speed Wi-Fi', 'Swimming Pool', '24/7 Concierge Support'],
+    roomCategories: ['Standard Room', 'Deluxe Room', 'Family Room'],
+    isDisplayed: true
+  }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
+import { cleanHotelName } from '../../../utils/hotels'
 
 // In-memory cache for serverless instance lifetime
 let cachedHotels: any[] | null = null
@@ -40,18 +41,37 @@ export async function GET() {
     }
 
     const rawHotels: any[] = XLSX.utils.sheet_to_json(hotelSheet)
-    const parsed = rawHotels.map((h, idx) => ({
-      id: `hotel-${idx}`,
-      name: h['Hotel Name'] || h['Hotel'] || h['NAME'] || `Partner Hotel ${idx + 1}`,
-      star: h['Star Rating'] || h['Star'] || h['Category'] || '4-Star',
-      location: h['City'] || h['Location'] || h['Area'] || 'Singapore',
-      roomType: h['Room Category'] || h['Room Type'] || 'Deluxe Room',
-      amenities: [
-        h['Breakfast'] ? 'Breakfast Included' : 'Buffet Breakfast Available',
-        'Free Wi-Fi',
-        'Swimming Pool'
-      ].filter(Boolean)
-    }))
+    const seenNames = new Set<string>()
+    const parsed: any[] = []
+
+    rawHotels.forEach((h, idx) => {
+      const rawName = h['Hotel Name'] || h['Hotel'] || h['NAME'] || ''
+      const roomType = h['Room Category'] || h['Room Type'] || 'Deluxe Room'
+
+      // Skip supplementary cost rows and empty rows
+      if (!rawName || /supplementary\s*cost/i.test(roomType) || /price\s*\/\s*night/i.test(rawName)) {
+        return
+      }
+
+      const { cleanName, detectedStar } = cleanHotelName(rawName)
+      const normalizedKey = cleanName.toLowerCase().trim()
+
+      if (seenNames.has(normalizedKey)) return
+      seenNames.add(normalizedKey)
+
+      parsed.push({
+        id: `hotel-${idx}`,
+        name: cleanName,
+        star: h['Star Rating'] || h['Star'] || h['Category'] || detectedStar || '4-Star',
+        location: h['City'] || h['Location'] || h['Area'] || 'Singapore',
+        roomType: roomType,
+        amenities: [
+          h['Breakfast'] ? 'Breakfast Included' : 'Buffet Breakfast Available',
+          'Free Wi-Fi',
+          'Swimming Pool'
+        ].filter(Boolean)
+      })
+    })
 
     // Save to memory cache (10 minutes)
     cachedHotels = parsed

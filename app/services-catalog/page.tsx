@@ -24,7 +24,7 @@ import {
 } from 'lucide-react'
 import { client } from '../../sanity/lib/client'
 import AdBanner from '../../components/AdBanner'
-import { DEFAULT_HOTELS } from '../../utils/hotels'
+import { DEFAULT_HOTELS, cleanHotelName, slugifyHotelName } from '../../utils/hotels'
 
 // Helper function to strip raw HTML tags and format clean text
 function stripHtml(htmlStr?: string) {
@@ -654,43 +654,48 @@ export default function ServicesCatalogPage() {
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
                     {filteredHotels.map((h) => {
+                      const { cleanName: displayName, detectedStar } = cleanHotelName(h.name)
+                      const targetStar = h.star || detectedStar || '4-Star'
+                      const hotelSlug = slugifyHotelName(displayName)
+
                       // Match with Sanity / fallback hotel media
-                      const matchedMedia = mediaItems.find(m => 
-                        m.category === 'hotel' && (
-                          m.title.toLowerCase().trim() === h.name.toLowerCase().trim() ||
-                          m.title.toLowerCase().includes(h.name.toLowerCase()) ||
-                          h.name.toLowerCase().includes(m.title.toLowerCase())
-                        )
-                      )
+                      const matchedMedia = mediaItems.find(m => {
+                        if (m.category !== 'hotel') return false
+                        const mSlug = m.slug || slugifyHotelName(m.title)
+                        const mName = (m.title || '').toLowerCase().trim()
+                        const dName = displayName.toLowerCase().trim()
+                        return mSlug === hotelSlug || mName.includes(dName) || dName.includes(mName)
+                      })
+
+                      const finalSlug = matchedMedia?.slug || hotelSlug
+                      const finalTitle = matchedMedia?.title || displayName
 
                       const coverImg = matchedMedia?.coverImageUrl || (
-                        h.star?.includes('5') 
+                        targetStar.includes('5') 
                           ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
-                          : h.name.toLowerCase().includes('boss')
+                          : displayName.toLowerCase().includes('boss')
                           ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
-                          : h.name.toLowerCase().includes('lavender')
+                          : displayName.toLowerCase().includes('lavender')
                           ? 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&auto=format&fit=crop'
                           : 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop'
                       )
 
-                      const hotelSlug = matchedMedia?.slug || h.name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '')
-
                       const modalData = matchedMedia ? {
                         ...matchedMedia,
-                        slug: hotelSlug,
-                        title: h.name,
-                        starRating: h.star,
+                        slug: finalSlug,
+                        title: finalTitle,
+                        starRating: targetStar,
                         destination: h.location,
                         features: matchedMedia.features || h.amenities
                       } : {
                         _id: h.id,
-                        slug: hotelSlug,
+                        slug: finalSlug,
                         category: 'hotel',
-                        title: h.name,
-                        subtitle: `${h.star} Partner Hotel · ${h.location}`,
+                        title: finalTitle,
+                        subtitle: `${targetStar} Partner Hotel · ${h.location}`,
                         destination: h.location,
-                        starRating: h.star,
-                        description: `${h.name} is a designated partner hotel in ${h.location} offering comfortable ${h.roomType} accommodations, daily breakfast options, and high-speed Wi-Fi with prime connectivity for business and leisure travelers.`,
+                        starRating: targetStar,
+                        description: `${finalTitle} is a designated partner hotel in ${h.location} offering comfortable ${h.roomType} accommodations, daily breakfast options, and high-speed Wi-Fi with prime connectivity for business and leisure travelers.`,
                         coverImageUrl: coverImg,
                         features: h.amenities || ['Breakfast Included', 'Free Wi-Fi', 'Swimming Pool'],
                         hotelAddress: `${h.location}, Singapore / Malaysia`
@@ -719,12 +724,12 @@ export default function ServicesCatalogPage() {
                                 <MapPin size={11} style={{ display: 'inline', marginRight: '3px' }} /> {h.location}
                               </span>
                               <span style={{ background: '#FEF3C7', color: '#D97706', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: '5px' }}>
-                                ★ {h.star}
+                                ★ {targetStar}
                               </span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                               <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#FFF', margin: 0, lineHeight: 1.25, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
-                                {h.name}
+                                {finalTitle}
                               </h3>
                               {matchedMedia?.videoUrl && (
                                 <span style={{ background: 'rgba(239, 68, 68, 0.9)', color: '#FFF', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
@@ -742,7 +747,7 @@ export default function ServicesCatalogPage() {
                                 <strong style={{ fontSize: '0.8rem', color: '#0F172A' }}>{h.roomType}</strong>
                               </div>
                               <Link
-                                href={`/services-catalog/hotels/${hotelSlug}`}
+                                href={`/services-catalog/hotels/${finalSlug}`}
                                 onClick={e => e.stopPropagation()}
                                 style={{
                                   fontSize: '0.72rem',
