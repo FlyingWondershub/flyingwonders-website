@@ -1,5 +1,6 @@
 const {
   default: makeWASocket,
+  Browsers,
   useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion
@@ -32,12 +33,15 @@ async function startWhatsAppGateway() {
     printQRInTerminal: false,
     auth: state,
     generateHighQualityLinkPreview: false,
-    browser: ['Flying Wonders Lead Gateway', 'Chrome', '122.0.0'],
+    // Identify as Official Native Desktop Client (suppresses iOS web session push banners)
+    browser: Browsers.macOS('Desktop'),
     syncFullHistory: false,
-    markOnlineOnConnect: false, // Stealth Mode: Do NOT broadcast online presence or wake mobile device
-    shouldSyncHistoryMessage: () => false, // Prevent continuous historical message downloads
+    markOnlineOnConnect: false, // Stealth Mode: Do NOT broadcast online presence
+    shouldSyncHistoryMessage: () => false, // Do NOT request history downloads from phone
+    fireInitQueries: false, // Suppress initial query storms to phone
     emitOwnEvents: false,
-    keepAliveIntervalMs: 30000,
+    cachedGroupMetadata: async (jid) => groupNameCache.get(jid),
+    keepAliveIntervalMs: 60000,
     defaultQueryTimeoutMs: 60000,
     connectTimeoutMs: 60000,
     getMessage: async () => ({ conversation: '' }),
