@@ -252,16 +252,6 @@ export default function ServicesCatalogPage() {
   })
 
   // State Stores (Pre-populated with instant defaults for sub-100ms first paint)
-  const [hotels, setHotels] = useState<any[]>(() => 
-    DEFAULT_HOTELS.map(h => ({
-      id: h._id,
-      name: h.name,
-      star: h.star,
-      location: h.location,
-      roomType: h.roomType || 'Deluxe Room',
-      amenities: h.features || ['Breakfast Included', 'Free Wi-Fi', 'Swimming Pool']
-    }))
-  )
   const [attractions, setAttractions] = useState<any[]>([])
   const [mediaItems, setMediaItems] = useState<any[]>(DEFAULT_MEDIA_ITEMS)
   const [loading, setLoading] = useState(false)
@@ -280,7 +270,6 @@ export default function ServicesCatalogPage() {
       if (cached) {
         const parsed = JSON.parse(cached)
         if (parsed.settings) setSettings(parsed.settings)
-        if (parsed.hotels?.length) setHotels(parsed.hotels)
         if (parsed.attractions?.length) setAttractions(parsed.attractions)
         if (parsed.mediaItems?.length) setMediaItems(parsed.mediaItems)
       }
@@ -311,22 +300,6 @@ export default function ServicesCatalogPage() {
         }
       } catch (e) {
         console.warn('Using default catalog settings')
-      }
-      return null
-    }
-
-    const fetchHotels = async () => {
-      try {
-        const response = await fetch('/api/catalog-hotels')
-        if (response.ok) {
-          const data = await response.json()
-          if (data.success && Array.isArray(data.hotels)) {
-            setHotels(data.hotels)
-            return data.hotels
-          }
-        }
-      } catch (e) {
-        console.warn('Failed to load catalog hotels from API proxy')
       }
       return null
     }
@@ -370,6 +343,7 @@ export default function ServicesCatalogPage() {
           starRating,
           hotelAddress,
           roomCategories,
+          shorts,
           isDisplayed
         }`)
         
@@ -394,10 +368,9 @@ export default function ServicesCatalogPage() {
       }
     }
 
-    // Execute all 4 queries concurrently in parallel
-    const [settledSettings, settledHotels, settledAttractions, settledMedia] = await Promise.allSettled([
+    // Execute queries concurrently in parallel
+    const [settledSettings, settledAttractions, settledMedia] = await Promise.allSettled([
       fetchSettings(),
-      fetchHotels(),
       fetchAttractions(),
       fetchMedia()
     ])
@@ -406,7 +379,6 @@ export default function ServicesCatalogPage() {
     try {
       const cachePayload = {
         settings: settledSettings.status === 'fulfilled' ? settledSettings.value : null,
-        hotels: settledHotels.status === 'fulfilled' ? settledHotels.value : null,
         attractions: settledAttractions.status === 'fulfilled' ? settledAttractions.value : null,
         mediaItems: settledMedia.status === 'fulfilled' ? settledMedia.value : null,
         timestamp: Date.now()
@@ -424,28 +396,18 @@ export default function ServicesCatalogPage() {
     const q = searchQuery.toLowerCase().trim()
     const hiddenNames = (settings.hiddenHotelNames || []).map(n => n.toLowerCase().trim()).filter(Boolean)
 
-    return hotels.filter(h => {
-      const hName = h.name.toLowerCase().trim()
-      // Check if hidden by name in Sanity settings
-      if (hiddenNames.some(hn => hName.includes(hn) || hn.includes(hName))) {
+    return mediaItems.filter(m => {
+      if (m.category !== 'hotel' || m.isDisplayed === false) return false
+      const titleLower = (m.title || '').toLowerCase().trim()
+      const destinationLower = (m.destination || '').toLowerCase().trim()
+
+      if (hiddenNames.some(hn => titleLower.includes(hn) || hn.includes(titleLower))) {
         return false
       }
 
-      // Check if specific Sanity hotel entry has isDisplayed === false
-      const matchedSanity = mediaItems.find(m => 
-        m.category === 'hotel' && (
-          m.title.toLowerCase().trim() === hName ||
-          m.title.toLowerCase().includes(hName) ||
-          hName.includes(m.title.toLowerCase())
-        )
-      )
-      if (matchedSanity && matchedSanity.isDisplayed === false) {
-        return false
-      }
-
-      return !q || h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q)
+      return !q || titleLower.includes(q) || destinationLower.includes(q)
     })
-  }, [hotels, searchQuery, settings.hideHotels, settings.hiddenHotelNames, mediaItems])
+  }, [mediaItems, searchQuery, settings.hideHotels, settings.hiddenHotelNames])
 
   const filteredAttractions = useMemo(() => {
     if (settings.hideAttractions) return []
@@ -643,7 +605,7 @@ export default function ServicesCatalogPage() {
                     </p>
                   </div>
                   <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, background: '#F1F5F9', padding: '3px 10px', borderRadius: '12px' }}>
-                    Synced from Google Sheets Master Inventory
+                    Managed via Sanity CMS
                   </span>
                 </div>
 
@@ -654,56 +616,25 @@ export default function ServicesCatalogPage() {
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
                     {filteredHotels.map((h) => {
-                      const { cleanName: displayName, detectedStar } = cleanHotelName(h.name)
-                      const targetStar = h.star || detectedStar || '4-Star'
-                      const hotelSlug = slugifyHotelName(displayName)
+                      const finalSlug = h.slug || slugifyHotelName(h.title)
+                      const finalTitle = h.title
+                      const targetStar = h.starRating || '4-Star'
+                      const coverImg = h.coverImageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
+                      const roomTypeDisplay = (h.roomCategories && h.roomCategories.length > 0) ? h.roomCategories[0] : 'Deluxe Room / Suites'
 
-                      // Match with Sanity / fallback hotel media
-                      const matchedMedia = mediaItems.find(m => {
-                        if (m.category !== 'hotel') return false
-                        const mSlug = m.slug || slugifyHotelName(m.title)
-                        const mName = (m.title || '').toLowerCase().trim()
-                        const dName = displayName.toLowerCase().trim()
-                        return mSlug === hotelSlug || mName.includes(dName) || dName.includes(mName)
-                      })
-
-                      const finalSlug = matchedMedia?.slug || hotelSlug
-                      const finalTitle = matchedMedia?.title || displayName
-
-                      const coverImg = matchedMedia?.coverImageUrl || (
-                        targetStar.includes('5') 
-                          ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
-                          : displayName.toLowerCase().includes('boss')
-                          ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
-                          : displayName.toLowerCase().includes('lavender')
-                          ? 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&auto=format&fit=crop'
-                          : 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop'
-                      )
-
-                      const modalData = matchedMedia ? {
-                        ...matchedMedia,
+                      const modalData = {
+                        ...h,
                         slug: finalSlug,
                         title: finalTitle,
                         starRating: targetStar,
-                        destination: h.location,
-                        features: matchedMedia.features || h.amenities
-                      } : {
-                        _id: h.id,
-                        slug: finalSlug,
-                        category: 'hotel',
-                        title: finalTitle,
-                        subtitle: `${targetStar} Partner Hotel · ${h.location}`,
-                        destination: h.location,
-                        starRating: targetStar,
-                        description: `${finalTitle} is a designated partner hotel in ${h.location} offering comfortable ${h.roomType} accommodations, daily breakfast options, and high-speed Wi-Fi with prime connectivity for business and leisure travelers.`,
-                        coverImageUrl: coverImg,
-                        features: h.amenities || ['Breakfast Included', 'Free Wi-Fi', 'Swimming Pool'],
-                        hotelAddress: `${h.location}, Singapore / Malaysia`
+                        destination: h.destination || 'Singapore',
+                        features: h.features || ['Breakfast Included', 'Free Wi-Fi', 'Swimming Pool'],
+                        hotelAddress: h.hotelAddress || `${h.destination || 'Singapore'}`
                       }
 
                       return (
                         <div 
-                          key={h.id} 
+                          key={h._id || finalSlug} 
                           onClick={() => setActiveMediaModal(modalData)}
                           style={{ 
                             background: '#FFF', 
@@ -721,7 +652,7 @@ export default function ServicesCatalogPage() {
                           <div style={{ height: '140px', background: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.65)), url(${coverImg})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={{ background: 'rgba(15,23,42,0.8)', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', backdropFilter: 'blur(4px)' }}>
-                                <MapPin size={11} style={{ display: 'inline', marginRight: '3px' }} /> {h.location}
+                                <MapPin size={11} style={{ display: 'inline', marginRight: '3px' }} /> {h.destination || 'Singapore'}
                               </span>
                               <span style={{ background: '#FEF3C7', color: '#D97706', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: '5px' }}>
                                 ★ {targetStar}
@@ -731,7 +662,7 @@ export default function ServicesCatalogPage() {
                               <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#FFF', margin: 0, lineHeight: 1.25, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
                                 {finalTitle}
                               </h3>
-                              {matchedMedia?.videoUrl && (
+                              {h.videoUrl && (
                                 <span style={{ background: 'rgba(239, 68, 68, 0.9)', color: '#FFF', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                                   <Play size={10} fill="#FFF" /> Video
                                 </span>
@@ -743,8 +674,8 @@ export default function ServicesCatalogPage() {
                           <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
                             <div style={{ background: '#F8FAFC', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
-                                <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Room Category</span>
-                                <strong style={{ fontSize: '0.8rem', color: '#0F172A' }}>{h.roomType}</strong>
+                                <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Room Categories</span>
+                                <strong style={{ fontSize: '0.8rem', color: '#0F172A' }}>{roomTypeDisplay}</strong>
                               </div>
                               <Link
                                 href={`/services-catalog/hotels/${finalSlug}`}
@@ -767,7 +698,7 @@ export default function ServicesCatalogPage() {
                             </div>
 
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 'auto' }}>
-                              {(h.amenities || []).map((am: string, i: number) => (
+                              {(h.features || []).slice(0, 3).map((am: string, i: number) => (
                                 <span key={i} style={{ background: '#F1F5F9', color: '#334155', fontSize: '0.68rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>✓ {am}</span>
                               ))}
                             </div>
