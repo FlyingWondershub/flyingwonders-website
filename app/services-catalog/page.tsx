@@ -61,6 +61,110 @@ function getYouTubeEmbedUrl(url: string) {
 
 // Fallback items if Sanity b2bServiceMedia is empty
 const DEFAULT_MEDIA_ITEMS: any[] = [
+  // ── Partner Hotels Showcase ──
+  {
+    _id: 'hotel-1',
+    category: 'hotel',
+    title: 'Hotel Boss Singapore',
+    subtitle: 'Victoria Street / Jalan Sultan (Lavender MRT)',
+    destination: 'Singapore',
+    starRating: '4-Star',
+    hotelAddress: '500 Jalan Sultan (Near Lavender & Bugis MRT), Singapore 199020',
+    description: 'Centrally located along Victoria Street and Jalan Sultan, Hotel Boss is a premier 4-star destination hotel featuring 1,500 modern guest rooms, an expansive outdoor swimming pool overlooking the city skyline, a 24-hour fitness gym, and an array of halal and international dining options just 5 minutes walk from Lavender and Bugis MRT stations.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    galleryImageUrls: [
+      'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop'
+    ],
+    features: ['Outdoor Skyline Pool', '5 Mins Walk to Lavender MRT', 'Halal-Certified Food Court', '24/7 Gym', 'Free High-Speed Wi-Fi'],
+    roomCategories: ['Superior Double Room', 'Premier Queen with Balcony', 'Family Triple / Quad Room']
+  },
+  {
+    _id: 'hotel-2',
+    category: 'hotel',
+    title: 'V Hotel Lavender',
+    subtitle: 'Directly Above Lavender MRT Station (East-West Green Line)',
+    destination: 'Singapore',
+    starRating: '4-Star',
+    hotelAddress: '70 Jellicoe Road (Above Lavender MRT), Singapore 208767',
+    description: 'Located directly above Lavender MRT Station with direct train access to Changi Airport and Bugis, V Hotel Lavender is one of Singapore\'s most popular transit and leisure hubs featuring a breezy sky terrace swimming pool, modern minimalist rooms, fitness center, and multi-cuisine food court.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    galleryImageUrls: [
+      'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&auto=format&fit=crop'
+    ],
+    features: ['Direct Lavender MRT Link', 'Direct Train to Changi Airport', 'Sky Terrace Pool', 'Currency Exchange Desk', '24/7 Concierge'],
+    roomCategories: ['Superior Queen Room', 'Premier Twin Room', 'Triple Room']
+  },
+  {
+    _id: 'hotel-3',
+    category: 'hotel',
+    title: 'Marina Bay Sands Singapore',
+    subtitle: 'World-Renowned Integrated Luxury Resort & Sands SkyPark',
+    destination: 'Singapore',
+    starRating: '5-Star',
+    hotelAddress: '10 Bayfront Avenue, Marina Bay, Singapore 018956',
+    description: 'World-famous luxury integrated resort featuring the legendary 57th-floor Rooftop Infinity Pool, Sands SkyPark Observation Deck, Michelin-starred dining, The Shoppes luxury promenade, and spacious designer suites overlooking Marina Bay and Gardens by the Bay.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=t5A5L_e1Q9k',
+    galleryImageUrls: [
+      'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop'
+    ],
+    features: ['World-Famous 57F Infinity Pool', 'Sands SkyPark Access', 'Celebrity Chef Dining', 'Direct Bayfront MRT Link', 'Luxury Banyan Tree Spa'],
+    roomCategories: ['Deluxe City View', 'Sands Premier Suite', 'Club King with SkyPark Access']
+  },
+  {
+    _id: 'hotel-4',
+    category: 'hotel',
+    title: 'Village Hotel Bugis by Far East Hospitality',
+    subtitle: 'Heritage & Shopping Heart of Arab Street & Bugis',
+    destination: 'Singapore',
+    starRating: '4-Star',
+    hotelAddress: '390 Victoria Street, Bugis, Singapore 188061',
+    description: 'Set in the cultural and shopping haven of Arab Street, Haji Lane, and Bugis Junction, Village Hotel Bugis features spacious family rooms, outdoor swimming pool, halal-certified international buffet dining at The Landmark, and effortless train connectivity.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&auto=format&fit=crop',
+    galleryImageUrls: [
+      'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&auto=format&fit=crop'
+    ],
+    features: ['Arab Street & Haji Lane Location', 'Halal Buffet Dining', 'Spacious Family Rooms', 'Bugis MRT Station (5 mins)'],
+    roomCategories: ['Superior Room', 'Deluxe Room', 'Family Room with Kids Amenities']
+  },
+  {
+    _id: 'hotel-5',
+    category: 'hotel',
+    title: 'Grand Copthorne Waterfront Hotel',
+    subtitle: 'Scenic Singapore River & Robertson Quay Luxury',
+    destination: 'Singapore',
+    starRating: '5-Star',
+    hotelAddress: '392 Havelock Road, Singapore 169663',
+    description: 'Award-winning 5-star riverfront hotel along historical Singapore River and Robertson Quay, offering panoramic river and city skyline vistas, refined Italian and Asian dining, executive club lounge, and resort swimming pool.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&auto=format&fit=crop',
+    galleryImageUrls: [
+      'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
+    ],
+    features: ['Singapore River Views', 'Promenade Waterfront Dining', 'Resort Pool & Jacuzzi', 'Havelock MRT Connection'],
+    roomCategories: ['Superior City View', 'Deluxe Waterfront Room', 'Club Executive Suite']
+  },
+  {
+    _id: 'hotel-6',
+    category: 'hotel',
+    title: 'Berjaya Times Square Hotel Kuala Lumpur',
+    subtitle: 'Integrated with Indoor Theme Park & Shopping Hub',
+    destination: 'Malaysia',
+    starRating: '5-Star',
+    hotelAddress: '1 Jalan Imbi, Bukit Bintang, 55100 Kuala Lumpur, Malaysia',
+    description: 'Premier Kuala Lumpur hotel integrated with Berjaya Times Square Shopping Mall and Indoor Theme Park, featuring rooftop pool, squash courts, and monorail link right at the doorstep.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=800&auto=format&fit=crop',
+    features: ['Integrated with Indoor Theme Park', 'Imbi Monorail Station Access', 'Rooftop Swimming Pool', 'Bukit Bintang Golden Triangle'],
+    roomCategories: ['Studio Suite', 'Superior 2-Bedroom Suite', 'Club Premier Room']
+  },
   // Tour Guides
   {
     _id: 'guide-1',
@@ -123,7 +227,18 @@ const DEFAULT_MEDIA_ITEMS: any[] = [
 
 export default function ServicesCatalogPage() {
   // Sanity Settings & Toggles State
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<{
+    isPageHidden: boolean
+    hideHotels: boolean
+    hideAttractions: boolean
+    hideRestaurants: boolean
+    hideGuides: boolean
+    hideTours: boolean
+    hidePackages: boolean
+    heroTitle: string
+    heroSubtitle: string
+    hiddenHotelNames: string[]
+  }>({
     isPageHidden: false,
     hideHotels: false,
     hideAttractions: false,
@@ -133,36 +248,36 @@ export default function ServicesCatalogPage() {
     hidePackages: false,
     heroTitle: 'Singapore & Malaysia Destination Services Catalog',
     heroSubtitle: 'Explore our complete inventory of Hotels, Attractions, Dining, Licensed Guides, and Tour Circuits.',
+    hiddenHotelNames: []
   })
 
-  // Active Category Filter Tab
-  const [activeTab, setActiveTab] = useState<'all' | 'hotels' | 'attractions' | 'restaurants' | 'guides' | 'tours' | 'packages'>('all')
-  const [searchQuery, setSearchQuery] = useState('')
-
-  // Data Loading States
-  const [loading, setLoading] = useState(true)
+  // State Stores
   const [hotels, setHotels] = useState<any[]>([])
   const [attractions, setAttractions] = useState<any[]>([])
-  const [mediaItems, setMediaItems] = useState<any[]>(DEFAULT_MEDIA_ITEMS)
+  const [mediaItems, setMediaItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Interactive UI State
+  const [activeTab, setActiveTab] = useState<'all' | 'hotels' | 'attractions' | 'restaurants' | 'guides' | 'tours' | 'packages'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [activeMediaModal, setActiveMediaModal] = useState<any | null>(null)
   const [activeAttractionModal, setActiveAttractionModal] = useState<any | null>(null)
 
-  // Fetch Sanity Settings, Google Sheets Hotels, Live Attractions API, and Sanity Media Items in parallel with caching
+  // Fetch all live data sources in parallel on mount
   useEffect(() => {
-    // 1. Fast hydrate from session storage cache for instant sub-second render
+    // 1. Instant hydration from sessionStorage if available
     try {
       const cached = sessionStorage.getItem('fw_services_catalog_cache')
       if (cached) {
         const parsed = JSON.parse(cached)
-        if (parsed.hotels?.length) setHotels(parsed.hotels)
-        if (parsed.attractions?.length) setAttractions(parsed.attractions)
-        if (parsed.mediaItems?.length) setMediaItems(parsed.mediaItems)
         if (parsed.settings) setSettings(parsed.settings)
+        if (parsed.hotels) setHotels(parsed.hotels)
+        if (parsed.attractions) setAttractions(parsed.attractions)
+        if (parsed.mediaItems) setMediaItems(parsed.mediaItems)
         setLoading(false)
       }
     } catch (e) {}
 
-    // 2. Fetch fresh data in parallel in the background
     loadAllCatalogData()
   }, [])
 
@@ -179,7 +294,8 @@ export default function ServicesCatalogPage() {
           hideTours,
           hidePackages,
           heroTitle,
-          heroSubtitle
+          heroSubtitle,
+          hiddenHotelNames
         }`)
         if (fetchedSettings) {
           setSettings(prev => ({ ...prev, ...fetchedSettings }))
@@ -240,6 +356,7 @@ export default function ServicesCatalogPage() {
         const fetchedMedia = await client.fetch(`*[_type == "b2bServiceMedia"]{
           _id,
           category,
+          "slug": slug.current,
           title,
           subtitle,
           destination,
@@ -253,7 +370,11 @@ export default function ServicesCatalogPage() {
           features,
           duration,
           spokenLanguages,
-          cuisineType
+          cuisineType,
+          starRating,
+          hotelAddress,
+          roomCategories,
+          isDisplayed
         }`)
         
         if (fetchedMedia && fetchedMedia.length > 0) {
@@ -304,8 +425,30 @@ export default function ServicesCatalogPage() {
   const filteredHotels = useMemo(() => {
     if (settings.hideHotels) return []
     const q = searchQuery.toLowerCase().trim()
-    return hotels.filter(h => !q || h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q))
-  }, [hotels, searchQuery, settings.hideHotels])
+    const hiddenNames = (settings.hiddenHotelNames || []).map(n => n.toLowerCase().trim()).filter(Boolean)
+
+    return hotels.filter(h => {
+      const hName = h.name.toLowerCase().trim()
+      // Check if hidden by name in Sanity settings
+      if (hiddenNames.some(hn => hName.includes(hn) || hn.includes(hName))) {
+        return false
+      }
+
+      // Check if specific Sanity hotel entry has isDisplayed === false
+      const matchedSanity = mediaItems.find(m => 
+        m.category === 'hotel' && (
+          m.title.toLowerCase().trim() === hName ||
+          m.title.toLowerCase().includes(hName) ||
+          hName.includes(m.title.toLowerCase())
+        )
+      )
+      if (matchedSanity && matchedSanity.isDisplayed === false) {
+        return false
+      }
+
+      return !q || h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q)
+    })
+  }, [hotels, searchQuery, settings.hideHotels, settings.hiddenHotelNames, mediaItems])
 
   const filteredAttractions = useMemo(() => {
     if (settings.hideAttractions) return []
@@ -316,25 +459,25 @@ export default function ServicesCatalogPage() {
   const filteredRestaurants = useMemo(() => {
     if (settings.hideRestaurants) return []
     const q = searchQuery.toLowerCase().trim()
-    return mediaItems.filter(m => m.category === 'restaurant' && (!q || m.title.toLowerCase().includes(q) || (m.cuisineType || '').toLowerCase().includes(q)))
+    return mediaItems.filter(m => m.category === 'restaurant' && m.isDisplayed !== false && (!q || m.title.toLowerCase().includes(q) || (m.cuisineType || '').toLowerCase().includes(q)))
   }, [mediaItems, searchQuery, settings.hideRestaurants])
 
   const filteredGuides = useMemo(() => {
     if (settings.hideGuides) return []
     const q = searchQuery.toLowerCase().trim()
-    return mediaItems.filter(m => m.category === 'guide' && (!q || m.title.toLowerCase().includes(q) || (m.destination || '').toLowerCase().includes(q)))
+    return mediaItems.filter(m => m.category === 'guide' && m.isDisplayed !== false && (!q || m.title.toLowerCase().includes(q) || (m.destination || '').toLowerCase().includes(q)))
   }, [mediaItems, searchQuery, settings.hideGuides])
 
   const filteredTours = useMemo(() => {
     if (settings.hideTours) return []
     const q = searchQuery.toLowerCase().trim()
-    return mediaItems.filter(m => m.category === 'tour' && (!q || m.title.toLowerCase().includes(q) || (m.duration || '').toLowerCase().includes(q)))
+    return mediaItems.filter(m => m.category === 'tour' && m.isDisplayed !== false && (!q || m.title.toLowerCase().includes(q) || (m.duration || '').toLowerCase().includes(q)))
   }, [mediaItems, searchQuery, settings.hideTours])
 
   const filteredPackages = useMemo(() => {
     if (settings.hidePackages) return []
     const q = searchQuery.toLowerCase().trim()
-    return mediaItems.filter(m => m.category === 'package' && (!q || m.title.toLowerCase().includes(q) || (m.destination || '').toLowerCase().includes(q)))
+    return mediaItems.filter(m => m.category === 'package' && m.isDisplayed !== false && (!q || m.title.toLowerCase().includes(q) || (m.destination || '').toLowerCase().includes(q)))
   }, [mediaItems, searchQuery, settings.hidePackages])
 
   // Total Item Counts for Badges
@@ -490,13 +633,18 @@ export default function ServicesCatalogPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
             
-            {/* ══ SECTION A: HOTELS (FROM GOOGLE SHEETS) ══ */}
+            {/* ══ SECTION A: HOTELS (FROM GOOGLE SHEETS & SANITY MEDIA) ══ */}
             {(!settings.hideHotels && (activeTab === 'all' || activeTab === 'hotels')) && (
               <section>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Building2 size={22} color="#0F4C3A" /> Partner Hotels (Singapore & Malaysia)
-                  </h2>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: '0 0 2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Building2 size={22} color="#0F4C3A" /> Partner Hotels (Singapore & Malaysia)
+                    </h2>
+                    <p style={{ fontSize: '0.78rem', color: '#64748B', margin: 0, fontWeight: 600 }}>
+                      📸 Click any hotel to inspect photo galleries, room amenities, and video walkthrough tours.
+                    </p>
+                  </div>
                   <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, background: '#F1F5F9', padding: '3px 10px', borderRadius: '12px' }}>
                     Synced from Google Sheets Master Inventory
                   </span>
@@ -507,29 +655,124 @@ export default function ServicesCatalogPage() {
                     No hotels match your query.
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
-                    {filteredHotels.map((h) => (
-                      <div key={h.id} style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', padding: '1.25rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                          <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#0F172A', margin: 0 }}>{h.name}</h3>
-                          <span style={{ background: '#FEF3C7', color: '#D97706', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: '5px', flexShrink: 0 }}>
-                            ★ {h.star}
-                          </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+                    {filteredHotels.map((h) => {
+                      // Match with Sanity / fallback hotel media
+                      const matchedMedia = mediaItems.find(m => 
+                        m.category === 'hotel' && (
+                          m.title.toLowerCase().trim() === h.name.toLowerCase().trim() ||
+                          m.title.toLowerCase().includes(h.name.toLowerCase()) ||
+                          h.name.toLowerCase().includes(m.title.toLowerCase())
+                        )
+                      )
+
+                      const coverImg = matchedMedia?.coverImageUrl || (
+                        h.star?.includes('5') 
+                          ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
+                          : h.name.toLowerCase().includes('boss')
+                          ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
+                          : h.name.toLowerCase().includes('lavender')
+                          ? 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&auto=format&fit=crop'
+                          : 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop'
+                      )
+
+                      const hotelSlug = matchedMedia?.slug || h.name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '')
+
+                      const modalData = matchedMedia ? {
+                        ...matchedMedia,
+                        slug: hotelSlug,
+                        title: h.name,
+                        starRating: h.star,
+                        destination: h.location,
+                        features: matchedMedia.features || h.amenities
+                      } : {
+                        _id: h.id,
+                        slug: hotelSlug,
+                        category: 'hotel',
+                        title: h.name,
+                        subtitle: `${h.star} Partner Hotel · ${h.location}`,
+                        destination: h.location,
+                        starRating: h.star,
+                        description: `${h.name} is a designated partner hotel in ${h.location} offering comfortable ${h.roomType} accommodations, daily breakfast options, and high-speed Wi-Fi with prime connectivity for business and leisure travelers.`,
+                        coverImageUrl: coverImg,
+                        features: h.amenities || ['Breakfast Included', 'Free Wi-Fi', 'Swimming Pool'],
+                        hotelAddress: `${h.location}, Singapore / Malaysia`
+                      }
+
+                      return (
+                        <div 
+                          key={h.id} 
+                          onClick={() => setActiveMediaModal(modalData)}
+                          style={{ 
+                            background: '#FFF', 
+                            borderRadius: '14px', 
+                            border: '1px solid #E2E8F0', 
+                            overflow: 'hidden',
+                            boxShadow: '0 2px 12px rgba(0,0,0,0.04)', 
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            cursor: 'pointer',
+                            transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                          }}
+                        >
+                          {/* Hotel Card Image Banner */}
+                          <div style={{ height: '140px', background: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.65)), url(${coverImg})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ background: 'rgba(15,23,42,0.8)', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', backdropFilter: 'blur(4px)' }}>
+                                <MapPin size={11} style={{ display: 'inline', marginRight: '3px' }} /> {h.location}
+                              </span>
+                              <span style={{ background: '#FEF3C7', color: '#D97706', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: '5px' }}>
+                                ★ {h.star}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                              <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#FFF', margin: 0, lineHeight: 1.25, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
+                                {h.name}
+                              </h3>
+                              {matchedMedia?.videoUrl && (
+                                <span style={{ background: 'rgba(239, 68, 68, 0.9)', color: '#FFF', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                  <Play size={10} fill="#FFF" /> Video
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Hotel Details Body */}
+                          <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                            <div style={{ background: '#F8FAFC', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <span style={{ fontSize: '0.65rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Room Category</span>
+                                <strong style={{ fontSize: '0.8rem', color: '#0F172A' }}>{h.roomType}</strong>
+                              </div>
+                              <Link
+                                href={`/services-catalog/hotels/${hotelSlug}`}
+                                onClick={e => e.stopPropagation()}
+                                style={{
+                                  fontSize: '0.72rem',
+                                  color: '#0F4C3A',
+                                  fontWeight: 800,
+                                  background: '#ECFDF5',
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  textDecoration: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px'
+                                }}
+                              >
+                                <span>Page</span> →
+                              </Link>
+                            </div>
+
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 'auto' }}>
+                              {(h.amenities || []).map((am: string, i: number) => (
+                                <span key={i} style={{ background: '#F1F5F9', color: '#334155', fontSize: '0.68rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>✓ {am}</span>
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                        <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '0 0 0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <MapPin size={13} color="#0F4C3A" /> {h.location}
-                        </p>
-                        <div style={{ background: '#F8FAFC', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '0.85rem' }}>
-                          <span style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Room Category</span>
-                          <strong style={{ fontSize: '0.82rem', color: '#0F172A' }}>{h.roomType}</strong>
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 'auto' }}>
-                          {(h.amenities || []).map((am: string, i: number) => (
-                            <span key={i} style={{ background: '#ECFDF5', color: '#047857', fontSize: '0.68rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>✓ {am}</span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </section>
@@ -779,8 +1022,18 @@ export default function ServicesCatalogPage() {
               <X size={18} />
             </button>
 
-            <h3 style={{ margin: '0 0 4px', fontSize: '1.25rem', fontWeight: 900, color: '#0F4C3A' }}>{activeMediaModal.title}</h3>
-            <p style={{ margin: '0 0 1rem', fontSize: '0.82rem', color: '#64748B', fontWeight: 600 }}>📍 {activeMediaModal.destination}</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '0.35rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#0F4C3A' }}>{activeMediaModal.title}</h3>
+              {activeMediaModal.starRating && (
+                <span style={{ background: '#FEF3C7', color: '#D97706', fontSize: '0.75rem', fontWeight: 800, padding: '3px 9px', borderRadius: '6px', flexShrink: 0 }}>
+                  ★ {activeMediaModal.starRating}
+                </span>
+              )}
+            </div>
+
+            <p style={{ margin: '0 0 1rem', fontSize: '0.82rem', color: '#64748B', fontWeight: 600 }}>
+              📍 {activeMediaModal.hotelAddress || activeMediaModal.subtitle || activeMediaModal.destination}
+            </p>
 
             {/* Cover Image */}
             {activeMediaModal.coverImageUrl && !activeMediaModal.videoUrl && (
@@ -837,14 +1090,49 @@ export default function ServicesCatalogPage() {
               </div>
             )}
 
-            <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <h5 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#0F4C3A' }}>Key Inclusions & Capabilities</h5>
+            {/* Room Categories (For Hotels) */}
+            {activeMediaModal.roomCategories && activeMediaModal.roomCategories.length > 0 && (
+              <div style={{ background: '#F0FDF4', padding: '1rem', borderRadius: '10px', border: '1px solid #BBF7D0', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <h5 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#166534' }}>Available Room Categories & Suites</h5>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                  {activeMediaModal.roomCategories.map((rc: string, idx: number) => (
+                    <span key={idx} style={{ background: '#DCFCE7', color: '#15803D', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: 700 }}>🛏️ {rc}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: activeMediaModal.slug ? '1rem' : '0' }}>
+              <h5 style={{ margin: 0, fontSize: '0.8rem', fontWeight: 800, color: '#0F4C3A' }}>Key Inclusions & Amenities</h5>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                 {(activeMediaModal.features || []).map((ft: string, idx: number) => (
                   <span key={idx} style={{ background: '#ECFDF5', color: '#047857', padding: '3px 8px', borderRadius: '5px', fontSize: '0.75rem', fontWeight: 700 }}>✓ {ft}</span>
                 ))}
               </div>
             </div>
+
+            {activeMediaModal.slug && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Link
+                  href={`/services-catalog/hotels/${activeMediaModal.slug}`}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '0.6rem 1.2rem',
+                    borderRadius: '8px',
+                    background: '#0F4C3A',
+                    color: '#FFF',
+                    fontWeight: 800,
+                    fontSize: '0.82rem',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 8px rgba(15,76,58,0.2)'
+                  }}
+                >
+                  <span>Open Full Hotel Page & Gallery</span> →
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

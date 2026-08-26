@@ -3,6 +3,7 @@ import { createClient } from 'next-sanity';
 import { dataset, projectId, apiVersion } from '../sanity/env';
 
 import { getAllPackages, normalizeSlug } from '../utils/packages';
+import { getAllHotels, slugifyHotelName } from '../utils/hotels';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://flyingwonders.net'
@@ -100,10 +101,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
          priority: 0.7,
        }))
      }
-   } catch (err) {
-     console.error('Failed to get blog slugs for sitemap:', err)
-   }
+    } catch (err) {
+      console.error('Failed to get blog slugs for sitemap:', err)
+    }
 
-   return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...blogRoutes]
+    // Dynamic individual partner hotel routes
+    let hotelSitemap: MetadataRoute.Sitemap = []
+    try {
+      const hotels = await getAllHotels()
+      hotelSitemap = hotels.map((h) => ({
+        url: `${baseUrl}/services-catalog/hotels/${h.slug || slugifyHotelName(h.name)}`,
+        lastModified: today,
+        changeFrequency: 'weekly' as MetadataRoute.Sitemap[0]['changeFrequency'],
+        priority: 0.85,
+      }))
+    } catch (err) {
+      console.error('Failed to get hotel routes for sitemap:', err)
+    }
+
+    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...blogRoutes, ...hotelSitemap]
 
 }

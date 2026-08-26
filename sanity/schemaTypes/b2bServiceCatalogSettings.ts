@@ -19,6 +19,13 @@ export const b2bServiceCatalogSettingsSchema = defineType({
       initialValue: false,
     }),
     defineField({
+      name: 'hiddenHotelNames',
+      title: 'Hidden Hotel Names (Hide Specific Hotels)',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'Enter names of specific hotels to hide from the live catalog showcase (e.g. "Hotel Boss", "Grand Hotel").',
+    }),
+    defineField({
       name: 'hideAttractions',
       title: 'Hide Attractions Section?',
       type: 'boolean',

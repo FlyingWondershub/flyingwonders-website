@@ -2,7 +2,7 @@ import { defineType, defineField } from 'sanity'
 
 export const b2bServiceMediaSchema = defineType({
   name: 'b2bServiceMedia',
-  title: 'Services Catalog Items (Restaurants, Guides, Tours)',
+  title: 'Services Catalog Items (Hotels, Restaurants, Guides, Tours)',
   type: 'document',
   fields: [
     defineField({
@@ -11,6 +11,7 @@ export const b2bServiceMediaSchema = defineType({
       type: 'string',
       options: {
         list: [
+          { title: '🏨 Partner Hotel & Resort', value: 'hotel' },
           { title: '🍽️ Restaurant / Dining', value: 'restaurant' },
           { title: '🚩 Licensed Tour Guide', value: 'guide' },
           { title: '🚍 Tour (2N/3N/4N & City Tours)', value: 'tour' },
@@ -20,10 +21,27 @@ export const b2bServiceMediaSchema = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'isDisplayed',
+      title: 'Display in Services Catalog',
+      type: 'boolean',
+      initialValue: true,
+      description: 'Toggle ON (green) to display this item/hotel in the catalog, or toggle OFF to temporarily hide it.',
+    }),
+    defineField({
       name: 'title',
       title: 'Item Title / Name',
       type: 'string',
       validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'slug',
+      title: 'URL Slug (Direct Page Link)',
+      type: 'slug',
+      options: {
+        source: 'title',
+        maxLength: 96,
+      },
+      description: 'Generates direct individual URL link, e.g. /services-catalog/hotels/hotel-boss-singapore',
     }),
     defineField({
       name: 'subtitle',
@@ -109,6 +127,27 @@ export const b2bServiceMediaSchema = defineType({
       name: 'cuisineType',
       title: 'Cuisine Type (For Restaurants e.g. Halal, Seafood, Indian)',
       type: 'string',
+    }),
+    defineField({
+      name: 'starRating',
+      title: 'Star Rating (For Hotels e.g. 4-Star, 5-Star, Luxury Resort)',
+      type: 'string',
+      options: {
+        list: ['3-Star', '4-Star', '5-Star', 'Luxury Resort', 'Boutique Hotel'],
+      },
+    }),
+    defineField({
+      name: 'hotelAddress',
+      title: 'Address & Nearest MRT Station (For Hotels)',
+      type: 'string',
+      description: 'e.g. 500 Jalan Sultan (Near Lavender MRT), Singapore',
+    }),
+    defineField({
+      name: 'roomCategories',
+      title: 'Room Categories & Amenities',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'e.g. Deluxe Room, Superior City View, Family Suite with Balcony',
     }),
   ],
 })
