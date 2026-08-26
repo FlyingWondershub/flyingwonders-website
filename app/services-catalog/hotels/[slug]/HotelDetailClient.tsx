@@ -217,12 +217,14 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
           )}
 
           {/* YouTube Shorts Carousel for Hotel Video Walkthroughs */}
-          <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-            <PackageShortsCarousel
-              destination={hotel.location || 'Singapore'}
-              curatedShorts={hotel.shorts && hotel.shorts.length > 0 ? hotel.shorts : undefined}
-            />
-          </div>
+          {hotel.shorts && hotel.shorts.length > 0 && (
+            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+              <PackageShortsCarousel
+                destination={hotel.location || 'Singapore'}
+                curatedShorts={hotel.shorts}
+              />
+            </div>
+          )}
 
           {/* Photo Gallery Grid */}
           {allPhotos.length > 0 && (
