@@ -200,7 +200,6 @@ export default function LayoutWrapper({
               <Link href="/" className="nav-link">Home</Link>
               {!pageVisibility?.hidePackages && <Link href="/packages" className="nav-link">Packages</Link>}
               {!pageVisibility?.hideInstantQuote && <Link href="/instant-quote" className="nav-link">Instant Quote</Link>}
-              {!pageVisibility?.hideInsurance && <Link href="/insurance" className="nav-link">Insurance</Link>}
               <Link href="/about" className="nav-link">About Us</Link>
               <Link href="/travel-tools" className="nav-link">Travel Tools</Link>
               <Link href="/corporate-travel" className="nav-link">Corporate Desk</Link>
@@ -291,7 +290,6 @@ export default function LayoutWrapper({
         <div className="container" style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.15)', textAlign: 'center', color: '#CBD5E1', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
           <span>© {new Date().getFullYear()} Flying Wonders Pvt Ltd. All rights reserved.</span>
           <div style={{ display: 'flex', gap: '1.5rem' }}>
-            {!pageVisibility?.hideInsurance && <Link href="/insurance" style={{ textDecoration: 'underline', color: '#E2E8F0' }}>Travel Insurance</Link>}
             {!pageVisibility?.hideFaq && <Link href="/faq" style={{ textDecoration: 'underline', color: '#E2E8F0' }}>FAQ</Link>}
             <Link href="/privacy" style={{ textDecoration: 'underline', color: '#E2E8F0' }}>Privacy Policy</Link>
             <Link href="/terms" style={{ textDecoration: 'underline', color: '#E2E8F0' }}>Terms of Service</Link>
