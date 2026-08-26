@@ -138,9 +138,153 @@ export async function POST(request: Request) {
       postedAt: typeof timestamp === 'string' ? timestamp : new Date().toISOString(),
     })
 
+    // 6. Match Active Subscribers & Dispatch Alerts / Audit Log
+    const enabledChannel = settings?.enabledAlertChannels || 'whatsapp_only'
+    const isWhatsAppEnabled = enabledChannel === 'whatsapp_only' || enabledChannel === 'all_channels'
+
+    const subscribersQuery = `*[_type == "b2bLeadSubscriber" && status == "active"]{
+      _id,
+      agentName,
+      companyName,
+      whatsappNumber,
+      email,
+      subscribedDestinations,
+      subscribedCategories,
+      customKeywords,
+      alertFrequency,
+      preferredChannel,
+      maxDailyAlerts,
+      totalAlertsSent,
+      lastAlertSentAt
+    }`
+    const subscribers = await client.fetch(subscribersQuery).catch(() => [])
+
+    const matchedAlerts: Array<{
+      subscriberId: string
+      recipientPhone: string
+      recipientEmail?: string
+      recipientName: string
+      text: string
+    }> = []
+
+    // Helper to check quiet hours (e.g. 22:30 to 08:00)
+    const isInQuietHours = () => {
+      if (!settings?.enableQuietHours) return false
+      const now = new Date()
+      const hours = now.getHours()
+      const minutes = now.getMinutes()
+      const currentTimeVal = hours * 60 + minutes
+
+      const [startH, startM] = (settings.quietHoursStart || '22:30').split(':').map(Number)
+      const [endH, endM] = (settings.quietHoursEnd || '08:00').split(':').map(Number)
+      const startTimeVal = (startH || 22) * 60 + (startM || 30)
+      const endTimeVal = (endH || 8) * 60 + (endM || 0)
+
+      if (startTimeVal > endTimeVal) {
+        return currentTimeVal >= startTimeVal || currentTimeVal < endTimeVal
+      }
+      return currentTimeVal >= startTimeVal && currentTimeVal < endTimeVal
+    }
+
+    const inQuietHours = isInQuietHours() && parsed.urgency !== 'urgent'
+
+    if (Array.isArray(subscribers) && subscribers.length > 0) {
+      for (const sub of subscribers) {
+        // Destination Match
+        const destMatch =
+          !sub.subscribedDestinations ||
+          sub.subscribedDestinations.includes('All Destinations') ||
+          sub.subscribedDestinations.includes('All') ||
+          (parsed.destination && sub.subscribedDestinations.some((d: string) =>
+            d.toLowerCase().trim() === parsed.destination.toLowerCase().trim() ||
+            parsed.destination.toLowerCase().includes(d.toLowerCase().trim()) ||
+            d.toLowerCase().includes(parsed.destination.toLowerCase().trim())
+          ))
+
+        // Category Match
+        const catMatch =
+          !sub.subscribedCategories ||
+          sub.subscribedCategories.includes('all') ||
+          sub.subscribedCategories.includes(parsed.category)
+
+        // Custom Keywords Match
+        let keywordMatch = true
+        if (sub.customKeywords && typeof sub.customKeywords === 'string' && sub.customKeywords.trim()) {
+          const keywords = sub.customKeywords.split(',').map((k: string) => k.trim().toLowerCase()).filter(Boolean)
+          if (keywords.length > 0) {
+            keywordMatch = keywords.some((k: string) => parsed.rawMessage.toLowerCase().includes(k))
+          }
+        }
+
+        if (destMatch && catMatch && keywordMatch) {
+          const limit = sub.maxDailyAlerts || settings?.defaultDailyAlertLimit || 6
+          const isToday = sub.lastAlertSentAt && new Date(sub.lastAlertSentAt).toDateString() === new Date().toDateString()
+          const isRateLimited = isToday && (sub.totalAlertsSent || 0) >= limit
+
+          let deliveryStatus = 'sent'
+          let skipDispatch = false
+
+          if (sub.alertFrequency === 'daily_digest') {
+            deliveryStatus = 'queued_for_digest'
+            skipDispatch = true
+          } else if (isRateLimited) {
+            deliveryStatus = 'rate_limited'
+            skipDispatch = true
+          } else if (inQuietHours) {
+            deliveryStatus = 'quiet_hours_delayed'
+            skipDispatch = true
+          }
+
+          try {
+            await writeClient.create({
+              _type: 'b2bLeadAuditLog',
+              inquiryTitle: parsed.title,
+              inquiryRef: { _type: 'reference', _ref: newDoc._id },
+              subscriberRef: { _type: 'reference', _ref: sub._id },
+              recipientPhone: sub.whatsappNumber,
+              recipientEmail: sub.email || undefined,
+              matchedDestination: parsed.destination || 'All Destinations',
+              dispatchChannel: isWhatsAppEnabled ? 'whatsapp' : 'email',
+              deliveryStatus,
+              dispatchedAt: new Date().toISOString(),
+            })
+
+            if (!skipDispatch) {
+              await writeClient
+                .patch(sub._id)
+                .set({
+                  lastAlertSentAt: new Date().toISOString(),
+                  totalAlertsSent: (sub.totalAlertsSent || 0) + 1,
+                })
+                .commit()
+
+              const waLink = parsed.phoneNumber
+                ? `https://wa.me/${parsed.phoneNumber.replace(/[^\d]/g, '')}?text=${encodeURIComponent(
+                    `Hi ${parsed.requesterName || 'Partner'}, saw your requirement for "${parsed.title}". We can assist you.`
+                  )}`
+                : 'https://flyingwonders.net/b2b-leads'
+
+              const alertMsg = `🔔 *NEW LEAD ALERT — ${parsed.destination ? parsed.destination.toUpperCase() : 'TRAVEL REQUIREMENT'}*\n━━━━━━━━━━━━━━━━━━━━\n📌 *Requirement:* ${parsed.title}\n👤 *Agent:* ${parsed.requesterName || 'Travel Partner'}${parsed.city ? ` (${parsed.city})` : ''}\n🕒 *Posted:* Just now\n\n👉 *Connect Directly on WhatsApp:*\n${waLink}\n\n🌐 *View on Live Board:*\nhttps://flyingwonders.net/b2b-leads\n━━━━━━━━━━━━━━━━━━━━\n_Reply STOP to pause alerts._`
+
+              matchedAlerts.push({
+                subscriberId: sub._id,
+                recipientPhone: sub.whatsappNumber,
+                recipientEmail: sub.email,
+                recipientName: sub.agentName,
+                text: alertMsg,
+              })
+            }
+          } catch (auditErr) {
+            console.error('Failed to log audit or update subscriber:', auditErr)
+          }
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       inquiryId: newDoc._id,
+      matchedAlerts,
       parsed: {
         title: parsed.title,
         destination: parsed.destination,

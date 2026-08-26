@@ -12,12 +12,45 @@ require('dotenv').config()
 
 // Configuration from .env
 const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://flyingwonders.net/api/inquiries/webhook'
+const UNSUBSCRIBE_URL = process.env.UNSUBSCRIBE_URL || 'https://flyingwonders.net/api/inquiries/unsubscribe'
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || ''
 const BOT_PHONE_NUMBER = process.env.BOT_PHONE_NUMBER || ''
 const SESSION_FOLDER = process.env.SESSION_FOLDER || 'auth_info_baileys'
 
 // In-memory group name cache to avoid fetching metadata repeatedly
 const groupNameCache = new Map()
+
+// Asynchronous Outbound Safe Dispatch Queue
+const dispatchQueue = []
+let isProcessingQueue = false
+
+async function processDispatchQueue(sock) {
+  if (isProcessingQueue || dispatchQueue.length === 0) return
+  isProcessingQueue = true
+
+  while (dispatchQueue.length > 0) {
+    const alert = dispatchQueue.shift()
+    if (!alert || !alert.recipientPhone || !alert.text) continue
+
+    try {
+      let targetJid = alert.recipientPhone.replace(/[^\d]/g, '')
+      if (!targetJid.includes('@s.whatsapp.net')) {
+        targetJid = `${targetJid}@s.whatsapp.net`
+      }
+
+      console.log(`[FW-Gateway] 🚀 Sending alert DM to ${alert.recipientName || 'Subscriber'} (${targetJid})...`)
+      await sock.sendMessage(targetJid, { text: alert.text })
+
+      // Randomized human jitter pause between 3.5s and 6.5s to ensure 100% account safety
+      const jitterMs = Math.floor(Math.random() * 3000) + 3500
+      await new Promise((resolve) => setTimeout(resolve, jitterMs))
+    } catch (err) {
+      console.error(`[FW-Gateway] ❌ Failed to dispatch alert to ${alert.recipientPhone}:`, err.message)
+    }
+  }
+
+  isProcessingQueue = false
+}
 
 async function startWhatsAppGateway() {
   const authPath = path.resolve(__dirname, SESSION_FOLDER)
@@ -33,12 +66,11 @@ async function startWhatsAppGateway() {
     printQRInTerminal: false,
     auth: state,
     generateHighQualityLinkPreview: false,
-    // Identify as Official Native Desktop Client (suppresses iOS web session push banners)
     browser: Browsers.macOS('Desktop'),
     syncFullHistory: false,
-    markOnlineOnConnect: false, // Stealth Mode: Do NOT broadcast online presence
-    shouldSyncHistoryMessage: () => false, // Do NOT request history downloads from phone
-    fireInitQueries: false, // Suppress initial query storms to phone
+    markOnlineOnConnect: false,
+    shouldSyncHistoryMessage: () => false,
+    fireInitQueries: false,
     emitOwnEvents: false,
     cachedGroupMetadata: async (jid) => groupNameCache.get(jid),
     keepAliveIntervalMs: 60000,
@@ -79,54 +111,73 @@ async function startWhatsAppGateway() {
     }
   })
 
-  // Listen to new messages
+  // Listen to incoming messages (Group Inquiries & 2-Way Bot Commands)
   sock.ev.on('messages.upsert', async ({ messages, type }) => {
     if (type !== 'notify') return
 
     for (const msg of messages) {
-      // Ignore outgoing messages sent by the bot itself
       if (msg.key.fromMe) continue
 
       const remoteJid = msg.key.remoteJid || ''
       const isGroup = remoteJid.endsWith('@g.us')
-      if (!isGroup) continue // Ignore direct messages sent to the bot phone number
 
-      // Extract message text from conversation, extendedTextMessage, or image caption
       const messageContent = msg.message
       if (!messageContent) continue
 
-      const text =
+      const text = (
         messageContent.conversation ||
         messageContent.extendedTextMessage?.text ||
         messageContent.imageMessage?.caption ||
         messageContent.videoMessage?.caption ||
         ''
+      ).trim()
 
-      if (!text || text.trim().length < 5) continue
-
-      let groupName = 'Direct Message'
-      if (isGroup) {
-        if (groupNameCache.has(remoteJid)) {
-          groupName = groupNameCache.get(remoteJid)
-        } else {
-          try {
-            const meta = await sock.groupMetadata(remoteJid)
-            groupName = meta.subject || 'WhatsApp Group'
-            groupNameCache.set(remoteJid, groupName)
-          } catch (e) {
-            groupName = 'WhatsApp Group'
-          }
-        }
-      }
+      if (!text) continue
 
       const senderJid = msg.key.participant || msg.key.remoteJid || ''
       const senderPhone = senderJid.split('@')[0]
       const senderName = msg.pushName || ''
-      const timestamp = new Date((msg.messageTimestamp || Date.now() / 1000) * 1000).toISOString()
 
+      // CASE 1: 1-on-1 Direct Message to the Bot (Two-Way Interactive Commands: STOP / START / STATUS)
+      if (!isGroup) {
+        const upper = text.toUpperCase().trim()
+        if (['STOP', 'UNSUB', 'UNSUBSCRIBE', 'PAUSE', 'START', 'RESUME', 'STATUS', 'HELP'].includes(upper)) {
+          console.log(`[FW-Gateway] 🤖 Received bot command [${upper}] from ${senderPhone}`)
+          try {
+            const unsubRes = await fetch(UNSUBSCRIBE_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ phone: senderPhone, command: upper }),
+            })
+            const data = await unsubRes.json()
+            const replyMsg = data.message || 'Command processed.'
+            await sock.sendMessage(remoteJid, { text: replyMsg })
+          } catch (e) {
+            console.error('[FW-Gateway] Error executing bot command:', e.message)
+          }
+        }
+        continue
+      }
+
+      // CASE 2: Group Message (B2B Lead Processing)
+      if (text.length < 5) continue
+
+      let groupName = 'WhatsApp Group'
+      if (groupNameCache.has(remoteJid)) {
+        groupName = groupNameCache.get(remoteJid)
+      } else {
+        try {
+          const meta = await sock.groupMetadata(remoteJid)
+          groupName = meta.subject || 'WhatsApp Group'
+          groupNameCache.set(remoteJid, groupName)
+        } catch (e) {
+          groupName = 'WhatsApp Group'
+        }
+      }
+
+      const timestamp = new Date((msg.messageTimestamp || Date.now() / 1000) * 1000).toISOString()
       console.log(`[FW-Gateway] 📩 Processing msg from [${groupName}] (${senderName} / ${senderPhone})`)
 
-      // Forward to Flying Wonders Next.js Webhook
       try {
         const headers = { 'Content-Type': 'application/json' }
         if (WEBHOOK_SECRET) {
@@ -141,15 +192,25 @@ async function startWhatsAppGateway() {
             sender: senderPhone,
             senderName,
             text,
-            botNumber: BOT_PHONE_NUMBER,
+            botNumber: BOT_PHONE_NUMBER || sock.user?.id?.split(':')[0] || '',
             timestamp,
           }),
         })
 
-        const resData = await response.json().catch(() => ({}))
-        console.log(`[FW-Gateway] 🚀 Webhook Status: ${response.status}`, resData)
+        const result = await response.json()
+        console.log(`[FW-Gateway] ↳ Webhook response:`, result.status || (result.success ? 'saved' : 'error'))
+
+        // If matching subscriber alerts were returned, push to safe dispatch queue
+        if (result.matchedAlerts && Array.isArray(result.matchedAlerts) && result.matchedAlerts.length > 0) {
+          console.log(`[FW-Gateway] 🔔 ${result.matchedAlerts.length} subscriber alert(s) matched. Queueing safe DMs...`)
+          for (const alert of result.matchedAlerts) {
+            dispatchQueue.push(alert)
+          }
+          processDispatchQueue(sock)
+        }
+
       } catch (err) {
-        console.error('[FW-Gateway] ❌ Failed to dispatch webhook:', err.message)
+        console.error(`[FW-Gateway] ❌ Failed to forward to webhook:`, err.message)
       }
     }
   })
@@ -157,5 +218,5 @@ async function startWhatsAppGateway() {
 
 // Start Gateway
 startWhatsAppGateway().catch((err) => {
-  console.error('[FW-Gateway] Fatal Startup Error:', err)
+  console.error('[FW-Gateway] Fatal crash:', err)
 })

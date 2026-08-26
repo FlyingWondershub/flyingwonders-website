@@ -27,7 +27,10 @@ import {
   Lock,
   ChevronRight,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Bell,
+  Mail,
+  Send
 } from 'lucide-react'
 import { client } from '../../sanity/lib/client'
 import { parseWhatsAppMessage } from '../../utils/inquiryParser'
@@ -58,6 +61,7 @@ interface LeadsSettings {
   allowedGroups?: string[]
   requirePinToClose?: boolean
   closurePin?: string
+  enabledAlertChannels?: 'whatsapp_only' | 'email_only' | 'all_channels'
 }
 
 const CATEGORY_MAP: Record<string, { label: string; icon: any; bg: string; color: string; border: string }> = {
@@ -70,6 +74,24 @@ const CATEGORY_MAP: Record<string, { label: string; icon: any; bg: string; color
   other: { label: 'General Requirement', icon: HelpCircle, bg: '#F1F5F9', color: '#334155', border: '#CBD5E1' },
 }
 
+const POPULAR_DESTINATIONS = [
+  'All Destinations',
+  'Singapore',
+  'Malaysia',
+  'Thailand',
+  'Bali',
+  'Dubai',
+  'Andaman',
+  'Ayodhya',
+  'Kashmir',
+  'Goa',
+  'Kerala',
+  'Vietnam',
+  'Sri Lanka',
+  'Maldives',
+  'Europe',
+]
+
 export default function B2BLeadsPage() {
   const [inquiries, setInquiries] = useState<InquiryItem[]>([])
   const [settings, setSettings] = useState<LeadsSettings | null>(null)
@@ -79,17 +101,33 @@ export default function B2BLeadsPage() {
   const [statusFilter, setStatusFilter] = useState<'open' | 'closed' | 'all'>('open')
   const [selectedDestination, setSelectedDestination] = useState<string>('all')
 
-  // Modals state
+  // Modals state: Paste Modal
   const [isPasteModalOpen, setIsPasteModalOpen] = useState(false)
   const [rawPasteText, setRawPasteText] = useState('')
   const [pasteGroupName, setPasteGroupName] = useState('DMC SUPPORT EACH OTHER')
   const [isSubmittingPaste, setIsSubmittingPaste] = useState(false)
 
+  // Modals state: Close Modal
   const [closingInquiry, setClosingInquiry] = useState<InquiryItem | null>(null)
   const [solverName, setSolverName] = useState('')
   const [closePin, setClosePin] = useState('')
   const [isClosingSubmitting, setIsClosingSubmitting] = useState(false)
   const [closeError, setCloseError] = useState('')
+
+  // Modals state: Subscribe Modal
+  const [isSubscribeModalOpen, setIsSubscribeModalOpen] = useState(false)
+  const [subAgentName, setSubAgentName] = useState('')
+  const [subCompanyName, setSubCompanyName] = useState('')
+  const [subWhatsApp, setSubWhatsApp] = useState('')
+  const [subEmail, setSubEmail] = useState('')
+  const [subDestinations, setSubDestinations] = useState<string[]>(['All Destinations'])
+  const [subCategory, setSubCategory] = useState<string>('all')
+  const [subFrequency, setSubFrequency] = useState<'instant' | 'daily_digest'>('instant')
+  const [subChannel, setSubChannel] = useState<'whatsapp' | 'email' | 'both'>('whatsapp')
+  const [subKeywords, setSubKeywords] = useState('')
+  const [isSubscribing, setIsSubscribing] = useState(false)
+  const [subscribeSuccessMsg, setSubscribeSuccessMsg] = useState('')
+  const [subscribeErrorMsg, setSubscribeErrorMsg] = useState('')
 
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [adminBypass, setAdminBypass] = useState(false)
@@ -149,6 +187,67 @@ export default function B2BLeadsPage() {
     } finally {
       setIsSubmittingPaste(false)
     }
+  }
+
+  // Handle Subscription Submit
+  const handleSubscribeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!subAgentName.trim() || !subWhatsApp.trim()) return
+
+    setIsSubscribing(true)
+    setSubscribeErrorMsg('')
+    setSubscribeSuccessMsg('')
+
+    try {
+      const res = await fetch('/api/inquiries/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentName: subAgentName,
+          companyName: subCompanyName,
+          whatsappNumber: subWhatsApp,
+          email: subEmail,
+          subscribedDestinations: subDestinations,
+          subscribedCategories: [subCategory],
+          customKeywords: subKeywords,
+          alertFrequency: subFrequency,
+          preferredChannel: subChannel,
+        }),
+      })
+
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setSubscribeSuccessMsg(data.message || 'Successfully subscribed to lead alerts!')
+        setTimeout(() => {
+          setIsSubscribeModalOpen(false)
+          setSubscribeSuccessMsg('')
+        }, 2200)
+      } else {
+        setSubscribeErrorMsg(data.error || 'Failed to subscribe. Please verify your details.')
+      }
+    } catch (err: any) {
+      setSubscribeErrorMsg('Network error: ' + err.message)
+    } finally {
+      setIsSubscribing(false)
+    }
+  }
+
+  // Toggle Destination in Subscribe Modal
+  const toggleSubDestination = (dest: string) => {
+    if (dest === 'All Destinations') {
+      setSubDestinations(['All Destinations'])
+      return
+    }
+
+    setSubDestinations((prev) => {
+      const withoutAll = prev.filter((d) => d !== 'All Destinations')
+      if (withoutAll.includes(dest)) {
+        const next = withoutAll.filter((d) => d !== dest)
+        return next.length === 0 ? ['All Destinations'] : next
+      } else {
+        return [...withoutAll, dest]
+      }
+    })
   }
 
   // Handle Close / Cleared Submit
@@ -211,7 +310,7 @@ export default function B2BLeadsPage() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  // Extract unique destinations
+  // Extract unique destinations from current items
   const availableDestinations = useMemo(() => {
     const set = new Set<string>()
     inquiries.forEach((item) => {
@@ -313,10 +412,12 @@ export default function B2BLeadsPage() {
   const openCount = inquiries.filter(i => i.status === 'open').length
   const closedCount = inquiries.filter(i => i.status === 'closed').length
 
+  const allowEmailChannel = settings?.enabledAlertChannels === 'email_only' || settings?.enabledAlertChannels === 'all_channels'
+
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC', color: '#0F172A', fontFamily: 'var(--font-inter), sans-serif' }}>
       
-      {/* Top Header Bar with Search + Status + Actions on 1 Line */}
+      {/* Top Header Bar with Search + Status + Alerts + Actions on 1 Line */}
       <header style={{ position: 'sticky', top: 0, zIndex: 40, background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 12px' }}>
         <div style={{ maxWidth: '1440px', margin: '0 auto', minHeight: '50px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', padding: '6px 0' }}>
           
@@ -343,10 +444,10 @@ export default function B2BLeadsPage() {
           </div>
 
           {/* Center: Compact Search Box + Status Filter Next to it */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '1 1 auto', maxWidth: '640px', minWidth: '260px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '1 1 auto', maxWidth: '580px', minWidth: '240px' }}>
             
             {/* Search Box */}
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: '1 1 200px', minWidth: '160px' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: '1 1 180px', minWidth: '140px' }}>
               <Search size={14} color="#64748B" style={{ position: 'absolute', left: '9px' }} />
               <input
                 type="text"
@@ -369,13 +470,13 @@ export default function B2BLeadsPage() {
             <div style={{ display: 'inline-flex', background: '#F1F5F9', padding: '2px', borderRadius: '7px', flexShrink: 0, border: '1px solid #E2E8F0' }}>
               <button
                 onClick={() => setStatusFilter('open')}
-                style={{ padding: '4px 10px', borderRadius: '5px', border: 'none', background: statusFilter === 'open' ? '#0F4C3A' : 'transparent', color: statusFilter === 'open' ? '#FFFFFF' : '#334155', fontWeight: 800, fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                style={{ padding: '4px 9px', borderRadius: '5px', border: 'none', background: statusFilter === 'open' ? '#0F4C3A' : 'transparent', color: statusFilter === 'open' ? '#FFFFFF' : '#334155', fontWeight: 800, fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
               >
                 🟢 Open ({openCount})
               </button>
               <button
                 onClick={() => setStatusFilter('closed')}
-                style={{ padding: '4px 10px', borderRadius: '5px', border: 'none', background: statusFilter === 'closed' ? '#334155' : 'transparent', color: statusFilter === 'closed' ? '#FFFFFF' : '#334155', fontWeight: 800, fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                style={{ padding: '4px 9px', borderRadius: '5px', border: 'none', background: statusFilter === 'closed' ? '#334155' : 'transparent', color: statusFilter === 'closed' ? '#FFFFFF' : '#334155', fontWeight: 800, fontSize: '0.72rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
               >
                 ⚪ Cleared ({closedCount})
               </button>
@@ -389,8 +490,19 @@ export default function B2BLeadsPage() {
 
           </div>
 
-          {/* Right: Refresh & Post Button */}
+          {/* Right: Get Alerts + Refresh + Post Button */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            
+            {/* Get Lead Alerts Button */}
+            <button
+              onClick={() => setIsSubscribeModalOpen(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: '#FEF3C7', color: '#92400E', border: '1px solid #FDE68A', borderRadius: '7px', fontWeight: 800, fontSize: '0.74rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              title="Get WhatsApp or Email alerts for matching destination leads"
+            >
+              <Bell size={13} color="#B45309" />
+              <span>Get Alerts</span>
+            </button>
+
             <button
               onClick={() => fetchData()}
               disabled={loading}
@@ -563,7 +675,7 @@ export default function B2BLeadsPage() {
                       {inquiry.title}
                     </h3>
 
-                    {/* Raw Message Card (No awkward horizontal scroll, clean text wrap) */}
+                    {/* Raw Message Card */}
                     <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '7px 9px', fontSize: '0.74rem', color: '#1E293B', lineHeight: 1.45, fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'break-word', overflowX: 'hidden', maxHeight: '110px', overflowY: 'auto', marginBottom: '8px' }}>
                       {inquiry.rawMessage}
                     </div>
@@ -643,7 +755,234 @@ export default function B2BLeadsPage() {
 
       </main>
 
-      {/* MODAL 1: Paste WhatsApp Inquiry Modal */}
+      {/* MODAL 1: Subscribe for Lead Alerts Modal */}
+      {isSubscribeModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '14px', maxWidth: '500px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: '18px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
+            
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#92400E' }}>
+                  <Bell size={15} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                    Get Instant Lead Alerts
+                  </h3>
+                  <p style={{ fontSize: '0.68rem', color: '#64748B', margin: 0 }}>
+                    Receive verified travel requirements directly on your WhatsApp.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsSubscribeModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {subscribeSuccessMsg ? (
+              <div style={{ padding: '20px 14px', textAlign: 'center', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '10px', color: '#065F46' }}>
+                <CheckCircle2 size={32} color="#059669" style={{ margin: '0 auto 8px' }} />
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 800, marginBottom: '4px' }}>Alerts Activated!</h4>
+                <p style={{ fontSize: '0.76rem', lineHeight: 1.4 }}>{subscribeSuccessMsg}</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubscribeSubmit}>
+                
+                {subscribeErrorMsg && (
+                  <div style={{ padding: '7px 9px', background: '#FFE4E6', border: '1px solid #FECDD3', borderRadius: '7px', fontSize: '0.72rem', color: '#9F1239', marginBottom: '8px' }}>
+                    {subscribeErrorMsg}
+                  </div>
+                )}
+
+                {/* Agent Name & Company */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
+                      Your Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Rahul Sharma"
+                      value={subAgentName}
+                      onChange={(e) => setSubAgentName(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A', fontWeight: 600 }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
+                      Agency / Company
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Zenith Holidays"
+                      value={subCompanyName}
+                      onChange={(e) => setSubCompanyName(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A', fontWeight: 600 }}
+                    />
+                  </div>
+                </div>
+
+                {/* WhatsApp Number & Email */}
+                <div style={{ display: 'grid', gridTemplateColumns: allowEmailChannel ? '1fr 1fr' : '1fr', gap: '8px', marginBottom: '10px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
+                      WhatsApp Number (with Country Code) *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="+91 98765 43210"
+                      value={subWhatsApp}
+                      onChange={(e) => setSubWhatsApp(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A', fontWeight: 600 }}
+                    />
+                  </div>
+
+                  {allowEmailChannel && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="agent@company.com"
+                        value={subEmail}
+                        onChange={(e) => setSubEmail(e.target.value)}
+                        style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A', fontWeight: 600 }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Destinations Multi-Select Chips */}
+                <div style={{ marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '0.7rem', fontWeight: 800, color: '#1E293B' }}>
+                      Subscribed Destinations / Hubs *
+                    </label>
+                    <span style={{ fontSize: '0.64rem', color: '#64748B' }}>Select all that apply</span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '100px', overflowY: 'auto', padding: '6px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                    {POPULAR_DESTINATIONS.map((dest) => {
+                      const isSelected = subDestinations.includes(dest)
+                      return (
+                        <button
+                          key={dest}
+                          type="button"
+                          onClick={() => toggleSubDestination(dest)}
+                          style={{
+                            padding: '3px 7px',
+                            borderRadius: '5px',
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            border: '1px solid',
+                            borderColor: isSelected ? '#0F4C3A' : '#CBD5E1',
+                            background: isSelected ? '#0F4C3A' : '#FFFFFF',
+                            color: isSelected ? '#FFFFFF' : '#334155',
+                          }}
+                        >
+                          {isSelected ? '✓ ' : '+ '}{dest}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Category Filter & Frequency Row */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
+                      Requirement Type
+                    </label>
+                    <select
+                      value={subCategory}
+                      onChange={(e) => setSubCategory(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.72rem', outline: 'none', color: '#0F172A', fontWeight: 600 }}
+                    >
+                      <option value="all">🌍 All Types</option>
+                      <option value="hotels">🏨 Hotels & Stays</option>
+                      <option value="transport">🚗 Transport & Cabs</option>
+                      <option value="dmc_package">🏖️ DMC Ground Packages</option>
+                      <option value="visa_fairs">🎟️ Trade Fairs & Visas</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
+                      Alert Frequency
+                    </label>
+                    <select
+                      value={subFrequency}
+                      onChange={(e) => setSubFrequency(e.target.value as any)}
+                      style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.72rem', outline: 'none', color: '#0F172A', fontWeight: 600 }}
+                    >
+                      <option value="instant">⚡ Instant (Real-time DM)</option>
+                      <option value="daily_digest">☀️ Daily Morning Summary</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Channel Selector (If multiple enabled) */}
+                {allowEmailChannel && (
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
+                      Alert Channel
+                    </label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setSubChannel('whatsapp')}
+                        style={{ flex: 1, padding: '5px 8px', borderRadius: '6px', border: '1px solid', borderColor: subChannel === 'whatsapp' ? '#0F4C3A' : '#CBD5E1', background: subChannel === 'whatsapp' ? '#ECFDF5' : '#FFFFFF', color: subChannel === 'whatsapp' ? '#065F46' : '#475569', fontWeight: 700, fontSize: '0.7rem', cursor: 'pointer' }}
+                      >
+                        📱 WhatsApp Only
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSubChannel('both')}
+                        style={{ flex: 1, padding: '5px 8px', borderRadius: '6px', border: '1px solid', borderColor: subChannel === 'both' ? '#0F4C3A' : '#CBD5E1', background: subChannel === 'both' ? '#ECFDF5' : '#FFFFFF', color: subChannel === 'both' ? '#065F46' : '#475569', fontWeight: 700, fontSize: '0.7rem', cursor: 'pointer' }}
+                      >
+                        📱 + 📧 Both
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer Note & Buttons */}
+                <div style={{ padding: '8px', background: '#F1F5F9', borderRadius: '7px', fontSize: '0.64rem', color: '#64748B', marginBottom: '12px', lineHeight: 1.4 }}>
+                  🛡️ <strong>Zero Spam Guarantee:</strong> Max 6 alerts/day. Mute anytime by replying <strong>STOP</strong> on WhatsApp.
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsSubscribeModalOpen(false)}
+                    style={{ padding: '6px 12px', fontSize: '0.72rem', fontWeight: 800, background: '#F1F5F9', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#334155' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubscribing || !subAgentName.trim() || !subWhatsApp.trim()}
+                    style={{ padding: '6px 16px', fontSize: '0.74rem', fontWeight: 900, background: '#0F4C3A', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    {isSubscribing ? 'Subscribing...' : 'Activate Lead Alerts'}
+                  </button>
+                </div>
+
+              </form>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Paste WhatsApp Inquiry Modal */}
       {isPasteModalOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)' }}>
           <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '14px', maxWidth: '460px', width: '100%', padding: '18px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
@@ -721,7 +1060,7 @@ export default function B2BLeadsPage() {
         </div>
       )}
 
-      {/* MODAL 2: Mark as Cleared Modal */}
+      {/* MODAL 3: Mark as Cleared Modal */}
       {closingInquiry && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)' }}>
           <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '14px', maxWidth: '380px', width: '100%', padding: '18px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>

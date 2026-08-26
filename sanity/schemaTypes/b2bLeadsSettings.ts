@@ -73,5 +73,45 @@ export const b2bLeadsSettingsSchema = defineType({
       description: 'PIN code required if Require Team PIN is enabled.',
       initialValue: '1234',
     }),
+    defineField({
+      name: 'enabledAlertChannels',
+      title: 'Active Alert Delivery Channels',
+      type: 'string',
+      options: {
+        list: [
+          { title: '📱 WhatsApp Only (Current Default)', value: 'whatsapp_only' },
+          { title: '📧 Email Only', value: 'email_only' },
+          { title: '📱 + 📧 Both (WhatsApp & Email)', value: 'all_channels' },
+        ],
+      },
+      description: 'Controls which alert channels are enabled system-wide. Default is WhatsApp only.',
+      initialValue: 'whatsapp_only',
+    }),
+    defineField({
+      name: 'enableQuietHours',
+      title: 'Enable Night Quiet Hours (Mute late DMs)?',
+      type: 'boolean',
+      description: 'When enabled, non-urgent alerts posted during night hours will be held until morning.',
+      initialValue: true,
+    }),
+    defineField({
+      name: 'quietHoursStart',
+      title: 'Quiet Hours Start Time (24h format e.g. 22:30)',
+      type: 'string',
+      initialValue: '22:30',
+    }),
+    defineField({
+      name: 'quietHoursEnd',
+      title: 'Quiet Hours End Time (24h format e.g. 08:00)',
+      type: 'string',
+      initialValue: '08:00',
+    }),
+    defineField({
+      name: 'defaultDailyAlertLimit',
+      title: 'Default Daily Alert Limit Per Agent',
+      type: 'number',
+      description: 'Maximum automated alerts an agent receives per day to prevent spam (default: 6).',
+      initialValue: 6,
+    }),
   ],
 })

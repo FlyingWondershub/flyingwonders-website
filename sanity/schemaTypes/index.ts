@@ -47,6 +47,8 @@ import { karnatakaPackageSchema } from './karnatakaPackage'
 import { karnatakaSettingsSchema } from './karnatakaSettings'
 import { b2bLeadInquirySchema } from './b2bLeadInquiry'
 import { b2bLeadsSettingsSchema } from './b2bLeadsSettings'
+import { b2bLeadSubscriberSchema } from './b2bLeadSubscriber'
+import { b2bLeadAuditLogSchema } from './b2bLeadAuditLog'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -94,6 +96,8 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     readyPackageTemplateSchema,
     blogPostSchema,
     b2bLeadInquirySchema,
-    b2bLeadsSettingsSchema
+    b2bLeadsSettingsSchema,
+    b2bLeadSubscriberSchema,
+    b2bLeadAuditLogSchema
   ],
 }
