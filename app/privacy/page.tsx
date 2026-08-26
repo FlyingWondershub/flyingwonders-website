@@ -33,13 +33,14 @@ The personal information we collect depends on the context of your interactions 
   },
   {
     id: 'adsense',
-    title: '4. Google AdSense & Personalized Ads',
-    content: `We partner with Google AdSense to serve advertisements on our platform to support our digital services. Google, as a third-party vendor, uses cookies to serve ads on our website.
+    title: '4. Google AdSense, DoubleClick Cookies & Third-Party Advertising',
+    content: `We partner with Google AdSense and Google Certified Third-Party Ad Networks to serve advertisements on our platform. 
 
-Google’s use of advertising cookies enables it and its partners to serve ads to our users based on their visit to our sites and/or other sites on the Internet.
-• Personalized Advertising: AdSense may personalize advertisements based on your interests, demographic profiles, and past web browsing behavior.
-• Opting Out: Users may opt out of personalized advertising by visiting Google's ad settings desk at https://www.google.com/settings/ads.
-• Cookie Consent: In compliance with ePrivacy (GDPR) and California Consumer Privacy Act (CCPA) regulations, we implement Google-certified consent management protocols. You can customize your consent preferences at any time through our cookie settings banner.`
+• Third-Party Cookies: Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to our website or other websites on the Internet.
+• Google's Advertising Cookies: Google’s use of advertising cookies enables it and its partners to serve ads to our users based on their visit to our sites and/or other sites on the Internet.
+• Opting Out of Personalized Advertising: Users may opt out of personalized advertising by visiting Google Ad Settings at https://adssettings.google.com or by visiting the Network Advertising Initiative / Digital Advertising Alliance opt-out portal at https://www.aboutads.info/choices/.
+• Third-Party Ad Vendors: Third-party vendor and ad network cookies may also be used to measure advertising effectiveness and personalize ad content. You can find a list of Google-certified ad tech providers at https://support.google.com/adsense/answer/9012903.
+• Consent Management & GDPR/CCPA: In accordance with global privacy frameworks (GDPR, UK-GDPR, CCPA), we respect your cookie preferences. Non-essential advertising cookies are only activated in compliance with applicable regional privacy regulations.`
   },
   {
     id: 'sharing',

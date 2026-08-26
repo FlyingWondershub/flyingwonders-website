@@ -1,28 +1,80 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import AdBanner from '../../../components/AdBanner'
+import BlogViewTracker from '../../../components/BlogViewTracker'
+import { getBlogArticleBySlug, getAllBlogSlugs, BlogPost } from '../../../utils/blog'
 
-interface Article {
-  id: string
-  title: string
-  slug: string
-  category: string
-  date: string
-  author: string
-  readTime: string
-  imageUrl: string
-  excerpt: string
-  content: string
+export const revalidate = 600 // ISR: revalidate every 10 minutes
+
+interface PageProps {
+  params: Promise<{ slug: string }>
 }
 
-// Custom High-Performance Markdown and Visual Block Renderer
-function MarkdownRenderer({ content }: { content: string }) {
+export async function generateStaticParams() {
+  const slugs = await getAllBlogSlugs()
+  return slugs.map((slug) => ({ slug }))
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const article = await getBlogArticleBySlug(slug)
+
+  if (!article) {
+    return {
+      title: 'Article Not Found | Flying Wonders Travel Guides',
+      description: 'The requested Singapore travel guide could not be found.',
+    }
+  }
+
+  const title = `${article.title} | Flying Wonders Singapore`
+  const description = article.excerpt || article.seoDescription || `Discover top insider travel tips and guides for Singapore with Flying Wonders.`
+  const url = `https://flyingwonders.net/blog/${article.slug}`
+  const imageUrl = article.imageUrl || 'https://flyingwonders.net/images/hero/singapore-hero-1.jpg'
+
+  return {
+    title,
+    description,
+    keywords: [
+      article.category,
+      'Singapore travel guide',
+      'Singapore tourism',
+      ...(article.tags || []),
+      'Flying Wonders DMC'
+    ],
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'Flying Wonders',
+      type: 'article',
+      publishedTime: article.date,
+      authors: [article.author],
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [imageUrl],
+    },
+  }
+}
+
+// Server-Side High-Performance Markdown and Visual Block Renderer
+function ServerMarkdownRenderer({ content }: { content: string }) {
   if (!content) return null
 
-  // Normalize single newlines between list items or headers
   const lines = content.split('\n')
   const elements: React.ReactNode[] = []
   let currentList: string[] = []
@@ -39,7 +91,7 @@ function MarkdownRenderer({ content }: { content: string }) {
         elements.push(
           <ol key={`ol-${elements.length}`} style={{ margin: '1.25rem 0 1.75rem 1.75rem', padding: 0 }}>
             {items.map((item, iIdx) => (
-              <li key={iIdx} style={{ marginBottom: '0.75rem', lineHeight: '1.75', color: '#374151' }}>
+              <li key={iIdx} style={{ marginBottom: '0.75rem', lineHeight: '1.75', color: 'var(--text-dark)' }}>
                 <span dangerouslySetInnerHTML={{
                   __html: item
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -54,7 +106,7 @@ function MarkdownRenderer({ content }: { content: string }) {
         elements.push(
           <ul key={`ul-${elements.length}`} style={{ margin: '1.25rem 0 1.75rem 1.75rem', padding: 0, listStyleType: 'disc' }}>
             {items.map((item, iIdx) => (
-              <li key={iIdx} style={{ marginBottom: '0.75rem', lineHeight: '1.75', color: '#374151' }}>
+              <li key={iIdx} style={{ marginBottom: '0.75rem', lineHeight: '1.75', color: 'var(--text-dark)' }}>
                 <span dangerouslySetInnerHTML={{
                   __html: item
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -82,7 +134,7 @@ function MarkdownRenderer({ content }: { content: string }) {
     if (trimmed === '---' || trimmed === '***') {
       flushList()
       elements.push(
-        <hr key={`hr-${idx}`} style={{ border: 'none', borderTop: '1px solid #E2E8F0', margin: '2.5rem 0' }} />
+        <hr key={`hr-${idx}`} style={{ border: 'none', borderTop: '1px solid var(--glass-border)', margin: '2.5rem 0' }} />
       )
       continue
     }
@@ -98,8 +150,7 @@ function MarkdownRenderer({ content }: { content: string }) {
       if (h2Count === 2) {
         elements.push(
           <AdBanner 
-            key={`in-article-ad-${idx}`} 
-            slotId="blog_in_article_slot" 
+            key={`ad-mid-${idx}`}
             category="blog"
             style={{ margin: '2.5rem 0' }}
           />
@@ -112,13 +163,13 @@ function MarkdownRenderer({ content }: { content: string }) {
           id={id}
           style={{
             fontFamily: 'var(--font-playfair), serif',
-            fontSize: '1.85rem',
+            fontSize: '1.75rem',
             color: 'var(--emerald-secondary)',
-            marginTop: '2.75rem',
-            marginBottom: '1.25rem',
-            paddingBottom: '0.5rem',
-            borderBottom: '2px solid rgba(47,133,90,0.15)',
+            marginTop: '2.5rem',
+            marginBottom: '1rem',
             lineHeight: '1.3',
+            borderBottom: '2px solid rgba(47,133,90,0.15)',
+            paddingBottom: '0.5rem'
           }}
         >
           {text}
@@ -138,11 +189,11 @@ function MarkdownRenderer({ content }: { content: string }) {
           id={id}
           style={{
             fontFamily: 'var(--font-playfair), serif',
-            fontSize: '1.4rem',
-            color: '#1A202C',
-            marginTop: '2rem',
-            marginBottom: '0.85rem',
-            lineHeight: '1.35',
+            fontSize: '1.35rem',
+            color: 'var(--text-dark)',
+            marginTop: '1.75rem',
+            marginBottom: '0.75rem',
+            lineHeight: '1.4'
           }}
         >
           {text}
@@ -151,51 +202,108 @@ function MarkdownRenderer({ content }: { content: string }) {
       continue
     }
 
-    // Inline Image ![Alt text](url)
-    const imageMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/)
-    if (imageMatch) {
+    // Markdown Table Parser
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
       flushList()
-      const altText = imageMatch[1]
-      const imgUrl = imageMatch[2]
-      elements.push(
-        <figure key={`fig-${idx}`} style={{ margin: '2.25rem 0', textAlign: 'center' }}>
-          <div style={{ borderRadius: '14px', overflow: 'hidden', boxShadow: 'var(--shadow-md)', maxHeight: '440px', background: '#F1F5F9' }}>
-            <img
-              src={imgUrl || '/images/hero/singapore-hero-1.jpg'}
-              alt={altText}
-              loading="lazy"
-              onError={(e: any) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = '/images/hero/singapore-hero-1.jpg';
-              }}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
+      const tableLines = [trimmed]
+      while (idx + 1 < lines.length && lines[idx + 1].trim().startsWith('|') && lines[idx + 1].trim().endsWith('|')) {
+        idx++
+        tableLines.push(lines[idx].trim())
+      }
+
+      if (tableLines.length >= 2) {
+        const headerCols = tableLines[0].split('|').slice(1, -1).map(c => c.trim())
+        const rowLines = tableLines.slice(2)
+
+        elements.push(
+          <div key={`tbl-${idx}`} style={{ overflowX: 'auto', margin: '2rem 0', borderRadius: '12px', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem', background: 'var(--bg-secondary)' }}>
+              <thead>
+                <tr style={{ background: 'var(--emerald-secondary)', color: '#FFFFFF' }}>
+                  {headerCols.map((col, cIdx) => (
+                    <th key={cIdx} style={{ padding: '0.85rem 1rem', fontWeight: 700 }}>
+                      <span dangerouslySetInnerHTML={{
+                        __html: col
+                          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                      }} />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rowLines.map((rowStr, rIdx) => {
+                  const cells = rowStr.split('|').slice(1, -1).map(c => c.trim())
+                  return (
+                    <tr key={rIdx} style={{ borderBottom: '1px solid var(--glass-border)', background: rIdx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)' }}>
+                      {cells.map((cell, cellIdx) => (
+                        <td key={cellIdx} style={{ padding: '0.85rem 1rem', color: 'var(--text-dark)' }}>
+                          <span dangerouslySetInnerHTML={{
+                            __html: cell
+                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                              .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                              .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" style="color:var(--emerald-secondary);font-weight:600;text-decoration:underline;">$1</a>')
+                          }} />
+                        </td>
+                      ))}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
-          {altText && (
-            <figcaption style={{ fontSize: '0.85rem', color: '#718096', fontStyle: 'italic', marginTop: '0.65rem' }}>
-              📸 {altText}
-            </figcaption>
+        )
+        continue
+      }
+    }
+
+    // Markdown Image tag: ![Alt text](url)
+    const imgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/)
+    if (imgMatch) {
+      flushList()
+      const alt = imgMatch[1]
+      const src = imgMatch[2]
+      elements.push(
+        <div
+          key={`img-${idx}`}
+          style={{
+            margin: '2rem 0',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            boxShadow: 'var(--shadow-md)',
+            background: 'rgba(0,0,0,0.03)'
+          }}
+        >
+          <img
+            src={src}
+            alt={alt}
+            style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '550px', objectFit: 'cover' }}
+            loading="lazy"
+          />
+          {alt && (
+            <div style={{ padding: '0.65rem 1rem', background: 'var(--bg-secondary)', fontSize: '0.82rem', color: 'var(--text-muted, #64748B)', textAlign: 'center', borderTop: '1px solid var(--glass-border)', fontStyle: 'italic' }}>
+              📷 {alt}
+            </div>
           )}
-        </figure>
+        </div>
       )
       continue
     }
 
-    // Callout Box / Tip / Alert (> text)
-    if (trimmed.startsWith('> ')) {
+    // Blockquote Insider Tip (> Tip text)
+    if (trimmed.startsWith('>')) {
       flushList()
-      const quoteText = trimmed.replace(/^>\s+/, '')
+      const quoteText = trimmed.replace(/^>\s*/, '')
       elements.push(
         <div
-          key={`quote-${idx}`}
-          className="blog-tip-box"
+          key={`tip-${idx}`}
           style={{
-            borderLeft: '4px solid var(--gold-accent)',
-            background: '#FFFDF5',
-            padding: '1.25rem 1.5rem',
-            margin: '1.75rem 0',
+            background: 'linear-gradient(135deg, rgba(212,160,23,0.08) 0%, rgba(212,160,23,0.18) 100%)',
+            borderLeft: '4px solid #D4A017',
             borderRadius: '0 12px 12px 0',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            padding: '1.25rem 1.5rem',
+            margin: '2rem 0',
+            boxShadow: 'var(--shadow-sm)'
           }}
         >
           <div className="tip-title" style={{ fontWeight: 700, color: '#975A16', marginBottom: '0.35rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -307,48 +415,12 @@ function MarkdownRenderer({ content }: { content: string }) {
   )
 }
 
-export default function ArticleDetail() {
-  const { slug } = useParams()
-  const [article, setArticle] = useState<Article | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function loadArticle() {
-      try {
-        const res = await fetch('/api/blog/fetch')
-        const data = await res.json()
-        if (data.success) {
-          const match = data.articles.find((a: Article) => a.slug === slug)
-          setArticle(match || null)
-          if (match) {
-            fetch(`/api/blog/view/${match.slug}`, { method: 'PATCH' }).catch(console.error)
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load article detail', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadArticle()
-  }, [slug])
-
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '10rem 1.5rem', fontSize: '1.2rem', color: 'var(--emerald-secondary)' }}>
-        🔄 Loading guide content...
-      </div>
-    )
-  }
+export default async function ArticleDetailPage({ params }: PageProps) {
+  const { slug } = await params
+  const article = await getBlogArticleBySlug(slug)
 
   if (!article) {
-    return (
-      <div style={{ textAlign: 'center', padding: '10rem 1.5rem' }}>
-        <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2rem', color: 'red', marginBottom: '1rem' }}>Article Not Found</h2>
-        <p style={{ opacity: 0.8, marginBottom: '2rem' }}>We could not locate this travel story or guide.</p>
-        <Link href="/blog" className="btn btn-primary">Back to Blog Feed</Link>
-      </div>
-    )
+    notFound()
   }
 
   // Extract Table of Contents from markdown headings
@@ -362,169 +434,200 @@ export default function ArticleDetail() {
       return { text, id, isH2 }
     })
 
+  // Google JSON-LD BlogPosting Schema for Rich Search Indexing & AdSense Trust
+  const blogPostingSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: article.title,
+    description: article.excerpt || article.seoDescription,
+    image: [article.imageUrl],
+    datePublished: article.date,
+    dateModified: article.date,
+    author: {
+      '@type': 'Person',
+      name: article.author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Flying Wonders Private Limited',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://flyingwonders.net/images/logo.png',
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://flyingwonders.net/blog/${article.slug}`,
+    },
+  }
+
   return (
-    <div className="container" style={{ padding: '2.5rem 1.5rem 4rem', maxWidth: '1200px', margin: '0 auto' }}>
-      
-      {/* Back button link */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <Link href="/blog" style={{ color: 'var(--emerald-secondary)', fontWeight: 700, fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
-          ← Back to Blog Feed
-        </Link>
-      </div>
+    <>
+      {/* JSON-LD Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
+      />
+      <BlogViewTracker slug={article.slug} />
 
-      <div className="blog-layout-grid">
+      <div className="container" style={{ padding: '2.5rem 1.5rem 4rem', maxWidth: '1200px', margin: '0 auto' }}>
         
-        {/* Main Content Pane */}
-        <div style={{ minWidth: 0 }}>
+        {/* Back button link */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <Link href="/blog" style={{ color: 'var(--emerald-secondary)', fontWeight: 700, fontSize: '0.88rem', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}>
+            ← Back to Blog Feed
+          </Link>
+        </div>
+
+        <div className="blog-layout-grid">
           
-          {/* Article Header info */}
-          <div style={{ marginBottom: '1.75rem' }}>
-            <span style={{ fontSize: '0.75rem', background: 'rgba(47,133,90,0.12)', color: 'var(--emerald-secondary)', padding: '0.25rem 0.75rem', borderRadius: '12px', fontWeight: 700, textTransform: 'uppercase' }}>
-              {article.category}
-            </span>
-            <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.75rem, 5vw, 2.5rem)', color: 'var(--text-dark)', marginTop: '0.75rem', marginBottom: '0.85rem', lineHeight: '1.25' }}>
-              {article.title}
-            </h1>
-            <div style={{ display: 'flex', gap: '1.25rem', color: 'var(--text-dark)', opacity: 0.75, fontSize: '0.82rem', flexWrap: 'wrap' }}>
-              <span>✍️ Written by: <strong>{article.author}</strong></span>
-              <span>📅 Published: {article.date}</span>
-              <span>⏱️ Read Time: {article.readTime}</span>
+          {/* Main Content Pane */}
+          <article style={{ minWidth: 0 }}>
+            
+            {/* Article Header info */}
+            <header style={{ marginBottom: '1.75rem' }}>
+              <span style={{ fontSize: '0.75rem', background: 'rgba(47,133,90,0.12)', color: 'var(--emerald-secondary)', padding: '0.25rem 0.75rem', borderRadius: '12px', fontWeight: 700, textTransform: 'uppercase' }}>
+                {article.category}
+              </span>
+              <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.75rem, 5vw, 2.5rem)', color: 'var(--text-dark)', marginTop: '0.75rem', marginBottom: '0.85rem', lineHeight: '1.25' }}>
+                {article.title}
+              </h1>
+              <div style={{ display: 'flex', gap: '1.25rem', color: 'var(--text-dark)', opacity: 0.75, fontSize: '0.82rem', flexWrap: 'wrap' }}>
+                <span>✍️ Written by: <strong>{article.author}</strong></span>
+                <span>📅 Published: {article.date}</span>
+                <span>⏱️ Read Time: {article.readTime}</span>
+              </div>
+            </header>
+
+            {/* Hero Cover Image */}
+            <div style={{ height: 'clamp(240px, 45vw, 440px)', borderRadius: '16px', overflow: 'hidden', marginBottom: '2rem', boxShadow: 'var(--shadow-md)', background: 'rgba(0,0,0,0.05)' }}>
+              <img 
+                src={article.imageUrl || '/images/hero/singapore-hero-1.jpg'} 
+                alt={article.title} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              />
             </div>
-          </div>
 
-          {/* Hero Cover Image */}
-          <div style={{ height: 'clamp(240px, 45vw, 440px)', borderRadius: '16px', overflow: 'hidden', marginBottom: '2rem', boxShadow: 'var(--shadow-md)', background: 'rgba(0,0,0,0.05)' }}>
-            <img 
-              src={article.imageUrl || '/images/hero/singapore-hero-1.jpg'} 
-              alt={article.title} 
-              onError={(e: any) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = '/images/hero/singapore-hero-1.jpg';
-              }}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            {/* Table of Contents Box */}
+            {tocHeadings.length > 0 && (
+              <div
+                className="blog-toc-box"
+                style={{
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--glass-border)',
+                  borderRadius: '14px',
+                  padding: '1.25rem 1.5rem',
+                  marginBottom: '2.5rem'
+                }}
+              >
+                <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--emerald-secondary)', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📑 In this Singapore Travel Guide:
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem', listStyle: 'none' }}>
+                  {tocHeadings.map((h, hIdx) => (
+                    <li key={hIdx} style={{ marginBottom: '0.4rem', paddingLeft: h.isH2 ? 0 : '1rem' }}>
+                      <a
+                        href={`#${h.id}`}
+                        style={{
+                          color: h.isH2 ? 'var(--text-dark)' : 'var(--text-dark)',
+                          opacity: h.isH2 ? 1 : 0.8,
+                          fontWeight: h.isH2 ? 600 : 400,
+                          fontSize: '0.88rem',
+                          textDecoration: 'none',
+                          transition: 'color 0.2s'
+                        }}
+                      >
+                        {h.isH2 ? '• ' : '↳ '} {h.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Render Full Rich Markdown Content with Photos & Callouts */}
+            <ServerMarkdownRenderer content={article.content} />
+
+            {/* Bottom End-of-Article Sponsored Unit */}
+            <AdBanner 
+              category="blog"
+              style={{ marginTop: '2.5rem', marginBottom: '1rem' }}
             />
-          </div>
 
-          {/* Table of Contents Box */}
-          {tocHeadings.length > 0 && (
-            <div
-              className="blog-toc-box"
+            {/* Bottom Article Author & Share footer */}
+            <footer className="blog-author-box" style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+              <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'var(--emerald-secondary)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 800, flexShrink: 0 }}>
+                {article.author.charAt(0)}
+              </div>
+              <div>
+                <div style={{ fontWeight: 800, color: 'var(--text-dark)', fontSize: '0.95rem' }}>{article.author}</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-dark)', opacity: 0.75, marginTop: '0.15rem' }}>
+                  Destination Specialist at Flying Wonders Singapore. Curating luxury itineraries, corporate groups, and family holiday experiences.
+                </div>
+              </div>
+            </footer>
+
+          </article>
+
+          {/* Streamlined Super Compact Sidebar CTA */}
+          <aside style={{ position: 'sticky', top: '90px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            
+            {/* Consolidated Compact Action Card */}
+            <div className="glass" style={{ padding: '1.25rem', borderRadius: '14px', background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--emerald-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                ⚡ Direct DMC Rates
+              </span>
+              <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.15rem', color: 'var(--text-dark)', margin: '0.35rem 0 0.5rem 0', lineHeight: '1.3' }}>
+                Singapore Attraction Tickets
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-dark)', opacity: 0.8, lineHeight: 1.45, marginBottom: '0.85rem' }}>
+                Instant barcode e-tickets to USS, Gardens by the Bay, Night Safari & more at wholesale rates.
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <Link
+                  href="/singapore-attractions"
+                  className="btn btn-primary"
+                  style={{ width: '100%', textAlign: 'center', padding: '0.55rem', fontSize: '0.8rem', fontWeight: 700 }}
+                >
+                  Instant E-Tickets →
+                </Link>
+                <Link
+                  href="/packages"
+                  style={{ width: '100%', textAlign: 'center', padding: '0.45rem', fontSize: '0.78rem', fontWeight: 600, color: 'var(--emerald-secondary)', border: '1px solid var(--glass-border)', borderRadius: '6px', textDecoration: 'none' }}
+                >
+                  Custom Packages
+                </Link>
+              </div>
+            </div>
+
+            {/* Quick WhatsApp Link Pill */}
+            <a 
+              href="https://wa.me/919886171251" 
+              target="_blank" 
+              rel="noopener noreferrer"
               style={{
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--glass-border)',
-                borderRadius: '14px',
-                padding: '1.25rem 1.5rem',
-                marginBottom: '2.5rem'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                background: '#25D366',
+                color: '#FFFFFF',
+                padding: '0.6rem 0.85rem',
+                borderRadius: '10px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(37,211,102,0.25)'
               }}
             >
-              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--emerald-secondary)', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                📑 In this Singapore Travel Guide:
-              </div>
-              <ul style={{ margin: 0, paddingLeft: '1.25rem', listStyle: 'none' }}>
-                {tocHeadings.map((h, hIdx) => (
-                  <li key={hIdx} style={{ marginBottom: '0.4rem', paddingLeft: h.isH2 ? 0 : '1rem' }}>
-                    <a
-                      href={`#${h.id}`}
-                      style={{
-                        color: h.isH2 ? 'var(--text-dark)' : 'var(--text-dark)',
-                        opacity: h.isH2 ? 1 : 0.8,
-                        fontWeight: h.isH2 ? 600 : 400,
-                        fontSize: '0.88rem',
-                        textDecoration: 'none',
-                        transition: 'color 0.2s'
-                      }}
-                    >
-                      {h.isH2 ? '• ' : '↳ '} {h.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Render Full Rich Markdown Content with Photos & Callouts */}
-          <MarkdownRenderer content={article.content} />
-
-          {/* Bottom End-of-Article Sponsored Unit */}
-          <AdBanner 
-            slotId="blog_article_end_slot" 
-            category="blog"
-            style={{ marginTop: '2.5rem', marginBottom: '1rem' }}
-          />
-
-          {/* Bottom Article Author & Share footer */}
-          <div className="blog-author-box" style={{ marginTop: '2rem', padding: '1.5rem', background: 'var(--bg-secondary)', borderRadius: '16px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-            <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'var(--emerald-secondary)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', fontWeight: 800, flexShrink: 0 }}>
-              {article.author.charAt(0)}
-            </div>
-            <div>
-              <div style={{ fontWeight: 800, color: 'var(--text-dark)', fontSize: '0.95rem' }}>{article.author}</div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-dark)', opacity: 0.75, marginTop: '0.15rem' }}>
-                Destination Specialist at Flying Wonders Singapore. Curating luxury itineraries, corporate groups, and family holiday experiences.
-              </div>
-            </div>
-          </div>
+              💬 WhatsApp Singapore Desk
+            </a>
+          </aside>
 
         </div>
 
-        {/* Streamlined Super Compact Sidebar CTA */}
-        <aside style={{ position: 'sticky', top: '90px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          
-          {/* Consolidated Compact Action Card */}
-          <div className="glass" style={{ padding: '1.25rem', borderRadius: '14px', background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-sm)' }}>
-            <span style={{ fontSize: '0.7rem', color: 'var(--emerald-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              ⚡ Direct DMC Rates
-            </span>
-            <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.15rem', color: 'var(--text-dark)', margin: '0.35rem 0 0.5rem 0', lineHeight: '1.3' }}>
-              Singapore Attraction Tickets
-            </h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-dark)', opacity: 0.8, lineHeight: 1.45, marginBottom: '0.85rem' }}>
-              Instant barcode e-tickets to USS, Gardens by the Bay, Night Safari & more at wholesale rates.
-            </p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <Link
-                href="/singapore-attractions"
-                className="btn btn-primary"
-                style={{ width: '100%', textAlign: 'center', padding: '0.55rem', fontSize: '0.8rem', fontWeight: 700 }}
-              >
-                Instant E-Tickets →
-              </Link>
-              <Link
-                href="/packages"
-                style={{ width: '100%', textAlign: 'center', padding: '0.45rem', fontSize: '0.78rem', fontWeight: 600, color: 'var(--emerald-secondary)', border: '1px solid var(--glass-border)', borderRadius: '6px', textDecoration: 'none' }}
-              >
-                Custom Packages
-              </Link>
-            </div>
-          </div>
-
-          {/* Quick WhatsApp Link Pill */}
-          <a 
-            href="https://wa.me/919886171251" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              background: '#25D366',
-              color: '#FFFFFF',
-              padding: '0.6rem 0.85rem',
-              borderRadius: '10px',
-              fontSize: '0.8rem',
-              fontWeight: 700,
-              textDecoration: 'none',
-              boxShadow: '0 2px 6px rgba(37,211,102,0.25)'
-            }}
-          >
-            💬 WhatsApp Singapore Desk
-          </a>
-        </aside>
-
       </div>
-
-    </div>
+    </>
   )
 }

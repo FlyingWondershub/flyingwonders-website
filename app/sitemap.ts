@@ -4,6 +4,7 @@ import { dataset, projectId, apiVersion } from '../sanity/env';
 
 import { getAllPackages, normalizeSlug } from '../utils/packages';
 import { getAllHotels, slugifyHotelName } from '../utils/hotels';
+import { getAllBlogSlugs } from '../utils/blog';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://flyingwonders.net'
@@ -15,7 +16,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/services-catalog', priority: 0.95, freq: 'daily' },
     { path: '/b2b-directory', priority: 0.95, freq: 'daily' },
     { path: '/b2b-leads', priority: 0.95, freq: 'daily' },
-    { path: '/directory', priority: 0.9, freq: 'daily' },
     { path: '/packages', priority: 0.9, freq: 'weekly' },
     { path: '/singapore-attractions', priority: 0.9, freq: 'daily' },
     { path: '/singapore-attractions/promotions', priority: 0.85, freq: 'daily' },
@@ -82,28 +82,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
      console.error('Failed to get packages for sitemap:', err)
    }
 
-   // Dynamic blog routes – fetch all published slugs from Sanity
+   // Dynamic blog routes – fetch all published slugs
    let blogRoutes: MetadataRoute.Sitemap = []
    try {
-     const client = createClient({
-       projectId,
-       dataset,
-       apiVersion,
-       useCdn: false,
-       token: process.env.SANITY_READ_TOKEN,
-     })
-     const blogSlugs: string[] = await client.fetch("*[_type == \"blogPost\" && isPublished == true].slug.current")
+     const blogSlugs = await getAllBlogSlugs()
      if (Array.isArray(blogSlugs)) {
        blogRoutes = blogSlugs.map((slug) => ({
          url: `${baseUrl}/blog/${slug}`,
          lastModified: today,
          changeFrequency: 'daily' as MetadataRoute.Sitemap[0]['changeFrequency'],
-         priority: 0.7,
+         priority: 0.75,
        }))
      }
-    } catch (err) {
-      console.error('Failed to get blog slugs for sitemap:', err)
-    }
+   } catch (err) {
+     console.error('Failed to get blog slugs for sitemap:', err)
+   }
 
     // Dynamic individual partner hotel routes
     let hotelSitemap: MetadataRoute.Sitemap = []

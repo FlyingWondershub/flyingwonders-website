@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 interface AdBannerProps {
   slotId?: string
@@ -15,7 +15,7 @@ interface AdBannerProps {
 }
 
 export default function AdBanner({
-  slotId = '1234567890',
+  slotId,
   format = 'auto',
   style,
   className = '',
@@ -27,30 +27,36 @@ export default function AdBanner({
 }: AdBannerProps) {
   const [adEnabled, setAdEnabled] = useState(true)
   const [adLoaded, setAdLoaded] = useState(false)
+  const pushedRef = useRef(false)
   const publisherId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-3967023851392009'
 
-  useEffect(() => {
-    // Check if ads are enabled for this category in local/site settings
-    if (typeof window !== 'undefined') {
-      try {
-        const disabled = localStorage.getItem(`fw_ads_disabled_${category}`)
-        if (disabled === 'true') {
-          setAdEnabled(false)
-          return
-        }
-      } catch (e) {}
+  // Validate if slotId is a valid 8-12 digit AdSense numeric ID
+  const isNumericSlot = Boolean(slotId && /^\d{8,12}$/.test(slotId))
 
-      // Try triggering Google AdSense push
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    try {
+      const disabled = localStorage.getItem(`fw_ads_disabled_${category}`)
+      if (disabled === 'true') {
+        setAdEnabled(false)
+        return
+      }
+    } catch (e) {}
+
+    // Only push if adsbygoogle is defined and we haven't already pushed for this unit
+    if (!pushedRef.current && isNumericSlot) {
       try {
-        if (window && (window as any).adsbygoogle && publisherId) {
+        if ((window as any).adsbygoogle) {
           ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({})
+          pushedRef.current = true
           setAdLoaded(true)
         }
       } catch (err) {
         // Fallback display active
       }
     }
-  }, [category, publisherId])
+  }, [category, publisherId, isNumericSlot])
 
   if (!adEnabled) return null
 
@@ -90,23 +96,25 @@ export default function AdBanner({
             border: '1px solid var(--glass-border, #E2E8F0)'
           }}
         >
-          Sponsored / Advertisement
+          Sponsored / Recommendation
         </span>
       </div>
 
-      {/* Google AdSense Script slot */}
-      <div style={{ minHeight: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <ins
-          className="adsbygoogle"
-          style={{ display: 'block', width: '100%', textAlign: 'center' }}
-          data-ad-client={publisherId}
-          data-ad-slot={slotId}
-          data-ad-format={format}
-          data-full-width-responsive="true"
-        />
+      <div style={{ minHeight: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        {/* Google AdSense Script slot (only if valid numeric slot is provided) */}
+        {isNumericSlot && (
+          <ins
+            className="adsbygoogle"
+            style={{ display: 'block', width: '100%', textAlign: 'center' }}
+            data-ad-client={publisherId}
+            data-ad-slot={slotId}
+            data-ad-format={format}
+            data-full-width-responsive="true"
+          />
+        )}
 
         {/* High-Converting Native Travel Affiliate Fallback Card */}
-        {!adLoaded && (
+        {(!isNumericSlot || !adLoaded) && (
           <div
             style={{
               width: '100%',
