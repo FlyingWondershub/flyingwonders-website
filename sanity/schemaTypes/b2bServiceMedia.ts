@@ -149,5 +149,23 @@ export const b2bServiceMediaSchema = defineType({
       of: [{ type: 'string' }],
       description: 'e.g. Deluxe Room, Superior City View, Family Suite with Balcony',
     }),
+    defineField({
+      name: 'shorts',
+      title: 'Curated YouTube Shorts (Vertical Reels)',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            { name: 'title', title: 'Short Title', type: 'string' },
+            { name: 'creator', title: 'Creator / Channel Name', type: 'string' },
+            { name: 'views', title: 'Views Text (e.g. 500K views)', type: 'string' },
+            { name: 'thumbnailUrl', title: 'Thumbnail Image URL', type: 'string' },
+            { name: 'youtubeVideoId', title: 'YouTube Video ID / Short ID', type: 'string' },
+          ],
+        },
+      ],
+      description: 'Add vertical 9:16 YouTube Shorts for room walkthroughs, pool tours, and amenities.',
+    }),
   ],
 })

@@ -17,6 +17,7 @@ import {
   ShieldCheck
 } from 'lucide-react'
 import { HotelData } from '../../../../utils/hotels'
+import PackageShortsCarousel from '../../../../components/PackageShortsCarousel'
 
 export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
   const [copied, setCopied] = useState(false)
@@ -214,6 +215,14 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
               </div>
             </div>
           )}
+
+          {/* YouTube Shorts Carousel for Hotel Video Walkthroughs */}
+          <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <PackageShortsCarousel
+              destination={hotel.location || 'Singapore'}
+              curatedShorts={hotel.shorts && hotel.shorts.length > 0 ? hotel.shorts : undefined}
+            />
+          </div>
 
           {/* Photo Gallery Grid */}
           {allPhotos.length > 0 && (

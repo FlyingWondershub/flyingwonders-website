@@ -1,4 +1,5 @@
 import { client } from '../sanity/lib/client'
+import type { TravelShort } from './packages'
 
 export interface HotelData {
   _id: string
@@ -15,6 +16,7 @@ export interface HotelData {
   galleryImageUrls?: string[]
   features?: string[]
   roomCategories?: string[]
+  shorts?: TravelShort[]
   isDisplayed?: boolean
 }
 
@@ -48,6 +50,24 @@ export const DEFAULT_HOTELS: HotelData[] = [
     ],
     features: ['Outdoor Skyline Pool', '5 Mins Walk to Lavender MRT', 'Halal-Certified Food Court', '24/7 Gym', 'Free High-Speed Wi-Fi', 'Daily Buffet Breakfast'],
     roomCategories: ['Superior Double Room', 'Premier Queen with Balcony', 'Family Triple / Quad Room', 'Executive King Suite'],
+    shorts: [
+      {
+        id: 'hb-short-1',
+        title: 'Hotel Boss Singapore Sky Pool & City View 🇸🇬',
+        creator: 'SingaporeHotels',
+        views: '320K views',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop',
+        youtubeVideoId: 'kYJzX9Qz8oM'
+      },
+      {
+        id: 'hb-short-2',
+        title: 'Hotel Boss Room Tour & Lavender MRT Walk 🚶‍♂️',
+        creator: 'TravelVibesSG',
+        views: '180K views',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&auto=format&fit=crop',
+        youtubeVideoId: 't5A5L_e1Q9k'
+      }
+    ],
     isDisplayed: true
   },
   {
@@ -69,6 +89,16 @@ export const DEFAULT_HOTELS: HotelData[] = [
     ],
     features: ['Direct Lavender MRT Link', 'Direct Train to Changi Airport', 'Sky Terrace Pool', 'Currency Exchange Desk', '24/7 Concierge'],
     roomCategories: ['Superior Queen Room', 'Premier Twin Room', 'Triple Family Room'],
+    shorts: [
+      {
+        id: 'vh-short-1',
+        title: 'Direct MRT Access at V Hotel Lavender Singapore 🚇',
+        creator: 'SingaporeTransit',
+        views: '240K views',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&auto=format&fit=crop',
+        youtubeVideoId: 'kYJzX9Qz8oM'
+      }
+    ],
     isDisplayed: true
   },
   {
@@ -91,6 +121,24 @@ export const DEFAULT_HOTELS: HotelData[] = [
     ],
     features: ['World-Famous 57F Infinity Pool', 'Sands SkyPark Access', 'Celebrity Chef Dining', 'Direct Bayfront MRT Link', 'Luxury Banyan Tree Spa'],
     roomCategories: ['Deluxe City View', 'Sands Premier Suite', 'Club King with SkyPark Access', 'Presidential Harbour Suite'],
+    shorts: [
+      {
+        id: 'mbs-short-1',
+        title: '57th Floor Infinity Pool at Marina Bay Sands 🏊‍♂️✨',
+        creator: 'LuxuryTravelSG',
+        views: '2.4M views',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=600&auto=format&fit=crop',
+        youtubeVideoId: 't5A5L_e1Q9k'
+      },
+      {
+        id: 'mbs-short-2',
+        title: 'Sands SkyPark Observation Deck Sunset View 🌅',
+        creator: 'VisitSingapore',
+        views: '850K views',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&auto=format&fit=crop',
+        youtubeVideoId: 'x6d3XQc0G4s'
+      }
+    ],
     isDisplayed: true
   },
   {
@@ -174,6 +222,7 @@ export async function getAllHotels(): Promise<HotelData[]> {
       starRating,
       hotelAddress,
       roomCategories,
+      shorts,
       isDisplayed
     }`)
 
@@ -191,6 +240,7 @@ export async function getAllHotels(): Promise<HotelData[]> {
       galleryImageUrls: h.galleryUploaded || h.galleryImageUrls || [],
       features: h.features || [],
       roomCategories: h.roomCategories || [],
+      shorts: h.shorts || [],
       isDisplayed: h.isDisplayed !== false
     }))
 

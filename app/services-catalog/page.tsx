@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import * as XLSX from 'xlsx'
 import {
   Building2,
   Compass,
@@ -25,6 +24,7 @@ import {
 } from 'lucide-react'
 import { client } from '../../sanity/lib/client'
 import AdBanner from '../../components/AdBanner'
+import { DEFAULT_HOTELS } from '../../utils/hotels'
 
 // Helper function to strip raw HTML tags and format clean text
 function stripHtml(htmlStr?: string) {
@@ -251,11 +251,20 @@ export default function ServicesCatalogPage() {
     hiddenHotelNames: []
   })
 
-  // State Stores
-  const [hotels, setHotels] = useState<any[]>([])
+  // State Stores (Pre-populated with instant defaults for sub-100ms first paint)
+  const [hotels, setHotels] = useState<any[]>(() => 
+    DEFAULT_HOTELS.map(h => ({
+      id: h._id,
+      name: h.name,
+      star: h.star,
+      location: h.location,
+      roomType: h.roomType || 'Deluxe Room',
+      amenities: h.features || ['Breakfast Included', 'Free Wi-Fi', 'Swimming Pool']
+    }))
+  )
   const [attractions, setAttractions] = useState<any[]>([])
-  const [mediaItems, setMediaItems] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [mediaItems, setMediaItems] = useState<any[]>(DEFAULT_MEDIA_ITEMS)
+  const [loading, setLoading] = useState(false)
 
   // Interactive UI State
   const [activeTab, setActiveTab] = useState<'all' | 'hotels' | 'attractions' | 'restaurants' | 'guides' | 'tours' | 'packages'>('all')
@@ -265,16 +274,15 @@ export default function ServicesCatalogPage() {
 
   // Fetch all live data sources in parallel on mount
   useEffect(() => {
-    // 1. Instant hydration from sessionStorage if available
+    // 1. Instant hydration from persistent storage if available
     try {
-      const cached = sessionStorage.getItem('fw_services_catalog_cache')
+      const cached = localStorage.getItem('fw_services_catalog_cache') || sessionStorage.getItem('fw_services_catalog_cache')
       if (cached) {
         const parsed = JSON.parse(cached)
         if (parsed.settings) setSettings(parsed.settings)
-        if (parsed.hotels) setHotels(parsed.hotels)
-        if (parsed.attractions) setAttractions(parsed.attractions)
-        if (parsed.mediaItems) setMediaItems(parsed.mediaItems)
-        setLoading(false)
+        if (parsed.hotels?.length) setHotels(parsed.hotels)
+        if (parsed.attractions?.length) setAttractions(parsed.attractions)
+        if (parsed.mediaItems?.length) setMediaItems(parsed.mediaItems)
       }
     } catch (e) {}
 
@@ -309,28 +317,16 @@ export default function ServicesCatalogPage() {
 
     const fetchHotels = async () => {
       try {
-        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlNHAbUt7ldY7my-EXF1VZq4s2eQ7y3YzZm8z6vFLfUH4KYKHw3G03FK60DlgQ_fGUN1Hz1qIBFqUT/pub?output=xlsx'
-        const response = await fetch(sheetUrl)
+        const response = await fetch('/api/catalog-hotels')
         if (response.ok) {
-          const buffer = await response.arrayBuffer()
-          const wb = XLSX.read(buffer, { type: 'array' })
-          const hotelSheet = wb.Sheets['Hotel'] || wb.Sheets['HOTEL'] || wb.Sheets['Hotels']
-          if (hotelSheet) {
-            const rawHotels: any[] = XLSX.utils.sheet_to_json(hotelSheet)
-            const parsed = rawHotels.map((h, idx) => ({
-              id: `hotel-${idx}`,
-              name: h['Hotel Name'] || h['Hotel'] || h['NAME'] || `Partner Hotel ${idx + 1}`,
-              star: h['Star Rating'] || h['Star'] || h['Category'] || '4-Star',
-              location: h['City'] || h['Location'] || h['Area'] || 'Singapore',
-              roomType: h['Room Category'] || h['Room Type'] || 'Deluxe Room',
-              amenities: [h['Breakfast'] ? 'Breakfast Included' : 'Buffet Breakfast Available', 'Free Wi-Fi', 'Swimming Pool'].filter(Boolean)
-            }))
-            setHotels(parsed)
-            return parsed
+          const data = await response.json()
+          if (data.success && Array.isArray(data.hotels)) {
+            setHotels(data.hotels)
+            return data.hotels
           }
         }
       } catch (e) {
-        console.warn('Failed to load Google Sheets hotel list')
+        console.warn('Failed to load catalog hotels from API proxy')
       }
       return null
     }
@@ -406,7 +402,7 @@ export default function ServicesCatalogPage() {
       fetchMedia()
     ])
 
-    // Save snapshot to sessionStorage for instant next visits
+    // Save snapshot to localStorage for instant sub-second render on subsequent visits
     try {
       const cachePayload = {
         settings: settledSettings.status === 'fulfilled' ? settledSettings.value : null,
@@ -415,6 +411,7 @@ export default function ServicesCatalogPage() {
         mediaItems: settledMedia.status === 'fulfilled' ? settledMedia.value : null,
         timestamp: Date.now()
       }
+      localStorage.setItem('fw_services_catalog_cache', JSON.stringify(cachePayload))
       sessionStorage.setItem('fw_services_catalog_cache', JSON.stringify(cachePayload))
     } catch (e) {}
 

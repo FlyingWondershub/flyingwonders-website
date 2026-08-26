@@ -10,6 +10,10 @@ const BASE_URL = process.env.CEBU_API_PROXY_URL || 'http://129.159.237.41/cebu'
 let cachedToken: string | null = null
 let tokenExpiryTime: number = 0
 
+// In-memory cache for attraction tickets (15 minutes)
+let cachedTicketList: any[] | null = null
+let ticketListExpiry: number = 0
+
 // Helper to get active Auth Token using Reseller API protocol
 async function getAuthToken(): Promise<string> {
   const now = Date.now()
@@ -162,6 +166,13 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
     const path = searchParams.get('path') || '/attractions'
+
+    // Return in-memory cache if standard attractions catalog query is fresh (15 minutes)
+    const now = Date.now()
+    if (path === '/attractions' && cachedTicketList && cachedTicketList.length > 0 && ticketListExpiry > now) {
+      return NextResponse.json({ success: true, tickets: cachedTicketList, cached: true })
+    }
+
     const targetUrl = `${BASE_URL}${path}`
 
     try {
@@ -243,7 +254,16 @@ export async function GET(req: Request) {
         })
 
         const attractions = await Promise.all(attractionPromises)
-        return NextResponse.json({ success: true, tickets: attractions.length > 0 ? attractions : FALLBACK_TICKETS })
+        const finalTickets = attractions.length > 0 ? attractions : FALLBACK_TICKETS
+
+        if (path === '/attractions' && finalTickets.length > 0) {
+          cachedTicketList = finalTickets
+          ticketListExpiry = Date.now() + 15 * 60 * 1000
+        }
+
+        return NextResponse.json({ success: true, tickets: finalTickets }, {
+          headers: { 'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=1800' }
+        })
       } else {
         return NextResponse.json({ success: true, tickets: FALLBACK_TICKETS, source: 'cache_fallback' })
       }
