@@ -34,6 +34,13 @@ async function startWhatsAppGateway() {
     generateHighQualityLinkPreview: false,
     browser: ['Flying Wonders Lead Gateway', 'Chrome', '122.0.0'],
     syncFullHistory: false,
+    markOnlineOnConnect: false, // Stealth Mode: Do NOT broadcast online presence or wake mobile device
+    shouldSyncHistoryMessage: () => false, // Prevent continuous historical message downloads
+    emitOwnEvents: false,
+    keepAliveIntervalMs: 30000,
+    defaultQueryTimeoutMs: 60000,
+    connectTimeoutMs: 60000,
+    getMessage: async () => ({ conversation: '' }),
   })
 
   sock.ev.on('creds.update', saveCreds)
