@@ -85,16 +85,16 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     starRating: '4.9',
     duration: '6 to 8 Hours (Full-Day)',
     description: 'Immerse yourself in the blockbuster thrills of Universal Studios Singapore, Southeast Asia\'s only Universal Studios theme park featuring 24 exhilarating rides, shows, and attractions across 6 uniquely themed zones including Hollywood, New York, Sci-Fi City, Ancient Egypt, The Lost World, and Far Far Away.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=1600&auto=format&fit=crop',
+    coverImageUrl: '/images/attractions/universal-studios-singapore/cover.jpg',
     videoUrl: 'https://www.youtube.com/watch?v=F0f6X5Y-O3Y',
     galleryImageUrls: [
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Far_Far_Away_Castle%2C_Universal_Studios_Singapore.jpg/1280px-Far_Far_Away_Castle%2C_Universal_Studios_Singapore.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Battlestar_Galactica_-_Universal_Studios_Singapore_%28cropped%29.jpg/1280px-Battlestar_Galactica_-_Universal_Studios_Singapore_%28cropped%29.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Ancient_Egypt%2C_Universal_Studios_Singapore.jpg/1280px-Ancient_Egypt%2C_Universal_Studios_Singapore.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Sci-Fi_City_at_Universal_Studios_Singapore.jpg/1280px-Sci-Fi_City_at_Universal_Studios_Singapore.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/The_Lost_World_Universal_Studios_Singapore.JPG/1280px-The_Lost_World_Universal_Studios_Singapore.JPG',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/New_York_at_Universal_Studios_Singapore.jpg/1280px-New_York_at_Universal_Studios_Singapore.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Hollywood_Zone_Universal_Studios_Singapore.jpg/1280px-Hollywood_Zone_Universal_Studios_Singapore.jpg'
+      '/images/attractions/universal-studios-singapore/gallery-1.jpg',
+      '/images/attractions/universal-studios-singapore/gallery-2.jpg',
+      '/images/attractions/universal-studios-singapore/gallery-3.jpg',
+      '/images/attractions/universal-studios-singapore/gallery-4.jpg',
+      '/images/attractions/universal-studios-singapore/gallery-5.jpg',
+      '/images/attractions/universal-studios-singapore/gallery-6.jpg',
+      '/images/attractions/universal-studios-singapore/gallery-7.jpg'
     ],
     features: [
       'Instant eVoucher Confirmation',
@@ -175,12 +175,14 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     starRating: '4.8',
     duration: '3.5 to 4.5 Hours (Evening)',
     description: 'Explore the world’s very first nocturnal wildlife park! Spanning 35 hectares of dense secondary rainforest, Night Safari is home to nearly 900 animals across 100 species—41% of which are threatened. Experience an exhilarating open-air guided tram tour and walking trails illuminated by subtle moonlighting.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=1600&auto=format&fit=crop',
+    coverImageUrl: '/images/attractions/night-safari-singapore/cover.jpg',
     videoUrl: 'https://www.youtube.com/watch?v=yW6U7Vq-U9o',
     galleryImageUrls: [
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Night_Safari_Singapore_Tram.jpg/1280px-Night_Safari_Singapore_Tram.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Fishing_Cat_Trail_Night_Safari.jpg/1280px-Fishing_Cat_Trail_Night_Safari.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Creatures_of_the_Night_Show.jpg/1280px-Creatures_of_the_Night_Show.jpg'
+      '/images/attractions/night-safari-singapore/gallery-1.jpg',
+      '/images/attractions/night-safari-singapore/gallery-2.jpg',
+      '/images/attractions/night-safari-singapore/gallery-3.jpg',
+      '/images/attractions/night-safari-singapore/gallery-4.jpg',
+      '/images/attractions/night-safari-singapore/gallery-5.jpg'
     ],
     features: [
       'Guided 35-Min Tram Safari with Audio Commentary',
@@ -248,12 +250,15 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     starRating: '4.9',
     duration: '4 to 6 Hours',
     description: 'An internationally acclaimed horticultural showpiece spanning 101 hectares in the heart of Marina Bay. Features two world-record cooled glass conservatories (Flower Dome & Cloud Forest), the 35-meter indoor waterfall mountain, and the towering vertical gardens of Supertree Grove.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=1600&auto=format&fit=crop',
+    coverImageUrl: '/images/attractions/gardens-by-the-bay/cover.jpg',
     videoUrl: 'https://www.youtube.com/watch?v=t5A5L_e1Q9k',
     galleryImageUrls: [
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Cloud_Forest_waterfall%2C_Gardens_by_the_Bay%2C_Singapore_-_20120620.jpg/1280px-Cloud_Forest_waterfall%2C_Gardens_by_the_Bay%2C_Singapore_-_20120620.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Gardens_by_the_Bay_Flower_Dome_1.jpg/1280px-Gardens_by_the_Bay_Flower_Dome_1.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Supertrees%2C_Gardens_by_the_Bay%2C_Singapore_-_20120620.jpg/1280px-Supertrees%2C_Gardens_by_the_Bay%2C_Singapore_-_20120620.jpg'
+      '/images/attractions/gardens-by-the-bay/gallery-1.jpg',
+      '/images/attractions/gardens-by-the-bay/gallery-2.jpg',
+      '/images/attractions/gardens-by-the-bay/gallery-3.jpg',
+      '/images/attractions/gardens-by-the-bay/gallery-4.jpg',
+      '/images/attractions/gardens-by-the-bay/gallery-5.jpg',
+      '/images/attractions/gardens-by-the-bay/gallery-6.jpg'
     ],
     features: [
       'Flower Dome (World’s Largest Glass Greenhouse - Guinness World Records)',
@@ -318,12 +323,14 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     starRating: '4.7',
     duration: '2.5 to 3.5 Hours',
     description: 'Dive deep into the wonders of the marine realm at S.E.A. Aquarium! Home to over 100,000 marine animals representing 1,000 species across 40 distinct habitats, featuring giant manta rays, scalloped hammerhead sharks, coral reefs, and the awe-inspiring Open Ocean viewing panel.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1600&auto=format&fit=crop',
+    coverImageUrl: '/images/attractions/sea-aquarium-singapore/cover.jpg',
     videoUrl: 'https://www.youtube.com/watch?v=F0f6X5Y-O3Y',
     galleryImageUrls: [
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/S.E.A._Aquarium_Singapore.jpg/1280px-S.E.A._Aquarium_Singapore.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Open_Ocean_Habitat_SEA_Aquarium.jpg/1280px-Open_Ocean_Habitat_SEA_Aquarium.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Shark_Seas_Tunnel_SEA_Aquarium.jpg/1280px-Shark_Seas_Tunnel_SEA_Aquarium.jpg'
+      '/images/attractions/sea-aquarium-singapore/gallery-1.jpg',
+      '/images/attractions/sea-aquarium-singapore/gallery-2.jpg',
+      '/images/attractions/sea-aquarium-singapore/gallery-3.jpg',
+      '/images/attractions/sea-aquarium-singapore/gallery-4.jpg',
+      '/images/attractions/sea-aquarium-singapore/gallery-5.jpg'
     ],
     features: [
       'Massive Open Ocean Viewing Habitat',
@@ -378,11 +385,12 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     starRating: '4.8',
     duration: '1.5 to 2.5 Hours',
     description: 'Standing 165 meters tall, the Singapore Flyer offers breathtaking 360-degree panoramic views of Marina Bay, Sentosa Island, and neighboring Malaysia and Indonesia on clear days. Preceded by the Time Capsule immersive visual experience.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1600&auto=format&fit=crop',
+    coverImageUrl: '/images/attractions/singapore-flyer/cover.jpg',
     videoUrl: 'https://www.youtube.com/watch?v=F0f6X5Y-O3Y',
     galleryImageUrls: [
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Singapore_Flyer_from_Marina_Bay_Sands.jpg/1280px-Singapore_Flyer_from_Marina_Bay_Sands.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Singapore_Flyer_capsule_interior.jpg/1280px-Singapore_Flyer_capsule_interior.jpg'
+      '/images/attractions/singapore-flyer/gallery-1.jpg',
+      '/images/attractions/singapore-flyer/gallery-2.jpg',
+      '/images/attractions/singapore-flyer/gallery-3.jpg'
     ],
     features: ['30-Min Scenic Flight', 'Time Capsule Interactive Exhibition', 'Marina Bay Panoramic Views', 'Air-Conditioned Glass Capsules'],
     mustDoThings: [
@@ -413,11 +421,12 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     starRating: '4.9',
     duration: '3.5 to 5 Hours',
     description: 'Asia’s newest and largest bird park housing 3,500 birds across 8 immersive walk-in aviaries representing dense African rainforests, South American wetlands, Australian eucalyptus forests, and polar penguin coves.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=1600&auto=format&fit=crop',
+    coverImageUrl: '/images/attractions/bird-paradise-singapore/cover.jpg',
     videoUrl: 'https://www.youtube.com/watch?v=yW6U7Vq-U9o',
     galleryImageUrls: [
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Bird_Paradise_Singapore_Aviary.jpg/1280px-Bird_Paradise_Singapore_Aviary.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Penguin_Cove_Bird_Paradise.jpg/1280px-Penguin_Cove_Bird_Paradise.jpg'
+      '/images/attractions/bird-paradise-singapore/gallery-1.jpg',
+      '/images/attractions/bird-paradise-singapore/gallery-2.jpg',
+      '/images/attractions/bird-paradise-singapore/gallery-3.jpg'
     ],
     features: ['8 Immense Walk-In Aviaries', 'Wings of the World Presentation', 'Ocean Network Express Penguin Cove', 'Complimentary In-Park Tram'],
     mustDoThings: [
@@ -457,11 +466,13 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     starRating: '4.8',
     duration: '2.5 to 4 Hours',
     description: 'Home to the giant pandas Kai Kai & Jia Jia, manatees in the colossal Amazon Flooded Forest, and the popular Amazon River Quest boat ride.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef6?w=1600&auto=format&fit=crop',
+    coverImageUrl: '/images/attractions/river-wonders-singapore/cover.jpg',
     videoUrl: 'https://www.youtube.com/watch?v=yW6U7Vq-U9o',
     galleryImageUrls: [
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Giant_Panda_Forest_Singapore.jpg/1280px-Giant_Panda_Forest_Singapore.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Amazon_Flooded_Forest_Manatees.jpg/1280px-Amazon_Flooded_Forest_Manatees.jpg'
+      '/images/attractions/river-wonders-singapore/gallery-1.jpg',
+      '/images/attractions/river-wonders-singapore/gallery-2.jpg',
+      '/images/attractions/river-wonders-singapore/gallery-3.jpg',
+      '/images/attractions/river-wonders-singapore/gallery-4.jpg'
     ],
     features: ['Giant Panda Forest', 'Amazon Flooded Forest (World’s Largest Freshwater Aquarium)', 'Amazon River Quest Boat Ride', 'Squirrel Monkey Forest'],
     mustDoThings: [
@@ -493,11 +504,13 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     starRating: '4.8',
     duration: '1.5 to 2.5 Hours',
     description: 'Ride the open-air Skyride chairlift to the top of Imbiah Lookout for coastal sea views, then take the wheel of your three-wheeled gravity Luge cart down 4 thrilling neon-lit downhill tracks.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=1600&auto=format&fit=crop',
+    coverImageUrl: '/images/attractions/sentosa-skyline-luge/cover.jpg',
     videoUrl: 'https://www.youtube.com/watch?v=F0f6X5Y-O3Y',
     galleryImageUrls: [
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Skyline_Luge_Sentosa_Track.jpg/1280px-Skyline_Luge_Sentosa_Track.jpg',
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Sentosa_Skyride_Chairlift.jpg/1280px-Sentosa_Skyride_Chairlift.jpg'
+      '/images/attractions/sentosa-skyline-luge/gallery-1.jpg',
+      '/images/attractions/sentosa-skyline-luge/gallery-2.jpg',
+      '/images/attractions/sentosa-skyline-luge/gallery-3.jpg',
+      '/images/attractions/sentosa-skyline-luge/gallery-4.jpg'
     ],
     features: ['4 Unique Downhill Tracks (Dragon, Jungle, Expedition, Kupu Kupu)', 'Scenic Open Skyride Chairlift', 'Night Luge with Neon LED Lighting'],
     mustDoThings: [
