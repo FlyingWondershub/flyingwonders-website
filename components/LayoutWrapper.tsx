@@ -3,6 +3,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { 
+  ChevronDown, 
+  Building2, 
+  Palmtree, 
+  Ticket, 
+  GraduationCap, 
+  TrendingUp, 
+  FolderKanban 
+} from 'lucide-react'
 import ChatBot from './ChatBot'
 import PwaInstallPrompt from './PwaInstallPrompt'
 
@@ -48,6 +57,8 @@ export default function LayoutWrapper({
   const [subMessage, setSubMessage] = useState('')
   const [hideNavBar, setHideNavBar] = useState(false)
   const [loggedInCompanyName, setLoggedInCompanyName] = useState('')
+  const [isServicesOpen, setIsServicesOpen] = useState(false)
+  const servicesDropdownRef = useRef<HTMLDivElement>(null)
   const lastScrollY = useRef(0)
 
   useEffect(() => {
@@ -68,7 +79,30 @@ export default function LayoutWrapper({
       }
     }
     checkAuth()
+    setIsServicesOpen(false)
   }, [pathname])
+
+  // Click outside and Escape key handler for Services dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (servicesDropdownRef.current && !servicesDropdownRef.current.contains(event.target as Node)) {
+        setIsServicesOpen(false)
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsServicesOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
 
   useEffect(() => {
     let ticking = false
@@ -202,7 +236,130 @@ export default function LayoutWrapper({
               {!pageVisibility?.hideInstantQuote && <Link href="/instant-quote" className="nav-link">Instant Quote</Link>}
               <Link href="/about" className="nav-link">About Us</Link>
               <Link href="/travel-tools" className="nav-link">Travel Tools</Link>
-              <Link href="/corporate-travel" className="nav-link">Corporate Desk</Link>
+
+              {/* Services Dropdown */}
+              <div 
+                ref={servicesDropdownRef}
+                className={`nav-dropdown-wrapper ${isServicesOpen ? 'is-open' : ''}`}
+                onMouseEnter={() => setIsServicesOpen(true)}
+                onMouseLeave={() => setIsServicesOpen(false)}
+              >
+                <button
+                  type="button"
+                  className="nav-link nav-dropdown-trigger"
+                  onClick={() => setIsServicesOpen(prev => !prev)}
+                  aria-expanded={isServicesOpen}
+                  aria-haspopup="true"
+                >
+                  <span>Services</span>
+                  <ChevronDown size={13} className="nav-dropdown-chevron" />
+                </button>
+
+                <div className="nav-dropdown-menu" role="menu">
+                  <Link 
+                    href="/corporate-travel" 
+                    className="nav-dropdown-item"
+                    onClick={() => setIsServicesOpen(false)}
+                  >
+                    <div className="nav-dropdown-icon-box">
+                      <Building2 size={17} />
+                    </div>
+                    <div className="nav-dropdown-content">
+                      <div className="nav-dropdown-title">
+                        <span>Corporate Desk</span>
+                        <span className="nav-dropdown-badge">B2B</span>
+                      </div>
+                      <div className="nav-dropdown-desc">Corporate travel & executive MICE</div>
+                    </div>
+                  </Link>
+
+                  <Link 
+                    href="/karnataka" 
+                    className="nav-dropdown-item"
+                    onClick={() => setIsServicesOpen(false)}
+                  >
+                    <div className="nav-dropdown-icon-box">
+                      <Palmtree size={17} />
+                    </div>
+                    <div className="nav-dropdown-content">
+                      <div className="nav-dropdown-title">
+                        <span>Karnataka</span>
+                        <span className="nav-dropdown-badge">Tours</span>
+                      </div>
+                      <div className="nav-dropdown-desc">Heritage, nature & coastal circuits</div>
+                    </div>
+                  </Link>
+
+                  <Link 
+                    href="/singapore-attractions" 
+                    className="nav-dropdown-item"
+                    onClick={() => setIsServicesOpen(false)}
+                  >
+                    <div className="nav-dropdown-icon-box">
+                      <Ticket size={17} />
+                    </div>
+                    <div className="nav-dropdown-content">
+                      <div className="nav-dropdown-title">
+                        <span>Singapore Attractions</span>
+                        <span className="nav-dropdown-badge">Popular</span>
+                      </div>
+                      <div className="nav-dropdown-desc">Attractions, theme parks & passes</div>
+                    </div>
+                  </Link>
+
+                  <Link 
+                    href="/study-in-singapore" 
+                    className="nav-dropdown-item"
+                    onClick={() => setIsServicesOpen(false)}
+                  >
+                    <div className="nav-dropdown-icon-box">
+                      <GraduationCap size={17} />
+                    </div>
+                    <div className="nav-dropdown-content">
+                      <div className="nav-dropdown-title">
+                        <span>Study in Singapore</span>
+                        <span className="nav-dropdown-badge">Edu</span>
+                      </div>
+                      <div className="nav-dropdown-desc">University tours & student consulting</div>
+                    </div>
+                  </Link>
+
+                  <Link 
+                    href="/b2b-leads" 
+                    className="nav-dropdown-item"
+                    onClick={() => setIsServicesOpen(false)}
+                  >
+                    <div className="nav-dropdown-icon-box">
+                      <TrendingUp size={17} />
+                    </div>
+                    <div className="nav-dropdown-content">
+                      <div className="nav-dropdown-title">
+                        <span>B2B Leads</span>
+                        <span className="nav-dropdown-badge">Leads</span>
+                      </div>
+                      <div className="nav-dropdown-desc">Agent lead generator & buyer RFQs</div>
+                    </div>
+                  </Link>
+
+                  <Link 
+                    href="/b2b-directory" 
+                    className="nav-dropdown-item"
+                    onClick={() => setIsServicesOpen(false)}
+                  >
+                    <div className="nav-dropdown-icon-box">
+                      <FolderKanban size={17} />
+                    </div>
+                    <div className="nav-dropdown-content">
+                      <div className="nav-dropdown-title">
+                        <span>B2B Directory</span>
+                        <span className="nav-dropdown-badge">Network</span>
+                      </div>
+                      <div className="nav-dropdown-desc">Verified travel agents & suppliers</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
               {!pageVisibility?.hideReviews && <Link href="/reviews" className="nav-link">Reviews</Link>}
               {!pageVisibility?.hideBlog && <Link href="/blog" className="nav-link">Blog</Link>}
               {!pageVisibility?.hideContact && <Link href="/contact" className="nav-link">Contact</Link>}
