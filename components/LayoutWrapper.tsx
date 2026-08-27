@@ -246,13 +246,13 @@ export default function LayoutWrapper({
               >
                 <button
                   type="button"
-                  className="nav-link nav-dropdown-trigger"
+                  className="nav-dropdown-trigger"
                   onClick={() => setIsServicesOpen(prev => !prev)}
                   aria-expanded={isServicesOpen}
                   aria-haspopup="true"
                 >
-                  <span>Services</span>
-                  <ChevronDown size={13} className="nav-dropdown-chevron" />
+                  Services
+                  <ChevronDown size={11} className="nav-dropdown-chevron" />
                 </button>
 
                 <div className="nav-dropdown-menu" role="menu">
