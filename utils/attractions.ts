@@ -329,6 +329,139 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
       { typeTitle: 'S.E.A. Aquarium 1-Day Admission (Child)', validityPeriodText: 'Fixed Date Admission', bookingType: 'Direct QR Entry' }
     ],
     isDisplayed: true
+  },
+  {
+    _id: 'attraction-singapore-flyer',
+    slug: 'singapore-flyer',
+    name: 'Singapore Flyer + Time Capsule',
+    subtitle: 'Asia’s Largest Giant Observation Wheel with 360° Panoramic Skyline Views',
+    category: 'Observation Wheel / Marina Bay',
+    destination: 'Singapore',
+    locationAddress: '30 Raffles Avenue, Singapore 039803 (Promenade MRT)',
+    starRating: '4.8',
+    duration: '1.5 to 2.5 Hours',
+    description: 'Standing 165 meters tall, the Singapore Flyer offers breathtaking 360-degree panoramic views of Marina Bay, Sentosa Island, and neighboring Malaysia and Indonesia on clear days. Preceded by the Time Capsule immersive visual experience.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=2J3E-hOwh3A',
+    features: ['30-Min Scenic Flight', 'Time Capsule Interactive Exhibition', 'Marina Bay Panoramic Views', 'Air-Conditioned Glass Capsules'],
+    mustDoThings: [
+      'Experience the 30-minute giant observation flight over Marina Bay',
+      'Walk through the multi-sensory Time Capsule exhibition',
+      'Enjoy sunset flights between 6:30 PM and 7:30 PM for golden hour photos'
+    ],
+    timings: '10:00 AM – 10:00 PM Daily (Last flight: 9:30 PM); Best Time: 6:45 PM for sunset & night lights transition.',
+    tipsAndTricks: [
+      'Take MRT to Promenade Station (CC4/DT15), Exit A—it is a scenic 6-minute walk to the Flyer entrance.',
+      'Combine with Gardens by the Bay via the Helix Bridge connecting directly to Marina Bay Sands.'
+    ],
+    isDisplayed: true
+  },
+  {
+    _id: 'attraction-bird-paradise',
+    slug: 'bird-paradise-singapore',
+    name: 'Bird Paradise Singapore (Mandai Wildlife Reserve)',
+    category: 'Wildlife & Nature / Mandai',
+    destination: 'Singapore',
+    locationAddress: '20 Mandai Lake Road, Singapore 729825',
+    starRating: '4.9',
+    duration: '3.5 to 5 Hours',
+    description: 'Asia’s newest and largest bird park housing 3,500 birds across 8 immersive walk-in aviaries representing dense African rainforests, South American wetlands, Australian eucalyptus forests, and polar penguin coves.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=1200&auto=format&fit=crop',
+    features: ['8 Immense Walk-In Aviaries', 'Wings of the World Presentation', 'Ocean Network Express Penguin Cove', 'Complimentary In-Park Tram'],
+    mustDoThings: [
+      'Wings of the World show at Sky Amphitheatre',
+      'Kuok Group Asian Aviary & Heart of Africa canopy walk',
+      'Feed lorikeets and lories at Lory Loft',
+      'Sub-Antarctic cold-climate penguin diving at Penguin Cove'
+    ],
+    timings: '9:00 AM – 6:00 PM Daily (Last entry 5:00 PM); Best Time: Morning at 9:00 AM for feeding sessions.',
+    tipsAndTricks: [
+      'Mandai Shuttle: Take the S$1 express shuttle from Khatib MRT (NS14) directly to Bird Paradise in 15 minutes.',
+      'Download the Mandai App to set alarms for daily bird presentation timings.'
+    ],
+    appDetails: {
+      appName: 'Mandai Wildlife Reserve App',
+      appDescription: 'Live presentation alerts, feeding schedules, GPS map, and tram stops.',
+      appStoreUrl: 'https://apps.apple.com/app/mandai-wildlife-reserve/id1552865917',
+      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.mandai.app',
+      appFeatures: ['Live Presentation Timers', 'Interactive GPS Aviary Map', 'E-Ticket QR Scanner']
+    },
+    isDisplayed: true
+  },
+  {
+    _id: 'attraction-river-wonders',
+    slug: 'river-wonders-singapore',
+    name: 'River Wonders Singapore',
+    subtitle: 'Asia’s Only River-Themed Wildlife Park & Giant Panda Forest',
+    category: 'River Wildlife & Panda / Mandai',
+    destination: 'Singapore',
+    locationAddress: '80 Mandai Lake Road, Singapore 729826',
+    starRating: '4.8',
+    duration: '2.5 to 4 Hours',
+    description: 'Home to the giant pandas Kai Kai & Jia Jia, manatees in the colossal Amazon Flooded Forest, and the popular Amazon River Quest boat ride.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef6?w=1200&auto=format&fit=crop',
+    features: ['Giant Panda Forest', 'Amazon Flooded Forest (World’s Largest Freshwater Aquarium)', 'Amazon River Quest Boat Ride', 'Squirrel Monkey Forest'],
+    mustDoThings: [
+      'Visit Kai Kai & Jia Jia at the climate-controlled Giant Panda Forest',
+      'Ride the Amazon River Quest boat to spot jaguars and tapirs',
+      'Watch gentle manatees glide in the Amazon Flooded Forest'
+    ],
+    timings: '10:00 AM – 7:00 PM Daily (Last admission: 6:00 PM).',
+    tipsAndTricks: [
+      'Book Amazon River Quest boat ride slot early upon entering to avoid long queues.',
+      'Combine with Night Safari in the evening since they share the same Mandai transport drop-off.'
+    ],
+    isDisplayed: true
+  },
+  {
+    _id: 'attraction-skyline-luge',
+    slug: 'sentosa-skyline-luge',
+    name: 'Sentosa Skyline Luge & Skyride',
+    subtitle: 'Once is Never Enough! Gravity-Fueled Racing on 4 Purpose-Built Tracks',
+    category: 'Action & Adventure / Sentosa',
+    destination: 'Singapore',
+    locationAddress: '1 Imbiah Road / 45 Siloso Beach Walk, Sentosa, Singapore 099538',
+    starRating: '4.8',
+    duration: '1.5 to 2.5 Hours',
+    description: 'Ride the open-air Skyride chairlift to the top of Imbiah Lookout for coastal sea views, then take the wheel of your three-wheeled gravity Luge cart down 4 thrilling neon-lit downhill tracks.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=1200&auto=format&fit=crop',
+    features: ['4 Unique Downhill Tracks (Dragon, Jungle, Expedition, Kupu Kupu)', 'Scenic Open Skyride Chairlift', 'Night Luge with Neon LED Lighting'],
+    mustDoThings: [
+      'Race down the 688m Dragon Track with hairpin corners',
+      'Ride Night Luge after 7:00 PM under dazzling multicolor light tunnels',
+      'Capture automatic motion photos at high-speed corners'
+    ],
+    timings: '10:00 AM – 7:30 PM (Sun-Thu) | 10:00 AM – 9:00 PM (Fri-Sat Night Luge); Best Time: 5:30 PM to catch day and night rides.',
+    tipsAndTricks: [
+      'Buy at least 3 to 4 rides combo—trust us, 1 or 2 rides are never enough once you master the steering!',
+      'Reach via Sentosa Express Monorail to Beach Station or Imbiah Station.'
+    ],
+    isDisplayed: true
+  },
+  {
+    _id: 'attraction-mbs-skypark',
+    slug: 'marina-bay-sands-skypark',
+    name: 'Marina Bay Sands SkyPark Observation Deck',
+    subtitle: 'Perched 56 Storeys Above Singapore’s Glittering Bay Area',
+    category: 'Observation Deck / Marina Bay',
+    destination: 'Singapore',
+    locationAddress: '10 Bayfront Avenue, Hotel Tower 3 Level 56, Singapore 018956',
+    starRating: '4.8',
+    duration: '1 to 2 Hours',
+    description: 'Located atop the world-famous three towers of Marina Bay Sands, offering unforgettable panoramic vistas of Marina Bay, Singapore Strait, Gardens by the Bay, and the Central Business District.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop',
+    features: ['56th-Floor 360° Open Observation Deck', 'Unmatched View of Spectra Light Show', 'Direct Bayfront MRT Link', 'Panoramic Photo Spot'],
+    mustDoThings: [
+      'Watch the 8:00 PM or 9:00 PM Spectra Light & Water Show from 200m above',
+      'Admire the Supertrees glowing in the dark across Gardens by the Bay',
+      'Enjoy sunset cocktails at CÉ LA VI lounge'
+    ],
+    timings: '11:00 AM – 9:00 PM Daily (Best Time: 6:30 PM for sunset & evening lights).',
+    tipsAndTricks: [
+      'Access is via the exterior basement entrance of Hotel Tower 3.',
+      'Infinity Pool access is strictly reserved for in-house hotel guests; SkyPark ticket grants entry to the observation deck.'
+    ],
+    isDisplayed: true
   }
 ]
 

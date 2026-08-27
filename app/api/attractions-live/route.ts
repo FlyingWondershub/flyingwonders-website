@@ -125,7 +125,8 @@ const FALLBACK_TICKETS = [
     description: "Discover the awe-inspiring marine realm at S.E.A. Aquarium, home to more than 100,000 marine animals across over 40 diverse habitats.",
     tnc: "Operating hours subject to change without prior notice.",
     subTickets: [
-      { skuId: "sea-adt", typeTitle: "[ADULT] S.E.A. Aquarium Standard Ticket", bookingType: "open_date", validityPeriodText: "Valid for 3 Months" }
+      { skuId: "sea-adt", typeTitle: "[ADULT] S.E.A. Aquarium Standard Ticket", bookingType: "open_date", validityPeriodText: "Valid for 3 Months" },
+      { skuId: "sea-chd", typeTitle: "[CHILD] S.E.A. Aquarium Child Ticket", bookingType: "open_date", validityPeriodText: "Valid for 3 Months" }
     ]
   },
   {
@@ -141,7 +142,8 @@ const FALLBACK_TICKETS = [
     description: "Enjoy 360-degree panoramic views of Singapore skyline, Faber Peak, and Sentosa Island aboard the iconic Cable Car Sky Network.",
     tnc: "Valid for one round trip on Mount Faber Line and Sentosa Line.",
     subTickets: [
-      { skuId: "cc-adt", typeTitle: "[ADULT] Cable Car Sky Pass Round Trip", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" }
+      { skuId: "cc-adt", typeTitle: "[ADULT] Cable Car Sky Pass Round Trip", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" },
+      { skuId: "cc-chd", typeTitle: "[CHILD] Cable Car Sky Pass Child Round Trip", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" }
     ]
   },
   {
@@ -157,7 +159,323 @@ const FALLBACK_TICKETS = [
     description: "The world's first nocturnal wildlife park. Experience guided tram rides through 6 geographical zones and observe nocturnal animals in naturalistic habitats.",
     tnc: "Fixed time slot admission. Please arrive 15 minutes prior to designated entry time.",
     subTickets: [
-      { skuId: "ns-adt", typeTitle: "[ADULT] Night Safari Entry + Tram Ride", bookingType: "fixed_date", validityPeriodText: "Valid for Selected Time Slot" }
+      { skuId: "ns-adt", typeTitle: "[ADULT] Night Safari Entry + Tram Ride", bookingType: "fixed_date", validityPeriodText: "Valid for Selected Time Slot" },
+      { skuId: "ns-chd", typeTitle: "[CHILD] Night Safari Child Entry + Tram", bookingType: "fixed_date", validityPeriodText: "Valid for Selected Time Slot" }
+    ]
+  },
+  {
+    id: "att-006",
+    attractionSku: "att-006",
+    name: "Singapore Flyer + Time Capsule Experience",
+    category: "Observation Wheel",
+    imageUrl: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800",
+    liveRate: 36.00,
+    markupRate: 40.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated (3 Months)",
+    description: "Tower 165 meters above Singapore in a giant observation wheel with 360-degree panoramic views of Marina Bay, Sentosa, and neighboring Malaysia and Indonesia on clear days.",
+    tnc: "Includes Time Capsule multisensory interactive exhibition prior to the 30-minute flight rotation.",
+    subTickets: [
+      { skuId: "sf-adt", typeTitle: "[ADULT] Singapore Flyer + Time Capsule", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" },
+      { skuId: "sf-chd", typeTitle: "[CHILD] Singapore Flyer + Time Capsule Child", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" }
+    ]
+  },
+  {
+    id: "att-007",
+    attractionSku: "att-007",
+    name: "Bird Paradise Singapore (Mandai Wildlife Reserve)",
+    category: "Wildlife & Nature",
+    imageUrl: "https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=800",
+    liveRate: 44.00,
+    markupRate: 49.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated",
+    description: "Asia's largest bird park housing 3,500 birds across 8 immersive walk-in aviaries representing dense African rainforests, South American wetlands, and Australian eucalyptus forests.",
+    tnc: "Complimentary shuttle tram service within park grounds included.",
+    subTickets: [
+      { skuId: "bp-adt", typeTitle: "[ADULT] Bird Paradise Admission + Tram", bookingType: "open_date", validityPeriodText: "Valid for 60 Days" },
+      { skuId: "bp-chd", typeTitle: "[CHILD] Bird Paradise Child Admission", bookingType: "open_date", validityPeriodText: "Valid for 60 Days" }
+    ]
+  },
+  {
+    id: "att-008",
+    attractionSku: "att-008",
+    name: "River Wonders Singapore (with Amazon River Quest Boat Ride)",
+    category: "River Wildlife & Panda",
+    imageUrl: "https://images.unsplash.com/photo-1564349683136-77e08dba1ef6?w=800",
+    liveRate: 38.00,
+    markupRate: 42.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated",
+    description: "Asia's only river-themed wildlife park featuring giant pandas Kai Kai & Jia Jia, manatees in the Amazon Flooded Forest, and the thrilling Amazon River Quest boat ride.",
+    tnc: "Riders must be at least 1.06m in height for Amazon River Quest boat ride.",
+    subTickets: [
+      { skuId: "rw-adt", typeTitle: "[ADULT] River Wonders + Amazon River Quest", bookingType: "open_date", validityPeriodText: "Valid for 60 Days" },
+      { skuId: "rw-chd", typeTitle: "[CHILD] River Wonders Child Admission", bookingType: "open_date", validityPeriodText: "Valid for 60 Days" }
+    ]
+  },
+  {
+    id: "att-009",
+    attractionSku: "att-009",
+    name: "Singapore Zoo Admission + Unlimited Tram Ride",
+    category: "Wildlife Park",
+    imageUrl: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=800",
+    liveRate: 45.00,
+    markupRate: 50.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated",
+    description: "World-renowned open-concept zoo set in lush rainforest. Home to over 2,800 animals from 300 species roaming in spacious, naturalistic enclosures.",
+    tnc: "Unlimited tram rides included in ticket.",
+    subTickets: [
+      { skuId: "sz-adt", typeTitle: "[ADULT] Singapore Zoo + Unlimited Tram", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" },
+      { skuId: "sz-chd", typeTitle: "[CHILD] Singapore Zoo Child Ticket", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" }
+    ]
+  },
+  {
+    id: "att-010",
+    attractionSku: "att-010",
+    name: "Sentosa Skyline Luge & Skyride (3 / 4 / 5 Rides)",
+    category: "Action & Adventure",
+    imageUrl: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=800",
+    liveRate: 27.00,
+    markupRate: 32.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated",
+    description: "Hop on the Skyride chairlift for sweeping coastal views, then race down 4 purpose-built gravity tracks on the iconic three-wheeled Luge cart.",
+    tnc: "Children under 6 or shorter than 110cm can ride tandem with an adult.",
+    subTickets: [
+      { skuId: "luge-3", typeTitle: "[COMBO] 3 Luge + 3 Skyride Rides", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" },
+      { skuId: "luge-4", typeTitle: "[COMBO] 4 Luge + 4 Skyride Rides", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" },
+      { skuId: "luge-5", typeTitle: "[COMBO] 5 Luge + 5 Skyride Rides (Best Value)", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" }
+    ]
+  },
+  {
+    id: "att-011",
+    attractionSku: "att-011",
+    name: "Adventure Cove Waterpark Sentosa",
+    category: "Waterpark",
+    imageUrl: "https://images.unsplash.com/photo-1582650625119-3a31f8418b7d?w=800",
+    liveRate: 36.00,
+    markupRate: 40.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated (3 Months)",
+    description: "High-speed water slides, lazy river drifting through underwater marine tunnels, and snorkeling with 20,000 friendly tropical fish at Rainbow Reef.",
+    tnc: "Swimwear guidelines strictly enforced. Life jackets provided free of charge.",
+    subTickets: [
+      { skuId: "acw-adt", typeTitle: "[ADULT] Adventure Cove One-Day Pass", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" },
+      { skuId: "acw-chd", typeTitle: "[CHILD] Adventure Cove Child Pass", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" }
+    ]
+  },
+  {
+    id: "att-012",
+    attractionSku: "att-012",
+    name: "Marina Bay Sands SkyPark Observation Deck",
+    category: "Observation Deck",
+    imageUrl: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800",
+    liveRate: 30.00,
+    markupRate: 34.00,
+    availability: "Instant Confirmation",
+    validity: "Fixed Date / Time Slot",
+    description: "Perched 56 storeys high atop Marina Bay Sands, the SkyPark Observation Deck offers unbeatable bird's-eye views of Singapore's glittering skyline and the Singapore Strait.",
+    tnc: "Observation deck only (Infinity pool access is exclusive to hotel guests).",
+    subTickets: [
+      { skuId: "mbs-adt", typeTitle: "[ADULT] MBS SkyPark Observation Deck Entry", bookingType: "open_date", validityPeriodText: "Valid on Visit Date" },
+      { skuId: "mbs-chd", typeTitle: "[CHILD] MBS SkyPark Child Entry", bookingType: "open_date", validityPeriodText: "Valid on Visit Date" }
+    ]
+  },
+  {
+    id: "att-013",
+    attractionSku: "att-013",
+    name: "Wings of Time Fireworks & Water Light Show (Siloso Beach)",
+    category: "Evening Show",
+    imageUrl: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800",
+    liveRate: 16.00,
+    markupRate: 20.00,
+    availability: "Instant Confirmation",
+    validity: "Fixed Date & Show Time (7:40 PM / 8:40 PM)",
+    description: "Award-winning multi-sensory outdoor night show set against the open sea with 3D projection mapping, laser choreography, water fountains, and pyrotechnics.",
+    tnc: "Seats allocated on a first-come, first-served basis within designated tier.",
+    subTickets: [
+      { skuId: "wot-std", typeTitle: "[STANDARD SEAT] Wings of Time Show Ticket", bookingType: "fixed_date", validityPeriodText: "Valid for Selected Show Time" },
+      { skuId: "wot-prem", typeTitle: "[PREMIUM SEAT] Wings of Time Best View", bookingType: "fixed_date", validityPeriodText: "Valid for Selected Show Time" }
+    ]
+  },
+  {
+    id: "att-014",
+    attractionSku: "att-014",
+    name: "Madame Tussauds Singapore (4-in-1 Experience + Marvel 4D)",
+    category: "Museum & Experience",
+    imageUrl: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800",
+    liveRate: 32.00,
+    markupRate: 38.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated",
+    description: "Get up close with lifelike wax figures of world leaders, Bollywood stars, Hollywood icons, plus the Spirit of Singapore Boat Ride and Marvel 4D Cinema.",
+    tnc: "Includes Wax Museum, Images of Singapore, Spirit of Singapore Boat Ride, and Marvel 4D.",
+    subTickets: [
+      { skuId: "mt-4in1", typeTitle: "[4-IN-1 COMBO] Madame Tussauds + Marvel 4D + Boat Ride", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" }
+    ]
+  },
+  {
+    id: "att-015",
+    attractionSku: "att-015",
+    name: "Museum of Ice Cream Singapore (Dempsey Hill)",
+    category: "Interactive Museum",
+    imageUrl: "https://images.unsplash.com/photo-1501446529957-6226bd447c46?w=800",
+    liveRate: 38.00,
+    markupRate: 42.00,
+    availability: "Instant Confirmation",
+    validity: "Fixed Date & Time Slot",
+    description: "Vibrant pink paradise featuring 14 multisensory installations, a gigantic sprinkle pool, and unlimited sweet treats and ice cream scoops during your visit.",
+    tnc: "Unlimited ice cream included inside museum installations.",
+    subTickets: [
+      { skuId: "moic-std", typeTitle: "[GENERAL ADMISSION] MOIC + Unlimited Ice Cream", bookingType: "fixed_date", validityPeriodText: "Valid for Selected Slot" }
+    ]
+  },
+  {
+    id: "att-016",
+    attractionSku: "att-016",
+    name: "Singapore DUCKtours (Amphibious City & Harbor Tour)",
+    category: "Sightseeing Cruise",
+    imageUrl: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800",
+    liveRate: 41.00,
+    markupRate: 46.00,
+    availability: "Instant Confirmation",
+    validity: "Fixed Date & Time",
+    description: "The original amphibious tour aboard a genuine Vietnam War craft. Drive by Singapore's historical Civic District landmarks then splash into Marina Bay for a harbor cruise.",
+    tnc: "Departs from Suntec City Mall. Please report 15 mins before tour departure.",
+    subTickets: [
+      { skuId: "duck-adt", typeTitle: "[ADULT] 60-Minute DUCKtours Amphibious Tour", bookingType: "fixed_date", validityPeriodText: "Valid for Selected Slot" },
+      { skuId: "duck-chd", typeTitle: "[CHILD] 60-Minute DUCKtours Child Ticket", bookingType: "fixed_date", validityPeriodText: "Valid for Selected Slot" }
+    ]
+  },
+  {
+    id: "att-017",
+    attractionSku: "att-017",
+    name: "National Gallery Singapore Admission",
+    category: "Art & Culture",
+    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
+    liveRate: 18.00,
+    markupRate: 22.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated",
+    description: "Housed in the restored Supreme Court and City Hall, showcasing the world's largest public collection of modern Southeast Asian art.",
+    tnc: "Valid for permanent galleries admission.",
+    subTickets: [
+      { skuId: "ng-std", typeTitle: "[GENERAL ADMISSION] National Gallery All Permanent Galleries", bookingType: "open_date", validityPeriodText: "Valid for 60 Days" }
+    ]
+  },
+  {
+    id: "att-018",
+    attractionSku: "att-018",
+    name: "Singapore Science Centre + Omni-Theatre Movie",
+    category: "Science & Education",
+    imageUrl: "https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=800",
+    liveRate: 21.00,
+    markupRate: 25.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated",
+    description: "Inspiring interactive science exhibits, Fire Tornado demonstrations, and Southeast Asia's first 8K Digital Dome Omni-Theatre planetarium experience.",
+    tnc: "Closed on selected Mondays for maintenance.",
+    subTickets: [
+      { skuId: "sc-omni", typeTitle: "[COMBO] Science Centre + Omni-Theatre Movie", bookingType: "open_date", validityPeriodText: "Valid for 60 Days" }
+    ]
+  },
+  {
+    id: "att-019",
+    attractionSku: "att-019",
+    name: "Sunway Lagoon Theme Park (6 Parks in 1 - Malaysia)",
+    category: "Malaysia Theme Park",
+    imageUrl: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=800",
+    liveRate: 58.00,
+    markupRate: 65.00,
+    availability: "Instant Confirmation",
+    validity: "Fixed Date",
+    description: "Malaysia's premier 88-acre theme park featuring Water Park, Amusement Park, Wildlife Park, Extreme Park, Scream Park, and Nickelodeon Lost Lagoon.",
+    tnc: "Valid for entry to all 6 parks. Quack Xpress fast pass sold separately.",
+    subTickets: [
+      { skuId: "sunway-adt", typeTitle: "[ADULT] Sunway Lagoon All 6 Parks Admission", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" },
+      { skuId: "sunway-chd", typeTitle: "[CHILD] Sunway Lagoon Child Admission", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" }
+    ]
+  },
+  {
+    id: "att-020",
+    attractionSku: "att-020",
+    name: "Legoland Malaysia Resort (Theme Park + Water Park Combo)",
+    category: "Malaysia Theme Park",
+    imageUrl: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800",
+    liveRate: 68.00,
+    markupRate: 75.00,
+    availability: "Instant Confirmation",
+    validity: "Fixed Date",
+    description: "Located in Johor Bahru, just 45 minutes from Singapore border. Features over 70 Lego-themed rollercoasters, shows, interactive water rides, and SEA LIFE aquarium.",
+    tnc: "Valid for 1-day combo admission to Theme Park & Water Park.",
+    subTickets: [
+      { skuId: "lego-combo", typeTitle: "[1-DAY COMBO] Legoland Theme Park + Water Park", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" }
+    ]
+  },
+  {
+    id: "att-021",
+    attractionSku: "att-021",
+    name: "Genting SkyWorlds Outdoor Theme Park (Genting Highlands, Malaysia)",
+    category: "Malaysia Theme Park",
+    imageUrl: "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=800",
+    liveRate: 48.00,
+    markupRate: 55.00,
+    availability: "Instant Confirmation",
+    validity: "Fixed Date",
+    description: "Perched 6,000 feet above sea level in the cool clouds of Genting Highlands, featuring 9 uniquely themed movie-inspired worlds including Ice Age, Rio, and Epic.",
+    tnc: "Includes complimentary Photo+ digital downloads.",
+    subTickets: [
+      { skuId: "skyworlds-adt", typeTitle: "[ADULT] Genting SkyWorlds 1-Day Pass", bookingType: "open_date", validityPeriodText: "Valid for 60 Days" }
+    ]
+  },
+  {
+    id: "att-022",
+    attractionSku: "att-022",
+    name: "Genting Awana SkyWay Cable Car (Return Gondola)",
+    category: "Malaysia Cable Car",
+    imageUrl: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800",
+    liveRate: 8.00,
+    markupRate: 10.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated",
+    description: "Glaze through the cool mountain mist in just 10 minutes from Awana Station to SkyAvenue at the peak of Genting Highlands, with a free stop at Chin Swee Caves Temple.",
+    tnc: "Valid for round-trip standard gondola ride.",
+    subTickets: [
+      { skuId: "awana-ret", typeTitle: "[RETURN] Awana SkyWay Standard Gondola", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" }
+    ]
+  },
+  {
+    id: "att-023",
+    attractionSku: "att-023",
+    name: "Aquaria KLCC (Kuala Lumpur City Centre, Malaysia)",
+    category: "Malaysia Aquarium",
+    imageUrl: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800",
+    liveRate: 20.00,
+    markupRate: 24.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated",
+    description: "Located beneath the iconic Petronas Twin Towers in Kuala Lumpur, featuring a 90-meter underwater tunnel with tiger sharks, giant stingrays, and sea turtles.",
+    tnc: "Operating hours: 10:00 AM – 8:00 PM Daily.",
+    subTickets: [
+      { skuId: "klcc-adt", typeTitle: "[ADULT] Aquaria KLCC Standard Entry Ticket", bookingType: "open_date", validityPeriodText: "Valid for 90 Days" }
+    ]
+  },
+  {
+    id: "att-024",
+    attractionSku: "att-024",
+    name: "KL Tower (Menara Kuala Lumpur) Observation Deck",
+    category: "Observation Deck",
+    imageUrl: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800",
+    liveRate: 18.00,
+    markupRate: 22.00,
+    availability: "Instant Confirmation",
+    validity: "Open Dated",
+    description: "Enjoy 360-degree aerial views of the Kuala Lumpur metropolitan skyline and Petronas Twin Towers from the 276-meter high indoor Observation Deck.",
+    tnc: "Sky Deck and Sky Box options available upon upgrade.",
+    subTickets: [
+      { skuId: "klt-obs", typeTitle: "[ADULT] KL Tower Indoor Observation Deck", bookingType: "open_date", validityPeriodText: "Valid for 60 Days" }
     ]
   }
 ]
