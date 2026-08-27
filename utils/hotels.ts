@@ -1,5 +1,6 @@
 import { client } from '../sanity/lib/client'
 import type { TravelShort } from './packages'
+import type { AppDetails } from '../components/AppDownloadCard'
 
 export interface HotelData {
   _id: string
@@ -16,6 +17,10 @@ export interface HotelData {
   galleryImageUrls?: string[]
   features?: string[]
   roomCategories?: string[]
+  mustDoThings?: string[]
+  timings?: string
+  tipsAndTricks?: string[]
+  appDetails?: AppDetails
   shorts?: TravelShort[]
   isDisplayed?: boolean
 }
@@ -23,7 +28,7 @@ export interface HotelData {
 /**
  * Normalizes raw hotel names from Google Sheets / legacy data:
  * - Extracts and removes leading star prefixes ("4* V Hotel lavendar" -> "V Hotel Lavender")
- * - Corrects known spelling variants ("lavendar" -> "Lavender", "tyrwhitt" -> "Tyrwhitt", "Boss Hotel" -> "Hotel Boss Singapore")
+ * - Corrects known spelling variants ("lavendar" -> "Lavender", "tyrwhitt" -> "Tyrwhitt", "Boss Hotel" -> "Hotel Boss Singapore", "chancellor" -> "Hotel Chancellor @ Orchard")
  */
 export function cleanHotelName(rawName: string): { cleanName: string; detectedStar?: string } {
   if (!rawName) return { cleanName: 'Partner Hotel' }
@@ -48,6 +53,8 @@ export function cleanHotelName(rawName: string): { cleanName: string; detectedSt
     .replace(/\bBoss Hotel\b/gi, 'Hotel Boss Singapore')
     .replace(/^Hotel Boss$/i, 'Hotel Boss Singapore')
     .replace(/^Marina Bay Sands$/i, 'Marina Bay Sands Singapore')
+    .replace(/\bHotel Chancellor\b/gi, 'Hotel Chancellor @ Orchard')
+    .replace(/^Hotel Chancellor @ Orchard Singapore$/i, 'Hotel Chancellor @ Orchard')
     .replace(/\bAlbert Court\b/gi, 'Village Hotel Albert Court')
     .replace(/\bVillage Hotel Village Hotel\b/gi, 'Village Hotel')
     .replace(/\s+/g, ' ')
@@ -70,12 +77,13 @@ export function slugifyHotelName(name: string): string {
     .toLowerCase()
     .trim()
     .replace(/\blavendar\b/g, 'lavender')
+    .replace(/@/g, '')
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
-  // Remove leading numbers followed by hyphen if it represents a star prefix (e.g. "4-v-hotel-lavender" -> "v-hotel-lavender")
-  slug = slug.replace(/^[1-5]-(hotel-boss|v-hotel|marina-bay|village-hotel|dorsett|grand-copthorne|holiday-inn|ibis|aqueen|hotel-mi|mercure|serangoon|one-farrer)/i, '$1')
+  // Remove leading numbers followed by hyphen if it represents a star prefix
+  slug = slug.replace(/^[1-5]-(hotel-boss|v-hotel|marina-bay|village-hotel|dorsett|grand-copthorne|holiday-inn|ibis|aqueen|hotel-mi|mercure|serangoon|one-farrer|hotel-chancellor)/i, '$1')
 
   return slug
 }
@@ -89,10 +97,78 @@ export function normalizeHotelSlug(rawSlug: string): string {
   if (s === 'boss-hotel' || s === 'hotel-boss') return 'hotel-boss-singapore'
   if (s === 'albert-court' || s === 'ibis-styles-albert-court') return 'village-hotel-albert-court'
   if (s === 'marina-bay-sands') return 'marina-bay-sands-singapore'
+  if (s === 'chancellor' || s === 'hotel-chancellor' || s === 'hotel-chancellor-orchard-singapore') return 'hotel-chancellor-orchard'
   return s
 }
 
 export const DEFAULT_HOTELS: HotelData[] = [
+  {
+    _id: 'hotel-chancellor-orchard',
+    slug: 'hotel-chancellor-orchard',
+    name: 'Hotel Chancellor @ Orchard',
+    subtitle: 'Prime Orchard Road Shopping Belt · 5 Mins Walk to Somerset MRT (NS23)',
+    star: '3.5-Star / 4-Star',
+    location: 'Singapore',
+    roomType: 'Deluxe Room / Premier Queen / Family Triple',
+    hotelAddress: '28 Cavenagh Road, Orchard / Somerset, Singapore 229635',
+    description: 'Centrally located in the prestigious Orchard Road shopping enclave, Hotel Chancellor @ Orchard offers contemporary comfort with unbeatable city access. Featuring a spectacular rooftop outdoor swimming pool overlooking the Somerset skyline, in-room instant hot/cold filtered water dispensers, the all-day dining Bistro @ Chancellor Cafe, and 24-hour reception just 5 minutes walk from Somerset MRT Station (NS23) and Orchard Central.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    galleryImageUrls: [
+      'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&auto=format&fit=crop'
+    ],
+    features: [
+      'Rooftop Outdoor Skyline Pool',
+      'In-Room Filtered Hot/Cold Water Tap',
+      '5 Mins Sheltered Walk to Somerset MRT',
+      'Bistro @ Chancellor Halal & International Buffet',
+      'Free High-Speed Wi-Fi',
+      '24/7 Concierge Support'
+    ],
+    mustDoThings: [
+      'Relax at the Rooftop Outdoor Swimming Pool with panoramic Orchard city views',
+      'Enjoy Daily International Buffet Breakfast at Bistro @ Chancellor Cafe',
+      'Step right into Orchard Road shopping: Orchard Central, 313@Somerset, Takashimaya, and Paragon',
+      'Take an evening architectural stroll through historic Emerald Hill Peranakan shophouse heritage enclave just behind the hotel',
+      'Explore late-night Japanese ramen & izakaya dining at adjacent Cuppage Plaza'
+    ],
+    timings: 'Check-In: From 3:00 PM | Check-Out: Until 12:00 PM (Noon) | Breakfast: 6:30 AM – 10:00 AM Daily | Rooftop Pool: 7:00 AM – 9:00 PM',
+    tipsAndTricks: [
+      'Somerset MRT Connection: Walk through the covered Cuppage Terrace pathway to access Somerset MRT (NS23) within 5–7 minutes without exposure to tropical rain or heat.',
+      'In-Room Filtered Hot Water: Every room is equipped with an instant hot/cold purified water dispenser tap—super convenient for instant tea, coffee, and baby formula milk.',
+      'B2B Wholesale Advantage: Popular corporate and family FIT hotel offering high-availability wholesale room allotments through Flying Wonders DMC.',
+      'Late Check-out / Luggage Storage: Free secure luggage storage is available at the 24-hour reception desk if you have an evening flight out of Changi Airport.'
+    ],
+    appDetails: {
+      appName: 'Hotel Chancellor Digital Concierge & Singapore Travel Apps',
+      appDescription: 'Instant WhatsApp guest support, Grab ride booking, and MyICA SG Arrival Card mobile tools.',
+      appFeatures: [
+        '24/7 WhatsApp B2B & Guest Concierge Desk',
+        'Direct Taxi / Grab Fare Estimation',
+        'Offline Orchard Shopping & Dining Guide'
+      ]
+    },
+    roomCategories: [
+      'Deluxe Queen Room (18 sqm)',
+      'Deluxe Twin Room (2 Single Beds)',
+      'Premier King Room with City View (22 sqm)',
+      'Family Triple Room with Balcony (1 Queen + 1 Single Bed)'
+    ],
+    shorts: [
+      {
+        id: 'hc-short-1',
+        title: 'Hotel Chancellor @ Orchard Rooftop Pool & Orchard View 🇸🇬',
+        creator: 'SingaporeHotels',
+        views: '210K views',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop',
+        youtubeVideoId: 'kYJzX9Qz8oM'
+      }
+    ],
+    isDisplayed: true
+  },
   {
     _id: 'hotel-boss',
     slug: 'hotel-boss-singapore',
@@ -112,6 +188,16 @@ export const DEFAULT_HOTELS: HotelData[] = [
       'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&auto=format&fit=crop'
     ],
     features: ['Outdoor Skyline Pool', '5 Mins Walk to Lavender MRT', 'Halal-Certified Food Court', '24/7 Gym', 'Free High-Speed Wi-Fi', 'Daily Buffet Breakfast'],
+    mustDoThings: [
+      'Swim at the Sky Terrace Outdoor Pool overlooking the Singapore skyline',
+      'Enjoy 24-hour dining options at the on-site halal food court and Founder Bak Kut Teh',
+      'Walk 5 minutes to Bugis Junction and Kampong Glam heritage quarter'
+    ],
+    timings: 'Check-In: From 3:00 PM | Check-Out: Until 11:00 AM | Pool: 7:00 AM – 9:00 PM',
+    tipsAndTricks: [
+      'Take the East-West green line directly from Changi Airport to Lavender MRT Station (EW11), Exit B is 300m from the lobby.',
+      'Family rooms with balconies offer great views of Kampong Glam and Marina Bay Sands.'
+    ],
     roomCategories: ['Superior Double Room', 'Premier Queen with Balcony', 'Family Triple / Quad Room', 'Executive King Suite'],
     shorts: [
       {
@@ -151,6 +237,16 @@ export const DEFAULT_HOTELS: HotelData[] = [
       'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop'
     ],
     features: ['Direct Lavender MRT Link', 'Direct Train to Changi Airport', 'Sky Terrace Pool', 'Currency Exchange Desk', '24/7 Concierge'],
+    mustDoThings: [
+      'Enjoy seamless direct indoor access to Lavender MRT train platform',
+      'Take a dip in the 4th-floor landscaped sky pool and garden terrace',
+      'Sample multi-cuisine dishes at Kopitiam food court directly beneath the hotel'
+    ],
+    timings: 'Check-In: From 3:00 PM | Check-Out: Until 11:00 AM | Pool: 7:00 AM – 9:00 PM',
+    tipsAndTricks: [
+      'Zero rain exposure: The MRT station escalator opens right inside the hotel lobby building.',
+      'Direct East-West green line train straight to City Hall, Raffles Place, and Jurong East.'
+    ],
     roomCategories: ['Superior Queen Room', 'Premier Twin Room', 'Triple Family Room'],
     shorts: [
       {
@@ -183,6 +279,16 @@ export const DEFAULT_HOTELS: HotelData[] = [
       'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
     ],
     features: ['World-Famous 57F Infinity Pool', 'Sands SkyPark Access', 'Celebrity Chef Dining', 'Direct Bayfront MRT Link', 'Luxury Banyan Tree Spa'],
+    mustDoThings: [
+      'Swim in the world-famous 57th floor Rooftop Infinity Pool overlooking Marina Bay',
+      'Watch sunset from the Sands SkyPark Observation Deck',
+      'Dine at celebrity chef restaurants (Gordon Ramsay Bread Street Kitchen, CUT by Wolfgang Puck, Spago)'
+    ],
+    timings: 'Check-In: From 3:00 PM | Check-Out: Until 11:00 AM | Infinity Pool: 6:00 AM – 12:00 AM (Midnight)',
+    tipsAndTricks: [
+      'Infinity pool access is exclusively reserved for registered hotel room key card holders.',
+      'Direct underground connection to Bayfront MRT Station (DT16/CE1).'
+    ],
     roomCategories: ['Deluxe City View', 'Sands Premier Suite', 'Club King with SkyPark Access', 'Presidential Harbour Suite'],
     shorts: [
       {
@@ -346,6 +452,10 @@ export async function getAllHotels(): Promise<HotelData[]> {
       starRating,
       hotelAddress,
       roomCategories,
+      mustDoThings,
+      timings,
+      tipsAndTricks,
+      appDetails,
       shorts,
       isDisplayed
     }`)
@@ -366,6 +476,10 @@ export async function getAllHotels(): Promise<HotelData[]> {
         galleryImageUrls: h.galleryUploaded || h.galleryImageUrls || [],
         features: h.features || [],
         roomCategories: h.roomCategories || [],
+        mustDoThings: h.mustDoThings || [],
+        timings: h.timings,
+        tipsAndTricks: h.tipsAndTricks || [],
+        appDetails: h.appDetails,
         shorts: h.shorts || [],
         isDisplayed: h.isDisplayed !== false
       }
@@ -391,7 +505,7 @@ export async function getHotelBySlug(rawSlug: string): Promise<HotelData | null>
   )
   if (directMatch) return directMatch
 
-  // 2. Fuzzy substring match (e.g. "lavendar" matching "v-hotel-lavender", "boss" matching "hotel-boss-singapore")
+  // 2. Fuzzy substring match (e.g. "chancellor" matching "hotel-chancellor-orchard", "boss" matching "hotel-boss-singapore")
   const fuzzyMatch = all.find(h => {
     const s = normalizeHotelSlug(h.slug)
     return s.includes(targetSlug) || targetSlug.includes(s)
@@ -412,6 +526,9 @@ export async function getHotelBySlug(rawSlug: string): Promise<HotelData | null>
     description: `${cleanName} is a verified partner hotel offering comfortable accommodations, daily buffet breakfast options, high-speed Wi-Fi, and convenient transit links for leisure and corporate travelers.`,
     coverImageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop',
     features: ['Daily Buffet Breakfast Available', 'Free High-Speed Wi-Fi', 'Swimming Pool', '24/7 Concierge Support'],
+    mustDoThings: ['Comfortable stay in prime city location', 'Daily buffet breakfast', 'Convenient transit access'],
+    timings: 'Check-In: From 3:00 PM | Check-Out: Until 12:00 PM',
+    tipsAndTricks: ['Check-in online or present booking voucher at front desk.'],
     roomCategories: ['Standard Room', 'Deluxe Room', 'Family Room'],
     isDisplayed: true
   }

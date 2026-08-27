@@ -2,28 +2,29 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { 
-  Building2, 
-  MapPin, 
-  Play, 
-  ImageIcon, 
-  Check, 
-  Share2, 
-  ArrowLeft, 
-  Package, 
-  MessageCircle, 
-  Sparkles,
-  BedDouble,
-  ShieldCheck,
+import {
+  Compass,
+  MapPin,
   Clock,
+  Sparkles,
+  Play,
+  ImageIcon,
+  Check,
+  Share2,
+  ArrowLeft,
+  Package,
+  MessageCircle,
+  ShieldCheck,
+  Ticket,
   Lightbulb,
-  CheckCircle2
+  CheckCircle2,
+  X
 } from 'lucide-react'
-import { HotelData } from '../../../../utils/hotels'
-import PackageShortsCarousel from '../../../../components/PackageShortsCarousel'
-import AppDownloadCard from '../../../../components/AppDownloadCard'
+import { AttractionData } from '../utils/attractions'
+import PackageShortsCarousel from './PackageShortsCarousel'
+import AppDownloadCard from './AppDownloadCard'
 
-export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
+export default function AttractionDetailClient({ attraction }: { attraction: AttractionData }) {
   const [copied, setCopied] = useState(false)
   const [activePhoto, setActivePhoto] = useState<string | null>(null)
 
@@ -50,12 +51,12 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
   }
 
   const whatsappMsg = encodeURIComponent(
-    `Hi Flying Wonders! I would like to inquire about B2B rates and group booking availability for ${hotel.name} (${hotel.star}).`
+    `Hi Flying Wonders! I would like to inquire about B2B tickets, availability, and group rates for ${attraction.name}.`
   )
 
   const allPhotos = [
-    hotel.coverImageUrl,
-    ...(hotel.galleryImageUrls || [])
+    attraction.coverImageUrl,
+    ...(attraction.galleryImageUrls || [])
   ].filter(Boolean)
 
   return (
@@ -69,9 +70,9 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
             <span>/</span>
             <Link href="/services-catalog" style={{ color: '#64748B', textDecoration: 'none' }}>Services Catalog</Link>
             <span>/</span>
-            <Link href="/services-catalog" style={{ color: '#0F4C3A', fontWeight: 700, textDecoration: 'none' }}>Hotels</Link>
+            <Link href="/services-catalog" style={{ color: '#0F4C3A', fontWeight: 700, textDecoration: 'none' }}>Attractions</Link>
             <span>/</span>
-            <span style={{ color: '#0F172A', fontWeight: 800 }}>{hotel.name}</span>
+            <span style={{ color: '#0F172A', fontWeight: 800 }}>{attraction.name}</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -92,7 +93,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
               }}
             >
               {copied ? <Check size={14} color="#15803D" /> : <Share2 size={14} />}
-              <span>{copied ? 'Link Copied!' : 'Share Hotel Page'}</span>
+              <span>{copied ? 'Link Copied!' : 'Share Attraction'}</span>
             </button>
 
             <Link
@@ -125,7 +126,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
           minHeight: '340px',
           borderRadius: '20px',
           overflow: 'hidden',
-          backgroundImage: `linear-gradient(to top, rgba(15,23,42,0.92) 0%, rgba(15,23,42,0.4) 50%, rgba(15,23,42,0.2) 100%), url(${hotel.coverImageUrl})`,
+          backgroundImage: `linear-gradient(to top, rgba(15,23,42,0.94) 0%, rgba(15,23,42,0.45) 50%, rgba(15,23,42,0.2) 100%), url(${attraction.coverImageUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           display: 'flex',
@@ -136,27 +137,27 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
             <span style={{ background: '#FEF3C7', color: '#B45309', fontWeight: 900, fontSize: '0.82rem', padding: '4px 10px', borderRadius: '8px' }}>
-              ★ {hotel.star}
+              ★ {attraction.starRating || '4.9'}
             </span>
             <span style={{ background: 'rgba(255,255,255,0.2)', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', padding: '4px 12px', borderRadius: '8px', backdropFilter: 'blur(6px)' }}>
-              <MapPin size={13} style={{ display: 'inline', marginRight: '4px' }} /> {hotel.location}
+              <Compass size={13} style={{ display: 'inline', marginRight: '4px' }} /> {attraction.category || 'Theme Park'}
             </span>
             <span style={{ background: '#DCFCE7', color: '#15803D', fontWeight: 800, fontSize: '0.78rem', padding: '4px 10px', borderRadius: '8px' }}>
-              <ShieldCheck size={13} style={{ display: 'inline', marginRight: '4px' }} /> Verified B2B DMC Partner
+              <ShieldCheck size={13} style={{ display: 'inline', marginRight: '4px' }} /> Verified DMC Direct Entry
             </span>
           </div>
 
           <h1 style={{ fontSize: '2.4rem', fontWeight: 900, color: '#FFFFFF', margin: '0 0 0.5rem', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
-            {hotel.name}
+            {attraction.name}
           </h1>
 
-          <p style={{ fontSize: '0.95rem', color: '#E2E8F0', margin: 0, fontWeight: 500, maxWidth: '750px' }}>
-            📍 {hotel.hotelAddress || hotel.subtitle || hotel.location}
+          <p style={{ fontSize: '0.95rem', color: '#E2E8F0', margin: 0, fontWeight: 500, maxWidth: '800px' }}>
+            📍 {attraction.locationAddress || attraction.subtitle || attraction.destination}
           </p>
         </div>
       </section>
 
-      {/* ── 3. QUICK STATS STRIP ── */}
+      {/* ── 3. QUICK STATS STRIP (PRAYANAAI INSPIRED) ── */}
       <section style={{ maxWidth: '1200px', margin: '0 auto 2rem', padding: '0 1.5rem' }}>
         <div style={{
           background: '#FFFFFF',
@@ -173,18 +174,18 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
               <Clock size={20} color="#059669" />
             </div>
             <div>
-              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Check-In / Out</span>
-              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>From 3:00 PM / 12:00 PM</strong>
+              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Suggested Duration</span>
+              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>{attraction.duration || 'Full Day Experience'}</strong>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Building2 size={20} color="#2563EB" />
+              <Ticket size={20} color="#2563EB" />
             </div>
             <div>
-              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Property Classification</span>
-              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>{hotel.star} Hotel Destination</strong>
+              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Voucher Confirmation</span>
+              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>Instant QR Code Entry</strong>
             </div>
           </div>
 
@@ -193,8 +194,8 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
               <MapPin size={20} color="#D97706" />
             </div>
             <div>
-              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Transit Link</span>
-              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>Near Key MRT Stations</strong>
+              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Destination Location</span>
+              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>{attraction.destination || 'Singapore'}</strong>
             </div>
           </div>
 
@@ -203,8 +204,8 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
               <Sparkles size={20} color="#9333EA" />
             </div>
             <div>
-              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Allotments</span>
-              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>Direct B2B DMC Contracting</strong>
+              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Service Type</span>
+              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>Official Ticket Partner</strong>
             </div>
           </div>
         </div>
@@ -213,36 +214,36 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
       {/* ── 4. MAIN CONTENT: 2-COLUMN LAYOUT ── */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
         
-        {/* LEFT COLUMN: Overview, Highlights, Timings, Pro-Tips, Video, Rooms & Gallery */}
+        {/* LEFT COLUMN: Overview, Must-Dos, Timings, Pro-Tips, Video, App & Gallery */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', gridColumn: 'span 2' }}>
           
-          {/* Property Overview & Description */}
+          {/* Overview Section */}
           <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
             <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Building2 size={20} color="#0F4C3A" /> Property Overview
+              <Compass size={20} color="#0F4C3A" /> Attraction Overview
             </h2>
             <p style={{ fontSize: '0.92rem', color: '#334155', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
-              {hotel.description}
+              {attraction.description}
             </p>
           </div>
 
-          {/* MUST-EXPERIENCE HOTEL HIGHLIGHTS & AMENITIES */}
-          {hotel.mustDoThings && hotel.mustDoThings.length > 0 && (
+          {/* MUST-DO THINGS & SIGNATURE EXPERIENCES */}
+          {attraction.mustDoThings && attraction.mustDoThings.length > 0 && (
             <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
                 <span style={{ fontSize: '1.35rem' }}>✨</span>
                 <div>
                   <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0 }}>
-                    Must-Experience Hotel Highlights & Amenities
+                    Must-Do Things & Signature Experiences
                   </h2>
                   <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '2px 0 0' }}>
-                    Signature facilities, dining options, and guest conveniences at {hotel.name}.
+                    Top recommended rides, shows, exhibits, and encounters you cannot miss.
                   </p>
                 </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {hotel.mustDoThings.map((item, idx) => (
+                {attraction.mustDoThings.map((item, idx) => (
                   <div
                     key={idx}
                     style={{
@@ -267,38 +268,54 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
             </div>
           )}
 
-          {/* HOTEL TIMINGS & HOUSE GUIDELINES */}
-          {hotel.timings && (
+          {/* TIMINGS TO VISIT & SUGGESTED DURATION */}
+          {attraction.timings && (
             <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
               <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Clock size={20} color="#0F4C3A" /> Hotel Timings & House Guidelines
+                <Clock size={20} color="#0F4C3A" /> Operating Hours & Best Timings to Visit
               </h2>
 
-              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '12px', padding: '1.25rem' }}>
-                <strong style={{ fontSize: '0.92rem', color: '#166534', lineHeight: 1.6, display: 'block' }}>
-                  🕒 {hotel.timings}
-                </strong>
+              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '12px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ background: '#15803D', color: '#FFF', fontSize: '0.75rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+                    Open Today
+                  </span>
+                  <strong style={{ fontSize: '0.92rem', color: '#166534' }}>
+                    {attraction.timings}
+                  </strong>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid #DCFCE7' }}>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: '#15803D', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Suggested Time Needed</span>
+                    <strong style={{ fontSize: '0.85rem', color: '#0F172A' }}>{attraction.duration || 'Full Day (6–8 Hours)'}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: '#15803D', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Best Entry Slot</span>
+                    <strong style={{ fontSize: '0.85rem', color: '#0F172A' }}>Morning at Opening or Pre-booked Slot</strong>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
-          {/* PRO-TIPS & NEIGHBORHOOD GUIDE */}
-          {hotel.tipsAndTricks && hotel.tipsAndTricks.length > 0 && (
+          {/* TIPS & TRIPS / PRO-TIPS & PRACTICAL GUIDE */}
+          {attraction.tipsAndTricks && attraction.tipsAndTricks.length > 0 && (
             <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
                 <Lightbulb size={22} color="#D97706" />
                 <div>
                   <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0 }}>
-                    Pro-Tips & Neighborhood Guide
+                    Tips & Trips (Insider Visitor Advice)
                   </h2>
                   <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '2px 0 0' }}>
-                    Local transit directions, dining recommendations, and guest hacks.
+                    Pro-tips on queue-skipping, baggage lockers, weather gear, and transport directions.
                   </p>
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.85rem' }}>
-                {hotel.tipsAndTricks.map((tip, idx) => (
+                {attraction.tipsAndTricks.map((tip, idx) => (
                   <div
                     key={idx}
                     style={{
@@ -321,16 +338,16 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
             </div>
           )}
 
-          {/* Video Showcase Tour Player */}
-          {hotel.videoUrl && (
+          {/* VIDEO SHOWCASE TOUR */}
+          {attraction.videoUrl && (
             <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
               <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Play size={20} color="#EF4444" fill="#EF4444" /> Hotel & Room Video Walkthrough Tour
+                <Play size={20} color="#EF4444" fill="#EF4444" /> Video Walkthrough Tour
               </h2>
-              {hotel.videoUrl.includes('youtube.com') || hotel.videoUrl.includes('youtu.be') ? (
+              {attraction.videoUrl.includes('youtube.com') || attraction.videoUrl.includes('youtu.be') ? (
                 <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.08)' }}>
                   <iframe
-                    src={getYouTubeEmbedUrl(hotel.videoUrl)}
+                    src={getYouTubeEmbedUrl(attraction.videoUrl)}
                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
@@ -340,51 +357,51 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
                 <video
                   controls
                   playsInline
-                  src={hotel.videoUrl}
+                  src={attraction.videoUrl}
                   style={{ width: '100%', maxHeight: '420px', borderRadius: '12px', background: '#000', border: '1px solid #E2E8F0' }}
                 />
               )}
             </div>
           )}
 
-          {/* DIGITAL CONCIERGE & APP DOWNLOAD CARD */}
-          {hotel.appDetails && (
-            <AppDownloadCard appDetails={hotel.appDetails} />
+          {/* YOUTUBE SHORTS CAROUSEL */}
+          {attraction.shorts && attraction.shorts.length > 0 && (
+            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+              <PackageShortsCarousel
+                destination={attraction.destination || 'Singapore'}
+                curatedShorts={attraction.shorts}
+              />
+            </div>
           )}
 
-          {/* Available Room Categories & Suites */}
-          {hotel.roomCategories && hotel.roomCategories.length > 0 && (
+          {/* OFFICIAL MOBILE VISITOR APP DOWNLOAD CARD */}
+          {attraction.appDetails && (
+            <AppDownloadCard appDetails={attraction.appDetails} />
+          )}
+
+          {/* AVAILABLE TICKET VARIANTS & SUB-TICKETS */}
+          {attraction.subTickets && attraction.subTickets.length > 0 && (
             <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
               <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <BedDouble size={20} color="#0F4C3A" /> Available Room Categories & Suites
+                <Ticket size={20} color="#0F4C3A" /> Available Ticket Options & Variants
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                {hotel.roomCategories.map((rc, idx) => (
-                  <div key={idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <BedDouble size={18} color="#15803D" />
-                    </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {attraction.subTickets.map((st, idx) => (
+                  <div key={idx} style={{ background: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                     <div>
-                      <strong style={{ fontSize: '0.88rem', color: '#0F172A', display: 'block' }}>{rc}</strong>
-                      <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>Enquire for FIT / Group Rates</span>
+                      <strong style={{ fontSize: '0.88rem', color: '#0F172A', display: 'block' }}>{st.typeTitle}</strong>
+                      {st.validityPeriodText && <span style={{ fontSize: '0.75rem', color: '#64748B' }}>Validity: {st.validityPeriodText}</span>}
                     </div>
+                    <span style={{ background: '#DCFCE7', color: '#15803D', fontSize: '0.72rem', fontWeight: 800, padding: '3px 9px', borderRadius: '6px' }}>
+                      {st.bookingType || 'Instant eVoucher'}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* YouTube Shorts Carousel for Hotel Video Walkthroughs */}
-          {hotel.shorts && hotel.shorts.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-              <PackageShortsCarousel
-                destination={hotel.location || 'Singapore'}
-                curatedShorts={hotel.shorts}
-              />
-            </div>
-          )}
-
-          {/* Photo Gallery Grid */}
+          {/* PHOTO GALLERY */}
           {allPhotos.length > 0 && (
             <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
               <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -404,7 +421,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
                       position: 'relative'
                     }}
                   >
-                    <img src={url} alt={`${hotel.name} Photo ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.2s ease' }} />
+                    <img src={url} alt={`${attraction.name} Photo ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.2s ease' }} />
                   </div>
                 ))}
               </div>
@@ -413,21 +430,20 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
         </div>
 
-        {/* RIGHT COLUMN: Quick B2B Action Card & Amenities */}
+        {/* RIGHT COLUMN: Action Card & WhatsApp Inquiry */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          {/* Action Card: Custom Package Builder & WhatsApp Booking */}
           <div style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 8px 25px rgba(15,76,58,0.2)', position: 'sticky', top: '2rem' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.85rem' }}>
-              <Sparkles size={13} color="#10B981" /> Wholesale B2B Rates
+              <Sparkles size={13} color="#10B981" /> Wholesale DMC Inquiries
             </div>
 
             <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#FFF', margin: '0 0 0.5rem' }}>
-              Ready to Book {hotel.name}?
+              Plan Your Visit to {attraction.name}
             </h3>
 
             <p style={{ fontSize: '0.85rem', color: '#E2E8F0', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
-              Include this verified hotel in your custom Singapore or Malaysia itinerary, or request special group block rates from our operations team.
+              Include this attraction into a tailor-made Singapore itinerary or request group booking allotments from our ground operations team.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -472,16 +488,16 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
                 }}
               >
                 <MessageCircle size={17} />
-                <span>Inquire Rates on WhatsApp</span>
+                <span>Inquire on WhatsApp</span>
               </a>
             </div>
 
             <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
               <h4 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#A7F3D0', margin: '0 0 0.65rem' }}>
-                Key Hotel Amenities & Inclusions:
+                Key Inclusions & Benefits:
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {(hotel.features || ['Buffet Breakfast Available', 'Free High-Speed Wi-Fi', 'Swimming Pool', '24/7 Concierge']).map((f, i) => (
+                {(attraction.features || ['Instant Confirmation', 'Turnstile QR Entry', 'Free Lockers']).map((f, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#F1F5F9' }}>
                     <Check size={13} color="#10B981" />
                     <span>{f}</span>

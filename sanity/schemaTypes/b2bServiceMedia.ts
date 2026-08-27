@@ -11,6 +11,7 @@ export const b2bServiceMediaSchema = defineType({
       type: 'string',
       options: {
         list: [
+          { title: '🎡 Attraction Showcase', value: 'attraction' },
           { title: '🏨 Partner Hotel & Resort', value: 'hotel' },
           { title: '🍽️ Restaurant / Dining', value: 'restaurant' },
           { title: '🚩 Licensed Tour Guide', value: 'guide' },
@@ -25,7 +26,7 @@ export const b2bServiceMediaSchema = defineType({
       title: 'Display in Services Catalog',
       type: 'boolean',
       initialValue: true,
-      description: 'Toggle ON (green) to display this item/hotel in the catalog, or toggle OFF to temporarily hide it.',
+      description: 'Toggle ON (green) to display this item/hotel/attraction in the catalog, or toggle OFF to temporarily hide it.',
     }),
     defineField({
       name: 'title',
@@ -41,7 +42,7 @@ export const b2bServiceMediaSchema = defineType({
         source: 'title',
         maxLength: 96,
       },
-      description: 'Generates direct individual URL link, e.g. /services-catalog/hotels/hotel-boss-singapore',
+      description: 'Generates direct individual URL link, e.g. /services-catalog/attractions/universal-studios-singapore or /services-catalog/hotels/hotel-chancellor-orchard',
     }),
     defineField({
       name: 'subtitle',
@@ -63,9 +64,42 @@ export const b2bServiceMediaSchema = defineType({
     }),
     defineField({
       name: 'description',
-      title: 'Detailed Description / Highlights',
+      title: 'Detailed Description / Overview',
       type: 'text',
       rows: 4,
+    }),
+    defineField({
+      name: 'mustDoThings',
+      title: 'Must-Do Things & Key Experiences (Bullet Points)',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'List signature rides, shows, exhibits, or room experiences (e.g. "Battlestar Galactica Coaster", "Creatures of the Night Show", "Rooftop Pool").',
+    }),
+    defineField({
+      name: 'timings',
+      title: 'Operating Hours / Timings & Best Time to Visit',
+      type: 'string',
+      description: 'e.g. "10:00 AM – 7:00 PM (Daily); Best time: Weekday mornings to avoid peak crowds"',
+    }),
+    defineField({
+      name: 'tipsAndTricks',
+      title: 'Tips & Trips / Pro-Tips & Practical Advice',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'Add insider tips, ticket hacks, queue strategies, what to wear, transit routes, etc.',
+    }),
+    defineField({
+      name: 'appDetails',
+      title: 'Official Mobile App Details (Visitor Apps)',
+      type: 'object',
+      fields: [
+        { name: 'appName', title: 'App Name', type: 'string', description: 'e.g. Universal Studios Singapore Official App' },
+        { name: 'appDescription', title: 'Short App Description', type: 'string', description: 'e.g. Live ride wait times, interactive GPS map & mobile ordering' },
+        { name: 'appStoreUrl', title: 'Apple App Store URL (iOS)', type: 'url' },
+        { name: 'playStoreUrl', title: 'Google Play Store URL (Android)', type: 'url' },
+        { name: 'appFeatures', title: 'Key App Features', type: 'array', of: [{ type: 'string' }] },
+      ],
+      description: 'Mobile visitor app download details and features.',
     }),
     defineField({
       name: 'coverImage',
@@ -98,7 +132,7 @@ export const b2bServiceMediaSchema = defineType({
       title: 'Photo Gallery Uploads (Direct Multiple Photo Upload)',
       type: 'array',
       of: [{ type: 'image', options: { hotspot: true } }],
-      description: 'Upload multiple photos of food, restaurant interiors, or tour highlights.',
+      description: 'Upload multiple photos of rides, exhibits, interiors, food, or tour highlights.',
     }),
     defineField({
       name: 'galleryImageUrls',
@@ -114,7 +148,7 @@ export const b2bServiceMediaSchema = defineType({
     }),
     defineField({
       name: 'duration',
-      title: 'Duration (For Tours e.g. 2N/3D, Half Day City Tour)',
+      title: 'Duration (For Attractions & Tours e.g. 6–8 Hours, Full Day, 2N/3D)',
       type: 'string',
     }),
     defineField({
@@ -133,18 +167,18 @@ export const b2bServiceMediaSchema = defineType({
       title: 'Star Rating (For Hotels e.g. 4-Star, 5-Star, Luxury Resort)',
       type: 'string',
       options: {
-        list: ['3-Star', '4-Star', '5-Star', 'Luxury Resort', 'Boutique Hotel'],
+        list: ['3-Star', '3.5-Star', '4-Star', '5-Star', 'Luxury Resort', 'Boutique Hotel'],
       },
     }),
     defineField({
       name: 'hotelAddress',
-      title: 'Address & Nearest MRT Station (For Hotels)',
+      title: 'Address & Nearest MRT Station',
       type: 'string',
-      description: 'e.g. 500 Jalan Sultan (Near Lavender MRT), Singapore',
+      description: 'e.g. 28 Cavenagh Road (Near Somerset MRT), Singapore 229635',
     }),
     defineField({
       name: 'roomCategories',
-      title: 'Room Categories & Amenities',
+      title: 'Room Categories & Amenities (For Hotels)',
       type: 'array',
       of: [{ type: 'string' }],
       description: 'e.g. Deluxe Room, Superior City View, Family Suite with Balcony',
@@ -165,7 +199,7 @@ export const b2bServiceMediaSchema = defineType({
           ],
         },
       ],
-      description: 'Add vertical 9:16 YouTube Shorts for room walkthroughs, pool tours, and amenities.',
+      description: 'Add vertical 9:16 YouTube Shorts for ride walkthroughs, animal encounters, and room tours.',
     }),
   ],
 })

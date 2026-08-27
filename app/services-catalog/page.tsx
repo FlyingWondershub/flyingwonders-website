@@ -25,6 +25,7 @@ import {
 import { client } from '../../sanity/lib/client'
 import AdBanner from '../../components/AdBanner'
 import { DEFAULT_HOTELS, cleanHotelName, slugifyHotelName } from '../../utils/hotels'
+import { DEFAULT_ATTRACTIONS, slugifyAttractionName } from '../../utils/attractions'
 
 // Helper function to strip raw HTML tags and format clean text
 function stripHtml(htmlStr?: string) {
@@ -63,8 +64,39 @@ function getYouTubeEmbedUrl(url: string) {
 const DEFAULT_MEDIA_ITEMS: any[] = [
   // ── Partner Hotels Showcase ──
   {
+    _id: 'hotel-chancellor',
+    category: 'hotel',
+    slug: 'hotel-chancellor-orchard',
+    title: 'Hotel Chancellor @ Orchard',
+    subtitle: 'Prime Orchard Road Shopping Belt · 5 Mins Walk to Somerset MRT (NS23)',
+    destination: 'Singapore',
+    starRating: '3.5-Star / 4-Star',
+    hotelAddress: '28 Cavenagh Road, Orchard / Somerset, Singapore 229635',
+    description: 'Centrally located in the prestigious Orchard Road shopping enclave, Hotel Chancellor @ Orchard offers contemporary comfort with unbeatable city access. Featuring a spectacular rooftop outdoor swimming pool overlooking the Somerset skyline, in-room instant hot/cold filtered water dispensers, the all-day dining Bistro @ Chancellor Cafe, and 24-hour reception just 5 minutes walk from Somerset MRT Station (NS23) and Orchard Central.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    galleryImageUrls: [
+      'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop'
+    ],
+    features: ['Rooftop Outdoor Skyline Pool', 'In-Room Filtered Hot/Cold Water Tap', '5 Mins Walk to Somerset MRT', 'Bistro @ Chancellor Buffet', 'Free High-Speed Wi-Fi'],
+    mustDoThings: [
+      'Relax at the Rooftop Outdoor Swimming Pool with panoramic Orchard skyline views',
+      'Enjoy Daily International Buffet Breakfast at Bistro @ Chancellor Cafe',
+      'Walk 5 minutes to Orchard Central, 313@Somerset, Takashimaya, and Paragon'
+    ],
+    timings: 'Check-In: From 3:00 PM | Check-Out: Until 12:00 PM (Noon) | Breakfast: 6:30 AM – 10:00 AM',
+    tipsAndTricks: [
+      'Walk through the sheltered Cuppage Terrace pathway to Somerset MRT (NS23) in 5 minutes.',
+      'Every room has an instant hot/cold purified water tap—super convenient for instant tea and formula milk.'
+    ],
+    roomCategories: ['Deluxe Queen Room', 'Deluxe Twin Room', 'Premier King Room', 'Family Triple Room with Balcony']
+  },
+  {
     _id: 'hotel-1',
     category: 'hotel',
+    slug: 'hotel-boss-singapore',
     title: 'Hotel Boss Singapore',
     subtitle: 'Victoria Street / Jalan Sultan (Lavender MRT)',
     destination: 'Singapore',
@@ -343,6 +375,10 @@ export default function ServicesCatalogPage() {
           starRating,
           hotelAddress,
           roomCategories,
+          mustDoThings,
+          timings,
+          tipsAndTricks,
+          appDetails,
           shorts,
           isDisplayed
         }`)
@@ -714,21 +750,117 @@ export default function ServicesCatalogPage() {
             {/* AdSense Unit */}
             <AdBanner slotId="services_catalog_mid_slot" category="b2b" style={{ margin: '2rem 0' }} />
 
-            {/* ══ SECTION B: ATTRACTIONS (LIVE SUPPLIER API - INFORMATIONAL ONLY NO BOOKING/PRICE) ══ */}
+            {/* ══ SECTION B: ATTRACTIONS (LIVE SUPPLIER API + FEATURED SPOTLIGHT) ══ */}
             {(!settings.hideAttractions && (activeTab === 'all' || activeTab === 'attractions')) && (
               <section>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div>
                     <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: '0 0 2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Compass size={22} color="#0F4C3A" /> Live Attraction Inventory (Informational Catalogue)
+                      <Compass size={22} color="#0F4C3A" /> Featured Attractions & Live Ticket Inventory
                     </h2>
                     <p style={{ fontSize: '0.78rem', color: '#64748B', margin: 0, fontWeight: 600 }}>
-                      ℹ️ Informational Showcase only. Direct booking actions and retail pricing are disabled in this section.
+                      ✨ Explore must-do rides, operating hours, pro-tips, and official visitor apps.
                     </p>
                   </div>
                   <span style={{ fontSize: '0.78rem', color: '#166534', fontWeight: 800, background: '#DCFCE7', padding: '3px 10px', borderRadius: '12px' }}>
                     🟢 Live Supplier API Connected
                   </span>
+                </div>
+
+                {/* ── FEATURED ATTRACTIONS SPOTLIGHT ROW ── */}
+                <div style={{ marginBottom: '1.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '1rem' }}>⭐</span>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F4C3A', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Flagship Featured Attractions
+                    </h3>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                    {DEFAULT_ATTRACTIONS.map((fa) => (
+                      <div
+                        key={fa._id}
+                        onClick={() => setActiveAttractionModal(fa)}
+                        style={{
+                          background: '#FFFFFF',
+                          borderRadius: '14px',
+                          border: '2px solid #BBF7D0',
+                          overflow: 'hidden',
+                          boxShadow: '0 4px 15px rgba(16,185,129,0.08)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          cursor: 'pointer',
+                          transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                        }}
+                      >
+                        <div style={{ height: '140px', background: `linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.75)), url(${fa.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+                              ★ Featured Spotlight
+                            </span>
+                            <span style={{ background: '#FEF3C7', color: '#D97706', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: '5px' }}>
+                              ★ {fa.starRating}
+                            </span>
+                          </div>
+                          <div>
+                            <h4 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#FFF', margin: '0 0 2px', lineHeight: 1.2, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
+                              {fa.name}
+                            </h4>
+                            <span style={{ fontSize: '0.72rem', color: '#E2E8F0', fontWeight: 600 }}>⏱️ {fa.duration}</span>
+                          </div>
+                        </div>
+
+                        <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                          <p style={{ fontSize: '0.78rem', color: '#475569', margin: '0 0 0.85rem', lineHeight: 1.45 }}>
+                            {fa.description.slice(0, 110)}...
+                          </p>
+
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '1rem' }}>
+                            {(fa.features || []).slice(0, 2).map((ft, i) => (
+                              <span key={i} style={{ background: '#ECFDF5', color: '#047857', fontSize: '0.68rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
+                                ✓ {ft}
+                              </span>
+                            ))}
+                            {fa.appDetails && (
+                              <span style={{ background: '#EFF6FF', color: '#2563EB', fontSize: '0.68rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
+                                📱 App Guide
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.6rem', borderTop: '1px solid #F1F5F9' }}>
+                            <span style={{ fontSize: '0.72rem', color: '#0F4C3A', fontWeight: 700 }}>Full Guide & App</span>
+                            <Link
+                              href={`/services-catalog/attractions/${fa.slug}`}
+                              onClick={e => e.stopPropagation()}
+                              style={{
+                                fontSize: '0.75rem',
+                                color: '#FFF',
+                                fontWeight: 800,
+                                background: '#0F4C3A',
+                                padding: '5px 10px',
+                                borderRadius: '6px',
+                                textDecoration: 'none',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <span>View Page</span> →
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── ALL LIVE ATTRACTIONS INVENTORY GRID ── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '1rem' }}>📋</span>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#475569', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Complete Live Attraction Catalog ({filteredAttractions.length})
+                  </h3>
                 </div>
 
                 {filteredAttractions.length === 0 ? (
@@ -737,29 +869,38 @@ export default function ServicesCatalogPage() {
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
-                    {filteredAttractions.map((a) => (
-                      <div key={a.id} onClick={() => setActiveAttractionModal(a)} style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
-                        <div style={{ height: '140px', background: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6)), url(${a.imageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800'})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                          <span style={{ background: 'rgba(15,23,42,0.75)', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', backdropFilter: 'blur(4px)', alignSelf: 'flex-start' }}>
-                            📍 {a.category || 'Singapore Attraction'}
-                          </span>
-                          <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#FFF', margin: 0, lineHeight: 1.25, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-                            {a.name}
-                          </h3>
-                        </div>
+                    {filteredAttractions.map((a) => {
+                      const attractionSlug = slugifyAttractionName(a.name)
+                      return (
+                        <div key={a.id} onClick={() => setActiveAttractionModal(a)} style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
+                          <div style={{ height: '140px', background: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6)), url(${a.imageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800'})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <span style={{ background: 'rgba(15,23,42,0.75)', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', backdropFilter: 'blur(4px)', alignSelf: 'flex-start' }}>
+                              📍 {a.category || 'Singapore Attraction'}
+                            </span>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 900, color: '#FFF', margin: 0, lineHeight: 1.25, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                              {a.name}
+                            </h3>
+                          </div>
 
-                        <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                          <p style={{ fontSize: '0.78rem', color: '#475569', margin: '0 0 0.75rem', lineHeight: 1.45 }}>
-                            {a.description ? (stripHtml(a.description).length > 110 ? `${stripHtml(a.description).substring(0, 110)}...` : stripHtml(a.description)) : 'Official Singapore & Malaysia attraction experience.'}
-                          </p>
+                          <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <p style={{ fontSize: '0.78rem', color: '#475569', margin: '0 0 0.75rem', lineHeight: 1.45 }}>
+                              {a.description ? (stripHtml(a.description).length > 110 ? `${stripHtml(a.description).substring(0, 110)}...` : stripHtml(a.description)) : 'Official Singapore & Malaysia attraction experience.'}
+                            </p>
 
-                          <div style={{ marginTop: 'auto', background: '#F8FAFC', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.72rem', color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span><strong>Validity:</strong> {a.validity || 'Instant eVoucher'}</span>
-                            <span style={{ color: '#0F4C3A', fontWeight: 800 }}>ℹ️ Catalogue Info Only</span>
+                            <div style={{ marginTop: 'auto', background: '#F8FAFC', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.72rem', color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span><strong>Validity:</strong> {a.validity || 'Instant eVoucher'}</span>
+                              <Link
+                                href={`/services-catalog/attractions/${attractionSlug}`}
+                                onClick={e => e.stopPropagation()}
+                                style={{ color: '#0F4C3A', fontWeight: 800, textDecoration: 'none' }}
+                              >
+                                <span>Details</span> →
+                              </Link>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </section>
@@ -1135,6 +1276,35 @@ export default function ServicesCatalogPage() {
               </p>
             </div>
 
+            {/* Must-Do Things & Highlights */}
+            {activeAttractionModal.mustDoThings && activeAttractionModal.mustDoThings.length > 0 && (
+              <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
+                <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.88rem', fontWeight: 800, color: '#0F4C3A' }}>
+                  ✨ Must-Do Highlights & Signature Rides
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  {activeAttractionModal.mustDoThings.slice(0, 4).map((item: string, idx: number) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.8rem', color: '#1E293B' }}>
+                      <span style={{ color: '#0F4C3A', fontWeight: 800 }}>•</span>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Operating Hours & Timings */}
+            {activeAttractionModal.timings && (
+              <div style={{ background: '#F0FDF4', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #BBF7D0', marginBottom: '1.25rem' }}>
+                <strong style={{ fontSize: '0.82rem', color: '#166534', display: 'block' }}>
+                  🕒 Operating Hours & Timings:
+                </strong>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#15803D' }}>
+                  {activeAttractionModal.timings}
+                </p>
+              </div>
+            )}
+
             {/* Sub-tickets / Options Available (INFORMATIONAL MODE WITHOUT PRICES) */}
             {Array.isArray(activeAttractionModal.subTickets) && activeAttractionModal.subTickets.length > 0 && (
               <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
@@ -1160,13 +1330,35 @@ export default function ServicesCatalogPage() {
 
             {/* Terms & Conditions */}
             {activeAttractionModal.tnc && (
-              <div style={{ background: '#FFFBEB', padding: '1rem', borderRadius: '12px', border: '1px solid #FDE68A' }}>
+              <div style={{ background: '#FFFBEB', padding: '1rem', borderRadius: '12px', border: '1px solid #FDE68A', marginBottom: '1.25rem' }}>
                 <h4 style={{ margin: '0 0 0.4rem', fontSize: '0.85rem', fontWeight: 800, color: '#92400E' }}>⚠️ Terms & Entry Guidelines</h4>
                 <p style={{ fontSize: '0.78rem', color: '#78350F', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
                   {stripHtml(activeAttractionModal.tnc)}
                 </p>
               </div>
             )}
+
+            {/* Direct Link to Full Experience & App Guide */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
+              <Link
+                href={`/services-catalog/attractions/${activeAttractionModal.slug || slugifyAttractionName(activeAttractionModal.name)}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '8px',
+                  background: '#0F4C3A',
+                  color: '#FFF',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 8px rgba(15,76,58,0.2)'
+                }}
+              >
+                <span>Open Full Experience Guide & App Download</span> →
+              </Link>
+            </div>
 
           </div>
         </div>
