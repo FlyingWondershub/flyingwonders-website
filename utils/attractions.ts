@@ -10,6 +10,12 @@ export interface AttractionData {
   category: string
   destination: string
   locationAddress?: string
+  mapEmbedUrl?: string
+  transitInfo?: {
+    mrtStation?: string
+    busLines?: string
+    directions?: string
+  }
   description: string
   duration?: string
   starRating?: string
@@ -70,16 +76,25 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     category: 'Theme Park / Sentosa Island',
     destination: 'Singapore',
     locationAddress: '8 Sentosa Gateway, Resorts World Sentosa, Sentosa Island, Singapore 098269',
+    mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.8197775535567!2d103.8217316757655!3d1.254042898734005!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da1bf869680373%3A0xb355e1dbbb457e5b!2sUniversal%20Studios%20Singapore!5e0!3m2!1sen!2ssg!4v1700000000000!5m2!1sen!2ssg',
+    transitInfo: {
+      mrtStation: 'HarbourFront MRT (NE1/CC29) — Exit to VivoCity Level 3',
+      busLines: 'Sentosa Express Monorail to Resorts World Station (1 stop) or RWS8 Bus',
+      directions: 'Take the MRT to HarbourFront, go to VivoCity Level 3, and take the Sentosa Express monorail directly to Resorts World Station.'
+    },
     starRating: '4.9',
     duration: '6 to 8 Hours (Full-Day)',
     description: 'Immerse yourself in the blockbuster thrills of Universal Studios Singapore, Southeast Asia\'s only Universal Studios theme park featuring 24 exhilarating rides, shows, and attractions across 6 uniquely themed zones including Hollywood, New York, Sci-Fi City, Ancient Egypt, The Lost World, and Far Far Away.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/watch?v=2J3E-hOwh3A',
+    coverImageUrl: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=1600&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=F0f6X5Y-O3Y',
     galleryImageUrls: [
-      'https://images.unsplash.com/photo-1513415564515-763d91423bdd?w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Far_Far_Away_Castle%2C_Universal_Studios_Singapore.jpg/1280px-Far_Far_Away_Castle%2C_Universal_Studios_Singapore.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Battlestar_Galactica_-_Universal_Studios_Singapore_%28cropped%29.jpg/1280px-Battlestar_Galactica_-_Universal_Studios_Singapore_%28cropped%29.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Ancient_Egypt%2C_Universal_Studios_Singapore.jpg/1280px-Ancient_Egypt%2C_Universal_Studios_Singapore.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Sci-Fi_City_at_Universal_Studios_Singapore.jpg/1280px-Sci-Fi_City_at_Universal_Studios_Singapore.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/The_Lost_World_Universal_Studios_Singapore.JPG/1280px-The_Lost_World_Universal_Studios_Singapore.JPG',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/New_York_at_Universal_Studios_Singapore.jpg/1280px-New_York_at_Universal_Studios_Singapore.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Hollywood_Zone_Universal_Studios_Singapore.jpg/1280px-Hollywood_Zone_Universal_Studios_Singapore.jpg'
     ],
     features: [
       'Instant eVoucher Confirmation',
@@ -124,16 +139,16 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
         title: 'Battlestar Galactica: Human vs Cylon Coaster POV 🎢',
         creator: 'ThemeParkRider',
         views: '1.2M views',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1513415564515-763d91423bdd?w=600&auto=format&fit=crop',
-        youtubeVideoId: '2J3E-hOwh3A'
+        thumbnailUrl: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=600&auto=format&fit=crop',
+        youtubeVideoId: 'F0f6X5Y-O3Y'
       },
       {
         id: 'uss-short-2',
         title: 'Transformers The Ride 3D Battle at Universal Studios 🇸🇬',
         creator: 'SingaporeAdventures',
         views: '890K views',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=600&auto=format&fit=crop',
-        youtubeVideoId: 't5A5L_e1Q9k'
+        thumbnailUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Sci-Fi_City_at_Universal_Studios_Singapore.jpg/600px-Sci-Fi_City_at_Universal_Studios_Singapore.jpg',
+        youtubeVideoId: 'F0f6X5Y-O3Y'
       }
     ],
     subTickets: [
@@ -151,65 +166,68 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     category: 'Wildlife & Safari / Mandai',
     destination: 'Singapore',
     locationAddress: '80 Mandai Lake Road, Mandai Wildlife Reserve, Singapore 729826',
+    mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.665798485293!2d103.78817747576572!3d1.4023477985842884!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da139ef182eead%3A0xc3f8373b5bc25f45!2sNight%20Safari!5e0!3m2!1sen!2ssg!4v1700000000000!5m2!1sen!2ssg',
+    transitInfo: {
+      mrtStation: 'Khatib MRT (NS14) — Mandai Khatib Shuttle (S$1)',
+      busLines: 'Mandai Shuttle from Khatib MRT or Bus 138 from Ang Mo Kio MRT',
+      directions: 'Take the North-South Line to Khatib MRT Station, then board the dedicated Mandai Shuttle bus (S$1, 15 minutes direct to Night Safari).'
+    },
     starRating: '4.8',
     duration: '3.5 to 4.5 Hours (Evening)',
     description: 'Explore the world’s very first nocturnal wildlife park! Spanning 35 hectares of dense secondary rainforest, Night Safari is home to nearly 900 animals across 100 species—41% of which are threatened. Experience an exhilarating open-air guided tram tour and walking trails illuminated by subtle moonlighting.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=1200&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    coverImageUrl: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=1600&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=yW6U7Vq-U9o',
     galleryImageUrls: [
-      'https://images.unsplash.com/photo-1575550959106-5a7defe28b56?w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1564349683136-77e08dba1ef6?w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=800&auto=format&fit=crop'
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Night_Safari_Singapore_Tram.jpg/1280px-Night_Safari_Singapore_Tram.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Fishing_Cat_Trail_Night_Safari.jpg/1280px-Fishing_Cat_Trail_Night_Safari.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Creatures_of_the_Night_Show.jpg/1280px-Creatures_of_the_Night_Show.jpg'
     ],
     features: [
-      'Multi-Sensory 35-Min Guided Tram Safari',
-      '4 Interconnected Rainforest Walking Trails',
+      'Guided 35-Min Tram Safari with Audio Commentary',
       'Creatures of the Night Presentation',
-      'Khatib MRT Shuttle Link (S$1)',
-      'Ulu Ulu Authentic Asian Dining'
+      '4 Immersive Walking Trails in Moonlighting',
+      'Direct S$1 Mandai Express Shuttle from Khatib MRT'
     ],
     mustDoThings: [
-      'Guided Tram Safari Tour (35-minute narrated journey across 6 global habitats from Himalayan Foothills to Equatorial Africa)',
-      'Creatures of the Night Show (Fascinating presentation highlighting natural predatory and defense skills of binturongs, civets, and otters)',
-      'Leopard Trail & Fishing Cat Trail (Up-close viewing of leopards, giant flying squirrels, and fishing cats hunting in shallow streams)',
-      'Tasmanian Devil & Wallaby Trail (Encounter marsupials and nocturnal Australian native fauna under soft moonlight)',
-      'East Lodge Trail (Spot Malayan tigers, babirusas, and spotted hyenas in their natural nocturnal habitats)',
-      'Ulu Ulu Safari Restaurant (Dine amidst rustic timber ambiance serving Singapore Laksa, Chicken Rice, and Satay)'
+      'Guided Open-Air Tram Safari through 6 geographical zones',
+      'Creatures of the Night Presentation (Amphitheatre show)',
+      'Leopard Trail (Spotted leopards, giant flying squirrels, flying foxes in walk-in aviary)',
+      'Fishing Cat Trail (Observe nocturnal feline hunting behaviors)',
+      'East Lodge Trail (Malayan tigers and babirusas)',
+      'Tasmanian Devil Trail (Australia’s iconic nocturnal carnivores)'
     ],
-    timings: '7:15 PM – 12:00 AM (Midnight) Daily (Last admission: 11:15 PM). Recommended entry time-slots: 7:15 PM or 8:15 PM.',
+    timings: '7:15 PM – 12:00 AM (Midnight) Daily (Last entry 11:15 PM); Entry time slots: 7:15 PM, 8:15 PM, 9:15 PM, 10:15 PM.',
     tipsAndTricks: [
-      'Mandai Time-Slot Reservation: You MUST pre-book your specific entry time-slot in advance, as park capacity is strictly managed for nocturnal animal welfare.',
-      'Walk the Trails First: Do the walking trails right upon entry (between 7:30 PM and 8:45 PM) while natural twilight provides great visibility, then ride the Tram around 9:30 PM when queues drastically shorten.',
-      'Strictly No Flash Photography: Flash photography is strictly forbidden as it damages the sensitive eyes of nocturnal creatures. Turn off flash and enable night mode.',
-      'Insect Repellent & Umbrella: As Night Safari is nestled in dense natural rainforest, apply DEET-free mosquito repellent and pack a small umbrella for unexpected tropical showers.',
-      'Mandai Khatib Shuttle: Take the MRT North-South Line to Khatib Station (NS14), then hop on the Mandai Khatib Shuttle (only S$1, departs every 10–15 mins) directly to the park gates.'
+      'Mandai Shuttle: Take the S$1 express bus from Khatib MRT (NS14) directly to the park in 15 minutes.',
+      'Walk Trails First: Walk the 4 walking trails right at 7:15 PM twilight when animals are most active, then take the tram around 9:30 PM after queue crowds subside.',
+      'Strict No-Flash Rule: Flash photography is strictly forbidden as it blinds and distresses nocturnal animals—use night mode on your mobile.',
+      'Dress Lightly: Wear lightweight breathable clothing and apply mosquito repellent before entering the rainforest.'
     ],
     appDetails: {
       appName: 'Mandai Wildlife Reserve Official App',
-      appDescription: 'Interactive GPS wayfinding map for Night Safari, Singapore Zoo, Bird Paradise, and River Wonders. Includes animal presentation alerts and mobile food ordering.',
-      appStoreUrl: 'https://apps.apple.com/app/mandai-wildlife-reserve/id1535497210',
+      appDescription: 'Interactive GPS wayfinding map, Creatures of the Night show reminder alarms, and mobile food ordering at Ulu Ulu Restaurant.',
+      appStoreUrl: 'https://apps.apple.com/app/mandai-wildlife-reserve/id1552865917',
       playStoreUrl: 'https://play.google.com/store/apps/details?id=com.mandai.app',
       appFeatures: [
-        'Interactive Night-Mode GPS Park Map',
-        'Show Alarms & Presentation Seat Bookings',
-        'Real-Time Tram Queue Status',
-        'Audio Guide & Animal Fun Facts',
-        'Mobile Food & Beverage Ordering'
+        'Live Show Timers & Push Reminders',
+        'Interactive GPS Rainforest Walking Trail Map',
+        'E-Ticket Mobile Barcode Wallet',
+        'Ulu Ulu Safari Restaurant Mobile Ordering'
       ]
     },
     shorts: [
       {
         id: 'ns-short-1',
-        title: 'Night Safari Singapore Guided Tram Tour Experience 🌙🐘',
-        creator: 'WildSingapore',
-        views: '650K views',
+        title: 'Night Safari Singapore: Night Tram Tour Experience 🐅',
+        creator: 'SingaporeWildlife',
+        views: '640K views',
         thumbnailUrl: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=600&auto=format&fit=crop',
-        youtubeVideoId: 'kYJzX9Qz8oM'
+        youtubeVideoId: 'yW6U7Vq-U9o'
       }
     ],
     subTickets: [
-      { typeTitle: 'Night Safari Admission with Tram Ride (Adult)', validityPeriodText: 'Selected Time-Slot', bookingType: 'Time-Slot eVoucher' },
-      { typeTitle: 'Night Safari Admission with Tram Ride (Child 3-12 yrs)', validityPeriodText: 'Selected Time-Slot', bookingType: 'Time-Slot eVoucher' }
+      { typeTitle: 'Night Safari Admission + Tram Ride (Adult)', validityPeriodText: 'Fixed Date & Time Slot', bookingType: 'Direct QR Entry' },
+      { typeTitle: 'Night Safari Admission + Tram Ride (Child 3-12 yrs)', validityPeriodText: 'Fixed Date & Time Slot', bookingType: 'Direct QR Entry' }
     ],
     isDisplayed: true
   },
@@ -217,57 +235,63 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     _id: 'attraction-gardens-by-the-bay',
     slug: 'gardens-by-the-bay',
     name: 'Gardens by the Bay Singapore',
-    subtitle: 'World-Famous Futuristic Green Oasis & Cloud Forest Conservatory',
-    category: 'Botanical & Architectural / Marina Bay',
+    subtitle: 'Futuristic Botanical Wonderland with Supertree Grove & Cloud Forest Waterfall',
+    category: 'Nature & Botanical / Marina Bay',
     destination: 'Singapore',
-    locationAddress: '18 Marina Gardens Drive, Marina Bay, Singapore 018953',
+    locationAddress: '18 Marina Gardens Drive, Singapore 018953 (Bayfront MRT)',
+    mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.8105753066373!2d103.86105377576561!3d1.2815682987062402!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da1904937e1633%3A0x62099677b59fca76!2sGardens%20by%20the%20Bay!5e0!3m2!1sen!2ssg!4v1700000000000!5m2!1sen!2ssg',
+    transitInfo: {
+      mrtStation: 'Bayfront MRT (CE1/DT16) — Exit B / Gardens by the Bay MRT (TE22)',
+      busLines: 'Bus 400 from Tanjong Pagar MRT',
+      directions: 'Take Downtown Line or Circle Line to Bayfront MRT Station (Exit B) and follow the underground pedestrian link directly into the outdoor gardens.'
+    },
     starRating: '4.9',
-    duration: '3 to 5 Hours',
-    description: 'An architectural and horticultural marvel spanning 101 hectares in the heart of Marina Bay. Features the world-record Cloud Forest conservatory with a 35-meter indoor waterfall, the climate-controlled Flower Dome, Floral Fantasy, and the iconic Supertree Grove.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop',
+    duration: '4 to 6 Hours',
+    description: 'An internationally acclaimed horticultural showpiece spanning 101 hectares in the heart of Marina Bay. Features two world-record cooled glass conservatories (Flower Dome & Cloud Forest), the 35-meter indoor waterfall mountain, and the towering vertical gardens of Supertree Grove.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=1600&auto=format&fit=crop',
     videoUrl: 'https://www.youtube.com/watch?v=t5A5L_e1Q9k',
     galleryImageUrls: [
-      'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop'
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Cloud_Forest_waterfall%2C_Gardens_by_the_Bay%2C_Singapore_-_20120620.jpg/1280px-Cloud_Forest_waterfall%2C_Gardens_by_the_Bay%2C_Singapore_-_20120620.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Gardens_by_the_Bay_Flower_Dome_1.jpg/1280px-Gardens_by_the_Bay_Flower_Dome_1.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Supertrees%2C_Gardens_by_the_Bay%2C_Singapore_-_20120620.jpg/1280px-Supertrees%2C_Gardens_by_the_Bay%2C_Singapore_-_20120620.jpg'
     ],
     features: [
-      'World’s Largest Glass Greenhouse (Flower Dome)',
-      '35m Indoor Waterfall & Mist Cloud Walk',
-      'Free Supertree Garden Rhapsody Light Show',
-      'Direct Bayfront MRT (TE20 / DT16) Connection'
+      'Flower Dome (World’s Largest Glass Greenhouse - Guinness World Records)',
+      'Cloud Forest 35m Indoor Waterfall & Cloud Walk Canopy',
+      'Free Supertree Garden Rhapsody Light Show (7:45 PM & 8:45 PM Daily)',
+      'Direct Underground MRT Link at Bayfront Station (CE1/DT16)'
     ],
     mustDoThings: [
-      'Cloud Forest Conservatory & 35-Meter Indoor Mountain Waterfall',
-      'Flower Dome Conservatory (Ever-changing floral displays and thousand-year-old olive trees)',
-      'Supertree Grove Garden Rhapsody Light & Music Show (Daily at 7:45 PM & 8:45 PM - Free to watch)',
-      'OCBC Skyway Aerial Walkway suspended 22 meters above ground between Supertrees',
-      'Floral Fantasy & 4D Dragonfly Ride'
+      'Cloud Forest: 35-meter-tall indoor mist waterfall and spiral aerial walkways',
+      'Flower Dome: Thousand-year-old olive trees, Mediterranean garden, and seasonal floral exhibits',
+      'Supertree Grove: Garden Rhapsody music & light choreography at 7:45 PM and 8:45 PM',
+      'OCBC Skyway: 22-meter-high walkway suspended between Supertrees',
+      'Floral Fantasy: 4 interactive whimsical garden scenes with 4D ride'
     ],
-    timings: 'Conservatories: 9:00 AM – 9:00 PM Daily (Last ticket sale: 8:00 PM); Outdoor Gardens: 5:00 AM – 2:00 AM (Free access); Best time for Light Show: 7:30 PM.',
+    timings: 'Conservatories (Flower Dome & Cloud Forest): 9:00 AM – 9:00 PM Daily (Last ticket: 8:30 PM); Outdoor Supertree Grove: 5:00 AM – 2:00 AM (Free access).',
     tipsAndTricks: [
-      'Bring a Light Jacket: The Flower Dome and Cloud Forest are air-conditioned to 23°C–25°C with high mist levels, which can feel quite chilly.',
-      'Supertree Light Show Timings: The Garden Rhapsody show happens twice nightly at 7:45 PM and 8:45 PM. Arrive 20 mins early to find a comfortable grassy viewing spot.',
-      'Direct MRT Access: Take the Downtown or Thomson-East Coast Line directly to Bayfront MRT Station (Exit B) or Gardens by the Bay MRT Station (TE22).'
+      'Bring a Jacket: Conservatories are cooled to 23°C–25°C with high humidity mist in Cloud Forest.',
+      'Catch the Light Show: Find a comfortable spot lying on the grass at Supertree Grove 15 minutes before the free 7:45 PM show.',
+      'Combo Savings: Pair Flower Dome & Cloud Forest together on a single double-conservatory ticket.'
     ],
     appDetails: {
-      appName: 'Gardens by the Bay Official App',
-      appDescription: 'Interactive GPS wayfinding map, plant scanner identifier, augmented reality flora tours, and ticket booking.',
-      appStoreUrl: 'https://apps.apple.com/app/gardens-by-the-bay/id563148107',
-      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.gardensbythebay.app',
+      appName: 'Gardens by the Bay Mobile App',
+      appDescription: 'Interactive botanic guide, plant finder, audio tours, and real-time conservatory queue counters.',
+      appStoreUrl: 'https://apps.apple.com/app/gardens-by-the-bay/id1454522046',
+      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.gbtb.gardensbythebay',
       appFeatures: [
-        'Interactive Wayfinding & Plant Finder',
-        'Garden Rhapsody Show Reminders',
-        'AR Interactive Plant Tours',
-        'Digital Ticket Wallet'
+        'Interactive Plant & Conservatory Map',
+        'Daily Floral Display Schedules',
+        'Direct Mobile QR Entry'
       ]
     },
     shorts: [
       {
         id: 'gbtb-short-1',
-        title: 'Cloud Forest 35m Indoor Waterfall Singapore 🌊🌿',
-        creator: 'SingaporeVibes',
-        views: '980K views',
-        thumbnailUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=600&auto=format&fit=crop',
+        title: 'Gardens by the Bay: Cloud Forest 35m Waterfall 🌿',
+        creator: 'SingaporeTravelGuide',
+        views: '1.8M views',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&auto=format&fit=crop',
         youtubeVideoId: 't5A5L_e1Q9k'
       }
     ],
@@ -285,14 +309,21 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     category: 'Marine Park / Sentosa Island',
     destination: 'Singapore',
     locationAddress: '8 Sentosa Gateway, Resorts World Sentosa, Sentosa Island, Singapore 098269',
+    mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.816666872583!2d103.81883737576562!3d1.2587563987293527!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da1bf9f73fbfb5%3A0x7d6f51f496aa0e95!2sS.E.A.%20Aquarium!5e0!3m2!1sen!2ssg!4v1700000000000!5m2!1sen!2ssg',
+    transitInfo: {
+      mrtStation: 'HarbourFront MRT (NE1/CC29) — VivoCity Level 3',
+      busLines: 'Sentosa Express Monorail to Resorts World Station',
+      directions: 'Take the MRT to HarbourFront, take the Sentosa Express monorail to Resorts World Station, and walk 3 minutes to the aquarium entrance.'
+    },
     starRating: '4.7',
     duration: '2.5 to 3.5 Hours',
     description: 'Dive deep into the wonders of the marine realm at S.E.A. Aquarium! Home to over 100,000 marine animals representing 1,000 species across 40 distinct habitats, featuring giant manta rays, scalloped hammerhead sharks, coral reefs, and the awe-inspiring Open Ocean viewing panel.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    coverImageUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1600&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=F0f6X5Y-O3Y',
     galleryImageUrls: [
-      'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop'
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/S.E.A._Aquarium_Singapore.jpg/1280px-S.E.A._Aquarium_Singapore.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Open_Ocean_Habitat_SEA_Aquarium.jpg/1280px-Open_Ocean_Habitat_SEA_Aquarium.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Shark_Seas_Tunnel_SEA_Aquarium.jpg/1280px-Shark_Seas_Tunnel_SEA_Aquarium.jpg'
     ],
     features: [
       'Massive Open Ocean Viewing Habitat',
@@ -338,11 +369,21 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     category: 'Observation Wheel / Marina Bay',
     destination: 'Singapore',
     locationAddress: '30 Raffles Avenue, Singapore 039803 (Promenade MRT)',
+    mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.802319207038!2d103.86082497576566!3d1.2893322986985442!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da19a99b45668b%3A0xe54d2417b1b369!2sSingapore%20Flyer!5e0!3m2!1sen!2ssg!4v1700000000000!5m2!1sen!2ssg',
+    transitInfo: {
+      mrtStation: 'Promenade MRT (CC4/DT15) — Exit A (6 mins walk)',
+      busLines: 'Bus 56, 75, 77, 97, 97e, 171, 195 to Promenade Station',
+      directions: 'Take Downtown or Circle Line to Promenade MRT Station, take Exit A, and walk 6 minutes along Raffles Avenue to the Singapore Flyer.'
+    },
     starRating: '4.8',
     duration: '1.5 to 2.5 Hours',
     description: 'Standing 165 meters tall, the Singapore Flyer offers breathtaking 360-degree panoramic views of Marina Bay, Sentosa Island, and neighboring Malaysia and Indonesia on clear days. Preceded by the Time Capsule immersive visual experience.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/watch?v=2J3E-hOwh3A',
+    coverImageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1600&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=F0f6X5Y-O3Y',
+    galleryImageUrls: [
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Singapore_Flyer_from_Marina_Bay_Sands.jpg/1280px-Singapore_Flyer_from_Marina_Bay_Sands.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Singapore_Flyer_capsule_interior.jpg/1280px-Singapore_Flyer_capsule_interior.jpg'
+    ],
     features: ['30-Min Scenic Flight', 'Time Capsule Interactive Exhibition', 'Marina Bay Panoramic Views', 'Air-Conditioned Glass Capsules'],
     mustDoThings: [
       'Experience the 30-minute giant observation flight over Marina Bay',
@@ -363,10 +404,21 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     category: 'Wildlife & Nature / Mandai',
     destination: 'Singapore',
     locationAddress: '20 Mandai Lake Road, Singapore 729825',
+    mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.665798485293!2d103.78817747576572!3d1.4023477985842884!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da139ef182eead%3A0xc3f8373b5bc25f45!2sBird%20Paradise!5e0!3m2!1sen!2ssg!4v1700000000000!5m2!1sen!2ssg',
+    transitInfo: {
+      mrtStation: 'Khatib MRT (NS14) — Mandai Khatib Shuttle (S$1)',
+      busLines: 'Mandai Shuttle from Khatib MRT or Bus 138 from Ang Mo Kio MRT',
+      directions: 'Take the North-South Line to Khatib MRT Station, then board the dedicated Mandai Shuttle bus (S$1, 15 minutes direct).'
+    },
     starRating: '4.9',
     duration: '3.5 to 5 Hours',
     description: 'Asia’s newest and largest bird park housing 3,500 birds across 8 immersive walk-in aviaries representing dense African rainforests, South American wetlands, Australian eucalyptus forests, and polar penguin coves.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=1200&auto=format&fit=crop',
+    coverImageUrl: 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=1600&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=yW6U7Vq-U9o',
+    galleryImageUrls: [
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Bird_Paradise_Singapore_Aviary.jpg/1280px-Bird_Paradise_Singapore_Aviary.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Penguin_Cove_Bird_Paradise.jpg/1280px-Penguin_Cove_Bird_Paradise.jpg'
+    ],
     features: ['8 Immense Walk-In Aviaries', 'Wings of the World Presentation', 'Ocean Network Express Penguin Cove', 'Complimentary In-Park Tram'],
     mustDoThings: [
       'Wings of the World show at Sky Amphitheatre',
@@ -396,10 +448,21 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     category: 'River Wildlife & Panda / Mandai',
     destination: 'Singapore',
     locationAddress: '80 Mandai Lake Road, Singapore 729826',
+    mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.665798485293!2d103.78817747576572!3d1.4023477985842884!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da139ef182eead%3A0xc3f8373b5bc25f45!2sRiver%20Wonders!5e0!3m2!1sen!2ssg!4v1700000000000!5m2!1sen!2ssg',
+    transitInfo: {
+      mrtStation: 'Khatib MRT (NS14) — Mandai Khatib Shuttle (S$1)',
+      busLines: 'Mandai Shuttle from Khatib MRT or Bus 138 from Ang Mo Kio MRT',
+      directions: 'Take the North-South Line to Khatib MRT Station, then board the dedicated Mandai Shuttle bus (S$1, 15 minutes direct).'
+    },
     starRating: '4.8',
     duration: '2.5 to 4 Hours',
     description: 'Home to the giant pandas Kai Kai & Jia Jia, manatees in the colossal Amazon Flooded Forest, and the popular Amazon River Quest boat ride.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef6?w=1200&auto=format&fit=crop',
+    coverImageUrl: 'https://images.unsplash.com/photo-1564349683136-77e08dba1ef6?w=1600&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=yW6U7Vq-U9o',
+    galleryImageUrls: [
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Giant_Panda_Forest_Singapore.jpg/1280px-Giant_Panda_Forest_Singapore.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Amazon_Flooded_Forest_Manatees.jpg/1280px-Amazon_Flooded_Forest_Manatees.jpg'
+    ],
     features: ['Giant Panda Forest', 'Amazon Flooded Forest (World’s Largest Freshwater Aquarium)', 'Amazon River Quest Boat Ride', 'Squirrel Monkey Forest'],
     mustDoThings: [
       'Visit Kai Kai & Jia Jia at the climate-controlled Giant Panda Forest',
@@ -421,10 +484,21 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     category: 'Action & Adventure / Sentosa',
     destination: 'Singapore',
     locationAddress: '1 Imbiah Road / 45 Siloso Beach Walk, Sentosa, Singapore 099538',
+    mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.824245644558!2d103.81640107576553!3d1.252063898736021!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da1bf1fbfa8599%3A0xe543e3940170a442!2sSkyline%20Luge%20Singapore!5e0!3m2!1sen!2ssg!4v1700000000000!5m2!1sen!2ssg',
+    transitInfo: {
+      mrtStation: 'HarbourFront MRT (NE1/CC29) — VivoCity Level 3',
+      busLines: 'Sentosa Express Monorail to Beach Station or Imbiah Station',
+      directions: 'Take the MRT to HarbourFront, board Sentosa Express monorail to Beach Station or Imbiah Station, and walk 2 minutes to the Luge counter.'
+    },
     starRating: '4.8',
     duration: '1.5 to 2.5 Hours',
     description: 'Ride the open-air Skyride chairlift to the top of Imbiah Lookout for coastal sea views, then take the wheel of your three-wheeled gravity Luge cart down 4 thrilling neon-lit downhill tracks.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=1200&auto=format&fit=crop',
+    coverImageUrl: 'https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=1600&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=F0f6X5Y-O3Y',
+    galleryImageUrls: [
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Skyline_Luge_Sentosa_Track.jpg/1280px-Skyline_Luge_Sentosa_Track.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Sentosa_Skyride_Chairlift.jpg/1280px-Sentosa_Skyride_Chairlift.jpg'
+    ],
     features: ['4 Unique Downhill Tracks (Dragon, Jungle, Expedition, Kupu Kupu)', 'Scenic Open Skyride Chairlift', 'Night Luge with Neon LED Lighting'],
     mustDoThings: [
       'Race down the 688m Dragon Track with hairpin corners',
@@ -446,10 +520,21 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     category: 'Observation Deck / Marina Bay',
     destination: 'Singapore',
     locationAddress: '10 Bayfront Avenue, Hotel Tower 3 Level 56, Singapore 018956',
+    mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.8093121516085!2d103.85848527576566!3d1.2828230987049618!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da19046c071727%3A0xb35e16543b59ebec!2sMarina%20Bay%20Sands%20SkyPark%20Observation%20Deck!5e0!3m2!1sen!2ssg!4v1700000000000!5m2!1sen!2ssg',
+    transitInfo: {
+      mrtStation: 'Bayfront MRT (CE1/DT16) — Exit C or D',
+      busLines: 'Bus 97, 97E, 133, 106, 518 to Marina Bay Sands',
+      directions: 'Take the MRT to Bayfront Station, proceed to Hotel Tower 3 exterior basement concourse, and take the express lift to Level 56.'
+    },
     starRating: '4.8',
     duration: '1 to 2 Hours',
     description: 'Located atop the world-famous three towers of Marina Bay Sands, offering unforgettable panoramic vistas of Marina Bay, Singapore Strait, Gardens by the Bay, and the Central Business District.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop',
+    coverImageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1600&auto=format&fit=crop',
+    videoUrl: 'https://www.youtube.com/watch?v=t5A5L_e1Q9k',
+    galleryImageUrls: [
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/MBS_SkyPark_Observation_Deck_View.jpg/1280px-MBS_SkyPark_Observation_Deck_View.jpg',
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Marina_Bay_Sands_Singapore_Skyline.jpg/1280px-Marina_Bay_Sands_Singapore_Skyline.jpg'
+    ],
     features: ['56th-Floor 360° Open Observation Deck', 'Unmatched View of Spectra Light Show', 'Direct Bayfront MRT Link', 'Panoramic Photo Spot'],
     mustDoThings: [
       'Watch the 8:00 PM or 9:00 PM Spectra Light & Water Show from 200m above',

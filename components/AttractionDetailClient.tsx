@@ -37,14 +37,24 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
   }
 
   const getYouTubeEmbedUrl = (url: string) => {
+    if (!url) return ''
     try {
+      if (url.includes('/embed/')) return url
       if (url.includes('youtu.be/')) {
-        const id = url.split('youtu.be/')[1]?.split('?')[0]
-        return `https://www.youtube-nocookie.com/embed/${id}?autoplay=0&rel=0`
+        const id = url.split('youtu.be/')[1]?.split('?')[0]?.split('&')[0]
+        return `https://www.youtube-nocookie.com/embed/${id}?rel=0`
+      }
+      if (url.includes('youtube.com/shorts/')) {
+        const id = url.split('shorts/')[1]?.split('?')[0]?.split('&')[0]
+        return `https://www.youtube-nocookie.com/embed/${id}?rel=0`
       }
       if (url.includes('youtube.com/watch')) {
-        const params = new URL(url).searchParams
-        return `https://www.youtube-nocookie.com/embed/${params.get('v')}?autoplay=0&rel=0`
+        const v = new URL(url).searchParams.get('v')
+        if (v) return `https://www.youtube-nocookie.com/embed/${v}?rel=0`
+      }
+      const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)
+      if (match && match[2]?.length === 11) {
+        return `https://www.youtube-nocookie.com/embed/${match[2]}?rel=0`
       }
     } catch (e) {}
     return url
@@ -341,16 +351,39 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
           {/* VIDEO SHOWCASE TOUR */}
           {attraction.videoUrl && (
             <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Play size={20} color="#EF4444" fill="#EF4444" /> Video Walkthrough Tour
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Play size={20} color="#EF4444" fill="#EF4444" /> 4K Video Walkthrough & Tour
+                </h2>
+                <a
+                  href={attraction.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    background: '#FEE2E2',
+                    color: '#DC2626',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    textDecoration: 'none'
+                  }}
+                >
+                  <span>Watch on YouTube</span> ↗
+                </a>
+              </div>
+
               {attraction.videoUrl.includes('youtube.com') || attraction.videoUrl.includes('youtu.be') ? (
-                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.08)' }}>
+                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.08)', background: '#000' }}>
                   <iframe
                     src={getYouTubeEmbedUrl(attraction.videoUrl)}
                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
                   />
                 </div>
               ) : (
@@ -378,6 +411,75 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
           {attraction.appDetails && (
             <AppDownloadCard appDetails={attraction.appDetails} />
           )}
+
+          {/* ── INTERACTIVE GOOGLE MAP & HOW TO GET THERE ── */}
+          <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MapPin size={20} color="#0F4C3A" /> Location & How to Get There
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '2px 0 0' }}>
+                  Interactive Google Map and public transit arrival directions.
+                </p>
+              </div>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(attraction.name + ' ' + (attraction.locationAddress || attraction.destination))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '0.45rem 0.9rem',
+                  borderRadius: '8px',
+                  background: '#EFF6FF',
+                  color: '#2563EB',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  textDecoration: 'none'
+                }}
+              >
+                <span>Open in Google Maps</span> ↗
+              </a>
+            </div>
+
+            <p style={{ fontSize: '0.88rem', color: '#334155', margin: '0 0 1rem', lineHeight: 1.5 }}>
+              📍 <strong>Official Address:</strong> {attraction.locationAddress || attraction.subtitle || 'Resorts World Sentosa, 8 Sentosa Gateway, Singapore 098269'}
+            </p>
+
+            {/* Responsive Google Maps Iframe */}
+            <div style={{ position: 'relative', width: '100%', height: '340px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #E2E8F0', marginBottom: '1.25rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+              <iframe
+                src={attraction.mapEmbedUrl || `https://maps.google.com/maps?q=${encodeURIComponent(attraction.name + ' ' + (attraction.locationAddress || attraction.destination))}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                style={{ width: '100%', height: '100%', border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+
+            {/* Transit Connection Badges */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+              <div style={{ background: '#F8FAFC', padding: '0.9rem 1.1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>
+                  🚆 Nearest MRT Station
+                </span>
+                <strong style={{ fontSize: '0.85rem', color: '#0F172A' }}>
+                  {attraction.transitInfo?.mrtStation || 'HarbourFront MRT (NE1/CC29)'}
+                </strong>
+              </div>
+
+              <div style={{ background: '#F8FAFC', padding: '0.9rem 1.1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>
+                  🚝 Monorail / Shuttle Link
+                </span>
+                <strong style={{ fontSize: '0.85rem', color: '#0F172A' }}>
+                  {attraction.transitInfo?.busLines || 'Sentosa Express from VivoCity L3 to Resorts World'}
+                </strong>
+              </div>
+            </div>
+          </div>
 
           {/* AVAILABLE TICKET VARIANTS & SUB-TICKETS */}
           {attraction.subTickets && attraction.subTickets.length > 0 && (
