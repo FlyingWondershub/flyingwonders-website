@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
-import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X, Sparkles } from 'lucide-react'
+import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X, Sparkles, Search, ChevronDown } from 'lucide-react'
 
 // Default Fallback Master Data (Configured in SGD)
 const FALLBACK_HOTELS = [
@@ -215,6 +215,35 @@ export default function PrototypeBuilder() {
   const [b2bAgentsList, setB2bAgentsList] = useState<any[]>([])
   const [selectedAgentId, setSelectedAgentId] = useState<string>('direct')
   const [selectedAgentDetails, setSelectedAgentDetails] = useState<{ _id?: string; companyName?: string; agentName?: string; email?: string; phone?: string } | null>(null)
+  const [agentSearchQuery, setAgentSearchQuery] = useState('')
+  const [isAgentComboboxOpen, setIsAgentComboboxOpen] = useState(false)
+  const agentComboboxRef = useRef<HTMLDivElement>(null)
+
+  // Filtered B2B Agents based on search query
+  const filteredB2bAgents = useMemo(() => {
+    const q = agentSearchQuery.toLowerCase().trim()
+    if (!q) return b2bAgentsList
+    return b2bAgentsList.filter(a => 
+      (a.companyName || '').toLowerCase().includes(q) ||
+      (a.agentName || '').toLowerCase().includes(q) ||
+      (a.email || '').toLowerCase().includes(q) ||
+      (a.phone || '').toLowerCase().includes(q) ||
+      (a.city || '').toLowerCase().includes(q)
+    )
+  }, [b2bAgentsList, agentSearchQuery])
+
+  // Click outside listener to close Agent combobox
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (agentComboboxRef.current && !agentComboboxRef.current.contains(event.target as Node)) {
+        setIsAgentComboboxOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   // Fetch registered B2B agents if logged in as Admin
   useEffect(() => {
@@ -5777,30 +5806,210 @@ ${proposal}
                     </div>
                   </div>
                 </div>
-                <div style={{ minWidth: '260px', flex: '1 1 260px' }}>
-                  <select
-                    value={selectedAgentId}
-                    onChange={e => handleAdminAgentChange(e.target.value)}
+                <div ref={agentComboboxRef} style={{ position: 'relative', minWidth: '320px', flex: '1 1 320px' }}>
+                  {/* Combobox Trigger / Search Input */}
+                  <div
                     style={{
-                      width: '100%',
-                      padding: '0.45rem 0.75rem',
-                      borderRadius: '6px',
-                      border: '1px solid #86EFAC',
+                      display: 'flex',
+                      alignItems: 'center',
                       background: '#FFF',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      color: '#14532D',
-                      outline: 'none',
-                      cursor: 'pointer'
+                      border: isAgentComboboxOpen ? '2px solid #16A34A' : '1px solid #86EFAC',
+                      borderRadius: '8px',
+                      padding: '0.35rem 0.65rem',
+                      boxShadow: isAgentComboboxOpen ? '0 0 0 3px rgba(34, 197, 94, 0.15)' : '0 1px 2px rgba(0,0,0,0.05)',
+                      transition: 'all 0.15s ease'
                     }}
                   >
-                    <option value="direct">🏢 Direct / In-House (Flying Wonders)</option>
-                    {b2bAgentsList.map((a: any) => (
-                      <option key={a._id} value={a._id}>
-                        {a.companyName || a.agentName} — {a.agentName} ({a.email})
-                      </option>
-                    ))}
-                  </select>
+                    <Search size={15} color="#16A34A" style={{ marginRight: '6px', flexShrink: 0 }} />
+                    <input
+                      type="text"
+                      placeholder={selectedAgentDetails ? `${selectedAgentDetails.companyName || selectedAgentDetails.agentName} (Click to change)` : "Search partner agency or type name/email..."}
+                      value={agentSearchQuery}
+                      onChange={e => {
+                        setAgentSearchQuery(e.target.value)
+                        if (!isAgentComboboxOpen) setIsAgentComboboxOpen(true)
+                      }}
+                      onFocus={() => setIsAgentComboboxOpen(true)}
+                      style={{
+                        width: '100%',
+                        border: 'none',
+                        outline: 'none',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        color: '#14532D',
+                        background: 'transparent'
+                      }}
+                    />
+
+                    {/* Clear / Reset to Direct button */}
+                    {(selectedAgentId !== 'direct' || agentSearchQuery) && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setAgentSearchQuery('')
+                          handleAdminAgentChange('direct')
+                          setIsAgentComboboxOpen(false)
+                        }}
+                        title="Reset to Direct / In-House"
+                        style={{
+                          background: '#F1F5F9',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '20px',
+                          height: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#64748B',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          marginLeft: '4px',
+                          flexShrink: 0
+                        }}
+                      >
+                        ✕
+                      </button>
+                    )}
+
+                    {/* Toggle Chevron */}
+                    <button
+                      type="button"
+                      onClick={() => setIsAgentComboboxOpen(prev => !prev)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        padding: 0,
+                        marginLeft: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: '#15803D',
+                        flexShrink: 0
+                      }}
+                    >
+                      <ChevronDown size={14} style={{ transform: isAgentComboboxOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s ease' }} />
+                    </button>
+                  </div>
+
+                  {/* Dropdown Options List */}
+                  {isAgentComboboxOpen && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 4px)',
+                        left: 0,
+                        right: 0,
+                        background: '#FFF',
+                        borderRadius: '10px',
+                        border: '1px solid #BBF7D0',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)',
+                        maxHeight: '260px',
+                        overflowY: 'auto',
+                        zIndex: 9999,
+                        padding: '4px'
+                      }}
+                    >
+                      {/* Direct / In-House Default Option */}
+                      <div
+                        onClick={() => {
+                          handleAdminAgentChange('direct')
+                          setAgentSearchQuery('')
+                          setIsAgentComboboxOpen(false)
+                        }}
+                        style={{
+                          padding: '0.55rem 0.75rem',
+                          borderRadius: '6px',
+                          background: selectedAgentId === 'direct' ? '#DCFCE7' : 'transparent',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          borderBottom: '1px solid #F1F5F9',
+                          marginBottom: '2px',
+                          transition: 'background 0.12s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '1rem' }}>🏢</span>
+                          <div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#166534' }}>
+                              Direct / In-House (Flying Wonders)
+                            </div>
+                            <div style={{ fontSize: '0.7rem', color: '#64748B' }}>
+                              Default company ledger & direct quotation
+                            </div>
+                          </div>
+                        </div>
+                        {selectedAgentId === 'direct' && (
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#16A34A' }}>✓ Selected</span>
+                        )}
+                      </div>
+
+                      {/* Header count of filtered partners */}
+                      {filteredB2bAgents.length > 0 && (
+                        <div style={{ padding: '0.3rem 0.6rem', fontSize: '0.68rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Registered Partner Agencies ({filteredB2bAgents.length})
+                        </div>
+                      )}
+
+                      {/* Filtered Agents List */}
+                      {filteredB2bAgents.map((a: any) => {
+                        const isSelected = selectedAgentId === a._id
+                        return (
+                          <div
+                            key={a._id}
+                            onClick={() => {
+                              handleAdminAgentChange(a._id)
+                              setAgentSearchQuery('')
+                              setIsAgentComboboxOpen(false)
+                            }}
+                            style={{
+                              padding: '0.5rem 0.75rem',
+                              borderRadius: '6px',
+                              background: isSelected ? '#DCFCE7' : 'transparent',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '8px',
+                              transition: 'background 0.12s ease'
+                            }}
+                            onMouseEnter={e => {
+                              if (!isSelected) e.currentTarget.style.background = '#F0FDF4'
+                            }}
+                            onMouseLeave={e => {
+                              if (!isSelected) e.currentTarget.style.background = 'transparent'
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span>{a.companyName || a.agentName}</span>
+                                {a.city && (
+                                  <span style={{ fontSize: '0.65rem', background: '#FEF3C7', color: '#B45309', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                                    {a.city}
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                                👤 {a.agentName} · ✉️ {a.email} {a.phone ? `· 📞 ${a.phone}` : ''}
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#16A34A' }}>✓</span>
+                            )}
+                          </div>
+                        )
+                      })}
+
+                      {filteredB2bAgents.length === 0 && agentSearchQuery.trim() && (
+                        <div style={{ padding: '1.25rem', textAlign: 'center', color: '#64748B', fontSize: '0.8rem' }}>
+                          🔍 No partner agencies found matching "<strong>{agentSearchQuery}</strong>"
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
