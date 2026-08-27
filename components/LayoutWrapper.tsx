@@ -255,7 +255,30 @@ export default function LayoutWrapper({
                   <ChevronDown size={11} className="nav-dropdown-chevron" />
                 </button>
 
+                {isServicesOpen && (
+                  <div 
+                    className="nav-dropdown-backdrop" 
+                    onClick={() => setIsServicesOpen(false)} 
+                    aria-hidden="true" 
+                  />
+                )}
+
                 <div className="nav-dropdown-menu" role="menu">
+                  {/* Mobile-Only Header with Dismiss Button */}
+                  <div className="nav-dropdown-mobile-header">
+                    <span style={{ fontWeight: 800, fontSize: '0.82rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                      Explore Services
+                    </span>
+                    <button 
+                      type="button" 
+                      onClick={() => setIsServicesOpen(false)} 
+                      className="nav-dropdown-mobile-close"
+                      aria-label="Close menu"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
                   <Link 
                     href="/corporate-travel" 
                     className="nav-dropdown-item"
