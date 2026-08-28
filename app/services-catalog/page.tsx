@@ -314,7 +314,7 @@ export default function ServicesCatalogPage() {
     // Define individual parallel fetchers
     const fetchSettings = async () => {
       try {
-        const fetchedSettings = await client.fetch(`*[_type == "b2bServiceCatalogSettings"][0]{
+        const fetchedSettings = await client.fetch(`*[_type == "b2bServiceCatalogSettings" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]{
           isPageHidden,
           hideHotels,
           hideAttractions,
@@ -324,7 +324,9 @@ export default function ServicesCatalogPage() {
           hidePackages,
           heroTitle,
           heroSubtitle,
-          hiddenHotelNames
+          hiddenHotelNames,
+          whatsappNumber,
+          whatsappMessageTemplate
         }`)
         if (fetchedSettings) {
           setSettings(prev => ({ ...prev, ...fetchedSettings }))

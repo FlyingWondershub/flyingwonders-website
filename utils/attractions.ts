@@ -594,7 +594,7 @@ export async function getAllAttractions(): Promise<AttractionData[]> {
         whatsappMessage,
         isDisplayed
       }`),
-      client.fetch(`*[_type == "b2bServiceCatalogSettings"][0]{ whatsappNumber, whatsappMessageTemplate }`).catch(() => null)
+      client.fetch(`*[_type == "b2bServiceCatalogSettings" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]{ whatsappNumber, whatsappMessageTemplate }`).catch(() => null)
     ])
 
     const globalWhatsappNumber = catalogSettings?.whatsappNumber || '6588941014'
