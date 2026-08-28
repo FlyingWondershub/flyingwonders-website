@@ -751,7 +751,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
                 }}
               >
                 <Ticket size={17} />
-                <span>Singapore Attractions 🎟️</span>
+                <span>Book Attraction Tickets 🎟️</span>
               </Link>
 
               <a
