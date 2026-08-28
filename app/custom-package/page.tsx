@@ -5,7 +5,7 @@ import Link from 'next/link'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
-import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X, Sparkles, Search, ChevronDown } from 'lucide-react'
+import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X, Sparkles, Search, ChevronDown, Check, Mail, Share2, Eye, RefreshCw, Layers, CheckCircle2, ArrowRight } from 'lucide-react'
 
 // Default Fallback Master Data (Configured in SGD)
 const FALLBACK_HOTELS = [
@@ -539,8 +539,39 @@ export default function PrototypeBuilder() {
   const [loadingQuotations, setLoadingQuotations] = useState(false)
   const [loadedProposalRaw, setLoadedProposalRaw] = useState<any | null>(null)
   const [registrySearchQuery, setRegistrySearchQuery] = useState('')
+  const [registryFilter, setRegistryFilter] = useState<'all' | 'confirmed' | 'pending' | 'followup' | 'scheduled'>('all')
+  const [registryCopiedId, setRegistryCopiedId] = useState<string | null>(null)
   const [showPreviewOverlay, setShowPreviewOverlay] = useState(false)
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({})
+
+  // Modern Toast Notification State
+  const [toast, setToast] = useState<{ message: string; type?: 'success' | 'info' | 'error' } | null>(null)
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    setToast({ message, type })
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null)
+    }, 3800)
+  }
+
+  // Multi-Format Copy Modal States
+  const [showCopyModal, setShowCopyModal] = useState(false)
+  const [copyFormatTab, setCopyFormatTab] = useState<'whatsapp' | 'email' | 'quick' | 'b2b'>('whatsapp')
+  const [copyOptions, setCopyOptions] = useState({
+    showPrice: true,
+    showTimings: true,
+    showNotes: true,
+    includeAgencyContact: true,
+  })
+  const [copiedFormat, setCopiedFormat] = useState<string | null>(null)
+
+  // Save As New (Clone) Modal States
+  const [showSaveAsModal, setShowSaveAsModal] = useState(false)
+  const [cloneGuestName, setCloneGuestName] = useState('')
+  const [cloneArrivalDate, setCloneArrivalDate] = useState('')
+  const [cloneStatus, setCloneStatus] = useState('pending')
+  const [isCloning, setIsCloning] = useState(false)
 
   // Admin Invoicing & Financial Ledger States
   const [activeProposalStatus, setActiveProposalStatus] = useState<string>('pending')
@@ -1456,9 +1487,10 @@ export default function PrototypeBuilder() {
     }).catch(() => {}) // Fire-and-forget, never block UI
   }
 
-  // Concise WhatsApp-optimised Proposal Text
-  const generateProposalText = (overrideNum?: string) => {
+  // Concise WhatsApp-optimised Proposal Text with customization options
+  const generateProposalText = (overrideNum?: string, opts?: { showPrice?: boolean; showTimings?: boolean; showNotes?: boolean; includeAgencyContact?: boolean }) => {
     const pNum = overrideNum || savedProposalNum
+    const currentOpts = opts || copyOptions
     const sep = '━━━━━━━━━━━━━━━━━━━━━'
     let t = `✈️ *${destinationMode === 'malaysia' ? 'MALAYSIA' : 'SINGAPORE'} ITINERARY*`
     if (pNum) {
@@ -1536,13 +1568,14 @@ export default function PrototypeBuilder() {
     const childAgeStr = kids > 0 && childAges.length > 0 ? ` (Ages: ${childAges.slice(0, kids).join(', ')} yrs)` : ''
     t += `👥 *Pax:* ${adults} Adult${adults !== 1 ? 's' : ''}${kids > 0 ? ` & ${kids} Child${kids !== 1 ? 'ren' : ''}${childAgeStr}` : ''}\n`
     t += `📅 *Arrival:* ${getItineraryDate(0)}  •  ${nightsCount + 1}D/${nightsCount}N\n`
-    t += `💰 *Total:* S$ ${costBreakdown.totalClientPrice.toLocaleString()}  _(≈₹${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')})_\n`
 
-    // Per-head breakdown
-    t += `💵 *Per Adult:* S$ ${costBreakdown.adultQuote}`
-    if (kids > 0) t += `  |  *Per Child:* S$ ${costBreakdown.childQuote}`
-    if (discountPerPerson > 0) t += `  _(Disc: S$${discountPerPerson}/pax)_`
-    t += `\n`
+    if (currentOpts.showPrice !== false) {
+      t += `💰 *Total:* S$ ${costBreakdown.totalClientPrice.toLocaleString()}  _(≈₹${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')})_\n`
+      t += `💵 *Per Adult:* S$ ${costBreakdown.adultQuote}`
+      if (kids > 0) t += `  |  *Per Child:* S$ ${costBreakdown.childQuote}`
+      if (discountPerPerson > 0) t += `  _(Disc: S$${discountPerPerson}/pax)_`
+      t += `\n`
+    }
 
     // Day-by-day
     t += `\n${sep}\n`
@@ -1559,9 +1592,10 @@ export default function PrototypeBuilder() {
       day.transfers.forEach(tr => {
         const v = vehiclesList[tr.vehicleIndex]?.type || 'Transfer'
         const qtyStr = tr.qty && tr.qty > 1 ? ` (×${tr.qty})` : ''
+        const timePrefix = currentOpts.showTimings !== false && tr.time ? `${tr.time} — ` : ''
         dayItems.push({
           time: tr.time || '00:00',
-          text: `🚗 ${tr.time || '00:00'} — ${v}${qtyStr}${tr.description ? ' → ' + tr.description : ''}`
+          text: `🚗 ${timePrefix}${v}${qtyStr}${tr.description ? ' → ' + tr.description : ''}`
         })
       })
       day.attractions.forEach(a => {
@@ -1571,24 +1605,27 @@ export default function PrototypeBuilder() {
         // Interline Pickup Transfer
         if (a.hasTransfer && a.pickupEnabled !== false) {
           const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Transfer'
+          const pickupTimePrefix = currentOpts.showTimings !== false && a.pickupTime ? `${a.pickupTime} — ` : ''
           dayItems.push({
             time: a.pickupTime || '09:00',
-            text: `🚗 ${a.pickupTime || '09:00'} — Pickup Transfer (${pvName})${a.pickupNotes ? ' → ' + a.pickupNotes : ''} [for ${name}]`
+            text: `🚗 ${pickupTimePrefix}Pickup Transfer (${pvName})${a.pickupNotes ? ' → ' + a.pickupNotes : ''} [for ${name}]`
           })
         }
 
         // Attraction Entry
+        const attrTimePrefix = currentOpts.showTimings !== false && a.time ? `${a.time} — ` : ''
         dayItems.push({
           time: a.time || '00:00',
-          text: `🎟️ ${a.time || '00:00'} — ${name}${paxStr}${a.description ? ' · ' + a.description : ''}`
+          text: `🎟️ ${attrTimePrefix}${name}${paxStr}${a.description ? ' · ' + a.description : ''}`
         })
 
         // Interline Drop Transfer
         if (a.hasTransfer && a.dropEnabled !== false) {
           const dvName = vehiclesList[a.dropVehicleIndex ?? 0]?.type || 'Transfer'
+          const dropTimePrefix = currentOpts.showTimings !== false && a.dropTime ? `${a.dropTime} — ` : ''
           dayItems.push({
             time: a.dropTime || '17:00',
-            text: `🚗 ${a.dropTime || '17:00'} — Drop Transfer (${dvName})${a.dropNotes ? ' → ' + a.dropNotes : ''} [from ${name}]`
+            text: `🚗 ${dropTimePrefix}Drop Transfer (${dvName})${a.dropNotes ? ' → ' + a.dropNotes : ''} [from ${name}]`
           })
         }
       })
@@ -1606,17 +1643,19 @@ export default function PrototypeBuilder() {
       if (day.meals && Array.isArray(day.meals)) {
         day.meals.forEach(m => {
           const type = mealsList[m.mealIndex]?.type || 'Meal'
+          const mTimePrefix = currentOpts.showTimings !== false && m.time ? `${m.time} — ` : ''
           dayItems.push({
             time: m.time || '00:00',
-            text: `🍽️ ${m.time} — ${type}${m.description ? ' · ' + m.description : ''}`
+            text: `🍽️ ${mTimePrefix}${type}${m.description ? ' · ' + m.description : ''}`
           })
         })
       }
       day.guides.forEach(g => {
         const type = guidesList[g.guideIndex]?.type || 'Guide'
+        const gTimePrefix = currentOpts.showTimings !== false && g.time ? `${g.time} — ` : ''
         dayItems.push({
           time: g.time || '00:00',
-          text: `👤 ${g.time} — ${type}${g.description ? ' · ' + g.description : ''}`
+          text: `👤 ${gTimePrefix}${type}${g.description ? ' · ' + g.description : ''}`
         })
       })
 
@@ -1635,14 +1674,167 @@ export default function PrototypeBuilder() {
     t += `  • Total Transfers: ${totalTransfers}\n`
     t += `  • Total Attractions: ${totalAttractionsCount}\n`
     t += `  • Meals Plan: ${costBreakdown.totalLunchCount} Lunch, ${costBreakdown.totalDinnerCount} Dinner\n\n`
-    t += `⚠️ *Note:* Prices may vary based on surcharges / unforeseen events\n`
-    t += `📌 FIT room rates are subject to a marginal increase\n`
-    t += `${sep}\n`
-    if (activeAgent) {
+    
+    if (currentOpts.showNotes !== false) {
+      t += `⚠️ *Note:* Prices may vary based on surcharges / unforeseen events\n`
+      t += `📌 FIT room rates are subject to a marginal increase\n`
+      t += `${sep}\n`
+    }
+
+    if (currentOpts.includeAgencyContact !== false && activeAgent) {
       t += `📞 ${activeAgent.agentName || ''}${activeAgent.phone ? ' · ' + activeAgent.phone : ''}\n`
     }
     t += `_Powered by Flying Wonders Singapore_`
     return t
+  }
+
+  // Quick 3-Line Summary Format
+  const generateQuickSummaryText = (overrideNum?: string) => {
+    const pNum = overrideNum || savedProposalNum
+    const dest = destinationMode === 'malaysia' ? 'MALAYSIA' : 'SINGAPORE'
+    const childAgeStr = kids > 0 && childAges.length > 0 ? ` (Ages: ${childAges.slice(0, kids).join(', ')} yrs)` : ''
+    let hName = 'Hotel Not Included'
+    if (hotelRequired) {
+      if (customHotelEnabled) {
+        hName = `${customHotelName || 'Custom Hotel'} (${customHotelRoomType || 'Custom Room'} ×${globalRoomCount})`
+      } else {
+        const h = hotelsList[globalHotelIndex]
+        const room = h?.rooms[globalRoomIndex]
+        hName = `${h?.name || 'Hotel'} (${room?.type || 'Standard'} ×${globalRoomCount})`
+      }
+    }
+    const refStr = pNum ? `(Ref: ${pNum})` : '(Draft Quote)'
+    return `✈️ *${dest} LUXURY PACKAGE* ${refStr}
+👤 *Guest:* ${guestName || 'Valued Guest'} | 📅 *Travel:* ${getItineraryDate(0)} (${nightsCount + 1}D/${nightsCount}N)
+👥 *Pax:* ${adults} Adult${adults !== 1 ? 's' : ''}${kids > 0 ? ` & ${kids} Child${kids !== 1 ? 'ren' : ''}${childAgeStr}` : ''}
+🏨 *Hotel:* ${hName}
+💰 *Total:* S$ ${costBreakdown.totalClientPrice.toLocaleString()}  _(≈₹${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')})_
+💵 *Per Adult:* S$ ${costBreakdown.adultQuote}${kids > 0 ? ` | *Per Child:* S$ ${costBreakdown.childQuote}` : ''}
+📞 *Contact:* ${activeAgent?.agentName || 'Flying Wonders'} ${activeAgent?.phone ? `(${activeAgent.phone})` : ''}`
+  }
+
+  // B2B Operational & Cost Breakdown Sheet
+  const generateB2BBreakdownText = (overrideNum?: string) => {
+    const pNum = overrideNum || savedProposalNum
+    const sep = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+    let t = `📑 *B2B OPERATIONS & COST BREAKDOWN* (Ref: ${pNum || 'Draft'})\n${sep}\n`
+    t += `👤 *Client:* ${guestName || 'Guest'}  |  📞 ${guestPhone || 'N/A'}\n`
+    t += `📅 *Dates:* ${getItineraryDate(0)} (${nightsCount + 1}D/${nightsCount}N)\n`
+    t += `👥 *Pax:* ${adults} Adult${adults !== 1 ? 's' : ''}${kids > 0 ? ` + ${kids} Child(ren)` : ''}\n\n`
+    
+    if (hotelRequired) {
+      const hName = customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || 'Hotel')
+      const rType = customHotelEnabled ? (customHotelRoomType || 'Custom Room') : (hotelsList[globalHotelIndex]?.rooms?.[globalRoomIndex]?.type || 'Room')
+      t += `🏨 *Accommodation:* ${hName} - ${rType} ×${globalRoomCount} (${nightsCount} Nights)\n`
+      t += `   • Base Hotel Cost: S$ ${costBreakdown.hotelTotal.toLocaleString()}\n`
+    }
+    
+    t += `🚗 *Transfers:* ${costBreakdown.totalTransfers || 0} transfers | Base Cost: S$ ${costBreakdown.transportTotal.toLocaleString()}\n`
+    t += `🎟️ *Attractions:* ${costBreakdown.totalAttractionsCount || 0} entries | Base Cost: S$ ${costBreakdown.attractionTotal.toLocaleString()}\n`
+    if (costBreakdown.miscTotal > 0) {
+      t += `📦 *Misc / Supplements:* S$ ${costBreakdown.miscTotal.toLocaleString()} (${miscNotes || 'None'})\n`
+    }
+    t += `\n${sep}\n`
+    t += `💵 *Total Base Net Cost:* S$ ${costBreakdown.netCost.toLocaleString()}\n`
+    if (markupPercent > 0 || markupAbsolute > 0) {
+      t += `📈 *Markup Applied:* ${markupPercent > 0 ? `${markupPercent}%` : ''} ${markupAbsolute > 0 ? `+S$${markupAbsolute}/pax` : ''} (S$ ${(costBreakdown.totalClientPrice - costBreakdown.netCost).toLocaleString()})\n`
+    }
+    if (discountPerPerson > 0) {
+      t += `🏷️ *Discount Given:* S$ ${discountPerPerson}/pax\n`
+    }
+    t += `💰 *Final Client Quoted Price:* S$ ${costBreakdown.totalClientPrice.toLocaleString()} (₹${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')})\n`
+    t += `${sep}\n`
+    t += `🏢 *Agent:* ${activeAgent?.companyName || activeAgent?.agentName || 'B2B Partner'}`
+    return t
+  }
+
+  // Rich HTML / Email Format for Direct Paste into Gmail & Outlook
+  const generateEmailHtml = (overrideNum?: string, opts = copyOptions) => {
+    const pNum = overrideNum || savedProposalNum
+    const dest = destinationMode === 'malaysia' ? 'Malaysia' : 'Singapore'
+    const childAgeStr = kids > 0 && childAges.length > 0 ? ` (Ages: ${childAges.slice(0, kids).join(', ')} yrs)` : ''
+    
+    let hName = 'Hotel Not Included'
+    let rType = '—'
+    if (hotelRequired) {
+      if (customHotelEnabled) {
+        hName = customHotelName || 'Custom Hotel'
+        rType = `${customHotelRoomType || 'Room'} ×${globalRoomCount}`
+      } else {
+        const h = hotelsList[globalHotelIndex]
+        const room = h?.rooms[globalRoomIndex]
+        hName = h?.name || 'Hotel'
+        rType = `${room?.type || 'Room'} ×${globalRoomCount}`
+      }
+    }
+
+    let daysHtml = ''
+    itinerary.forEach((day, dIdx) => {
+      const items: string[] = []
+      day.transfers.forEach(tr => {
+        const v = vehiclesList[tr.vehicleIndex]?.type || 'Transfer'
+        items.push(`<tr><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-size:13px;color:#64748B;width:75px;">${tr.time || '00:00'}</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-size:13px;color:#1E293B;">🚗 <strong>Transfer:</strong> ${v} ${tr.description ? `&bull; ${tr.description}` : ''}</td></tr>`)
+      })
+      day.attractions.forEach(a => {
+        const name = attractionsList[a.attractionIndex]?.name || 'Attraction'
+        if (a.hasTransfer && a.pickupEnabled !== false) {
+          items.push(`<tr><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-size:13px;color:#64748B;width:75px;">${a.pickupTime || '09:00'}</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-size:13px;color:#1E293B;">🚗 <strong>Pickup:</strong> For ${name}</td></tr>`)
+        }
+        items.push(`<tr><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-size:13px;color:#64748B;width:75px;">${a.time || '10:00'}</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-size:13px;color:#1E293B;">🎟️ <strong>Attraction:</strong> ${name} ${a.description ? `&bull; ${a.description}` : ''}</td></tr>`)
+        if (a.hasTransfer && a.dropEnabled !== false) {
+          items.push(`<tr><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-size:13px;color:#64748B;width:75px;">${a.dropTime || '17:00'}</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-size:13px;color:#1E293B;">🚗 <strong>Drop-off:</strong> Return from ${name}</td></tr>`)
+        }
+      })
+      if (day.isBreakTrip) {
+        items.push(`<tr><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-size:13px;color:#64748B;width:75px;">All Day</td><td style="padding:6px 10px;border-bottom:1px solid #E2E8F0;font-size:13px;color:#1E293B;">🌴 <strong>Free & Easy:</strong> Leisure / Shopping Day</td></tr>`)
+      }
+
+      daysHtml += `
+        <div style="margin-bottom:16px;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;">
+          <div style="background:#F1F5F9;padding:8px 14px;font-weight:700;font-size:14px;color:#0F4C3A;border-bottom:1px solid #E2E8F0;">
+            📅 Day ${dIdx + 1} &bull; ${getItineraryDate(dIdx)} ${day.dayTitle ? `(${day.dayTitle})` : ''}
+          </div>
+          <table style="width:100%;border-collapse:collapse;">
+            <tbody>
+              ${items.length > 0 ? items.join('') : '<tr><td style="padding:10px;font-size:13px;color:#94A3B8;font-style:italic;">Rest / Leisure day</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      `
+    })
+
+    return `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:650px;margin:0 auto;background:#F8FAFC;padding:24px;border-radius:12px;border:1px solid #E2E8F0;color:#1E293B;">
+        <div style="text-align:center;padding-bottom:16px;border-bottom:2px solid #0F4C3A;margin-bottom:20px;">
+          <h2 style="color:#0F4C3A;margin:0 0 6px 0;font-size:22px;font-weight:800;letter-spacing:0.5px;">✈️ ${dest.toUpperCase()} TRAVEL ITINERARY</h2>
+          <span style="background:#0F4C3A;color:#FFFFFF;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">Ref: ${pNum || 'Draft'}</span>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:8px;padding:16px;margin-bottom:16px;">
+          <table style="width:100%;font-size:14px;border-collapse:collapse;">
+            <tr><td style="padding:4px 0;color:#64748B;width:120px;">👤 <strong>Guest:</strong></td><td style="padding:4px 0;color:#1E293B;font-weight:600;">${guestName || 'Valued Guest'} ${guestPhone ? `(${guestPhone})` : ''}</td></tr>
+            <tr><td style="padding:4px 0;color:#64748B;">👥 <strong>Travelers:</strong></td><td style="padding:4px 0;color:#1E293B;">${adults} Adult${adults !== 1 ? 's' : ''}${kids > 0 ? ` & ${kids} Child${kids !== 1 ? 'ren' : ''}${childAgeStr}` : ''}</td></tr>
+            <tr><td style="padding:4px 0;color:#64748B;">📅 <strong>Duration:</strong></td><td style="padding:4px 0;color:#1E293B;">${getItineraryDate(0)} &bull; ${nightsCount + 1} Days / ${nightsCount} Nights</td></tr>
+            <tr><td style="padding:4px 0;color:#64748B;">🏨 <strong>Hotel:</strong></td><td style="padding:4px 0;color:#1E293B;font-weight:600;">${hName} (${rType})</td></tr>
+          </table>
+        </div>
+
+        ${opts.showPrice ? `
+        <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;padding:16px;margin-bottom:20px;text-align:center;">
+          <div style="font-size:13px;color:#065F46;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Quotation Total (SGD & INR)</div>
+          <div style="font-size:26px;font-weight:800;color:#0F4C3A;margin:4px 0;">S$ ${costBreakdown.totalClientPrice.toLocaleString()} <span style="font-size:16px;color:#059669;font-weight:600;">(≈₹${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')})</span></div>
+          <div style="font-size:13px;color:#047857;">Per Adult: <strong>S$ ${costBreakdown.adultQuote}</strong> ${kids > 0 ? `&bull; Per Child: <strong>S$ ${costBreakdown.childQuote}</strong>` : ''}</div>
+        </div>` : ''}
+
+        <h3 style="color:#0F4C3A;font-size:16px;margin:20px 0 12px 0;">🗺️ Day-by-Day Schedule</h3>
+        ${daysHtml}
+
+        <div style="margin-top:20px;padding-top:14px;border-top:1px dashed #CBD5E1;font-size:12px;color:#64748B;text-align:center;">
+          <div>📞 <strong>${activeAgent?.agentName || 'Flying Wonders Singapore'}</strong> ${activeAgent?.phone ? `&bull; ${activeAgent.phone}` : ''} ${activeAgent?.email ? `&bull; ${activeAgent.email}` : ''}</div>
+          <div style="margin-top:4px;color:#94A3B8;">Powered by Flying Wonders &bull; Singapore & Malaysia Destination Management</div>
+        </div>
+      </div>
+    `.trim()
   }
 
   // Download Itinerary PDF helper (auto-saves proposal if draft)
@@ -2962,7 +3154,7 @@ export default function PrototypeBuilder() {
         setSaveStatus('success')
         setSavedProposalNum(data.proposalNumber)
         if (!quiet) {
-          alert(`Proposal created successfully! Proposal Number: ${data.proposalNumber}`)
+          showToast(`Proposal created successfully! Ref: ${data.proposalNumber} 🎉`, 'success')
         }
         return data.proposalNumber
       }
@@ -2973,7 +3165,7 @@ export default function PrototypeBuilder() {
     return null
   }
 
-  // Copy Proposal handler with automatic Proposal ID assignment
+  // Copy Proposal handler with automatic Proposal ID assignment and toast feedback
   const handleCopyProposalText = async (closeDrawer = false) => {
     const pNum = await ensureProposalSaved(true)
     const text = generateProposalText(pNum || undefined)
@@ -2985,7 +3177,68 @@ export default function PrototypeBuilder() {
     notifyAgentActivity('clipboard_copy')
     if (closeDrawer) setPriceDrawerOpen(false)
     const refMsg = pNum ? ` (Ref: ${pNum})` : ''
-    alert(`Proposal copied to clipboard!${refMsg}`)
+    showToast(`WhatsApp Proposal copied to clipboard!${refMsg} 📋`, 'success')
+  }
+
+  // Multi-Format Copy Executor
+  const executeCopyFormat = async (format: 'whatsapp' | 'email' | 'quick' | 'b2b') => {
+    const pNum = await ensureProposalSaved(true)
+    const refNum = pNum || savedProposalNum || 'Draft'
+    
+    if (format === 'whatsapp') {
+      const text = generateProposalText(pNum || undefined, copyOptions)
+      try {
+        await navigator.clipboard.writeText(text)
+      } catch (e) {
+        console.error('Clipboard copy failed:', e)
+      }
+      setCopiedFormat('whatsapp')
+      showToast(`WhatsApp Proposal copied! (Ref: ${refNum}) 📋`, 'success')
+    } else if (format === 'quick') {
+      const text = generateQuickSummaryText(pNum || undefined)
+      try {
+        await navigator.clipboard.writeText(text)
+      } catch (e) {
+        console.error('Clipboard copy failed:', e)
+      }
+      setCopiedFormat('quick')
+      showToast(`Quick 3-line quote copied! (Ref: ${refNum}) ⚡`, 'success')
+    } else if (format === 'b2b') {
+      const text = generateB2BBreakdownText(pNum || undefined)
+      try {
+        await navigator.clipboard.writeText(text)
+      } catch (e) {
+        console.error('Clipboard copy failed:', e)
+      }
+      setCopiedFormat('b2b')
+      showToast(`B2B Operations Sheet copied! (Ref: ${refNum}) 📑`, 'success')
+    } else if (format === 'email') {
+      const htmlContent = generateEmailHtml(pNum || undefined, copyOptions)
+      const textContent = generateProposalText(pNum || undefined, copyOptions)
+      try {
+        if (typeof window !== 'undefined' && navigator.clipboard && window.ClipboardItem) {
+          const blobHtml = new Blob([htmlContent], { type: 'text/html' })
+          const blobText = new Blob([textContent], { type: 'text/plain' })
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              'text/html': blobHtml,
+              'text/plain': blobText,
+            })
+          ])
+        } else {
+          await navigator.clipboard.writeText(textContent)
+        }
+        setCopiedFormat('email')
+        showToast(`Rich Email HTML copied! Ready to paste into Gmail/Outlook. 📧`, 'success')
+      } catch (err) {
+        console.warn('ClipboardItem HTML copy fallback:', err)
+        await navigator.clipboard.writeText(textContent)
+        setCopiedFormat('email')
+        showToast(`Proposal copied to clipboard! (Ref: ${refNum}) 📋`, 'success')
+      }
+    }
+    notifyAgentActivity('clipboard_copy')
+    setTimeout(() => setCopiedFormat(null), 3000)
   }
 
   // Send Itinerary on WhatsApp helper (auto-saves proposal if draft)
@@ -2996,6 +3249,7 @@ export default function PrototypeBuilder() {
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`
     window.open(whatsappUrl, '_blank')
     notifyAgentActivity('whatsapp_share')
+    showToast('Opening WhatsApp with proposal... 💬', 'info')
   }
 
   // Handle Save Proposal to Sanity (Updates existing proposal if reloaded/active, or creates new if fresh)
@@ -3053,26 +3307,30 @@ export default function PrototypeBuilder() {
       if (res.ok && data.success) {
         setSaveStatus('success')
         setSavedProposalNum(data.proposalNumber)
-        alert(data.updated ? `Proposal ${data.proposalNumber} updated successfully!` : `Proposal created successfully! Proposal Number: ${data.proposalNumber}`)
+        showToast(data.updated ? `Proposal ${data.proposalNumber} updated successfully! ✨` : `Proposal created successfully! Ref: ${data.proposalNumber} 🎉`, 'success')
       } else {
         throw new Error(data.error || 'Failed to save proposal')
       }
     } catch (err) {
       console.error(err)
       setSaveStatus('error')
-      alert('Failed to save proposal to Sanity. Check write tokens.')
+      showToast('Failed to save proposal to Sanity. Check write tokens.', 'error')
     }
   }
 
-  // Handle Save As Proposal to Sanity (Creates a brand new package based on current details)
-  const handleSaveAsProposal = async () => {
-    if (!activeAgent) return
-    
-    // Prompt agent for new guest/client name or default to current guest name + "(Copy)"
-    const defaultName = guestName ? `${guestName} (Copy)` : ''
-    const newGuestName = prompt('Enter Guest Name for the new cloned package:', defaultName)
-    if (newGuestName === null) return // User cancelled
+  // Open Save As (Clone) Modal
+  const openSaveAsModal = () => {
+    setCloneGuestName(guestName ? `${guestName} (Copy)` : 'New Client Quote')
+    setCloneArrivalDate(arrivalDate || new Date().toISOString().split('T')[0])
+    setCloneStatus('pending')
+    setShowSaveAsModal(true)
+  }
 
+  // Execute Save As Proposal to Sanity (Creates a brand new package based on current details)
+  const handleExecuteCloneProposal = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!activeAgent) return
+    setIsCloning(true)
     setSaveStatus('saving')
     try {
       const h = hotelsList[globalHotelIndex]
@@ -3092,13 +3350,13 @@ export default function PrototypeBuilder() {
           templateName: activeTemplateName || '',
           agentId: targetAgentId,
           agentEmail: targetAgentEmail,
-          guestName: newGuestName.trim() || guestName,
+          guestName: cloneGuestName.trim() || guestName,
           guestPhone,
           adults,
           kids,
           childAges,
           nights: nightsCount,
-          arrivalDate,
+          arrivalDate: cloneArrivalDate || arrivalDate,
           hotelRequired,
           hotelName: customHotelEnabled ? customHotelName : (h?.name || ''),
           roomType: customHotelEnabled ? customHotelRoomType : (room?.type || ''),
@@ -3125,18 +3383,65 @@ export default function PrototypeBuilder() {
       if (res.ok && data.success) {
         setSaveStatus('success')
         setSavedProposalNum(data.proposalNumber)
-        if (newGuestName.trim()) setGuestName(newGuestName.trim())
+        if (cloneGuestName.trim()) setGuestName(cloneGuestName.trim())
+        if (cloneArrivalDate) setArrivalDate(cloneArrivalDate)
         if (typeof window !== 'undefined') {
           window.history.pushState({}, '', `/custom-package?ref=${data.proposalNumber}`)
         }
-        alert(`New package created successfully! Proposal Number: ${data.proposalNumber}`)
+        setShowSaveAsModal(false)
+        showToast(`New cloned package created! Ref: ${data.proposalNumber} ✨`, 'success')
       } else {
         throw new Error(data.error || 'Failed to save new package')
       }
     } catch (err) {
       console.error(err)
       setSaveStatus('error')
-      alert('Failed to save new package to Sanity. Check write tokens.')
+      showToast('Failed to save new package to Sanity.', 'error')
+    } finally {
+      setIsCloning(false)
+    }
+  }
+
+  // Copy helper for proposals in Registry modal
+  const copyRegistryProposalText = async (p: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const pNum = p.proposalNumber || 'Quote'
+    const sep = '━━━━━━━━━━━━━━━━━━━━━'
+    let t = `✈️ *${p.destinationMode === 'malaysia' ? 'MALAYSIA' : 'SINGAPORE'} ITINERARY* (Ref: ${pNum})\n${sep}\n`
+    if (p.guestName) t += `👤 *Guest:* ${p.guestName}\n`
+    if (p.guestPhone) t += `📞 *Contact:* ${p.guestPhone}\n`
+    t += `👥 *Pax:* ${p.adults || 2} Adults${p.kids > 0 ? ` & ${p.kids} Children` : ''}\n`
+    t += `📅 *Dates:* ${p.arrivalDate || 'TBD'} (${(p.nights || 3) + 1}D/${p.nights || 3}N)\n`
+    if (p.hotelRequired !== false && p.hotelName) {
+      t += `🏨 *Hotel:* ${p.hotelName} (${p.roomType || 'Standard'} ×${p.roomCount || 1})\n`
+    }
+    if (p.costBreakdown?.totalClientPrice) {
+      t += `💰 *Total:* S$ ${p.costBreakdown.totalClientPrice.toLocaleString()} _(≈₹${(p.costBreakdown.totalClientPriceINR || 0).toLocaleString('en-IN')})_\n`
+    }
+    t += `${sep}\n`
+    if (Array.isArray(p.itinerary)) {
+      p.itinerary.forEach((day: any, dIdx: number) => {
+        t += `\n*Day ${dIdx + 1}*\n`
+        if (day.transfers) {
+          day.transfers.forEach((tr: any) => {
+            t += `  🚗 ${tr.time || ''} ${tr.description || 'Transfer'}\n`
+          })
+        }
+        if (day.attractions) {
+          day.attractions.forEach((a: any) => {
+            t += `  🎟️ ${a.time || ''} ${a.description || 'Attraction'}\n`
+          })
+        }
+      })
+    }
+    t += `\n${sep}\n📞 Flying Wonders Singapore`
+    try {
+      await navigator.clipboard.writeText(t)
+      setRegistryCopiedId(pNum)
+      showToast(`Copied itinerary for ${pNum}! 📋`, 'success')
+      setTimeout(() => setRegistryCopiedId(null), 2500)
+    } catch (err) {
+      console.error(err)
     }
   }
 
@@ -4691,14 +4996,23 @@ ${proposal}
           @keyframes cp-slide-up {
             from { transform: translateY(100%); } to { transform: translateY(0); }
           }
+          @keyframes cp-slide-down {
+            from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; }
+          }
+          @keyframes cp-fade-in {
+            from { opacity: 0; } to { opacity: 1; }
+          }
           .cp-modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9500;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9500;
             display: flex; align-items: flex-end; justify-content: center;
+            backdrop-filter: blur(4px);
           }
           .cp-modal {
             background: #FFF; border-radius: 20px 20px 0 0; width: 100%; max-height: 90vh;
             overflow-y: auto; padding: 1.5rem 1.25rem 2rem;
             animation: cp-slide-up 0.28s cubic-bezier(0.32,0.72,0,1);
+            color: #1E293B;
+            font-family: var(--font-inter), -apple-system, sans-serif;
           }
           .cp-modal-handle { width: 40px; height: 4px; background: #E2E8F0; border-radius: 2px; margin: 0 auto 1.25rem; }
           .cp-day-body {
@@ -4707,17 +5021,19 @@ ${proposal}
           }
           .cp-day-body.collapsed { max-height: 0 !important; opacity: 0; }
           .cp-agent-toolbar {
-            display: flex; gap: 0.35rem; flex-wrap: nowrap; align-items: center; overflow-x: auto;
-            padding: 0.55rem 0.85rem; background: #F8FAFC;
-            border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 1.25rem;
+            display: flex; gap: 0.4rem; flex-wrap: nowrap; align-items: center; overflow-x: auto;
+            padding: 0.6rem 0.85rem; background: #F8FAFC;
+            border: 1px solid #E2E8F0; border-radius: 10px; margin-bottom: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
           }
           .cp-tool-btn {
-            display: inline-flex; align-items: center; gap: 0.25rem;
-            padding: 0.35rem 0.65rem; border-radius: 5px; border: 1px solid #CBD5E1;
-            background: #FFF; color: #2D3748; font-size: 0.76rem; font-weight: 700;
-            cursor: pointer; white-space: nowrap; transition: all 0.15s; flex-shrink: 0;
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid #CBD5E1;
+            background: #FFF; color: #1E293B; font-size: 0.78rem; font-weight: 700;
+            cursor: pointer; white-space: nowrap; transition: all 0.15s ease; flex-shrink: 0;
+            font-family: var(--font-inter), sans-serif;
           }
-          .cp-tool-btn:hover { background: #EBF8F0; border-color: #0F4C3A; color: #0F4C3A; }
+          .cp-tool-btn:hover { background: #EBF8F0; border-color: #0F4C3A; color: #0F4C3A; transform: translateY(-1px); }
           .cp-tool-btn.whatsapp { background: #25D366; color: #FFF; border-color: #25D366; }
           .cp-tool-btn.whatsapp:hover { background: #1da851; }
           @media (max-width: 768px) {
@@ -5229,24 +5545,73 @@ ${proposal}
           </div>
         )}
 
+        {/* ══ TOAST NOTIFICATION COMPONENT ══ */}
+        {toast && (
+          <div 
+            style={{
+              position: 'fixed',
+              top: '1.25rem',
+              right: '1.25rem',
+              zIndex: 100000,
+              background: toast.type === 'error' ? '#991B1B' : toast.type === 'info' ? '#1E40AF' : '#065F46',
+              color: '#FFFFFF',
+              padding: '0.75rem 1.25rem',
+              borderRadius: '10px',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.65rem',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              maxWidth: '90vw',
+              border: '1px solid rgba(255,255,255,0.2)',
+              animation: 'cp-slide-down 0.25s ease-out'
+            }}
+          >
+            <span>{toast.type === 'error' ? '⚠️' : toast.type === 'info' ? 'ℹ️' : '✅'}</span>
+            <span>{toast.message}</span>
+            <button 
+              onClick={() => setToast(null)} 
+              style={{ background: 'none', border: 'none', color: '#FFF', opacity: 0.8, cursor: 'pointer', marginLeft: '0.5rem', fontSize: '1rem' }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* ══ COMPACT AGENT TOOLS BAR ══ */}
         <div className="cp-agent-toolbar">
           <Link href="/agent-portal" className="cp-tool-btn" style={{ background: '#0F4C3A', color: '#FFF', border: 'none', fontWeight: 800, padding: '0.4rem 0.75rem' }}>
             🏠 Home Dashboard
           </Link>
-          <button className="cp-tool-btn" onClick={() => { setShowQuotationsModal(true); handleLoadQuotations(); }} style={{ background: '#EBF8FF', border: '1px solid #BEE3F8', color: '#2B6CB0' }}>🗄️ View Proposals</button>
-          <button className="cp-tool-btn" onClick={() => handleCopyProposalText(false)}>📋 Copy Proposal</button>
+          <button className="cp-tool-btn" onClick={() => { setShowQuotationsModal(true); handleLoadQuotations(); }} style={{ background: '#EBF8FF', border: '1px solid #BEE3F8', color: '#2B6CB0' }}>
+            🗄️ View Proposals
+          </button>
+          
+          {/* Copy Proposal with Dropdown/Modal Trigger */}
+          <button 
+            className="cp-tool-btn" 
+            onClick={() => setShowCopyModal(true)}
+            style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', fontWeight: 700 }}
+            title="Open Copy Formats (WhatsApp, Rich Email HTML, Quick Quote, B2B)"
+          >
+            📋 Copy Proposal <ChevronDown size={13} style={{ marginLeft: '-2px' }} />
+          </button>
+
           <button className="cp-tool-btn" onClick={downloadProposalPDF}>📄 PDF</button>
           <button className="cp-tool-btn" onClick={downloadSimpleItineraryPDF} style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', color: '#C2410C', fontWeight: 800 }} title="Download Simple Visual Itinerary (S-PDF)">📄 S-PDF</button>
           <button className="cp-tool-btn whatsapp" onClick={sendOnWhatsApp}>💬 WhatsApp</button>
+          
           <button className="cp-tool-btn" onClick={handleSaveProposal} style={{ background: '#FAF5FF', border: '1px solid #D6BCFA', color: '#6B46C1' }}>
             💾 {saveStatus === 'saving' ? 'Saving...' : (savedProposalNum ? 'Update Proposal' : 'Save Proposal')}
           </button>
+
           {savedProposalNum && (
-            <button className="cp-tool-btn" onClick={handleSaveAsProposal} style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8' }} title="Save as a new proposal copy">
+            <button className="cp-tool-btn" onClick={openSaveAsModal} style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8' }} title="Clone into a brand new package">
               📋 Save As New
             </button>
           )}
+
           {activeAgent?.email?.toLowerCase() === 'info.flyingwonders@gmail.com' && savedProposalNum && (
             <button 
               className="cp-tool-btn" 
@@ -5269,88 +5634,492 @@ ${proposal}
           <button className="cp-tool-btn" onClick={() => setShowEnquiry(true)}>📧 Enquiry</button>
         </div>
 
-        {/* View Quotations / Proposals Listing Modal */}
-        {showQuotationsModal && (
-          <div className="cp-modal-overlay" onClick={() => setShowQuotationsModal(false)}>
-            <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '600px', maxWidth: '95vw', maxHeight: '80vh', overflowY: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem' }}>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>🗄️ Saved Proposals Registry</h3>
-                <button onClick={() => setShowQuotationsModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#718096' }}>✕</button>
+        {/* ══ MULTI-FORMAT COPY PROPOSAL MODAL ══ */}
+        {showCopyModal && (
+          <div className="cp-modal-overlay" onClick={() => setShowCopyModal(false)}>
+            <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '680px', maxWidth: '95vw', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.85rem', marginBottom: '1rem' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--emerald-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Copy size={20} /> Copy Proposal Options
+                  </h3>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: '#64748B' }}>
+                    Ref: <strong>{savedProposalNum || 'Draft (Auto-Assigns on Copy)'}</strong> &bull; {guestName || 'Valued Guest'}
+                  </p>
+                </div>
+                <button onClick={() => setShowCopyModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.3rem', cursor: 'pointer', color: '#64748B' }}>✕</button>
               </div>
 
-              {loadingQuotations ? (
-                <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.6 }}>Loading saved records...</p>
-              ) : (
-                <>
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <input 
-                      type="text"
-                      placeholder="🔍 Search by Guest Name, Arrival Date, or Proposal Number..."
-                      value={registrySearchQuery}
-                      onChange={e => setRegistrySearchQuery(e.target.value)}
-                      style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.85rem' }}
-                    />
-                  </div>
+              {/* Format Switcher Tabs */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.35rem', background: '#F1F5F9', padding: '0.3rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                <button 
+                  onClick={() => setCopyFormatTab('whatsapp')}
+                  style={{
+                    padding: '0.55rem 0.35rem',
+                    borderRadius: '6px',
+                    border: 'none',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: copyFormatTab === 'whatsapp' ? '#25D366' : 'transparent',
+                    color: copyFormatTab === 'whatsapp' ? '#FFFFFF' : '#475569',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.3rem',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  💬 WhatsApp
+                </button>
+                <button 
+                  onClick={() => setCopyFormatTab('email')}
+                  style={{
+                    padding: '0.55rem 0.35rem',
+                    borderRadius: '6px',
+                    border: 'none',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: copyFormatTab === 'email' ? '#0F4C3A' : 'transparent',
+                    color: copyFormatTab === 'email' ? '#FFFFFF' : '#475569',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.3rem',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  📧 Rich Email
+                </button>
+                <button 
+                  onClick={() => setCopyFormatTab('quick')}
+                  style={{
+                    padding: '0.55rem 0.35rem',
+                    borderRadius: '6px',
+                    border: 'none',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: copyFormatTab === 'quick' ? '#2563EB' : 'transparent',
+                    color: copyFormatTab === 'quick' ? '#FFFFFF' : '#475569',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.3rem',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  ⚡ Quick 3-Line
+                </button>
+                <button 
+                  onClick={() => setCopyFormatTab('b2b')}
+                  style={{
+                    padding: '0.55rem 0.35rem',
+                    borderRadius: '6px',
+                    border: 'none',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: copyFormatTab === 'b2b' ? '#7C3AED' : 'transparent',
+                    color: copyFormatTab === 'b2b' ? '#FFFFFF' : '#475569',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.3rem',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  📑 B2B Sheet
+                </button>
+              </div>
 
-                  {(() => {
+              {/* Format Customization Checkbox Controls */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', padding: '0.6rem 0.85rem', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '1rem', fontSize: '0.78rem', color: '#334155' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={copyOptions.showPrice} onChange={e => setCopyOptions(prev => ({ ...prev, showPrice: e.target.checked }))} />
+                  Show Pricing (SGD / INR)
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={copyOptions.showTimings} onChange={e => setCopyOptions(prev => ({ ...prev, showTimings: e.target.checked }))} />
+                  Show Schedule Timings
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={copyOptions.showNotes} onChange={e => setCopyOptions(prev => ({ ...prev, showNotes: e.target.checked }))} />
+                  Include Terms & Policy
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={copyOptions.includeAgencyContact} onChange={e => setCopyOptions(prev => ({ ...prev, includeAgencyContact: e.target.checked }))} />
+                  Agency Contact Signature
+                </label>
+              </div>
+
+              {/* Live Preview Box */}
+              <div style={{ flex: 1, overflowY: 'auto', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '0.85rem', fontSize: '0.82rem', fontFamily: copyFormatTab === 'email' ? 'inherit' : 'monospace', whiteSpace: copyFormatTab === 'email' ? 'normal' : 'pre-wrap', maxHeight: '320px', color: '#1E293B', marginBottom: '1rem' }}>
+                {copyFormatTab === 'whatsapp' && generateProposalText(undefined, copyOptions)}
+                {copyFormatTab === 'quick' && generateQuickSummaryText()}
+                {copyFormatTab === 'b2b' && generateB2BBreakdownText()}
+                {copyFormatTab === 'email' && (
+                  <div dangerouslySetInnerHTML={{ __html: generateEmailHtml(undefined, copyOptions) }} />
+                )}
+              </div>
+
+              {/* Action Footer */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0', paddingTop: '0.85rem' }}>
+                <button onClick={() => setShowCopyModal(false)} style={{ padding: '0.55rem 1rem', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', color: '#475569' }}>
+                  Close
+                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {copyFormatTab === 'whatsapp' && (
+                    <button 
+                      onClick={sendOnWhatsApp} 
+                      style={{ padding: '0.55rem 1rem', background: '#25D366', color: '#FFF', border: 'none', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                    >
+                      <MessageCircle size={15} /> Send on WhatsApp
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => executeCopyFormat(copyFormatTab)} 
+                    style={{ padding: '0.55rem 1.25rem', background: copiedFormat === copyFormatTab ? '#059669' : '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', transition: 'background 0.2s' }}
+                  >
+                    {copiedFormat === copyFormatTab ? <Check size={16} /> : <Copy size={16} />}
+                    {copiedFormat === copyFormatTab ? 'Copied to Clipboard! ✓' : `Copy ${copyFormatTab === 'email' ? 'Rich Email HTML' : copyFormatTab === 'quick' ? 'Quick Quote' : copyFormatTab === 'b2b' ? 'B2B Sheet' : 'WhatsApp Text'}`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══ SAVE AS NEW (CLONE) MODAL ══ */}
+        {showSaveAsModal && (
+          <div className="cp-modal-overlay" onClick={() => !isCloning && setShowSaveAsModal(false)}>
+            <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '480px', maxWidth: '95vw' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>📑 Clone as New Proposal</h3>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.75rem', color: '#64748B' }}>Create a brand new quote while preserving your current itinerary & hotel</p>
+                </div>
+                <button onClick={() => setShowSaveAsModal(false)} disabled={isCloning} style={{ border: 'none', background: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#64748B' }}>✕</button>
+              </div>
+
+              <form onSubmit={handleExecuteCloneProposal} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>New Guest / Group Name *</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="e.g. Rahul Sharma (Option B)" 
+                    value={cloneGuestName} 
+                    onChange={e => setCloneGuestName(e.target.value)} 
+                    style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }} 
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>New Arrival Date</label>
+                  <input 
+                    type="date" 
+                    value={cloneArrivalDate} 
+                    onChange={e => setCloneArrivalDate(e.target.value)} 
+                    style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }} 
+                  />
+                </div>
+
+                <div style={{ background: '#F8FAFC', padding: '0.75rem', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.78rem', color: '#64748B' }}>
+                  💡 <strong>What happens:</strong> A fresh Proposal Reference (e.g. <code>FW-2026-XXXX</code>) will be generated. All selected attractions, hotel rooms, transfers, and custom markup will be cloned over.
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.65rem', marginTop: '0.5rem' }}>
+                  <button type="button" onClick={() => setShowSaveAsModal(false)} disabled={isCloning} style={{ padding: '0.6rem 1rem', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', color: '#475569' }}>
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={isCloning} style={{ padding: '0.6rem 1.25rem', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    {isCloning ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                    {isCloning ? 'Cloning Package...' : 'Create Cloned Proposal'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ══ SAVED PROPOSALS REGISTRY MODAL (LUXURY CARD DECK) ══ */}
+        {showQuotationsModal && (
+          <div className="cp-modal-overlay" onClick={() => setShowQuotationsModal(false)}>
+            <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '820px', maxWidth: '96vw', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
+              
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.85rem', marginBottom: '1rem', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>🗄️ Saved Proposals Registry</h3>
+                  <span style={{ fontSize: '0.75rem', background: '#E2E8F0', color: '#334155', fontWeight: 700, padding: '0.2rem 0.55rem', borderRadius: '12px' }}>
+                    {quotationsList.length} Quotes
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button onClick={handleLoadQuotations} title="Refresh Registry" style={{ border: '1px solid #CBD5E1', background: '#FFF', padding: '0.35rem 0.65rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: '#475569', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <RefreshCw size={13} /> Refresh
+                  </button>
+                  <button onClick={() => setShowQuotationsModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.3rem', cursor: 'pointer', color: '#64748B' }}>✕</button>
+                </div>
+              </div>
+
+              {/* Filter Tabs & Search */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem', flexShrink: 0 }}>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type="text"
+                    placeholder="🔍 Search by Guest Name, Phone, Ref Number (FW-2026-...), or Hotel..."
+                    value={registrySearchQuery}
+                    onChange={e => setRegistrySearchQuery(e.target.value)}
+                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.85rem', background: '#F8FAFC' }}
+                  />
+                  {registrySearchQuery && (
+                    <button onClick={() => setRegistrySearchQuery('')} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#94A3B8', cursor: 'pointer' }}>✕</button>
+                  )}
+                </div>
+
+                {/* Filter Pills */}
+                <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '2px' }}>
+                  {(['all', 'confirmed', 'followup', 'pending', 'scheduled'] as const).map(f => {
+                    const count = f === 'all' 
+                      ? quotationsList.length 
+                      : quotationsList.filter(q => (q.status || 'pending').toLowerCase() === f).length
+                    const labels: Record<string, string> = {
+                      all: 'All Proposals',
+                      confirmed: '🟢 Confirmed',
+                      followup: '🟡 Follow-up',
+                      pending: '🔵 Pending',
+                      scheduled: '🟣 Scheduled'
+                    }
+                    const active = registryFilter === f
+                    return (
+                      <button
+                        key={f}
+                        onClick={() => setRegistryFilter(f)}
+                        style={{
+                          padding: '0.3rem 0.7rem',
+                          borderRadius: '20px',
+                          border: active ? '1px solid #0F4C3A' : '1px solid #E2E8F0',
+                          background: active ? '#0F4C3A' : '#FFFFFF',
+                          color: active ? '#FFFFFF' : '#475569',
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          transition: 'all 0.15s'
+                        }}
+                      >
+                        {labels[f] || f} ({count})
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Proposal Cards Container */}
+              <div style={{ flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
+                {loadingQuotations ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 0', color: '#64748B' }}>
+                    <Loader2 className="animate-spin" size={28} style={{ margin: '0 auto 0.5rem' }} />
+                    <p style={{ fontSize: '0.85rem' }}>Loading saved proposals...</p>
+                  </div>
+                ) : (
+                  (() => {
+                    const query = registrySearchQuery.toLowerCase().trim()
                     const filtered = quotationsList.filter(q => {
-                      const query = registrySearchQuery.toLowerCase().trim()
+                      const matchesFilter = registryFilter === 'all' || (q.status || 'pending').toLowerCase() === registryFilter
+                      if (!matchesFilter) return false
                       if (!query) return true
                       return (
                         (q.guestName || '').toLowerCase().includes(query) ||
                         (q.guestPhone || '').toLowerCase().includes(query) ||
                         (q.arrivalDate || '').toLowerCase().includes(query) ||
-                        (q.proposalNumber || '').toLowerCase().includes(query)
+                        (q.proposalNumber || '').toLowerCase().includes(query) ||
+                        (q.hotelName || '').toLowerCase().includes(query) ||
+                        (q.agent?.agentName || '').toLowerCase().includes(query) ||
+                        (q.agent?.companyName || '').toLowerCase().includes(query)
                       )
                     })
 
                     if (filtered.length === 0) {
-                      return <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.6 }}>No matching proposals found.</p>
+                      return (
+                        <div style={{ textAlign: 'center', padding: '3rem 1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px dashed #CBD5E1' }}>
+                          <p style={{ fontSize: '1.5rem', margin: '0 0 0.5rem' }}>📂</p>
+                          <p style={{ fontWeight: 700, color: '#334155', margin: '0 0 0.25rem' }}>No matching proposals found</p>
+                          <p style={{ fontSize: '0.78rem', color: '#64748B', margin: 0 }}>Try clearing your search term or adjusting filter tabs.</p>
+                        </div>
+                      )
                     }
 
                     return (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {filtered.map((q, idx) => (
-                          <div 
-                            key={idx}
-                            onClick={() => {
-                              setSearchQuery(q.proposalNumber);
-                              setShowQuotationsModal(false);
-                              loadProposalByNumber(q.proposalNumber);
-                            }}
-                            style={{ 
-                              background: '#F8FAFC', 
-                              border: '1px solid #E2E8F0', 
-                              borderRadius: '8px', 
-                              padding: '1rem', 
-                              cursor: 'pointer',
-                              transition: 'background 0.2s',
-                              textAlign: 'left'
-                            }}
-                            onMouseOver={e => e.currentTarget.style.background = '#EDF2F7'}
-                            onMouseOut={e => e.currentTarget.style.background = '#F8FAFC'}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                              <span style={{ color: 'var(--emerald-secondary)' }}>{q.proposalNumber}</span>
-                              <span>S$ {q.totalClientPrice?.toLocaleString()}</span>
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#4A5568', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-                              <span>👤 Guest: <strong>{q.guestName || 'TBD'}</strong> {q.guestPhone ? `(${q.guestPhone})` : ''}</span>
-                              <span>📅 Date: {q.arrivalDate || 'TBD'}</span>
-                              <span>🌙 Nights: {q.nights}N</span>
-                            </div>
-                            {activeAgent?.email?.toLowerCase() === 'info.flyingwonders@gmail.com' && q.agent && (
-                              <div style={{ fontSize: '0.72rem', opacity: 0.6, borderTop: '1px dashed #E2E8F0', paddingTop: '0.35rem', marginTop: '0.35rem' }}>
-                                🏢 Agent: {q.agent.agentName} ({q.agent.companyName})
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '0.85rem' }}>
+                        {filtered.map((q, idx) => {
+                          const status = (q.status || 'pending').toLowerCase()
+                          const statusColors: Record<string, { bg: string; text: string; border: string }> = {
+                            confirmed: { bg: '#DCFCE7', text: '#15803D', border: '#86EFAC' },
+                            scheduled: { bg: '#F3E8FF', text: '#6B21A8', border: '#D8B4FE' },
+                            followup: { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A' },
+                            pending: { bg: '#E0F2FE', text: '#0369A1', border: '#BAE6FD' },
+                            ignore: { bg: '#F1F5F9', text: '#64748B', border: '#CBD5E1' },
+                          }
+                          const sc = statusColors[status] || statusColors.pending
+                          const isCurrentActive = q.proposalNumber === savedProposalNum
+                          const inrPrice = q.costBreakdown?.totalClientPriceINR || 0
+
+                          return (
+                            <div 
+                              key={idx}
+                              style={{ 
+                                background: isCurrentActive ? '#F0FDF4' : '#FFFFFF', 
+                                border: isCurrentActive ? '2px solid #059669' : '1px solid #E2E8F0', 
+                                borderRadius: '10px', 
+                                padding: '1rem', 
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                                transition: 'all 0.15s ease-in-out'
+                              }}
+                            >
+                              <div>
+                                {/* Card Top Row: Proposal Ref + Status + Price */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
+                                  <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                      <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#0F4C3A' }}>{q.proposalNumber}</span>
+                                      {isCurrentActive && (
+                                        <span style={{ fontSize: '0.65rem', background: '#059669', color: '#FFF', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>ACTIVE</span>
+                                      )}
+                                    </div>
+                                    <div style={{ display: 'inline-block', marginTop: '3px', fontSize: '0.68rem', fontWeight: 700, padding: '2px 7px', borderRadius: '12px', background: sc.bg, color: sc.text, border: `1px solid ${sc.border}` }}>
+                                      {status.toUpperCase()}
+                                    </div>
+                                  </div>
+
+                                  <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0F4C3A' }}>
+                                      S$ {q.totalClientPrice?.toLocaleString() || q.costBreakdown?.totalClientPrice?.toLocaleString() || '0'}
+                                    </div>
+                                    {inrPrice > 0 && (
+                                      <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600 }}>
+                                        ≈₹{inrPrice.toLocaleString('en-IN')}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Card Details: Guest, Hotel, Dates */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.8rem', color: '#334155', marginBottom: '0.85rem' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <span>👤</span>
+                                    <strong>{q.guestName || 'Valued Guest'}</strong>
+                                    {q.guestPhone && <span style={{ color: '#64748B', fontSize: '0.75rem' }}>({q.guestPhone})</span>}
+                                  </div>
+
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748B', fontSize: '0.75rem' }}>
+                                    <span>📅 {q.arrivalDate || 'TBD'}</span>
+                                    <span>&bull;</span>
+                                    <span>🌙 {q.nights || 3}N / {(q.nights || 3) + 1}D</span>
+                                    <span>&bull;</span>
+                                    <span>👥 {q.adults || 2}A{q.kids > 0 ? `+${q.kids}C` : ''}</span>
+                                  </div>
+
+                                  {q.hotelName && (
+                                    <div style={{ fontSize: '0.75rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.35rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      <span>🏨</span>
+                                      <span>{q.hotelName} {q.roomType ? `(${q.roomType})` : ''}</span>
+                                    </div>
+                                  )}
+
+                                  {activeAgent?.email?.toLowerCase() === 'info.flyingwonders@gmail.com' && q.agent && (
+                                    <div style={{ fontSize: '0.7rem', color: '#64748B', background: '#F8FAFC', padding: '3px 6px', borderRadius: '4px', marginTop: '2px' }}>
+                                      🏢 {q.agent.agentName} &bull; {q.agent.companyName}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                          </div>
-                        ))}
+
+                              {/* Card Action Buttons */}
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr 1fr', gap: '0.4rem', borderTop: '1px solid #F1F5F9', paddingTop: '0.65rem' }}>
+                                <button
+                                  onClick={() => {
+                                    setSearchQuery(q.proposalNumber);
+                                    setShowQuotationsModal(false);
+                                    loadProposalByNumber(q.proposalNumber);
+                                  }}
+                                  style={{
+                                    padding: '0.45rem 0.5rem',
+                                    background: '#0F4C3A',
+                                    color: '#FFFFFF',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.25rem'
+                                  }}
+                                >
+                                  ✏️ Load Quote
+                                </button>
+
+                                <button
+                                  onClick={(e) => copyRegistryProposalText(q, e)}
+                                  style={{
+                                    padding: '0.45rem 0.5rem',
+                                    background: registryCopiedId === q.proposalNumber ? '#DCFCE7' : '#F1F5F9',
+                                    color: registryCopiedId === q.proposalNumber ? '#15803D' : '#334155',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '6px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.25rem'
+                                  }}
+                                  title="Copy WhatsApp Text"
+                                >
+                                  {registryCopiedId === q.proposalNumber ? <Check size={13} /> : <Copy size={13} />}
+                                  {registryCopiedId === q.proposalNumber ? 'Copied!' : 'Copy WA'}
+                                </button>
+
+                                <Link
+                                  href={`/custom-package?ref=${q.proposalNumber}`}
+                                  target="_blank"
+                                  onClick={e => e.stopPropagation()}
+                                  style={{
+                                    padding: '0.45rem 0.5rem',
+                                    background: '#EFF6FF',
+                                    color: '#1D4ED8',
+                                    border: '1px solid #BFDBFE',
+                                    borderRadius: '6px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    textDecoration: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.25rem'
+                                  }}
+                                  title="Open package in new tab"
+                                >
+                                  🔗 Open ↗
+                                </Link>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
                     )
-                  })()}
-                </>
-              )}
+                  })()
+                )}
+              </div>
             </div>
           </div>
         )}
