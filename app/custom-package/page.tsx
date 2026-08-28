@@ -218,6 +218,9 @@ export default function PrototypeBuilder() {
   const [agentSearchQuery, setAgentSearchQuery] = useState('')
   const [isAgentComboboxOpen, setIsAgentComboboxOpen] = useState(false)
   const agentComboboxRef = useRef<HTMLDivElement>(null)
+  const [showPdfDropdown, setShowPdfDropdown] = useState(false)
+  const [showPdfModal, setShowPdfModal] = useState(false)
+  const pdfDropdownRef = useRef<HTMLDivElement>(null)
 
   // Filtered B2B Agents based on search query
   const filteredB2bAgents = useMemo(() => {
@@ -232,11 +235,14 @@ export default function PrototypeBuilder() {
     )
   }, [b2bAgentsList, agentSearchQuery])
 
-  // Click outside listener to close Agent combobox
+  // Click outside listener to close Agent combobox and PDF dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (agentComboboxRef.current && !agentComboboxRef.current.contains(event.target as Node)) {
         setIsAgentComboboxOpen(false)
+      }
+      if (pdfDropdownRef.current && !pdfDropdownRef.current.contains(event.target as Node)) {
+        setShowPdfDropdown(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -315,6 +321,7 @@ export default function PrototypeBuilder() {
   const [nightsCount, setNightsCount] = useState(3)
   const [miscCostPerPerson, setMiscCostPerPerson] = useState(0)
   const [miscNotes, setMiscNotes] = useState('')
+  const [itineraryNotes, setItineraryNotes] = useState('')
   const [markupPercent, setMarkupPercent] = useState(0)
   const [markupAbsolute, setMarkupAbsolute] = useState(0)
   const [discountPerPerson, setDiscountPerPerson] = useState(0)
@@ -1668,6 +1675,18 @@ export default function PrototypeBuilder() {
       else t += `  _(Rest day / TBD)_\n`
     })
 
+    // Important Itinerary Notes & Special Instructions
+    if (itineraryNotes && itineraryNotes.trim()) {
+      t += `\n${sep}\n`
+      t += `📝 *IMPORTANT NOTES & SPECIAL INSTRUCTIONS:*\n`
+      itineraryNotes.trim().split('\n').forEach(line => {
+        const clean = line.trim()
+        if (clean) {
+          t += clean.startsWith('•') || clean.startsWith('-') || clean.match(/^\d+\./) ? `  ${clean}\n` : `  • ${clean}\n`
+        }
+      })
+    }
+
     t += `${sep}\n`
     t += `📊 *SUMMARY STATS:*\n`
     t += `  • Total Rooms: ${totalRooms}\n`
@@ -1704,13 +1723,19 @@ export default function PrototypeBuilder() {
       }
     }
     const refStr = pNum ? `(Ref: ${pNum})` : '(Draft Quote)'
-    return `✈️ *${dest} LUXURY PACKAGE* ${refStr}
+    let summary = `✈️ *${dest} LUXURY PACKAGE* ${refStr}
 👤 *Guest:* ${guestName || 'Valued Guest'} | 📅 *Travel:* ${getItineraryDate(0)} (${nightsCount + 1}D/${nightsCount}N)
 👥 *Pax:* ${adults} Adult${adults !== 1 ? 's' : ''}${kids > 0 ? ` & ${kids} Child${kids !== 1 ? 'ren' : ''}${childAgeStr}` : ''}
 🏨 *Hotel:* ${hName}
 💰 *Total:* S$ ${costBreakdown.totalClientPrice.toLocaleString()}  _(≈₹${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')})_
-💵 *Per Adult:* S$ ${costBreakdown.adultQuote}${kids > 0 ? ` | *Per Child:* S$ ${costBreakdown.childQuote}` : ''}
-📞 *Contact:* ${activeAgent?.agentName || 'Flying Wonders'} ${activeAgent?.phone ? `(${activeAgent.phone})` : ''}`
+💵 *Per Adult:* S$ ${costBreakdown.adultQuote}${kids > 0 ? ` | *Per Child:* S$ ${costBreakdown.childQuote}` : ''}`
+
+    if (itineraryNotes && itineraryNotes.trim()) {
+      summary += `\n📝 *Notes:* ${itineraryNotes.trim().replace(/\n+/g, ' | ')}`
+    }
+
+    summary += `\n📞 *Contact:* ${activeAgent?.agentName || 'Flying Wonders'} ${activeAgent?.phone ? `(${activeAgent.phone})` : ''}`
+    return summary
   }
 
   // B2B Operational & Cost Breakdown Sheet
@@ -1734,6 +1759,11 @@ export default function PrototypeBuilder() {
     if (costBreakdown.miscTotal > 0) {
       t += `📦 *Misc / Supplements:* S$ ${costBreakdown.miscTotal.toLocaleString()} (${miscNotes || 'None'})\n`
     }
+
+    if (itineraryNotes && itineraryNotes.trim()) {
+      t += `\n📝 *Operational & Client Notes:*\n${itineraryNotes.trim()}\n`
+    }
+
     t += `\n${sep}\n`
     t += `💵 *Total Base Net Cost:* S$ ${costBreakdown.netCost.toLocaleString()}\n`
     if (markupPercent > 0 || markupAbsolute > 0) {
@@ -1829,6 +1859,12 @@ export default function PrototypeBuilder() {
         <h3 style="color:#0F4C3A;font-size:16px;margin:20px 0 12px 0;">🗺️ Day-by-Day Schedule</h3>
         ${daysHtml}
 
+        ${itineraryNotes && itineraryNotes.trim() ? `
+        <div style="margin-top:20px;background:#FFFBEB;border:1px solid #FDE68A;border-left:4px solid #D97706;border-radius:8px;padding:14px;">
+          <h4 style="margin:0 0 8px 0;color:#92400E;font-size:14px;font-weight:700;">📝 Important Notes & Special Instructions</h4>
+          <div style="font-size:13px;color:#78350F;line-height:1.5;white-space:pre-line;">${itineraryNotes.trim()}</div>
+        </div>` : ''}
+
         <div style="margin-top:20px;padding-top:14px;border-top:1px dashed #CBD5E1;font-size:12px;color:#64748B;text-align:center;">
           <div>📞 <strong>${activeAgent?.agentName || 'Flying Wonders Singapore'}</strong> ${activeAgent?.phone ? `&bull; ${activeAgent.phone}` : ''} ${activeAgent?.email ? `&bull; ${activeAgent.email}` : ''}</div>
           <div style="margin-top:4px;color:#94A3B8;">Powered by Flying Wonders &bull; Singapore & Malaysia Destination Management</div>
@@ -1838,7 +1874,7 @@ export default function PrototypeBuilder() {
   }
 
   // Download Itinerary PDF helper (auto-saves proposal if draft)
-  const downloadProposalPDF = async () => {
+  const downloadProposalPDF = async (hidePricing = false) => {
     const pNum = await ensureProposalSaved(true)
     import('jspdf').then((module) => {
       const jsPDF = module.jsPDF
@@ -1890,7 +1926,7 @@ export default function PrototypeBuilder() {
         const headerAgencyLines = doc.splitTextToSize(headerAgency, 62)
         doc.text(headerAgencyLines[0], ML, 8.5)
         font('normal', 7); setTxt(GOLD)
-        doc.text('CUSTOM TOUR PROPOSAL', PW / 2, 8.5, { align: 'center' })
+        doc.text(hidePricing ? 'CUSTOM TOUR ITINERARY' : 'CUSTOM TOUR PROPOSAL', PW / 2, 8.5, { align: 'center' })
         if (savedProposalNum) {
           font('bold', 7.5); setTxt(WHITE)
           doc.text(`Ref: ${savedProposalNum}`, MR, 8.5, { align: 'right' })
@@ -1964,7 +2000,7 @@ export default function PrototypeBuilder() {
       // Document label (vertical on right accent)
       doc.setFont('Helvetica', 'bold'); doc.setFontSize(7.5); setTxt(WHITE)
       doc.text('TOUR', PW - 11, 20, { angle: 90 })
-      doc.text('PROPOSAL', PW - 11, 35, { angle: 90 })
+      doc.text(hidePricing ? 'ITINERARY' : 'PROPOSAL', PW - 11, 35, { angle: 90 })
 
       // Contact row
       font('normal', 8); setTxt(GOLD)
@@ -2015,23 +2051,44 @@ export default function PrototypeBuilder() {
 
       y += 44
 
-      // ─── QUOTATION HIGHLIGHTS BAR ─────────────────────────
-      setFill(NAVY); doc.roundedRect(ML, y, CW, 22, 3, 3, 'F')
-      const priceItems = [
-        { lbl: 'PER ADULT (SGD)', val: `S$ ${costBreakdown.adultQuote.toLocaleString()}` },
-        { lbl: kids > 0 ? 'PER CHILD (SGD)' : 'TOTAL PACKAGE', val: kids > 0 ? `S$ ${costBreakdown.childQuote.toLocaleString()}` : `S$ ${costBreakdown.totalClientPrice.toLocaleString()}` },
-        { lbl: 'INR EQUIVALENT', val: `Rs. ${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}` },
-      ]
-      const piW = CW / priceItems.length
-      priceItems.forEach((pi, i) => {
-        const px = ML + i * piW
-        if (i > 0) { setDraw(GOLD); doc.setLineWidth(0.3); doc.line(px, y + 3, px, y + 19) }
-        font('normal', 7); setTxt(GOLD)
-        doc.text(pi.lbl, px + piW/2, y + 7.5, { align: 'center' })
-        font('bold', 13); setTxt(WHITE)
-        doc.text(pi.val, px + piW/2, y + 17, { align: 'center' })
-      })
-      y += 27
+      // ─── QUOTATION / TRIP HIGHLIGHTS BAR ──────────────────
+      if (hidePricing) {
+        // Presentation Trip Overview bar (No Pricing)
+        setFill(NAVY); doc.roundedRect(ML, y, CW, 20, 3, 3, 'F')
+        const overviewItems = [
+          { lbl: 'DESTINATION', val: 'Singapore' },
+          { lbl: 'TOUR STYLE', val: 'Private Custom FIT' },
+          { lbl: 'INCLUSIONS', val: hotelRequired ? 'Hotel, Transfers & Tours' : 'Transfers & Tours' },
+        ]
+        const piW = CW / overviewItems.length
+        overviewItems.forEach((pi, i) => {
+          const px = ML + i * piW
+          if (i > 0) { setDraw(GOLD); doc.setLineWidth(0.3); doc.line(px, y + 3, px, y + 17) }
+          font('normal', 7); setTxt(GOLD)
+          doc.text(pi.lbl, px + piW/2, y + 7, { align: 'center' })
+          font('bold', 10); setTxt(WHITE)
+          doc.text(pi.val, px + piW/2, y + 15, { align: 'center' })
+        })
+        y += 25
+      } else {
+        // Full Quotation Highlights bar (With Pricing)
+        setFill(NAVY); doc.roundedRect(ML, y, CW, 22, 3, 3, 'F')
+        const priceItems = [
+          { lbl: 'PER ADULT (SGD)', val: `S$ ${costBreakdown.adultQuote.toLocaleString()}` },
+          { lbl: kids > 0 ? 'PER CHILD (SGD)' : 'TOTAL PACKAGE', val: kids > 0 ? `S$ ${costBreakdown.childQuote.toLocaleString()}` : `S$ ${costBreakdown.totalClientPrice.toLocaleString()}` },
+          { lbl: 'INR EQUIVALENT', val: `Rs. ${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}` },
+        ]
+        const piW = CW / priceItems.length
+        priceItems.forEach((pi, i) => {
+          const px = ML + i * piW
+          if (i > 0) { setDraw(GOLD); doc.setLineWidth(0.3); doc.line(px, y + 3, px, y + 19) }
+          font('normal', 7); setTxt(GOLD)
+          doc.text(pi.lbl, px + piW/2, y + 7.5, { align: 'center' })
+          font('bold', 13); setTxt(WHITE)
+          doc.text(pi.val, px + piW/2, y + 17, { align: 'center' })
+        })
+        y += 27
+      }
 
       // ─── HOTEL SECTION ────────────────────────────────────
       sectionTitle('ACCOMMODATION DETAILS')
@@ -2066,75 +2123,77 @@ export default function PrototypeBuilder() {
       }
       y += 3
 
-      // ─── COST BREAKDOWN TABLE ─────────────────────────────
-      sectionTitle('PRICE BREAKDOWN')
-      const costRows: [string, string][] = [
-        [`Rooms (${globalRoomCount})`, `S$ ${costBreakdown.roomCostTotal.toFixed(2)}`],
-        [`Supp (${globalSuppCount})`, `S$ ${costBreakdown.suppCostTotal.toFixed(2)}`],
-        [`Transfers (${costBreakdown.totalTransfers})`, `S$ ${costBreakdown.transportTotal.toFixed(2)}`],
-        [`Tickets (${costBreakdown.totalAttractionsCount})`, `S$ ${costBreakdown.attractionTotal.toFixed(2)}`],
-        [`Meals (${costBreakdown.totalLunchCount}L, ${costBreakdown.totalDinnerCount}D)`, `S$ ${costBreakdown.mealTotal.toFixed(2)}`],
-        [`Guides (${costBreakdown.totalGuidesCount})`, `S$ ${costBreakdown.guideTotal.toFixed(2)}`],
-      ]
-      
-      // Include Special Misc Cost if present
-      if (miscCostPerPerson > 0) {
-        const totalMisc = miscCostPerPerson * (adults + kids)
-        costRows.push([`Special Inclusions (${miscNotes || 'Misc / Pax'})`, `S$ ${totalMisc.toFixed(2)}`])
-      }
+      // ─── COST BREAKDOWN TABLE (Rendered only when hidePricing is false) ───
+      if (!hidePricing) {
+        sectionTitle('PRICE BREAKDOWN')
+        const costRows: [string, string][] = [
+          [`Rooms (${globalRoomCount})`, `S$ ${costBreakdown.roomCostTotal.toFixed(2)}`],
+          [`Supp (${globalSuppCount})`, `S$ ${costBreakdown.suppCostTotal.toFixed(2)}`],
+          [`Transfers (${costBreakdown.totalTransfers})`, `S$ ${costBreakdown.transportTotal.toFixed(2)}`],
+          [`Tickets (${costBreakdown.totalAttractionsCount})`, `S$ ${costBreakdown.attractionTotal.toFixed(2)}`],
+          [`Meals (${costBreakdown.totalLunchCount}L, ${costBreakdown.totalDinnerCount}D)`, `S$ ${costBreakdown.mealTotal.toFixed(2)}`],
+          [`Guides (${costBreakdown.totalGuidesCount})`, `S$ ${costBreakdown.guideTotal.toFixed(2)}`],
+        ]
+        
+        // Include Special Misc Cost if present
+        if (miscCostPerPerson > 0) {
+          const totalMisc = miscCostPerPerson * (adults + kids)
+          costRows.push([`Special Inclusions (${miscNotes || 'Misc / Pax'})`, `S$ ${totalMisc.toFixed(2)}`])
+        }
 
-      // Include Additional Charges / Add-ons if present
-      if (Array.isArray(activeAdditionalCharges) && activeAdditionalCharges.length > 0) {
-        activeAdditionalCharges.forEach(chg => {
-          if (chg.amount) {
-            costRows.push([`Add-on: ${chg.itemDescription || 'Additional Service'}`, `S$ ${Number(chg.amount).toFixed(2)}`])
-          }
+        // Include Additional Charges / Add-ons if present
+        if (Array.isArray(activeAdditionalCharges) && activeAdditionalCharges.length > 0) {
+          activeAdditionalCharges.forEach(chg => {
+            if (chg.amount) {
+              costRows.push([`Add-on: ${chg.itemDescription || 'Additional Service'}`, `S$ ${Number(chg.amount).toFixed(2)}`])
+            }
+          })
+        }
+
+        const activeCostRows = costRows.filter(r => parseFloat(r[1].replace('S$ ', '')) > 0)
+
+        activeCostRows.forEach((row, i) => {
+          checkPage(8)
+          if (i % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F') }
+          font('normal', 8.5); setTxt(TEXT)
+          doc.text(row[0], ML + 3, y + 5)
+          font('bold', 8.5); setTxt(SLATE)
+          doc.text(row[1], MR - 2, y + 5, { align: 'right' })
+          y += 7
         })
-      }
 
-      const activeCostRows = costRows.filter(r => parseFloat(r[1].replace('S$ ', '')) > 0)
+        // Net total
+        if (!hideNetPricing) {
+          const netAdult = (costBreakdown.adultQuote / (1 + markupPercent / 100)).toFixed(2)
+          checkPage(9)
+          setFill(TEAL); doc.rect(ML, y, CW, 8, 'F')
+          font('bold', 9); setTxt(WHITE)
+          doc.text('B2B Net Rate (per adult)', ML + 3, y + 5.5)
+          doc.text(`S$ ${netAdult}`, MR - 2, y + 5.5, { align: 'right' })
+          y += 8
+        }
 
-      activeCostRows.forEach((row, i) => {
-        checkPage(8)
-        if (i % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F') }
-        font('normal', 8.5); setTxt(TEXT)
-        doc.text(row[0], ML + 3, y + 5)
-        font('bold', 8.5); setTxt(SLATE)
-        doc.text(row[1], MR - 2, y + 5, { align: 'right' })
-        y += 7
-      })
-
-      // Net total
-      if (!hideNetPricing) {
-        const netAdult = (costBreakdown.adultQuote / (1 + markupPercent / 100)).toFixed(2)
-        checkPage(9)
-        setFill(TEAL); doc.rect(ML, y, CW, 8, 'F')
-        font('bold', 9); setTxt(WHITE)
-        doc.text('B2B Net Rate (per adult)', ML + 3, y + 5.5)
-        doc.text(`S$ ${netAdult}`, MR - 2, y + 5.5, { align: 'right' })
+        // Grand totals
+        checkPage(16)
+        setFill(NAVY); doc.rect(ML, y, CW, 8, 'F')
+        font('bold', 9.5); setTxt(GOLD)
+        doc.text(`Total Package Price — ${adults} Adult${adults>1?'s':''}${kids>0?` + ${kids} Child${kids>1?'ren':''}`: ''}`, ML + 3, y + 5.5)
+        doc.text(`S$ ${costBreakdown.totalClientPrice.toLocaleString()}`, MR - 2, y + 5.5, { align: 'right' })
         y += 8
-      }
 
-      // Grand totals
-      checkPage(16)
-      setFill(NAVY); doc.rect(ML, y, CW, 8, 'F')
-      font('bold', 9.5); setTxt(GOLD)
-      doc.text(`Total Package Price — ${adults} Adult${adults>1?'s':''}${kids>0?` + ${kids} Child${kids>1?'ren':''}`: ''}`, ML + 3, y + 5.5)
-      doc.text(`S$ ${costBreakdown.totalClientPrice.toLocaleString()}`, MR - 2, y + 5.5, { align: 'right' })
-      y += 8
+        setFill(GOLD_L); doc.rect(ML, y, CW, 7, 'F')
+        font('normal', 8); setTxt(SLATE)
+        doc.text('Approx. INR Equivalent', ML + 3, y + 4.5)
+        font('bold', 8); setTxt(CRIM)
+        doc.text(`Rs. ${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}`, MR - 2, y + 4.5, { align: 'right' })
+        y += 10
 
-      setFill(GOLD_L); doc.rect(ML, y, CW, 7, 'F')
-      font('normal', 8); setTxt(SLATE)
-      doc.text('Approx. INR Equivalent', ML + 3, y + 4.5)
-      font('bold', 8); setTxt(CRIM)
-      doc.text(`Rs. ${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}`, MR - 2, y + 4.5, { align: 'right' })
-      y += 10
-
-      if (discountPerPerson > 0) {
-        checkPage(8)
-        font('italic', 8); setTxt(TEAL)
-        doc.text(`* Discount of S$ ${discountPerPerson}/person has been applied.`, ML + 3, y + 4)
-        y += 8
+        if (discountPerPerson > 0) {
+          checkPage(8)
+          font('italic', 8); setTxt(TEAL)
+          doc.text(`* Discount of S$ ${discountPerPerson}/person has been applied.`, ML + 3, y + 4)
+          y += 8
+        }
       }
 
       // ─── DYNAMIC DETAILED INCLUSIONS & EXCLUSIONS ────────────────
@@ -2458,6 +2517,24 @@ export default function PrototypeBuilder() {
         hrLine(LGRAY, 0.2)
       })
 
+      // ─── CUSTOM ITINERARY NOTES & SPECIAL INSTRUCTIONS ────
+      if (itineraryNotes && itineraryNotes.trim()) {
+        sectionTitle('SPECIAL INSTRUCTIONS & NOTES')
+        const noteParagraphs = itineraryNotes.trim().split('\n').filter(Boolean)
+        noteParagraphs.forEach((np) => {
+          const cleanText = np.trim().replace(/^[•\-\*]\s*/, '')
+          const lines = doc.splitTextToSize(`•  ${cleanText}`, CW - 8)
+          const boxH = Math.max(6.5, lines.length * 3.8 + 2.5)
+          checkPage(boxH + 2)
+          setFill(GOLD_L); doc.roundedRect(ML, y, CW, boxH, 1.5, 1.5, 'F')
+          setFill(GOLD); doc.rect(ML, y, 2.5, boxH, 'F')
+          font('normal', 7.6); setTxt(NAVY)
+          doc.text(lines, ML + 5, y + 4.2)
+          y += boxH + 2
+        })
+        y += 3
+      }
+
       // ─── TERMS & IMPORTANT NOTES ──────────────────────────
       sectionTitle('TERMS & IMPORTANT NOTES')
 
@@ -2516,7 +2593,8 @@ export default function PrototypeBuilder() {
       addFooter()
 
       const guestSlug = (guestName || 'Guest').replace(/\s+/g, '-')
-      doc.save(`FW-Proposal-${guestSlug}-${savedProposalNum || 'Draft'}.pdf`)
+      const docType = hidePricing ? 'Itinerary' : 'Proposal'
+      doc.save(`FW-${docType}-${guestSlug}-${savedProposalNum || 'Draft'}.pdf`)
       notifyAgentActivity('pdf_download')
     })
   }
@@ -3129,6 +3207,7 @@ export default function PrototypeBuilder() {
           customHotelSuppCost,
           miscCostPerPerson,
           miscNotes,
+          itineraryNotes,
           markupPercent,
           markupAbsolute,
           discountPerPerson,
@@ -3283,6 +3362,7 @@ export default function PrototypeBuilder() {
           customHotelSuppCost,
           miscCostPerPerson,
           miscNotes,
+          itineraryNotes,
           markupPercent,
           markupAbsolute,
           discountPerPerson,
@@ -3359,6 +3439,7 @@ export default function PrototypeBuilder() {
           customHotelSuppCost,
           miscCostPerPerson,
           miscNotes,
+          itineraryNotes,
           markupPercent,
           markupAbsolute,
           discountPerPerson,
@@ -3424,6 +3505,9 @@ export default function PrototypeBuilder() {
           })
         }
       })
+    }
+    if (p.itineraryNotes && p.itineraryNotes.trim()) {
+      t += `\n${sep}\n📝 *Important Notes & Special Instructions:*\n${p.itineraryNotes.trim()}\n`
     }
     t += `\n${sep}\n📞 Flying Wonders Singapore`
     try {
@@ -3500,6 +3584,7 @@ export default function PrototypeBuilder() {
         }
         setMiscCostPerPerson(prop.miscCostPerPerson || 0)
         setMiscNotes(prop.miscNotes || '')
+        setItineraryNotes(prop.itineraryNotes || prop.customNotes || '')
         setMarkupPercent(prop.markupPercent || 0)
         setMarkupAbsolute(prop.markupAbsolute || 0)
         setDiscountPerPerson(prop.discountPerPerson || 0)
@@ -3824,6 +3909,7 @@ export default function PrototypeBuilder() {
       setCustomHotelSuppCost(0)
       setMiscCostPerPerson(0)
       setMiscNotes('')
+      setItineraryNotes('')
       setMarkupPercent(0)
       setMarkupAbsolute(0)
       setDiscountPerPerson(0)
@@ -4911,6 +4997,19 @@ ${proposal}
             })}
           </div>
 
+          {/* Important Itinerary Notes & Remarks in Preview */}
+          {itineraryNotes && itineraryNotes.trim() && (
+            <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderLeft: '5px solid #D97706', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '1.2rem' }}>📝</span>
+                <h4 style={{ margin: 0, fontSize: '1.05rem', color: '#92400E', fontWeight: 800 }}>Important Notes & Special Instructions</h4>
+              </div>
+              <div style={{ color: '#78350F', fontSize: '0.88rem', lineHeight: '1.6', whiteSpace: 'pre-line' }}>
+                {itineraryNotes.trim()}
+              </div>
+            </div>
+          )}
+
           {/* Client Proposal Price Card */}
           <div className="glass" style={{ padding: '2.5rem', borderRadius: '16px', background: 'var(--bg-dark)', color: 'white', border: '1px solid #E2E8F0', textAlign: 'center', boxShadow: 'var(--shadow-xl)' }}>
             <span style={{ fontSize: '0.85rem', color: 'var(--gold-accent)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em' }}>
@@ -4949,11 +5048,11 @@ ${proposal}
                   🗓️ Transport Schedule
                 </button>
                 <button 
-                  onClick={downloadProposalPDF} 
+                  onClick={() => setShowPdfModal(true)} 
                   className="btn btn-primary" 
                   style={{ padding: '0.75rem 1.5rem', fontWeight: 700, background: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                 >
-                  📥 Download Visual PDF Brochure
+                  📥 Download PDF Document
                 </button>
               </div>
             </div>
@@ -5138,7 +5237,7 @@ ${proposal}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem', marginTop: '1rem' }}>
                 <button onClick={() => handleCopyProposalText(true)} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>📋 Copy</button>
-                <button onClick={() => { downloadProposalPDF(); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>📄 PDF</button>
+                <button onClick={() => { setShowPdfModal(true); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>📄 PDF</button>
                 <button onClick={() => { downloadSimpleItineraryPDF(); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem', background: '#FFF7ED', border: '1px solid #FFEDD5', color: '#C2410C', fontWeight: 800 }} title="Download Simple Visual Itinerary (S-PDF)">📄 S-PDF</button>
                 <button onClick={() => { sendOnWhatsApp(); setPriceDrawerOpen(false) }} className="cp-tool-btn whatsapp" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>💬 WA</button>
               </div>
@@ -5482,6 +5581,102 @@ ${proposal}
           </div>
         )}
 
+        {/* ══ PDF FORMAT SELECTION MODAL ══ */}
+        {showPdfModal && (
+          <div className="cp-modal-overlay" onClick={() => setShowPdfModal(false)}>
+            <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+              <div className="cp-modal-handle" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.3rem' }}>📄</span>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>Download PDF Document</h3>
+                </div>
+                <button onClick={() => setShowPdfModal(false)} style={{ border: 'none', background: '#F1F5F9', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', cursor: 'pointer', color: '#64748B', fontWeight: 700 }}>✕</button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* 1. Full Proposal PDF (With Pricing) */}
+                <div
+                  onClick={() => { downloadProposalPDF(false); setShowPdfModal(false); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '0.85rem 1rem',
+                    background: '#F8FAFC',
+                    border: '1.5px solid #E2E8F0',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#93C5FD' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.borderColor = '#E2E8F0' }}
+                >
+                  <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#DBEAFE', color: '#1E40AF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
+                    📊
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, color: '#1E3A8A', fontSize: '0.88rem' }}>Full Proposal PDF (With Pricing)</div>
+                    <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>Complete quotation with itemized cost breakdown</div>
+                  </div>
+                </div>
+
+                {/* 2. Client Itinerary PDF (No Pricing) */}
+                <div
+                  onClick={() => { downloadProposalPDF(true); setShowPdfModal(false); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '0.85rem 1rem',
+                    background: '#F0FDF4',
+                    border: '1.5px solid #BBF7D0',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#DCFCE7'; e.currentTarget.style.borderColor = '#86EFAC' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#F0FDF4'; e.currentTarget.style.borderColor = '#BBF7D0' }}
+                >
+                  <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#DCFCE7', color: '#15803D', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
+                    ✈️
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, color: '#14532D', fontSize: '0.88rem' }}>Client Itinerary PDF (No Pricing)</div>
+                    <div style={{ fontSize: '0.72rem', color: '#166534', marginTop: '2px' }}>Presentation mode: hotel, transfers & tours without costs</div>
+                  </div>
+                </div>
+
+                {/* 3. S-PDF Visual Magazine */}
+                <div
+                  onClick={() => { downloadSimpleItineraryPDF(); setShowPdfModal(false); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '0.85rem 1rem',
+                    background: '#FFF7ED',
+                    border: '1.5px solid #FFEDD5',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#FFEDD5'; e.currentTarget.style.borderColor = '#FDBA74' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#FFF7ED'; e.currentTarget.style.borderColor = '#FFEDD5' }}
+                >
+                  <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#FFEDD5', color: '#C2410C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
+                    ✨
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, color: '#9A3412', fontSize: '0.88rem' }}>Visual Scrapbook (S-PDF)</div>
+                    <div style={{ fontSize: '0.72rem', color: '#C2410C', marginTop: '2px' }}>High-res photos, curved organic masks & travel doodles</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Branding Modal */}
         {showBranding && (
           <div className="cp-modal-overlay" onClick={() => setShowBranding(false)}>
@@ -5589,7 +5784,92 @@ ${proposal}
             📋 Copy Proposal <ChevronDown size={13} style={{ marginLeft: '-2px' }} />
           </button>
 
-          <button className="cp-tool-btn" onClick={downloadProposalPDF}>📄 PDF</button>
+          {/* PDF Format Split Dropdown */}
+          <div ref={pdfDropdownRef} style={{ position: 'relative', display: 'inline-flex' }}>
+            <button 
+              type="button"
+              className="cp-tool-btn" 
+              onClick={() => setShowPdfDropdown(prev => !prev)}
+              style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', fontWeight: 700 }}
+              title="Download PDF (Full Proposal or Itinerary Only)"
+            >
+              📄 PDF <ChevronDown size={13} style={{ marginLeft: '-2px' }} />
+            </button>
+            {showPdfDropdown && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  left: 0,
+                  minWidth: '255px',
+                  background: '#FFFFFF',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '10px',
+                  boxShadow: '0 15px 30px rgba(0,0,0,0.15)',
+                  zIndex: 99999,
+                  padding: '5px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '3px'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => { downloadProposalPDF(false); setShowPdfDropdown(false); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '0.65rem 0.75rem',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: '7px',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '0.82rem',
+                    color: '#0F172A',
+                    fontWeight: 600
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F1F5F9'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <span style={{ fontSize: '1.15rem' }}>📊</span>
+                  <div>
+                    <div style={{ fontWeight: 800, color: '#1E40AF', fontSize: '0.84rem' }}>Full Proposal PDF</div>
+                    <div style={{ fontSize: '0.71rem', color: '#64748B' }}>Includes itemized price breakdown</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { downloadProposalPDF(true); setShowPdfDropdown(false); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '0.65rem 0.75rem',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: '7px',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '0.82rem',
+                    color: '#0F172A',
+                    fontWeight: 600
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F0FDF4'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <span style={{ fontSize: '1.15rem' }}>✈️</span>
+                  <div>
+                    <div style={{ fontWeight: 800, color: '#15803D', fontSize: '0.84rem' }}>Client Itinerary PDF</div>
+                    <div style={{ fontSize: '0.71rem', color: '#166534' }}>Hidden pricing (Presentation mode)</div>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+
           <button className="cp-tool-btn" onClick={downloadSimpleItineraryPDF} style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', color: '#C2410C', fontWeight: 800 }} title="Download Simple Visual Itinerary (S-PDF)">📄 S-PDF</button>
           <button className="cp-tool-btn whatsapp" onClick={sendOnWhatsApp}>💬 WhatsApp</button>
           
@@ -7823,8 +8103,104 @@ ${proposal}
               )
             })}
 
+            {/* ══ IMPORTANT ITINERARY NOTES & SPECIAL INSTRUCTIONS SECTION ══ */}
+            <div style={{
+              marginTop: '1.25rem',
+              marginBottom: '1.25rem',
+              background: '#FFFFFF',
+              border: '2px solid #E2E8F0',
+              borderRadius: '14px',
+              padding: '1.25rem 1.5rem',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.04)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.3rem' }}>📝</span>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', fontFamily: 'var(--font-playfair), serif', color: 'var(--emerald-secondary)', fontWeight: 700 }}>
+                    Itinerary Notes & Special Instructions
+                  </h4>
+                </div>
+                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600, background: '#F1F5F9', padding: '0.2rem 0.55rem', borderRadius: '12px' }}>
+                  Included in PDF, WhatsApp, HTML & Copy outputs
+                </span>
+              </div>
+
+              {/* Quick Template Tag Pills */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
+                {[
+                  '✈️ Flight details required 48h prior to arrival',
+                  '🏨 Standard check-in 15:00 hrs / check-out 11:00 hrs',
+                  '🚗 15-min waiting grace period for private transfers',
+                  '🎟️ Attraction tickets subject to operating slots',
+                  '🍽️ Halal / Vegetarian / Jain meal preferences noted',
+                  '💼 Luggage allowance: 1 check-in + 1 cabin bag per pax',
+                  '🛂 Passport validity must be minimum 6 months'
+                ].map((tag, tagIdx) => (
+                  <button
+                    key={tagIdx}
+                    type="button"
+                    onClick={() => {
+                      setItineraryNotes(prev => {
+                        const trimmed = prev.trim()
+                        if (trimmed.includes(tag)) return prev
+                        return trimmed ? `${trimmed}\n• ${tag}` : `• ${tag}`
+                      })
+                    }}
+                    style={{
+                      background: '#F8FAFC',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: '16px',
+                      padding: '0.22rem 0.6rem',
+                      fontSize: '0.72rem',
+                      color: '#334155',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#93C5FD'; e.currentTarget.style.color = '#1E40AF' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.borderColor = '#CBD5E1'; e.currentTarget.style.color = '#334155' }}
+                  >
+                    + {tag}
+                  </button>
+                ))}
+              </div>
+
+              {/* Multi-line Notes Textarea */}
+              <textarea
+                rows={4}
+                value={itineraryNotes}
+                onChange={e => setItineraryNotes(e.target.value)}
+                placeholder="Enter custom itinerary notes, operational remarks, flight details, pickup points, or special instructions here..."
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 0.9rem',
+                  borderRadius: '8px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '0.85rem',
+                  color: '#1E293B',
+                  lineHeight: '1.5',
+                  background: '#FCFDFF',
+                  outline: 'none',
+                  resize: 'vertical',
+                  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)'
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.4rem' }}>
+                <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Tip: Bullet points (•) and line breaks are formatted automatically in all outputs.</span>
+                {itineraryNotes && (
+                  <button
+                    type="button"
+                    onClick={() => setItineraryNotes('')}
+                    style={{ border: 'none', background: 'transparent', color: '#94A3B8', fontSize: '0.72rem', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Clear notes
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Add Custom Day (Break Trip) Button */}
-            <div style={{ marginTop: '1.5rem', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ marginTop: '0.5rem', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
               <button
                 type="button"
                 onClick={handleAddCustomBreakDay}
@@ -8091,8 +8467,8 @@ ${proposal}
 
                 <button 
                   type="button" 
-                  onClick={downloadProposalPDF}
-                  title="Download PDF"
+                  onClick={() => setShowPdfModal(true)}
+                  title="Download PDF Document"
                   style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.58rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
                   <FileDown size={14} color="#FFF" />
