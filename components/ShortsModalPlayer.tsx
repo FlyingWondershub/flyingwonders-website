@@ -2,6 +2,7 @@
 
 import React, { useEffect, useCallback } from 'react'
 import type { TravelShort } from '../utils/packages'
+import { extractYouTubeVideoId } from '../utils/packages'
 
 interface ShortsModalPlayerProps {
   isOpen: boolean
@@ -19,6 +20,7 @@ export default function ShortsModalPlayer({
   onNavigate
 }: ShortsModalPlayerProps) {
   const currentShort = shorts[currentIndex]
+  const videoId = currentShort ? extractYouTubeVideoId(currentShort.youtubeVideoId || currentShort.id) : ''
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -136,8 +138,8 @@ export default function ShortsModalPlayer({
         {/* YouTube Vertical Iframe */}
         <div style={{ position: 'relative', width: '100%', flex: 1, background: '#000' }}>
           <iframe
-            key={currentShort.youtubeVideoId}
-            src={`https://www.youtube.com/embed/${currentShort.youtubeVideoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
+            key={videoId}
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
             title={currentShort.title}
             style={{
               width: '100%',
@@ -179,7 +181,7 @@ export default function ShortsModalPlayer({
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               {currentShort.views && <span>👁️ {currentShort.views}</span>}
               <a
-                href={`https://www.youtube.com/watch?v=${currentShort.youtubeVideoId}`}
+                href={`https://www.youtube.com/watch?v=${videoId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

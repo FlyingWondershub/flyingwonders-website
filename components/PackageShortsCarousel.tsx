@@ -1,8 +1,8 @@
-﻿'use client'
+'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
 import type { TravelShort } from '../utils/packages'
-import { DEFAULT_SINGAPORE_SHORTS } from '../utils/packages'
+import { DEFAULT_SINGAPORE_SHORTS, normalizeTravelShort, extractYouTubeVideoId } from '../utils/packages'
 import ShortsModalPlayer from './ShortsModalPlayer'
 
 interface PackageShortsCarouselProps {
@@ -14,15 +14,18 @@ export default function PackageShortsCarousel({
   destination = 'Singapore',
   curatedShorts
 }: PackageShortsCarouselProps) {
-  const [shorts, setShorts] = useState<TravelShort[]>(curatedShorts || DEFAULT_SINGAPORE_SHORTS)
-  const [loading, setLoading] = useState(!curatedShorts)
+  const [shorts, setShorts] = useState<TravelShort[]>(() => {
+    const source = (curatedShorts && curatedShorts.length > 0) ? curatedShorts : DEFAULT_SINGAPORE_SHORTS
+    return source.map((s) => normalizeTravelShort(s, destination))
+  })
+  const [loading, setLoading] = useState(!curatedShorts || curatedShorts.length === 0)
   const [activeModalIndex, setActiveModalIndex] = useState<number | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // If curated shorts were passed explicitly, use them directly
+    // If curated shorts were passed explicitly, normalize and use them directly
     if (curatedShorts && curatedShorts.length > 0) {
-      setShorts(curatedShorts)
+      setShorts(curatedShorts.map((s) => normalizeTravelShort(s, destination)))
       setLoading(false)
       return
     }
@@ -35,7 +38,7 @@ export default function PackageShortsCarousel({
         if (res.ok) {
           const data = await res.json()
           if (isMounted && data.shorts && data.shorts.length > 0) {
-            setShorts(data.shorts)
+            setShorts(data.shorts.map((s: any) => normalizeTravelShort(s, destination)))
           }
         }
       } catch (err) {
@@ -184,9 +187,16 @@ export default function PackageShortsCarousel({
           >
             {/* Background Thumbnail Poster */}
             <img
-              src={item.thumbnailUrl}
+              src={item.thumbnailUrl || (item.youtubeVideoId ? `https://i.ytimg.com/vi/${item.youtubeVideoId}/hqdefault.jpg` : '/images/hero/singapore-hero-1.jpg')}
               alt={item.title}
               loading="lazy"
+              onError={(e) => {
+                const target = e.currentTarget
+                const fallbackUrl = item.youtubeVideoId ? `https://i.ytimg.com/vi/${item.youtubeVideoId}/hqdefault.jpg` : '/images/hero/singapore-hero-1.jpg'
+                if (target.src !== fallbackUrl) {
+                  target.src = fallbackUrl
+                }
+              }}
               style={{
                 width: '100%',
                 height: '100%',

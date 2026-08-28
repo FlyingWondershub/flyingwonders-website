@@ -20,6 +20,51 @@ export interface TravelShort {
   youtubeVideoId: string
 }
 
+export function extractYouTubeVideoId(input?: string): string {
+  if (!input) return ''
+  const trimmed = input.trim()
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed
+  }
+  try {
+    if (trimmed.includes('youtu.be/')) {
+      return trimmed.split('youtu.be/')[1]?.split(/[?&#]/)[0] || trimmed
+    }
+    if (trimmed.includes('youtube.com/shorts/')) {
+      return trimmed.split('shorts/')[1]?.split(/[?&#]/)[0] || trimmed
+    }
+    if (trimmed.includes('youtube.com/embed/')) {
+      return trimmed.split('embed/')[1]?.split(/[?&#]/)[0] || trimmed
+    }
+    if (trimmed.includes('youtube.com/watch')) {
+      const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`)
+      const v = parsed.searchParams.get('v')
+      if (v) return v
+    }
+    const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/))([a-zA-Z0-9_-]{11})/)
+    if (match && match[1]) return match[1]
+  } catch (e) {}
+  return trimmed
+}
+
+export function normalizeTravelShort(item: Partial<TravelShort> | any, fallbackDestination = 'Singapore'): TravelShort {
+  const rawId = item?.youtubeVideoId || item?.id || ''
+  const cleanId = extractYouTubeVideoId(rawId)
+  const title = item?.title?.trim() || `${fallbackDestination} Travel Experience`
+  const creator = item?.creator?.trim() || 'Featured Explorer'
+  const views = item?.views || ''
+  const thumbnailUrl = item?.thumbnailUrl?.trim() || (cleanId ? `https://i.ytimg.com/vi/${cleanId}/hqdefault.jpg` : '')
+
+  return {
+    id: item?.id || cleanId || `short-${Math.random().toString(36).substring(2, 8)}`,
+    title,
+    creator,
+    views,
+    thumbnailUrl,
+    youtubeVideoId: cleanId
+  }
+}
+
 export interface TravelPackage {
   _id: string
   slug?: string
