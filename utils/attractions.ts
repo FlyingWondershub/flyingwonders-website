@@ -123,8 +123,8 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     appDetails: {
       appName: 'Universal Studios Singapore (Resorts World Sentosa) Official App',
       appDescription: 'Your indispensable companion inside the park: track live ride queue times, view real-time show schedules, navigate with GPS, and pre-order food.',
-      appStoreUrl: 'https://apps.apple.com/app/resorts-world-sentosa/id1081753177',
-      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.rwsentosa.mobile',
+      appStoreUrl: 'https://apps.apple.com/sg/app/universal-studios-singapore/id1462742095',
+      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.rwsentosa.UniversalSG',
       appFeatures: [
         'Live Ride Wait Times & Status Updates',
         'Interactive GPS Wayfinding Park Map',
@@ -208,8 +208,8 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     appDetails: {
       appName: 'Mandai Wildlife Reserve Official App',
       appDescription: 'Interactive GPS wayfinding map, Creatures of the Night show reminder alarms, and mobile food ordering at Ulu Ulu Restaurant.',
-      appStoreUrl: 'https://apps.apple.com/app/mandai-wildlife-reserve/id1552865917',
-      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.mandai.app',
+      appStoreUrl: 'https://apps.apple.com/sg/app/mandai-wildlife-reserve/id6445837575',
+      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.mandai.mfa',
       appFeatures: [
         'Live Show Timers & Push Reminders',
         'Interactive GPS Rainforest Walking Trail Map',
@@ -282,8 +282,8 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     appDetails: {
       appName: 'Gardens by the Bay Mobile App',
       appDescription: 'Interactive botanic guide, plant finder, audio tours, and real-time conservatory queue counters.',
-      appStoreUrl: 'https://apps.apple.com/app/gardens-by-the-bay/id1454522046',
-      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.gbtb.gardensbythebay',
+      appStoreUrl: 'https://apps.apple.com/sg/app/gardens-by-the-bay/id1490838037',
+      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.gardensbythebay.supertree',
       appFeatures: [
         'Interactive Plant & Conservatory Map',
         'Daily Floral Display Schedules',
@@ -354,8 +354,8 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     appDetails: {
       appName: 'Resorts World Sentosa Official App',
       appDescription: 'Live habitat maps, feeding presentation alerts, and digital ticketing.',
-      appStoreUrl: 'https://apps.apple.com/app/resorts-world-sentosa/id1081753177',
-      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.rwsentosa.mobile',
+      appStoreUrl: 'https://apps.apple.com/sg/app/universal-studios-singapore/id1462742095',
+      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.rwsentosa.UniversalSG',
       appFeatures: [
         'Feeding Schedules & Show Reminders',
         'Interactive Marine Habitat Map',
@@ -443,8 +443,8 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
     appDetails: {
       appName: 'Mandai Wildlife Reserve App',
       appDescription: 'Live presentation alerts, feeding schedules, GPS map, and tram stops.',
-      appStoreUrl: 'https://apps.apple.com/app/mandai-wildlife-reserve/id1552865917',
-      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.mandai.app',
+      appStoreUrl: 'https://apps.apple.com/sg/app/mandai-wildlife-reserve/id6445837575',
+      playStoreUrl: 'https://play.google.com/store/apps/details?id=com.mandai.mfa',
       appFeatures: ['Live Presentation Timers', 'Interactive GPS Aviary Map', 'E-Ticket QR Scanner']
     },
     isDisplayed: true

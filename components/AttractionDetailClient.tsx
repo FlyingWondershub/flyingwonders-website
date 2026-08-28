@@ -561,8 +561,8 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
               appDetails={attraction.appDetails || {
                 appName: `${attraction.name} Visitor Guide`,
                 appDescription: 'Official interactive park map, live queue wait times, and daily presentation reminder alarms.',
-                appStoreUrl: 'https://apps.apple.com',
-                playStoreUrl: 'https://play.google.com/store',
+                appStoreUrl: 'https://apps.apple.com/sg/app/mysentosa/id1671526843',
+                playStoreUrl: 'https://play.google.com/store/apps/details?id=sg.com.sentosa.app.sentosaislander',
                 appFeatures: [
                   'Interactive GPS Wayfinding Map',
                   'Live Presentation Timers & Reminders',
