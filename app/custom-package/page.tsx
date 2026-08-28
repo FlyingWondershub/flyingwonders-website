@@ -5784,91 +5784,16 @@ ${proposal}
             📋 Copy Proposal <ChevronDown size={13} style={{ marginLeft: '-2px' }} />
           </button>
 
-          {/* PDF Format Split Dropdown */}
-          <div ref={pdfDropdownRef} style={{ position: 'relative', display: 'inline-flex' }}>
-            <button 
-              type="button"
-              className="cp-tool-btn" 
-              onClick={() => setShowPdfDropdown(prev => !prev)}
-              style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', fontWeight: 700 }}
-              title="Download PDF (Full Proposal or Itinerary Only)"
-            >
-              📄 PDF <ChevronDown size={13} style={{ marginLeft: '-2px' }} />
-            </button>
-            {showPdfDropdown && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 6px)',
-                  left: 0,
-                  minWidth: '255px',
-                  background: '#FFFFFF',
-                  border: '1px solid #CBD5E1',
-                  borderRadius: '10px',
-                  boxShadow: '0 15px 30px rgba(0,0,0,0.15)',
-                  zIndex: 99999,
-                  padding: '5px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '3px'
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => { downloadProposalPDF(false); setShowPdfDropdown(false); }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '0.65rem 0.75rem',
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: '7px',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    fontSize: '0.82rem',
-                    color: '#0F172A',
-                    fontWeight: 600
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#F1F5F9'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <span style={{ fontSize: '1.15rem' }}>📊</span>
-                  <div>
-                    <div style={{ fontWeight: 800, color: '#1E40AF', fontSize: '0.84rem' }}>Full Proposal PDF</div>
-                    <div style={{ fontSize: '0.71rem', color: '#64748B' }}>Includes itemized price breakdown</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => { downloadProposalPDF(true); setShowPdfDropdown(false); }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '0.65rem 0.75rem',
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: '7px',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    fontSize: '0.82rem',
-                    color: '#0F172A',
-                    fontWeight: 600
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#F0FDF4'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <span style={{ fontSize: '1.15rem' }}>✈️</span>
-                  <div>
-                    <div style={{ fontWeight: 800, color: '#15803D', fontSize: '0.84rem' }}>Client Itinerary PDF</div>
-                    <div style={{ fontSize: '0.71rem', color: '#166534' }}>Hidden pricing (Presentation mode)</div>
-                  </div>
-                </button>
-              </div>
-            )}
-          </div>
+          {/* PDF Format Trigger (Opens Global Format Selector Modal) */}
+          <button 
+            type="button"
+            className="cp-tool-btn" 
+            onClick={() => setShowPdfModal(true)}
+            style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', fontWeight: 700 }}
+            title="Download PDF (Full Proposal with Pricing or Presentation Itinerary)"
+          >
+            📄 PDF <ChevronDown size={13} style={{ marginLeft: '-2px' }} />
+          </button>
 
           <button className="cp-tool-btn" onClick={downloadSimpleItineraryPDF} style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', color: '#C2410C', fontWeight: 800 }} title="Download Simple Visual Itinerary (S-PDF)">📄 S-PDF</button>
           <button className="cp-tool-btn whatsapp" onClick={sendOnWhatsApp}>💬 WhatsApp</button>
