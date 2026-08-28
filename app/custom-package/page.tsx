@@ -1872,12 +1872,12 @@ export default function PrototypeBuilder() {
       const font    = (w: 'normal'|'bold'|'italic', s: number) => { doc.setFont('Helvetica', w); doc.setFontSize(s) }
 
       const checkPage = (need = 12) => {
-        if (y + need > PH - 22) {
+        if (y + need > PH - 20) {
           addFooter()
           doc.addPage()
           pageNum++
           addPageHeader()
-          y = 48
+          y = 20
         }
       }
 
@@ -1911,13 +1911,13 @@ export default function PrototypeBuilder() {
       }
 
       const sectionTitle = (label: string) => {
-        checkPage(14)
-        y += 3
-        setFill(NAVY); doc.rect(ML, y, CW, 8, 'F')
-        setFill(GOLD); doc.rect(ML, y, 3, 8, 'F')
-        font('bold', 9.5); setTxt(WHITE)
-        doc.text(label.toUpperCase(), ML + 6, y + 5.5)
-        y += 12
+        checkPage(16)
+        y += 2
+        setFill(NAVY); doc.rect(ML, y, CW, 7.5, 'F')
+        setFill(GOLD); doc.rect(ML, y, 3, 7.5, 'F')
+        font('bold', 9); setTxt(WHITE)
+        doc.text(label.toUpperCase(), ML + 6, y + 5.2)
+        y += 11
       }
 
       const twoCol = (label: string, value: string, yPos: number, colX = ML, colW = CW / 2) => {
@@ -2227,7 +2227,7 @@ export default function PrototypeBuilder() {
       })
 
       const maxLines = Math.max(inclTotalLines, exclTotalLines)
-      const boxH = Math.max(38, 12 + maxLines * 5)
+      const boxH = Math.max(34, 10 + maxLines * 4.6)
       checkPage(boxH + 6)
 
       // INCLUDED Box (Left)
@@ -2236,12 +2236,12 @@ export default function PrototypeBuilder() {
       font('bold', 8.5); setTxt(TEAL)
       doc.text('INCLUDED IN THIS PACKAGE', ML + 3, y + 6)
       
-      let curY = y + 12
+      let curY = y + 11
       font('normal', 7.5); setTxt(SLATE)
       inclItems.forEach(item => {
         const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
         doc.text(lines, ML + 3, curY)
-        curY += lines.length * 4.5
+        curY += lines.length * 4.2
       })
 
       // EXCLUDED Box (Right)
@@ -2251,22 +2251,15 @@ export default function PrototypeBuilder() {
       font('bold', 8.5); setTxt(CRIM)
       doc.text('EXCLUDED FROM THIS PACKAGE', ex2 + 3, y + 6)
 
-      let curExY = y + 12
+      let curExY = y + 11
       font('normal', 7.5); setTxt(SLATE)
       exclItems.forEach(item => {
         const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
         doc.text(lines, ex2 + 3, curExY)
-        curExY += lines.length * 4.5
+        curExY += lines.length * 4.2
       })
 
       y += boxH + 6
-
-      // ─── PAGE BREAK BEFORE ITINERARY ─────────────────────
-      addFooter()
-      doc.addPage()
-      pageNum++
-      addPageHeader()
-      y = 48
 
       // ─── DAY-BY-DAY ITINERARY ─────────────────────────────
       sectionTitle('DAY-BY-DAY ITINERARY')
@@ -2312,18 +2305,18 @@ export default function PrototypeBuilder() {
         // Check if this day has anything
         const hasContent = nonAttrItems.length > 0 || day.attractions.length > 0
 
-        checkPage(22)
+        checkPage(20)
 
         // Day header
-        setFill(GOLD); doc.roundedRect(ML, y, CW, 9, 2, 2, 'F')
-        font('bold', 10); setTxt(NAVY)
-        doc.text(`DAY ${dIdx + 1}`, ML + 4, y + 6.2)
-        font('normal', 8.5); setTxt(NAVY)
-        doc.text(getItineraryDate(dIdx), ML + 22, y + 6.2)
+        setFill(GOLD); doc.roundedRect(ML, y, CW, 8.5, 2, 2, 'F')
+        font('bold', 9.5); setTxt(NAVY)
+        doc.text(`DAY ${dIdx + 1}`, ML + 4, y + 5.8)
+        font('normal', 8); setTxt(NAVY)
+        doc.text(getItineraryDate(dIdx), ML + 22, y + 5.8)
         const dayLabel = day.dayTitle ? day.dayTitle : (dIdx === 0 ? 'Arrival Day' : dIdx === nightsCount ? 'Departure Day' : 'Tour Day')
-        font('italic', 8); setTxt(NAVY)
-        doc.text(dayLabel, MR - 2, y + 6.2, { align: 'right' })
-        y += 11
+        font('italic', 7.5); setTxt(NAVY)
+        doc.text(dayLabel, MR - 2, y + 5.8, { align: 'right' })
+        y += 10.5
 
         if (!hasContent) {
           font('italic', 8.5); setTxt(MGRAY)
@@ -2332,17 +2325,23 @@ export default function PrototypeBuilder() {
         } else {
           // ── Render non-attraction items as compact timeline rows ──
           nonAttrItems.forEach((item, iIdx) => {
-            const dl = doc.splitTextToSize(item.detail, CW - 40)
-            const rowHeight = 9 + (dl.length > 1 ? (dl.length - 1) * 4 : 0)
-            checkPage(rowHeight + 4)
+            const labelLines = doc.splitTextToSize(item.label, CW - 26)
+            const detailLines = item.detail ? doc.splitTextToSize(item.detail, CW - 26) : []
+            const labelH = labelLines.length * 3.8
+            const detailH = detailLines.length * 3.2
+            const rowHeight = Math.max(8, 3 + labelH + detailH + 2)
+
+            checkPage(rowHeight + 2)
             if (iIdx % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, rowHeight, 'F') }
-            setFill(item.color); doc.circle(ML + 5.5, y + 4.5, 2.5, 'F')
+            setFill(item.color); doc.circle(ML + 5.5, y + 4.5, 2.2, 'F')
             font('bold', 7.5); setTxt(item.color)
-            doc.text(item.time, ML + 10, y + 5.2)
-            font('bold', 8.5); setTxt(NAVY)
-            doc.text(item.label, ML + 22, y + 5.2, { maxWidth: CW - 25 })
-            font('italic', 7.5); setTxt(SLATE)
-            doc.text(dl, ML + 22, y + 10.5)
+            doc.text(item.time, ML + 9.5, y + 4.8)
+            font('bold', 8); setTxt(NAVY)
+            doc.text(labelLines, ML + 22, y + 4.8)
+            if (detailLines.length > 0) {
+              font('italic', 7); setTxt(SLATE)
+              doc.text(detailLines, ML + 22, y + 4.8 + labelH + 0.8)
+            }
             y += rowHeight
           })
 
@@ -2361,12 +2360,17 @@ export default function PrototypeBuilder() {
             const location = meta?.location || ''
             const hasPhoto = !!(meta?.photoUrl)
 
-            // Estimate card height — meta parts render one-per-line at 4.5mm each
-            const descLines = doc.splitTextToSize(shortDesc, hasPhoto ? CW - 60 : CW - 8)
+            const textW = hasPhoto ? CW - 48 : CW - 12
+            const descLines = doc.splitTextToSize(shortDesc, textW)
+            const noteLines = notes ? doc.splitTextToSize(`Note: ${notes}`, textW) : []
             const highlightRows = Math.ceil(highlights.length / 2)
-            const metaLineCount = [openingHours, duration, location].filter(Boolean).length
-            const cardH = 16 + descLines.length * 4 + (highlights.length > 0 ? highlightRows * 6 + 4 : 0) + (metaLineCount > 0 ? metaLineCount * 4.5 + 4 : 0) + (notes ? 7 : 0)
-            checkPage(cardH + 10)
+            const metaParts: string[] = []
+            if (openingHours) metaParts.push(`Hours: ${openingHours}`)
+            if (duration) metaParts.push(`Duration: ${duration}`)
+            if (location) metaParts.push(`Location: ${location}`)
+
+            const cardH = Math.max(26, 12 + descLines.length * 3.8 + noteLines.length * 3.4 + (highlights.length > 0 ? highlightRows * 5.5 + 4 : 0) + (metaParts.length > 0 ? metaParts.length * 3.8 + 2 : 0))
+            checkPage(cardH + 4)
 
             // Card background
             setFill([248, 246, 240] as [number,number,number])
@@ -2376,100 +2380,86 @@ export default function PrototypeBuilder() {
             // Left accent bar
             setFill(CRIM); doc.rect(ML, y, 3, cardH, 'F')
 
-            let cy = y + 5
+            let cy = y + 4.5
 
             if (hasPhoto) {
-              // Image on the right side (40mm wide)
               const imgX = MR - 42
-              const imgW = 42
-              const imgH = Math.min(cardH - 6, 30)
+              const imgW = 40
+              const imgH = Math.min(cardH - 6, 28)
               try {
                 doc.addImage(meta!.photoUrl!, 'JPEG', imgX, y + 3, imgW, imgH, undefined, 'MEDIUM')
-                // Subtle overlay text area width
-              } catch (e) { /* image may not load in PDF context */ }
+              } catch (e) {}
             }
 
-            const textW = hasPhoto ? CW - 50 : CW - 12
-
             // Attraction name + time badge
-            font('bold', 10); setTxt(NAVY)
+            font('bold', 9.5); setTxt(NAVY)
             doc.text(attrName, ML + 6, cy)
-            cy += 5
+            cy += 4.5
 
             // Time + ticket count chips inline
             const ticketInfo = `${a.time ? a.time + '  |  ' : ''}Adult x${a.adultTickets}${kids > 0 ? `  |  Child x${a.childTickets}` : ''}`
-            font('bold', 7.5); setTxt(CRIM)
+            font('bold', 7.2); setTxt(CRIM)
             doc.text(ticketInfo, ML + 6, cy)
 
-            // Rating — ASCII-safe (jsPDF Helvetica cannot render Unicode stars)
             if (rating) {
               const ratingStr = `Rating: ${rating.toFixed(1)} / 5.0`
-              font('bold', 7.5); setTxt([180, 130, 20] as [number,number,number])
+              font('bold', 7.2); setTxt([180, 130, 20] as [number,number,number])
               doc.text(ratingStr, ML + textW, cy, { align: 'right' })
             }
-            cy += 5
+            cy += 4.5
 
             // Description
-            font('normal', 7.5); setTxt(SLATE)
-            const dl2 = doc.splitTextToSize(shortDesc, textW)
-            doc.text(dl2, ML + 6, cy)
-            cy += dl2.length * 4 + 1
+            font('normal', 7.2); setTxt(SLATE)
+            doc.text(descLines, ML + 6, cy)
+            cy += descLines.length * 3.8
 
             // Notes from agent
-            if (notes) {
-              font('italic', 7); setTxt(TEAL)
-              const nl = doc.splitTextToSize(`Note: ${notes}`, textW)
-              doc.text(nl, ML + 6, cy)
-              cy += nl.length * 3.5 + 1
+            if (noteLines.length > 0) {
+              font('italic', 6.8); setTxt(TEAL)
+              doc.text(noteLines, ML + 6, cy)
+              cy += noteLines.length * 3.4
             }
 
-            // Highlights as pills (Strictly constrained within textW to prevent colliding into right-side photo)
+            // Highlights as pills
             if (highlights.length > 0) {
-              font('bold', 7); setTxt(NAVY)
+              font('bold', 6.8); setTxt(NAVY)
               doc.text('Highlights:', ML + 6, cy)
-              cy += 4
+              cy += 3.5
 
               const hlAvailW = textW - 4
               const pillW = (hlAvailW - 4) / 2
 
               highlights.forEach((h, hi) => {
                 const colX = hi % 2 === 0 ? ML + 6 : ML + 6 + pillW + 4
-                if (hi % 2 === 0 && hi > 0) cy += 5.5
+                if (hi % 2 === 0 && hi > 0) cy += 5
                 setFill(GOLD_L)
-                doc.roundedRect(colX, cy - 3, pillW, 5, 1, 1, 'F')
-                font('normal', 6.2); setTxt(NAVY)
-                doc.text(`• ${h}`, colX + 1.5, cy + 0.5, { maxWidth: pillW - 3 })
+                doc.roundedRect(colX, cy - 2.8, pillW, 4.5, 1, 1, 'F')
+                font('normal', 6); setTxt(NAVY)
+                doc.text(`• ${h}`, colX + 1.5, cy + 0.3, { maxWidth: pillW - 3 })
               })
-              cy += 6
+              cy += 5.5
             }
 
-            // Opening hours / duration / location metadata row — ASCII-safe labels only
-            const metaParts: string[] = []
-            if (openingHours) metaParts.push(`Hours: ${openingHours}`)
-            if (duration) metaParts.push(`Duration: ${duration}`)
-            if (location) metaParts.push(`Location: ${location}`)
+            // Opening hours / duration / location metadata
             if (metaParts.length > 0) {
-              font('normal', 6.5); setTxt(MGRAY)
-              // Render each part on a new line to avoid overflow
+              font('normal', 6.2); setTxt(MGRAY)
               metaParts.forEach((mp, mpi) => {
                 const mpLines = doc.splitTextToSize(mp, textW)
-                doc.text(mpLines, ML + 6, cy + 1 + mpi * 4.5)
+                doc.text(mpLines, ML + 6, cy + mpi * 3.8)
               })
-              cy += metaParts.length * 4.5 + 2
+              cy += metaParts.length * 3.8
             }
 
-            y += Math.max(cardH, cy - y + 2) + 4
+            y += cardH + 3
           })
         }
 
-        y += 4
+        y += 2
         hrLine(LGRAY, 0.2)
       })
 
-
       // ─── TERMS & IMPORTANT NOTES ──────────────────────────
       sectionTitle('TERMS & IMPORTANT NOTES')
-      checkPage(60)
 
       const notes = [
         'Prices are quoted in Singapore Dollars (SGD) and are indicative. Final rates will be confirmed upon booking.',
@@ -2482,44 +2472,45 @@ export default function PrototypeBuilder() {
         'Travel insurance is highly recommended for all international travel.',
       ]
       notes.forEach((note, i) => {
-        checkPage(9)
-        if (i % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F') }
-        font('normal', 8); setTxt(TEXT)
-        const lines = doc.splitTextToSize(`${i + 1}. ${note}`, CW - 4)
-        doc.text(lines, ML + 3, y + 4.5)
-        y += 7
+        const lines = doc.splitTextToSize(`${i + 1}. ${note}`, CW - 6)
+        const rowH = Math.max(6.5, lines.length * 3.8 + 2.5)
+        checkPage(rowH + 2)
+        if (i % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, rowH, 'F') }
+        font('normal', 7.5); setTxt(TEXT)
+        doc.text(lines, ML + 3, y + 4)
+        y += rowH
       })
 
       // ─── AGENT / CONTACT CARD ────────────────────────────
-      y += 5
-      checkPage(38)
-      setFill(NAVY); doc.roundedRect(ML, y, CW, 32, 3, 3, 'F')
-      setFill(GOLD); doc.rect(ML, y + 30, CW, 2, 'F')
-      font('bold', 10); setTxt(GOLD)
-      doc.text('Your Travel Consultant', ML + 5, y + 9)
+      y += 4
+      checkPage(34)
+      setFill(NAVY); doc.roundedRect(ML, y, CW, 30, 3, 3, 'F')
+      setFill(GOLD); doc.rect(ML, y + 28, CW, 2, 'F')
+      font('bold', 9.5); setTxt(GOLD)
+      doc.text('Your Travel Consultant', ML + 5, y + 8)
       if (activeAgent) {
-        font('bold', 12); setTxt(WHITE)
-        doc.text(activeAgent.agentName || 'Travel Consultant', ML + 5, y + 18)
-        font('normal', 8.5); setTxt(GOLD)
+        font('bold', 11.5); setTxt(WHITE)
+        doc.text(activeAgent.agentName || 'Travel Consultant', ML + 5, y + 16.5)
+        font('normal', 8); setTxt(GOLD)
         const agentContactParts: string[] = []
         if (activeAgent.phone) agentContactParts.push(`Tel: ${activeAgent.phone}`)
         if (activeAgent.email) agentContactParts.push(`Email: ${activeAgent.email}`)
-        doc.text(agentContactParts.join('   |   '), ML + 5, y + 26)
+        doc.text(agentContactParts.join('   |   '), ML + 5, y + 24)
 
         // Company name on the right
         if (activeAgent.companyName) {
-          font('bold', 9); setTxt(GOLD)
-          doc.text(activeAgent.companyName.toUpperCase(), MR - 5, y + 18, { align: 'right' })
+          font('bold', 8.5); setTxt(GOLD)
+          doc.text(activeAgent.companyName.toUpperCase(), MR - 5, y + 16.5, { align: 'right' })
         }
-        font('normal', 7.5); setTxt(WHITE)
-        doc.text('Singapore DMC Travel Partner', MR - 5, y + 26, { align: 'right' })
+        font('normal', 7); setTxt(WHITE)
+        doc.text('Singapore DMC Travel Partner', MR - 5, y + 24, { align: 'right' })
       } else {
-        font('bold', 9); setTxt(GOLD)
-        doc.text('FLYING WONDERS', MR - 5, y + 18, { align: 'right' })
-        font('normal', 7.5); setTxt(WHITE)
-        doc.text('Singapore DMC Travel Partner', MR - 5, y + 26, { align: 'right' })
+        font('bold', 8.5); setTxt(GOLD)
+        doc.text('FLYING WONDERS', MR - 5, y + 16.5, { align: 'right' })
+        font('normal', 7); setTxt(WHITE)
+        doc.text('Singapore DMC Travel Partner', MR - 5, y + 24, { align: 'right' })
       }
-      y += 37
+      y += 34
 
       // final footer
       addFooter()
@@ -3052,9 +3043,8 @@ export default function PrototypeBuilder() {
           curY += 4
         })
 
-        curY += 2
-
-        // Meals Included Badge
+        // Meals Included Badge pinned cleanly near bottom of card
+        const mealY = topY + cardH - 11
         const dayMeals: string[] = []
         if (day.breakfast) dayMeals.push('Breakfast')
         if (day.lunch) dayMeals.push('Lunch')
@@ -3068,14 +3058,15 @@ export default function PrototypeBuilder() {
         const mealsText = dayMeals.length > 0 ? Array.from(new Set(dayMeals)).join(', ') : 'As per plan'
 
         // Render Meals Pill
-        setFill(CRIMSON); doc.roundedRect(textX, curY, 26, 5.5, 1.5, 1.5, 'F')
+        setFill(CRIMSON); doc.roundedRect(textX, mealY, 26, 5.5, 1.5, 1.5, 'F')
         font('bold', 6.5); setTxt(WHITE)
-        doc.text('Meals Included', textX + 13, curY + 3.8, { align: 'center' })
+        doc.text('Meals Included', textX + 13, mealY + 3.8, { align: 'center' })
 
-        setFill(WHITE); doc.roundedRect(textX + 27, curY, textW - 27, 5.5, 1.5, 1.5, 'F')
-        setDraw(BORDER); doc.setLineWidth(0.4); doc.roundedRect(textX + 27, curY, textW - 27, 5.5, 1.5, 1.5, 'S')
+        setFill(WHITE); doc.roundedRect(textX + 27, mealY, textW - 27, 5.5, 1.5, 1.5, 'F')
+        setDraw(BORDER); doc.setLineWidth(0.4); doc.roundedRect(textX + 27, mealY, textW - 27, 5.5, 1.5, 1.5, 'S')
         font('normal', 6.8); setTxt(BODY)
-        doc.text(mealsText, textX + 29, curY + 3.8)
+        const mealsLines = doc.splitTextToSize(mealsText, textW - 30)
+        doc.text(mealsLines[0], textX + 29, mealY + 3.8)
       }
 
       // Bottom Page Footer with Requested Tagline
