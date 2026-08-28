@@ -1266,7 +1266,30 @@ export default function ServicesCatalogPage() {
               </span>
             </div>
 
-            <h3 style={{ margin: '0 0 0.75rem', fontSize: '1.35rem', fontWeight: 900, color: '#0F4C3A' }}>{activeAttractionModal.name}</h3>
+            <h3 style={{ margin: '0 0 0.6rem', fontSize: '1.35rem', fontWeight: 900, color: '#0F4C3A' }}>{activeAttractionModal.name}</h3>
+
+            {/* Direct Link to Full Experience & App Guide (Top Placement) */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <Link
+                href={`/services-catalog/attractions/${activeAttractionModal.slug || slugifyAttractionName(activeAttractionModal.name)}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '0.65rem 1.15rem',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #0F4C3A 0%, #166534 100%)',
+                  color: '#FFF',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 3px 10px rgba(15,76,58,0.25)',
+                  transition: 'transform 0.15s ease'
+                }}
+              >
+                <span>Open Full Experience Guide & App Download</span> →
+              </Link>
+            </div>
 
             {/* Description */}
             <div style={{ marginBottom: '1.25rem' }}>
@@ -1330,35 +1353,13 @@ export default function ServicesCatalogPage() {
 
             {/* Terms & Conditions */}
             {activeAttractionModal.tnc && (
-              <div style={{ background: '#FFFBEB', padding: '1rem', borderRadius: '12px', border: '1px solid #FDE68A', marginBottom: '1.25rem' }}>
+              <div style={{ background: '#FFFBEB', padding: '1rem', borderRadius: '12px', border: '1px solid #FDE68A', marginBottom: '0.5rem' }}>
                 <h4 style={{ margin: '0 0 0.4rem', fontSize: '0.85rem', fontWeight: 800, color: '#92400E' }}>⚠️ Terms & Entry Guidelines</h4>
                 <p style={{ fontSize: '0.78rem', color: '#78350F', lineHeight: 1.5, margin: 0, whiteSpace: 'pre-wrap' }}>
                   {stripHtml(activeAttractionModal.tnc)}
                 </p>
               </div>
             )}
-
-            {/* Direct Link to Full Experience & App Guide */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
-              <Link
-                href={`/services-catalog/attractions/${activeAttractionModal.slug || slugifyAttractionName(activeAttractionModal.name)}`}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '0.65rem 1.25rem',
-                  borderRadius: '8px',
-                  background: '#0F4C3A',
-                  color: '#FFF',
-                  fontWeight: 800,
-                  fontSize: '0.82rem',
-                  textDecoration: 'none',
-                  boxShadow: '0 2px 8px rgba(15,76,58,0.2)'
-                }}
-              >
-                <span>Open Full Experience Guide & App Download</span> →
-              </Link>
-            </div>
 
           </div>
         </div>

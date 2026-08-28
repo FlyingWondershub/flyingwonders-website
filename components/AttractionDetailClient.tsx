@@ -18,6 +18,7 @@ import {
   Ticket,
   Lightbulb,
   CheckCircle2,
+  Smartphone,
   X
 } from 'lucide-react'
 import { AttractionData } from '../utils/attractions'
@@ -167,57 +168,201 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
         </div>
       </section>
 
-      {/* ── 3. QUICK STATS STRIP (PRAYANAAI INSPIRED) ── */}
+      {/* ── 3. QUICK SECTION NAVIGATION LINKS ── */}
       <section style={{ maxWidth: '1200px', margin: '0 auto 2rem', padding: '0 1.5rem' }}>
         <div style={{
           background: '#FFFFFF',
           borderRadius: '16px',
           border: '1px solid #E2E8F0',
-          padding: '1.25rem 1.5rem',
+          padding: '0.85rem 1rem',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '1.25rem',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '0.85rem',
+          boxShadow: '0 4px 16px -2px rgba(0,0,0,0.05)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Clock size={20} color="#059669" />
+          {/* 1. Must Do */}
+          <a
+            href="#must-do"
+            onClick={(e) => {
+              e.preventDefault()
+              document.getElementById('must-do')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              padding: '0.85rem 1.15rem',
+              borderRadius: '12px',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              textDecoration: 'none',
+              color: '#0F172A',
+              transition: 'all 0.2s ease',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#ECFDF5'
+              e.currentTarget.style.borderColor = '#A7F3D0'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(15,76,58,0.15)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#F8FAFC'
+              e.currentTarget.style.borderColor = '#E2E8F0'
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = 'none'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Sparkles size={19} color="#15803D" />
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>Must Do</strong>
+                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>Top Rides & Highlights</span>
+              </div>
             </div>
-            <div>
-              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Suggested Duration</span>
-              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>{attraction.duration || 'Full Day Experience'}</strong>
-            </div>
-          </div>
+            <span style={{ fontSize: '1rem', color: '#059669', fontWeight: 800 }}>↓</span>
+          </a>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Ticket size={20} color="#2563EB" />
+          {/* 2. Mobile App download */}
+          <a
+            href="#app-download"
+            onClick={(e) => {
+              e.preventDefault()
+              document.getElementById('app-download')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              padding: '0.85rem 1.15rem',
+              borderRadius: '12px',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              textDecoration: 'none',
+              color: '#0F172A',
+              transition: 'all 0.2s ease',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#EFF6FF'
+              e.currentTarget.style.borderColor = '#BFDBFE'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(37,99,235,0.15)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#F8FAFC'
+              e.currentTarget.style.borderColor = '#E2E8F0'
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = 'none'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Smartphone size={19} color="#2563EB" />
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>Mobile App download</strong>
+                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>Official Guides & Maps</span>
+              </div>
             </div>
-            <div>
-              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Voucher Confirmation</span>
-              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>Instant QR Code Entry</strong>
-            </div>
-          </div>
+            <span style={{ fontSize: '1rem', color: '#2563EB', fontWeight: 800 }}>↓</span>
+          </a>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <MapPin size={20} color="#D97706" />
+          {/* 3. Location & get there */}
+          <a
+            href="#location-directions"
+            onClick={(e) => {
+              e.preventDefault()
+              document.getElementById('location-directions')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              padding: '0.85rem 1.15rem',
+              borderRadius: '12px',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              textDecoration: 'none',
+              color: '#0F172A',
+              transition: 'all 0.2s ease',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#FEF3C7'
+              e.currentTarget.style.borderColor = '#FDE68A'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(217,119,6,0.15)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#F8FAFC'
+              e.currentTarget.style.borderColor = '#E2E8F0'
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = 'none'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <MapPin size={19} color="#D97706" />
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>Location & get there</strong>
+                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>Map & Transit Directions</span>
+              </div>
             </div>
-            <div>
-              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Destination Location</span>
-              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>{attraction.destination || 'Singapore'}</strong>
-            </div>
-          </div>
+            <span style={{ fontSize: '1rem', color: '#D97706', fontWeight: 800 }}>↓</span>
+          </a>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#F3E8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Sparkles size={20} color="#9333EA" />
+          {/* 4. In-dept experience */}
+          <a
+            href="#in-depth-experience"
+            onClick={(e) => {
+              e.preventDefault()
+              document.getElementById('in-depth-experience')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              padding: '0.85rem 1.15rem',
+              borderRadius: '12px',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              textDecoration: 'none',
+              color: '#0F172A',
+              transition: 'all 0.2s ease',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#F3E8FF'
+              e.currentTarget.style.borderColor = '#E9D5FF'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(147,51,234,0.15)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#F8FAFC'
+              e.currentTarget.style.borderColor = '#E2E8F0'
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = 'none'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#F3E8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Play size={19} color="#9333EA" fill="#9333EA" />
+              </div>
+              <div>
+                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>In-depth experience</strong>
+                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>4K Tour & Shorts</span>
+              </div>
             </div>
-            <div>
-              <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Service Type</span>
-              <strong style={{ fontSize: '0.88rem', color: '#0F172A' }}>Official Ticket Partner</strong>
-            </div>
-          </div>
+            <span style={{ fontSize: '1rem', color: '#9333EA', fontWeight: 800 }}>↓</span>
+          </a>
         </div>
       </section>
 
@@ -239,7 +384,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
 
           {/* MUST-DO THINGS & SIGNATURE EXPERIENCES */}
           {attraction.mustDoThings && attraction.mustDoThings.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div id="must-do" style={{ scrollMarginTop: '100px', background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
                 <span style={{ fontSize: '1.35rem' }}>✨</span>
                 <div>
@@ -348,72 +493,88 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
             </div>
           )}
 
-          {/* VIDEO SHOWCASE TOUR */}
-          {attraction.videoUrl && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Play size={20} color="#EF4444" fill="#EF4444" /> 4K Video Walkthrough & Tour
-                </h2>
-                <a
-                  href={attraction.videoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    background: '#FEE2E2',
-                    color: '#DC2626',
-                    fontSize: '0.75rem',
-                    fontWeight: 800,
-                    textDecoration: 'none'
-                  }}
-                >
-                  <span>Watch on YouTube</span> ↗
-                </a>
-              </div>
-
-              {attraction.videoUrl.includes('youtube.com') || attraction.videoUrl.includes('youtu.be') ? (
-                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.08)', background: '#000' }}>
-                  <iframe
-                    src={getYouTubeEmbedUrl(attraction.videoUrl)}
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    referrerPolicy="strict-origin-when-cross-origin"
-                  />
+          {/* ── IN-DEPTH EXPERIENCE: VIDEO SHOWCASE & SHORTS ── */}
+          <div id="in-depth-experience" style={{ scrollMarginTop: '100px', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+            {/* VIDEO SHOWCASE TOUR */}
+            {attraction.videoUrl && (
+              <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Play size={20} color="#EF4444" fill="#EF4444" /> 4K Video Walkthrough & Tour
+                  </h2>
+                  <a
+                    href={attraction.videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      background: '#FEE2E2',
+                      color: '#DC2626',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <span>Watch on YouTube</span> ↗
+                  </a>
                 </div>
-              ) : (
-                <video
-                  controls
-                  playsInline
-                  src={attraction.videoUrl}
-                  style={{ width: '100%', maxHeight: '420px', borderRadius: '12px', background: '#000', border: '1px solid #E2E8F0' }}
-                />
-              )}
-            </div>
-          )}
 
-          {/* YOUTUBE SHORTS CAROUSEL */}
-          {attraction.shorts && attraction.shorts.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-              <PackageShortsCarousel
-                destination={attraction.destination || 'Singapore'}
-                curatedShorts={attraction.shorts}
-              />
-            </div>
-          )}
+                {attraction.videoUrl.includes('youtube.com') || attraction.videoUrl.includes('youtu.be') ? (
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.08)', background: '#000' }}>
+                    <iframe
+                      src={getYouTubeEmbedUrl(attraction.videoUrl)}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  </div>
+                ) : (
+                  <video
+                    controls
+                    playsInline
+                    src={attraction.videoUrl}
+                    style={{ width: '100%', maxHeight: '420px', borderRadius: '12px', background: '#000', border: '1px solid #E2E8F0' }}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* YOUTUBE SHORTS CAROUSEL */}
+            {attraction.shorts && attraction.shorts.length > 0 && (
+              <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+                <PackageShortsCarousel
+                  destination={attraction.destination || 'Singapore'}
+                  curatedShorts={attraction.shorts}
+                />
+              </div>
+            )}
+          </div>
 
           {/* OFFICIAL MOBILE VISITOR APP DOWNLOAD CARD */}
-          {attraction.appDetails && (
-            <AppDownloadCard appDetails={attraction.appDetails} />
-          )}
+          <div id="app-download" style={{ scrollMarginTop: '100px' }}>
+            <AppDownloadCard
+              appDetails={attraction.appDetails || {
+                appName: `${attraction.name} Visitor Guide`,
+                appDescription: 'Official interactive park map, live queue wait times, and daily presentation reminder alarms.',
+                appStoreUrl: 'https://apps.apple.com',
+                playStoreUrl: 'https://play.google.com/store',
+                appFeatures: [
+                  'Interactive GPS Wayfinding Map',
+                  'Live Presentation Timers & Reminders',
+                  'Mobile Food Ordering & Halal Guides',
+                  'Digital E-Voucher QR Entry Wallet'
+                ]
+              }}
+            />
+          </div>
 
           {/* ── INTERACTIVE GOOGLE MAP & HOW TO GET THERE ── */}
-          <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div id="location-directions" style={{ scrollMarginTop: '100px', background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div>
                 <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
