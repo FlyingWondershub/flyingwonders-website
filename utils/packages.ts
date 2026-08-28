@@ -40,42 +40,50 @@ export const DEFAULT_SINGAPORE_SHORTS: TravelShort[] = [
   {
     id: 'sg-short-1',
     title: 'Jewel Changi Airport Rain Vortex & Canopy Park 🇸🇬',
-    creator: 'VisitSingapore',
+    creator: 'Travel with Hitman',
     views: '1.8M views',
     thumbnailUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=600&q=80',
-    youtubeVideoId: 'x6d3XQc0G4s'
+    youtubeVideoId: 'YdQkn0X-5q0'
   },
   {
     id: 'sg-short-2',
     title: 'Gardens by the Bay Light Show Spectacular ✨',
-    creator: 'Explore The World',
+    creator: 'Fatima Lillyy',
     views: '890K views',
     thumbnailUrl: 'https://images.unsplash.com/photo-1506351421178-63b52a2d2562?auto=format&fit=crop&w=600&q=80',
-    youtubeVideoId: 'dO1zZ9c3N90'
+    youtubeVideoId: '20vUdgKaWPE'
   },
   {
     id: 'sg-short-3',
-    title: 'Marina Bay Sands SkyPark & Infinity Pool Vibe 🌆',
-    creator: 'Travel Asia Today',
+    title: 'Marina Bay Sands SkyPark & Hotel Vibe 🌆',
+    creator: 'Luxury Travel Queen',
     views: '1.2M views',
     thumbnailUrl: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?auto=format&fit=crop&w=600&q=80',
-    youtubeVideoId: 'r53Q6P6h0dY'
+    youtubeVideoId: 'ANgyFcQDhLE'
   },
   {
     id: 'sg-short-4',
-    title: 'Sentosa Island Cable Car & Beach Club Guide 🏖️',
-    creator: 'Jake & Kaylee Travel',
+    title: 'Singapore Sentosa Island Cable Car Scenic Aerial Ride 🏖️',
+    creator: 'Singapore Walking Tours TV',
     views: '650K views',
     thumbnailUrl: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=600&q=80',
-    youtubeVideoId: 'V9P7b9mZtqU'
+    youtubeVideoId: 'Y7hnHIRThNg'
   },
   {
     id: 'sg-short-5',
-    title: 'Famous Singapore Hainanese Chicken Rice & Street Food 🍜',
-    creator: 'Foodie Explorer',
+    title: 'Famous Singapore Chinatown Street Food & Hawker Feast 🍜',
+    creator: 'Austin Givens',
     views: '2.4M views',
     thumbnailUrl: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?auto=format&fit=crop&w=600&q=80',
-    youtubeVideoId: 'Jb2z8c2k5y0'
+    youtubeVideoId: '1w0Ed-58PwE'
+  },
+  {
+    id: 'sg-short-6',
+    title: 'Universal Studios Singapore Full Theme Park Tour 🎢',
+    creator: 'Tour From Home TV',
+    views: '1.5M views',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=600&q=80',
+    youtubeVideoId: 'j_BoIf1t9wA'
   }
 ]
 

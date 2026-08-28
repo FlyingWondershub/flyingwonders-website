@@ -113,7 +113,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
     hotelAddress: '28 Cavenagh Road, Orchard / Somerset, Singapore 229635',
     description: 'Centrally located in the prestigious Orchard Road shopping enclave, Hotel Chancellor @ Orchard offers contemporary comfort with unbeatable city access. Featuring a spectacular rooftop outdoor swimming pool overlooking the Somerset skyline, in-room instant hot/cold filtered water dispensers, the all-day dining Bistro @ Chancellor Cafe, and 24-hour reception just 5 minutes walk from Somerset MRT Station (NS23) and Orchard Central.',
     coverImageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    videoUrl: 'https://www.youtube.com/watch?v=ANgyFcQDhLE',
     galleryImageUrls: [
       'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop',
@@ -164,7 +164,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
         creator: 'SingaporeHotels',
         views: '210K views',
         thumbnailUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop',
-        youtubeVideoId: 'kYJzX9Qz8oM'
+        youtubeVideoId: 'ANgyFcQDhLE'
       }
     ],
     isDisplayed: true
@@ -180,7 +180,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
     hotelAddress: '500 Jalan Sultan (Near Lavender & Bugis MRT), Singapore 199020',
     description: 'Centrally located along Victoria Street and Jalan Sultan, Hotel Boss is a premier 4-star destination hotel featuring 1,500 modern guest rooms, an expansive outdoor swimming pool overlooking the city skyline, a 24-hour fitness gym, and an array of halal and international dining options just 5 minutes walk from Lavender and Bugis MRT stations.',
     coverImageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    videoUrl: 'https://www.youtube.com/watch?v=ANgyFcQDhLE',
     galleryImageUrls: [
       'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop',
@@ -206,7 +206,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
         creator: 'SingaporeHotels',
         views: '320K views',
         thumbnailUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop',
-        youtubeVideoId: 'kYJzX9Qz8oM'
+        youtubeVideoId: 'ANgyFcQDhLE'
       },
       {
         id: 'hb-short-2',
@@ -214,7 +214,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
         creator: 'TravelVibesSG',
         views: '180K views',
         thumbnailUrl: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&auto=format&fit=crop',
-        youtubeVideoId: 't5A5L_e1Q9k'
+        youtubeVideoId: 'YdQkn0X-5q0'
       }
     ],
     isDisplayed: true
@@ -230,7 +230,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
     hotelAddress: '70 Jellicoe Road (Above Lavender MRT), Singapore 208767',
     description: 'Located directly above Lavender MRT Station with direct train access to Changi Airport and Bugis, V Hotel Lavender is one of Singapore\'s most popular transit and leisure hubs featuring a breezy sky terrace swimming pool, modern minimalist rooms, fitness center, and multi-cuisine food court.',
     coverImageUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    videoUrl: 'https://www.youtube.com/watch?v=ANgyFcQDhLE',
     galleryImageUrls: [
       'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&auto=format&fit=crop',
@@ -255,7 +255,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
         creator: 'SingaporeTransit',
         views: '240K views',
         thumbnailUrl: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=600&auto=format&fit=crop',
-        youtubeVideoId: 'kYJzX9Qz8oM'
+        youtubeVideoId: 'ANgyFcQDhLE'
       }
     ],
     isDisplayed: true
@@ -271,7 +271,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
     hotelAddress: '10 Bayfront Avenue, Marina Bay, Singapore 018956',
     description: 'World-famous luxury integrated resort featuring the legendary 57th-floor Rooftop Infinity Pool, Sands SkyPark Observation Deck, Michelin-starred dining, The Shoppes luxury promenade, and spacious designer suites overlooking Marina Bay and Gardens by the Bay.',
     coverImageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/watch?v=t5A5L_e1Q9k',
+    videoUrl: 'https://www.youtube.com/watch?v=YdQkn0X-5q0',
     galleryImageUrls: [
       'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop',
@@ -297,7 +297,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
         creator: 'LuxuryTravelSG',
         views: '2.4M views',
         thumbnailUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=600&auto=format&fit=crop',
-        youtubeVideoId: 't5A5L_e1Q9k'
+        youtubeVideoId: 'YdQkn0X-5q0'
       },
       {
         id: 'mbs-short-2',
@@ -305,7 +305,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
         creator: 'VisitSingapore',
         views: '850K views',
         thumbnailUrl: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&auto=format&fit=crop',
-        youtubeVideoId: 'x6d3XQc0G4s'
+        youtubeVideoId: '20vUdgKaWPE'
       }
     ],
     isDisplayed: true
@@ -341,7 +341,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
     hotelAddress: '180 Albert Street, Rochor / Little India Heritage Enclave, Singapore 189971',
     description: 'Imbued with rich Straits Chinese and Peranakan heritage charm, Village Hotel Albert Court is a distinguished 4-star boutique-style sanctuary situated in the vibrant cultural corridor of Rochor and Little India. Featuring charming restored shophouses, 210 elegant guestrooms with timber furnishings, outdoor relaxation courtyard, twin indoor jacuzzis, fitness gymnasium, and celebrated international dining.',
     coverImageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    videoUrl: 'https://www.youtube.com/watch?v=ANgyFcQDhLE',
     galleryImageUrls: [
       'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&auto=format&fit=crop',
@@ -356,7 +356,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
         creator: 'SingaporeHotels',
         views: '195K views',
         thumbnailUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&auto=format&fit=crop',
-        youtubeVideoId: 'kYJzX9Qz8oM'
+        youtubeVideoId: 'ANgyFcQDhLE'
       }
     ],
     isDisplayed: true
@@ -372,7 +372,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
     hotelAddress: '333 New Bridge Road, Chinatown / Outram Park, Singapore 088765',
     description: 'Strategically situated directly above Outram Park MRT interchange station (connecting the East-West, North-East, and Thomson-East Coast Lines), Dorsett Singapore is a sophisticated 4-star upscale hotel nestled at the historic cultural crossroad of Chinatown. Featuring 285 stylishly designed modern guestrooms with full-height windows, a sparkling 30-meter outdoor swimming pool with integrated jacuzzi, modern fitness center, and high-speed Wi-Fi.',
     coverImageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/watch?v=kYJzX9Qz8oM',
+    videoUrl: 'https://www.youtube.com/watch?v=ANgyFcQDhLE',
     galleryImageUrls: [
       'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop'
@@ -386,7 +386,7 @@ export const DEFAULT_HOTELS: HotelData[] = [
         creator: 'SingaporeTraveler',
         views: '145K views',
         thumbnailUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop',
-        youtubeVideoId: 'kYJzX9Qz8oM'
+        youtubeVideoId: 'ANgyFcQDhLE'
       }
     ],
     isDisplayed: true

@@ -42,19 +42,19 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
       if (url.includes('/embed/')) return url
       if (url.includes('youtu.be/')) {
         const id = url.split('youtu.be/')[1]?.split('?')[0]?.split('&')[0]
-        return `https://www.youtube-nocookie.com/embed/${id}?rel=0`
+        return `https://www.youtube.com/embed/${id}?rel=0&enablejsapi=1`
       }
       if (url.includes('youtube.com/shorts/')) {
         const id = url.split('shorts/')[1]?.split('?')[0]?.split('&')[0]
-        return `https://www.youtube-nocookie.com/embed/${id}?rel=0`
+        return `https://www.youtube.com/embed/${id}?rel=0&enablejsapi=1`
       }
       if (url.includes('youtube.com/watch')) {
         const v = new URL(url).searchParams.get('v')
-        if (v) return `https://www.youtube-nocookie.com/embed/${v}?rel=0`
+        if (v) return `https://www.youtube.com/embed/${v}?rel=0&enablejsapi=1`
       }
       const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)
       if (match && match[2]?.length === 11) {
-        return `https://www.youtube-nocookie.com/embed/${match[2]}?rel=0`
+        return `https://www.youtube.com/embed/${match[2]}?rel=0&enablejsapi=1`
       }
     } catch (e) {}
     return url
