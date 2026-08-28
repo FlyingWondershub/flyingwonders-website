@@ -61,9 +61,9 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
     return url
   }
 
-  const whatsappMsg = encodeURIComponent(
-    `Hi Flying Wonders! I would like to inquire about B2B tickets, availability, and group rates for ${attraction.name}.`
-  )
+  const targetWhatsappNumber = (attraction.whatsappNumber || '6588941014').replace(/[^0-9]/g, '')
+  const whatsappMsgText = attraction.whatsappMessage || `Hi Flying Wonders! I would like to inquire about B2B tickets, availability, and group rates for ${attraction.name}.`
+  const whatsappMsg = encodeURIComponent(whatsappMsgText)
 
   const allPhotos = [
     attraction.coverImageUrl,
@@ -724,15 +724,38 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  boxShadow: '0 4px 12px rgba(184,58,75,0.3)'
+                  boxShadow: '0 4px 12px rgba(184,58,75,0.3)',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 <Package size={17} />
                 <span>Build Custom Package ⚙️</span>
               </Link>
 
+              <Link
+                href="/singapore-attractions"
+                style={{
+                  background: '#0284C7',
+                  color: '#FFF',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '10px',
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 12px rgba(2,132,199,0.3)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <Ticket size={17} />
+                <span>Singapore Attractions 🎟️</span>
+              </Link>
+
               <a
-                href={`https://wa.me/6588941014?text=${whatsappMsg}`}
+                href={`https://wa.me/${targetWhatsappNumber}?text=${whatsappMsg}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -747,7 +770,8 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  boxShadow: '0 4px 12px rgba(37,211,102,0.25)'
+                  boxShadow: '0 4px 12px rgba(37,211,102,0.25)',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 <MessageCircle size={17} />

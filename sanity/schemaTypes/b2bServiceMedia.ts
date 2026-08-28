@@ -102,6 +102,19 @@ export const b2bServiceMediaSchema = defineType({
       description: 'Mobile visitor app download details and features.',
     }),
     defineField({
+      name: 'whatsappNumber',
+      title: '💬 Custom WhatsApp Inquiry Phone Number (Override)',
+      type: 'string',
+      description: 'Optional custom WhatsApp number for this specific attraction/service (e.g. "6588941014"). Leave blank to use Global Catalog WhatsApp number.',
+    }),
+    defineField({
+      name: 'whatsappMessage',
+      title: '💬 Custom WhatsApp Prefilled Message (Override)',
+      type: 'text',
+      rows: 3,
+      description: 'Optional custom prefilled message for this specific attraction/service. Leave blank to use default template.',
+    }),
+    defineField({
       name: 'coverImage',
       title: 'Cover Image Upload (Direct Computer Upload)',
       type: 'image',

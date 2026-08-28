@@ -68,5 +68,20 @@ export const b2bServiceCatalogSettingsSchema = defineType({
       rows: 2,
       initialValue: 'Explore our complete inventory of Hotels, Attractions, Dining, Licensed Guides, and Tour Circuits.',
     }),
+    defineField({
+      name: 'whatsappNumber',
+      title: '💬 WhatsApp Inquiry Phone Number (with Country Code)',
+      type: 'string',
+      description: 'Default WhatsApp number for inquiries across all services & attractions (e.g. "6588941014" or "919876543210" without + or dashes).',
+      initialValue: '6588941014',
+    }),
+    defineField({
+      name: 'whatsappMessageTemplate',
+      title: '💬 WhatsApp Message Template',
+      type: 'text',
+      rows: 3,
+      description: 'Default prefilled WhatsApp message template. Supports {serviceName} and {destination} placeholders.',
+      initialValue: 'Hi Flying Wonders! I would like to inquire about B2B tickets, availability, and group rates for {serviceName}.',
+    }),
   ],
 })

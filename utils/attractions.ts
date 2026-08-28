@@ -28,6 +28,8 @@ export interface AttractionData {
   tipsAndTricks?: string[]
   appDetails?: AppDetails
   shorts?: TravelShort[]
+  whatsappNumber?: string
+  whatsappMessage?: string
   subTickets?: {
     typeTitle: string
     validityPeriodText?: string
@@ -565,33 +567,42 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
 
 export async function getAllAttractions(): Promise<AttractionData[]> {
   try {
-    const sanityAttractions: any[] = await client.fetch(`*[_type == "b2bServiceMedia" && category == "attraction"]{
-      _id,
-      "slug": slug.current,
-      title,
-      subtitle,
-      destination,
-      description,
-      "coverImageFile": coverImage.asset->url,
-      coverImageUrl,
-      "videoFileUrl": videoFile.asset->url,
-      videoUrl,
-      "galleryUploaded": galleryImages[].asset->url,
-      galleryImageUrls,
-      features,
-      duration,
-      starRating,
-      hotelAddress,
-      mustDoThings,
-      timings,
-      tipsAndTricks,
-      appDetails,
-      shorts,
-      isDisplayed
-    }`)
+    const [sanityAttractions, catalogSettings]: [any[], any] = await Promise.all([
+      client.fetch(`*[_type == "b2bServiceMedia" && category == "attraction"]{
+        _id,
+        "slug": slug.current,
+        title,
+        subtitle,
+        destination,
+        description,
+        "coverImageFile": coverImage.asset->url,
+        coverImageUrl,
+        "videoFileUrl": videoFile.asset->url,
+        videoUrl,
+        "galleryUploaded": galleryImages[].asset->url,
+        galleryImageUrls,
+        features,
+        duration,
+        starRating,
+        hotelAddress,
+        mustDoThings,
+        timings,
+        tipsAndTricks,
+        appDetails,
+        shorts,
+        whatsappNumber,
+        whatsappMessage,
+        isDisplayed
+      }`),
+      client.fetch(`*[_type == "b2bServiceCatalogSettings"][0]{ whatsappNumber, whatsappMessageTemplate }`).catch(() => null)
+    ])
+
+    const globalWhatsappNumber = catalogSettings?.whatsappNumber || '6588941014'
+    const globalTemplate = catalogSettings?.whatsappMessageTemplate || 'Hi Flying Wonders! I would like to inquire about B2B tickets, availability, and group rates for {serviceName}.'
 
     const normalizedSanity: AttractionData[] = (sanityAttractions || []).map(a => {
       const cleanName = cleanAttractionName(a.title)
+      const formattedMessage = a.whatsappMessage || globalTemplate.replace(/{serviceName}/g, cleanName).replace(/{destination}/g, a.destination || 'Singapore')
       return {
         _id: a._id,
         slug: a.slug || slugifyAttractionName(cleanName),
@@ -612,6 +623,8 @@ export async function getAllAttractions(): Promise<AttractionData[]> {
         tipsAndTricks: a.tipsAndTricks || [],
         appDetails: a.appDetails,
         shorts: a.shorts || [],
+        whatsappNumber: a.whatsappNumber || globalWhatsappNumber,
+        whatsappMessage: formattedMessage,
         isDisplayed: a.isDisplayed !== false
       }
     })
