@@ -49,9 +49,9 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
     return url
   }
 
-  const whatsappMsg = encodeURIComponent(
-    `Hi Flying Wonders! I would like to inquire about B2B rates and group booking availability for ${hotel.name} (${hotel.star}).`
-  )
+  const targetWhatsappNumber = (hotel.whatsappNumber || '919886171251').replace(/[^0-9]/g, '')
+  const whatsappMsgText = hotel.whatsappMessage || `Hi Flying Wonders! I would like to inquire about B2B rates and group booking availability for ${hotel.name} (${hotel.star}).`
+  const whatsappMsg = encodeURIComponent(whatsappMsgText)
 
   const allPhotos = [
     hotel.coverImageUrl,
@@ -453,7 +453,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
               </Link>
 
               <a
-                href={`https://wa.me/6588941014?text=${whatsappMsg}`}
+                href={`https://wa.me/${targetWhatsappNumber}?text=${whatsappMsg}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

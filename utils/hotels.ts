@@ -22,6 +22,8 @@ export interface HotelData {
   tipsAndTricks?: string[]
   appDetails?: AppDetails
   shorts?: TravelShort[]
+  whatsappNumber?: string
+  whatsappMessage?: string
   isDisplayed?: boolean
 }
 
@@ -434,34 +436,45 @@ export const DEFAULT_HOTELS: HotelData[] = [
 
 export async function getAllHotels(): Promise<HotelData[]> {
   try {
-    // 1. Fetch from Sanity
-    const sanityHotels: any[] = await client.fetch(`*[_type == "b2bServiceMedia" && category == "hotel"]{
-      _id,
-      "slug": slug.current,
-      title,
-      subtitle,
-      destination,
-      description,
-      "coverImageFile": coverImage.asset->url,
-      coverImageUrl,
-      "videoFileUrl": videoFile.asset->url,
-      videoUrl,
-      "galleryUploaded": galleryImages[].asset->url,
-      galleryImageUrls,
-      features,
-      starRating,
-      hotelAddress,
-      roomCategories,
-      mustDoThings,
-      timings,
-      tipsAndTricks,
-      appDetails,
-      shorts,
-      isDisplayed
-    }`)
+    const [sanityHotels, catalogSettings, globalContact]: [any[], any, any] = await Promise.all([
+      client.fetch(`*[_type == "b2bServiceMedia" && category == "hotel"]{
+        _id,
+        "slug": slug.current,
+        title,
+        subtitle,
+        destination,
+        description,
+        "coverImageFile": coverImage.asset->url,
+        coverImageUrl,
+        "videoFileUrl": videoFile.asset->url,
+        videoUrl,
+        "galleryUploaded": galleryImages[].asset->url,
+        galleryImageUrls,
+        features,
+        roomCategories,
+        starRating,
+        hotelAddress,
+        mustDoThings,
+        timings,
+        tipsAndTricks,
+        appDetails,
+        shorts,
+        whatsappNumber,
+        whatsappMessage,
+        isDisplayed
+      }`),
+      client.fetch(`*[_type == "b2bServiceCatalogSettings" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]{ whatsappNumber, whatsappMessageTemplate }`).catch(() => null),
+      client.fetch(`*[_type == "globalContact" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]{ whatsappNumber, whatsapp }`).catch(() => null)
+    ])
+
+    const generalContactPhone = (globalContact?.whatsappNumber || globalContact?.whatsapp || '919886171251').replace(/[^0-9]/g, '')
+    const globalWhatsappNumber = (catalogSettings?.whatsappNumber ? catalogSettings.whatsappNumber.replace(/[^0-9]/g, '') : '') || generalContactPhone
+    const globalTemplate = catalogSettings?.whatsappMessageTemplate || 'Hi Flying Wonders! I would like to inquire about B2B rates and group booking availability for {serviceName}.'
 
     const normalizedSanity: HotelData[] = (sanityHotels || []).map(h => {
       const { cleanName, detectedStar } = cleanHotelName(h.title)
+      const formattedMessage = h.whatsappMessage || globalTemplate.replace(/{serviceName}/g, cleanName).replace(/{destination}/g, h.destination || 'Singapore')
+      const targetPhone = h.whatsappNumber ? h.whatsappNumber.replace(/[^0-9]/g, '') : globalWhatsappNumber
       return {
         _id: h._id,
         slug: h.slug || slugifyHotelName(cleanName),
@@ -481,6 +494,8 @@ export async function getAllHotels(): Promise<HotelData[]> {
         tipsAndTricks: h.tipsAndTricks || [],
         appDetails: h.appDetails,
         shorts: h.shorts || [],
+        whatsappNumber: targetPhone,
+        whatsappMessage: formattedMessage,
         isDisplayed: h.isDisplayed !== false
       }
     })

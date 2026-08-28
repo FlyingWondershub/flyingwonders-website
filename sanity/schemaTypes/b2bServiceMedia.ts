@@ -105,7 +105,7 @@ export const b2bServiceMediaSchema = defineType({
       name: 'whatsappNumber',
       title: '💬 Custom WhatsApp Inquiry Phone Number (Override)',
       type: 'string',
-      description: 'Optional custom WhatsApp number for this specific attraction/service (e.g. "6588941014"). Leave blank to use Global Catalog WhatsApp number.',
+      description: 'Optional custom WhatsApp number for this specific service (e.g. "919886171251" or "6594722830"). Leave blank to use General Contact WhatsApp number.',
     }),
     defineField({
       name: 'whatsappMessage',

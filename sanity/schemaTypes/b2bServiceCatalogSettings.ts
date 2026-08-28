@@ -70,10 +70,9 @@ export const b2bServiceCatalogSettingsSchema = defineType({
     }),
     defineField({
       name: 'whatsappNumber',
-      title: '💬 WhatsApp Inquiry Phone Number (with Country Code)',
+      title: '💬 Catalog WhatsApp Inquiry Phone Number (Override)',
       type: 'string',
-      description: 'Default WhatsApp number for inquiries across all services & attractions (e.g. "6588941014" or "919876543210" without + or dashes).',
-      initialValue: '6588941014',
+      description: 'Custom WhatsApp number for catalog inquiries (e.g. "919886171251" or "6594722830"). If left empty, the General Contact WhatsApp number will be automatically used.',
     }),
     defineField({
       name: 'whatsappMessageTemplate',

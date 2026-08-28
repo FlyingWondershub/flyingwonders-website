@@ -61,7 +61,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
     return url
   }
 
-  const targetWhatsappNumber = (attraction.whatsappNumber || '6588941014').replace(/[^0-9]/g, '')
+  const targetWhatsappNumber = (attraction.whatsappNumber || '919886171251').replace(/[^0-9]/g, '')
   const whatsappMsgText = attraction.whatsappMessage || `Hi Flying Wonders! I would like to inquire about B2B tickets, availability, and group rates for ${attraction.name}.`
   const whatsappMsg = encodeURIComponent(whatsappMsgText)
 

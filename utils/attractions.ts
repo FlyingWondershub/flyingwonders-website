@@ -567,7 +567,7 @@ export const DEFAULT_ATTRACTIONS: AttractionData[] = [
 
 export async function getAllAttractions(): Promise<AttractionData[]> {
   try {
-    const [sanityAttractions, catalogSettings]: [any[], any] = await Promise.all([
+    const [sanityAttractions, catalogSettings, globalContact]: [any[], any, any] = await Promise.all([
       client.fetch(`*[_type == "b2bServiceMedia" && category == "attraction"]{
         _id,
         "slug": slug.current,
@@ -594,15 +594,18 @@ export async function getAllAttractions(): Promise<AttractionData[]> {
         whatsappMessage,
         isDisplayed
       }`),
-      client.fetch(`*[_type == "b2bServiceCatalogSettings" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]{ whatsappNumber, whatsappMessageTemplate }`).catch(() => null)
+      client.fetch(`*[_type == "b2bServiceCatalogSettings" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]{ whatsappNumber, whatsappMessageTemplate }`).catch(() => null),
+      client.fetch(`*[_type == "globalContact" && !(_id in path("drafts.**"))] | order(_updatedAt desc)[0]{ whatsappNumber, whatsapp }`).catch(() => null)
     ])
 
-    const globalWhatsappNumber = catalogSettings?.whatsappNumber || '6588941014'
+    const generalContactPhone = (globalContact?.whatsappNumber || globalContact?.whatsapp || '919886171251').replace(/[^0-9]/g, '')
+    const globalWhatsappNumber = (catalogSettings?.whatsappNumber ? catalogSettings.whatsappNumber.replace(/[^0-9]/g, '') : '') || generalContactPhone
     const globalTemplate = catalogSettings?.whatsappMessageTemplate || 'Hi Flying Wonders! I would like to inquire about B2B tickets, availability, and group rates for {serviceName}.'
 
     const normalizedSanity: AttractionData[] = (sanityAttractions || []).map(a => {
       const cleanName = cleanAttractionName(a.title)
       const formattedMessage = a.whatsappMessage || globalTemplate.replace(/{serviceName}/g, cleanName).replace(/{destination}/g, a.destination || 'Singapore')
+      const targetPhone = a.whatsappNumber ? a.whatsappNumber.replace(/[^0-9]/g, '') : globalWhatsappNumber
       return {
         _id: a._id,
         slug: a.slug || slugifyAttractionName(cleanName),
@@ -623,7 +626,7 @@ export async function getAllAttractions(): Promise<AttractionData[]> {
         tipsAndTricks: a.tipsAndTricks || [],
         appDetails: a.appDetails,
         shorts: a.shorts || [],
-        whatsappNumber: a.whatsappNumber || globalWhatsappNumber,
+        whatsappNumber: targetPhone,
         whatsappMessage: formattedMessage,
         isDisplayed: a.isDisplayed !== false
       }
