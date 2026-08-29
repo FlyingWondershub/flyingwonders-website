@@ -7,7 +7,8 @@ import {
   DollarSign, RefreshCw, FileText, Map, ExternalLink, Zap, Package, Compass,
   Calendar, Eye, Filter, ChevronLeft, ChevronRight, AlertCircle, Clock,
   ChevronDown, ChevronUp, CalendarCheck, CheckCheck, LayoutDashboard, Database,
-  ArrowRight, ShieldCheck, CreditCard, Menu, PanelLeftClose, PanelLeftOpen, Megaphone
+  ArrowRight, ShieldCheck, CreditCard, Menu, PanelLeftClose, PanelLeftOpen, Megaphone,
+  Wrench, Globe, ShoppingBag, FileSpreadsheet
 } from 'lucide-react'
 
 export default function AdminDashboard() {
@@ -1138,72 +1139,141 @@ export default function AdminDashboard() {
         <div id="section-sitemap" style={{ marginBottom: '2.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
             <Map size={20} color="#4A5568" />
-            <h2 style={{ fontSize: '1.3rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif' }}>Site Map & Quick Links</h2>
+            <h2 style={{ fontSize: '1.3rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif' }}>Site Map & Comprehensive Quick Links</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
             
-            {/* Core Operations */}
+            {/* 1. Core Operations & B2B Portals */}
             <div style={{ background: '#FFF', borderRadius: '14px', padding: '1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
               <h3 style={{ fontSize: '0.95rem', color: '#2D3748', marginBottom: '0.85rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Zap size={16} color="#D69E2E" /> Core Operations
+                <Zap size={16} color="#D69E2E" /> Operations & B2B Portals
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                 {[
-                  { name: 'Sanity Studio CMS', path: '/studio', desc: 'Manage content & schemas' },
-                  { name: 'Singapore Attractions', path: '/singapore-attractions', desc: 'B2B/B2C Quote Builder' },
-                  { name: 'Active Promotions', path: '/singapore-attractions/promotions', desc: 'Discounted attraction deals' },
-                  { name: 'Competitor price tracker', path: '/api/admin/price-tracker', desc: 'JSON list of competitor prices' },
+                  { name: 'Sanity Studio CMS', path: '/studio', desc: 'Manage database schemas & live content' },
+                  { name: 'B2B Agent Portal', path: '/agent-portal', desc: 'Partner agent workspace & dashboard' },
+                  { name: 'Custom Package Builder', path: '/custom-package', desc: 'FIT custom tour quotation engine' },
+                  { name: 'B2B Travel Directory', path: '/b2b-directory', desc: 'Verified agencies & DMC directory' },
+                  { name: 'B2B Leads & RFQs', path: '/b2b-leads', desc: 'Live buyer inquiries & trade leads' },
+                  { name: 'B2B Partnership Hub', path: '/b2b', desc: 'Trade partner registration & perks' },
+                  { name: 'Card Scanner / Contact Ingest', path: '/add-contact', desc: 'Optical card reader & contact save' },
+                  { name: 'Competitor Price Tracker', path: '/api/admin/price-tracker', desc: 'Real-time JSON market price tracker' },
                 ].map(link => (
-                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
+                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{link.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#718096' }}>{link.desc}</div>
+                      <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{link.name}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#718096' }}>{link.desc}</div>
                     </div>
-                    <ExternalLink size={15} color="#A0AEC0" />
+                    <ExternalLink size={14} color="#A0AEC0" />
                   </a>
                 ))}
               </div>
             </div>
 
-            {/* Client Tools */}
+            {/* 2. Interactive Travel Tools & Utilities */}
             <div style={{ background: '#FFF', borderRadius: '14px', padding: '1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
               <h3 style={{ fontSize: '0.95rem', color: '#2D3748', marginBottom: '0.85rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Package size={16} color="#3182CE" /> Client Tools
+                <Wrench size={16} color="#3182CE" /> Interactive Travel Tools
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                 {[
-                  { name: 'AI Trip Planner', path: '/ai-planner', desc: 'Intelligent itinerary generation' },
-                  { name: 'Instant Quote', path: '/instant-quote', desc: 'Quick package estimation' },
-                  { name: 'Live Bookings', path: '/attractions-live', desc: 'Real-time booking portal' },
+                  { name: 'Travel Tools Master Hub', path: '/travel-tools', desc: 'Complete interactive utility suite' },
+                  { name: 'Visa Requirements Checker', path: '/visa-checker', desc: 'Live Singapore & Malaysia entry rules' },
+                  { name: 'SGD / INR Currency Converter', path: '/currency-converter', desc: 'Live exchange rates with conversion' },
+                  { name: 'Causeway Border Traffic', path: '/border-traffic', desc: 'Tuas & Woodlands live traffic cameras' },
+                  { name: 'Changi Flight Tracker', path: '/flight-tracker', desc: 'Real-time flight arrival & departure radar' },
+                  { name: 'Traveler Age Calculator', path: '/age-calculator', desc: 'Infant, child & adult fare categorization' },
+                  { name: 'AI Trip & Itinerary Planner', path: '/ai-planner', desc: 'Intelligent AI-generated itineraries' },
+                  { name: 'Instant Package Estimator', path: '/instant-quote', desc: 'Rapid pricing & budget calculator' },
                 ].map(link => (
-                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
+                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{link.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#718096' }}>{link.desc}</div>
+                      <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{link.name}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#718096' }}>{link.desc}</div>
                     </div>
-                    <ExternalLink size={15} color="#A0AEC0" />
+                    <ExternalLink size={14} color="#A0AEC0" />
                   </a>
                 ))}
               </div>
             </div>
 
-            {/* Public Pages */}
+            {/* 3. Services & Tour Catalogs */}
             <div style={{ background: '#FFF', borderRadius: '14px', padding: '1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
               <h3 style={{ fontSize: '0.95rem', color: '#2D3748', marginBottom: '0.85rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Compass size={16} color="#38A169" /> Public Pages
+                <ShoppingBag size={16} color="#805AD5" /> Services & Catalogs
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                 {[
-                  { name: 'Homepage', path: '/', desc: 'Main landing page' },
-                  { name: 'Travel Blog', path: '/blog', desc: 'SEO articles and guides' },
-                  { name: 'Contact Us', path: '/contact', desc: 'Support and inquiries' },
+                  { name: 'Services Catalog', path: '/services-catalog', desc: 'Master multi-category service directory' },
+                  { name: 'Singapore Attractions', path: '/singapore-attractions', desc: 'Attractions catalog & quote builder' },
+                  { name: 'Active Promotions', path: '/singapore-attractions/promotions', desc: 'Discounted attraction deals & passes' },
+                  { name: 'Live Attraction Booking', path: '/attractions-live', desc: 'Direct instant e-ticket issuance' },
+                  { name: 'Curated Tour Packages', path: '/packages', desc: 'Exotic, Classic & Explorer packages' },
+                  { name: 'Travel & Medical Insurance', path: '/insurance', desc: 'Policy quotation & instant issuance' },
+                  { name: 'Travel Consulting', path: '/travel-consulting', desc: '1-on-1 personalized itinerary planning' },
+                  { name: 'Study in Singapore', path: '/study-in-singapore', desc: 'Educational & student immersion tours' },
+                  { name: 'Karnataka Specialist Hub', path: '/karnataka', desc: 'Direct Karnataka to Singapore tours' },
+                  { name: 'Corporate Travel & MICE', path: '/corporate-travel', desc: 'Corporate delegations & events' },
                 ].map(link => (
-                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.65rem 0.85rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
+                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
                     <div>
-                      <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{link.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#718096' }}>{link.desc}</div>
+                      <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{link.name}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#718096' }}>{link.desc}</div>
                     </div>
-                    <ExternalLink size={15} color="#A0AEC0" />
+                    <ExternalLink size={14} color="#A0AEC0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. Public, Booking & Marketing */}
+            <div style={{ background: '#FFF', borderRadius: '14px', padding: '1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <h3 style={{ fontSize: '0.95rem', color: '#2D3748', marginBottom: '0.85rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Globe size={16} color="#38A169" /> Public, Booking & Info
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                {[
+                  { name: 'Main Landing Page', path: '/', desc: 'Public homepage & hero showcase' },
+                  { name: 'Direct Booking Checkout', path: '/book', desc: 'Package reservation & traveler checkout' },
+                  { name: 'Online Payments & QR', path: '/pay', desc: 'Card checkout & ICICI UPI QR portal' },
+                  { name: 'Travel Brochure', path: '/brochure', desc: 'Downloadable marketing materials' },
+                  { name: 'Travel Blog & Articles', path: '/blog', desc: 'SEO travel guides & insights' },
+                  { name: 'Guest Reviews & Ratings', path: '/reviews', desc: 'Verified traveler testimonials' },
+                  { name: 'Singapore Events Calendar', path: '/events', desc: 'Festivals, concerts & exhibitions' },
+                  { name: 'About Flying Wonders', path: '/about', desc: 'Company vision, mission & team' },
+                  { name: 'Contact & Support', path: '/contact', desc: 'Singapore & India contact info' },
+                  { name: 'FAQ Help Center', path: '/faq', desc: 'Frequently asked customer questions' },
+                  { name: 'Terms, Privacy & Refund', path: '/terms', desc: 'Legal agreements, Privacy & Refund' },
+                ].map(link => (
+                  <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{link.name}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#718096' }}>{link.desc}</div>
+                    </div>
+                    <ExternalLink size={14} color="#A0AEC0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* 5. Data Exports & Operational Reports */}
+            <div style={{ background: '#FFF', borderRadius: '14px', padding: '1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
+              <h3 style={{ fontSize: '0.95rem', color: '#2D3748', marginBottom: '0.85rem', borderBottom: '1px solid #EDF2F7', paddingBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <FileSpreadsheet size={16} color="#E53E3E" /> Data Exports & Reports
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                {[
+                  { name: 'Export Accounts Ledger CSV', path: '/api/admin/export-accounts', desc: 'Contract value, paid & pending balance' },
+                  { name: 'Export B2B Agents CSV', path: '/api/admin/export-agents', desc: 'All registered agency partners' },
+                  { name: 'Export Captured Contacts CSV', path: '/api/admin/export-contacts', desc: 'Optical business card contact list' },
+                  { name: 'Export Payment Ledger CSV', path: '/api/admin/export-payments', desc: 'All logged and verified transactions' },
+                ].map(link => (
+                  <a key={link.path} href={link.path} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', background: '#FEF2F2', border: '1px solid #FEE2E2', borderRadius: '8px', textDecoration: 'none', color: '#991B1B', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#FEE2E2'} onMouseLeave={e => e.currentTarget.style.background = '#FEF2F2'}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.82rem' }}>📥 {link.name}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#B91C1C' }}>{link.desc}</div>
+                    </div>
+                    <Download size={14} color="#991B1B" />
                   </a>
                 ))}
               </div>

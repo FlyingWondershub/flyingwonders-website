@@ -10,7 +10,8 @@ import {
   Ticket, 
   GraduationCap, 
   TrendingUp, 
-  FolderKanban 
+  FolderKanban,
+  ShieldCheck
 } from 'lucide-react'
 import ChatBot from './ChatBot'
 import PwaInstallPrompt from './PwaInstallPrompt'
@@ -380,6 +381,25 @@ export default function LayoutWrapper({
                       <div className="nav-dropdown-desc">Verified travel agents & suppliers</div>
                     </div>
                   </Link>
+
+                  {!pageVisibility?.hideInsurance && (
+                    <Link 
+                      href="/insurance" 
+                      className="nav-dropdown-item"
+                      onClick={() => setIsServicesOpen(false)}
+                    >
+                      <div className="nav-dropdown-icon-box">
+                        <ShieldCheck size={17} />
+                      </div>
+                      <div className="nav-dropdown-content">
+                        <div className="nav-dropdown-title">
+                          <span>Travel Insurance</span>
+                          <span className="nav-dropdown-badge">Protection</span>
+                        </div>
+                        <div className="nav-dropdown-desc">Comprehensive medical & trip coverage</div>
+                      </div>
+                    </Link>
+                  )}
                 </div>
               </div>
 
