@@ -2873,51 +2873,99 @@ export default function PrototypeBuilder() {
       doc.line(x + 6.6, y + 2.8, x + 3.5, y + 6.5)
     }
 
+    // Clean string sanitizer for attractions, transfers, and descriptions
+    const cleanItemTitle = (text: string) => {
+      if (!text) return ''
+      let s = text
+        .replace(/-\s*Fixed\s*Date\s*(\/\s*Time)?/gi, '')
+        .replace(/\(Peak\s*-\s*Fixed\s*date\s*\/Time\s*\)/gi, '')
+        .replace(/\(Peak\s*-\s*Fixed\s*Date\s*\)/gi, '')
+        .replace(/-\s*Fixed\s*Time/gi, '')
+        .replace(/-\s*Non\s*Peak/gi, '')
+        .replace(/Museum\s*Of\s*Icecram/gi, 'Museum of Ice Cream')
+        .replace(/Museum\s*Of\s*Icecreams/gi, 'Museum of Ice Cream')
+        .replace(/Combo\s*:\s*/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+      return s
+    }
+
     const FALLBACK_PICS: Record<string, string> = {
-      'universal': 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=800&auto=format&fit=crop&q=80',
-      'garden': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
-      'dome': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+      'arrival': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop&q=80', // Jewel Changi
+      'departure': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop&q=80', // Changi Airport
+      'universal': 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=800&auto=format&fit=crop&q=80', // Universal Studios
+      'sentosa': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80', // Sentosa Cable Car
       'cable': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
       'wings': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
-      'sentosa': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
-      'night': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
+      'mbs': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80', // Marina Bay Sands
+      'marina': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
+      'skypark': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
+      'garden': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80', // Gardens by the Bay
+      'dome': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+      'flower': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+      'cloud': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+      'night': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80', // Night Safari
       'safari': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
       'zoo': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
+      'ice cream': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=800&auto=format&fit=crop&q=80',
+      'icecream': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=800&auto=format&fit=crop&q=80',
       'bird': 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=800&auto=format&fit=crop&q=80',
       'merlion': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
-      'city': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
-      'marina': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
+      'city': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80',
       'jewel': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop&q=80',
       'singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80'
     }
 
-    // Resolve best photo for each day
+    // Resolve best photo for each day with accurate contextual keyword priorities
     const dayImageUrls: { url: string; isPhotoRight: boolean }[] = []
     itinerary.forEach((day, idx) => {
       let chosenUrl = ''
+      
+      const allNames = [
+        ...day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || ''),
+        ...day.transfers.map(t => vehiclesList[t.vehicleIndex]?.type || t.type || ''),
+      ].join(' ').toLowerCase()
+
+      // 1. Check attraction metadata first if available
       for (const a of day.attractions) {
         const name = (attractionsList[a.attractionIndex]?.name || a.attractionName || '').toLowerCase().trim()
         const meta = attractionsMeta[name]
-        if (meta?.photoUrl) {
+        if (meta?.photoUrl && !meta.photoUrl.toLowerCase().includes('poster') && !meta.photoUrl.toLowerCase().includes('banner')) {
           chosenUrl = meta.photoUrl
           break
         }
       }
-      if (!chosenUrl) {
-        const allNames = [
-          ...day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || ''),
-          ...day.transfers.map(t => vehiclesList[t.vehicleIndex]?.type || t.type || ''),
-        ].join(' ').toLowerCase()
 
-        for (const [kw, url] of Object.entries(FALLBACK_PICS)) {
-          if (allNames.includes(kw)) {
-            chosenUrl = url
-            break
+      // 2. Contextual keyword match
+      if (!chosenUrl) {
+        if (idx === 0) {
+          chosenUrl = FALLBACK_PICS.arrival
+        } else if (idx === nightsCount) {
+          chosenUrl = FALLBACK_PICS.departure
+        } else if (allNames.includes('mbs') || allNames.includes('skypark') || allNames.includes('marinabay')) {
+          chosenUrl = FALLBACK_PICS.mbs
+        } else if (allNames.includes('garden') || allNames.includes('dome') || allNames.includes('cloud')) {
+          chosenUrl = FALLBACK_PICS.garden
+        } else if (allNames.includes('sentosa') || allNames.includes('cable') || allNames.includes('wings') || allNames.includes('tussaud')) {
+          chosenUrl = FALLBACK_PICS.sentosa
+        } else if (allNames.includes('universal')) {
+          chosenUrl = FALLBACK_PICS.universal
+        } else if (allNames.includes('night') || allNames.includes('safari') || allNames.includes('zoo')) {
+          chosenUrl = FALLBACK_PICS.night
+        } else if (allNames.includes('ice cream') || allNames.includes('icecream')) {
+          chosenUrl = FALLBACK_PICS['ice cream']
+        } else {
+          for (const [kw, url] of Object.entries(FALLBACK_PICS)) {
+            if (allNames.includes(kw)) {
+              chosenUrl = url
+              break
+            }
           }
         }
       }
+
       if (!chosenUrl) {
-        chosenUrl = idx === 0 ? FALLBACK_PICS.merlion : FALLBACK_PICS.singapore
+        chosenUrl = idx === 0 ? FALLBACK_PICS.arrival : FALLBACK_PICS.singapore
       }
       dayImageUrls.push({ url: chosenUrl, isPhotoRight: idx % 2 === 0 })
     })
@@ -3025,7 +3073,6 @@ export default function PrototypeBuilder() {
           try {
             doc.addImage(imgData, 'PNG', photoX, polaroidY, photoW, photoH, undefined, 'MEDIUM')
           } catch (e) {
-            // Fallback photo box
             setFill(GRAY_L); doc.roundedRect(photoX, polaroidY, photoW, photoH, 3, 3, 'F')
             font('italic', 8); setTxt(BODY)
             doc.text('Singapore Sightseeing', photoX + photoW / 2, polaroidY + photoH / 2, { align: 'center' })
@@ -3050,79 +3097,129 @@ export default function PrototypeBuilder() {
 
         curY += 12
 
-        // Day Title (Constructed dynamically or custom entered)
+        // Day Title (Constructed dynamically with luxury phrasing)
         const dayAttrNames = day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '').filter(Boolean)
         let dayTitle = ''
-        if (day.dayTitle && day.dayTitle.trim()) {
-          dayTitle = day.dayTitle.trim()
-        } else if (dayAttrNames.length > 0) {
-          dayTitle = dayAttrNames.slice(0, 2).join(' & ')
+        if (day.dayTitle && day.dayTitle.trim().length > 3) {
+          dayTitle = cleanItemTitle(day.dayTitle.trim())
         } else if (dIdx === 0) {
           dayTitle = 'Arrival in Singapore & Hotel Check-in'
         } else if (dIdx === nightsCount) {
-          dayTitle = 'Departure & Airport Transfer'
+          dayTitle = 'Farewell Singapore & Changi Airport Transfer'
+        } else if (dayAttrNames.length > 0) {
+          const cleanedNames = dayAttrNames.map(n => cleanItemTitle(n))
+          dayTitle = cleanedNames.slice(0, 2).join(' & ')
         } else if (day.isBreakTrip) {
           dayTitle = 'Free & Easy Leisure Day'
         } else {
-          dayTitle = 'Singapore Exploration Day'
+          dayTitle = 'Singapore City Exploration'
         }
 
-        font('bold', 11); setTxt(DARK)
+        font('bold', 10.5); setTxt(DARK)
         const titleLines = doc.splitTextToSize(dayTitle, textW)
         doc.text(titleLines.slice(0, 2), textX, curY)
-        curY += Math.min(titleLines.length, 2) * 5 + 2
+        curY += Math.min(titleLines.length, 2) * 4.8 + 2
 
-        // Day Narrative Description
+        // Day Narrative Description (Rich storytelling paragraph)
         let narrative = ''
-        if (dayAttrNames.length > 0) {
-          const firstMeta = attractionsMeta[dayAttrNames[0].toLowerCase().trim()]
-          narrative = firstMeta?.shortDescription || ATTRACTION_DESCRIPTIONS[dayAttrNames[0]] || `Experience the best of Singapore on Day ${dIdx + 1} with world-class sightseeing and memorable activities.`
-        } else if (dIdx === 0) {
-          narrative = `Arrive at Singapore Changi Airport and transfer comfortably to your hotel. Relax and enjoy the vibrant city at your own leisure.`
+        if (dIdx === 0) {
+          narrative = `Arrive at world-renowned Singapore Changi Airport. Meet your private chauffeur at the arrival hall and transfer comfortably to your hotel for check-in. Relax and enjoy the vibrant city at your own leisure.`
         } else if (dIdx === nightsCount) {
-          narrative = `Enjoy your final morning in Singapore. Transfer comfortably to Changi Airport for your scheduled return flight.`
+          narrative = `Enjoy your final morning in Singapore for last-minute shopping or leisure. Transfer comfortably in your private vehicle to Changi Airport for your scheduled departure flight.`
+        } else if (dayAttrNames.length > 0) {
+          const firstRawName = dayAttrNames[0].toLowerCase().trim()
+          const firstCleanName = cleanItemTitle(dayAttrNames[0])
+          const firstMeta = attractionsMeta[firstRawName]
+          
+          if (firstMeta?.shortDescription && !firstMeta.shortDescription.toLowerCase().includes('ticket and admission')) {
+            narrative = firstMeta.shortDescription
+          } else if (ATTRACTION_DESCRIPTIONS[firstCleanName]) {
+            narrative = ATTRACTION_DESCRIPTIONS[firstCleanName]
+          } else {
+            if (firstRawName.includes('universal')) {
+              narrative = 'Experience cutting-edge rides, shows, and immersive themed zones based on blockbuster films at Universal Studios Singapore.'
+            } else if (firstRawName.includes('sentosa') || firstRawName.includes('cable') || firstRawName.includes('wings')) {
+              narrative = 'Discover the ultimate island playground with scenic cable car views over the southern coastline, world-class attractions, and the iconic Wings of Time show.'
+            } else if (firstRawName.includes('zoo') || firstRawName.includes('safari')) {
+              narrative = "Explore Singapore's award-winning wildlife parks, featuring lush open rainforest habitats, guided tram safaris, and extraordinary animal encounters."
+            } else if (firstRawName.includes('mbs') || firstRawName.includes('skypark') || firstRawName.includes('garden')) {
+              narrative = 'Marvel at panoramic skyline views from the Marina Bay Sands SkyPark Observation Deck and stroll through the futuristic Supertrees and double domes of Gardens by the Bay.'
+            } else if (firstRawName.includes('ice cream') || firstRawName.includes('icecream')) {
+              narrative = 'Explore 14 interactive, candy-colored installations celebrating the joy of ice cream, complete with the famous sprinkle pool and unlimited sweet treats.'
+            } else {
+              narrative = `Experience the best of Singapore on Day ${dIdx + 1} with scheduled private transfers, premier sightseeing, and memorable highlights.`
+            }
+          }
         } else {
-          narrative = `Enjoy a relaxed day exploring Singapore's iconic neighborhoods, dining, and scenic waterfront attractions.`
+          narrative = `Enjoy a relaxed day exploring Singapore's iconic neighborhoods, dining, and scenic waterfront attractions at your own pace.`
         }
 
-        font('normal', 7.5); setTxt(BODY)
+        if (!narrative.endsWith('.')) narrative += '.'
+
+        font('normal', 7.4); setTxt(BODY)
         const descLines = doc.splitTextToSize(narrative, textW)
         doc.text(descLines.slice(0, 3), textX, curY)
-        curY += Math.min(descLines.length, 3) * 3.8 + 3
+        curY += Math.min(descLines.length, 3) * 3.6 + 3
 
-        // Sights & Highlights Bullets
+        // Sights & Highlights Bullets (Cleaned & Formatted)
         const highlights: string[] = []
         day.transfers.forEach(t => {
           const v = vehiclesList[t.vehicleIndex]?.type || t.type || 'Private Transfer'
-          highlights.push(t.description ? `${v} - ${t.description}` : v)
+          let desc = t.description ? t.description.trim() : ''
+          if (desc.toLowerCase().startsWith('airport to hotel') || desc.toLowerCase().includes('arrival')) {
+            highlights.push(`${v} - Airport Arrival Transfer`)
+          } else if (desc.toLowerCase().startsWith('hotel to airport') || desc.toLowerCase().includes('departure')) {
+            highlights.push(`${v} - Airport Departure Transfer`)
+          } else if (desc.toLowerCase().includes('city tour')) {
+            highlights.push(`${v} - Singapore City Tour Transfer`)
+          } else if (desc.toLowerCase().includes('fireworks')) {
+            highlights.push(`${v} - Special Fireworks Transfer`)
+          } else if (desc) {
+            highlights.push(`${v} - ${cleanItemTitle(desc)}`)
+          } else {
+            highlights.push(`${v} - Private Scheduled Transfer`)
+          }
         })
+
         day.attractions.forEach(a => {
-          const name = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+          const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+          const name = cleanItemTitle(rawName)
           highlights.push(name)
           if (a.hasTransfer) {
             if (a.pickupEnabled !== false) highlights.push(`Pickup Transfer for ${name}`)
-            if (a.dropEnabled !== false) highlights.push(`Drop-off Transfer from ${name}`)
+            if (a.dropEnabled !== false) highlights.push(`Drop-off Return Transfer from ${name}`)
           }
         })
+
         day.guides.forEach(g => {
           const gt = guidesList[g.guideIndex]?.type || g.type || 'Tour Guide'
           highlights.push(gt)
         })
+
         if (dIdx === 0 && hotelRequired) {
           const hName = customHotelEnabled ? customHotelName : (hotelsList[globalHotelIndex]?.name || 'Hotel')
-          highlights.push(`Overnight stay at ${hName}`)
+          highlights.push(`Overnight stay at ${cleanItemTitle(hName)}`)
         }
 
+        // Pinned Meal Badge Position
+        const mealY = topY + cardH - 11
+
+        // Render Multi-Line Bullet Text with hanging indent
         font('normal', 7.2); setTxt(DARK)
         const displayHighlights = highlights.slice(0, 4)
         displayHighlights.forEach(h => {
-          const hLines = doc.splitTextToSize(`•  ${h}`, textW - 2)
-          doc.text(hLines[0], textX, curY)
-          curY += 4
+          const cleanH = cleanItemTitle(h)
+          const hLines = doc.splitTextToSize(`•  ${cleanH}`, textW - 2)
+          if (curY + (hLines.length * 3.5) > mealY - 2) return
+          hLines.forEach((line: string, lIdx: number) => {
+            const lineX = lIdx === 0 ? textX : textX + 3.5
+            doc.text(line, lineX, curY)
+            curY += 3.5
+          })
+          curY += 0.8
         })
 
         // Meals Included Badge pinned cleanly near bottom of card
-        const mealY = topY + cardH - 11
         const dayMeals: string[] = []
         if (day.breakfast) dayMeals.push('Breakfast')
         if (day.lunch) dayMeals.push('Lunch')
@@ -3133,9 +3230,15 @@ export default function PrototypeBuilder() {
             dayMeals.push(mt)
           })
         }
+        // Auto-detect meals mentioned in attraction titles
+        const allAttrText = day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '').join(' ').toLowerCase()
+        if (allAttrText.includes('dinner') && !dayMeals.includes('Dinner')) dayMeals.push('Dinner')
+        if (allAttrText.includes('lunch') && !dayMeals.includes('Lunch')) dayMeals.push('Lunch')
+        if (allAttrText.includes('breakfast') && !dayMeals.includes('Breakfast')) dayMeals.push('Breakfast')
+
         const mealsText = dayMeals.length > 0 ? Array.from(new Set(dayMeals)).join(', ') : 'As per plan'
 
-        // Render Meals Pill
+        // Render Meals Pill with styled border container
         setFill(CRIMSON); doc.roundedRect(textX, mealY, 26, 5.5, 1.5, 1.5, 'F')
         font('bold', 6.5); setTxt(WHITE)
         doc.text('Meals Included', textX + 13, mealY + 3.8, { align: 'center' })
@@ -3145,6 +3248,67 @@ export default function PrototypeBuilder() {
         font('normal', 6.8); setTxt(BODY)
         const mealsLines = doc.splitTextToSize(mealsText, textW - 30)
         doc.text(mealsLines[0], textX + 29, mealY + 3.8)
+      }
+
+      // ─── If Odd Number of Days: Render "Traveler Guidelines & Support Desk" in bottom slot ───
+      const isOddFinalPage = pageIdx === totalPages - 1 && (totalDays % daysPerPage !== 0)
+      if (isOddFinalPage) {
+        const bottomY = 150
+        const cardH = 126
+
+        // Enclosed Guidelines Card
+        setFill(WHITE); doc.roundedRect(ML, bottomY, CW, cardH, 4, 4, 'F')
+        setDraw(BORDER); doc.setLineWidth(0.5); doc.roundedRect(ML, bottomY, CW, cardH, 4, 4, 'S')
+
+        // Decorative side accent strip in Emerald
+        setFill([15, 76, 58]); doc.roundedRect(ML, bottomY, 3, cardH, 1.5, 1.5, 'F')
+
+        const gTextX = ML + 10
+        const gTextW = CW - 20
+        let gY = bottomY + 10
+
+        // Guidelines Pill Badge
+        setFill([15, 76, 58]); doc.roundedRect(gTextX, gY, 38, 6.5, 3.2, 3.2, 'F')
+        font('bold', 8); setTxt(WHITE)
+        doc.text('TRAVEL TIPS', gTextX + 19, gY + 4.5, { align: 'center' })
+
+        font('normal', 7.5); setTxt(GOLD)
+        doc.text('Important Singapore Guidelines & Ground Assistance', gTextX + 42, gY + 4.5)
+
+        gY += 13
+        font('bold', 11); setTxt(DARK)
+        doc.text('Essential Traveler Information & 24/7 Support Desk', gTextX, gY)
+
+        gY += 7
+        font('normal', 7.6); setTxt(BODY)
+        const introLines = doc.splitTextToSize('We are committed to delivering a seamless, worry-free journey across Singapore. Please review the following essential guidelines for your upcoming tour:', gTextW)
+        doc.text(introLines, gTextX, gY)
+        gY += introLines.length * 4 + 3
+
+        // Guideline Bullet Boxes
+        const guidelinesList = [
+          { title: 'SG Arrival Card (SGAC)', desc: 'Must be submitted online within 3 days prior to your arrival date into Singapore.' },
+          { title: 'Airport Changi Chauffeur Pickup', desc: 'Your private driver will wait at the Arrival Hall exit holding your name placard.' },
+          { title: 'Hotel Standard Check-in / Check-out', desc: 'Check-in is from 15:00 hrs; check-out by 11:00 hrs. Early check-in is subject to availability.' },
+          { title: 'Attraction Timings & Vouchers', desc: 'Please carry valid photo ID / passports for theme park entry and ticket validation.' },
+        ]
+
+        guidelinesList.forEach(item => {
+          font('bold', 7.4); setTxt(DARK)
+          doc.text(`•  ${item.title}: `, gTextX, gY)
+          const titleWidth = doc.getTextWidth(`•  ${item.title}: `)
+          font('normal', 7.2); setTxt(BODY)
+          const descLines = doc.splitTextToSize(item.desc, gTextW - titleWidth)
+          doc.text(descLines[0], gTextX + titleWidth, gY)
+          gY += 4.5
+        })
+
+        // Bottom Support Contact Banner
+        const supportY = bottomY + cardH - 12
+        setFill([240, 253, 244]); doc.roundedRect(gTextX, supportY, gTextW, 7, 2, 2, 'F')
+        setDraw([187, 247, 208]); doc.setLineWidth(0.4); doc.roundedRect(gTextX, supportY, gTextW, 7, 2, 2, 'S')
+        font('bold', 7); setTxt([21, 128, 61])
+        doc.text('📞 24/7 Dedicated Ground Support & Assistance Available Throughout Your Stay in Singapore', gTextX + gTextW / 2, supportY + 4.8, { align: 'center' })
       }
 
       // Bottom Page Footer with Requested Tagline
