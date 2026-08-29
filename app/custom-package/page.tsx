@@ -5235,11 +5235,10 @@ ${proposal}
                   <div>{nightsCount}N / {nightsCount + 1}D</div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem', marginTop: '1rem' }}>
-                <button onClick={() => handleCopyProposalText(true)} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>📋 Copy</button>
-                <button onClick={() => { setShowPdfModal(true); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>📄 PDF</button>
-                <button onClick={() => { downloadSimpleItineraryPDF(); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem', background: '#FFF7ED', border: '1px solid #FFEDD5', color: '#C2410C', fontWeight: 800 }} title="Download Simple Visual Itinerary (S-PDF)">📄 S-PDF</button>
-                <button onClick={() => { sendOnWhatsApp(); setPriceDrawerOpen(false) }} className="cp-tool-btn whatsapp" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.78rem' }}>💬 WA</button>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', marginTop: '1rem' }}>
+                <button onClick={() => handleCopyProposalText(true)} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.82rem' }}>📋 Copy</button>
+                <button onClick={() => { setShowPdfModal(true); setPriceDrawerOpen(false) }} className="cp-tool-btn" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.82rem', background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8' }}>📄 PDF</button>
+                <button onClick={() => { sendOnWhatsApp(); setPriceDrawerOpen(false) }} className="cp-tool-btn whatsapp" style={{ justifyContent: 'center', padding: '0.65rem 0.35rem', fontSize: '0.82rem' }}>💬 WA</button>
               </div>
             </div>
           </div>
@@ -5795,7 +5794,6 @@ ${proposal}
             📄 PDF <ChevronDown size={13} style={{ marginLeft: '-2px' }} />
           </button>
 
-          <button className="cp-tool-btn" onClick={downloadSimpleItineraryPDF} style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', color: '#C2410C', fontWeight: 800 }} title="Download Simple Visual Itinerary (S-PDF)">📄 S-PDF</button>
           <button className="cp-tool-btn whatsapp" onClick={sendOnWhatsApp}>💬 WhatsApp</button>
           
           <button className="cp-tool-btn" onClick={handleSaveProposal} style={{ background: '#FAF5FF', border: '1px solid #D6BCFA', color: '#6B46C1' }}>
@@ -8379,14 +8377,14 @@ ${proposal}
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '0.2rem', marginTop: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.25rem', marginTop: '1rem' }}>
                 <button 
                   type="button" 
                   onClick={() => handleCopyProposalText(false)}
                   title="Copy Proposal"
-                  style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.58rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
+                  style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: '#FFF', fontWeight: 800, padding: '0.5rem 0.15rem', fontSize: '0.64rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <CopyCheck size={14} color="#FFF" />
+                  <CopyCheck size={15} color="#FFF" />
                   <span>COPY</span>
                 </button>
 
@@ -8394,20 +8392,10 @@ ${proposal}
                   type="button" 
                   onClick={() => setShowPdfModal(true)}
                   title="Download PDF Document"
-                  style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.58rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
+                  style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)', color: '#FFF', fontWeight: 800, padding: '0.5rem 0.15rem', fontSize: '0.64rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
                 >
-                  <FileDown size={14} color="#FFF" />
+                  <FileDown size={15} color="#FFF" />
                   <span>PDF</span>
-                </button>
-
-                <button 
-                  type="button" 
-                  onClick={downloadSimpleItineraryPDF}
-                  title="Download Visual Itinerary (S-PDF)"
-                  style={{ background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)', color: '#FFF', fontWeight: 800, padding: '0.45rem 0.1rem', fontSize: '0.58rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.15)' }}
-                >
-                  <Sparkles size={14} color="#FFF" />
-                  <span>S-PDF</span>
                 </button>
 
                 <button 
