@@ -214,5 +214,67 @@ export const b2bServiceMediaSchema = defineType({
       ],
       description: 'Add vertical 9:16 YouTube Shorts for ride walkthroughs, animal encounters, and room tours.',
     }),
+    defineField({
+      name: 'itineraryTimeline',
+      title: '⏱️ Hourly Circuit Timeline (For 1-Day & Multi-Day Tours)',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            { name: 'time', title: 'Time Slot (e.g. 10:00 AM, 10:30 AM – 4:30 PM)', type: 'string' },
+            { name: 'title', title: 'Stop Title / Activity Name', type: 'string' },
+            { name: 'description', title: 'Detailed Experience Description', type: 'text', rows: 3 },
+            { name: 'badge', title: 'Category Tag (e.g. 🎢 Thrill Coasters, 🚠 Scenic Transit, 🦁 Safari Encounters, 🎆 Night Pyro Show, 🍽️ Meal Break)', type: 'string' },
+            { name: 'attractionSlug', title: 'Linked Attraction Page Slug (Optional, e.g. universal-studios-singapore)', type: 'string' },
+            { name: 'transitNote', title: 'Transfer & Transit Directions to Next Stop (Optional)', type: 'string' },
+          ],
+        },
+      ],
+      description: 'Step-by-step chronological itinerary for the tour circuit.',
+    }),
+    defineField({
+      name: 'googleMapsRouteUrl',
+      title: '🗺️ Google Maps Multi-Stop Route URL',
+      type: 'url',
+      description: 'Full Google Maps turn-by-turn navigation link connecting all circuit waypoints.',
+    }),
+    defineField({
+      name: 'routeWaypoints',
+      title: '📍 Route Waypoint Stops',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'List of waypoints in order (e.g. "HarbourFront Tower 2", "Universal Studios Singapore", "Skyline Luge Sentosa", "Wings of Time").',
+    }),
+    defineField({
+      name: 'diningOptions',
+      title: '🍽️ Recommended Dining & Dietary Pitstops Along Circuit',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            { name: 'restaurantName', title: 'Restaurant / Eatery Name', type: 'string' },
+            { name: 'cuisine', title: 'Cuisine Type & Signature Dishes', type: 'string' },
+            { name: 'location', title: 'Location / Zone Along Route', type: 'string' },
+            { name: 'isHalal', title: 'Halal Certified?', type: 'boolean', initialValue: false },
+            { name: 'isVegetarian', title: 'Vegetarian / Jain Friendly?', type: 'boolean', initialValue: false },
+          ],
+        },
+      ],
+      description: 'Curated food and refreshment options along the tour route.',
+    }),
+    defineField({
+      name: 'groupPricing',
+      title: '🧮 B2B Group Pricing & Wholesale Rate Estimates',
+      type: 'object',
+      fields: [
+        { name: 'adultEstimate', title: 'Adult Base Estimate (per pax)', type: 'number' },
+        { name: 'childEstimate', title: 'Child Base Estimate (per pax)', type: 'number' },
+        { name: 'currency', title: 'Currency (e.g. SGD, INR, USD)', type: 'string', initialValue: 'SGD' },
+        { name: 'pricingNote', title: 'Inclusions & Pricing Note', type: 'text', rows: 2 },
+      ],
+      description: 'Base wholesale price estimates for FIT and group package calculations.',
+    }),
   ],
 })

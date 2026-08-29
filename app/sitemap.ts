@@ -5,6 +5,7 @@ import { dataset, projectId, apiVersion } from '../sanity/env';
 import { getAllPackages, normalizeSlug } from '../utils/packages';
 import { getAllHotels, slugifyHotelName } from '../utils/hotels';
 import { getAllAttractions, slugifyAttractionName } from '../utils/attractions';
+import { getAllTours, slugifyTourTitle } from '../utils/tours';
 import { getAllBlogSlugs } from '../utils/blog';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -127,5 +128,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.error('Failed to get attraction routes for sitemap:', err)
     }
 
-    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap]
+    // Dynamic individual 1-day & multi-day tour routes
+    let tourSitemap: MetadataRoute.Sitemap = []
+    try {
+      const tours = await getAllTours()
+      tourSitemap = tours.map((t) => ({
+        url: `${baseUrl}/services-catalog/tours/${t.slug || slugifyTourTitle(t.title)}`,
+        lastModified: today,
+        changeFrequency: 'weekly' as MetadataRoute.Sitemap[0]['changeFrequency'],
+        priority: 0.85,
+      }))
+    } catch (err) {
+      console.error('Failed to get tour routes for sitemap:', err)
+    }
+
+    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap, ...tourSitemap]
 }

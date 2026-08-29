@@ -1190,22 +1190,30 @@ export default function ServicesCatalogPage() {
             {activeMediaModal.slug && (
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Link
-                  href={`/services-catalog/hotels/${activeMediaModal.slug}`}
+                  href={
+                    activeMediaModal.category === 'tour'
+                      ? `/services-catalog/tours/${activeMediaModal.slug}`
+                      : `/services-catalog/hotels/${activeMediaModal.slug}`
+                  }
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    padding: '0.6rem 1.2rem',
-                    borderRadius: '8px',
-                    background: '#0F4C3A',
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #0F4C3A 0%, #166534 100%)',
                     color: '#FFF',
                     fontWeight: 800,
-                    fontSize: '0.82rem',
+                    fontSize: '0.84rem',
                     textDecoration: 'none',
-                    boxShadow: '0 2px 8px rgba(15,76,58,0.2)'
+                    boxShadow: '0 3px 10px rgba(15,76,58,0.25)'
                   }}
                 >
-                  <span>Open Full Hotel Page & Gallery</span> →
+                  <span>
+                    {activeMediaModal.category === 'tour'
+                      ? 'Open Full Tour Itinerary & Route Guide →'
+                      : 'Open Full Hotel Page & Gallery →'}
+                  </span>
                 </Link>
               </div>
             )}
