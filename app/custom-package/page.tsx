@@ -2562,7 +2562,6 @@ export default function PrototypeBuilder() {
       y += 4
       checkPage(34)
       setFill(NAVY); doc.roundedRect(ML, y, CW, 30, 3, 3, 'F')
-      setFill(GOLD); doc.rect(ML, y + 28, CW, 2, 'F')
       font('bold', 9.5); setTxt(GOLD)
       doc.text('Your Travel Consultant', ML + 5, y + 8)
       if (activeAgent) {
@@ -2599,717 +2598,572 @@ export default function PrototypeBuilder() {
     })
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // S-PDF: Simple Magazine / Visual Scrapbook Itinerary PDF Generator
-  // ═══════════════════════════════════════════════════════════════
+  // S-PDF: Luxury Editorial Magazine Itinerary PDF Generator
   const downloadSimpleItineraryPDF = async () => {
-    const pNum = await ensureProposalSaved(true)
-    const { jsPDF } = await import('jspdf')
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const pNum = await ensureProposalSaved(true)
+      const { jsPDF } = await import('jspdf')
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
-    const PW = 210
-    const PH = 297
-    const ML = 14
-    const MR = 196
-    const CW = MR - ML
+      const PW = 210
+      const PH = 297
+      const ML = 12
+      const MR = 198
+      const CW = MR - ML
 
-    // Color Palette
-    const CRIMSON = [184, 28, 28]   as [number,number,number] // #B81C1C Day Badge / Accent
-    const CRIM_L  = [254, 242, 242] as [number,number,number] // #FEF2F2
-    const NAVY    = [10, 34, 64]    as [number,number,number]
-    const GOLD    = [196, 156, 60]  as [number,number,number]
-    const DARK    = [24, 24, 27]    as [number,number,number] // #18181B Title
-    const BODY    = [55, 65, 81]    as [number,number,number] // #374151 Description
-    const GRAY_L  = [243, 244, 246] as [number,number,number] // #F3F4F6
-    const WHITE   = [255, 255, 255] as [number,number,number]
-    const BORDER  = [229, 231, 235] as [number,number,number]
-    const BG_WARM = [252, 250, 246] as [number,number,number] // Warm parchment tone
+      // Refined Luxury Color Palette
+      const EMERALD = [15, 76, 58]     as [number,number,number] // #0F4C3A
+      const EMERALD_L = [240, 253, 244] as [number,number,number] // #F0FDF4
+      const GOLD    = [196, 156, 60]   as [number,number,number] // #C49C3C
+      const GOLD_L  = [253, 248, 237]  as [number,number,number] // #FDF8ED
+      const NAVY    = [10, 34, 64]     as [number,number,number] // #0A2240
+      const DARK    = [17, 24, 39]     as [number,number,number] // #111827
+      const BODY    = [75, 85, 99]     as [number,number,number] // #4B5563
+      const WHITE   = [255, 255, 255]  as [number,number,number]
+      const BORDER  = [226, 232, 240]  as [number,number,number] // #E2E8F0
+      const BG_WARM = [250, 248, 245]  as [number,number,number] // #FAF8F5 Warm Ivory Linen
 
-    const setFill = (c: [number,number,number]) => doc.setFillColor(c[0], c[1], c[2])
-    const setDraw = (c: [number,number,number]) => doc.setDrawColor(c[0], c[1], c[2])
-    const setTxt  = (c: [number,number,number]) => doc.setTextColor(c[0], c[1], c[2])
-    const font    = (w: 'normal'|'bold'|'italic', s: number) => { doc.setFont('Helvetica', w); doc.setFontSize(s) }
+      const setFill = (c: [number,number,number]) => doc.setFillColor(c[0], c[1], c[2])
+      const setDraw = (c: [number,number,number]) => doc.setDrawColor(c[0], c[1], c[2])
+      const setTxt  = (c: [number,number,number]) => doc.setTextColor(c[0], c[1], c[2])
+      const font    = (w: 'normal'|'bold'|'italic', s: number) => { doc.setFont('Helvetica', w); doc.setFontSize(s) }
 
-    // Helper to load image and crop/mask into dramatic 75% curved organic photo shape (facing text)
-    const fetchBase64Image = async (url: string, isPhotoRight: boolean): Promise<string | null> => {
-      try {
-        let rawDataUrl = ''
-
-        // 1. Fetch via server-side image proxy to eliminate CORS & tainted canvas security errors
+      // Helper to load image and crop cleanly into crisp, modern rounded rectangle with luxury border
+      const fetchBase64Image = async (url: string): Promise<string | null> => {
         try {
-          const proxyRes = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`)
-          if (proxyRes.ok) {
-            const proxyData = await proxyRes.json()
-            if (proxyData.success && proxyData.base64) {
-              rawDataUrl = proxyData.base64
-            }
-          }
-        } catch (e) {}
-
-        // Fallback to direct fetch if proxy unavailable
-        if (!rawDataUrl) {
-          const res = await fetch(url)
-          if (!res.ok) return null
-          const blob = await res.blob()
-          rawDataUrl = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onloadend = () => resolve(reader.result as string)
-            reader.onerror = reject
-            reader.readAsDataURL(blob)
-          })
-        }
-
-        if (typeof window === 'undefined') return rawDataUrl
-
-        // Process via Canvas to create dramatic 75% organic curved mask with thick white deckle border
-        return new Promise((resolve) => {
-          const img = new Image()
-          img.crossOrigin = 'anonymous'
-          img.onload = () => {
-            try {
-              const canvas = document.createElement('canvas')
-              const targetW = 600
-              const targetH = 750
-              canvas.width = targetW
-              canvas.height = targetH
-              const ctx = canvas.getContext('2d')
-              if (!ctx) return resolve(rawDataUrl)
-
-              ctx.clearRect(0, 0, targetW, targetH)
-
-              const pad = 18
-              const w = targetW - pad * 2
-              const h = targetH - pad * 2
-              const x = pad
-              const y = pad
-
-              // Build dramatic 75% organic curved path
-              const buildCurvedPath = (c: CanvasRenderingContext2D) => {
-                c.beginPath()
-                if (isPhotoRight) {
-                  // Photo on Right: Left edge curves dramatically inward towards image
-                  c.moveTo(x + 40, y)
-                  c.bezierCurveTo(x + w * 0.4, y - 8, x + w * 0.7, y + 6, x + w - 36, y)
-                  c.quadraticCurveTo(x + w, y, x + w, y + 36)
-                  // Right outer edge
-                  c.bezierCurveTo(x + w + 8, y + h * 0.35, x + w - 6, y + h * 0.7, x + w, y + h - 36)
-                  c.quadraticCurveTo(x + w, y + h, x + w - 36, y + h)
-                  // Bottom edge
-                  c.bezierCurveTo(x + w * 0.7, y + h + 8, x + w * 0.35, y + h - 6, x + 40, y + h)
-                  c.quadraticCurveTo(x + 10, y + h, x + 16, y + h - 36)
-                  // Dramatic 75% organic inner wave facing text
-                  c.bezierCurveTo(x + 55, y + h * 0.75, x - 18, y + h * 0.48, x + 48, y + h * 0.22)
-                  c.bezierCurveTo(x + 18, y + h * 0.08, x - 8, y + 36, x + 40, y)
-                } else {
-                  // Photo on Left: Right edge curves dramatically inward towards image
-                  c.moveTo(x + 36, y)
-                  c.bezierCurveTo(x + w * 0.3, y - 8, x + w * 0.6, y + 6, x + w - 40, y)
-                  c.quadraticCurveTo(x + w - 10, y, x + w - 16, y + 36)
-                  // Dramatic 75% organic inner wave facing text
-                  c.bezierCurveTo(x + w - 55, y + h * 0.22, x + w + 18, y + h * 0.48, x + w - 48, y + h * 0.75)
-                  c.bezierCurveTo(x + w - 18, y + h * 0.92, x + w + 8, y + h - 36, x + w - 40, y + h)
-                  c.quadraticCurveTo(x + w - 10, y + h, x + w - 36, y + h)
-                  // Bottom edge
-                  c.bezierCurveTo(x + w * 0.65, y + h + 8, x + w * 0.35, y + h - 6, x + 36, y + h)
-                  c.quadraticCurveTo(x, y + h, x, y + h - 36)
-                  // Left outer edge
-                  c.bezierCurveTo(x - 8, y + h * 0.7, x + 6, y + h * 0.35, x, y + 36)
-                  c.quadraticCurveTo(x, y, x + 36, y)
-                }
-                c.closePath()
-              }
-
-              // Clip and draw image cover
-              ctx.save()
-              buildCurvedPath(ctx)
-              ctx.clip()
-
-              const imgAspect = img.width / img.height
-              const targetAspect = targetW / targetH
-              let dw = targetW
-              let dh = targetH
-              let dx = 0
-              let dy = 0
-              if (imgAspect > targetAspect) {
-                dw = targetH * imgAspect
-                dx = (targetW - dw) / 2
-              } else {
-                dh = targetW / imgAspect
-                dy = (targetH - dh) / 2
-              }
-              ctx.drawImage(img, dx, dy, dw, dh)
-              ctx.restore()
-
-              // Draw thick solid white deckle halo border + soft shadow outline
-              ctx.save()
-              buildCurvedPath(ctx)
-              ctx.strokeStyle = 'rgba(255, 255, 255, 0.98)'
-              ctx.lineWidth = 14
-              ctx.stroke()
-
-              ctx.strokeStyle = 'rgba(205, 180, 150, 0.55)'
-              ctx.lineWidth = 2.5
-              ctx.stroke()
-              ctx.restore()
-
-              resolve(canvas.toDataURL('image/png'))
-            } catch (err) {
-              resolve(rawDataUrl)
-            }
-          }
-          img.onerror = () => resolve(rawDataUrl)
-          img.src = rawDataUrl
-        })
-      } catch (e) {
-        return null
-      }
-    }
-
-    // ── Rich Collection of High-Density Meaningful Vector Travel Doodles ──
-    const DOODLE_COLOR = [178, 145, 112] as [number, number, number]
-
-    const drawAirplaneWithTrail = (x: number, y: number) => {
-      setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
-      doc.setLineDashPattern([1.5, 1.5], 0)
-      doc.lines([[14, -4], [22, 3], [8, 6], [-12, 3]], x - 24, y + 2, [1, 1], 'S', false)
-      doc.setLineDashPattern([], 0)
-
-      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
-      doc.roundedRect(x, y - 1.5, 13, 3, 1, 1, 'FD')
-      doc.triangle(x + 4.5, y - 5.5, x + 7.5, y - 0.2, x + 2.5, y - 0.2, 'FD')
-      doc.triangle(x + 4.5, y + 4.8, x + 7.5, y + 0.8, x + 2.5, y + 0.8, 'FD')
-      doc.triangle(x + 10, y - 3.5, x + 13, y - 0.2, x + 9, y - 0.2, 'FD')
-    }
-
-    const drawCameraDoodle = (x: number, y: number) => {
-      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
-      doc.roundedRect(x, y, 12, 8.5, 1.2, 1.2, 'FD')
-      doc.rect(x + 3.5, y - 1.8, 4.5, 1.8, 'FD')
-      doc.circle(x + 6, y + 4.2, 2.8, 'FD')
-      doc.circle(x + 6, y + 4.2, 1.2, 'S')
-      doc.circle(x + 9.8, y + 2, 0.6, 'F')
-    }
-
-    const drawSunglassesDoodle = (x: number, y: number) => {
-      setDraw(DOODLE_COLOR); doc.setLineWidth(0.5); setFill([255, 252, 246])
-      doc.roundedRect(x, y, 6.5, 4.5, 1.8, 1.8, 'FD')
-      doc.roundedRect(x + 8.5, y, 6.5, 4.5, 1.8, 1.8, 'FD')
-      doc.line(x + 6.5, y + 2, x + 8.5, y + 2)
-      doc.line(x, y + 1.5, x - 2.5, y - 1)
-      doc.line(x + 15, y + 1.5, x + 17.5, y - 1)
-    }
-
-    const drawSuitcaseDoodle = (x: number, y: number) => {
-      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
-      doc.roundedRect(x, y, 13, 10, 1.5, 1.5, 'FD')
-      doc.roundedRect(x + 4.5, y - 2.5, 4, 2.5, 0.8, 0.8, 'S')
-      doc.line(x + 3.8, y, x + 3.8, y + 10)
-      doc.line(x + 9.2, y, x + 9.2, y + 10)
-      doc.circle(x + 6.5, y + 5, 0.7, 'FD')
-    }
-
-    const drawCompassDoodle = (x: number, y: number) => {
-      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
-      doc.circle(x + 5.5, y + 5.5, 5.2, 'FD')
-      doc.circle(x + 5.5, y + 5.5, 4, 'S')
-      doc.triangle(x + 5.5, y + 1.5, x + 6.8, y + 5.5, x + 4.2, y + 5.5, 'FD')
-      doc.triangle(x + 5.5, y + 9.5, x + 6.8, y + 5.5, x + 4.2, y + 5.5, 'S')
-    }
-
-    const drawLuggageTagDoodle = (x: number, y: number) => {
-      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
-      doc.roundedRect(x, y, 7.5, 11, 1.2, 1.2, 'FD')
-      doc.circle(x + 3.75, y + 2.5, 0.9, 'S')
-      doc.line(x + 1.8, y + 5.5, x + 5.7, y + 5.5)
-      doc.line(x + 1.8, y + 7.8, x + 5.7, y + 7.8)
-      doc.line(x + 3.75, y + 1.6, x + 3.75, y - 2.5)
-    }
-
-    const drawCoffeeDoodle = (x: number, y: number) => {
-      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
-      doc.roundedRect(x, y, 8, 6.5, 1.2, 1.2, 'FD')
-      doc.roundedRect(x + 8, y + 1.2, 2.4, 4, 0.8, 0.8, 'S')
-      doc.line(x + 2.8, y - 1, x + 2.8, y - 2.8)
-      doc.line(x + 5.4, y - 1.2, x + 5.4, y - 3)
-    }
-
-    const drawPalmFrondDoodle = (x: number, y: number) => {
-      setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
-      doc.lines([[6, 12], [8, 16]], x, y, [1, 1], 'S', false)
-      doc.line(x + 2, y + 3, x - 4, y + 1)
-      doc.line(x + 3.5, y + 6, x + 9, y + 4)
-      doc.line(x + 5, y + 9, x - 3, y + 8)
-      doc.line(x + 6.5, y + 12, x + 11, y + 11)
-    }
-
-    const drawPostageStamp = (x: number, y: number) => {
-      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
-      doc.rect(x, y, 12, 15, 'FD')
-      doc.rect(x + 1.2, y + 1.2, 9.6, 12.6, 'S')
-      doc.circle(x + 6, y + 7.5, 2.6, 'S')
-      doc.line(x + 13, y + 4, x + 20, y + 4)
-      doc.line(x + 13, y + 7, x + 22, y + 7)
-      doc.line(x + 13, y + 10, x + 19, y + 10)
-    }
-
-    const drawCurvedArrow = (x: number, y: number) => {
-      setDraw(DOODLE_COLOR); doc.setLineWidth(0.5)
-      doc.lines([[10, 5], [16, 3]], x, y, [1, 1], 'S', false)
-      doc.line(x + 16, y + 3, x + 12.5, y + 1.5)
-      doc.line(x + 16, y + 3, x + 13.5, y + 5.5)
-    }
-
-    const drawSparkleStar = (x: number, y: number, r = 2.4) => {
-      setDraw(DOODLE_COLOR); doc.setLineWidth(0.45)
-      doc.line(x, y - r, x, y + r)
-      doc.line(x - r, y, x + r, y)
-    }
-
-    const drawHeartDoodle = (x: number, y: number) => {
-      setFill([255, 252, 246]); setDraw(DOODLE_COLOR); doc.setLineWidth(0.45)
-      doc.circle(x + 2, y + 2, 1.8, 'S')
-      doc.circle(x + 5, y + 2, 1.8, 'S')
-      doc.line(x + 0.4, y + 2.8, x + 3.5, y + 6.5)
-      doc.line(x + 6.6, y + 2.8, x + 3.5, y + 6.5)
-    }
-
-    // Clean string sanitizer for attractions, transfers, and descriptions
-    const cleanItemTitle = (text: string) => {
-      if (!text) return ''
-      let s = text
-        .replace(/-\s*Fixed\s*Date\s*(\/\s*Time)?/gi, '')
-        .replace(/\(Peak\s*-\s*Fixed\s*date\s*\/Time\s*\)/gi, '')
-        .replace(/\(Peak\s*-\s*Fixed\s*Date\s*\)/gi, '')
-        .replace(/-\s*Fixed\s*Time/gi, '')
-        .replace(/-\s*Non\s*Peak/gi, '')
-        .replace(/Museum\s*Of\s*Icecram/gi, 'Museum of Ice Cream')
-        .replace(/Museum\s*Of\s*Icecreams/gi, 'Museum of Ice Cream')
-        .replace(/Combo\s*:\s*/gi, '')
-        .replace(/\s+/g, ' ')
-        .trim()
-      return s
-    }
-
-    const FALLBACK_PICS: Record<string, string> = {
-      'arrival': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop&q=80', // Jewel Changi
-      'departure': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop&q=80', // Changi Airport
-      'universal': 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=800&auto=format&fit=crop&q=80', // Universal Studios
-      'sentosa': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80', // Sentosa Cable Car
-      'cable': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
-      'wings': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
-      'mbs': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80', // Marina Bay Sands
-      'marina': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
-      'skypark': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
-      'garden': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80', // Gardens by the Bay
-      'dome': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
-      'flower': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
-      'cloud': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
-      'night': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80', // Night Safari
-      'safari': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
-      'zoo': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
-      'ice cream': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=800&auto=format&fit=crop&q=80',
-      'icecream': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=800&auto=format&fit=crop&q=80',
-      'bird': 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=800&auto=format&fit=crop&q=80',
-      'merlion': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
-      'city': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80',
-      'jewel': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop&q=80',
-      'singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80'
-    }
-
-    // Resolve best photo for each day with accurate contextual keyword priorities
-    const dayImageUrls: { url: string; isPhotoRight: boolean }[] = []
-    itinerary.forEach((day, idx) => {
-      let chosenUrl = ''
-      
-      const allNames = [
-        ...day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || ''),
-        ...day.transfers.map(t => vehiclesList[t.vehicleIndex]?.type || t.type || ''),
-      ].join(' ').toLowerCase()
-
-      // 1. Check attraction metadata first if available
-      for (const a of day.attractions) {
-        const name = (attractionsList[a.attractionIndex]?.name || a.attractionName || '').toLowerCase().trim()
-        const meta = attractionsMeta[name]
-        if (meta?.photoUrl && !meta.photoUrl.toLowerCase().includes('poster') && !meta.photoUrl.toLowerCase().includes('banner')) {
-          chosenUrl = meta.photoUrl
-          break
-        }
-      }
-
-      // 2. Contextual keyword match
-      if (!chosenUrl) {
-        if (idx === 0) {
-          chosenUrl = FALLBACK_PICS.arrival
-        } else if (idx === nightsCount) {
-          chosenUrl = FALLBACK_PICS.departure
-        } else if (allNames.includes('mbs') || allNames.includes('skypark') || allNames.includes('marinabay')) {
-          chosenUrl = FALLBACK_PICS.mbs
-        } else if (allNames.includes('garden') || allNames.includes('dome') || allNames.includes('cloud')) {
-          chosenUrl = FALLBACK_PICS.garden
-        } else if (allNames.includes('sentosa') || allNames.includes('cable') || allNames.includes('wings') || allNames.includes('tussaud')) {
-          chosenUrl = FALLBACK_PICS.sentosa
-        } else if (allNames.includes('universal')) {
-          chosenUrl = FALLBACK_PICS.universal
-        } else if (allNames.includes('night') || allNames.includes('safari') || allNames.includes('zoo')) {
-          chosenUrl = FALLBACK_PICS.night
-        } else if (allNames.includes('ice cream') || allNames.includes('icecream')) {
-          chosenUrl = FALLBACK_PICS['ice cream']
-        } else {
-          for (const [kw, url] of Object.entries(FALLBACK_PICS)) {
-            if (allNames.includes(kw)) {
-              chosenUrl = url
-              break
-            }
-          }
-        }
-      }
-
-      if (!chosenUrl) {
-        chosenUrl = idx === 0 ? FALLBACK_PICS.arrival : FALLBACK_PICS.singapore
-      }
-      dayImageUrls.push({ url: chosenUrl, isPhotoRight: idx % 2 === 0 })
-    })
-
-    // Pre-fetch all day images into base64 with directional 75% curved organic mask
-    const base64Images: (string | null)[] = await Promise.all(
-      dayImageUrls.map(item => fetchBase64Image(item.url, item.isPhotoRight))
-    )
-
-    const totalDays = itinerary.length
-    const daysPerPage = 2
-    const totalPages = Math.ceil(totalDays / daysPerPage)
-
-    for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
-      if (pageIdx > 0) doc.addPage()
-
-      // Warm parchment background canvas
-      setFill(BG_WARM); doc.rect(0, 0, PW, PH, 'F')
-
-      // ─── Dense, Rich Scrapbook Vector Travel Doodles (Background Ambient Layer) ───
-      // Top section ambient doodles
-      drawAirplaneWithTrail(PW - 42, 20)
-      drawCameraDoodle(18, 19)
-      drawSparkleStar(92, 18, 2.5)
-      drawPalmFrondDoodle(PW - 16, 68)
-      drawCoffeeDoodle(6, 72)
-      drawHeartDoodle(98, 74)
-
-      // Center divider band between Day 1 & Day 2 cards
-      drawAirplaneWithTrail(PW / 2 + 10, 146)
-      drawSunglassesDoodle(24, 144)
-      drawSuitcaseDoodle(PW - 44, 143)
-      drawSparkleStar(PW / 2 - 28, 147, 2.2)
-      drawSparkleStar(PW / 2 + 38, 147, 2.2)
-
-      // Lower section ambient doodles
-      drawCompassDoodle(10, 208)
-      drawLuggageTagDoodle(PW - 16, 214)
-      drawHeartDoodle(96, 210)
-      drawCurvedArrow(ML + 8, 279)
-      drawPostageStamp(PW - 34, 272)
-      drawSparkleStar(PW / 2, 280, 2)
-
-      // Header on every page
-      setFill(NAVY); doc.rect(0, 0, PW, 12, 'F')
-      setFill(GOLD); doc.rect(0, 12, PW, 1.2, 'F')
-      font('bold', 7.5); setTxt(WHITE)
-      const headerAgency = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
-      const headerAgencyLines = doc.splitTextToSize(headerAgency, 62)
-      doc.text(headerAgencyLines[0], ML, 8.5)
-      font('normal', 7); setTxt(GOLD)
-      doc.text('VISUAL TOUR ITINERARY', PW / 2, 8.5, { align: 'center' })
-      if (savedProposalNum) {
-        font('bold', 7.5); setTxt(WHITE)
-        doc.text(`Ref: ${savedProposalNum}`, MR, 8.5, { align: 'right' })
-      }
-
-      // Render up to 2 days on this page
-      const startDayIdx = pageIdx * daysPerPage
-      const endDayIdx = Math.min(startDayIdx + daysPerPage, totalDays)
-
-      for (let dayPos = 0; dayPos < endDayIdx - startDayIdx; dayPos++) {
-        const dIdx = startDayIdx + dayPos
-        const day = itinerary[dIdx]
-        const imgData = base64Images[dIdx]
-
-        // Top slot (y = 18) or Bottom slot (y = 150)
-        const topY = dayPos === 0 ? 18 : 150
-        const cardH = 126
-
-        // ─── Enclosed White Day Card Container ───
-        setFill(WHITE); doc.roundedRect(ML, topY, CW, cardH, 4, 4, 'F')
-        setDraw(BORDER); doc.setLineWidth(0.5); doc.roundedRect(ML, topY, CW, cardH, 4, 4, 'S')
-
-        // Decorative side accent strip
-        setFill(GOLD); doc.roundedRect(ML, topY, 3, cardH, 1.5, 1.5, 'F')
-
-        // Alternating layout inside the card:
-        // Even day index: Text on Left, Photo on Right
-        // Odd day index: Photo on Left, Text on Right
-        const isPhotoRight = dIdx % 2 === 0
-        const textX = isPhotoRight ? ML + 8 : ML + 92
-        const textW = 88
-        const photoX = isPhotoRight ? ML + 96 : ML + 4
-        const photoW = 86
-        const photoH = 110
-
-        // ─── Card Interior Ambient Doodles ───
-        if (isPhotoRight) {
-          drawCameraDoodle(ML + 76, topY + 4.5)
-          drawSuitcaseDoodle(ML + textW - 4, topY + cardH - 18)
-          drawCoffeeDoodle(ML + 68, topY + cardH - 18)
-          drawSparkleStar(ML + 93, topY + 8.5, 2.2)
-        } else {
-          drawSunglassesDoodle(ML + CW - 24, topY + 4.5)
-          drawCompassDoodle(ML + 6, topY + cardH - 18)
-          drawLuggageTagDoodle(ML + 86, topY + 5)
-          drawHeartDoodle(ML + CW - 18, topY + cardH - 18)
-          drawSparkleStar(ML + CW - 6, topY + 8.5, 2.2)
-        }
-
-        // ─── 1. Dramatic 75% Organic Curved Photo Display ───
-        const polaroidY = topY + 8
-        if (imgData) {
+          let rawDataUrl = ''
           try {
-            doc.addImage(imgData, 'PNG', photoX, polaroidY, photoW, photoH, undefined, 'MEDIUM')
-          } catch (e) {
-            setFill(GRAY_L); doc.roundedRect(photoX, polaroidY, photoW, photoH, 3, 3, 'F')
-            font('italic', 8); setTxt(BODY)
-            doc.text('Singapore Sightseeing', photoX + photoW / 2, polaroidY + photoH / 2, { align: 'center' })
+            const proxyRes = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`)
+            if (proxyRes.ok) {
+              const proxyData = await proxyRes.json()
+              if (proxyData.success && proxyData.base64) {
+                rawDataUrl = proxyData.base64
+              }
+            }
+          } catch (e) {}
+
+          if (!rawDataUrl) {
+            const res = await fetch(url)
+            if (!res.ok) return null
+            const blob = await res.blob()
+            rawDataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader()
+              reader.onloadend = () => resolve(reader.result as string)
+              reader.onerror = reject
+              reader.readAsDataURL(blob)
+            })
           }
-        } else {
-          setFill(GRAY_L); doc.roundedRect(photoX, polaroidY, photoW, photoH, 3, 3, 'F')
-          font('italic', 8); setTxt(BODY)
-          doc.text('Singapore Sightseeing', photoX + photoW / 2, polaroidY + photoH / 2, { align: 'center' })
+
+          if (typeof window === 'undefined') return rawDataUrl
+
+          return new Promise((resolve) => {
+            const img = new Image()
+            img.crossOrigin = 'anonymous'
+            img.onload = () => {
+              try {
+                const canvas = document.createElement('canvas')
+                const targetW = 600
+                const targetH = 800
+                canvas.width = targetW
+                canvas.height = targetH
+                const ctx = canvas.getContext('2d')
+                if (!ctx) return resolve(rawDataUrl)
+
+                ctx.clearRect(0, 0, targetW, targetH)
+
+                const r = 24
+                const pad = 4
+                const w = targetW - pad * 2
+                const h = targetH - pad * 2
+                const x = pad
+                const y = pad
+
+                // Draw rounded mask
+                ctx.save()
+                ctx.beginPath()
+                ctx.moveTo(x + r, y)
+                ctx.lineTo(x + w - r, y)
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+                ctx.lineTo(x + w, y + h - r)
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+                ctx.lineTo(x + r, y + h)
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+                ctx.lineTo(x, y + r)
+                ctx.quadraticCurveTo(x, y, x + r, y)
+                ctx.closePath()
+                ctx.clip()
+
+                // Draw cover image
+                const imgAspect = img.width / img.height
+                const targetAspect = targetW / targetH
+                let dw = targetW
+                let dh = targetH
+                let dx = 0
+                let dy = 0
+                if (imgAspect > targetAspect) {
+                  dw = targetH * imgAspect
+                  dx = (targetW - dw) / 2
+                } else {
+                  dh = targetW / imgAspect
+                  dy = (targetH - dh) / 2
+                }
+                ctx.drawImage(img, dx, dy, dw, dh)
+                ctx.restore()
+
+                // Draw delicate champagne gold border
+                ctx.save()
+                ctx.beginPath()
+                ctx.moveTo(x + r, y)
+                ctx.lineTo(x + w - r, y)
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r)
+                ctx.lineTo(x + w, y + h - r)
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h)
+                ctx.lineTo(x + r, y + h)
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r)
+                ctx.lineTo(x, y + r)
+                ctx.quadraticCurveTo(x, y, x + r, y)
+                ctx.closePath()
+                ctx.strokeStyle = '#D4AF37'
+                ctx.lineWidth = 3
+                ctx.stroke()
+                ctx.restore()
+
+                resolve(canvas.toDataURL('image/jpeg', 0.92))
+              } catch (err) {
+                resolve(rawDataUrl)
+              }
+            }
+            img.onerror = () => resolve(rawDataUrl)
+            img.src = rawDataUrl
+          })
+        } catch (e) {
+          return null
+        }
+      }
+
+      // Clean string sanitizer for attractions, transfers, and descriptions
+      const cleanItemTitle = (text: string) => {
+        if (!text) return ''
+        let s = text
+          .replace(/-\s*Fixed\s*Date\s*(\/\s*Time)?/gi, '')
+          .replace(/\(Peak\s*-\s*Fixed\s*date\s*\/Time\s*\)/gi, '')
+          .replace(/\(Peak\s*-\s*Fixed\s*Date\s*\)/gi, '')
+          .replace(/-\s*Fixed\s*Time/gi, '')
+          .replace(/-\s*Non\s*Peak/gi, '')
+          .replace(/Museum\s*Of\s*Icecram/gi, 'Museum of Ice Cream')
+          .replace(/Museum\s*Of\s*Icecreams/gi, 'Museum of Ice Cream')
+          .replace(/Combo\s*:\s*/gi, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+        return s
+      }
+
+      const isPromotionalPoster = (url: string) => {
+        const u = url.toLowerCase()
+        return u.includes('combo') || u.includes('poster') || u.includes('banner') || u.includes('flyer') || u.includes('madame') || u.includes('tussaud') || u.includes('ad_') || u.includes('graphic')
+      }
+
+      // High-resolution curated scenic photography for Singapore
+      const SCENIC_PHOTOS: Record<string, string> = {
+        'arrival': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop&q=80', // Jewel Changi
+        'departure': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80', // Singapore Skyline at Sunset
+        'universal': 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=800&auto=format&fit=crop&q=80', // Universal Studios
+        'sentosa': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80', // Cable Car over ocean
+        'cable': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
+        'wings': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
+        'mbs': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80', // Marina Bay Sands
+        'marina': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
+        'skypark': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
+        'garden': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80', // Gardens by the Bay
+        'dome': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+        'flower': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+        'cloud': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
+        'night': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80', // Night Safari
+        'safari': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
+        'zoo': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
+        'ice cream': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=800&auto=format&fit=crop&q=80',
+        'icecream': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=800&auto=format&fit=crop&q=80',
+        'bird': 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=800&auto=format&fit=crop&q=80',
+        'merlion': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
+        'city': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80',
+        'jewel': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop&q=80',
+        'singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80'
+      }
+
+      // Resolve best scenic photo for each day
+      const dayImageUrls: string[] = []
+      itinerary.forEach((day, idx) => {
+        let chosenUrl = ''
+        
+        const allNames = [
+          ...day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || ''),
+          ...day.transfers.map(t => vehiclesList[t.vehicleIndex]?.type || t.type || ''),
+        ].join(' ').toLowerCase()
+
+        // 1. Check attraction metadata first if available and not a promotional poster
+        for (const a of day.attractions) {
+          const name = (attractionsList[a.attractionIndex]?.name || a.attractionName || '').toLowerCase().trim()
+          const meta = attractionsMeta[name]
+          if (meta?.photoUrl && !isPromotionalPoster(meta.photoUrl)) {
+            chosenUrl = meta.photoUrl
+            break
+          }
         }
 
-        // ─── 2. Text Section ───
-        let curY = topY + 9
-
-        // Day Pill Badge
-        setFill(CRIMSON); doc.roundedRect(textX, curY, 26, 6.5, 3.2, 3.2, 'F')
-        font('bold', 8); setTxt(WHITE)
-        doc.text(`DAY ${dIdx + 1}`, textX + 13, curY + 4.5, { align: 'center' })
-
-        // Date subtitle next to badge
-        font('normal', 7.5); setTxt(GOLD)
-        doc.text(getItineraryDate(dIdx), textX + 30, curY + 4.5)
-
-        curY += 12
-
-        // Day Title (Constructed dynamically with luxury phrasing)
-        const dayAttrNames = day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '').filter(Boolean)
-        let dayTitle = ''
-        if (day.dayTitle && day.dayTitle.trim().length > 3) {
-          dayTitle = cleanItemTitle(day.dayTitle.trim())
-        } else if (dIdx === 0) {
-          dayTitle = 'Arrival in Singapore & Hotel Check-in'
-        } else if (dIdx === nightsCount) {
-          dayTitle = 'Farewell Singapore & Changi Airport Transfer'
-        } else if (dayAttrNames.length > 0) {
-          const cleanedNames = dayAttrNames.map(n => cleanItemTitle(n))
-          dayTitle = cleanedNames.slice(0, 2).join(' & ')
-        } else if (day.isBreakTrip) {
-          dayTitle = 'Free & Easy Leisure Day'
-        } else {
-          dayTitle = 'Singapore City Exploration'
-        }
-
-        font('bold', 10.5); setTxt(DARK)
-        const titleLines = doc.splitTextToSize(dayTitle, textW)
-        doc.text(titleLines.slice(0, 2), textX, curY)
-        curY += Math.min(titleLines.length, 2) * 4.8 + 2
-
-        // Day Narrative Description (Rich storytelling paragraph)
-        let narrative = ''
-        if (dIdx === 0) {
-          narrative = `Arrive at world-renowned Singapore Changi Airport. Meet your private chauffeur at the arrival hall and transfer comfortably to your hotel for check-in. Relax and enjoy the vibrant city at your own leisure.`
-        } else if (dIdx === nightsCount) {
-          narrative = `Enjoy your final morning in Singapore for last-minute shopping or leisure. Transfer comfortably in your private vehicle to Changi Airport for your scheduled departure flight.`
-        } else if (dayAttrNames.length > 0) {
-          const firstRawName = dayAttrNames[0].toLowerCase().trim()
-          const firstCleanName = cleanItemTitle(dayAttrNames[0])
-          const firstMeta = attractionsMeta[firstRawName]
-          
-          if (firstMeta?.shortDescription && !firstMeta.shortDescription.toLowerCase().includes('ticket and admission')) {
-            narrative = firstMeta.shortDescription
-          } else if (ATTRACTION_DESCRIPTIONS[firstCleanName]) {
-            narrative = ATTRACTION_DESCRIPTIONS[firstCleanName]
+        // 2. Contextual scenic match
+        if (!chosenUrl) {
+          if (idx === 0) {
+            chosenUrl = SCENIC_PHOTOS.arrival
+          } else if (idx === nightsCount) {
+            chosenUrl = SCENIC_PHOTOS.departure
+          } else if (allNames.includes('mbs') || allNames.includes('skypark') || allNames.includes('marinabay')) {
+            chosenUrl = SCENIC_PHOTOS.mbs
+          } else if (allNames.includes('garden') || allNames.includes('dome') || allNames.includes('cloud')) {
+            chosenUrl = SCENIC_PHOTOS.garden
+          } else if (allNames.includes('sentosa') || allNames.includes('cable') || allNames.includes('wings') || allNames.includes('tussaud')) {
+            chosenUrl = SCENIC_PHOTOS.sentosa
+          } else if (allNames.includes('universal')) {
+            chosenUrl = SCENIC_PHOTOS.universal
+          } else if (allNames.includes('night') || allNames.includes('safari') || allNames.includes('zoo')) {
+            chosenUrl = SCENIC_PHOTOS.night
+          } else if (allNames.includes('ice cream') || allNames.includes('icecream')) {
+            chosenUrl = SCENIC_PHOTOS['ice cream']
           } else {
-            if (firstRawName.includes('universal')) {
-              narrative = 'Experience cutting-edge rides, shows, and immersive themed zones based on blockbuster films at Universal Studios Singapore.'
-            } else if (firstRawName.includes('sentosa') || firstRawName.includes('cable') || firstRawName.includes('wings')) {
-              narrative = 'Discover the ultimate island playground with scenic cable car views over the southern coastline, world-class attractions, and the iconic Wings of Time show.'
-            } else if (firstRawName.includes('zoo') || firstRawName.includes('safari')) {
-              narrative = "Explore Singapore's award-winning wildlife parks, featuring lush open rainforest habitats, guided tram safaris, and extraordinary animal encounters."
-            } else if (firstRawName.includes('mbs') || firstRawName.includes('skypark') || firstRawName.includes('garden')) {
-              narrative = 'Marvel at panoramic skyline views from the Marina Bay Sands SkyPark Observation Deck and stroll through the futuristic Supertrees and double domes of Gardens by the Bay.'
-            } else if (firstRawName.includes('ice cream') || firstRawName.includes('icecream')) {
-              narrative = 'Explore 14 interactive, candy-colored installations celebrating the joy of ice cream, complete with the famous sprinkle pool and unlimited sweet treats.'
-            } else {
-              narrative = `Experience the best of Singapore on Day ${dIdx + 1} with scheduled private transfers, premier sightseeing, and memorable highlights.`
+            for (const [kw, url] of Object.entries(SCENIC_PHOTOS)) {
+              if (allNames.includes(kw)) {
+                chosenUrl = url
+                break
+              }
             }
           }
-        } else {
-          narrative = `Enjoy a relaxed day exploring Singapore's iconic neighborhoods, dining, and scenic waterfront attractions at your own pace.`
         }
 
-        if (!narrative.endsWith('.')) narrative += '.'
-
-        font('normal', 7.4); setTxt(BODY)
-        const descLines = doc.splitTextToSize(narrative, textW)
-        doc.text(descLines.slice(0, 3), textX, curY)
-        curY += Math.min(descLines.length, 3) * 3.6 + 3
-
-        // Sights & Highlights Bullets (Cleaned & Formatted)
-        const highlights: string[] = []
-        day.transfers.forEach(t => {
-          const v = vehiclesList[t.vehicleIndex]?.type || t.type || 'Private Transfer'
-          let desc = t.description ? t.description.trim() : ''
-          if (desc.toLowerCase().startsWith('airport to hotel') || desc.toLowerCase().includes('arrival')) {
-            highlights.push(`${v} - Airport Arrival Transfer`)
-          } else if (desc.toLowerCase().startsWith('hotel to airport') || desc.toLowerCase().includes('departure')) {
-            highlights.push(`${v} - Airport Departure Transfer`)
-          } else if (desc.toLowerCase().includes('city tour')) {
-            highlights.push(`${v} - Singapore City Tour Transfer`)
-          } else if (desc.toLowerCase().includes('fireworks')) {
-            highlights.push(`${v} - Special Fireworks Transfer`)
-          } else if (desc) {
-            highlights.push(`${v} - ${cleanItemTitle(desc)}`)
-          } else {
-            highlights.push(`${v} - Private Scheduled Transfer`)
-          }
-        })
-
-        day.attractions.forEach(a => {
-          const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
-          const name = cleanItemTitle(rawName)
-          highlights.push(name)
-          if (a.hasTransfer) {
-            if (a.pickupEnabled !== false) highlights.push(`Pickup Transfer for ${name}`)
-            if (a.dropEnabled !== false) highlights.push(`Drop-off Return Transfer from ${name}`)
-          }
-        })
-
-        day.guides.forEach(g => {
-          const gt = guidesList[g.guideIndex]?.type || g.type || 'Tour Guide'
-          highlights.push(gt)
-        })
-
-        if (dIdx === 0 && hotelRequired) {
-          const hName = customHotelEnabled ? customHotelName : (hotelsList[globalHotelIndex]?.name || 'Hotel')
-          highlights.push(`Overnight stay at ${cleanItemTitle(hName)}`)
+        if (!chosenUrl) {
+          chosenUrl = idx === 0 ? SCENIC_PHOTOS.arrival : SCENIC_PHOTOS.singapore
         }
+        dayImageUrls.push(chosenUrl)
+      })
 
-        // Pinned Meal Badge Position
-        const mealY = topY + cardH - 11
+      // Pre-fetch all day images into base64
+      const base64Images: (string | null)[] = await Promise.all(
+        dayImageUrls.map(url => fetchBase64Image(url))
+      )
 
-        // Render Multi-Line Bullet Text with hanging indent
-        font('normal', 7.2); setTxt(DARK)
-        const displayHighlights = highlights.slice(0, 4)
-        displayHighlights.forEach(h => {
-          const cleanH = cleanItemTitle(h)
-          const hLines = doc.splitTextToSize(`•  ${cleanH}`, textW - 2)
-          if (curY + (hLines.length * 3.5) > mealY - 2) return
-          hLines.forEach((line: string, lIdx: number) => {
-            const lineX = lIdx === 0 ? textX : textX + 3.5
-            doc.text(line, lineX, curY)
-            curY += 3.5
-          })
-          curY += 0.8
-        })
+      const totalDays = itinerary.length
+      const daysPerPage = 2
+      const totalPages = Math.ceil(totalDays / daysPerPage)
 
-        // Meals Included Badge pinned cleanly near bottom of card
-        const dayMeals: string[] = []
-        if (day.breakfast) dayMeals.push('Breakfast')
-        if (day.lunch) dayMeals.push('Lunch')
-        if (day.dinner) dayMeals.push('Dinner')
-        if (day.meals && Array.isArray(day.meals)) {
-          day.meals.forEach(m => {
-            const mt = mealsList[m.mealIndex]?.type || m.type || 'Meal'
-            dayMeals.push(mt)
-          })
-        }
-        // Auto-detect meals mentioned in attraction titles
-        const allAttrText = day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '').join(' ').toLowerCase()
-        if (allAttrText.includes('dinner') && !dayMeals.includes('Dinner')) dayMeals.push('Dinner')
-        if (allAttrText.includes('lunch') && !dayMeals.includes('Lunch')) dayMeals.push('Lunch')
-        if (allAttrText.includes('breakfast') && !dayMeals.includes('Breakfast')) dayMeals.push('Breakfast')
+      for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
+        if (pageIdx > 0) doc.addPage()
 
-        const mealsText = dayMeals.length > 0 ? Array.from(new Set(dayMeals)).join(', ') : 'As per plan'
+        // Warm ivory linen background
+        setFill(BG_WARM); doc.rect(0, 0, PW, PH, 'F')
 
-        // Render Meals Pill with styled border container
-        setFill(CRIMSON); doc.roundedRect(textX, mealY, 26, 5.5, 1.5, 1.5, 'F')
-        font('bold', 6.5); setTxt(WHITE)
-        doc.text('Meals Included', textX + 13, mealY + 3.8, { align: 'center' })
+        // Delicate outer page border with champagne gold corner brackets
+        setDraw(BORDER); doc.setLineWidth(0.4)
+        doc.rect(ML - 3, 16, CW + 6, PH - 30, 'S')
 
-        setFill(WHITE); doc.roundedRect(textX + 27, mealY, textW - 27, 5.5, 1.5, 1.5, 'F')
-        setDraw(BORDER); doc.setLineWidth(0.4); doc.roundedRect(textX + 27, mealY, textW - 27, 5.5, 1.5, 1.5, 'S')
-        font('normal', 6.8); setTxt(BODY)
-        const mealsLines = doc.splitTextToSize(mealsText, textW - 30)
-        doc.text(mealsLines[0], textX + 29, mealY + 3.8)
-      }
+        // Corner accent brackets in Gold
+        setDraw(GOLD); doc.setLineWidth(0.7)
+        const bx1 = ML - 3, by1 = 16, bx2 = ML + CW + 3, by2 = PH - 14
+        // Top-Left bracket
+        doc.line(bx1, by1, bx1 + 6, by1); doc.line(bx1, by1, bx1, by1 + 6)
+        // Top-Right bracket
+        doc.line(bx2, by1, bx2 - 6, by1); doc.line(bx2, by1, bx2, by1 + 6)
+        // Bottom-Left bracket
+        doc.line(bx1, by2, bx1 + 6, by2); doc.line(bx1, by2, bx1, by2 - 6)
+        // Bottom-Right bracket
+        doc.line(bx2, by2, bx2 - 6, by2); doc.line(bx2, by2, bx2, by2 - 6)
 
-      // ─── If Odd Number of Days: Render "Traveler Guidelines & Support Desk" in bottom slot ───
-      const isOddFinalPage = pageIdx === totalPages - 1 && (totalDays % daysPerPage !== 0)
-      if (isOddFinalPage) {
-        const bottomY = 150
-        const cardH = 126
+        // ── TOP NAVY & GOLD HEADER BAR ──
+        setFill(NAVY); doc.rect(0, 0, PW, 12, 'F')
+        setFill(GOLD); doc.rect(0, 12, PW, 1.0, 'F')
 
-        // Enclosed Guidelines Card
-        setFill(WHITE); doc.roundedRect(ML, bottomY, CW, cardH, 4, 4, 'F')
-        setDraw(BORDER); doc.setLineWidth(0.5); doc.roundedRect(ML, bottomY, CW, cardH, 4, 4, 'S')
-
-        // Decorative side accent strip in Emerald
-        setFill([15, 76, 58]); doc.roundedRect(ML, bottomY, 3, cardH, 1.5, 1.5, 'F')
-
-        const gTextX = ML + 10
-        const gTextW = CW - 20
-        let gY = bottomY + 10
-
-        // Guidelines Pill Badge
-        setFill([15, 76, 58]); doc.roundedRect(gTextX, gY, 38, 6.5, 3.2, 3.2, 'F')
         font('bold', 8); setTxt(WHITE)
-        doc.text('TRAVEL TIPS', gTextX + 19, gY + 4.5, { align: 'center' })
+        const headerAgency = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
+        const headerAgencyLines = doc.splitTextToSize(headerAgency, 65)
+        doc.text(headerAgencyLines[0], ML, 8.2)
 
-        font('normal', 7.5); setTxt(GOLD)
-        doc.text('Important Singapore Guidelines & Ground Assistance', gTextX + 42, gY + 4.5)
+        font('bold', 7.5); setTxt(GOLD)
+        doc.text('VISUAL TOUR ITINERARY', PW / 2, 8.2, { align: 'center' })
 
-        gY += 13
-        font('bold', 11); setTxt(DARK)
-        doc.text('Essential Traveler Information & 24/7 Support Desk', gTextX, gY)
+        if (savedProposalNum) {
+          font('bold', 7.5); setTxt(WHITE)
+          doc.text(`Ref: ${savedProposalNum}`, MR, 8.2, { align: 'right' })
+        }
 
-        gY += 7
-        font('normal', 7.6); setTxt(BODY)
-        const introLines = doc.splitTextToSize('We are committed to delivering a seamless, worry-free journey across Singapore. Please review the following essential guidelines for your upcoming tour:', gTextW)
-        doc.text(introLines, gTextX, gY)
-        gY += introLines.length * 4 + 3
+        // Render up to 2 days on this page
+        const startDayIdx = pageIdx * daysPerPage
+        const endDayIdx = Math.min(startDayIdx + daysPerPage, totalDays)
 
-        // Guideline Bullet Boxes
-        const guidelinesList = [
-          { title: 'SG Arrival Card (SGAC)', desc: 'Must be submitted online within 3 days prior to your arrival date into Singapore.' },
-          { title: 'Airport Changi Chauffeur Pickup', desc: 'Your private driver will wait at the Arrival Hall exit holding your name placard.' },
-          { title: 'Hotel Standard Check-in / Check-out', desc: 'Check-in is from 15:00 hrs; check-out by 11:00 hrs. Early check-in is subject to availability.' },
-          { title: 'Attraction Timings & Vouchers', desc: 'Please carry valid photo ID / passports for theme park entry and ticket validation.' },
-        ]
+        for (let dayPos = 0; dayPos < endDayIdx - startDayIdx; dayPos++) {
+          const dIdx = startDayIdx + dayPos
+          const day = itinerary[dIdx]
+          const imgData = base64Images[dIdx]
 
-        guidelinesList.forEach(item => {
-          font('bold', 7.4); setTxt(DARK)
-          doc.text(`•  ${item.title}: `, gTextX, gY)
-          const titleWidth = doc.getTextWidth(`•  ${item.title}: `)
+          // Top slot (y = 19) or Bottom slot (y = 150)
+          const topY = dayPos === 0 ? 19 : 150
+          const cardH = 125
+
+          // ─── Enclosed White Day Card Container ───
+          setFill(WHITE); doc.roundedRect(ML, topY, CW, cardH, 4, 4, 'F')
+          setDraw(BORDER); doc.setLineWidth(0.45); doc.roundedRect(ML, topY, CW, cardH, 4, 4, 'S')
+
+          // Alternating layout inside the card:
+          // Even day index: Text on Left (W=92), Photo on Right (W=82)
+          // Odd day index: Photo on Left (W=82), Text on Right (W=92)
+          const isPhotoRight = dIdx % 2 === 0
+          const textX = isPhotoRight ? ML + 7 : ML + 91
+          const textW = 90
+          const photoX = isPhotoRight ? ML + 100 : ML + 6
+          const photoW = 80
+          const photoH = 113
+          const photoY = topY + 6
+
+          // ─── 1. Modern Architectural Photo Card ───
+          if (imgData) {
+            try {
+              doc.addImage(imgData, 'JPEG', photoX, photoY, photoW, photoH, undefined, 'FAST')
+            } catch (e) {
+              setFill(GOLD_L); doc.roundedRect(photoX, photoY, photoW, photoH, 3, 3, 'F')
+              setDraw(BORDER); doc.roundedRect(photoX, photoY, photoW, photoH, 3, 3, 'S')
+              font('italic', 8); setTxt(BODY)
+              doc.text('Singapore Sightseeing', photoX + photoW / 2, photoY + photoH / 2, { align: 'center' })
+            }
+          } else {
+            setFill(GOLD_L); doc.roundedRect(photoX, photoY, photoW, photoH, 3, 3, 'F')
+            setDraw(BORDER); doc.roundedRect(photoX, photoY, photoW, photoH, 3, 3, 'S')
+            font('italic', 8); setTxt(BODY)
+            doc.text('Singapore Sightseeing', photoX + photoW / 2, photoY + photoH / 2, { align: 'center' })
+          }
+
+          // ─── 2. Text Column ───
+          let curY = topY + 8
+
+          // Header Row: Day Pill Badge + Date
+          setFill(EMERALD); doc.roundedRect(textX, curY, 24, 6, 3, 3, 'F')
+          font('bold', 7.5); setTxt(WHITE)
+          doc.text(`DAY ${dIdx + 1}`, textX + 12, curY + 4.2, { align: 'center' })
+
+          font('bold', 7.8); setTxt(GOLD)
+          doc.text(getItineraryDate(dIdx), textX + 28, curY + 4.2)
+
+          curY += 11.5
+
+          // Day Title (Refined Luxury Phrasing)
+          const dayAttrNames = day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '').filter(Boolean)
+          let dayTitle = ''
+          if (day.dayTitle && day.dayTitle.trim().length > 3) {
+            dayTitle = cleanItemTitle(day.dayTitle.trim())
+          } else if (dIdx === 0) {
+            dayTitle = 'Arrival in Singapore & Hotel Check-in'
+          } else if (dIdx === nightsCount) {
+            dayTitle = 'Farewell Singapore & Changi Airport Transfer'
+          } else if (dayAttrNames.length > 0) {
+            const cleanedNames = dayAttrNames.map(n => cleanItemTitle(n))
+            dayTitle = cleanedNames.slice(0, 2).join(' & ')
+          } else if (day.isBreakTrip) {
+            dayTitle = 'Free & Easy Leisure Day'
+          } else {
+            dayTitle = 'Singapore City Exploration'
+          }
+
+          font('bold', 10.5); setTxt(DARK)
+          const titleLines = doc.splitTextToSize(dayTitle, textW)
+          doc.text(titleLines.slice(0, 2), textX, curY)
+          curY += Math.min(titleLines.length, 2) * 4.8 + 2
+
+          // Day Story Narrative
+          let narrative = ''
+          if (dIdx === 0) {
+            narrative = `Arrive at world-renowned Singapore Changi Airport. Meet your private chauffeur at the arrival hall and transfer comfortably to your hotel for check-in. Relax and enjoy the vibrant city at your own leisure.`
+          } else if (dIdx === nightsCount) {
+            narrative = `Enjoy your final morning in Singapore for last-minute shopping or leisure. Transfer comfortably in your private vehicle to Changi Airport for your scheduled departure flight.`
+          } else if (dayAttrNames.length > 0) {
+            const firstRawName = dayAttrNames[0].toLowerCase().trim()
+            const firstCleanName = cleanItemTitle(dayAttrNames[0])
+            const firstMeta = attractionsMeta[firstRawName]
+            
+            if (firstMeta?.shortDescription && !firstMeta.shortDescription.toLowerCase().includes('ticket and admission')) {
+              narrative = firstMeta.shortDescription
+            } else if (ATTRACTION_DESCRIPTIONS[firstCleanName]) {
+              narrative = ATTRACTION_DESCRIPTIONS[firstCleanName]
+            } else {
+              if (firstRawName.includes('universal')) {
+                narrative = 'Experience cutting-edge rides, shows, and immersive themed zones based on blockbuster films at Universal Studios Singapore.'
+              } else if (firstRawName.includes('sentosa') || firstRawName.includes('cable') || firstRawName.includes('wings')) {
+                narrative = 'Discover the ultimate island playground with scenic cable car views over the southern coastline, world-class attractions, and the iconic Wings of Time show.'
+              } else if (firstRawName.includes('zoo') || firstRawName.includes('safari')) {
+                narrative = "Explore Singapore's award-winning wildlife parks, featuring lush open rainforest habitats, guided tram safaris, and extraordinary animal encounters."
+              } else if (firstRawName.includes('mbs') || firstRawName.includes('skypark') || firstRawName.includes('garden')) {
+                narrative = 'Marvel at panoramic skyline views from the Marina Bay Sands SkyPark Observation Deck and stroll through the futuristic Supertrees and double domes of Gardens by the Bay.'
+              } else if (firstRawName.includes('ice cream') || firstRawName.includes('icecream')) {
+                narrative = 'Explore 14 interactive, candy-colored installations celebrating the joy of ice cream, complete with the famous sprinkle pool and unlimited sweet treats.'
+              } else {
+                narrative = `Experience the best of Singapore on Day ${dIdx + 1} with scheduled private transfers, premier sightseeing, and memorable highlights.`
+              }
+            }
+          } else {
+            narrative = `Enjoy a relaxed day exploring Singapore's iconic neighborhoods, dining, and scenic waterfront attractions at your own pace.`
+          }
+
+          if (!narrative.endsWith('.')) narrative += '.'
+
           font('normal', 7.2); setTxt(BODY)
-          const descLines = doc.splitTextToSize(item.desc, gTextW - titleWidth)
-          doc.text(descLines[0], gTextX + titleWidth, gY)
-          gY += 4.5
-        })
+          const descLines = doc.splitTextToSize(narrative, textW)
+          doc.text(descLines.slice(0, 3), textX, curY)
+          curY += Math.min(descLines.length, 3) * 3.5 + 3
 
-        // Bottom Support Contact Banner
-        const supportY = bottomY + cardH - 12
-        setFill([240, 253, 244]); doc.roundedRect(gTextX, supportY, gTextW, 7, 2, 2, 'F')
-        setDraw([187, 247, 208]); doc.setLineWidth(0.4); doc.roundedRect(gTextX, supportY, gTextW, 7, 2, 2, 'S')
-        font('bold', 7); setTxt([21, 128, 61])
-        doc.text('📞 24/7 Dedicated Ground Support & Assistance Available Throughout Your Stay in Singapore', gTextX + gTextW / 2, supportY + 4.8, { align: 'center' })
-      }
+          // Sights & Inclusions Data
+          const highlights: { icon: string; label: string; text: string }[] = []
+          day.transfers.forEach(t => {
+            const v = vehiclesList[t.vehicleIndex]?.type || t.type || 'Private Transfer'
+            let desc = t.description ? t.description.trim() : ''
+            if (desc.toLowerCase().startsWith('airport to hotel') || desc.toLowerCase().includes('arrival')) {
+              highlights.push({ icon: '🚗', label: 'Airport Transfer', text: `${v} - Changi Airport Arrival` })
+            } else if (desc.toLowerCase().startsWith('hotel to airport') || desc.toLowerCase().includes('departure')) {
+              highlights.push({ icon: '🚗', label: 'Airport Transfer', text: `${v} - Changi Airport Departure` })
+            } else if (desc.toLowerCase().includes('city tour')) {
+              highlights.push({ icon: '🚗', label: 'Tour Transfer', text: `${v} - Singapore City Tour` })
+            } else if (desc.toLowerCase().includes('fireworks')) {
+              highlights.push({ icon: '🚗', label: 'Special Transfer', text: `${v} - Special Fireworks Transfer` })
+            } else if (desc) {
+              highlights.push({ icon: '🚗', label: 'Transfer', text: `${v} - ${cleanItemTitle(desc)}` })
+            } else {
+              highlights.push({ icon: '🚗', label: 'Transfer', text: `${v} - Scheduled Private Transfer` })
+            }
+          })
+
+          day.attractions.forEach(a => {
+            const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+            const name = cleanItemTitle(rawName)
+            highlights.push({ icon: '🎟️', label: 'Attraction', text: name })
+            if (a.hasTransfer) {
+              if (a.pickupEnabled !== false) highlights.push({ icon: '🚗', label: 'Pickup', text: `Hotel Pickup for ${name}` })
+              if (a.dropEnabled !== false) highlights.push({ icon: '🚗', label: 'Drop-off', text: `Return Transfer from ${name}` })
+            }
+          })
+
+          day.guides.forEach(g => {
+            const gt = guidesList[g.guideIndex]?.type || g.type || 'Tour Guide'
+            highlights.push({ icon: '✨', label: 'Guide Service', text: gt })
+          })
+
+          if (dIdx === 0 && hotelRequired) {
+            const hName = customHotelEnabled ? customHotelName : (hotelsList[globalHotelIndex]?.name || 'Hotel')
+            highlights.push({ icon: '🏨', label: 'Accommodation', text: `Overnight at ${cleanItemTitle(hName)}` })
+          }
+
+          // ─── Enclosed Soft Highlights Cardlet (Eliminates Empty Space) ───
+          const maxHBoxHeight = 44
+          const hBoxY = curY
+          const displayHighlights = highlights.slice(0, 4)
+
+          setFill([248, 250, 252]); doc.roundedRect(textX, hBoxY, textW, maxHBoxHeight, 2.5, 2.5, 'F')
+          setDraw(BORDER); doc.setLineWidth(0.4); doc.roundedRect(textX, hBoxY, textW, maxHBoxHeight, 2.5, 2.5, 'S')
+
+          let hlY = hBoxY + 4
+          displayHighlights.forEach(h => {
+            font('bold', 7); setTxt(DARK)
+            doc.text(`${h.icon}  ${h.label}: `, textX + 3, hlY)
+            const lblW = doc.getTextWidth(`${h.icon}  ${h.label}: `)
+
+            font('normal', 6.9); setTxt(BODY)
+            const txtLines = doc.splitTextToSize(h.text, textW - lblW - 6)
+            doc.text(txtLines[0], textX + 3 + lblW, hlY)
+            hlY += 9.5
+          })
+
+          // ─── Integrated Bottom Meals Strip ───
+          const mealY = topY + cardH - 12
+          const dayMeals: string[] = []
+          if (day.breakfast) dayMeals.push('Breakfast')
+          if (day.lunch) dayMeals.push('Lunch')
+          if (day.dinner) dayMeals.push('Dinner')
+          if (day.meals && Array.isArray(day.meals)) {
+            day.meals.forEach(m => {
+              const mt = mealsList[m.mealIndex]?.type || m.type || 'Meal'
+              dayMeals.push(mt)
+            })
+          }
+          const allAttrText = day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '').join(' ').toLowerCase()
+          if (allAttrText.includes('dinner') && !dayMeals.includes('Dinner')) dayMeals.push('Dinner')
+          if (allAttrText.includes('lunch') && !dayMeals.includes('Lunch')) dayMeals.push('Lunch')
+          if (allAttrText.includes('breakfast') && !dayMeals.includes('Breakfast')) dayMeals.push('Breakfast')
+
+          const mealsText = dayMeals.length > 0 ? Array.from(new Set(dayMeals)).join(', ') : 'As per plan'
+
+          // Render Meals Badge with clean modern pill
+          setFill(EMERALD); doc.roundedRect(textX, mealY, 26, 5.8, 1.5, 1.5, 'F')
+          font('bold', 6.5); setTxt(WHITE)
+          doc.text('Meals Included', textX + 13, mealY + 4, { align: 'center' })
+
+          setFill(GOLD_L); doc.roundedRect(textX + 27, mealY, textW - 27, 5.8, 1.5, 1.5, 'F')
+          setDraw(BORDER); doc.setLineWidth(0.4); doc.roundedRect(textX + 27, mealY, textW - 27, 5.8, 1.5, 1.5, 'S')
+          font('bold', 6.8); setTxt([180, 83, 9])
+          const mealsLines = doc.splitTextToSize(`🍽️  ${mealsText}`, textW - 31)
+          doc.text(mealsLines[0], textX + 29, mealY + 4)
+        }
+
+        // ─── If Odd Number of Days: Render "Traveler Guidelines & Support Desk" in bottom slot ───
+        const isOddFinalPage = pageIdx === totalPages - 1 && (totalDays % daysPerPage !== 0)
+        if (isOddFinalPage) {
+          const bottomY = 150
+          const cardH = 125
+
+          // Enclosed Guidelines Card
+          setFill(WHITE); doc.roundedRect(ML, bottomY, CW, cardH, 4, 4, 'F')
+          setDraw(BORDER); doc.setLineWidth(0.45); doc.roundedRect(ML, bottomY, CW, cardH, 4, 4, 'S')
+
+          const gTextX = ML + 8
+          const gTextW = CW - 16
+          let gY = bottomY + 8
+
+          // Guidelines Pill Badge
+          setFill(EMERALD); doc.roundedRect(gTextX, gY, 34, 6, 3, 3, 'F')
+          font('bold', 7.5); setTxt(WHITE)
+          doc.text('TRAVEL TIPS', gTextX + 17, gY + 4.2, { align: 'center' })
+
+          font('bold', 7.8); setTxt(GOLD)
+          doc.text('Essential Singapore Guidelines & Ground Assistance', gTextX + 38, gY + 4.2)
+
+          gY += 12
+          font('bold', 10.5); setTxt(DARK)
+          doc.text('Essential Traveler Information & 24/7 Concierge Support', gTextX, gY)
+
+          gY += 6.5
+          font('normal', 7.2); setTxt(BODY)
+          const introLines = doc.splitTextToSize('We are committed to delivering a seamless, luxury travel experience in Singapore. Please review the following essential guidelines for your upcoming tour:', gTextW)
+          doc.text(introLines, gTextX, gY)
+          gY += introLines.length * 3.8 + 3
+
+          // Guideline Bullet Boxes
+          const guidelinesList = [
+            { title: 'SG Arrival Card (SGAC)', desc: 'Mandatory electronic submission within 3 days prior to your flight arrival.' },
+            { title: 'Airport Changi Chauffeur Pickup', desc: 'Your private driver will await at Arrival Hall exit with your name placard.' },
+            { title: 'Hotel Standard Check-in / Out', desc: 'Standard check-in is 15:00 hrs; check-out by 11:00 hrs. Early check-in subject to availability.' },
+            { title: 'Attraction Timings & Vouchers', desc: 'Please carry valid passport/photo ID for theme park entry and ticket validation.' },
+          ]
+
+          guidelinesList.forEach(item => {
+            setFill([248, 250, 252]); doc.roundedRect(gTextX, gY, gTextW, 9, 2, 2, 'F')
+            setDraw(BORDER); doc.setLineWidth(0.35); doc.roundedRect(gTextX, gY, gTextW, 9, 2, 2, 'S')
+
+            font('bold', 7); setTxt(DARK)
+            doc.text(`✓  ${item.title}: `, gTextX + 3, gY + 5.5)
+            const titleWidth = doc.getTextWidth(`✓  ${item.title}: `)
+            font('normal', 6.8); setTxt(BODY)
+            const descLines = doc.splitTextToSize(item.desc, gTextW - titleWidth - 6)
+            doc.text(descLines[0], gTextX + 3 + titleWidth, gY + 5.5)
+            gY += 11
+          })
+
+          // Bottom Support Contact Banner
+          const supportY = bottomY + cardH - 12
+          setFill(EMERALD_L); doc.roundedRect(gTextX, supportY, gTextW, 6.5, 2, 2, 'F')
+          setDraw([187, 247, 208]); doc.setLineWidth(0.4); doc.roundedRect(gTextX, supportY, gTextW, 6.5, 2, 2, 'S')
+          font('bold', 7); setTxt([21, 128, 61])
+          doc.text('📞 24/7 Dedicated Ground Concierge & Tour Helpline Available Throughout Your Stay in Singapore', gTextX + gTextW / 2, supportY + 4.5, { align: 'center' })
+        }
 
       // Bottom Page Footer with Requested Tagline
       const footY = PH - 10
