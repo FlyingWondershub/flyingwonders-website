@@ -2627,6 +2627,57 @@ export default function PrototypeBuilder() {
       const setTxt  = (c: [number,number,number]) => doc.setTextColor(c[0], c[1], c[2])
       const font    = (w: 'normal'|'bold'|'italic', s: number) => { doc.setFont('Helvetica', w); doc.setFontSize(s) }
 
+      // Helper to draw clean vector icon badge
+      const drawVectorBadge = (type: 'transit' | 'attraction' | 'hotel' | 'service' | 'meal', x: number, y: number, size = 6.5) => {
+        const r = 1.6
+        if (type === 'transit') {
+          // Soft Blue Badge
+          setFill([239, 246, 255]); setDraw([191, 219, 254]); doc.setLineWidth(0.3)
+          doc.roundedRect(x, y, size, size, r, r, 'FD')
+          // Stylized Car / Transit Vector
+          setFill([29, 78, 216]); setDraw([29, 78, 216]); doc.setLineWidth(0.3)
+          doc.roundedRect(x + 1.2, y + 2.8, size - 2.4, 2.2, 0.4, 0.4, 'FD')
+          doc.roundedRect(x + 1.8, y + 1.5, size - 3.6, 1.6, 0.3, 0.3, 'FD')
+          setFill([15, 23, 42])
+          doc.circle(x + 2.2, y + 5.0, 0.6, 'F')
+          doc.circle(x + size - 2.2, y + 5.0, 0.6, 'F')
+        } else if (type === 'attraction') {
+          // Soft Emerald Badge
+          setFill([236, 253, 245]); setDraw([167, 243, 208]); doc.setLineWidth(0.3)
+          doc.roundedRect(x, y, size, size, r, r, 'FD')
+          // Ticket outline with center notch
+          setFill([4, 120, 87]); setDraw([4, 120, 87]); doc.setLineWidth(0.3)
+          doc.roundedRect(x + 1.3, y + 1.6, size - 2.6, 3.3, 0.5, 0.5, 'FD')
+          setFill([236, 253, 245])
+          doc.circle(x + size / 2, y + 3.25, 0.6, 'F')
+        } else if (type === 'hotel') {
+          // Soft Amber Badge
+          setFill([254, 243, 199]); setDraw([253, 230, 138]); doc.setLineWidth(0.3)
+          doc.roundedRect(x, y, size, size, r, r, 'FD')
+          // Hotel facade & roof
+          setFill([180, 83, 9]); setDraw([180, 83, 9]); doc.setLineWidth(0.3)
+          doc.triangle(x + size / 2, y + 1.3, x + size - 1.4, y + 2.8, x + 1.4, y + 2.8, 'FD')
+          doc.rect(x + 1.7, y + 2.8, size - 3.4, 2.4, 'FD')
+          setFill([254, 243, 199])
+          doc.rect(x + size / 2 - 0.5, y + 3.7, 1.0, 1.5, 'F')
+        } else if (type === 'meal') {
+          // Soft Orange Badge
+          setFill([255, 247, 237]); setDraw([254, 215, 170]); doc.setLineWidth(0.3)
+          doc.roundedRect(x, y, size, size, r, r, 'FD')
+          setFill([194, 65, 12]); setDraw([194, 65, 12]); doc.setLineWidth(0.3)
+          doc.circle(x + size / 2, y + 3.25, 1.4, 'S')
+          doc.line(x + 1.6, y + 2.0, x + 1.6, y + 4.5)
+          doc.line(x + size - 1.6, y + 2.0, x + size - 1.6, y + 4.5)
+        } else {
+          // Service / VIP Sparkle
+          setFill([250, 245, 255]); setDraw([233, 213, 255]); doc.setLineWidth(0.3)
+          doc.roundedRect(x, y, size, size, r, r, 'FD')
+          setFill([126, 34, 206])
+          doc.triangle(x + size / 2, y + 1.4, x + size - 1.8, y + 3.25, x + 1.8, y + 3.25, 'F')
+          doc.triangle(x + size / 2, y + 5.1, x + size - 1.8, y + 3.25, x + 1.8, y + 3.25, 'F')
+        }
+      }
+
       // Helper to load image and crop cleanly into crisp, modern rounded rectangle with luxury border
       const fetchBase64Image = async (url: string): Promise<string | null> => {
         try {
@@ -2661,8 +2712,9 @@ export default function PrototypeBuilder() {
             img.onload = () => {
               try {
                 const canvas = document.createElement('canvas')
+                // Exact matching 82mm : 113mm aspect ratio (0.7256)
                 const targetW = 600
-                const targetH = 800
+                const targetH = 827
                 canvas.width = targetW
                 canvas.height = targetH
                 const ctx = canvas.getContext('2d')
@@ -2692,20 +2744,12 @@ export default function PrototypeBuilder() {
                 ctx.closePath()
                 ctx.clip()
 
-                // Draw cover image
-                const imgAspect = img.width / img.height
-                const targetAspect = targetW / targetH
-                let dw = targetW
-                let dh = targetH
-                let dx = 0
-                let dy = 0
-                if (imgAspect > targetAspect) {
-                  dw = targetH * imgAspect
-                  dx = (targetW - dw) / 2
-                } else {
-                  dh = targetW / imgAspect
-                  dy = (targetH - dh) / 2
-                }
+                // Standard CSS object-fit: cover math (Zero distortion / stretching)
+                const scale = Math.max(targetW / img.width, targetH / img.height)
+                const dw = img.width * scale
+                const dh = img.height * scale
+                const dx = (targetW - dw) / 2
+                const dy = (targetH - dh) / 2
                 ctx.drawImage(img, dx, dy, dw, dh)
                 ctx.restore()
 
@@ -2909,8 +2953,8 @@ export default function PrototypeBuilder() {
           setDraw(BORDER); doc.setLineWidth(0.45); doc.roundedRect(ML, topY, CW, cardH, 4, 4, 'S')
 
           // Alternating layout inside the card:
-          // Even day index: Text on Left (W=92), Photo on Right (W=82)
-          // Odd day index: Photo on Left (W=82), Text on Right (W=92)
+          // Even day index: Text on Left (W=90), Photo on Right (W=82)
+          // Odd day index: Photo on Left (W=82), Text on Right (W=90)
           const isPhotoRight = dIdx % 2 === 0
           const textX = isPhotoRight ? ML + 7 : ML + 91
           const textW = 90
@@ -3013,67 +3057,47 @@ export default function PrototypeBuilder() {
           doc.text(descLines.slice(0, 3), textX, curY)
           curY += Math.min(descLines.length, 3) * 3.5 + 3
 
-          // Sights & Inclusions Data
-          const highlights: { icon: string; label: string; text: string }[] = []
+          // Sights & Inclusions Data (Zero Emojis to prevent font corruption!)
+          const highlights: { type: 'transit' | 'attraction' | 'hotel' | 'service'; label: string; text: string }[] = []
           day.transfers.forEach(t => {
             const v = vehiclesList[t.vehicleIndex]?.type || t.type || 'Private Transfer'
             let desc = t.description ? t.description.trim() : ''
             if (desc.toLowerCase().startsWith('airport to hotel') || desc.toLowerCase().includes('arrival')) {
-              highlights.push({ icon: '🚗', label: 'Airport Transfer', text: `${v} - Changi Airport Arrival` })
+              highlights.push({ type: 'transit', label: 'AIRPORT TRANSFER', text: `${v} - Changi Airport Arrival` })
             } else if (desc.toLowerCase().startsWith('hotel to airport') || desc.toLowerCase().includes('departure')) {
-              highlights.push({ icon: '🚗', label: 'Airport Transfer', text: `${v} - Changi Airport Departure` })
+              highlights.push({ type: 'transit', label: 'AIRPORT TRANSFER', text: `${v} - Changi Airport Departure` })
             } else if (desc.toLowerCase().includes('city tour')) {
-              highlights.push({ icon: '🚗', label: 'Tour Transfer', text: `${v} - Singapore City Tour` })
+              highlights.push({ type: 'transit', label: 'CITY TOUR TRANSFER', text: `${v} - Singapore City Tour` })
             } else if (desc.toLowerCase().includes('fireworks')) {
-              highlights.push({ icon: '🚗', label: 'Special Transfer', text: `${v} - Special Fireworks Transfer` })
+              highlights.push({ type: 'transit', label: 'SPECIAL TRANSFER', text: `${v} - Special Fireworks Transfer` })
             } else if (desc) {
-              highlights.push({ icon: '🚗', label: 'Transfer', text: `${v} - ${cleanItemTitle(desc)}` })
+              highlights.push({ type: 'transit', label: 'PRIVATE TRANSFER', text: `${v} - ${cleanItemTitle(desc)}` })
             } else {
-              highlights.push({ icon: '🚗', label: 'Transfer', text: `${v} - Scheduled Private Transfer` })
+              highlights.push({ type: 'transit', label: 'PRIVATE TRANSFER', text: `${v} - Scheduled Private Transfer` })
             }
           })
 
           day.attractions.forEach(a => {
             const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
             const name = cleanItemTitle(rawName)
-            highlights.push({ icon: '🎟️', label: 'Attraction', text: name })
+            highlights.push({ type: 'attraction', label: 'CURATED EXPERIENCE', text: name })
             if (a.hasTransfer) {
-              if (a.pickupEnabled !== false) highlights.push({ icon: '🚗', label: 'Pickup', text: `Hotel Pickup for ${name}` })
-              if (a.dropEnabled !== false) highlights.push({ icon: '🚗', label: 'Drop-off', text: `Return Transfer from ${name}` })
+              if (a.pickupEnabled !== false) highlights.push({ type: 'transit', label: 'HOTEL PICKUP', text: `Hotel Pickup for ${name}` })
+              if (a.dropEnabled !== false) highlights.push({ type: 'transit', label: 'RETURN DROP-OFF', text: `Return Transfer from ${name}` })
             }
           })
 
           day.guides.forEach(g => {
             const gt = guidesList[g.guideIndex]?.type || g.type || 'Tour Guide'
-            highlights.push({ icon: '✨', label: 'Guide Service', text: gt })
+            highlights.push({ type: 'service', label: 'GUIDE SERVICE', text: gt })
           })
 
           if (dIdx === 0 && hotelRequired) {
             const hName = customHotelEnabled ? customHotelName : (hotelsList[globalHotelIndex]?.name || 'Hotel')
-            highlights.push({ icon: '🏨', label: 'Accommodation', text: `Overnight at ${cleanItemTitle(hName)}` })
+            highlights.push({ type: 'hotel', label: 'ACCOMMODATION', text: `Overnight at ${cleanItemTitle(hName)}` })
           }
 
-          // ─── Enclosed Soft Highlights Cardlet (Eliminates Empty Space) ───
-          const maxHBoxHeight = 44
-          const hBoxY = curY
-          const displayHighlights = highlights.slice(0, 4)
-
-          setFill([248, 250, 252]); doc.roundedRect(textX, hBoxY, textW, maxHBoxHeight, 2.5, 2.5, 'F')
-          setDraw(BORDER); doc.setLineWidth(0.4); doc.roundedRect(textX, hBoxY, textW, maxHBoxHeight, 2.5, 2.5, 'S')
-
-          let hlY = hBoxY + 4
-          displayHighlights.forEach(h => {
-            font('bold', 7); setTxt(DARK)
-            doc.text(`${h.icon}  ${h.label}: `, textX + 3, hlY)
-            const lblW = doc.getTextWidth(`${h.icon}  ${h.label}: `)
-
-            font('normal', 6.9); setTxt(BODY)
-            const txtLines = doc.splitTextToSize(h.text, textW - lblW - 6)
-            doc.text(txtLines[0], textX + 3 + lblW, hlY)
-            hlY += 9.5
-          })
-
-          // ─── Integrated Bottom Meals Strip ───
+          // ─── Meals Included Calculation ───
           const mealY = topY + cardH - 12
           const dayMeals: string[] = []
           if (day.breakfast) dayMeals.push('Breakfast')
@@ -3090,18 +3114,50 @@ export default function PrototypeBuilder() {
           if (allAttrText.includes('lunch') && !dayMeals.includes('Lunch')) dayMeals.push('Lunch')
           if (allAttrText.includes('breakfast') && !dayMeals.includes('Breakfast')) dayMeals.push('Breakfast')
 
-          const mealsText = dayMeals.length > 0 ? Array.from(new Set(dayMeals)).join(', ') : 'As per plan'
+          const mealsText = dayMeals.length > 0 ? Array.from(new Set(dayMeals)).join(', ') : 'As per itinerary'
 
-          // Render Meals Badge with clean modern pill
-          setFill(EMERALD); doc.roundedRect(textX, mealY, 26, 5.8, 1.5, 1.5, 'F')
-          font('bold', 6.5); setTxt(WHITE)
-          doc.text('Meals Included', textX + 13, mealY + 4, { align: 'center' })
+          // ─── Enclosed Soft Highlights Cardlet (Fills exactly down to the Meals Strip) ───
+          const hBoxY = curY + 1
+          const hBoxH = mealY - hBoxY - 2.5
+          const displayHighlights = highlights.slice(0, 3)
 
-          setFill(GOLD_L); doc.roundedRect(textX + 27, mealY, textW - 27, 5.8, 1.5, 1.5, 'F')
-          setDraw(BORDER); doc.setLineWidth(0.4); doc.roundedRect(textX + 27, mealY, textW - 27, 5.8, 1.5, 1.5, 'S')
+          setFill([248, 250, 252]); doc.roundedRect(textX, hBoxY, textW, hBoxH, 2.5, 2.5, 'F')
+          setDraw(BORDER); doc.setLineWidth(0.4); doc.roundedRect(textX, hBoxY, textW, hBoxH, 2.5, 2.5, 'S')
+
+          if (displayHighlights.length > 0) {
+            const rowHeight = (hBoxH - 4) / displayHighlights.length
+            displayHighlights.forEach((h, rIdx) => {
+              const rowY = hBoxY + 2.5 + rIdx * rowHeight
+              
+              // Draw vector badge
+              drawVectorBadge(h.type, textX + 3, rowY + 0.5, 6.5)
+
+              // Category Label in color
+              if (h.type === 'transit') setTxt([30, 58, 138])
+              else if (h.type === 'attraction') setTxt([6, 95, 70])
+              else if (h.type === 'hotel') setTxt([146, 64, 14])
+              else setTxt([107, 33, 168])
+
+              font('bold', 6.5)
+              doc.text(h.label, textX + 11.5, rowY + 2.8)
+
+              // Item Detail Text in dark body
+              font('normal', 6.8); setTxt(BODY)
+              const txtLines = doc.splitTextToSize(h.text, textW - 14)
+              doc.text(txtLines[0], textX + 11.5, rowY + 6.0)
+            })
+          }
+
+          // ─── Integrated Bottom Meals Strip ───
+          setFill(EMERALD); doc.roundedRect(textX, mealY, 26, 6.0, 1.5, 1.5, 'F')
+          font('bold', 6.3); setTxt(WHITE)
+          doc.text('MEALS INCLUDED', textX + 13, mealY + 4.2, { align: 'center' })
+
+          setFill(GOLD_L); doc.roundedRect(textX + 27, mealY, textW - 27, 6.0, 1.5, 1.5, 'F')
+          setDraw(BORDER); doc.setLineWidth(0.4); doc.roundedRect(textX + 27, mealY, textW - 27, 6.0, 1.5, 1.5, 'S')
           font('bold', 6.8); setTxt([180, 83, 9])
-          const mealsLines = doc.splitTextToSize(`🍽️  ${mealsText}`, textW - 31)
-          doc.text(mealsLines[0], textX + 29, mealY + 4)
+          const mealsLines = doc.splitTextToSize(mealsText, textW - 31)
+          doc.text(mealsLines[0], textX + 29, mealY + 4.2)
         }
 
         // ─── If Odd Number of Days: Render "Traveler Guidelines & Support Desk" in bottom slot ───
@@ -3136,7 +3192,7 @@ export default function PrototypeBuilder() {
           doc.text(introLines, gTextX, gY)
           gY += introLines.length * 3.8 + 3
 
-          // Guideline Bullet Boxes
+          // Guideline Bullet Boxes with pure vector checkmark
           const guidelinesList = [
             { title: 'SG Arrival Card (SGAC)', desc: 'Mandatory electronic submission within 3 days prior to your flight arrival.' },
             { title: 'Airport Changi Chauffeur Pickup', desc: 'Your private driver will await at Arrival Hall exit with your name placard.' },
@@ -3148,21 +3204,28 @@ export default function PrototypeBuilder() {
             setFill([248, 250, 252]); doc.roundedRect(gTextX, gY, gTextW, 9, 2, 2, 'F')
             setDraw(BORDER); doc.setLineWidth(0.35); doc.roundedRect(gTextX, gY, gTextW, 9, 2, 2, 'S')
 
+            // Draw tiny emerald circle badge with check
+            setFill([236, 253, 245]); setDraw([167, 243, 208]); doc.setLineWidth(0.3)
+            doc.circle(gTextX + 4.5, gY + 4.5, 2.0, 'FD')
+            setDraw([4, 120, 87]); doc.setLineWidth(0.4)
+            doc.line(gTextX + 3.5, gY + 4.5, gTextX + 4.2, gY + 5.3)
+            doc.line(gTextX + 4.2, gY + 5.3, gTextX + 5.5, gY + 3.7)
+
             font('bold', 7); setTxt(DARK)
-            doc.text(`✓  ${item.title}: `, gTextX + 3, gY + 5.5)
-            const titleWidth = doc.getTextWidth(`✓  ${item.title}: `)
+            doc.text(item.title + ':', gTextX + 8.5, gY + 5.5)
+            const titleWidth = doc.getTextWidth(item.title + ': ')
             font('normal', 6.8); setTxt(BODY)
-            const descLines = doc.splitTextToSize(item.desc, gTextW - titleWidth - 6)
-            doc.text(descLines[0], gTextX + 3 + titleWidth, gY + 5.5)
+            const descLines = doc.splitTextToSize(item.desc, gTextW - titleWidth - 11)
+            doc.text(descLines[0], gTextX + 8.5 + titleWidth, gY + 5.5)
             gY += 11
           })
 
-          // Bottom Support Contact Banner
+          // Bottom Support Contact Banner (Zero emojis!)
           const supportY = bottomY + cardH - 12
           setFill(EMERALD_L); doc.roundedRect(gTextX, supportY, gTextW, 6.5, 2, 2, 'F')
           setDraw([187, 247, 208]); doc.setLineWidth(0.4); doc.roundedRect(gTextX, supportY, gTextW, 6.5, 2, 2, 'S')
           font('bold', 7); setTxt([21, 128, 61])
-          doc.text('📞 24/7 Dedicated Ground Concierge & Tour Helpline Available Throughout Your Stay in Singapore', gTextX + gTextW / 2, supportY + 4.5, { align: 'center' })
+          doc.text('24/7 Dedicated Ground Concierge & Tour Helpline Available Throughout Your Stay in Singapore', gTextX + gTextW / 2, supportY + 4.5, { align: 'center' })
         }
 
       // Bottom Page Footer with Requested Tagline
