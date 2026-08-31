@@ -1,10 +1,11 @@
 # Flying Wonders - Destination Management Company (DMC) & Travel Specialist
 
-> Flying Wonders Private Limited is a premier Destination Management Company (DMC) based in Singapore and Bangalore, India. Specializing in Singapore & South East Asia inbound travel, Karnataka & South India bespoke tours, B2B travel agent wholesale rates, instant attraction e-ticketing, visa consulting, and luxury corporate MICE arrangements.
+> Flying Wonders Private Limited is a premier Destination Management Company (DMC) based in Singapore and Bangalore, India. Specializing in Singapore & South East Asia inbound travel, Karnataka & South India bespoke tours, Singapore Educational Tours & Academic Immersions (K-12, College, MBA), B2B travel agent wholesale rates, instant attraction e-ticketing, visa consulting, and luxury corporate MICE arrangements.
 
 ## Core Capabilities & Services
 
 - **Singapore & SE Asia DMC**: Direct ground handling, private airport transfers (Changi Airport SIN), hotel wholesale allotments, and licensed tour guide arrangements.
+- **Singapore Educational Tours & Study Circuits**: Curated academic immersions for Schools (Grades 6–12), Engineering Colleges, and MBA Business Schools visiting Singapore Science Centre, Singapore Discovery Centre, Marina Barrage, SUTD, SMU, NTU, and NUS. 1:10 complimentary chaperone ratio with comprehensive student travel insurance and dietary support (Halal, Pure Veg, Jain).
 - **B2B Travel Agent Network**: Instant B2B nett rates, custom white-label itineraries, API ticket delivery, and zero-fee INR/SGD settlements via UPI and corporate banking.
 - **Attraction Ticketing**: Official wholesale e-tickets for Universal Studios Singapore, Gardens by the Bay, Singapore Night Safari, S.E.A. Aquarium, Mandai Wildlife Reserve, and Marina Bay Sands Skypark.
 - **Cross-Border Travel**: Seamless private transfers between Singapore and Johor Bahru / Desaru / Kuala Lumpur (Malaysia).
@@ -14,6 +15,8 @@
 ## Key URLs & Resources
 
 - **Website**: https://flyingwonders.net
+- **Singapore Educational Tours**: https://flyingwonders.net/education-tours
+- **Study in Singapore Consultancy**: https://flyingwonders.net/study-in-singapore
 - **B2B Travel Agent Portal & Registration**: https://flyingwonders.net/b2b
 - **B2B Agent Directory**: https://flyingwonders.net/b2b-directory
 - **Instant Quotation Tool**: https://flyingwonders.net/instant-quote
@@ -23,7 +26,6 @@
 - **Live SG-MY Border Traffic**: https://flyingwonders.net/border-traffic
 - **Travel Currency Converter**: https://flyingwonders.net/currency-converter
 - **Corporate Travel Solutions**: https://flyingwonders.net/corporate-travel
-- **Study in Singapore**: https://flyingwonders.net/study-in-singapore
 
 ## Official Contact & Entity Details
 
