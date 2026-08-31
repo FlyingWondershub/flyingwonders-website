@@ -315,7 +315,7 @@ const educationToursData = {
       targetCohort: 'School (Grades 6–12)',
       duration: '4 Days / 3 Nights',
       badge: 'Best for K-12 Schools',
-      circuitPdfUrl: '/brochure/Singapore.pdf',
+      circuitPdfUrl: '/brochures/Singapore-4D3N-STEM-School-Tour-Itinerary.pdf',
       estimatedPriceSgd: 580,
       highlights: [
         'Singapore Science Centre & 8K Omni-Theatre Show',
