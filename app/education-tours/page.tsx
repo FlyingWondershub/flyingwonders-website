@@ -38,7 +38,10 @@ import {
   Calendar,
   X,
   ExternalLink,
-  HelpCircle
+  HelpCircle,
+  Share2,
+  Link2,
+  Copy
 } from 'lucide-react'
 
 // Primary Colour Palette
@@ -619,6 +622,19 @@ export default function EducationToursPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
 
+  // Deep Link Toast Notification
+  const [copiedToast, setCopiedToast] = useState<string | null>(null)
+
+  const copyDirectLink = (anchorId: string, label: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    if (typeof window === 'undefined') return
+    const fullUrl = `${window.location.origin}/education-tours#${anchorId}`
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      setCopiedToast(`Copied direct URL for ${label}!`)
+      setTimeout(() => setCopiedToast(null), 2800)
+    }).catch(() => {})
+  }
+
   useEffect(() => {
     Promise.all([
       client.fetch(`*[_type == "educationToursSettings"][0]`),
@@ -702,6 +718,44 @@ export default function EducationToursPage() {
     }
     return FAQS
   }, [sanitySettings])
+
+  // Deep-Link & URL Hash/Query Synchronization for 7 Cards and 3 Circuits
+  useEffect(() => {
+    const handleDeepLink = () => {
+      if (typeof window === 'undefined') return
+      const hash = window.location.hash.replace('#', '').toLowerCase()
+      const params = new URLSearchParams(window.location.search)
+      const instQuery = params.get('institution')?.toLowerCase() || params.get('card')?.toLowerCase()
+      const circuitQuery = params.get('circuit')?.toLowerCase() || params.get('itinerary')?.toLowerCase()
+
+      const knownInstIds = ['science-centre', 'discovery-centre', 'marina-barrage', 'sutd', 'smu', 'ntu', 'nus']
+      const knownCircuitIds = ['school-stem', 'college-tech', 'mba-business']
+
+      const targetInstId = instQuery || (knownInstIds.includes(hash) ? hash : null)
+      const targetCircuitId = circuitQuery || (knownCircuitIds.includes(hash) ? hash : null)
+
+      if (targetInstId) {
+        const found = institutionsList.find((i: any) => i.id.toLowerCase() === targetInstId)
+        if (found) {
+          setSelectedInstitutionDetail(found)
+          setTimeout(() => {
+            const el = document.getElementById(targetInstId)
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }, 150)
+        }
+      } else if (targetCircuitId) {
+        setActiveItineraryId(targetCircuitId)
+        setTimeout(() => {
+          const el = document.getElementById('circuits') || document.getElementById(targetCircuitId)
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 150)
+      }
+    }
+
+    handleDeepLink()
+    window.addEventListener('hashchange', handleDeepLink)
+    return () => window.removeEventListener('hashchange', handleDeepLink)
+  }, [institutionsList, itinerariesList])
 
   // Estimator Calculations
   const chaperoneCount = Math.floor(studentCount / 10)
@@ -1088,6 +1142,7 @@ export default function EducationToursPage() {
             {filteredInstitutions.map((inst: any) => (
               <div
                 key={inst.id}
+                id={inst.id}
                 style={{
                   background: '#FFF',
                   borderRadius: '16px',
@@ -1096,12 +1151,16 @@ export default function EducationToursPage() {
                   boxShadow: '0 4px 15px rgba(0,0,0,0.04)',
                   display: 'flex',
                   flexDirection: 'column',
-                  transition: 'transform 0.2s, box-shadow 0.2s'
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  scrollMarginTop: '100px'
                 }}
               >
                 {/* Photo & Overlay (Clickable to open Full Details & Labs) */}
                 <div
-                  onClick={() => setSelectedInstitutionDetail(inst)}
+                  onClick={() => {
+                    setSelectedInstitutionDetail(inst)
+                    if (typeof window !== 'undefined') window.history.replaceState(null, '', `#${inst.id}`)
+                  }}
                   title={`Click to view full details & video tour for ${inst.name}`}
                   style={{
                     position: 'relative',
@@ -1216,26 +1275,51 @@ export default function EducationToursPage() {
                   </div>
 
                   {/* Card Bottom CTA */}
-                  <div style={{ paddingTop: '0.85rem', borderTop: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
-                    <button
-                      onClick={() => setSelectedInstitutionDetail(inst)}
-                      style={{
-                        background: '#FFF',
-                        color: '#0F172A',
-                        border: '1px solid #CBD5E1',
-                        padding: '0.4rem 0.75rem',
-                        borderRadius: '8px',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                    >
-                      <BookOpen size={13} color="#2563EB" />
-                      <span>Full Details & Labs</span>
-                    </button>
+                  <div style={{ paddingTop: '0.85rem', borderTop: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <button
+                        onClick={() => {
+                          setSelectedInstitutionDetail(inst)
+                          if (typeof window !== 'undefined') window.history.replaceState(null, '', `#${inst.id}`)
+                        }}
+                        style={{
+                          background: '#FFF',
+                          color: '#0F172A',
+                          border: '1px solid #CBD5E1',
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '8px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <BookOpen size={13} color="#2563EB" />
+                        <span>Full Details & Labs</span>
+                      </button>
+
+                      <button
+                        onClick={(e) => copyDirectLink(inst.id, inst.name, e)}
+                        title={`Copy direct link for ${inst.name}`}
+                        style={{
+                          background: '#F8FAFC',
+                          color: '#475569',
+                          border: '1px solid #CBD5E1',
+                          padding: '0.4rem 0.55rem',
+                          borderRadius: '8px',
+                          fontSize: '0.72rem',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}
+                      >
+                        <Share2 size={12} color="#475569" />
+                        <span style={{ fontSize: '0.68rem', fontWeight: 600 }}>Share</span>
+                      </button>
+                    </div>
 
                     <button
                       onClick={() => {
@@ -1287,6 +1371,7 @@ export default function EducationToursPage() {
               onClick={() => {
                 setActiveItineraryId(it.id)
                 setExpandedDay(1)
+                if (typeof window !== 'undefined') window.history.replaceState(null, '', `#${it.id}`)
               }}
               style={{
                 background: activeItineraryId === it.id ? EMERALD : '#FFF',
@@ -1300,7 +1385,8 @@ export default function EducationToursPage() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: activeItineraryId === it.id ? '0 4px 12px rgba(9,62,48,0.2)' : 'none'
+                boxShadow: activeItineraryId === it.id ? '0 4px 12px rgba(9,62,48,0.2)' : 'none',
+                transition: 'all 0.15s'
               }}
             >
               <GraduationCap size={15} />
@@ -1311,13 +1397,17 @@ export default function EducationToursPage() {
         </div>
 
         {/* Active Itinerary Box */}
-        <div style={{
-          background: '#FFF',
-          borderRadius: '20px',
-          border: '1px solid #E2E8F0',
-          padding: 'clamp(1.25rem, 3.5vw, 2.2rem)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.04)'
-        }}>
+        <div
+          id={activeItinerary.id}
+          style={{
+            background: '#FFF',
+            borderRadius: '20px',
+            border: '1px solid #E2E8F0',
+            padding: 'clamp(1.25rem, 3.5vw, 2.2rem)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.04)',
+            scrollMarginTop: '100px'
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', paddingBottom: '1.25rem', borderBottom: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
             <div>
               <span style={{ background: '#FEF3C7', color: '#92400E', padding: '0.15rem 0.65rem', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 800, display: 'inline-block', marginBottom: '0.4rem' }}>
@@ -1339,7 +1429,28 @@ export default function EducationToursPage() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                onClick={(e) => copyDirectLink(activeItinerary.id, activeItinerary.title, e)}
+                title="Copy shareable link for this circuit"
+                style={{
+                  background: '#F8FAFC',
+                  color: '#334155',
+                  border: '1px solid #CBD5E1',
+                  padding: '0.65rem 1rem',
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Share2 size={14} color="#475569" />
+                <span>Share URL</span>
+              </button>
+
               {activeItinerary.circuitPdfUrl && (
                 <a
                   href={activeItinerary.circuitPdfUrl}
@@ -1827,29 +1938,53 @@ export default function EducationToursPage() {
                   background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.25) 60%, transparent 100%)'
                 }} />
 
-                <button
-                  onClick={() => setSelectedInstitutionDetail(null)}
-                  style={{
-                    position: 'absolute',
-                    top: '14px',
-                    right: '14px',
-                    background: 'rgba(0,0,0,0.65)',
-                    color: '#FFF',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '34px',
-                    height: '34px',
-                    cursor: 'pointer',
-                    fontWeight: 800,
-                    fontSize: '1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backdropFilter: 'blur(4px)'
-                  }}
-                >
-                  ✕
-                </button>
+                <div style={{ position: 'absolute', top: '14px', right: '14px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button
+                    onClick={(e) => copyDirectLink(selectedInstitutionDetail.id, selectedInstitutionDetail.name, e)}
+                    title="Copy direct shareable link for this institution"
+                    style={{
+                      background: 'rgba(0,0,0,0.65)',
+                      color: '#FFF',
+                      border: 'none',
+                      borderRadius: '20px',
+                      padding: '6px 12px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.72rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      backdropFilter: 'blur(4px)'
+                    }}
+                  >
+                    <Share2 size={12} />
+                    <span>Share Link</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedInstitutionDetail(null)
+                      if (typeof window !== 'undefined') window.history.replaceState(null, '', '#institutions')
+                    }}
+                    style={{
+                      background: 'rgba(0,0,0,0.65)',
+                      color: '#FFF',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '34px',
+                      height: '34px',
+                      cursor: 'pointer',
+                      fontWeight: 800,
+                      fontSize: '1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backdropFilter: 'blur(4px)'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
 
                 <div style={{ position: 'absolute', bottom: '14px', left: '20px', right: '20px', color: '#FFF' }}>
                   <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
@@ -2275,6 +2410,30 @@ export default function EducationToursPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+      {/* ─── Floating Toast Notification for Link Copying ─── */}
+      {copiedToast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#0F172A',
+          color: '#FFF',
+          padding: '10px 22px',
+          borderRadius: '30px',
+          fontSize: '0.82rem',
+          fontWeight: 700,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          zIndex: 99999,
+          border: '1px solid rgba(255,255,255,0.15)'
+        }}>
+          <CheckCircle2 size={16} color="#10B981" />
+          <span>{copiedToast}</span>
         </div>
       )}
     </div>

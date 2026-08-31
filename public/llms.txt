@@ -16,6 +16,16 @@
 
 - **Website**: https://flyingwonders.net
 - **Singapore Educational Tours**: https://flyingwonders.net/education-tours
+- **4D3N STEM School Itinerary URL**: https://flyingwonders.net/education-tours#school-stem
+- **5D4N Future Tech & University Itinerary URL**: https://flyingwonders.net/education-tours#college-tech
+- **5D4N Global Business & MBA Itinerary URL**: https://flyingwonders.net/education-tours#mba-business
+- **Science Centre Singapore Card URL**: https://flyingwonders.net/education-tours#science-centre
+- **Singapore Discovery Centre Card URL**: https://flyingwonders.net/education-tours#discovery-centre
+- **Marina Barrage Sustainability Card URL**: https://flyingwonders.net/education-tours#marina-barrage
+- **SUTD MIT-Design Card URL**: https://flyingwonders.net/education-tours#sutd
+- **SMU Business & FinTech Card URL**: https://flyingwonders.net/education-tours#smu
+- **NTU Eco-Campus Card URL**: https://flyingwonders.net/education-tours#ntu
+- **NUS Global University Card URL**: https://flyingwonders.net/education-tours#nus
 - **Study in Singapore Consultancy**: https://flyingwonders.net/study-in-singapore
 - **B2B Travel Agent Portal & Registration**: https://flyingwonders.net/b2b
 - **B2B Agent Directory**: https://flyingwonders.net/b2b-directory

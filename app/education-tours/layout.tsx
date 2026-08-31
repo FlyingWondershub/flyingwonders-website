@@ -72,6 +72,28 @@ const jsonLd = {
       }
     },
     {
+      '@type': 'ItemList',
+      name: 'Featured Partner Institutions & Innovation Hubs in Singapore',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Singapore Science Centre & Omni-Theatre', url: 'https://flyingwonders.net/education-tours#science-centre' },
+        { '@type': 'ListItem', position: 2, name: 'Singapore Discovery Centre', url: 'https://flyingwonders.net/education-tours#discovery-centre' },
+        { '@type': 'ListItem', position: 3, name: 'Marina Barrage & Sustainable Singapore Gallery', url: 'https://flyingwonders.net/education-tours#marina-barrage' },
+        { '@type': 'ListItem', position: 4, name: 'Singapore University of Technology and Design (SUTD)', url: 'https://flyingwonders.net/education-tours#sutd' },
+        { '@type': 'ListItem', position: 5, name: 'Singapore Management University (SMU)', url: 'https://flyingwonders.net/education-tours#smu' },
+        { '@type': 'ListItem', position: 6, name: 'Nanyang Technological University (NTU)', url: 'https://flyingwonders.net/education-tours#ntu' },
+        { '@type': 'ListItem', position: 7, name: 'National University of Singapore (NUS)', url: 'https://flyingwonders.net/education-tours#nus' }
+      ]
+    },
+    {
+      '@type': 'ItemList',
+      name: 'Curated Singapore Academic Study Itineraries',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: '4D3N STEM, Sustainability & Discovery Explorer (School Grades 6-12)', url: 'https://flyingwonders.net/education-tours#school-stem' },
+        { '@type': 'ListItem', position: 2, name: '5D4N Future Tech, Design & Top University Immersion (College & Engineering)', url: 'https://flyingwonders.net/education-tours#college-tech' },
+        { '@type': 'ListItem', position: 3, name: '5D4N Global Business, FinTech & Supply Chain Immersion (MBA & Business)', url: 'https://flyingwonders.net/education-tours#mba-business' }
+      ]
+    },
+    {
       '@type': 'FAQPage',
       mainEntity: [
         {
