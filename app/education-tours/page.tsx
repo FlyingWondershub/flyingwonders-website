@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { client } from '../../sanity/lib/client'
+import { urlForImage } from '../../sanity/lib/image'
 import {
   GraduationCap,
   Sparkles,
@@ -29,7 +30,15 @@ import {
   DollarSign,
   TrendingUp,
   FileCheck2,
-  BookOpen
+  BookOpen,
+  Download,
+  Video,
+  FileText,
+  Layers,
+  Calendar,
+  X,
+  ExternalLink,
+  HelpCircle
 } from 'lucide-react'
 
 // Primary Colour Palette
@@ -40,20 +49,36 @@ const AMBER_LIGHT = '#F59E0B'
 const SLATE = '#475569'
 const LIGHT_BG = '#F8FAFC'
 
+interface Workshop {
+  title: string
+  duration?: string
+  focus?: string
+}
+
 interface Institution {
   id: string
   name: string
   shortName: string
+  globalRank?: string
+  establishedYear?: string
   badge: string
   badgeBg: string
   category: string
   cohorts: ('School' | 'College' | 'MBA')[]
   location: string
-  image: string
+  image?: any
+  imageUrl: string
+  galleryPhotos?: { photo?: any; photoUrl?: string; caption?: string }[]
+  videoUrl?: string
+  brochureFile?: any
+  brochureUrl?: string
+  visitDuration?: string
   tagline: string
   description: string
+  targetDepartments?: string[]
   keyHighlights: string[]
   learningOutcomes: string[]
+  specialWorkshops?: Workshop[]
 }
 
 const INSTITUTIONS: Institution[] = [
@@ -61,110 +86,157 @@ const INSTITUTIONS: Institution[] = [
     id: 'science-centre',
     name: 'Singapore Science Centre & Omni-Theatre',
     shortName: 'Science Centre',
-    badge: 'Interactive STEM',
+    globalRank: '#1 Interactive STEM Hub in SE Asia',
+    establishedYear: 'Est. 1977',
+    badge: 'Interactive STEM Labs',
     badgeBg: '#2563EB',
     category: 'Science & STEM',
     cohorts: ['School', 'College'],
     location: 'Jurong East, Singapore',
-    image: 'https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&w=800&q=80',
-    tagline: 'World-class interactive science labs, Omni-Theatre planetarium & future AI exhibits.',
-    description: 'Home to over 1,000 interactive exhibits across 14 galleries. Students engage in experiential physics, molecular gastronomy, space astronomy at the Southeast Asia premiere 8K Digital Omni-Theatre, and hands-on robotics workshops.',
+    imageUrl: 'https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJ5q5hK41A',
+    brochureUrl: '/brochure/Singapore.pdf',
+    visitDuration: 'Full-Day Immersion (6 Hours)',
+    tagline: 'World-class interactive science labs, 8K Omni-Theatre planetarium & future AI robotics exhibits.',
+    description: 'Home to over 1,000 interactive exhibits across 14 galleries. Students engage in experiential physics, molecular gastronomy, space astronomy at Southeast Asia’s premiere 8K Digital Omni-Theatre, and accredited DNA biology workshops.',
+    targetDepartments: ['Physics & Space Science', 'Molecular Biology & Genetics', 'Artificial Intelligence & Robotics', 'Environmental Ecology'],
     keyHighlights: [
-      'Omni-Theatre 8K fulldome space & climate immersion',
-      'DNA Learning Lab & Molecular Biology experiments',
-      'Kinetic Garden & Waterworks physics playground',
+      'Omni-Theatre 8K fulldome space & climate immersion show',
+      'DNA Learning Lab & Molecular Biology gene sequencing',
+      'Kinetic Garden & Waterworks interactive physics playground',
       'Climate Change & AI Future Technology Gallery'
     ],
     learningOutcomes: [
-      'Deepen conceptual physics and environmental chemistry principles',
-      'Understand practical automation and artificial intelligence workflows',
-      'Active STEM problem-solving in accredited educational laboratories'
+      'Deepen conceptual physics and molecular biochemistry principles',
+      'Understand practical industrial automation and artificial intelligence workflows',
+      'Active STEM problem-solving inside certified research laboratories'
+    ],
+    specialWorkshops: [
+      { title: 'DNA Molecular Extraction Lab', duration: '90 Mins', focus: 'Gel electrophoresis and DNA isolation under expert biologists.' },
+      { title: 'AI & Robotics Hands-on Arena', duration: '75 Mins', focus: 'Sensor calibration, pathfinding algorithms, and logic programming.' },
+      { title: '8K Fulldome Astrophysics Session', duration: '60 Mins', focus: 'Deep space exploration and atmospheric dynamics.' }
     ]
   },
   {
     id: 'discovery-centre',
     name: 'Singapore Discovery Centre',
     shortName: 'Discovery Centre',
-    badge: 'National Resilience',
+    globalRank: 'National Defence & Crisis Resilience Hub',
+    establishedYear: 'Est. 1996',
+    badge: 'Crisis & Leadership Labs',
     badgeBg: '#D97706',
     category: 'National Defense & Media',
     cohorts: ['School', 'College', 'MBA'],
     location: 'Upper Jurong Road, Singapore',
-    image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80',
-    tagline: 'Crisis management simulations, digital media broadcasting, and nation-building story.',
-    description: 'An interactive center celebrating Singapore’s transition from a third-world colony to a first-world metropolis. Features dynamic AR simulations, state-of-the-art crisis communication studios, and cross-cultural leadership labs.',
+    imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJ5q5hK41A',
+    brochureUrl: '/brochure/Singapore.pdf',
+    visitDuration: 'Half-Day Immersion (4 Hours)',
+    tagline: 'Crisis management simulations, digital media broadcasting, and national resilience story.',
+    description: 'An interactive experiential center celebrating Singapore’s transition into a global leader. Features dynamic augmented reality timeline trails, crisis leadership escape rooms, and digital broadcast media studios.',
+    targetDepartments: ['Strategic Leadership', 'Crisis Communication', 'Digital Media & Broadcasting', 'Public Governance'],
     keyHighlights: [
       'Through the Lens of Time: Immersive Singapore History AR',
-      'Crisis Simulation & Leadership Escape Room labs',
+      'Crisis Simulation & Leadership Strategy Escape Labs',
       'Digital Broadcasting & Media Production studios',
-      'Cross-cultural military defense & resilience insights'
+      'National military defense & economic resilience insights'
     ],
     learningOutcomes: [
       'Analyze public governance, strategic leadership, and crisis management',
       'Understand national security policy and strategic resource planning',
-      'Develop media literacy and team problem-solving under pressure'
+      'Develop media production literacy and team coordination under time constraints'
+    ],
+    specialWorkshops: [
+      { title: 'Crisis Room Command Simulation', duration: '90 Mins', focus: 'Collaborative scenario simulation managing resource allocation during city emergencies.' },
+      { title: 'Digital Media Studio Anchoring', duration: '60 Mins', focus: 'Green-screen broadcast production, teleprompter delivery, and camera directing.' }
     ]
   },
   {
     id: 'marina-barrage',
     name: 'Marina Barrage & Sustainable Singapore Gallery',
     shortName: 'Marina Barrage',
+    globalRank: 'Global Benchmark in Urban Water Engineering',
+    establishedYear: 'Est. 2008',
     badge: 'Sustainability & Water Tech',
     badgeBg: '#0D9488',
     category: 'Sustainability & Water Tech',
     cohorts: ['School', 'College', 'MBA'],
     location: 'Marina South, Singapore',
-    image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80',
-    tagline: 'Civil engineering marvel managing water supply, flood control & solar green energy.',
-    description: 'Built across the mouth of the 350-metre wide Marina Channel, this multi-award-winning reservoir project embodies Singapore’s world-leading water security vision. Students tour the 9 crest gates, pump house, and the Sustainable Singapore Gallery.',
+    imageUrl: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJ5q5hK41A',
+    brochureUrl: '/brochure/Singapore.pdf',
+    visitDuration: 'Half-Day Field Immersion (3.5 Hours)',
+    tagline: 'Civil engineering marvel managing water security, flood alleviation & solar green energy.',
+    description: 'Built across the mouth of the 350-metre wide Marina Channel, this project embodies Singapore’s world-leading water security vision. Students examine the 9 crest gates, massive drainage pump houses, and the Sustainable Singapore Gallery.',
+    targetDepartments: ['Civil & Environmental Engineering', 'Water Resource Management', 'Urban Architecture & Planning', 'ESG & Sustainability'],
     keyHighlights: [
       'Sustainable Singapore Gallery: 6 interactive eco-zones',
       'Live crest gates & flood alleviation pump mechanics',
-      'Solar Park generating clean energy for the barrage',
-      'Closed-loop urban water catchment engineering'
+      'Solar Park generating clean energy for civic operations',
+      'Closed-loop urban water catchment engineering models'
     ],
     learningOutcomes: [
-      'Examine circular water economy models and flood mitigation engineering',
+      'Examine circular water economy models and flood mitigation civil engineering',
       'Study urban sustainability planning and UN SDG integration',
       'Understand climate resilience strategies for coastal megacities'
+    ],
+    specialWorkshops: [
+      { title: 'Hydraulic Gate Mechanics Briefing', duration: '60 Mins', focus: 'Engineering analysis of crest gate activation during tidal surges.' },
+      { title: 'Eco-Singapore Carbon Neutrality Tour', duration: '75 Mins', focus: 'Zero-waste urban ecosystems and solar infrastructure review.' }
     ]
   },
   {
     id: 'sutd',
     name: 'Singapore University of Technology and Design (SUTD)',
     shortName: 'SUTD',
-    badge: 'Design & MIT Collaboration',
+    globalRank: 'Established in Collaboration with MIT (USA)',
+    establishedYear: 'Est. 2009',
+    badge: 'Design & MIT Innovation',
     badgeBg: '#7C3AED',
     category: 'Tech & Design',
     cohorts: ['College', 'MBA'],
     location: 'Upper Changi, Singapore',
-    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJ5q5hK41A',
+    brochureUrl: '/brochure/Singapore.pdf',
+    visitDuration: 'Full-Day Tech Immersion (5 Hours)',
     tagline: 'MIT-partnered campus driving human-centric design, FabLab 3D prototyping & IoT robotics.',
-    description: 'Established in collaboration with the Massachusetts Institute of Technology (MIT), SUTD pioneers multidisciplinary curriculum combining architecture, engineering systems, and artificial intelligence. Students experience the sprawling FabLab and autonomous robotics testbeds.',
+    description: 'Established in collaboration with MIT, SUTD pioneers multidisciplinary curriculum combining architecture, engineering systems, and artificial intelligence. Students experience the sprawling FabLab and autonomous robotics testbeds.',
+    targetDepartments: ['Architecture (ASD)', 'Engineering Systems (ESD)', 'Information Systems & AI (ISTD)', 'Product Design (EPD)'],
     keyHighlights: [
       'FabLab: High-precision laser cutting & 3D additive manufacturing',
-      'Architecture & Sustainable Design (ASD) showcases',
+      'Architecture & Sustainable Design (ASD) design showcases',
       'Engineering Product Development (EPD) robotic workshops',
-      'MIT-SUTD Dual Degree and research collaboration insights'
+      'MIT-SUTD Dual Degree and international admission criteria'
     ],
     learningOutcomes: [
       'Master Design Thinking methodologies for real-world engineering',
       'Explore cutting-edge additive manufacturing and smart prototyping',
       'Gain direct exposure to world-class university admissions criteria'
+    ],
+    specialWorkshops: [
+      { title: 'FabLab 3D Additive Prototyping', duration: '90 Mins', focus: 'Hands-on SLA 3D printing and CAD translation workshops.' },
+      { title: 'MIT Design Thinking Case Sprint', duration: '90 Mins', focus: 'Rapid prototyping sprint solving smart city mobility challenges.' }
     ]
   },
   {
     id: 'smu',
     name: 'Singapore Management University (SMU)',
     shortName: 'SMU',
-    badge: 'City-Campus Business Hub',
+    globalRank: 'Modeled on The Wharton School (UPenn)',
+    establishedYear: 'Est. 2000',
+    badge: 'Downtown FinTech & Business',
     badgeBg: '#DC2626',
     category: 'Business & FinTech',
     cohorts: ['College', 'MBA'],
     location: 'Bras Basah, Downtown Singapore',
-    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
-    tagline: 'Downtown interactive seminar pedagogy, FinTech hubs & Asian business leadership.',
+    imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJ5q5hK41A',
+    brochureUrl: '/brochure/Singapore.pdf',
+    visitDuration: 'Half-Day Business Masterclass (4 Hours)',
+    tagline: 'Downtown interactive seminar pedagogy, FinTech trading rooms & Asian business leadership.',
     description: 'Strategically located in Singapore’s arts and financial district, SMU models its seminar-style interactive learning on the Wharton School (UPenn). Tour state-of-the-art trading rooms, incubation labs, and join masterclasses on Asian business dynamics.',
+    targetDepartments: ['Lee Kong Chian School of Business', 'School of Accountancy', 'FinTech & Analytics', 'Venture Capital & IIE'],
     keyHighlights: [
       'Simulated Financial Trading & Bloomberg Terminal room',
       'SMU Connexion net-zero energy smart building',
@@ -175,20 +247,30 @@ const INSTITUTIONS: Institution[] = [
       'Understand Asian capital markets, global FinTech, and venture capital',
       'Experience dynamic case-study pedagogical discussions',
       'Network with faculty and international business student cohorts'
+    ],
+    specialWorkshops: [
+      { title: 'Financial Trading Simulation', duration: '90 Mins', focus: 'Live trading floor simulations with multi-currency risk management.' },
+      { title: 'Asian FinTech & Venture Landscape', duration: '75 Mins', focus: 'Monetary Authority of Singapore (MAS) sandboxes & ASEAN market entry.' }
     ]
   },
   {
     id: 'ntu',
     name: 'Nanyang Technological University (NTU)',
     shortName: 'NTU',
-    badge: 'Global Top-15 Tech University',
+    globalRank: '#15 Globally (QS 2026) & Top Smart Eco-Campus',
+    establishedYear: 'Est. 1991',
+    badge: 'Global Top-15 Tech Campus',
     badgeBg: '#0284C7',
     category: 'Tech & Design',
     cohorts: ['College', 'MBA', 'School'],
     location: 'Jurong West, Singapore',
-    image: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJ5q5hK41A',
+    brochureUrl: '/brochure/Singapore.pdf',
+    visitDuration: 'Full-Day Campus Circuit (6 Hours)',
     tagline: 'World-renowned eco-campus, "The Hive" learning hub & frontier aerospace research.',
     description: 'Consistently ranked among the world’s top 15 universities, NTU’s 200-hectare smart campus is a living testbed for green building tech, autonomous vehicles, and satellite aerospace development. Walk the iconic "Hive" designed by Thomas Heatherwick.',
+    targetDepartments: ['Computer Science & AI', 'Aerospace Engineering', 'Materials Science', 'Energy Research Institute (ERI@N)'],
     keyHighlights: [
       'The Hive (Learning Hub South) iconic flipped-classroom design',
       'CleanTech One & Energy Research Institute (ERI@N)',
@@ -199,20 +281,30 @@ const INSTITUTIONS: Institution[] = [
       'Observe frontier AI, nanotechnology, and aerospace research projects',
       'Experience smart campus IoT living laboratories',
       'Learn international postgraduate and undergraduate admission pathways'
+    ],
+    specialWorkshops: [
+      { title: 'The Hive Flipped Classroom Experience', duration: '60 Mins', focus: 'Collaborative case breakdown inside Thomas Heatherwick-designed pods.' },
+      { title: 'CleanTech Autonomous Mobility Telemetry', duration: '90 Mins', focus: 'Sensor arrays, lidar maps, and EV battery testing.' }
     ]
   },
   {
     id: 'nus',
     name: 'National University of Singapore (NUS)',
     shortName: 'NUS',
-    badge: 'Global Top-10 World University',
+    globalRank: '#8 Globally (QS 2026) & #1 in Asia',
+    establishedYear: 'Est. 1905',
+    badge: 'Global Top-10 University',
     badgeBg: '#EA580C',
     category: 'Global Top University',
     cohorts: ['School', 'College', 'MBA'],
     location: 'Kent Ridge, Singapore',
-    image: 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
+    videoUrl: 'https://www.youtube.com/watch?v=kYJ5q5hK41A',
+    brochureUrl: '/brochure/Singapore.pdf',
+    visitDuration: 'Full-Day Flagship Immersion (6.5 Hours)',
     tagline: 'Asia’s premier university campus, BLOCK71 startup ecosystem & world-class research.',
-    description: 'Ranked #8 globally (QS World Rankings), NUS is Singapore’s flagship institution. Students tour University Town (UTown), visit the NUS Enterprise startup hub BLOCK71, explore biomedical science clusters, and participate in academic briefings.',
+    description: 'Ranked #8 globally (QS World Rankings), NUS is Singapore’s flagship institution. Students tour University Town (UTown), visit the NUS Enterprise startup hub BLOCK71, explore biomedical science clusters, and participate in academic faculty briefings.',
+    targetDepartments: ['School of Computing', 'Faculty of Engineering', 'NUS Business School', 'Yong Loo Lin School of Medicine'],
     keyHighlights: [
       'University Town (UTown) sustainable residential & study colleges',
       'BLOCK71 / NUS Enterprise high-tech startup incubator ecosystem',
@@ -223,6 +315,10 @@ const INSTITUTIONS: Institution[] = [
       'Immerse in an elite global academic research culture',
       'Understand the journey from university IP to commercial tech ventures',
       'Obtain insider advice on competitive international university admissions'
+    ],
+    specialWorkshops: [
+      { title: 'BLOCK71 Deep-Tech Startup Incubation', duration: '90 Mins', focus: 'Venture scaling, founder pitch evaluation, and patent commercialization.' },
+      { title: 'NUS International Admissions Masterclass', duration: '60 Mins', focus: 'Portfolio requirements, scholarship avenues, and faculty interviews.' }
     ]
   }
 ]
@@ -230,9 +326,11 @@ const INSTITUTIONS: Institution[] = [
 interface Itinerary {
   id: string
   title: string
-  targetCohort: 'School (Grades 6–12)' | 'College & Engineering' | 'MBA & Business Schools'
+  targetCohort: string
   duration: string
   badge: string
+  circuitPdfUrl?: string
+  estimatedPriceSgd?: number
   highlights: string[]
   days: {
     day: number
@@ -251,6 +349,8 @@ const ITINERARIES: Itinerary[] = [
     targetCohort: 'School (Grades 6–12)',
     duration: '4 Days / 3 Nights',
     badge: 'Best for K-12 Schools',
+    circuitPdfUrl: '/brochure/Singapore.pdf',
+    estimatedPriceSgd: 580,
     highlights: [
       'Singapore Science Centre & 8K Omni-Theatre Show',
       'Marina Barrage & Sustainable Singapore Gallery',
@@ -299,6 +399,8 @@ const ITINERARIES: Itinerary[] = [
     targetCohort: 'College & Engineering',
     duration: '5 Days / 4 Nights',
     badge: 'Popular with Tech & Science Colleges',
+    circuitPdfUrl: '/brochure/Singapore.pdf',
+    estimatedPriceSgd: 725,
     highlights: [
       'NUS University Town & Enterprise BLOCK71 Startup Incubator',
       'NTU The Hive Campus Tour & CleanTech One Sustainable Park',
@@ -355,6 +457,8 @@ const ITINERARIES: Itinerary[] = [
     targetCohort: 'MBA & Business Schools',
     duration: '5 Days / 4 Nights',
     badge: 'Designed for MBA & Executive Cohorts',
+    circuitPdfUrl: '/brochure/Singapore.pdf',
+    estimatedPriceSgd: 920,
     highlights: [
       'Singapore Management University (SMU) FinTech Seminar',
       'PSA Singapore Smart Port & Maritime Logistics Briefing',
@@ -409,37 +513,37 @@ const ITINERARIES: Itinerary[] = [
 
 const LEARNING_PILLARS = [
   {
-    icon: <Cpu size={28} color="#2563EB" />,
+    icon: <Cpu size={26} color="#2563EB" />,
     title: 'STEM, Robotics & AI',
-    description: 'Hands-on programming, molecular biology labs at Singapore Science Centre, and drone/robotics automation testbeds.',
+    description: 'Hands-on coding, molecular labs at Science Centre, and drone/robotics automation testbeds.',
     bg: '#EFF6FF',
     border: '#BFDBFE'
   },
   {
-    icon: <Globe size={28} color="#0D9488" />,
+    icon: <Globe size={26} color="#0D9488" />,
     title: 'Sustainability & Circular Economy',
-    description: 'Closed-loop water reclamation (NEWater), Marina Barrage flood control engineering, and zero-carbon building designs.',
+    description: 'Closed-loop water reclamation (NEWater), Marina Barrage flood engineering, and zero-carbon buildings.',
     bg: '#F0FDFA',
     border: '#99F6E4'
   },
   {
-    icon: <Building2 size={28} color="#D97706" />,
+    icon: <Building2 size={26} color="#D97706" />,
     title: 'Smart Nation Urban Engineering',
-    description: 'Autonomous vehicle testbeds, URA 3D spatial planning, green infrastructure, and high-density transit integration.',
+    description: 'Autonomous vehicle testbeds, URA 3D spatial planning, green infrastructure, and transit systems.',
     bg: '#FFFBEB',
     border: '#FDE68A'
   },
   {
-    icon: <TrendingUp size={28} color="#7C3AED" />,
+    icon: <TrendingUp size={26} color="#7C3AED" />,
     title: 'Global Trade & Logistics Hubs',
-    description: 'Tuas Mega Port automation, automated logistics warehousing, and Changi airfreight multimodal supply chains.',
+    description: 'Tuas Mega Port automation, automated logistics warehousing, and Changi multimodal supply chains.',
     bg: '#FAF5FF',
     border: '#E9D5FF'
   },
   {
-    icon: <GraduationCap size={28} color="#E11D48" />,
+    icon: <GraduationCap size={26} color="#E11D48" />,
     title: 'Top University & Design Immersions',
-    description: 'Campus masterclasses at NUS (#8 World), NTU (#15 World), SUTD (MIT-partnered) and SMU business schools.',
+    description: 'Campus masterclasses at NUS (#8 World), NTU (#15 World), SUTD (MIT-partnered) and SMU.',
     bg: '#FFF1F2',
     border: '#FECDD3'
   }
@@ -448,23 +552,28 @@ const LEARNING_PILLARS = [
 const FAQS = [
   {
     q: 'How many complimentary slots do teachers or chaperones receive?',
-    a: 'For all our educational tour cohorts, Flying Wonders provides 1 complimentary chaperone package (twin-sharing accommodation, all meals, admissions, and coach travel) for every 10 paying students (1:10 ratio).'
+    a: 'For all our educational tour cohorts, Flying Wonders provides 1 complimentary chaperone package (twin-sharing accommodation, all meals, admissions, and coach travel) for every 10 paying students (1:10 ratio).',
+    category: 'Logistics & Chaperones'
   },
   {
     q: 'Can itineraries be customized to match specific school curriculums (IB, CBSE, IGCSE, B.Tech)?',
-    a: 'Yes, absolutely. We tailor daily workshops, laboratory sessions, and guided walkthroughs to align precisely with specific syllabus learning outcomes (e.g. IB Environmental Systems, CBSE Physics, B.Tech IoT/Robotics, or MBA FinTech).'
+    a: 'Yes, absolutely. We tailor daily workshops, laboratory sessions, and guided walkthroughs to align precisely with specific syllabus learning outcomes (e.g. IB Environmental Systems, CBSE Physics, B.Tech IoT/Robotics, or MBA FinTech).',
+    category: 'Curriculum & Labs'
   },
   {
     q: 'What safety and emergency protocols are in place in Singapore?',
-    a: 'Singapore is universally recognized as the world’s safest country for student travel. Flying Wonders provides 24/7 dedicated on-ground tour managers, comprehensive student travel medical & emergency evacuation insurance, certified English/Hindi/regional guides, and direct hospital network partnerships.'
+    a: 'Singapore is universally recognized as the world’s safest country for student travel. Flying Wonders provides 24/7 dedicated on-ground tour managers, comprehensive student travel medical & emergency evacuation insurance, certified English/Hindi/regional guides, and direct hospital network partnerships.',
+    category: 'Safety & Medical'
   },
   {
     q: 'Do you cater to dietary requirements like Halal, Pure Vegetarian, and Jain meals?',
-    a: 'Yes. All student group meal itineraries are fully customized with certified Halal, Pure Vegetarian, Vegan, or Jain meal options prepared by licensed food partners throughout Singapore.'
+    a: 'Yes. All student group meal itineraries are fully customized with certified Halal, Pure Vegetarian, Vegan, or Jain meal options prepared by licensed food partners throughout Singapore.',
+    category: 'Logistics & Chaperones'
   },
   {
     q: 'What is the booking lead time and payment schedule for school delegations?',
-    a: 'We recommend initiating planning 6 to 12 weeks prior to departure to secure university lab slots, flight blocks, and hotel room allotments. Payment terms typically include a booking deposit with balance structured in milestones prior to departure.'
+    a: 'We recommend initiating planning 6 to 12 weeks prior to departure to secure university lab slots, flight blocks, and hotel room allotments. Payment terms typically include a booking deposit with balance structured in milestones prior to departure.',
+    category: 'Booking & Payment'
   }
 ]
 
@@ -475,14 +584,8 @@ export default function EducationToursPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [expandedDay, setExpandedDay] = useState<number | null>(1)
 
-  useEffect(() => {
-    client
-      .fetch(`*[_type == "educationToursSettings"][0]`)
-      .then((res) => {
-        if (res) setSanitySettings(res)
-      })
-      .catch(() => {})
-  }, [])
+  // Institution Modal (for full details / media / syllabus download)
+  const [selectedInstitutionDetail, setSelectedInstitutionDetail] = useState<Institution | null>(null)
 
   // Estimator States
   const [studentCount, setStudentCount] = useState<number>(30)
@@ -502,24 +605,50 @@ export default function EducationToursPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
 
+  useEffect(() => {
+    client
+      .fetch(`*[_type == "educationToursSettings"][0]`)
+      .then((res) => {
+        if (res) setSanitySettings(res)
+      })
+      .catch(() => {})
+  }, [])
+
   // Dynamic Institutions List
-  const institutionsList = useMemo(() => {
+  const institutionsList: Institution[] = useMemo(() => {
     if (sanitySettings?.institutions && Array.isArray(sanitySettings.institutions) && sanitySettings.institutions.length > 0) {
-      return sanitySettings.institutions.map((inst: any, idx: number) => ({
-        id: inst.id || `inst-${idx}`,
-        name: inst.name || '',
-        shortName: inst.shortName || inst.name || '',
-        badge: inst.badge || 'Academic Lab',
-        badgeBg: inst.badgeBg || '#2563EB',
-        category: inst.category || 'General',
-        cohorts: inst.cohorts || ['School', 'College', 'MBA'],
-        location: inst.location || 'Singapore',
-        image: inst.imageUrl || INSTITUTIONS[idx % INSTITUTIONS.length].image,
-        tagline: inst.tagline || '',
-        description: inst.description || '',
-        keyHighlights: inst.keyHighlights || [],
-        learningOutcomes: inst.learningOutcomes || []
-      }))
+      return sanitySettings.institutions.map((inst: any, idx: number) => {
+        const fallback = INSTITUTIONS[idx % INSTITUTIONS.length]
+        let resolvedImage = inst.imageUrl || fallback.imageUrl
+        if (inst.image?.asset) {
+          try {
+            resolvedImage = urlForImage(inst.image)?.url() || resolvedImage
+          } catch (e) {}
+        }
+        return {
+          id: inst.id || fallback.id || `inst-${idx}`,
+          name: inst.name || fallback.name,
+          shortName: inst.shortName || fallback.shortName,
+          globalRank: inst.globalRank || fallback.globalRank,
+          establishedYear: inst.establishedYear || fallback.establishedYear,
+          badge: inst.badge || fallback.badge,
+          badgeBg: inst.badgeBg || fallback.badgeBg,
+          category: inst.category || fallback.category,
+          cohorts: inst.cohorts || fallback.cohorts,
+          location: inst.location || fallback.location,
+          imageUrl: resolvedImage,
+          galleryPhotos: inst.galleryPhotos || fallback.galleryPhotos,
+          videoUrl: inst.videoUrl || fallback.videoUrl,
+          brochureUrl: inst.brochureUrl || fallback.brochureUrl,
+          visitDuration: inst.visitDuration || fallback.visitDuration,
+          tagline: inst.tagline || fallback.tagline,
+          description: inst.description || fallback.description,
+          targetDepartments: inst.targetDepartments || fallback.targetDepartments,
+          keyHighlights: inst.keyHighlights || fallback.keyHighlights,
+          learningOutcomes: inst.learningOutcomes || fallback.learningOutcomes,
+          specialWorkshops: inst.specialWorkshops || fallback.specialWorkshops
+        }
+      })
     }
     return INSTITUTIONS
   }, [sanitySettings])
@@ -531,7 +660,7 @@ export default function EducationToursPage() {
   }, [selectedCohort, institutionsList])
 
   // Dynamic Itineraries List
-  const itinerariesList = useMemo(() => {
+  const itinerariesList: Itinerary[] = useMemo(() => {
     if (sanitySettings?.itineraries && Array.isArray(sanitySettings.itineraries) && sanitySettings.itineraries.length > 0) {
       return sanitySettings.itineraries
     }
@@ -607,48 +736,48 @@ export default function EducationToursPage() {
     <div style={{ background: '#F8FAFC', minHeight: '100vh', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}>
       
       {/* ─── Breadcrumb ─── */}
-      <div style={{ background: '#FFF', borderBottom: '1px solid #E2E8F0', padding: '0.6rem 1.5rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: SLATE }}>
+      <div style={{ background: '#FFF', borderBottom: '1px solid #E2E8F0', padding: '0.45rem 1.2rem' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: SLATE }}>
           <Link href="/" style={{ color: SLATE, textDecoration: 'none' }}>Home</Link>
-          <ChevronRight size={13} />
+          <ChevronRight size={12} />
           <Link href="/services-catalog" style={{ color: SLATE, textDecoration: 'none' }}>Services</Link>
-          <ChevronRight size={13} />
+          <ChevronRight size={12} />
           <span style={{ color: EMERALD, fontWeight: 700 }}>Education Tours Singapore</span>
         </div>
       </div>
 
-      {/* ─── Hero Section ─── */}
+      {/* ─── Compact Hero Section ─── */}
       <section style={{
         background: 'linear-gradient(140deg, #05241B 0%, #093E30 45%, #0B2545 100%)',
         color: '#FFF',
-        padding: 'clamp(3.5rem, 7vw, 6rem) 1.5rem clamp(4.5rem, 9vw, 7.5rem)',
+        padding: 'clamp(2.2rem, 4.5vw, 3.4rem) 1.2rem clamp(3.2rem, 6vw, 4.5rem)',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Decorative Grid Pattern */}
+        {/* Subtle grid pattern */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px)',
-          backgroundSize: '28px 28px',
+          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
           pointerEvents: 'none'
         }} />
 
-        <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: '840px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
           {/* Top Pill */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', padding: '0.35rem 1rem', borderRadius: '30px', fontSize: '0.78rem', fontWeight: 600, marginBottom: '1.5rem', backdropFilter: 'blur(8px)' }}>
-            <Sparkles size={15} color="#F59E0B" />
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', padding: '0.25rem 0.85rem', borderRadius: '30px', fontSize: '0.74rem', fontWeight: 600, marginBottom: '1rem', backdropFilter: 'blur(8px)' }}>
+            <Sparkles size={13} color="#F59E0B" />
             <span>{sanitySettings?.heroBadge || 'Singapore: The World’s Safest Live Classroom • K-12, College & MBA'}</span>
           </div>
 
-          {/* Heading */}
+          {/* Compact Main Heading */}
           <h1 style={{
             fontFamily: 'var(--font-playfair), serif',
-            fontSize: 'clamp(2.2rem, 5.5vw, 3.8rem)',
+            fontSize: 'clamp(1.8rem, 4vw, 2.75rem)',
             fontWeight: 800,
-            lineHeight: 1.15,
-            marginBottom: '1.25rem',
+            lineHeight: 1.18,
+            marginBottom: '0.75rem',
             letterSpacing: '-0.01em'
           }}>
             {sanitySettings?.heroTitle ? (
@@ -656,66 +785,89 @@ export default function EducationToursPage() {
             ) : (
               <>
                 Singapore Educational Tours<br />
-                <span style={{ color: AMBER_LIGHT }}>& Academic Immersions</span>
+                <span style={{ color: AMBER_LIGHT }}>& Campus Academic Immersions</span>
               </>
             )}
           </h1>
 
+          {/* Subtitle */}
           <p style={{
-            fontSize: 'clamp(0.95rem, 2vw, 1.12rem)',
+            fontSize: 'clamp(0.85rem, 1.8vw, 0.98rem)',
             color: 'rgba(255,255,255,0.85)',
-            marginBottom: '2rem',
-            lineHeight: 1.65,
-            maxWidth: '750px',
-            margin: '0 auto 2rem'
+            marginBottom: '1.4rem',
+            lineHeight: 1.55,
+            maxWidth: '680px',
+            margin: '0 auto 1.4rem'
           }}>
             {sanitySettings?.heroSubtitle || (
               <>Experiential study circuits curated for <strong>Schools (K–12)</strong>, <strong>Engineering Colleges</strong>, and <strong>MBA Business Schools</strong>. Explore world-class innovation labs, sustainable engineering marvels, and top global university campuses.</>
             )}
           </p>
 
-          {/* CTA Group */}
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {/* Compact CTA Group with Curated Circuits Link in between */}
+          <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
               onClick={() => setIsModalOpen(true)}
               style={{
                 background: AMBER_LIGHT,
                 color: '#1E293B',
                 border: 'none',
-                padding: '0.85rem 2rem',
-                borderRadius: '30px',
+                padding: '0.7rem 1.4rem',
+                borderRadius: '25px',
                 fontWeight: 800,
                 cursor: 'pointer',
-                boxShadow: '0 6px 20px rgba(245,158,11,0.45)',
+                boxShadow: '0 4px 14px rgba(245,158,11,0.4)',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.95rem',
+                gap: '6px',
+                fontSize: '0.85rem',
                 transition: 'all 0.2s'
               }}
             >
               <span>Request Custom Proposal</span>
-              <ArrowRight size={18} />
+              <ArrowRight size={15} />
             </button>
 
+            {/* In-Between Link to Curated Circuits */}
             <a
-              href="#institutions"
+              href="#circuits"
               style={{
-                background: 'rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.18)',
                 color: '#FFF',
-                border: '1px solid rgba(255,255,255,0.25)',
-                padding: '0.85rem 1.8rem',
-                borderRadius: '30px',
+                border: '1px solid rgba(255,255,255,0.35)',
+                padding: '0.7rem 1.35rem',
+                borderRadius: '25px',
                 fontWeight: 700,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.95rem',
+                gap: '6px',
+                fontSize: '0.85rem',
                 backdropFilter: 'blur(8px)'
               }}
             >
-              <Compass size={18} color="#6EE7B7" />
+              <Layers size={15} color="#FBBF24" />
+              <span>Curated Study Circuits</span>
+            </a>
+
+            <a
+              href="#institutions"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                color: '#FFF',
+                border: '1px solid rgba(255,255,255,0.22)',
+                padding: '0.7rem 1.35rem',
+                borderRadius: '25px',
+                fontWeight: 700,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '0.85rem',
+                backdropFilter: 'blur(8px)'
+              }}
+            >
+              <Compass size={15} color="#6EE7B7" />
               <span>Explore 7 Partner Institutions</span>
             </a>
 
@@ -724,95 +876,95 @@ export default function EducationToursPage() {
               style={{
                 background: 'rgba(255,255,255,0.06)',
                 color: '#FFF',
-                border: '1px solid rgba(255,255,255,0.18)',
-                padding: '0.85rem 1.8rem',
-                borderRadius: '30px',
+                border: '1px solid rgba(255,255,255,0.16)',
+                padding: '0.7rem 1.25rem',
+                borderRadius: '25px',
                 fontWeight: 700,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.95rem',
+                gap: '6px',
+                fontSize: '0.85rem',
                 backdropFilter: 'blur(8px)'
               }}
             >
-              <DollarSign size={18} color="#FBBF24" />
-              <span>Calculate Group Cost</span>
+              <DollarSign size={15} color="#FBBF24" />
+              <span>Cost Estimator</span>
             </a>
           </div>
         </div>
       </section>
 
-      {/* ─── Floating Trust Stats Bar ─── */}
-      <section style={{ maxWidth: '1150px', margin: '-3.2rem auto 4rem', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
+      {/* ─── Compact Floating Trust Stats Bar ─── */}
+      <section style={{ maxWidth: '1100px', margin: '-2.4rem auto 3.5rem', padding: '0 1.2rem', position: 'relative', zIndex: 10 }}>
         <div style={{
           background: '#FFF',
-          borderRadius: '20px',
-          padding: '1.5rem 2rem',
-          boxShadow: '0 15px 35px rgba(0,0,0,0.08)',
+          borderRadius: '16px',
+          padding: '1rem 1.5rem',
+          boxShadow: '0 10px 28px rgba(0,0,0,0.06)',
           border: '1px solid #E2E8F0',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '1.5rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1rem'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
-              <Award size={24} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
+              <Award size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A' }}>75+ Cohorts</div>
-              <div style={{ fontSize: '0.75rem', color: SLATE }}>Facilitated since 2018</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A' }}>75+ Cohorts</div>
+              <div style={{ fontSize: '0.7rem', color: SLATE }}>Facilitated since 2018</div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D97706' }}>
-              <Users size={24} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D97706' }}>
+              <Users size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A' }}>1:10 Free Chaperone</div>
-              <div style={{ fontSize: '0.75rem', color: SLATE }}>100% Free teacher slots</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A' }}>1:10 Free Chaperone</div>
+              <div style={{ fontSize: '0.7rem', color: SLATE }}>100% Free teacher slots</div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB' }}>
-              <ShieldCheck size={24} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB' }}>
+              <ShieldCheck size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A' }}>100% Verified Safety</div>
-              <div style={{ fontSize: '0.75rem', color: SLATE }}>Medical & evacuation cover</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A' }}>100% Verified Safety</div>
+              <div style={{ fontSize: '0.7rem', color: SLATE }}>Medical & evacuation cover</div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FAF5FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C3AED' }}>
-              <GraduationCap size={24} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#FAF5FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C3AED' }}>
+              <GraduationCap size={20} />
             </div>
             <div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A' }}>7 Top Institutions</div>
-              <div style={{ fontSize: '0.75rem', color: SLATE }}>Science, Tech & Universities</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A' }}>7 Top Institutions</div>
+              <div style={{ fontSize: '0.7rem', color: SLATE }}>Science, Tech & Universities</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ─── 5 Learning Pillars ─── */}
-      <section style={{ maxWidth: '1200px', margin: '0 auto 5rem', padding: '0 1.5rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Academic Excellence</span>
-          <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.2rem', fontWeight: 800, color: '#0F172A', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
+      <section style={{ maxWidth: '1200px', margin: '0 auto 4.5rem', padding: '0 1.2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Academic Excellence</span>
+          <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.9rem', fontWeight: 800, color: '#0F172A', marginTop: '0.2rem', marginBottom: '0.35rem' }}>
             Core Educational Learning Pillars
           </h2>
-          <p style={{ color: SLATE, fontSize: '0.95rem', maxWidth: '680px', margin: '0 auto' }}>
+          <p style={{ color: SLATE, fontSize: '0.88rem', maxWidth: '640px', margin: '0 auto' }}>
             Every circuit is structured around Singapore’s national strengths—integrating hands-on STEM discovery, urban ecology, smart port logistics, and world-class higher education.
           </p>
         </div>
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-          gap: '1.25rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1rem'
         }}>
           {LEARNING_PILLARS.map((p, idx) => (
             <div
@@ -820,48 +972,47 @@ export default function EducationToursPage() {
               style={{
                 background: p.bg,
                 border: `1px solid ${p.border}`,
-                borderRadius: '16px',
-                padding: '1.5rem',
+                borderRadius: '14px',
+                padding: '1.25rem',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.75rem',
-                transition: 'transform 0.2s',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                gap: '0.6rem',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
               }}
             >
               <div>{p.icon}</div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>{p.title}</h3>
-              <p style={{ fontSize: '0.78rem', color: '#334155', lineHeight: 1.55, margin: 0 }}>{p.description}</p>
+              <h3 style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>{p.title}</h3>
+              <p style={{ fontSize: '0.75rem', color: '#334155', lineHeight: 1.5, margin: 0 }}>{p.description}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ─── Featured 7 Institutions ─── */}
-      <section id="institutions" style={{ background: '#FFF', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0', padding: '5rem 1.5rem' }}>
+      {/* ─── Enhanced Featured 7 Institutions ─── */}
+      <section id="institutions" style={{ background: '#FFF', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0', padding: '4.5rem 1.2rem' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '3rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1.2rem', marginBottom: '2.5rem' }}>
             <div>
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Destination Masterclasses</span>
-              <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.2rem', fontWeight: 800, color: '#0F172A', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
-                Featured 7 Institutions & Hubs
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Direct Faculty & Lab Access</span>
+              <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2rem', fontWeight: 800, color: '#0F172A', marginTop: '0.2rem', marginBottom: '0.4rem' }}>
+                Featured 7 Institutions & Innovation Hubs
               </h2>
-              <p style={{ color: SLATE, fontSize: '0.95rem', maxWidth: '650px', margin: 0 }}>
-                Direct access, guided laboratory workshops, and faculty briefings across Singapore’s iconic centers of science, sustainability, and higher education.
+              <p style={{ color: SLATE, fontSize: '0.88rem', maxWidth: '640px', margin: 0 }}>
+                Direct access, laboratory masterclasses, and faculty briefings across Singapore’s iconic centers of science, sustainability, and higher education.
               </p>
             </div>
 
             {/* Cohort Tabs */}
-            <div style={{ display: 'flex', background: '#F1F5F9', padding: '0.35rem', borderRadius: '12px', gap: '4px' }}>
+            <div style={{ display: 'flex', background: '#F1F5F9', padding: '0.3rem', borderRadius: '10px', gap: '4px' }}>
               {(['All', 'School', 'College', 'MBA'] as const).map((cohort) => (
                 <button
                   key={cohort}
                   onClick={() => setSelectedCohort(cohort)}
                   style={{
                     border: 'none',
-                    padding: '0.55rem 1.1rem',
-                    borderRadius: '8px',
-                    fontSize: '0.8rem',
+                    padding: '0.45rem 1rem',
+                    borderRadius: '7px',
+                    fontSize: '0.78rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     background: selectedCohort === cohort ? EMERALD : 'transparent',
@@ -879,14 +1030,14 @@ export default function EducationToursPage() {
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-            gap: '2rem'
+            gap: '1.75rem'
           }}>
             {filteredInstitutions.map((inst: any) => (
               <div
                 key={inst.id}
                 style={{
                   background: '#FFF',
-                  borderRadius: '18px',
+                  borderRadius: '16px',
                   border: '1px solid #E2E8F0',
                   overflow: 'hidden',
                   boxShadow: '0 4px 15px rgba(0,0,0,0.04)',
@@ -895,67 +1046,105 @@ export default function EducationToursPage() {
                   transition: 'transform 0.2s, box-shadow 0.2s'
                 }}
               >
-                {/* Photo & Badge */}
-                <div style={{ position: 'relative', height: '200px', width: '100%', overflow: 'hidden' }}>
+                {/* Photo & Overlay */}
+                <div style={{ position: 'relative', height: '190px', width: '100%', overflow: 'hidden' }}>
                   <img
-                    src={inst.image}
+                    src={inst.imageUrl}
                     alt={inst.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                   <div style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)'
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)'
                   }} />
                   
-                  <span style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    background: inst.badgeBg,
-                    color: '#FFF',
-                    fontSize: '0.72rem',
-                    fontWeight: 800,
-                    padding: '0.25rem 0.75rem',
-                    borderRadius: '20px',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-                  }}>
-                    {inst.badge}
-                  </span>
+                  {/* Top Badges */}
+                  <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      background: inst.badgeBg,
+                      color: '#FFF',
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      padding: '0.2rem 0.65rem',
+                      borderRadius: '14px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.25)'
+                    }}>
+                      {inst.badge}
+                    </span>
+                    {inst.globalRank && (
+                      <span style={{
+                        background: 'rgba(0,0,0,0.7)',
+                        color: '#FCD34D',
+                        border: '1px solid rgba(252,211,77,0.4)',
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        padding: '0.2rem 0.6rem',
+                        borderRadius: '14px',
+                        backdropFilter: 'blur(4px)'
+                      }}>
+                        ⭐ {inst.globalRank}
+                      </span>
+                    )}
+                  </div>
 
-                  <div style={{ position: 'absolute', bottom: '12px', left: '16px', right: '16px', color: '#FFF' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: '#FCD34D', marginBottom: '2px' }}>
-                      <MapPin size={12} />
+                  <div style={{ position: 'absolute', bottom: '10px', left: '14px', right: '14px', color: '#FFF' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: '#FCD34D', marginBottom: '2px' }}>
+                      <MapPin size={11} />
                       <span>{inst.location}</span>
+                      {inst.establishedYear && <span style={{ opacity: 0.8 }}>• {inst.establishedYear}</span>}
                     </div>
-                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, lineHeight: 1.3 }}>{inst.name}</h3>
+                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, lineHeight: 1.25 }}>{inst.name}</h3>
                   </div>
                 </div>
 
                 {/* Body Content */}
-                <div style={{ padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
-                    {/* Cohort tags */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.85rem' }}>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: SLATE }}>Cohorts:</span>
-                      {inst.cohorts?.map((c: any) => (
-                        <span key={c} style={{ background: '#F1F5F9', border: '1px solid #E2E8F0', padding: '0.15rem 0.55rem', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 700, color: '#334155' }}>
-                          {c}
+                    {/* Cohort tags & duration */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: SLATE }}>Cohorts:</span>
+                        {inst.cohorts?.map((c: any) => (
+                          <span key={c} style={{ background: '#F1F5F9', border: '1px solid #E2E8F0', padding: '0.12rem 0.45rem', borderRadius: '5px', fontSize: '0.65rem', fontWeight: 700, color: '#334155' }}>
+                            {c}
+                          </span>
+                        ))}
+                      </div>
+                      {inst.visitDuration && (
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '0.15rem 0.5rem', borderRadius: '6px' }}>
+                          ⏱️ {inst.visitDuration}
                         </span>
-                      ))}
+                      )}
                     </div>
 
-                    <p style={{ fontSize: '0.82rem', color: SLATE, lineHeight: 1.6, marginBottom: '1rem' }}>
+                    <p style={{ fontSize: '0.78rem', color: SLATE, lineHeight: 1.55, marginBottom: '0.85rem' }}>
                       {inst.description}
                     </p>
 
-                    {/* Key Highlights list */}
-                    <div style={{ marginBottom: '1.25rem' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <CheckCircle2 size={13} color="#059669" />
-                        <span>Key Highlights:</span>
+                    {/* Target Faculties / Departments */}
+                    {inst.targetDepartments && inst.targetDepartments.length > 0 && (
+                      <div style={{ marginBottom: '0.85rem' }}>
+                        <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.3rem' }}>
+                          Target Faculties:
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {inst.targetDepartments.map((dept: string, i: number) => (
+                            <span key={i} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '0.12rem 0.45rem', borderRadius: '4px', fontSize: '0.65rem', color: '#475569' }}>
+                              {dept}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.76rem', color: '#475569', lineHeight: 1.55 }}>
+                    )}
+
+                    {/* Key Highlights list */}
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle2 size={12} color="#059669" />
+                        <span>Key Facilities & Highlights:</span>
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.74rem', color: '#475569', lineHeight: 1.5 }}>
                         {inst.keyHighlights?.slice(0, 3).map((kh: any, i: number) => (
                           <li key={i}>{kh}</li>
                         ))}
@@ -964,10 +1153,27 @@ export default function EducationToursPage() {
                   </div>
 
                   {/* Card Bottom CTA */}
-                  <div style={{ paddingTop: '1rem', borderTop: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669' }}>
-                      Guided Lab & Workshop Included
-                    </span>
+                  <div style={{ paddingTop: '0.85rem', borderTop: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      onClick={() => setSelectedInstitutionDetail(inst)}
+                      style={{
+                        background: '#FFF',
+                        color: '#0F172A',
+                        border: '1px solid #CBD5E1',
+                        padding: '0.4rem 0.75rem',
+                        borderRadius: '8px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      <BookOpen size={13} color="#2563EB" />
+                      <span>Full Details & Labs</span>
+                    </button>
+
                     <button
                       onClick={() => {
                         setModalNotes(`Inquiring specifically for: ${inst.name}`)
@@ -979,7 +1185,7 @@ export default function EducationToursPage() {
                         border: '1px solid #A7F3D0',
                         padding: '0.4rem 0.85rem',
                         borderRadius: '8px',
-                        fontSize: '0.75rem',
+                        fontSize: '0.72rem',
                         fontWeight: 700,
                         cursor: 'pointer',
                         display: 'inline-flex',
@@ -988,7 +1194,7 @@ export default function EducationToursPage() {
                       }}
                     >
                       <span>Inquire</span>
-                      <ArrowRight size={13} />
+                      <ArrowRight size={12} />
                     </button>
                   </div>
                 </div>
@@ -999,20 +1205,20 @@ export default function EducationToursPage() {
       </section>
 
       {/* ─── Curated Itinerary Matrix ─── */}
-      <section style={{ maxWidth: '1200px', margin: '5rem auto', padding: '0 1.5rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Customizable Study Circuits</span>
-          <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.2rem', fontWeight: 800, color: '#0F172A', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
+      <section id="circuits" style={{ maxWidth: '1200px', margin: '4.5rem auto', padding: '0 1.2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Fully Customizable Curriculums</span>
+          <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2rem', fontWeight: 800, color: '#0F172A', marginTop: '0.2rem', marginBottom: '0.35rem' }}>
             Curated Day-by-Day Study Itineraries
           </h2>
-          <p style={{ color: SLATE, fontSize: '0.95rem', maxWidth: '680px', margin: '0 auto' }}>
-            Choose your student cohort to preview comprehensive day-by-day schedules, laboratory workshops, and verified learning outcomes.
+          <p style={{ color: SLATE, fontSize: '0.88rem', maxWidth: '640px', margin: '0 auto' }}>
+            Choose your student cohort to preview comprehensive schedules, laboratory masterclasses, syllabus documents, and verified learning outcomes.
           </p>
         </div>
 
         {/* Itinerary Selectors */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
-          {ITINERARIES.map((it) => (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+          {itinerariesList.map((it) => (
             <button
               key={it.id}
               onClick={() => {
@@ -1023,20 +1229,20 @@ export default function EducationToursPage() {
                 background: activeItineraryId === it.id ? EMERALD : '#FFF',
                 color: activeItineraryId === it.id ? '#FFF' : '#334155',
                 border: `1px solid ${activeItineraryId === it.id ? EMERALD : '#CBD5E1'}`,
-                padding: '0.75rem 1.4rem',
-                borderRadius: '12px',
-                fontSize: '0.85rem',
+                padding: '0.65rem 1.2rem',
+                borderRadius: '10px',
+                fontSize: '0.82rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                boxShadow: activeItineraryId === it.id ? '0 4px 12px rgba(9,62,48,0.25)' : 'none'
+                gap: '6px',
+                boxShadow: activeItineraryId === it.id ? '0 4px 12px rgba(9,62,48,0.2)' : 'none'
               }}
             >
-              <GraduationCap size={16} />
+              <GraduationCap size={15} />
               <span>{it.targetCohort}</span>
-              <span style={{ opacity: 0.8, fontSize: '0.75rem' }}>({it.duration})</span>
+              <span style={{ opacity: 0.8, fontSize: '0.72rem' }}>({it.duration})</span>
             </button>
           ))}
         </div>
@@ -1044,61 +1250,92 @@ export default function EducationToursPage() {
         {/* Active Itinerary Box */}
         <div style={{
           background: '#FFF',
-          borderRadius: '24px',
+          borderRadius: '20px',
           border: '1px solid #E2E8F0',
-          padding: 'clamp(1.5rem, 4vw, 2.5rem)',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.05)'
+          padding: 'clamp(1.25rem, 3.5vw, 2.2rem)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.04)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', paddingBottom: '1.5rem', borderBottom: '1px solid #E2E8F0', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', paddingBottom: '1.25rem', borderBottom: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
             <div>
-              <span style={{ background: '#FEF3C7', color: '#92400E', padding: '0.2rem 0.75rem', borderRadius: '14px', fontSize: '0.72rem', fontWeight: 800, display: 'inline-block', marginBottom: '0.5rem' }}>
+              <span style={{ background: '#FEF3C7', color: '#92400E', padding: '0.15rem 0.65rem', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 800, display: 'inline-block', marginBottom: '0.4rem' }}>
                 {activeItinerary.badge}
               </span>
-              <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.65rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+              <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
                 {activeItinerary.title}
               </h3>
-              <div style={{ display: 'flex', gap: '1rem', fontSize: '0.82rem', color: SLATE, marginTop: '0.4rem' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={14} /> {activeItinerary.duration}</span>
+              <div style={{ display: 'flex', gap: '0.85rem', fontSize: '0.78rem', color: SLATE, marginTop: '0.35rem', flexWrap: 'wrap' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={13} /> {activeItinerary.duration}</span>
                 <span>•</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Users size={14} /> {activeItinerary.targetCohort}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Users size={13} /> {activeItinerary.targetCohort}</span>
+                {activeItinerary.estimatedPriceSgd && (
+                  <>
+                    <span>•</span>
+                    <span style={{ color: EMERALD, fontWeight: 700 }}>SGD ~{activeItinerary.estimatedPriceSgd} / student</span>
+                  </>
+                )}
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                setModalCohort(activeItinerary.targetCohort)
-                setModalNotes(`Inquiring about circuit: ${activeItinerary.title}`)
-                setIsModalOpen(true)
-              }}
-              style={{
-                background: EMERALD,
-                color: '#FFF',
-                border: 'none',
-                padding: '0.75rem 1.6rem',
-                borderRadius: '12px',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 4px 12px rgba(9,62,48,0.25)'
-              }}
-            >
-              <Send size={15} />
-              <span>Book This Circuit</span>
-            </button>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {activeItinerary.circuitPdfUrl && (
+                <a
+                  href={activeItinerary.circuitPdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: '#F1F5F9',
+                    color: '#0F172A',
+                    border: '1px solid #CBD5E1',
+                    padding: '0.65rem 1.2rem',
+                    borderRadius: '10px',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Download size={14} />
+                  <span>Download Syllabus</span>
+                </a>
+              )}
+              <button
+                onClick={() => {
+                  setModalCohort(activeItinerary.targetCohort)
+                  setModalNotes(`Inquiring about circuit: ${activeItinerary.title}`)
+                  setIsModalOpen(true)
+                }}
+                style={{
+                  background: EMERALD,
+                  color: '#FFF',
+                  border: 'none',
+                  padding: '0.65rem 1.4rem',
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 3px 10px rgba(9,62,48,0.2)'
+                }}
+              >
+                <Send size={14} />
+                <span>Book This Circuit</span>
+              </button>
+            </div>
           </div>
 
           {/* Highlights */}
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.6rem' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.5rem' }}>
               Circuit Inclusions:
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
               {activeItinerary.highlights?.map((h: any, i: number) => (
-                <span key={i} style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46', padding: '0.35rem 0.85rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                  <CheckCircle2 size={13} color="#059669" />
+                <span key={i} style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46', padding: '0.3rem 0.75rem', borderRadius: '7px', fontSize: '0.72rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <CheckCircle2 size={12} color="#059669" />
                   <span>{h}</span>
                 </span>
               ))}
@@ -1106,7 +1343,7 @@ export default function EducationToursPage() {
           </div>
 
           {/* Day By Day Accordions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {activeItinerary.days?.map((d: any) => {
               const isExpanded = expandedDay === d.day
               return (
@@ -1114,7 +1351,7 @@ export default function EducationToursPage() {
                   key={d.day}
                   style={{
                     border: `1px solid ${isExpanded ? '#10B981' : '#E2E8F0'}`,
-                    borderRadius: '14px',
+                    borderRadius: '12px',
                     overflow: 'hidden',
                     background: isExpanded ? '#F0FDF4' : '#FFF',
                     transition: 'all 0.15s'
@@ -1124,7 +1361,7 @@ export default function EducationToursPage() {
                     onClick={() => setExpandedDay(isExpanded ? null : d.day)}
                     style={{
                       width: '100%',
-                      padding: '1rem 1.25rem',
+                      padding: '0.85rem 1.1rem',
                       background: 'transparent',
                       border: 'none',
                       textAlign: 'left',
@@ -1134,39 +1371,39 @@ export default function EducationToursPage() {
                       cursor: 'pointer'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: EMERALD, color: '#FFF', fontWeight: 800, fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '7px', background: EMERALD, color: '#FFF', fontWeight: 800, fontSize: '0.78rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         D{d.day}
                       </div>
                       <div>
-                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase' }}>Day 0{d.day}</div>
-                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A' }}>{d.title}</div>
+                        <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase' }}>Day 0{d.day}</div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>{d.title}</div>
                       </div>
                     </div>
                     <div>
-                      {isExpanded ? <ChevronUp size={18} color={SLATE} /> : <ChevronDown size={18} color={SLATE} />}
+                      {isExpanded ? <ChevronUp size={16} color={SLATE} /> : <ChevronDown size={16} color={SLATE} />}
                     </div>
                   </button>
 
                   {isExpanded && (
-                    <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid #E2E8F0' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem', marginTop: '1rem', marginBottom: '1rem' }}>
-                        <div style={{ background: '#FFF', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#D97706', display: 'block', marginBottom: '0.25rem' }}>🌅 Morning Schedule</span>
-                          <p style={{ fontSize: '0.78rem', color: SLATE, margin: 0, lineHeight: 1.55 }}>{d.morning}</p>
+                    <div style={{ padding: '0 1.1rem 1.1rem', borderTop: '1px solid #E2E8F0' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', marginTop: '0.85rem', marginBottom: '0.85rem' }}>
+                        <div style={{ background: '#FFF', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#D97706', display: 'block', marginBottom: '0.2rem' }}>🌅 Morning Schedule</span>
+                          <p style={{ fontSize: '0.74rem', color: SLATE, margin: 0, lineHeight: 1.5 }}>{d.morning}</p>
                         </div>
-                        <div style={{ background: '#FFF', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#2563EB', display: 'block', marginBottom: '0.25rem' }}>☀️ Afternoon Immersion</span>
-                          <p style={{ fontSize: '0.78rem', color: SLATE, margin: 0, lineHeight: 1.55 }}>{d.afternoon}</p>
+                        <div style={{ background: '#FFF', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#2563EB', display: 'block', marginBottom: '0.2rem' }}>☀️ Afternoon Immersion</span>
+                          <p style={{ fontSize: '0.74rem', color: SLATE, margin: 0, lineHeight: 1.5 }}>{d.afternoon}</p>
                         </div>
-                        <div style={{ background: '#FFF', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
-                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#7C3AED', display: 'block', marginBottom: '0.25rem' }}>🌙 Evening Debrief & Dinner</span>
-                          <p style={{ fontSize: '0.78rem', color: SLATE, margin: 0, lineHeight: 1.55 }}>{d.evening}</p>
+                        <div style={{ background: '#FFF', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#7C3AED', display: 'block', marginBottom: '0.2rem' }}>🌙 Evening Debrief & Dinner</span>
+                          <p style={{ fontSize: '0.74rem', color: SLATE, margin: 0, lineHeight: 1.5 }}>{d.evening}</p>
                         </div>
                       </div>
 
-                      <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.75rem 1rem', borderRadius: '10px', display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.78rem' }}>
-                        <Lightbulb size={16} color="#059669" style={{ marginTop: '2px', flexShrink: 0 }} />
+                      <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.65rem 0.85rem', borderRadius: '8px', display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.74rem' }}>
+                        <Lightbulb size={14} color="#059669" style={{ marginTop: '2px', flexShrink: 0 }} />
                         <div>
                           <strong style={{ color: '#065F46' }}>Core Learning Outcome: </strong>
                           <span style={{ color: '#047857' }}>{d.learningOutcome}</span>
@@ -1182,30 +1419,30 @@ export default function EducationToursPage() {
       </section>
 
       {/* ─── Interactive Estimator ─── */}
-      <section id="estimator" style={{ background: '#FFF', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0', padding: '5rem 1.5rem' }}>
-        <div style={{ maxWidth: '1150px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Budgeting & Transparency</span>
-            <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.2rem', fontWeight: 800, color: '#0F172A', marginTop: '0.25rem', marginBottom: '0.5rem' }}>
+      <section id="estimator" style={{ background: '#FFF', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0', padding: '4.5rem 1.2rem' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Budgeting & Transparency</span>
+            <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2rem', fontWeight: 800, color: '#0F172A', marginTop: '0.2rem', marginBottom: '0.4rem' }}>
               Interactive Group Cost Estimator
             </h2>
-            <p style={{ color: SLATE, fontSize: '0.95rem', maxWidth: '680px', margin: '0 auto' }}>
+            <p style={{ color: SLATE, fontSize: '0.88rem', maxWidth: '640px', margin: '0 auto' }}>
               Estimate complete per-student tour packages—including laboratory admissions, private coach transfers, 3 meals daily, travel medical insurance, and complimentary chaperone slots.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.75rem', alignItems: 'start' }}>
             
             {/* Estimator Controls */}
-            <div style={{ background: '#F8FAFC', borderRadius: '20px', border: '1px solid #E2E8F0', padding: '2rem' }}>
+            <div style={{ background: '#F8FAFC', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.75rem' }}>
               {/* Slider 1: Students */}
-              <div style={{ marginBottom: '1.75rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Users size={16} color="#059669" />
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Users size={15} color="#059669" />
                     <span>Number of Students:</span>
                   </label>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: EMERALD, background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.2rem 0.75rem', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: EMERALD, background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.15rem 0.65rem', borderRadius: '6px' }}>
                     {studentCount} Students
                   </span>
                 </div>
@@ -1218,7 +1455,7 @@ export default function EducationToursPage() {
                   onChange={(e) => setStudentCount(Number(e.target.value))}
                   style={{ width: '100%', accentColor: EMERALD, cursor: 'pointer', height: '6px' }}
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: SLATE, marginTop: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: SLATE, marginTop: '3px' }}>
                   <span>15 Min Cohort</span>
                   <span>75 Mid-Size</span>
                   <span>150 Mega Group</span>
@@ -1226,13 +1463,13 @@ export default function EducationToursPage() {
               </div>
 
               {/* Slider 2: Duration */}
-              <div style={{ marginBottom: '1.75rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Clock size={16} color="#D97706" />
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Clock size={15} color="#D97706" />
                     <span>Tour Duration (Days):</span>
                   </label>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#D97706', background: '#FEF3C7', border: '1px solid #FDE68A', padding: '0.2rem 0.75rem', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#D97706', background: '#FEF3C7', border: '1px solid #FDE68A', padding: '0.15rem 0.65rem', borderRadius: '6px' }}>
                     {durationDays} Days / {durationDays - 1} Nights
                   </span>
                 </div>
@@ -1245,7 +1482,7 @@ export default function EducationToursPage() {
                   onChange={(e) => setDurationDays(Number(e.target.value))}
                   style={{ width: '100%', accentColor: '#D97706', cursor: 'pointer', height: '6px' }}
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: SLATE, marginTop: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.68rem', color: SLATE, marginTop: '3px' }}>
                   <span>3 Days Express</span>
                   <span>5 Days Standard</span>
                   <span>7 Days Comprehensive</span>
@@ -1253,11 +1490,11 @@ export default function EducationToursPage() {
               </div>
 
               {/* Accommodation Selector */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A', display: 'block', marginBottom: '0.6rem' }}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                <label style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0F172A', display: 'block', marginBottom: '0.5rem' }}>
                   Accommodation Category:
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.45rem' }}>
                   {[
                     { id: 'budget', name: 'Youth Hostel', desc: 'Quad-share' },
                     { id: 'standard', name: '3-Star Hotel', desc: 'Twin/Triple' },
@@ -1269,22 +1506,22 @@ export default function EducationToursPage() {
                       style={{
                         border: `1px solid ${hotelTier === tier.id ? EMERALD : '#CBD5E1'}`,
                         background: hotelTier === tier.id ? '#ECFDF5' : '#FFF',
-                        borderRadius: '10px',
-                        padding: '0.65rem 0.5rem',
+                        borderRadius: '8px',
+                        padding: '0.55rem 0.4rem',
                         textAlign: 'center',
                         cursor: 'pointer'
                       }}
                     >
-                      <div style={{ fontSize: '0.78rem', fontWeight: 800, color: hotelTier === tier.id ? EMERALD : '#0F172A' }}>{tier.name}</div>
-                      <div style={{ fontSize: '0.68rem', color: SLATE, marginTop: '2px' }}>{tier.desc}</div>
+                      <div style={{ fontSize: '0.74rem', fontWeight: 800, color: hotelTier === tier.id ? EMERALD : '#0F172A' }}>{tier.name}</div>
+                      <div style={{ fontSize: '0.65rem', color: SLATE, marginTop: '2px' }}>{tier.desc}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
               {/* Chaperone Callout */}
-              <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.85rem 1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem' }}>
-                <Users size={18} color="#059669" style={{ flexShrink: 0 }} />
+              <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', padding: '0.75rem 0.9rem', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.74rem' }}>
+                <Users size={16} color="#059669" style={{ flexShrink: 0 }} />
                 <span style={{ color: '#065F46' }}>
                   For <strong>{studentCount} students</strong>, you receive <strong>{chaperoneCount} complimentary teacher slots</strong> (100% free flight & tour assistance).
                 </span>
@@ -1295,46 +1532,46 @@ export default function EducationToursPage() {
             <div style={{
               background: 'linear-gradient(145deg, #062B21 0%, #093E30 60%, #0A1C30 100%)',
               color: '#FFF',
-              borderRadius: '24px',
-              padding: '2.2rem',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.15)'
+              borderRadius: '20px',
+              padding: '2rem',
+              boxShadow: '0 16px 36px rgba(0,0,0,0.12)'
             }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6EE7B7' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#6EE7B7' }}>
                 Estimated Total Investment
               </span>
-              <div style={{ marginTop: '0.75rem', marginBottom: '1.5rem' }}>
+              <div style={{ marginTop: '0.65rem', marginBottom: '1.25rem' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                  <span style={{ fontSize: '2.8rem', fontWeight: 800, color: '#FFF', lineHeight: 1 }}>SGD ~{estimatedSgdPerStudent}</span>
-                  <span style={{ color: '#A7F3D0', fontSize: '0.85rem' }}>/ student</span>
+                  <span style={{ fontSize: '2.5rem', fontWeight: 800, color: '#FFF', lineHeight: 1 }}>SGD ~{estimatedSgdPerStudent}</span>
+                  <span style={{ color: '#A7F3D0', fontSize: '0.82rem' }}>/ student</span>
                 </div>
-                <div style={{ fontSize: '1rem', color: '#FCD34D', marginTop: '0.4rem', fontWeight: 700 }}>
+                <div style={{ fontSize: '0.92rem', color: '#FCD34D', marginTop: '0.35rem', fontWeight: 700 }}>
                   Approx. INR ₹{estimatedInrPerStudent.toLocaleString('en-IN')} per student
                 </div>
               </div>
 
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.78rem', color: 'rgba(255,255,255,0.9)' }}>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.55rem', fontSize: '0.74rem', color: 'rgba(255,255,255,0.9)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={14} color="#6EE7B7" /> Accommodation ({hotelTier.toUpperCase()})</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Check size={13} color="#6EE7B7" /> Accommodation ({hotelTier.toUpperCase()})</span>
                   <span style={{ fontWeight: 700, color: '#6EE7B7' }}>{durationDays - 1} Nights</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={14} color="#6EE7B7" /> Dedicated Private AC Coach</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Check size={13} color="#6EE7B7" /> Dedicated Private AC Coach</span>
                   <span style={{ fontWeight: 700, color: '#6EE7B7' }}>Full-Day Transfers</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={14} color="#6EE7B7" /> All 7 Institution Admissions</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Check size={13} color="#6EE7B7" /> All 7 Institution Admissions</span>
                   <span style={{ fontWeight: 700, color: '#6EE7B7' }}>Lab Passes Included</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={14} color="#6EE7B7" /> 3 Daily Meals (Halal/Veg/Jain)</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Check size={13} color="#6EE7B7" /> 3 Daily Meals (Halal/Veg/Jain)</span>
                   <span style={{ fontWeight: 700, color: '#6EE7B7' }}>Breakfast, Lunch, Dinner</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={14} color="#6EE7B7" /> Student Medical Travel Insurance</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Check size={13} color="#6EE7B7" /> Student Medical Travel Insurance</span>
                   <span style={{ fontWeight: 700, color: '#6EE7B7' }}>Included (SGD 50K Cover)</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Check size={14} color="#FCD34D" /> Free Teacher Chaperones</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Check size={13} color="#FCD34D" /> Free Teacher Chaperones</span>
                   <span style={{ fontWeight: 800, color: '#FCD34D' }}>{chaperoneCount} Free Slots</span>
                 </div>
               </div>
@@ -1347,24 +1584,24 @@ export default function EducationToursPage() {
                 }}
                 style={{
                   width: '100%',
-                  marginTop: '2rem',
-                  padding: '0.95rem',
-                  borderRadius: '12px',
+                  marginTop: '1.75rem',
+                  padding: '0.85rem',
+                  borderRadius: '10px',
                   border: 'none',
                   background: AMBER_LIGHT,
                   color: '#1E293B',
                   fontWeight: 800,
-                  fontSize: '0.92rem',
+                  fontSize: '0.88rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '6px',
-                  boxShadow: '0 6px 18px rgba(245,158,11,0.4)'
+                  boxShadow: '0 5px 15px rgba(245,158,11,0.4)'
                 }}
               >
                 <span>Lock In This Estimated Quote</span>
-                <ArrowRight size={16} />
+                <ArrowRight size={15} />
               </button>
             </div>
           </div>
@@ -1372,15 +1609,15 @@ export default function EducationToursPage() {
       </section>
 
       {/* ─── FAQs ─── */}
-      <section style={{ maxWidth: '850px', margin: '5rem auto', padding: '0 1.5rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Coordinator Help Center</span>
-          <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.2rem', fontWeight: 800, color: '#0F172A', marginTop: '0.25rem' }}>
+      <section style={{ maxWidth: '850px', margin: '4.5rem auto', padding: '0 1.2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Coordinator Help Center</span>
+          <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2rem', fontWeight: 800, color: '#0F172A', marginTop: '0.2rem' }}>
             Frequently Asked Questions
           </h2>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {faqsList.map((faq: any, idx: number) => {
             const isOpen = openFaq === idx
             return (
@@ -1389,7 +1626,7 @@ export default function EducationToursPage() {
                 style={{
                   background: '#FFF',
                   border: '1px solid #E2E8F0',
-                  borderRadius: '14px',
+                  borderRadius: '12px',
                   overflow: 'hidden'
                 }}
               >
@@ -1397,7 +1634,7 @@ export default function EducationToursPage() {
                   onClick={() => setOpenFaq(isOpen ? null : idx)}
                   style={{
                     width: '100%',
-                    padding: '1.2rem',
+                    padding: '1rem 1.2rem',
                     background: 'transparent',
                     border: 'none',
                     textAlign: 'left',
@@ -1405,17 +1642,17 @@ export default function EducationToursPage() {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     cursor: 'pointer',
-                    fontSize: '0.92rem',
+                    fontSize: '0.88rem',
                     fontWeight: 700,
                     color: '#0F172A'
                   }}
                 >
                   <span>{faq.q}</span>
-                  <span>{isOpen ? <ChevronUp size={18} color={SLATE} /> : <ChevronDown size={18} color={SLATE} />}</span>
+                  <span>{isOpen ? <ChevronUp size={16} color={SLATE} /> : <ChevronDown size={16} color={SLATE} />}</span>
                 </button>
 
                 {isOpen && (
-                  <div style={{ padding: '0 1.2rem 1.2rem', fontSize: '0.82rem', color: SLATE, lineHeight: 1.6, borderTop: '1px solid #F1F5F9' }}>
+                  <div style={{ padding: '0 1.2rem 1.1rem', fontSize: '0.78rem', color: SLATE, lineHeight: 1.55, borderTop: '1px solid #F1F5F9' }}>
                     {faq.a}
                   </div>
                 )}
@@ -1429,38 +1666,38 @@ export default function EducationToursPage() {
       <section style={{
         background: 'linear-gradient(140deg, #05241B 0%, #093E30 50%, #05192D 100%)',
         color: '#FFF',
-        padding: '5rem 1.5rem',
+        padding: '4.5rem 1.2rem',
         textAlign: 'center'
       }}>
         <div style={{ maxWidth: '750px', margin: '0 auto' }}>
-          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#6EE7B7', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ready To Plan?</span>
-          <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, marginTop: '0.5rem', marginBottom: '1rem' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#6EE7B7', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Ready To Plan?</span>
+          <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.7rem, 3.8vw, 2.4rem)', fontWeight: 800, marginTop: '0.4rem', marginBottom: '0.85rem' }}>
             Empower Your Students with an Unforgettable Singapore Educational Tour
           </h2>
-          <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, marginBottom: '2rem' }}>
+          <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.55, marginBottom: '1.75rem' }}>
             Let our educational specialists build a tailored curriculum circuit for your school, college, or MBA institution with verified safety protocols and competitive group rates.
           </p>
 
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
               onClick={() => setIsModalOpen(true)}
               style={{
                 background: AMBER_LIGHT,
                 color: '#1E293B',
                 border: 'none',
-                padding: '0.85rem 2rem',
-                borderRadius: '30px',
+                padding: '0.75rem 1.8rem',
+                borderRadius: '25px',
                 fontWeight: 800,
                 cursor: 'pointer',
-                boxShadow: '0 6px 20px rgba(245,158,11,0.45)',
+                boxShadow: '0 5px 18px rgba(245,158,11,0.4)',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.95rem'
+                gap: '6px',
+                fontSize: '0.88rem'
               }}
             >
               <span>Request Institutional Proposal</span>
-              <ArrowRight size={18} />
+              <ArrowRight size={16} />
             </button>
 
             <a
@@ -1471,23 +1708,236 @@ export default function EducationToursPage() {
                 background: 'rgba(255,255,255,0.1)',
                 color: '#FFF',
                 border: '1px solid rgba(255,255,255,0.25)',
-                padding: '0.85rem 1.8rem',
-                borderRadius: '30px',
+                padding: '0.75rem 1.6rem',
+                borderRadius: '25px',
                 fontWeight: 700,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.95rem',
+                gap: '6px',
+                fontSize: '0.88rem',
                 backdropFilter: 'blur(8px)'
               }}
             >
-              <MessageCircle size={18} color="#6EE7B7" />
+              <MessageCircle size={16} color="#6EE7B7" />
               <span>Instant WhatsApp Consultation</span>
             </a>
           </div>
         </div>
       </section>
+
+      {/* ─── Full Institution Detail Modal (Photos, Video, Workshops, Syllabus Document) ─── */}
+      {selectedInstitutionDetail && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(5px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: '#FFF',
+            borderRadius: '20px',
+            maxWidth: '680px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            position: 'relative',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.3)'
+          }}>
+            {/* Modal Header Image */}
+            <div style={{ position: 'relative', height: '220px', width: '100%', overflow: 'hidden' }}>
+              <img
+                src={selectedInstitutionDetail.imageUrl}
+                alt={selectedInstitutionDetail.name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)'
+              }} />
+
+              <button
+                onClick={() => setSelectedInstitutionDetail(null)}
+                style={{
+                  position: 'absolute',
+                  top: '14px',
+                  right: '14px',
+                  background: 'rgba(0,0,0,0.6)',
+                  color: '#FFF',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  cursor: 'pointer',
+                  fontWeight: 800,
+                  fontSize: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ✕
+              </button>
+
+              <div style={{ position: 'absolute', bottom: '14px', left: '20px', right: '20px', color: '#FFF' }}>
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                  <span style={{ background: selectedInstitutionDetail.badgeBg, color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.55rem', borderRadius: '12px' }}>
+                    {selectedInstitutionDetail.badge}
+                  </span>
+                  {selectedInstitutionDetail.globalRank && (
+                    <span style={{ background: 'rgba(0,0,0,0.7)', color: '#FCD34D', fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.55rem', borderRadius: '12px', border: '1px solid rgba(252,211,77,0.4)' }}>
+                      ⭐ {selectedInstitutionDetail.globalRank}
+                    </span>
+                  )}
+                </div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>{selectedInstitutionDetail.name}</h3>
+                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#E2E8F0' }}>{selectedInstitutionDetail.location} {selectedInstitutionDetail.establishedYear && `• ${selectedInstitutionDetail.establishedYear}`}</p>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '1.5rem' }}>
+              <p style={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                {selectedInstitutionDetail.description}
+              </p>
+
+              {/* Target Departments */}
+              {selectedInstitutionDetail.targetDepartments && selectedInstitutionDetail.targetDepartments.length > 0 && (
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                    Target Academic Faculties:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {selectedInstitutionDetail.targetDepartments.map((dept, idx) => (
+                      <span key={idx} style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.72rem', color: '#334155', fontWeight: 600 }}>
+                        {dept}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Accredited Workshops */}
+              {selectedInstitutionDetail.specialWorkshops && selectedInstitutionDetail.specialWorkshops.length > 0 && (
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Cpu size={14} color="#2563EB" />
+                    <span>Accredited Labs & Masterclasses:</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {selectedInstitutionDetail.specialWorkshops.map((w, idx) => (
+                      <div key={idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '0.75rem', borderRadius: '10px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A' }}>{w.title}</span>
+                          {w.duration && <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#2563EB', background: '#EFF6FF', padding: '0.1rem 0.45rem', borderRadius: '4px' }}>{w.duration}</span>}
+                        </div>
+                        {w.focus && <p style={{ fontSize: '0.74rem', color: SLATE, margin: 0, lineHeight: 1.45 }}>{w.focus}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Key Learning Outcomes */}
+              <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <CheckCircle2 size={14} color="#059669" />
+                  <span>Curriculum Learning Outcomes:</span>
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.78rem', color: '#475569', lineHeight: 1.55 }}>
+                  {selectedInstitutionDetail.learningOutcomes?.map((lo, idx) => (
+                    <li key={idx}>{lo}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Document & Video Action Row */}
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', paddingTop: '1rem', borderTop: '1px solid #E2E8F0', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {selectedInstitutionDetail.brochureUrl && (
+                    <a
+                      href={selectedInstitutionDetail.brochureUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: '#F1F5F9',
+                        color: '#0F172A',
+                        border: '1px solid #CBD5E1',
+                        padding: '0.55rem 1rem',
+                        borderRadius: '8px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Download size={14} />
+                      <span>Download Syllabus PDF</span>
+                    </a>
+                  )}
+                  {selectedInstitutionDetail.videoUrl && (
+                    <a
+                      href={selectedInstitutionDetail.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: '#FEF2F2',
+                        color: '#DC2626',
+                        border: '1px solid #FECACA',
+                        padding: '0.55rem 1rem',
+                        borderRadius: '8px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Video size={14} />
+                      <span>Campus Video Tour</span>
+                    </a>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => {
+                    const instName = selectedInstitutionDetail.name
+                    setSelectedInstitutionDetail(null)
+                    setModalNotes(`Inquiring specifically for: ${instName}`)
+                    setIsModalOpen(true)
+                  }}
+                  style={{
+                    background: EMERALD,
+                    color: '#FFF',
+                    border: 'none',
+                    padding: '0.65rem 1.4rem',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 3px 10px rgba(9,62,48,0.2)'
+                  }}
+                >
+                  <Send size={14} />
+                  <span>Inquire for Delegation</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Inquiry Modal ─── */}
       {isModalOpen && (
@@ -1507,7 +1957,7 @@ export default function EducationToursPage() {
             borderRadius: '20px',
             maxWidth: '520px',
             width: '100%',
-            padding: '2rem',
+            padding: '1.75rem',
             boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
             maxHeight: '90vh',
             overflowY: 'auto',
@@ -1520,13 +1970,13 @@ export default function EducationToursPage() {
               }}
               style={{
                 position: 'absolute',
-                top: '16px',
-                right: '16px',
+                top: '14px',
+                right: '14px',
                 background: '#F1F5F9',
                 border: 'none',
                 borderRadius: '50%',
-                width: '32px',
-                height: '32px',
+                width: '30px',
+                height: '30px',
                 cursor: 'pointer',
                 fontWeight: 700
               }}
@@ -1535,14 +1985,14 @@ export default function EducationToursPage() {
             </button>
 
             {submitSuccess ? (
-              <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#ECFDF5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
-                  <CheckCircle2 size={36} />
+              <div style={{ textAlign: 'center', padding: '1.5rem 1rem' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#ECFDF5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.1rem' }}>
+                  <CheckCircle2 size={32} />
                 </div>
-                <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.6rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.5rem' }}>
+                <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.4rem' }}>
                   Proposal Request Received!
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: SLATE, lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                <p style={{ fontSize: '0.82rem', color: SLATE, lineHeight: 1.55, marginBottom: '1.25rem' }}>
                   Thank you. Our educational tour specialist will get in touch within 24 hours with a customized itinerary, day-by-day plan, and official budget quotation.
                 </p>
                 <button
@@ -1554,11 +2004,11 @@ export default function EducationToursPage() {
                     background: EMERALD,
                     color: '#FFF',
                     border: 'none',
-                    padding: '0.75rem 2rem',
-                    borderRadius: '10px',
+                    padding: '0.65rem 1.8rem',
+                    borderRadius: '8px',
                     fontWeight: 700,
                     cursor: 'pointer',
-                    fontSize: '0.85rem'
+                    fontSize: '0.82rem'
                   }}
                 >
                   Close
@@ -1566,23 +2016,23 @@ export default function EducationToursPage() {
               </div>
             ) : (
               <div>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase' }}>Institutional Quote</span>
-                  <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', margin: '0.25rem 0' }}>
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase' }}>Institutional Quote</span>
+                  <h3 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.4rem', fontWeight: 800, color: '#0F172A', margin: '0.2rem 0' }}>
                     Request Education Tour Proposal
                   </h3>
-                  <p style={{ fontSize: '0.78rem', color: SLATE, margin: 0 }}>
+                  <p style={{ fontSize: '0.75rem', color: SLATE, margin: 0 }}>
                     Fill in your institution details for a customized curriculum itinerary and group quotation.
                   </p>
                 </div>
 
-                <form onSubmit={handleInquirySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <form onSubmit={handleInquirySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '4px' }}>Target Cohort</label>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '3px' }}>Target Cohort</label>
                     <select
                       value={modalCohort}
                       onChange={(e) => setModalCohort(e.target.value)}
-                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.8rem', background: '#F8FAFC' }}
+                      style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '7px', border: '1px solid #CBD5E1', fontSize: '0.78rem', background: '#F8FAFC' }}
                     >
                       <option value="School (Grades 6-12)">School (Grades 6–12 / CBSE / ICSE / IB)</option>
                       <option value="College & Engineering">College & Undergraduates (B.Tech / Science)</option>
@@ -1590,88 +2040,88 @@ export default function EducationToursPage() {
                     </select>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
                     <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '4px' }}>Coordinator Name *</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '3px' }}>Coordinator Name *</label>
                       <input
                         type="text"
                         required
                         placeholder="e.g. Dr. Rajesh Sharma"
                         value={modalName}
                         onChange={(e) => setModalName(e.target.value)}
-                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '7px', border: '1px solid #CBD5E1', fontSize: '0.78rem', boxSizing: 'border-box' }}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '4px' }}>Institution Name *</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '3px' }}>Institution Name *</label>
                       <input
                         type="text"
                         required
                         placeholder="e.g. DPS / IIT / B-School"
                         value={modalInstitution}
                         onChange={(e) => setModalInstitution(e.target.value)}
-                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '7px', border: '1px solid #CBD5E1', fontSize: '0.78rem', boxSizing: 'border-box' }}
                       />
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
                     <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '4px' }}>Official Email *</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '3px' }}>Official Email *</label>
                       <input
                         type="email"
                         required
                         placeholder="name@school.edu"
                         value={modalEmail}
                         onChange={(e) => setModalEmail(e.target.value)}
-                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '7px', border: '1px solid #CBD5E1', fontSize: '0.78rem', boxSizing: 'border-box' }}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '4px' }}>Phone / WhatsApp *</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '3px' }}>Phone / WhatsApp *</label>
                       <input
                         type="tel"
                         required
                         placeholder="+91 98765 43210"
                         value={modalPhone}
                         onChange={(e) => setModalPhone(e.target.value)}
-                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '7px', border: '1px solid #CBD5E1', fontSize: '0.78rem', boxSizing: 'border-box' }}
                       />
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
                     <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '4px' }}>Estimated Students</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '3px' }}>Estimated Students</label>
                       <input
                         type="number"
                         min="10"
                         max="300"
                         value={modalStudents}
                         onChange={(e) => setModalStudents(e.target.value)}
-                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '7px', border: '1px solid #CBD5E1', fontSize: '0.78rem', boxSizing: 'border-box' }}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '4px' }}>Target Month / Year</label>
+                      <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '3px' }}>Target Month / Year</label>
                       <input
                         type="text"
                         placeholder="e.g. October 2026"
                         value={modalDate}
                         onChange={(e) => setModalDate(e.target.value)}
-                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.8rem', boxSizing: 'border-box' }}
+                        style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '7px', border: '1px solid #CBD5E1', fontSize: '0.78rem', boxSizing: 'border-box' }}
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '4px' }}>Special Requirements</label>
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBottom: '3px' }}>Special Requirements</label>
                     <textarea
-                      rows={3}
+                      rows={2}
                       placeholder="e.g. Science Centre STEM labs, SUTD design workshop, pure veg meals..."
                       value={modalNotes}
                       onChange={(e) => setModalNotes(e.target.value)}
-                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.8rem', boxSizing: 'border-box', resize: 'none' }}
+                      style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '7px', border: '1px solid #CBD5E1', fontSize: '0.78rem', boxSizing: 'border-box', resize: 'none' }}
                     />
                   </div>
 
@@ -1679,29 +2129,29 @@ export default function EducationToursPage() {
                     type="submit"
                     disabled={isSubmitting}
                     style={{
-                      marginTop: '0.5rem',
+                      marginTop: '0.35rem',
                       background: EMERALD,
                       color: '#FFF',
                       border: 'none',
-                      padding: '0.85rem',
-                      borderRadius: '10px',
+                      padding: '0.75rem',
+                      borderRadius: '8px',
                       fontWeight: 800,
-                      fontSize: '0.85rem',
+                      fontSize: '0.82rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px'
+                      gap: '6px'
                     }}
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                        <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />
                         <span>Submitting Request...</span>
                       </>
                     ) : (
                       <>
-                        <Send size={16} />
+                        <Send size={15} />
                         <span>Submit Proposal Request</span>
                       </>
                     )}
@@ -1715,4 +2165,3 @@ export default function EducationToursPage() {
     </div>
   )
 }
-

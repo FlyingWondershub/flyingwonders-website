@@ -56,10 +56,10 @@ export const educationToursSettingsSchema = defineType({
       ],
     }),
 
-    // ─── FEATURED INSTITUTIONS ───
+    // ─── FEATURED INSTITUTIONS & HUBS ───
     defineField({
       name: 'institutions',
-      title: 'Featured Institutions & Hubs',
+      title: 'Featured Institutions & Hubs (All 7 Cards)',
       type: 'array',
       of: [
         {
@@ -68,12 +68,14 @@ export const educationToursSettingsSchema = defineType({
             { name: 'id', title: 'Identifier (e.g. science-centre)', type: 'string' },
             { name: 'name', title: 'Full Institution Name', type: 'string' },
             { name: 'shortName', title: 'Short Name', type: 'string' },
+            { name: 'globalRank', title: 'Global Rank / Accolade (e.g. #8 Global (QS World Rankings))', type: 'string' },
+            { name: 'establishedYear', title: 'Established Year / History (e.g. Est. 1905 / 1977)', type: 'string' },
             { name: 'badge', title: 'Badge Label (e.g. Interactive STEM)', type: 'string' },
-            { name: 'badgeBg', title: 'Badge Color (Hex)', type: 'string' },
-            { name: 'category', title: 'Category', type: 'string' },
+            { name: 'badgeBg', title: 'Badge Color (Hex e.g. #2563EB)', type: 'string' },
+            { name: 'category', title: 'Category (e.g. Science & STEM, Higher Education, Defense)', type: 'string' },
             {
               name: 'cohorts',
-              title: 'Eligible Cohorts',
+              title: 'Eligible Student Cohorts',
               type: 'array',
               of: [{ type: 'string' }],
               options: {
@@ -85,20 +87,81 @@ export const educationToursSettingsSchema = defineType({
               },
             },
             { name: 'location', title: 'Location in Singapore', type: 'string' },
-            { name: 'imageUrl', title: 'Image URL or Upload', type: 'string' },
-            { name: 'tagline', title: 'Tagline', type: 'string' },
-            { name: 'description', title: 'Description', type: 'text', rows: 3 },
+            { name: 'image', title: 'Primary Photo Upload', type: 'image', options: { hotspot: true } },
+            { name: 'imageUrl', title: 'Fallback Image URL', type: 'string' },
+            
+            // Rich Media: Gallery & Videos
+            {
+              name: 'galleryPhotos',
+              title: 'Photo Gallery',
+              type: 'array',
+              of: [
+                {
+                  type: 'object',
+                  fields: [
+                    { name: 'photo', title: 'Photo', type: 'image', options: { hotspot: true } },
+                    { name: 'photoUrl', title: 'Photo URL', type: 'string' },
+                    { name: 'caption', title: 'Caption / Room Name', type: 'string' },
+                  ],
+                },
+              ],
+            },
+            {
+              name: 'videoUrl',
+              title: 'Video / Virtual Campus Tour URL (YouTube, Vimeo, MP4)',
+              type: 'string',
+              description: 'e.g. https://www.youtube.com/watch?v=... or direct MP4 link',
+            },
+
+            // Downloadable Documents
+            {
+              name: 'brochureFile',
+              title: 'Curriculum & Tour Syllabus Document (PDF / DOCX Upload)',
+              type: 'file',
+            },
+            {
+              name: 'brochureUrl',
+              title: 'External Document / PDF URL',
+              type: 'string',
+            },
+
+            { name: 'visitDuration', title: 'Recommended Duration (e.g. 4 Hours / Half-Day)', type: 'string' },
+            { name: 'tagline', title: 'Tagline / Summary Sentence', type: 'string' },
+            { name: 'description', title: 'Detailed Overview', type: 'text', rows: 3 },
+            
+            {
+              name: 'targetDepartments',
+              title: 'Target Academic Departments',
+              type: 'array',
+              of: [{ type: 'string' }],
+              description: 'e.g. Computer Science, AI & Robotics, Civil Engineering, Business, Biotechnology',
+            },
             {
               name: 'keyHighlights',
-              title: 'Key Highlights',
+              title: 'Key Facilities & Tour Highlights',
               type: 'array',
               of: [{ type: 'string' }],
             },
             {
               name: 'learningOutcomes',
-              title: 'Learning Outcomes',
+              title: 'Academic Learning Outcomes',
               type: 'array',
               of: [{ type: 'string' }],
+            },
+            {
+              name: 'specialWorkshops',
+              title: 'Accredited Hands-on Workshops & Masterclasses',
+              type: 'array',
+              of: [
+                {
+                  type: 'object',
+                  fields: [
+                    { name: 'title', title: 'Workshop Title', type: 'string' },
+                    { name: 'duration', title: 'Duration (e.g. 90 mins)', type: 'string' },
+                    { name: 'focus', title: 'Focus Area & Lab Requirements', type: 'string' },
+                  ],
+                },
+              ],
             },
           ],
         },
@@ -121,23 +184,26 @@ export const educationToursSettingsSchema = defineType({
       ],
     }),
 
-    // ─── CURATED ITINERARIES ───
+    // ─── CURATED ITINERARIES & CIRCUITS ───
     defineField({
       name: 'itineraries',
-      title: 'Curated Itineraries',
+      title: 'Curated Study Circuits (Fully Updatable)',
       type: 'array',
       of: [
         {
           type: 'object',
           fields: [
-            { name: 'id', title: 'Identifier (e.g. school-stem)', type: 'string' },
-            { name: 'title', title: 'Circuit Title', type: 'string' },
-            { name: 'targetCohort', title: 'Target Cohort', type: 'string' },
-            { name: 'duration', title: 'Duration (e.g. 4 Days / 3 Nights)', type: 'string' },
-            { name: 'badge', title: 'Badge (e.g. Best for K-12 Schools)', type: 'string' },
+            { name: 'id', title: 'Circuit Identifier (e.g. school-stem, college-tech, mba-business)', type: 'string' },
+            { name: 'title', title: 'Circuit Full Title', type: 'string' },
+            { name: 'targetCohort', title: 'Target Cohort (e.g. School (Grades 6–12), College & Engineering, MBA & Business)', type: 'string' },
+            { name: 'duration', title: 'Duration (e.g. 4 Days / 3 Nights, 5 Days / 4 Nights)', type: 'string' },
+            { name: 'badge', title: 'Badge Label (e.g. Best for K-12 Schools)', type: 'string' },
+            { name: 'circuitPdfFile', title: 'Circuit Syllabus PDF Document Upload', type: 'file' },
+            { name: 'circuitPdfUrl', title: 'Circuit PDF Download URL', type: 'string' },
+            { name: 'estimatedPriceSgd', title: 'Estimated Base Price (SGD / student)', type: 'number' },
             {
               name: 'highlights',
-              title: 'Highlights List',
+              title: 'Circuit Inclusions / Highlight Badges',
               type: 'array',
               of: [{ type: 'string' }],
             },
@@ -149,12 +215,12 @@ export const educationToursSettingsSchema = defineType({
                 {
                   type: 'object',
                   fields: [
-                    { name: 'day', title: 'Day Number (e.g. 1)', type: 'number' },
-                    { name: 'title', title: 'Day Title', type: 'string' },
-                    { name: 'morning', title: 'Morning Activity', type: 'text', rows: 2 },
-                    { name: 'afternoon', title: 'Afternoon Activity', type: 'text', rows: 2 },
-                    { name: 'evening', title: 'Evening Activity', type: 'text', rows: 2 },
-                    { name: 'learningOutcome', title: 'Learning Outcome', type: 'string' },
+                    { name: 'day', title: 'Day Number (1, 2, 3...)', type: 'number' },
+                    { name: 'title', title: 'Day Title / Focus Theme', type: 'string' },
+                    { name: 'morning', title: 'Morning Schedule & Lab Workshop', type: 'text', rows: 2 },
+                    { name: 'afternoon', title: 'Afternoon Immersion & Guided Site Visit', type: 'text', rows: 2 },
+                    { name: 'evening', title: 'Evening Debrief, Cultural Tour & Dinner', type: 'text', rows: 2 },
+                    { name: 'learningOutcome', title: 'Core Academic Learning Outcome', type: 'string' },
                   ],
                 },
               ],
@@ -187,7 +253,7 @@ export const educationToursSettingsSchema = defineType({
     // ─── FAQS ───
     defineField({
       name: 'faqs',
-      title: 'Education Tours FAQs',
+      title: 'Education Tours FAQs (Updatable)',
       type: 'array',
       of: [
         {
@@ -195,6 +261,7 @@ export const educationToursSettingsSchema = defineType({
           fields: [
             { name: 'q', title: 'Question', type: 'string' },
             { name: 'a', title: 'Answer', type: 'text', rows: 3 },
+            { name: 'category', title: 'Category (e.g. Safety, Curriculum, Logistics, Booking)', type: 'string' },
           ],
         },
       ],
