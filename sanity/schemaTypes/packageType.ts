@@ -18,6 +18,7 @@ export const packageSchema = {
           { title: 'Premium', value: 'premium' },
           { title: 'Solo', value: 'solo' },
           { title: 'Groups/Families', value: 'groups' },
+          { title: 'Education', value: 'education' },
         ],
       },
     },

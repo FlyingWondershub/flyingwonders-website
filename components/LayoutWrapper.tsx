@@ -40,6 +40,7 @@ interface PageVisibility {
   hideFaq?: boolean
   hideInsurance?: boolean
   hidePwaPrompt?: boolean
+  hideEducationTours?: boolean
 }
 
 export default function LayoutWrapper({ 
@@ -347,6 +348,25 @@ export default function LayoutWrapper({
                       <div className="nav-dropdown-desc">University tours & student consulting</div>
                     </div>
                   </Link>
+
+                  {!pageVisibility?.hideEducationTours && (
+                    <Link
+                      href="/education-tours"
+                      className="nav-dropdown-item"
+                      onClick={() => setIsServicesOpen(false)}
+                    >
+                      <div className="nav-dropdown-icon-box">
+                        <GraduationCap size={17} />
+                      </div>
+                      <div className="nav-dropdown-content">
+                        <div className="nav-dropdown-title">
+                          <span>Education Tours</span>
+                          <span className="nav-dropdown-badge">Edu</span>
+                        </div>
+                        <div className="nav-dropdown-desc">School, College & MBA circuits</div>
+                      </div>
+                    </Link>
+                  )}
 
                   <Link 
                     href="/b2b-leads" 
