@@ -27,6 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/insurance', priority: 0.9, freq: 'daily' },
     { path: '/travel-consulting', priority: 0.9, freq: 'daily' },
     { path: '/study-in-singapore', priority: 0.85, freq: 'daily' },
+    { path: '/education-tours', priority: 0.9, freq: 'daily' },
     { path: '/karnataka', priority: 0.9, freq: 'daily' },
     { path: '/corporate-travel', priority: 0.85, freq: 'weekly' },
     { path: '/instant-quote', priority: 0.85, freq: 'weekly' },

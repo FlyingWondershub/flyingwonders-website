@@ -1212,6 +1212,7 @@ export default function AdminDashboard() {
                   { name: 'Travel & Medical Insurance', path: '/insurance', desc: 'Policy quotation & instant issuance' },
                   { name: 'Travel Consulting', path: '/travel-consulting', desc: '1-on-1 personalized itinerary planning' },
                   { name: 'Study in Singapore', path: '/study-in-singapore', desc: 'Educational & student immersion tours' },
+                  { name: 'Education Tours & Immersions', path: '/education-tours', desc: 'School, College & MBA study circuits' },
                   { name: 'Karnataka Specialist Hub', path: '/karnataka', desc: 'Direct Karnataka to Singapore tours' },
                   { name: 'Corporate Travel & MICE', path: '/corporate-travel', desc: 'Corporate delegations & events' },
                 ].map(link => (
