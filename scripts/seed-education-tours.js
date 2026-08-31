@@ -545,16 +545,49 @@ async function seedEducationTours() {
     const existing = await client.fetch(`*[_type == "educationToursSettings"][0]`);
 
     if (existing) {
-      console.log(`Found existing document (${existing._id}). Updating with full data...`);
-      await client.createOrReplace({
-        ...educationToursData,
-        _id: existing._id
+      console.log(`Found existing document (${existing._id}). Merging non-destructively to protect user images & links...`);
+      // Merge while preserving user uploaded images, custom video URLs, and custom brochures
+      const mergedInstitutions = educationToursData.institutions.map((inst, idx) => {
+        const existingInst = existing.institutions?.find((e) => e.id === inst.id) || existing.institutions?.[idx];
+        if (existingInst) {
+          return {
+            ...inst,
+            ...existingInst,
+            image: existingInst.image || inst.image,
+            imageUrl: existingInst.imageUrl || inst.imageUrl,
+            videoUrl: existingInst.videoUrl || inst.videoUrl,
+            brochureUrl: existingInst.brochureUrl || inst.brochureUrl,
+            brochureFile: existingInst.brochureFile || inst.brochureFile,
+          };
+        }
+        return inst;
       });
-      console.log("✅ Successfully replaced and populated existing educationToursSettings document in Sanity!");
+
+      await client
+        .patch(existing._id)
+        .setIfMissing({
+          pageTitle: educationToursData.pageTitle,
+          metaDescription: educationToursData.metaDescription,
+          heroBadge: educationToursData.heroBadge,
+          heroTitle: educationToursData.heroTitle,
+          heroSubtitle: educationToursData.heroSubtitle,
+          statsList: educationToursData.statsList,
+          learningPillars: educationToursData.learningPillars,
+          itineraries: educationToursData.itineraries,
+          estimatorBudgetRatePerDay: educationToursData.estimatorBudgetRatePerDay,
+          estimatorStandardRatePerDay: educationToursData.estimatorStandardRatePerDay,
+          estimatorPremiumRatePerDay: educationToursData.estimatorPremiumRatePerDay,
+          faqs: educationToursData.faqs,
+          notificationEmails: educationToursData.notificationEmails,
+          whatsappNumber: educationToursData.whatsappNumber,
+        })
+        .set({ institutions: mergedInstitutions })
+        .commit();
+      console.log("✅ Successfully updated educationToursSettings without overwriting user images/links!");
     } else {
-      console.log("No existing document found. Creating new educationToursSettings document...");
-      await client.createOrReplace(educationToursData);
-      console.log("✅ Successfully created new educationToursSettings document in Sanity!");
+      console.log("No existing document found. Creating initial educationToursSettings document...");
+      await client.createIfNotExists(educationToursData);
+      console.log("✅ Successfully created initial educationToursSettings document in Sanity!");
     }
   } catch (error) {
     console.error("❌ Error seeding Sanity document:", error);
