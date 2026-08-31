@@ -592,6 +592,7 @@ function getEmbedVideoUrl(url?: string): string | null {
 
 export default function EducationToursPage() {
   const [sanitySettings, setSanitySettings] = useState<any>(null)
+  const [globalSettings, setGlobalSettings] = useState<any>(null)
   const [selectedCohort, setSelectedCohort] = useState<'All' | 'School' | 'College' | 'MBA'>('All')
   const [activeItineraryId, setActiveItineraryId] = useState<string>('school-stem')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
@@ -619,13 +620,22 @@ export default function EducationToursPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false)
 
   useEffect(() => {
-    client
-      .fetch(`*[_type == "educationToursSettings"][0]`)
-      .then((res) => {
-        if (res) setSanitySettings(res)
+    Promise.all([
+      client.fetch(`*[_type == "educationToursSettings"][0]`),
+      client.fetch(`*[_type == "siteSettings"][0]{ whatsappNumber, contactEmail, notificationEmails }`)
+    ])
+      .then(([eduRes, siteRes]) => {
+        if (eduRes) setSanitySettings(eduRes)
+        if (siteRes) setGlobalSettings(siteRes)
       })
       .catch(() => {})
   }, [])
+
+  // Dynamic WhatsApp consultation number (Education Tours override -> Global Site Settings -> Default)
+  const resolvedWhatsappNumber = useMemo(() => {
+    const raw = sanitySettings?.whatsappNumber || globalSettings?.whatsappNumber || '+919886171251'
+    return raw.replace(/[^0-9]/g, '') || '919886171251'
+  }, [sanitySettings, globalSettings])
 
   // Dynamic Institutions List
   const institutionsList: Institution[] = useMemo(() => {
@@ -754,7 +764,7 @@ export default function EducationToursPage() {
         setSubmitSuccess(true)
       } else {
         window.open(
-          `https://wa.me/6583048408?text=${encodeURIComponent(
+          `https://wa.me/${resolvedWhatsappNumber}?text=${encodeURIComponent(
             `Hi Flying Wonders, I want to inquire about a Singapore Education Tour for ${modalInstitution} (${modalCohort}, ~${modalStudents} students, ${modalDate}).`
           )}`,
           '_blank'
@@ -763,7 +773,7 @@ export default function EducationToursPage() {
       }
     } catch (err) {
       window.open(
-        `https://wa.me/6583048408?text=${encodeURIComponent(
+        `https://wa.me/${resolvedWhatsappNumber}?text=${encodeURIComponent(
           `Hi Flying Wonders, I want to inquire about a Singapore Education Tour for ${modalInstitution} (${modalCohort}, ~${modalStudents} students, ${modalDate}).`
         )}`,
         '_blank'
@@ -1754,7 +1764,7 @@ export default function EducationToursPage() {
             </button>
 
             <a
-              href="https://wa.me/6583048408?text=Hi%20Flying%20Wonders%2C%20I%20am%20interested%20in%20organizing%20a%20Singapore%20Educational%20Tour%20for%20our%20institution."
+              href={`https://wa.me/${resolvedWhatsappNumber}?text=${encodeURIComponent('Hi Flying Wonders, I am interested in organizing a Singapore Educational Tour for our institution.')}`}
               target="_blank"
               rel="noopener noreferrer"
               style={{

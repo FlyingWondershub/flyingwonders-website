@@ -275,5 +275,14 @@ export const educationToursSettingsSchema = defineType({
       description: 'Comma-separated email addresses to receive instant proposals and inquiry alerts (e.g. tours@flyingwonders.net, info.flyingwonders@gmail.com). If left blank, defaults to the global notification email in Site Settings.',
       initialValue: 'info.flyingwonders@gmail.com',
     }),
+
+    // ─── WHATSAPP CONSULTATION SETTINGS ───
+    defineField({
+      name: 'whatsappNumber',
+      title: '📱 WhatsApp Consultation Number',
+      type: 'string',
+      description: 'WhatsApp number for instant student & institutional inquiries (e.g. +919886171251). If left blank, defaults to the global WhatsApp number in Site Settings.',
+      initialValue: '+919886171251',
+    }),
   ],
 })

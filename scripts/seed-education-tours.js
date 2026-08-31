@@ -533,7 +533,10 @@ const educationToursData = {
   ],
 
   // Notification Email Configuration
-  notificationEmails: 'info.flyingwonders@gmail.com'
+  notificationEmails: 'info.flyingwonders@gmail.com',
+
+  // WhatsApp Consultation Number
+  whatsappNumber: '+919886171251'
 };
 
 async function seedEducationTours() {
