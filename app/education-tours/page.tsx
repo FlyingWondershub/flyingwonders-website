@@ -399,7 +399,7 @@ const ITINERARIES: Itinerary[] = [
     targetCohort: 'College & Engineering',
     duration: '5 Days / 4 Nights',
     badge: 'Popular with Tech & Science Colleges',
-    circuitPdfUrl: '/brochure/Singapore.pdf',
+    circuitPdfUrl: '/brochures/Singapore-5D4N-College-Tech-Tour-Itinerary.pdf',
     estimatedPriceSgd: 725,
     highlights: [
       'NUS University Town & Enterprise BLOCK71 Startup Incubator',
@@ -457,7 +457,7 @@ const ITINERARIES: Itinerary[] = [
     targetCohort: 'MBA & Business Schools',
     duration: '5 Days / 4 Nights',
     badge: 'Designed for MBA & Executive Cohorts',
-    circuitPdfUrl: '/brochure/Singapore.pdf',
+    circuitPdfUrl: '/brochures/Singapore-5D4N-MBA-Business-Tour-Itinerary.pdf',
     estimatedPriceSgd: 920,
     highlights: [
       'Singapore Management University (SMU) FinTech Seminar',
