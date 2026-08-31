@@ -577,6 +577,19 @@ const FAQS = [
   }
 ]
 
+function getEmbedVideoUrl(url?: string): string | null {
+  if (!url) return null
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+  if (ytMatch && ytMatch[1]) {
+    return `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`
+  }
+  const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+  if (vimeoMatch && vimeoMatch[1]) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}`
+  }
+  return url
+}
+
 export default function EducationToursPage() {
   const [sanitySettings, setSanitySettings] = useState<any>(null)
   const [selectedCohort, setSelectedCohort] = useState<'All' | 'School' | 'College' | 'MBA'>('All')
@@ -1047,12 +1060,22 @@ export default function EducationToursPage() {
                   transition: 'transform 0.2s, box-shadow 0.2s'
                 }}
               >
-                {/* Photo & Overlay */}
-                <div style={{ position: 'relative', height: '190px', width: '100%', overflow: 'hidden' }}>
+                {/* Photo & Overlay (Clickable to open Full Details & Labs) */}
+                <div
+                  onClick={() => setSelectedInstitutionDetail(inst)}
+                  title={`Click to view full details & video tour for ${inst.name}`}
+                  style={{
+                    position: 'relative',
+                    height: '190px',
+                    width: '100%',
+                    overflow: 'hidden',
+                    cursor: 'pointer'
+                  }}
+                >
                   <img
                     src={inst.imageUrl}
                     alt={inst.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
                   />
                   <div style={{
                     position: 'absolute',
@@ -1727,218 +1750,270 @@ export default function EducationToursPage() {
         </div>
       </section>
 
-      {/* ─── Full Institution Detail Modal (Photos, Video, Workshops, Syllabus Document) ─── */}
-      {selectedInstitutionDetail && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(5px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1rem',
-          zIndex: 9999
-        }}>
+      {/* ─── Full Institution Detail Modal (Expanded with Embedded Playable Video Tour) ─── */}
+      {selectedInstitutionDetail && (() => {
+        const embedVideoUrl = getEmbedVideoUrl(selectedInstitutionDetail.videoUrl)
+        return (
           <div style={{
-            background: '#FFF',
-            borderRadius: '20px',
-            maxWidth: '680px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            position: 'relative',
-            boxShadow: '0 25px 60px rgba(0,0,0,0.3)'
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.75)',
+            backdropFilter: 'blur(6px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            zIndex: 9999
           }}>
-            {/* Modal Header Image */}
-            <div style={{ position: 'relative', height: '220px', width: '100%', overflow: 'hidden' }}>
-              <img
-                src={selectedInstitutionDetail.imageUrl}
-                alt={selectedInstitutionDetail.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, transparent 100%)'
-              }} />
-
-              <button
-                onClick={() => setSelectedInstitutionDetail(null)}
-                style={{
+            <div style={{
+              background: '#FFF',
+              borderRadius: '24px',
+              maxWidth: '860px',
+              width: '100%',
+              maxHeight: '92vh',
+              overflowY: 'auto',
+              position: 'relative',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.35)'
+            }}>
+              {/* Modal Header Image */}
+              <div style={{ position: 'relative', height: '230px', width: '100%', overflow: 'hidden' }}>
+                <img
+                  src={selectedInstitutionDetail.imageUrl}
+                  alt={selectedInstitutionDetail.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div style={{
                   position: 'absolute',
-                  top: '14px',
-                  right: '14px',
-                  background: 'rgba(0,0,0,0.6)',
-                  color: '#FFF',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  cursor: 'pointer',
-                  fontWeight: 800,
-                  fontSize: '1rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                ✕
-              </button>
-
-              <div style={{ position: 'absolute', bottom: '14px', left: '20px', right: '20px', color: '#FFF' }}>
-                <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                  <span style={{ background: selectedInstitutionDetail.badgeBg, color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.55rem', borderRadius: '12px' }}>
-                    {selectedInstitutionDetail.badge}
-                  </span>
-                  {selectedInstitutionDetail.globalRank && (
-                    <span style={{ background: 'rgba(0,0,0,0.7)', color: '#FCD34D', fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.55rem', borderRadius: '12px', border: '1px solid rgba(252,211,77,0.4)' }}>
-                      ⭐ {selectedInstitutionDetail.globalRank}
-                    </span>
-                  )}
-                </div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>{selectedInstitutionDetail.name}</h3>
-                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#E2E8F0' }}>{selectedInstitutionDetail.location} {selectedInstitutionDetail.establishedYear && `• ${selectedInstitutionDetail.establishedYear}`}</p>
-              </div>
-            </div>
-
-            {/* Modal Body */}
-            <div style={{ padding: '1.5rem' }}>
-              <p style={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-                {selectedInstitutionDetail.description}
-              </p>
-
-              {/* Target Departments */}
-              {selectedInstitutionDetail.targetDepartments && selectedInstitutionDetail.targetDepartments.length > 0 && (
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-                    Target Academic Faculties:
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {selectedInstitutionDetail.targetDepartments.map((dept, idx) => (
-                      <span key={idx} style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.72rem', color: '#334155', fontWeight: 600 }}>
-                        {dept}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Accredited Workshops */}
-              {selectedInstitutionDetail.specialWorkshops && selectedInstitutionDetail.specialWorkshops.length > 0 && (
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Cpu size={14} color="#2563EB" />
-                    <span>Accredited Labs & Masterclasses:</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {selectedInstitutionDetail.specialWorkshops.map((w, idx) => (
-                      <div key={idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '0.75rem', borderRadius: '10px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A' }}>{w.title}</span>
-                          {w.duration && <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#2563EB', background: '#EFF6FF', padding: '0.1rem 0.45rem', borderRadius: '4px' }}>{w.duration}</span>}
-                        </div>
-                        {w.focus && <p style={{ fontSize: '0.74rem', color: SLATE, margin: 0, lineHeight: 1.45 }}>{w.focus}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Key Learning Outcomes */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <CheckCircle2 size={14} color="#059669" />
-                  <span>Curriculum Learning Outcomes:</span>
-                </div>
-                <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.78rem', color: '#475569', lineHeight: 1.55 }}>
-                  {selectedInstitutionDetail.learningOutcomes?.map((lo, idx) => (
-                    <li key={idx}>{lo}</li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Document & Video Action Row */}
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', paddingTop: '1rem', borderTop: '1px solid #E2E8F0', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {selectedInstitutionDetail.brochureUrl && (
-                    <a
-                      href={selectedInstitutionDetail.brochureUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        background: '#F1F5F9',
-                        color: '#0F172A',
-                        border: '1px solid #CBD5E1',
-                        padding: '0.55rem 1rem',
-                        borderRadius: '8px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        textDecoration: 'none',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <Download size={14} />
-                      <span>Download Syllabus PDF</span>
-                    </a>
-                  )}
-                  {selectedInstitutionDetail.videoUrl && (
-                    <a
-                      href={selectedInstitutionDetail.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        background: '#FEF2F2',
-                        color: '#DC2626',
-                        border: '1px solid #FECACA',
-                        padding: '0.55rem 1rem',
-                        borderRadius: '8px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        textDecoration: 'none',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <Video size={14} />
-                      <span>Campus Video Tour</span>
-                    </a>
-                  )}
-                </div>
+                  inset: 0,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.25) 60%, transparent 100%)'
+                }} />
 
                 <button
-                  onClick={() => {
-                    const instName = selectedInstitutionDetail.name
-                    setSelectedInstitutionDetail(null)
-                    setModalNotes(`Inquiring specifically for: ${instName}`)
-                    setIsModalOpen(true)
-                  }}
+                  onClick={() => setSelectedInstitutionDetail(null)}
                   style={{
-                    background: EMERALD,
+                    position: 'absolute',
+                    top: '14px',
+                    right: '14px',
+                    background: 'rgba(0,0,0,0.65)',
                     color: '#FFF',
                     border: 'none',
-                    padding: '0.65rem 1.4rem',
-                    borderRadius: '8px',
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
+                    borderRadius: '50%',
+                    width: '34px',
+                    height: '34px',
                     cursor: 'pointer',
-                    display: 'inline-flex',
+                    fontWeight: 800,
+                    fontSize: '1rem',
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    boxShadow: '0 3px 10px rgba(9,62,48,0.2)'
+                    justifyContent: 'center',
+                    backdropFilter: 'blur(4px)'
                   }}
                 >
-                  <Send size={14} />
-                  <span>Inquire for Delegation</span>
+                  ✕
                 </button>
+
+                <div style={{ position: 'absolute', bottom: '14px', left: '20px', right: '20px', color: '#FFF' }}>
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                    <span style={{ background: selectedInstitutionDetail.badgeBg, color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.6rem', borderRadius: '12px' }}>
+                      {selectedInstitutionDetail.badge}
+                    </span>
+                    {selectedInstitutionDetail.globalRank && (
+                      <span style={{ background: 'rgba(0,0,0,0.7)', color: '#FCD34D', fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.6rem', borderRadius: '12px', border: '1px solid rgba(252,211,77,0.4)' }}>
+                        ⭐ {selectedInstitutionDetail.globalRank}
+                      </span>
+                    )}
+                    {selectedInstitutionDetail.visitDuration && (
+                      <span style={{ background: 'rgba(5,150,105,0.85)', color: '#FFF', fontSize: '0.65rem', fontWeight: 700, padding: '0.15rem 0.6rem', borderRadius: '12px' }}>
+                        ⏱️ {selectedInstitutionDetail.visitDuration}
+                      </span>
+                    )}
+                  </div>
+                  <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, lineHeight: 1.25 }}>{selectedInstitutionDetail.name}</h3>
+                  <p style={{ margin: '3px 0 0', fontSize: '0.76rem', color: '#E2E8F0' }}>
+                    {selectedInstitutionDetail.location} {selectedInstitutionDetail.establishedYear && `• ${selectedInstitutionDetail.establishedYear}`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div style={{ padding: '1.75rem' }}>
+                <p style={{ fontSize: '0.88rem', color: '#334155', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                  {selectedInstitutionDetail.description}
+                </p>
+
+                {/* ─── Embedded Video Tour Player ─── */}
+                {embedVideoUrl && (
+                  <div style={{ marginBottom: '1.75rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '1.1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Video size={16} color="#DC2626" />
+                        <span>Interactive Campus & Laboratory Video Tour</span>
+                      </div>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '0.15rem 0.55rem', borderRadius: '6px' }}>
+                        Play Directly Below
+                      </span>
+                    </div>
+
+                    <div style={{
+                      position: 'relative',
+                      width: '100%',
+                      paddingTop: '56.25%',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      background: '#000',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.12)'
+                    }}>
+                      <iframe
+                        src={embedVideoUrl}
+                        title={`${selectedInstitutionDetail.name} Campus Tour`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          border: 'none'
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Target Faculties */}
+                {selectedInstitutionDetail.targetDepartments && selectedInstitutionDetail.targetDepartments.length > 0 && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
+                      Target Academic Faculties:
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {selectedInstitutionDetail.targetDepartments.map((dept, idx) => (
+                        <span key={idx} style={{ background: '#F1F5F9', border: '1px solid #CBD5E1', padding: '0.25rem 0.65rem', borderRadius: '6px', fontSize: '0.74rem', color: '#334155', fontWeight: 600 }}>
+                          {dept}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Accredited Workshops */}
+                {selectedInstitutionDetail.specialWorkshops && selectedInstitutionDetail.specialWorkshops.length > 0 && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Cpu size={15} color="#2563EB" />
+                      <span>Accredited Labs & Masterclasses:</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.75rem' }}>
+                      {selectedInstitutionDetail.specialWorkshops.map((w, idx) => (
+                        <div key={idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '0.85rem', borderRadius: '10px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0F172A' }}>{w.title}</span>
+                            {w.duration && <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#2563EB', background: '#EFF6FF', padding: '0.15rem 0.5rem', borderRadius: '5px' }}>{w.duration}</span>}
+                          </div>
+                          {w.focus && <p style={{ fontSize: '0.74rem', color: SLATE, margin: 0, lineHeight: 1.45 }}>{w.focus}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Key Learning Outcomes */}
+                <div style={{ marginBottom: '1.75rem' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', textTransform: 'uppercase', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <CheckCircle2 size={15} color="#059669" />
+                    <span>Curriculum Learning Outcomes:</span>
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.8rem', color: '#475569', lineHeight: 1.6 }}>
+                    {selectedInstitutionDetail.learningOutcomes?.map((lo, idx) => (
+                      <li key={idx}>{lo}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Document & Video Action Row */}
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', paddingTop: '1.25rem', borderTop: '1px solid #E2E8F0', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {selectedInstitutionDetail.brochureUrl && (
+                      <a
+                        href={selectedInstitutionDetail.brochureUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          background: '#F1F5F9',
+                          color: '#0F172A',
+                          border: '1px solid #CBD5E1',
+                          padding: '0.6rem 1.1rem',
+                          borderRadius: '8px',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Download size={14} />
+                        <span>Download Syllabus PDF</span>
+                      </a>
+                    )}
+                    {selectedInstitutionDetail.videoUrl && (
+                      <a
+                        href={selectedInstitutionDetail.videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          background: '#FEF2F2',
+                          color: '#DC2626',
+                          border: '1px solid #FECACA',
+                          padding: '0.6rem 1.1rem',
+                          borderRadius: '8px',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <ExternalLink size={14} />
+                        <span>Open Video in YouTube</span>
+                      </a>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const instName = selectedInstitutionDetail.name
+                      setSelectedInstitutionDetail(null)
+                      setModalNotes(`Inquiring specifically for: ${instName}`)
+                      setIsModalOpen(true)
+                    }}
+                    style={{
+                      background: EMERALD,
+                      color: '#FFF',
+                      border: 'none',
+                      padding: '0.7rem 1.5rem',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 12px rgba(9,62,48,0.25)'
+                    }}
+                  >
+                    <Send size={14} />
+                    <span>Inquire for Delegation</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
+
 
       {/* ─── Inquiry Modal ─── */}
       {isModalOpen && (
