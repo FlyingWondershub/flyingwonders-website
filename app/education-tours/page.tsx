@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { client } from '../../sanity/lib/client'
 import {
   GraduationCap,
   Sparkles,
@@ -468,10 +469,20 @@ const FAQS = [
 ]
 
 export default function EducationToursPage() {
+  const [sanitySettings, setSanitySettings] = useState<any>(null)
   const [selectedCohort, setSelectedCohort] = useState<'All' | 'School' | 'College' | 'MBA'>('All')
   const [activeItineraryId, setActiveItineraryId] = useState<string>('school-stem')
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [expandedDay, setExpandedDay] = useState<number | null>(1)
+
+  useEffect(() => {
+    client
+      .fetch(`*[_type == "educationToursSettings"][0]`)
+      .then((res) => {
+        if (res) setSanitySettings(res)
+      })
+      .catch(() => {})
+  }, [])
 
   // Estimator States
   const [studentCount, setStudentCount] = useState<number>(30)
@@ -491,20 +502,61 @@ export default function EducationToursPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
 
+  // Dynamic Institutions List
+  const institutionsList = useMemo(() => {
+    if (sanitySettings?.institutions && Array.isArray(sanitySettings.institutions) && sanitySettings.institutions.length > 0) {
+      return sanitySettings.institutions.map((inst: any, idx: number) => ({
+        id: inst.id || `inst-${idx}`,
+        name: inst.name || '',
+        shortName: inst.shortName || inst.name || '',
+        badge: inst.badge || 'Academic Lab',
+        badgeBg: inst.badgeBg || '#2563EB',
+        category: inst.category || 'General',
+        cohorts: inst.cohorts || ['School', 'College', 'MBA'],
+        location: inst.location || 'Singapore',
+        image: inst.imageUrl || INSTITUTIONS[idx % INSTITUTIONS.length].image,
+        tagline: inst.tagline || '',
+        description: inst.description || '',
+        keyHighlights: inst.keyHighlights || [],
+        learningOutcomes: inst.learningOutcomes || []
+      }))
+    }
+    return INSTITUTIONS
+  }, [sanitySettings])
+
   // Filtered institutions
   const filteredInstitutions = useMemo(() => {
-    if (selectedCohort === 'All') return INSTITUTIONS
-    return INSTITUTIONS.filter((inst) => inst.cohorts.includes(selectedCohort as any))
-  }, [selectedCohort])
+    if (selectedCohort === 'All') return institutionsList
+    return institutionsList.filter((inst: any) => inst.cohorts?.includes(selectedCohort as any))
+  }, [selectedCohort, institutionsList])
+
+  // Dynamic Itineraries List
+  const itinerariesList = useMemo(() => {
+    if (sanitySettings?.itineraries && Array.isArray(sanitySettings.itineraries) && sanitySettings.itineraries.length > 0) {
+      return sanitySettings.itineraries
+    }
+    return ITINERARIES
+  }, [sanitySettings])
 
   // Active Itinerary
   const activeItinerary = useMemo(() => {
-    return ITINERARIES.find((it) => it.id === activeItineraryId) || ITINERARIES[0]
-  }, [activeItineraryId])
+    return itinerariesList.find((it: any) => it.id === activeItineraryId) || itinerariesList[0] || ITINERARIES[0]
+  }, [activeItineraryId, itinerariesList])
+
+  // Dynamic FAQs List
+  const faqsList = useMemo(() => {
+    if (sanitySettings?.faqs && Array.isArray(sanitySettings.faqs) && sanitySettings.faqs.length > 0) {
+      return sanitySettings.faqs
+    }
+    return FAQS
+  }, [sanitySettings])
 
   // Estimator Calculations
   const chaperoneCount = Math.floor(studentCount / 10)
-  const baseRatePerDay = hotelTier === 'budget' ? 115 : hotelTier === 'standard' ? 145 : 185
+  const budgetRate = sanitySettings?.estimatorBudgetRatePerDay || 115
+  const standardRate = sanitySettings?.estimatorStandardRatePerDay || 145
+  const premiumRate = sanitySettings?.estimatorPremiumRatePerDay || 185
+  const baseRatePerDay = hotelTier === 'budget' ? budgetRate : hotelTier === 'standard' ? standardRate : premiumRate
   const estimatedSgdPerStudent = Math.round(baseRatePerDay * durationDays)
   const estimatedInrPerStudent = Math.round(estimatedSgdPerStudent * 63.5)
 
@@ -587,7 +639,7 @@ export default function EducationToursPage() {
           {/* Top Pill */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', padding: '0.35rem 1rem', borderRadius: '30px', fontSize: '0.78rem', fontWeight: 600, marginBottom: '1.5rem', backdropFilter: 'blur(8px)' }}>
             <Sparkles size={15} color="#F59E0B" />
-            <span>Singapore: The World’s Safest Live Classroom • K-12, College & MBA</span>
+            <span>{sanitySettings?.heroBadge || 'Singapore: The World’s Safest Live Classroom • K-12, College & MBA'}</span>
           </div>
 
           {/* Heading */}
@@ -599,8 +651,14 @@ export default function EducationToursPage() {
             marginBottom: '1.25rem',
             letterSpacing: '-0.01em'
           }}>
-            Singapore Educational Tours<br />
-            <span style={{ color: AMBER_LIGHT }}>& Academic Immersions</span>
+            {sanitySettings?.heroTitle ? (
+              sanitySettings.heroTitle
+            ) : (
+              <>
+                Singapore Educational Tours<br />
+                <span style={{ color: AMBER_LIGHT }}>& Academic Immersions</span>
+              </>
+            )}
           </h1>
 
           <p style={{
@@ -611,7 +669,9 @@ export default function EducationToursPage() {
             maxWidth: '750px',
             margin: '0 auto 2rem'
           }}>
-            Experiential study circuits curated for <strong>Schools (K–12)</strong>, <strong>Engineering Colleges</strong>, and <strong>MBA Business Schools</strong>. Explore world-class innovation labs, sustainable engineering marvels, and top global university campuses.
+            {sanitySettings?.heroSubtitle || (
+              <>Experiential study circuits curated for <strong>Schools (K–12)</strong>, <strong>Engineering Colleges</strong>, and <strong>MBA Business Schools</strong>. Explore world-class innovation labs, sustainable engineering marvels, and top global university campuses.</>
+            )}
           </p>
 
           {/* CTA Group */}
@@ -821,7 +881,7 @@ export default function EducationToursPage() {
             gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
             gap: '2rem'
           }}>
-            {filteredInstitutions.map((inst) => (
+            {filteredInstitutions.map((inst: any) => (
               <div
                 key={inst.id}
                 style={{
@@ -878,7 +938,7 @@ export default function EducationToursPage() {
                     {/* Cohort tags */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.85rem' }}>
                       <span style={{ fontSize: '0.72rem', fontWeight: 700, color: SLATE }}>Cohorts:</span>
-                      {inst.cohorts.map((c) => (
+                      {inst.cohorts?.map((c: any) => (
                         <span key={c} style={{ background: '#F1F5F9', border: '1px solid #E2E8F0', padding: '0.15rem 0.55rem', borderRadius: '6px', fontSize: '0.68rem', fontWeight: 700, color: '#334155' }}>
                           {c}
                         </span>
@@ -896,7 +956,7 @@ export default function EducationToursPage() {
                         <span>Key Highlights:</span>
                       </div>
                       <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.76rem', color: '#475569', lineHeight: 1.55 }}>
-                        {inst.keyHighlights.slice(0, 3).map((kh, i) => (
+                        {inst.keyHighlights?.slice(0, 3).map((kh: any, i: number) => (
                           <li key={i}>{kh}</li>
                         ))}
                       </ul>
@@ -1036,7 +1096,7 @@ export default function EducationToursPage() {
               Circuit Inclusions:
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {activeItinerary.highlights.map((h, i) => (
+              {activeItinerary.highlights?.map((h: any, i: number) => (
                 <span key={i} style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46', padding: '0.35rem 0.85rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <CheckCircle2 size={13} color="#059669" />
                   <span>{h}</span>
@@ -1047,7 +1107,7 @@ export default function EducationToursPage() {
 
           {/* Day By Day Accordions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            {activeItinerary.days.map((d) => {
+            {activeItinerary.days?.map((d: any) => {
               const isExpanded = expandedDay === d.day
               return (
                 <div
@@ -1321,7 +1381,7 @@ export default function EducationToursPage() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-          {FAQS.map((faq, idx) => {
+          {faqsList.map((faq: any, idx: number) => {
             const isOpen = openFaq === idx
             return (
               <div
