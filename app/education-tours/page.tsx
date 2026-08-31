@@ -706,20 +706,49 @@ export default function EducationToursPage() {
     e.preventDefault()
     setIsSubmitting(true)
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch('/api/education-tours/inquiry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: modalName,
+          institution: modalInstitution,
           email: modalEmail,
           phone: modalPhone,
-          tier: 'education',
-          travelers: parseInt(modalStudents) || 30,
+          cohort: modalCohort,
+          students: parseInt(modalStudents) || 30,
           travelDate: modalDate,
-          notes: `[Education Tour Inquiry]\nInstitution: ${modalInstitution}\nCohort: ${modalCohort}\nDuration: ${durationDays} Days\nNotes: ${modalNotes}`,
+          notes: modalNotes,
           totalPrice: estimatedSgdPerStudent * (parseInt(modalStudents) || 30)
         })
       })
+
+      // Client-side Web3Forms fallback
+      const web3formsKey = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY
+      if (web3formsKey) {
+        try {
+          const targetRecipient = sanitySettings?.notificationEmails || 'info.flyingwonders@gmail.com'
+          await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({
+              access_key: web3formsKey,
+              subject: `🎓 [Education Tour Proposal] ${modalInstitution} - ${modalName}`,
+              from_name: 'Flying Wonders Education Portal',
+              to_email: targetRecipient,
+              coordinator_name: modalName,
+              institution: modalInstitution,
+              official_email: modalEmail,
+              phone_whatsapp: modalPhone,
+              target_cohort: modalCohort,
+              students_count: modalStudents,
+              target_date: modalDate,
+              requirements: modalNotes
+            })
+          })
+        } catch (w3Err) {
+          console.error('Client Web3Forms send error:', w3Err)
+        }
+      }
 
       if (response.ok) {
         setSubmitSuccess(true)

@@ -530,7 +530,10 @@ const educationToursData = {
       a: 'We recommend initiating planning 6 to 12 weeks prior to departure to secure university lab slots, flight blocks, and hotel room allotments. Payment terms typically include a booking deposit with balance structured in milestones prior to departure.',
       category: 'Booking & Payment'
     }
-  ]
+  ],
+
+  // Notification Email Configuration
+  notificationEmails: 'info.flyingwonders@gmail.com'
 };
 
 async function seedEducationTours() {

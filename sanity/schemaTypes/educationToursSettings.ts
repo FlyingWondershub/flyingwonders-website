@@ -266,5 +266,14 @@ export const educationToursSettingsSchema = defineType({
         },
       ],
     }),
+
+    // ─── NOTIFICATION EMAIL SETTINGS ───
+    defineField({
+      name: 'notificationEmails',
+      title: '📧 Proposal & Inquiry Notification Recipient Emails',
+      type: 'string',
+      description: 'Comma-separated email addresses to receive instant proposals and inquiry alerts (e.g. tours@flyingwonders.net, info.flyingwonders@gmail.com). If left blank, defaults to the global notification email in Site Settings.',
+      initialValue: 'info.flyingwonders@gmail.com',
+    }),
   ],
 })
