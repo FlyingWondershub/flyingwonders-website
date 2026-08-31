@@ -750,7 +750,7 @@ export default function EducationToursPage() {
       <section style={{
         background: 'linear-gradient(140deg, #05241B 0%, #093E30 45%, #0B2545 100%)',
         color: '#FFF',
-        padding: 'clamp(2.2rem, 4.5vw, 3.4rem) 1.2rem clamp(3.2rem, 6vw, 4.5rem)',
+        padding: 'clamp(1.4rem, 2.5vw, 2.2rem) 1rem clamp(2.2rem, 3.8vw, 3rem)',
         textAlign: 'center',
         position: 'relative',
         overflow: 'hidden'
@@ -764,68 +764,66 @@ export default function EducationToursPage() {
           pointerEvents: 'none'
         }} />
 
-        <div style={{ maxWidth: '840px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: '1020px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
           {/* Top Pill */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', padding: '0.25rem 0.85rem', borderRadius: '30px', fontSize: '0.74rem', fontWeight: 600, marginBottom: '1rem', backdropFilter: 'blur(8px)' }}>
-            <Sparkles size={13} color="#F59E0B" />
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', padding: '0.2rem 0.75rem', borderRadius: '30px', fontSize: '0.72rem', fontWeight: 600, marginBottom: '0.65rem', backdropFilter: 'blur(8px)' }}>
+            <Sparkles size={12} color="#F59E0B" />
             <span>{sanitySettings?.heroBadge || 'Singapore: The World’s Safest Live Classroom • K-12, College & MBA'}</span>
           </div>
 
-          {/* Compact Main Heading */}
+          {/* Hero Main Heading (Single Line) */}
           <h1 style={{
             fontFamily: 'var(--font-playfair), serif',
-            fontSize: 'clamp(1.8rem, 4vw, 2.75rem)',
+            fontSize: 'clamp(1.45rem, 2.8vw, 2.35rem)',
             fontWeight: 800,
-            lineHeight: 1.18,
-            marginBottom: '0.75rem',
-            letterSpacing: '-0.01em'
+            lineHeight: 1.15,
+            marginBottom: '0.45rem',
+            letterSpacing: '-0.01em',
+            color: '#FFF'
           }}>
             {sanitySettings?.heroTitle ? (
               sanitySettings.heroTitle
             ) : (
-              <>
-                Singapore Educational Tours<br />
-                <span style={{ color: AMBER_LIGHT }}>& Campus Academic Immersions</span>
-              </>
+              'Singapore Educational Tours & Academic Immersions'
             )}
           </h1>
 
-          {/* Subtitle */}
+          {/* Hero Subtitle (2 Lines) */}
           <p style={{
-            fontSize: 'clamp(0.85rem, 1.8vw, 0.98rem)',
+            fontSize: 'clamp(0.8rem, 1.25vw, 0.88rem)',
             color: 'rgba(255,255,255,0.85)',
-            marginBottom: '1.4rem',
-            lineHeight: 1.55,
-            maxWidth: '680px',
-            margin: '0 auto 1.4rem'
+            lineHeight: 1.45,
+            maxWidth: '860px',
+            margin: '0 auto 1.1rem'
           }}>
             {sanitySettings?.heroSubtitle || (
-              <>Experiential study circuits curated for <strong>Schools (K–12)</strong>, <strong>Engineering Colleges</strong>, and <strong>MBA Business Schools</strong>. Explore world-class innovation labs, sustainable engineering marvels, and top global university campuses.</>
+              'Curated study circuits for Schools (K–12), Engineering Colleges, and MBA Business Schools. Explore world-class innovation labs, sustainable engineering marvels, and top global university campuses.'
             )}
           </p>
 
-          {/* Compact CTA Group with Curated Circuits Link in between */}
-          <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {/* All 4 Links in 1 Single Line */}
+          <div style={{ display: 'flex', gap: '0.45rem', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', maxWidth: '980px', margin: '0 auto' }}>
             <button
               onClick={() => setIsModalOpen(true)}
               style={{
                 background: AMBER_LIGHT,
                 color: '#1E293B',
                 border: 'none',
-                padding: '0.7rem 1.4rem',
-                borderRadius: '25px',
+                padding: '0.48rem 0.95rem',
+                borderRadius: '20px',
                 fontWeight: 800,
                 cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(245,158,11,0.4)',
+                boxShadow: '0 3px 10px rgba(245,158,11,0.35)',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.85rem',
+                gap: '5px',
+                fontSize: '0.78rem',
+                whiteSpace: 'nowrap',
                 transition: 'all 0.2s'
               }}
             >
               <span>Request Custom Proposal</span>
-              <ArrowRight size={15} />
+              <ArrowRight size={13} />
             </button>
 
             {/* In-Between Link to Curated Circuits */}
@@ -835,18 +833,19 @@ export default function EducationToursPage() {
                 background: 'rgba(255,255,255,0.18)',
                 color: '#FFF',
                 border: '1px solid rgba(255,255,255,0.35)',
-                padding: '0.7rem 1.35rem',
-                borderRadius: '25px',
+                padding: '0.48rem 0.95rem',
+                borderRadius: '20px',
                 fontWeight: 700,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.85rem',
+                gap: '5px',
+                fontSize: '0.78rem',
+                whiteSpace: 'nowrap',
                 backdropFilter: 'blur(8px)'
               }}
             >
-              <Layers size={15} color="#FBBF24" />
+              <Layers size={13} color="#FBBF24" />
               <span>Curated Study Circuits</span>
             </a>
 
@@ -856,18 +855,19 @@ export default function EducationToursPage() {
                 background: 'rgba(255,255,255,0.08)',
                 color: '#FFF',
                 border: '1px solid rgba(255,255,255,0.22)',
-                padding: '0.7rem 1.35rem',
-                borderRadius: '25px',
+                padding: '0.48rem 0.95rem',
+                borderRadius: '20px',
                 fontWeight: 700,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.85rem',
+                gap: '5px',
+                fontSize: '0.78rem',
+                whiteSpace: 'nowrap',
                 backdropFilter: 'blur(8px)'
               }}
             >
-              <Compass size={15} color="#6EE7B7" />
+              <Compass size={13} color="#6EE7B7" />
               <span>Explore 7 Partner Institutions</span>
             </a>
 
@@ -877,18 +877,19 @@ export default function EducationToursPage() {
                 background: 'rgba(255,255,255,0.06)',
                 color: '#FFF',
                 border: '1px solid rgba(255,255,255,0.16)',
-                padding: '0.7rem 1.25rem',
-                borderRadius: '25px',
+                padding: '0.48rem 0.95rem',
+                borderRadius: '20px',
                 fontWeight: 700,
                 textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.85rem',
+                gap: '5px',
+                fontSize: '0.78rem',
+                whiteSpace: 'nowrap',
                 backdropFilter: 'blur(8px)'
               }}
             >
-              <DollarSign size={15} color="#FBBF24" />
+              <DollarSign size={13} color="#FBBF24" />
               <span>Cost Estimator</span>
             </a>
           </div>
@@ -896,7 +897,7 @@ export default function EducationToursPage() {
       </section>
 
       {/* ─── Compact Floating Trust Stats Bar ─── */}
-      <section style={{ maxWidth: '1100px', margin: '-2.4rem auto 3.5rem', padding: '0 1.2rem', position: 'relative', zIndex: 10 }}>
+      <section style={{ maxWidth: '1100px', margin: '-1.8rem auto 3.2rem', padding: '0 1.2rem', position: 'relative', zIndex: 10 }}>
         <div style={{
           background: '#FFF',
           borderRadius: '16px',
