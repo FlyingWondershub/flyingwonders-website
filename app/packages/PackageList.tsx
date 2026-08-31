@@ -54,14 +54,14 @@ export default function PackageList({ initialPackages, exchangeRate = 74.81 }: {
 
       {/* Dynamic Filter Tabs */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
-        {['all', 'budget', 'premium', 'solo', 'groups'].map((tier) => (
+        {['all', 'budget', 'premium', 'solo', 'groups', 'education'].map((tier) => (
           <button
             key={tier}
             onClick={() => setActiveTier(tier)}
             className={`btn ${activeTier === tier ? 'btn-primary' : 'glass hover-lift'}`}
             style={{ textTransform: 'capitalize' }}
           >
-            {tier === 'groups' ? 'Groups/Families' : tier}
+            {tier === 'groups' ? 'Groups/Families' : tier === 'education' ? '🎓 Education Tours' : tier}
           </button>
         ))}
       </div>

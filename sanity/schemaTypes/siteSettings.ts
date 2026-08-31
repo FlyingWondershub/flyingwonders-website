@@ -168,6 +168,14 @@ export const siteSettingsSchema = {
       group: 'navigationToggles',
     },
     {
+      name: 'hideEducationTours',
+      title: '🙈 Hide "Education Tours" (/education-tours) Link',
+      type: 'boolean',
+      description: 'Toggle ON to hide the Education Tours dropdown link and promotions from the website.',
+      initialValue: false,
+      group: 'navigationToggles',
+    },
+    {
       name: 'hidePwaPrompt',
       title: '🙈 Hide "Add to Home Screen" PWA Prompt',
       type: 'boolean',
