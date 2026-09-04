@@ -337,29 +337,51 @@ export default function AttractionsForm({
     if (!sanityMeta || sanityMeta.length === 0) return undefined
     const normName = name.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
 
+    // Helper: Prevent cross-matching between opposite/contrasting keywords
+    const hasConflict = (a: string, b: string): boolean => {
+      const conflicts = [
+        ['arrival', 'departure'],
+        ['arrivals', 'departures'],
+        ['lunch', 'dinner'],
+        ['1 hr', '2 hr'],
+        ['1hr', '2hr'],
+        ['1 day', '5 day'],
+        ['1day', '5day'],
+        ['peak', 'off peak'],
+        ['peak', 'off-peak']
+      ]
+      for (const [kw1, kw2] of conflicts) {
+        if ((a.includes(kw1) && b.includes(kw2)) || (a.includes(kw2) && b.includes(kw1))) {
+          return true
+        }
+      }
+      return false
+    }
+
     // Tier 1: Direct exact match on Sanity record name
     const exactName = sanityMeta.find(m => m.name && m.name.toLowerCase().trim() === name.toLowerCase().trim())
     if (exactName) return exactName
 
-    // Tier 2: Sanity name inclusion (either direction)
+    // Tier 2: Sanity name inclusion (either direction) with conflict guard
     const nameInclusion = sanityMeta.find(m => {
       if (!m.name) return false
       const normMName = m.name.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
+      if (hasConflict(normName, normMName)) return false
       return normName.includes(normMName) || normMName.includes(normName)
     })
     if (nameInclusion) return nameInclusion
 
-    // Tier 3: Match keyword inclusion (stripped of punctuation/hyphens)
+    // Tier 3: Match keyword inclusion (stripped of punctuation/hyphens) with conflict guard
     const kwMatch = sanityMeta.find(m => {
       if (!m.matchKeyword) return false
       const normKw = m.matchKeyword.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
-      if (!normKw) return false
+      if (!normKw || hasConflict(normName, normKw)) return false
       return normName.includes(normKw) || normKw.includes(normName)
     })
     if (kwMatch) return kwMatch
 
-    // Tier 4: Significant Word Token Overlap
-    const stopWords = new Set(['ticket', 'tickets', 'entry', 'fixed', 'date', 'combo', 'peak', 'non', 'singapore', 'show', 'slot', 'time', 'with', 'for', 'and', 'the', 'pass'])
+    // Tier 4: Significant Word Token Overlap with strict threshold and conflict guard
+    const stopWords = new Set(['ticket', 'tickets', 'entry', 'fixed', 'date', 'combo', 'peak', 'non', 'singapore', 'show', 'slot', 'time', 'with', 'for', 'and', 'the', 'pass', 'from', 'airport', 'aiport', 'transfer', 'transfers'])
     const nameTokens = normName.split(' ').filter(w => w.length > 2 && !stopWords.has(w))
 
     let bestMeta: SanityMeta | undefined = undefined
@@ -367,6 +389,8 @@ export default function AttractionsForm({
 
     for (const m of sanityMeta) {
       const targetText = `${m.name || ''} ${m.matchKeyword || ''}`.toLowerCase().replace(/[^a-z0-9\s]/g, ' ')
+      if (hasConflict(normName, targetText)) continue
+
       let score = 0
       for (const token of nameTokens) {
         if (targetText.includes(token)) score++

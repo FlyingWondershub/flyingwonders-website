@@ -105,7 +105,7 @@ export default async function SingaporeAttractionsPage() {
   try {
     const rawMeta = await client.fetch(`*[_type == "attractionMeta"] {
       _id, name, matchKeyword, photo, officialWebsite, shortDescription, openingHours, rating, category, isPopular, isTrending, longDescription, highlights, tips, duration, location, ageRecommendation
-    }`, {}, { next: { revalidate: 600 } })
+    }`, {}, { next: { revalidate: 60 } })
     // Resolve photo URLs
     sanityMeta = (rawMeta || []).map((m: any) => ({
       ...m,
