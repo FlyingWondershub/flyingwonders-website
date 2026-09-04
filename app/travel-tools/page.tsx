@@ -791,7 +791,8 @@ export default function TravelToolsPage() {
               { id: 'tool-age-calculator', label: '🎂 Ticket Age Calculator', show: !sanitySettings.hideAgeCalculator },
               { id: 'tool-packing-checklist', label: '🎒 Packing List', show: !sanitySettings.hideInteractiveChecklist },
               { id: 'tool-news-radar', label: '📰 Travel News', show: !sanitySettings.hideTravelNews && !hideNewsRadar },
-              { id: 'tool-time-allocator', label: '⏱️ Time Allocator', show: !sanitySettings.hideAttractionAllocator }
+              { id: 'tool-time-allocator', label: '⏱️ Time Allocator', show: !sanitySettings.hideAttractionAllocator },
+              { id: 'tool-gst-customs', label: '🧾 GST & Customs Duty', show: true }
             ].filter(item => item.show).map(item => (
               <button
                 key={item.id}
@@ -1639,6 +1640,67 @@ export default function TravelToolsPage() {
             </div>
 
             <ToolCommunityFooter toolId="time-allocator" toolName="Attraction Time Allocator" summaryText="Recommended visit durations and best arrival times for top Singapore attractions." />
+          </div>
+        )}
+
+        {/* 🧾 GST REFUND & INDIA CUSTOMS DUTY — TEASER CARD (LINKS TO FULL PAGE) */}
+        {matchesSearch('gst customs duty refund tax singapore dubai india calculator gold allowance') && (
+          <div id="tool-gst-customs" style={{ background: 'linear-gradient(135deg, #FFF 0%, #F0FDF4 100%)', borderRadius: '16px', padding: '2rem', border: '2px solid #BBF7D0', boxShadow: '0 4px 20px rgba(5,150,105,0.1)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+              <div style={{ flex: 1, minWidth: '260px' }}>
+                <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#0F4C3A', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <Calculator size={24} color="#059669" /> GST Refund & India Customs Duty Guide
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: '#475569', margin: '0 0 1rem', lineHeight: 1.6 }}>
+                  Claim your <strong>Singapore GST refund (9%)</strong> and <strong>Dubai VAT refund (5%)</strong> at the airport.
+                  Know your <strong>India customs duty-free limits</strong> — ₹50,000 from Singapore vs ₹15,000 from Dubai.
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                  {['🧮 4 Calculators', '🛃 Duty-Free Limits', '🆚 Buy Where?', '📋 Airport Checklist', '⚠️ Prohibited Items'].map(tag => (
+                    <span key={tag} style={{ background: '#ECFDF5', color: '#065F46', fontSize: '0.72rem', fontWeight: 700, padding: '4px 10px', borderRadius: '20px', border: '1px solid #A7F3D0' }}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <Link
+                  href="/gst-customs-guide"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: '#0F4C3A',
+                    color: '#FFF',
+                    padding: '0.7rem 1.5rem',
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.9rem',
+                    textDecoration: 'none',
+                    boxShadow: '0 4px 15px rgba(15,76,58,0.3)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <Percent size={16} /> Open Full Guide & Calculators <ExternalLink size={14} />
+                </Link>
+              </div>
+
+              {/* Quick Highlights */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: '200px' }}>
+                {[
+                  { icon: '🇸🇬', label: 'SG GST Refund', value: '9% back' },
+                  { icon: '🇦🇪', label: 'Dubai VAT Refund', value: '5% back' },
+                  { icon: '🇮🇳', label: 'From Singapore', value: '₹50K free' },
+                  { icon: '🇮🇳', label: 'From Dubai', value: '₹15K free' }
+                ].map((item, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#FFF', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                    <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
+                    <div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>{item.label}</div>
+                      <div style={{ fontSize: '0.85rem', color: '#0F4C3A', fontWeight: 800 }}>{item.value}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 

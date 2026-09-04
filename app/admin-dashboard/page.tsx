@@ -1250,6 +1250,7 @@ export default function AdminDashboard() {
                   { name: 'Traveler Age Calculator', path: '/age-calculator', desc: 'Infant, child & adult fare categorization' },
                   { name: 'AI Trip & Itinerary Planner', path: '/ai-planner', desc: 'Intelligent AI-generated itineraries' },
                   { name: 'Instant Package Estimator', path: '/instant-quote', desc: 'Rapid pricing & budget calculator' },
+                  { name: 'GST Refund & Customs Calculator', path: '/gst-customs-guide', desc: 'Tax refund claims & India customs duty guide' },
                 ].map(link => (
                   <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
                     <div>
