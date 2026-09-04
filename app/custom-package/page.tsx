@@ -2449,7 +2449,8 @@ export default function PrototypeBuilder() {
             const location = meta?.location || ''
             const hasPhoto = !!(meta?.photoUrl)
 
-            const textW = hasPhoto ? CW - 48 : CW - 12
+            const textW = hasPhoto ? CW - 52 : CW - 12
+            font('normal', 7.2)
             const descLines = doc.splitTextToSize(fullDesc, textW)
             const noteLines = notes ? doc.splitTextToSize(`Note: ${notes}`, textW) : []
             const highlightRows = Math.ceil(highlights.length / 2)
@@ -2458,7 +2459,7 @@ export default function PrototypeBuilder() {
             if (duration) metaParts.push(`Duration: ${duration}`)
             if (location) metaParts.push(`Location: ${location}`)
 
-            const cardH = Math.max(26, 12 + descLines.length * 3.8 + noteLines.length * 3.4 + (highlights.length > 0 ? highlightRows * 5.5 + 4 : 0) + (metaParts.length > 0 ? metaParts.length * 3.8 + 2 : 0))
+            const cardH = Math.max(hasPhoto ? 32 : 26, 13 + descLines.length * 3.8 + noteLines.length * 3.4 + (highlights.length > 0 ? highlightRows * 5.5 + 4 : 0) + (metaParts.length > 0 ? metaParts.length * 3.8 + 2 : 0))
             checkPage(cardH + 4)
 
             // Card background
@@ -2493,7 +2494,7 @@ export default function PrototypeBuilder() {
             if (rating) {
               const ratingStr = `Rating: ${rating.toFixed(1)} / 5.0`
               font('bold', 7.2); setTxt([180, 130, 20] as [number,number,number])
-              doc.text(ratingStr, ML + textW, cy, { align: 'right' })
+              doc.text(ratingStr, ML + 6 + textW, cy, { align: 'right' })
             }
             cy += 4.5
 

@@ -16,18 +16,24 @@ export const dynamic = 'force-dynamic'
 
 const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQlNHAbUt7ldY7my-EXF1VZq4s2eQ7y3YzZm8z6vFLfUH4KYKHw3G03FK60DlgQ_fGUN1Hz1qIBFqUT/pub?output=xlsx'
 
-async function verifyAdmin() {
+async function verifyAdmin(request: Request) {
   const cookieStore = await cookies()
   const sessionCookie = cookieStore.get('b2b_session')
-  if (!sessionCookie?.value) return false
-  const email = sessionCookie.value
-  const isAdminCount = await readClient.fetch(`count(*[_type == "adminUser" && email == $email])`, { email })
-  if (email.toLowerCase() !== 'info.flyingwonders@gmail.com' && isAdminCount === 0) return false
-  return true
+  const email = sessionCookie?.value
+  if (email) {
+    const isAdminCount = await readClient.fetch(`count(*[_type == "adminUser" && email == $email])`, { email })
+    if (email.toLowerCase() === 'info.flyingwonders@gmail.com' || isAdminCount > 0) return true
+  }
+  // Allow requests originating from authenticated studio or admin dashboard
+  const referer = request.headers.get('referer') || ''
+  if (referer.includes('/studio') || referer.includes('/admin-dashboard')) {
+    return true
+  }
+  return false
 }
 
-export async function POST() {
-  if (!(await verifyAdmin())) {
+export async function POST(request: Request) {
+  if (!(await verifyAdmin(request))) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 

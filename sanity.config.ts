@@ -1,6 +1,7 @@
 import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {schema} from './sanity/schemaTypes'
+import {SyncAttractionsTool} from './sanity/tools/SyncAttractionsTool'
 import React from 'react'
 
 export default defineConfig({
@@ -14,6 +15,11 @@ export default defineConfig({
   ],
   tools: (prev) => [
     ...prev,
+    {
+      name: 'sync-sheets',
+      title: '🔄 Sync Sheets & Cache',
+      component: SyncAttractionsTool,
+    },
     {
       name: 'export-agents',
       title: '📤 Export B2B Agents',
