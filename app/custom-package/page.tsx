@@ -1980,21 +1980,6 @@ export default function PrototypeBuilder() {
       logoRaster = await fetchRasterLogo(effectiveLogoUrl)
     }
 
-    // Dynamic QR Code for Live Proposal / WhatsApp
-    let qrDataUrl: string | null = null
-    try {
-      const QRCode = (await import('qrcode')).default
-      const proposalRefCode = pNum || savedProposalNum
-      const qrTarget = typeof window !== 'undefined'
-        ? `${window.location.origin}/custom-package?ref=${proposalRefCode}`
-        : `https://flyingwonders.com/custom-package?ref=${proposalRefCode}`
-      qrDataUrl = await QRCode.toDataURL(qrTarget, {
-        margin: 1,
-        width: 140,
-        color: { dark: '#0A2240', light: '#FFFFFF' }
-      })
-    } catch (qe) {}
-
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
     const PW = 210  // page width
@@ -2217,21 +2202,6 @@ export default function PrototypeBuilder() {
         setFill(GOLD); doc.roundedRect(126, 8, 56, 10, 2, 2, 'F')
         font('bold', 7.5); setTxt(NAVY)
         doc.text(`PROPOSAL REF: ${refCode}`, 154, 14.5, { align: 'center' })
-      }
-
-      // Dynamic QR Code pill
-      if (qrDataUrl) {
-        const qrBoxX = 158
-        const qrBoxY = 21
-        const qrBoxW = 24
-        const qrBoxH = 30
-        setFill(WHITE); doc.roundedRect(qrBoxX, qrBoxY, qrBoxW, qrBoxH, 2, 2, 'F')
-        setDraw(LGRAY); doc.setLineWidth(0.3); doc.roundedRect(qrBoxX, qrBoxY, qrBoxW, qrBoxH, 2, 2, 'S')
-        try {
-          doc.addImage(qrDataUrl, 'PNG', qrBoxX + 2, qrBoxY + 2, 20, 20, undefined, 'FAST')
-          font('bold', 5.5); setTxt(NAVY)
-          doc.text('SCAN ONLINE', qrBoxX + qrBoxW / 2, qrBoxY + 26, { align: 'center' })
-        } catch (qre) {}
       }
 
       y = 64
