@@ -50,6 +50,27 @@ export default function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false)
   const [competitorPrices, setCompetitorPrices] = useState<any[]>([])
   const [refreshingPrices, setRefreshingPrices] = useState(false)
+  const [syncingAttractions, setSyncingAttractions] = useState(false)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
+
+  const handleSyncAttractions = async () => {
+    setSyncingAttractions(true)
+    setSyncMessage(null)
+    try {
+      const res = await fetch('/api/admin/sync-attractions', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setSyncMessage(data.message || `Synced ${data.count} attractions!`)
+      } else {
+        setSyncMessage(`Error: ${data.error || 'Failed to sync'}`)
+      }
+    } catch (e: any) {
+      setSyncMessage(`Error: ${e.message}`)
+    } finally {
+      setSyncingAttractions(false)
+      setTimeout(() => setSyncMessage(null), 6000)
+    }
+  }
 
   // ── Travel Consulting Requests State ──
   const [consultingBookings, setConsultingBookings] = useState<any[]>([])
@@ -569,14 +590,58 @@ export default function AdminDashboard() {
             <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.1rem', color: '#2D3748', margin: 0 }}>Admin Operations Dashboard</h1>
             <p style={{ color: '#4A5568', fontSize: '0.92rem', margin: '0.25rem 0 0 0' }}>Manage package lifecycles, booking calendar, approvals & audit logs.</p>
           </div>
-          <button 
-            onClick={fetchData} 
-            disabled={refreshing}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}
-          >
-            <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} /> Refresh Data
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button 
+              onClick={handleSyncAttractions}
+              disabled={syncingAttractions}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.55rem 1.1rem',
+                background: '#ECFDF5',
+                color: '#065F46',
+                border: '1px solid #A7F3D0',
+                borderRadius: '8px',
+                cursor: syncingAttractions ? 'not-allowed' : 'pointer',
+                fontWeight: 600,
+                fontSize: '0.82rem'
+              }}
+              title="Sync latest attractions from Google Sheets and purge page caches"
+            >
+              <FileSpreadsheet size={15} className={syncingAttractions ? "animate-spin" : ""} />
+              {syncingAttractions ? "Syncing Sheets..." : "Sync Sheets & Purge Cache"}
+            </button>
+            <button 
+              onClick={fetchData} 
+              disabled={refreshing}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}
+            >
+              <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} /> Refresh Data
+            </button>
+          </div>
         </div>
+
+        {/* Sync Notification Banner */}
+        {syncMessage && (
+          <div style={{
+            marginBottom: '1.25rem',
+            padding: '0.65rem 1rem',
+            borderRadius: '8px',
+            background: syncMessage.startsWith('Error') ? '#FEF2F2' : '#F0FDF4',
+            border: `1px solid ${syncMessage.startsWith('Error') ? '#FECACA' : '#BBF7D0'}`,
+            color: syncMessage.startsWith('Error') ? '#991B1B' : '#166534',
+            fontSize: '0.84rem',
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+          }}>
+            {syncMessage.startsWith('Error') ? <XCircle size={16} /> : <CheckCircle size={16} />}
+            <span>{syncMessage}</span>
+          </div>
+        )}
 
         {/* ── SECTION 1: ULTRA-COMPACT KPI METRICS ROW ── */}
         <div id="section-metrics" style={{ marginBottom: '2rem' }}>

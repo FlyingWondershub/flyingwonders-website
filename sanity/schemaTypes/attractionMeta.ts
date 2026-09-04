@@ -1,5 +1,6 @@
 import { defineField, defineType } from 'sanity'
 import { ATTRACTION_NAMES } from './attractionsList'
+import { LiveAttractionNameInput } from '../components/LiveAttractionNameInput'
 
 export const attractionMetaSchema = defineType({
   name: 'attractionMeta',
@@ -20,9 +21,9 @@ export const attractionMetaSchema = defineType({
       title: 'Attraction Name',
       group: 'identity',
       type: 'string',
-      description: 'Select the attraction name to match from the Google Sheet pricing list.',
-      options: {
-        list: ATTRACTION_NAMES.map(name => ({ title: name, value: name })),
+      description: 'Select the attraction name dynamically from the live Google Sheet pricing list or type manually.',
+      components: {
+        input: LiveAttractionNameInput,
       },
       validation: Rule => Rule.required()
     }),
