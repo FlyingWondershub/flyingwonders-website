@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
       customAgencyName,
       customAgencyEmail,
       customAgencyPhone,
+      customAgencyLogoUrl,
       destinationMode,
       costBreakdown,
       itinerary,
@@ -181,6 +182,7 @@ export async function POST(req: NextRequest) {
       customAgencyName: customAgencyName || '',
       customAgencyEmail: customAgencyEmail || '',
       customAgencyPhone: customAgencyPhone || '',
+      customAgencyLogoUrl: customAgencyLogoUrl || '',
       destinationMode: destinationMode || 'singapore',
       invoiceNumber: reqInvoiceNumber || '',
       invoiceDate: reqInvoiceDate || '',
@@ -257,10 +259,16 @@ export async function GET(req: NextRequest) {
         invoiceDate,
         paymentLedger,
         additionalCharges,
+        customAgencyName,
+        customAgencyEmail,
+        customAgencyPhone,
+        customAgencyLogoUrl,
         agent->{
           agentName,
           companyName,
-          email
+          email,
+          phone,
+          "logoUrl": logo.asset->url
         }
       }`
 
@@ -279,7 +287,8 @@ export async function GET(req: NextRequest) {
           agentName,
           companyName,
           email,
-          phone
+          phone,
+          "logoUrl": logo.asset->url
         }
       }`,
       { number }

@@ -39,7 +39,8 @@ export async function GET() {
       mobile,
       isActive,
       isApproved,
-      _createdAt
+      _createdAt,
+      "logoUrl": logo.asset->url
     }`)
     
     // Normalize format across models
@@ -52,7 +53,8 @@ export async function GET() {
       phone: a.phone || a.mobile || 'N/A',
       isApproved: a.isApproved ?? a.isActive ?? false,
       isActive: a.isActive ?? a.isApproved ?? false,
-      createdAt: a._createdAt
+      createdAt: a._createdAt,
+      logoUrl: a.logoUrl || null,
     }))
 
     return NextResponse.json(normalized)

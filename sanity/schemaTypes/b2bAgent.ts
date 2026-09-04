@@ -16,6 +16,15 @@ export const b2bAgentSchema = defineType({
       type: 'string',
     }),
     defineField({
+      name: 'logo',
+      title: 'Agency Logo',
+      description: 'Upload high-resolution agency logo for white-label PDF proposals and itineraries.',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+    }),
+    defineField({
       name: 'email',
       title: 'Email Address',
       type: 'string',
@@ -43,4 +52,11 @@ export const b2bAgentSchema = defineType({
       type: 'string',
     }),
   ],
+  preview: {
+    select: {
+      title: 'companyName',
+      subtitle: 'email',
+      media: 'logo',
+    },
+  },
 })

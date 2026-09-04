@@ -22,7 +22,10 @@ import {
   Building2,
   Phone,
   Mail,
-  UserCheck
+  UserCheck,
+  UploadCloud,
+  Image as ImageIcon,
+  Trash2
 } from 'lucide-react'
 
 export default function AgentPortalPage() {
@@ -37,6 +40,16 @@ export default function AgentPortalPage() {
   const [customAgencyName, setCustomAgencyName] = useState('')
   const [customAgencyEmail, setCustomAgencyEmail] = useState('')
   const [customAgencyPhone, setCustomAgencyPhone] = useState('')
+  const [customAgencyLogoUrl, setCustomAgencyLogoUrl] = useState('')
+  const [brandingLogoFile, setBrandingLogoFile] = useState<File | null>(null)
+  const [brandingLogoPreview, setBrandingLogoPreview] = useState('')
+  const [brandingUploading, setBrandingUploading] = useState(false)
+
+  // Registration logo state
+  const [regLogoFile, setRegLogoFile] = useState<File | null>(null)
+  const [regLogoPreview, setRegLogoPreview] = useState('')
+  const [regLogoAssetId, setRegLogoAssetId] = useState('')
+  const [regUploading, setRegUploading] = useState(false)
 
   // Bookings Filter & Search
   const [bookingFilter, setBookingFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all')
@@ -71,6 +84,8 @@ export default function AgentPortalPage() {
           setCustomAgencyName(ag.companyName || ag.agentName || '')
           setCustomAgencyEmail(ag.email || '')
           setCustomAgencyPhone(ag.phone || '')
+          setCustomAgencyLogoUrl(ag.logoUrl || '')
+          setBrandingLogoPreview(ag.logoUrl || '')
           localStorage.setItem('fw_b2b_agent', JSON.stringify(ag))
           fetchAgentProposals(ag.email)
           setLoading(false)
@@ -99,6 +114,28 @@ export default function AgentPortalPage() {
     }
     setAuthSubmitting(true)
     try {
+      let uploadedLogoAssetId = regLogoAssetId
+      if (authMode === 'signup' && regLogoFile && !uploadedLogoAssetId) {
+        setRegUploading(true)
+        try {
+          const fd = new FormData()
+          fd.append('file', regLogoFile)
+          const uploadRes = await fetch('/api/agent-portal/logo-upload', {
+            method: 'POST',
+            body: fd,
+          })
+          const uploadData = await uploadRes.json()
+          if (uploadData.success && uploadData.assetId) {
+            uploadedLogoAssetId = uploadData.assetId
+            setRegLogoAssetId(uploadData.assetId)
+          }
+        } catch (upErr) {
+          console.warn('Logo upload during signup failed, continuing:', upErr)
+        } finally {
+          setRegUploading(false)
+        }
+      }
+
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,6 +144,7 @@ export default function AgentPortalPage() {
           companyName: authMode === 'signup' ? regCompanyName : undefined,
           agentName: authMode === 'signup' ? regAgentName : undefined,
           phone: authMode === 'signup' ? regPhone : undefined,
+          logoAssetId: uploadedLogoAssetId || undefined,
         })
       })
       const data = await res.json()
@@ -145,6 +183,8 @@ export default function AgentPortalPage() {
         setCustomAgencyName(ag.companyName || ag.agentName || '')
         setCustomAgencyEmail(ag.email || '')
         setCustomAgencyPhone(ag.phone || '')
+        setCustomAgencyLogoUrl(ag.logoUrl || '')
+        setBrandingLogoPreview(ag.logoUrl || '')
         localStorage.setItem('fw_b2b_agent', JSON.stringify(ag))
         setShowLoginModal(false)
         fetchAgentProposals(ag.email)
@@ -206,18 +246,50 @@ export default function AgentPortalPage() {
     }
   }
 
-  const handleSaveBranding = () => {
+  const handleSaveBranding = async () => {
     if (!activeAgent) return
+    setBrandingUploading(true)
+    let newLogoUrl = customAgencyLogoUrl
+
+    if (brandingLogoFile) {
+      try {
+        const fd = new FormData()
+        fd.append('file', brandingLogoFile)
+        if (activeAgent.email) {
+          fd.append('agentEmail', activeAgent.email)
+        }
+        const uploadRes = await fetch('/api/agent-portal/logo-upload', {
+          method: 'POST',
+          body: fd,
+        })
+        const uploadData = await uploadRes.json()
+        if (uploadData.success && uploadData.url) {
+          newLogoUrl = uploadData.url
+          setCustomAgencyLogoUrl(newLogoUrl)
+          setBrandingLogoPreview(newLogoUrl)
+        }
+      } catch (err) {
+        console.error('Failed to upload branding logo:', err)
+        alert('Failed to upload agency logo image, but saving text branding.')
+      }
+    } else if (!brandingLogoPreview) {
+      newLogoUrl = ''
+      setCustomAgencyLogoUrl('')
+    }
+
     const updated = {
       ...activeAgent,
       companyName: customAgencyName,
       email: customAgencyEmail,
-      phone: customAgencyPhone
+      phone: customAgencyPhone,
+      logoUrl: newLogoUrl,
     }
     setActiveAgent(updated)
     localStorage.setItem('fw_b2b_agent', JSON.stringify(updated))
+    setBrandingLogoFile(null)
+    setBrandingUploading(false)
     setShowBrandingModal(false)
-    alert('Agency Branding updated successfully! Applies across all white-label PDF and WhatsApp proposals.')
+    alert('Agency Branding & Logo updated successfully! Applies across all white-label PDF and WhatsApp proposals.')
   }
 
   const handleLogout = async () => {
@@ -314,17 +386,22 @@ export default function AgentPortalPage() {
                 width: '72px',
                 height: '72px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #B83A4B 0%, #0F4C3A 100%)',
+                background: activeAgent?.logoUrl ? '#FFFFFF' : 'linear-gradient(135deg, #B83A4B 0%, #0F4C3A 100%)',
+                border: activeAgent?.logoUrl ? '2px solid #E2E8F0' : 'none',
                 color: '#FFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '1.5rem',
                 fontWeight: 800,
-                boxShadow: '0 4px 12px rgba(184,58,75,0.25)',
-                margin: '0 auto'
+                boxShadow: '0 4px 12px rgba(184,58,75,0.15)',
+                margin: '0 auto',
+                overflow: 'hidden',
+                padding: activeAgent?.logoUrl ? '6px' : 0,
               }}>
-                {companyInitials}
+                {activeAgent?.logoUrl ? (
+                  <img src={activeAgent.logoUrl} alt={activeAgent?.companyName || 'Agency Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                ) : companyInitials}
               </div>
               <button 
                 onClick={() => setShowBrandingModal(true)}
@@ -974,6 +1051,68 @@ export default function AgentPortalPage() {
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+              {/* Agency Logo Upload & Preview */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>Agency Logo (PDF & Itineraries)</label>
+                {brandingLogoPreview ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px' }}>
+                    <div style={{ width: '80px', height: '50px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '4px' }}>
+                      <img src={brandingLogoPreview} alt="Agency Logo Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1E293B' }}>Logo Attached</span>
+                      <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Renders high-contrast on PDF proposals</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <label style={{ cursor: 'pointer', padding: '0.4rem 0.65rem', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <UploadCloud size={14} /> Replace
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                          style={{ display: 'none' }}
+                          onChange={e => {
+                            const f = e.target.files?.[0]
+                            if (f) {
+                              setBrandingLogoFile(f)
+                              setBrandingLogoPreview(URL.createObjectURL(f))
+                            }
+                          }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBrandingLogoFile(null)
+                          setBrandingLogoPreview('')
+                          setCustomAgencyLogoUrl('')
+                        }}
+                        style={{ padding: '0.4rem 0.65rem', background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#E11D48', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <Trash2 size={14} /> Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1.25rem', border: '2px dashed #CBD5E1', borderRadius: '10px', background: '#F8FAFC', cursor: 'pointer', textAlign: 'center' }}>
+                    <UploadCloud size={24} color="#64748B" style={{ marginBottom: '0.4rem' }} />
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0F172A' }}>Upload Agency Logo</span>
+                    <span style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>PNG, JPG, SVG or WebP • Recommended transparent background</span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                      style={{ display: 'none' }}
+                      onChange={e => {
+                        const f = e.target.files?.[0]
+                        if (f) {
+                          setBrandingLogoFile(f)
+                          setBrandingLogoPreview(URL.createObjectURL(f))
+                        }
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+
               <div>
                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '0.25rem' }}>Agency / Company Name *</label>
                 <input
@@ -1018,10 +1157,11 @@ export default function AgentPortalPage() {
               </button>
               <button
                 type="button"
+                disabled={brandingUploading}
                 onClick={handleSaveBranding}
-                style={{ padding: '0.6rem 1.5rem', borderRadius: '8px', border: 'none', background: '#B83A4B', color: '#FFF', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}
+                style={{ padding: '0.6rem 1.5rem', borderRadius: '8px', border: 'none', background: '#B83A4B', color: '#FFF', fontWeight: 700, cursor: brandingUploading ? 'not-allowed' : 'pointer', fontSize: '0.85rem' }}
               >
-                Save Branding Settings
+                {brandingUploading ? 'Saving Logo & Branding...' : 'Save Branding Settings'}
               </button>
             </div>
 
@@ -1146,6 +1286,43 @@ export default function AgentPortalPage() {
                         value={regPhone} onChange={e => setRegPhone(e.target.value)}
                         style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }}
                       />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.25rem', color: '#475569' }}>
+                        Agency Logo <span style={{ fontWeight: 400, color: '#94A3B8' }}>(Optional)</span>
+                      </label>
+                      {regLogoPreview ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
+                          <div style={{ width: '50px', height: '36px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                            <img src={regLogoPreview} alt="Logo preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: '#15803D', fontWeight: 700, flex: 1 }}>Logo selected</span>
+                          <button
+                            type="button"
+                            onClick={() => { setRegLogoFile(null); setRegLogoPreview(''); setRegLogoAssetId(''); }}
+                            style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', border: '1px dashed #CBD5E1', borderRadius: '6px', background: '#F8FAFC', cursor: 'pointer', fontSize: '0.78rem', color: '#475569' }}>
+                          <UploadCloud size={16} color="#64748B" />
+                          <span>Choose Agency Logo (PNG, JPG, SVG)</span>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                            style={{ display: 'none' }}
+                            onChange={e => {
+                              const f = e.target.files?.[0]
+                              if (f) {
+                                setRegLogoFile(f)
+                                setRegLogoPreview(URL.createObjectURL(f))
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
                     </div>
                   </>
                 )}

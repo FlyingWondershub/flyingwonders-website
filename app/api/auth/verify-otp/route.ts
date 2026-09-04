@@ -24,7 +24,10 @@ export async function POST(req: Request) {
     const cleanEmail = email.trim().toLowerCase()
 
     // 1. Fetch agent record from b2bAgent schema
-    let record = await writeClient.fetch(`*[_type == "b2bAgent" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
+    let record = await writeClient.fetch(`*[_type == "b2bAgent" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]{
+      ...,
+      "logoUrl": logo.asset->url
+    }`, { cleanEmail })
     let recordType = 'b2bAgent'
 
     // If not found in b2bAgent, check b2bCatalogProfile for B2B Directory
@@ -81,6 +84,7 @@ export async function POST(req: Request) {
         agentName: record.agentName,
         email: cleanEmail,
         phone: record.phone,
+        logoUrl: record.logoUrl || '',
       },
     })
 

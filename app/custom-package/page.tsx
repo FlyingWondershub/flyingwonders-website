@@ -181,7 +181,7 @@ export default function PrototypeBuilder() {
   
   const [authError, setAuthError] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
-  const [activeAgent, setActiveAgent] = useState<{ companyName?: string; agentName?: string; email?: string; phone?: string; role?: string } | null>(null)
+  const [activeAgent, setActiveAgent] = useState<{ companyName?: string; agentName?: string; email?: string; phone?: string; role?: string; logoUrl?: string } | null>(null)
 
   // Newsletter Admin States
   const [draftCampaigns, setDraftCampaigns] = useState<{ _id: string; title: string; subject: string }[]>([])
@@ -309,6 +309,7 @@ export default function PrototypeBuilder() {
       setCustomAgencyName('Flying Wonders DMC')
       setCustomAgencyEmail('info.flyingwonders@gmail.com')
       setCustomAgencyPhone('+65 9689 0101')
+      setCustomAgencyLogoUrl('')
       return
     }
     const found = b2bAgentsList.find(a => a._id === agentId)
@@ -320,6 +321,7 @@ export default function PrototypeBuilder() {
       setCustomAgencyName(found.companyName || found.agentName || 'Partner Agency')
       setCustomAgencyEmail(found.email || '')
       setCustomAgencyPhone(found.phone || '')
+      setCustomAgencyLogoUrl(found.logoUrl || '')
     }
   }
 
@@ -334,6 +336,7 @@ export default function PrototypeBuilder() {
         setCustomAgencyName(activeAgent.companyName || 'My Travel Agency')
         setCustomAgencyEmail(activeAgent.email || '')
         setCustomAgencyPhone(activeAgent.phone || '')
+        setCustomAgencyLogoUrl(activeAgent.logoUrl || '')
       }
     } else {
       setAgentName('')
@@ -342,6 +345,7 @@ export default function PrototypeBuilder() {
       setCustomAgencyName('My Travel Agency')
       setCustomAgencyEmail('')
       setCustomAgencyPhone('')
+      setCustomAgencyLogoUrl('')
     }
   }, [activeAgent])
 
@@ -399,6 +403,8 @@ export default function PrototypeBuilder() {
   const [customAgencyName, setCustomAgencyName] = useState('My Travel Agency')
   const [customAgencyEmail, setCustomAgencyEmail] = useState('')
   const [customAgencyPhone, setCustomAgencyPhone] = useState('')
+  const [customAgencyLogoUrl, setCustomAgencyLogoUrl] = useState('')
+  const [brandingLogoUploading, setBrandingLogoUploading] = useState(false)
   const [hideNetPricing, setHideNetPricing] = useState(true)
   const [breakdownModalType, setBreakdownModalType] = useState<'rooms' | 'transfers' | 'tickets' | 'meals' | 'guides' | null>(null)
   const [activeTab, setActiveTab] = useState<'editor' | 'preview' | 'templates'>('editor')
@@ -1919,65 +1925,140 @@ export default function PrototypeBuilder() {
     `.trim()
   }
 
+  // Helper to fetch raster logo image with CORS proxy fallback
+  const fetchRasterLogo = async (url: string): Promise<{ dataUrl: string; width: number; height: number; format: string } | null> => {
+    if (!url) return null
+    try {
+      let src = url
+      if (url.startsWith('http')) {
+        try {
+          const proxyRes = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`)
+          if (proxyRes.ok) {
+            const pData = await proxyRes.json()
+            if (pData.success && pData.base64) src = pData.base64
+          }
+        } catch (pe) {}
+      }
+      return await new Promise((resolve) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas')
+            canvas.width = img.naturalWidth || img.width || 400
+            canvas.height = img.naturalHeight || img.height || 200
+            const ctx = canvas.getContext('2d')
+            if (!ctx) return resolve(null)
+            ctx.drawImage(img, 0, 0)
+            resolve({
+              dataUrl: canvas.toDataURL('image/png'),
+              width: canvas.width,
+              height: canvas.height,
+              format: 'PNG'
+            })
+          } catch (e) {
+            resolve(null)
+          }
+        }
+        img.onerror = () => resolve(null)
+        img.src = src
+      })
+    } catch (err) {
+      return null
+    }
+  }
+
   // Download Itinerary PDF helper (auto-saves proposal if draft)
   const downloadProposalPDF = async (hidePricing = false) => {
     const pNum = await ensureProposalSaved(true)
-    import('jspdf').then((module) => {
-      const jsPDF = module.jsPDF
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+    const { jsPDF } = await import('jspdf')
 
-      const PW = 210  // page width
-      const PH = 297  // page height
-      const ML = 14   // margin left
-      const MR = 196  // margin right
-      const CW = MR - ML // content width
+    // Helper to fetch raster logo
+    const effectiveLogoUrl = customAgencyLogoUrl || activeAgent?.logoUrl || ''
+    let logoRaster: { dataUrl: string; width: number; height: number; format: string } | null = null
+    if (effectiveLogoUrl) {
+      logoRaster = await fetchRasterLogo(effectiveLogoUrl)
+    }
 
-      // ─── Color Palette ───────────────────────────────────────
-      const NAVY   = [10, 34, 64]    as [number,number,number]
-      const GOLD   = [196, 156, 60]  as [number,number,number]
-      const GOLD_L = [249, 240, 210] as [number,number,number]
-      const CRIM   = [140, 30, 50]   as [number,number,number]
-      const TEAL   = [32, 100, 96]   as [number,number,number]
-      const SLATE  = [44, 62, 80]    as [number,number,number]
-      const LGRAY  = [235, 238, 242] as [number,number,number]
-      const MGRAY  = [160, 170, 180] as [number,number,number]
-      const WHITE  = [255, 255, 255] as [number,number,number]
-      const TEXT   = [30, 40, 55]    as [number,number,number]
+    // Dynamic QR Code for Live Proposal / WhatsApp
+    let qrDataUrl: string | null = null
+    try {
+      const QRCode = (await import('qrcode')).default
+      const proposalRefCode = pNum || savedProposalNum
+      const qrTarget = typeof window !== 'undefined'
+        ? `${window.location.origin}/custom-package?ref=${proposalRefCode}`
+        : `https://flyingwonders.com/custom-package?ref=${proposalRefCode}`
+      qrDataUrl = await QRCode.toDataURL(qrTarget, {
+        margin: 1,
+        width: 140,
+        color: { dark: '#0A2240', light: '#FFFFFF' }
+      })
+    } catch (qe) {}
 
-      let y = 0
-      let pageNum = 1
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
-      // ─── Helpers ────────────────────────────────────────────
-      const setFill = (c: [number,number,number]) => doc.setFillColor(c[0], c[1], c[2])
-      const setDraw = (c: [number,number,number]) => doc.setDrawColor(c[0], c[1], c[2])
-      const setTxt  = (c: [number,number,number]) => doc.setTextColor(c[0], c[1], c[2])
-      const font    = (w: 'normal'|'bold'|'italic', s: number) => { doc.setFont('Helvetica', w); doc.setFontSize(s) }
+    const PW = 210  // page width
+    const PH = 297  // page height
+    const ML = 14   // margin left
+    const MR = 196  // margin right
+    const CW = MR - ML // content width
 
-      const checkPage = (need = 12) => {
-        if (y + need > PH - 20) {
-          addFooter()
-          doc.addPage()
-          pageNum++
-          addPageHeader()
-          y = 20
-        }
+    // ─── Color Palette ───────────────────────────────────────
+    const NAVY   = [10, 34, 64]    as [number,number,number]
+    const GOLD   = [196, 156, 60]  as [number,number,number]
+    const GOLD_L = [249, 240, 210] as [number,number,number]
+    const CRIM   = [140, 30, 50]   as [number,number,number]
+    const TEAL   = [32, 100, 96]   as [number,number,number]
+    const SLATE  = [44, 62, 80]    as [number,number,number]
+    const LGRAY  = [235, 238, 242] as [number,number,number]
+    const MGRAY  = [160, 170, 180] as [number,number,number]
+    const WHITE  = [255, 255, 255] as [number,number,number]
+    const TEXT   = [30, 40, 55]    as [number,number,number]
+
+    let y = 0
+    let pageNum = 1
+
+    // ─── Helpers ────────────────────────────────────────────
+    const setFill = (c: [number,number,number]) => doc.setFillColor(c[0], c[1], c[2])
+    const setDraw = (c: [number,number,number]) => doc.setDrawColor(c[0], c[1], c[2])
+    const setTxt  = (c: [number,number,number]) => doc.setTextColor(c[0], c[1], c[2])
+    const font    = (w: 'normal'|'bold'|'italic', s: number) => { doc.setFont('Helvetica', w); doc.setFontSize(s) }
+
+    const checkPage = (need = 12) => {
+      if (y + need > PH - 20) {
+        addFooter()
+        doc.addPage()
+        pageNum++
+        addPageHeader()
+        y = 20
+      }
+    }
+
+    const addPageHeader = () => {
+      // Slim repeat header for continuation pages
+      setFill(NAVY); doc.rect(0, 0, PW, 12, 'F')
+      setFill(GOLD); doc.rect(0, 12, PW, 1.2, 'F')
+
+      let pHeadX = ML
+      if (logoRaster) {
+        try {
+          setFill(WHITE); doc.roundedRect(ML, 1.5, 14, 9, 1.5, 1.5, 'F')
+          doc.addImage(logoRaster.dataUrl, 'PNG', ML + 1, 2, 12, 8, undefined, 'FAST')
+          pHeadX = ML + 17
+        } catch (e) {}
       }
 
-      const addPageHeader = () => {
-        // Slim repeat header for continuation pages
-        setFill(NAVY); doc.rect(0, 0, PW, 12, 'F')
-        setFill(GOLD); doc.rect(0, 12, PW, 1.2, 'F')
+      font('bold', 7.5); setTxt(WHITE)
+      const headerAgency = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
+      const headerAgencyLines = doc.splitTextToSize(headerAgency, 60)
+      doc.text(headerAgencyLines[0], pHeadX, 8.5)
+      font('normal', 7); setTxt(GOLD)
+      doc.text(hidePricing ? 'CUSTOM TOUR ITINERARY' : 'CUSTOM TOUR PROPOSAL', PW / 2, 8.5, { align: 'center' })
+      if (savedProposalNum || pNum) {
         font('bold', 7.5); setTxt(WHITE)
-        const headerAgency = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
-        const headerAgencyLines = doc.splitTextToSize(headerAgency, 62)
-        doc.text(headerAgencyLines[0], ML, 8.5)
-        font('normal', 7); setTxt(GOLD)
-        doc.text(hidePricing ? 'CUSTOM TOUR ITINERARY' : 'CUSTOM TOUR PROPOSAL', PW / 2, 8.5, { align: 'center' })
-        if (savedProposalNum) {
-          font('bold', 7.5); setTxt(WHITE)
-          doc.text(`Ref: ${savedProposalNum}`, MR, 8.5, { align: 'right' })
-        }
+        doc.text(`Ref: ${pNum || savedProposalNum}`, MR, 8.5, { align: 'right' })
       }
+    }
 
       const addFooter = () => {
         const fy = PH - 12
@@ -2022,26 +2103,58 @@ export default function PrototypeBuilder() {
       // ──────────────────────────────────────────────────────────
 
       // ─── Big branded header band ───────────────────────────
-      setFill(NAVY); doc.rect(0, 0, PW, 52, 'F')
+      setFill(NAVY); doc.rect(0, 0, PW, 54, 'F')
       // Diagonal gold accent
-      setFill(GOLD)
-      doc.rect(0, 52, PW, 2.5, 'F')
+      setFill(GOLD); doc.rect(0, 54, PW, 2.5, 'F')
       // Right-side accent bar
-      setFill(CRIM); doc.rect(PW - 22, 0, 22, 52, 'F')
+      setFill(CRIM); doc.rect(PW - 22, 0, 22, 54, 'F')
+
+      // ─── Agency Logo Card (if available) ────────────────────
+      let agencyStartX = ML
+      let maxAgencyWidth = 110
+      if (logoRaster) {
+        const lBoxX = ML
+        const lBoxY = 8
+        const lBoxW = 40
+        const lBoxH = 26
+        // Crisp White Card container guaranteeing high contrast
+        setFill(WHITE); doc.roundedRect(lBoxX, lBoxY, lBoxW, lBoxH, 2.5, 2.5, 'F')
+        setDraw(GOLD); doc.setLineWidth(0.4); doc.roundedRect(lBoxX, lBoxY, lBoxW, lBoxH, 2.5, 2.5, 'S')
+
+        // Fit logo with preserved aspect ratio inside container
+        const maxW = lBoxW - 4
+        const maxH = lBoxH - 4
+        const ratio = logoRaster.width / logoRaster.height
+        let fitW = maxW
+        let fitH = fitW / ratio
+        if (fitH > maxH) {
+          fitH = maxH
+          fitW = fitH * ratio
+        }
+        const posX = lBoxX + (lBoxW - fitW) / 2
+        const posY = lBoxY + (lBoxH - fitH) / 2
+        try {
+          doc.addImage(logoRaster.dataUrl, 'PNG', posX, posY, fitW, fitH, undefined, 'FAST')
+        } catch (ie) {}
+
+        agencyStartX = lBoxX + lBoxW + 5
+        maxAgencyWidth = 78
+      }
 
       // Agency name (wrapped cleanly to avoid collision with badge)
-      font('bold', 15); setTxt(WHITE)
+      font('bold', logoRaster ? 13 : 15); setTxt(WHITE)
       const fullAgencyName = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
-      const agencyLines = doc.splitTextToSize(fullAgencyName, 110)
-      const agencyStartY = agencyLines.length > 1 ? 16 : 22
-      doc.text(agencyLines, ML, agencyStartY)
+      const agencyLines = doc.splitTextToSize(fullAgencyName, maxAgencyWidth)
+      const agencyStartY = agencyLines.length > 1 ? 16 : (logoRaster ? 18 : 22)
+      doc.text(agencyLines, agencyStartX, agencyStartY)
 
       // Tagline
-      font('italic', 8.5); setTxt(GOLD)
+      font('italic', 8); setTxt(GOLD)
       const agencyTagline = activeAgent?.companyName
         ? `${activeAgent.companyName} · Singapore DMC Travel Partner`
         : 'Singapore DMC Travel Partner · Singapore Specialist'
-      doc.text(agencyTagline, ML, agencyLines.length > 1 ? 33 : 31)
+      const taglineStartY = agencyLines.length > 1 ? (logoRaster ? 29 : 33) : (logoRaster ? 27 : 31)
+      doc.text(agencyTagline, agencyStartX, taglineStartY)
 
       // Document label (vertical on right accent)
       doc.setFont('Helvetica', 'bold'); doc.setFontSize(7.5); setTxt(WHITE)
@@ -2049,21 +2162,37 @@ export default function PrototypeBuilder() {
       doc.text(hidePricing ? 'ITINERARY' : 'PROPOSAL', PW - 11, 35, { angle: 90 })
 
       // Contact row
-      font('normal', 8); setTxt(GOLD)
+      font('normal', 7.5); setTxt(GOLD)
       const ctLine = [
         customAgencyPhone ? `Tel: ${customAgencyPhone}` : (activeAgent?.phone ? `Tel: ${activeAgent.phone}` : ''),
         customAgencyEmail ? `Email: ${customAgencyEmail}` : (activeAgent?.email ? `Email: ${activeAgent.email}` : ''),
       ].filter(Boolean).join('   |   ')
-      doc.text(ctLine, ML, 43)
+      doc.text(ctLine, agencyStartX, 44)
 
       // Proposal ref badge
-      if (savedProposalNum) {
+      const refCode = pNum || savedProposalNum
+      if (refCode) {
         setFill(GOLD); doc.roundedRect(126, 8, 56, 10, 2, 2, 'F')
         font('bold', 7.5); setTxt(NAVY)
-        doc.text(`PROPOSAL REF: ${savedProposalNum}`, 154, 14.5, { align: 'center' })
+        doc.text(`PROPOSAL REF: ${refCode}`, 154, 14.5, { align: 'center' })
       }
 
-      y = 62
+      // Dynamic QR Code pill
+      if (qrDataUrl) {
+        const qrBoxX = 158
+        const qrBoxY = 21
+        const qrBoxW = 24
+        const qrBoxH = 30
+        setFill(WHITE); doc.roundedRect(qrBoxX, qrBoxY, qrBoxW, qrBoxH, 2, 2, 'F')
+        setDraw(LGRAY); doc.setLineWidth(0.3); doc.roundedRect(qrBoxX, qrBoxY, qrBoxW, qrBoxH, 2, 2, 'S')
+        try {
+          doc.addImage(qrDataUrl, 'PNG', qrBoxX + 2, qrBoxY + 2, 20, 20, undefined, 'FAST')
+          font('bold', 5.5); setTxt(NAVY)
+          doc.text('SCAN ONLINE', qrBoxX + qrBoxW / 2, qrBoxY + 26, { align: 'center' })
+        } catch (qre) {}
+      }
+
+      y = 64
 
       // ─── GUEST OVERVIEW CARD ──────────────────────────────
       setFill(GOLD_L); doc.roundedRect(ML, y, CW, 38, 3, 3, 'F')
@@ -2639,15 +2768,22 @@ export default function PrototypeBuilder() {
 
       const guestSlug = (guestName || 'Guest').replace(/\s+/g, '-')
       const docType = hidePricing ? 'Itinerary' : 'Proposal'
-      doc.save(`FW-${docType}-${guestSlug}-${savedProposalNum || 'Draft'}.pdf`)
+      doc.save(`FW-${docType}-${guestSlug}-${pNum || savedProposalNum || 'Draft'}.pdf`)
       notifyAgentActivity('pdf_download')
-    })
   }
 
   // S-PDF: Luxury Editorial Magazine Itinerary PDF Generator
   const downloadSimpleItineraryPDF = async () => {
       const pNum = await ensureProposalSaved(true)
       const { jsPDF } = await import('jspdf')
+
+      // Preload partner agency logo
+      const effectiveLogoUrl = customAgencyLogoUrl || activeAgent?.logoUrl || ''
+      let logoRaster: { dataUrl: string; width: number; height: number; format: string } | null = null
+      if (effectiveLogoUrl) {
+        logoRaster = await fetchRasterLogo(effectiveLogoUrl)
+      }
+
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
       const PW = 210
@@ -2968,17 +3104,27 @@ export default function PrototypeBuilder() {
         setFill(NAVY); doc.rect(0, 0, PW, 12, 'F')
         setFill(GOLD); doc.rect(0, 12, PW, 1.0, 'F')
 
+        let barAgencyX = ML
+        if (logoRaster) {
+          try {
+            setFill(WHITE); doc.roundedRect(ML, 1.5, 14, 9, 1.5, 1.5, 'F')
+            doc.addImage(logoRaster.dataUrl, 'PNG', ML + 1, 2, 12, 8, undefined, 'FAST')
+            barAgencyX = ML + 16
+          } catch (e) {}
+        }
+
         font('bold', 8); setTxt(WHITE)
         const headerAgency = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
-        const headerAgencyLines = doc.splitTextToSize(headerAgency, 65)
-        doc.text(headerAgencyLines[0], ML, 8.2)
+        const headerAgencyLines = doc.splitTextToSize(headerAgency, logoRaster ? 52 : 65)
+        doc.text(headerAgencyLines[0], barAgencyX, 8.2)
 
         font('bold', 7.5); setTxt(GOLD)
         doc.text('VISUAL TOUR ITINERARY', PW / 2, 8.2, { align: 'center' })
 
-        if (savedProposalNum) {
+        const refDisplay = pNum || savedProposalNum
+        if (refDisplay) {
           font('bold', 7.5); setTxt(WHITE)
-          doc.text(`Ref: ${savedProposalNum}`, MR, 8.2, { align: 'right' })
+          doc.text(`Ref: ${refDisplay}`, MR, 8.2, { align: 'right' })
         }
 
         // Render up to 2 days on this page
@@ -3342,6 +3488,7 @@ export default function PrototypeBuilder() {
           customAgencyName,
           customAgencyEmail,
           customAgencyPhone,
+          customAgencyLogoUrl,
           destinationMode,
           costBreakdown,
           itinerary,
@@ -3497,6 +3644,7 @@ export default function PrototypeBuilder() {
           customAgencyName,
           customAgencyEmail,
           customAgencyPhone,
+          customAgencyLogoUrl,
           destinationMode,
           costBreakdown,
           itinerary,
@@ -3574,6 +3722,7 @@ export default function PrototypeBuilder() {
           customAgencyName,
           customAgencyEmail,
           customAgencyPhone,
+          customAgencyLogoUrl,
           destinationMode,
           costBreakdown,
           itinerary,
@@ -3731,6 +3880,11 @@ export default function PrototypeBuilder() {
         if (prop.customAgencyName) setCustomAgencyName(prop.customAgencyName)
         if (prop.customAgencyEmail) setCustomAgencyEmail(prop.customAgencyEmail)
         if (prop.customAgencyPhone) setCustomAgencyPhone(prop.customAgencyPhone)
+        if (prop.customAgencyLogoUrl) {
+          setCustomAgencyLogoUrl(prop.customAgencyLogoUrl)
+        } else if (prop.agent?.logoUrl) {
+          setCustomAgencyLogoUrl(prop.agent.logoUrl)
+        }
         if (prop.destinationMode && ['singapore', 'malaysia', 'combined'].includes(prop.destinationMode)) {
           setDestinationMode(prop.destinationMode as any)
         }
@@ -4945,13 +5099,20 @@ ${proposal}
           {/* White-Label Customer Header */}
           <div className="glass" style={{ padding: '2.5rem', borderRadius: '16px', background: '#FFF', border: '1px solid #E2E8F0', boxShadow: 'var(--shadow-lg)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem', borderBottom: '2px solid #F0F4F8', paddingBottom: '1.5rem' }}>
-              <div>
-                <span style={{ fontSize: '0.85rem', color: 'var(--emerald-secondary)', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-                  Prepared By:
-                </span>
-                <h2 style={{ margin: '0.25rem 0 0 0', fontSize: '1.8rem', color: '#1A202C', fontFamily: 'var(--font-playfair), serif' }}>
-                  {customAgencyName}
-                </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                {(customAgencyLogoUrl || activeAgent?.logoUrl) && (
+                  <div style={{ width: '84px', height: '54px', background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.04)', flexShrink: 0 }}>
+                    <img src={customAgencyLogoUrl || activeAgent?.logoUrl} alt={customAgencyName} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                  </div>
+                )}
+                <div>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--emerald-secondary)', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                    Prepared By:
+                  </span>
+                  <h2 style={{ margin: '0.25rem 0 0 0', fontSize: '1.8rem', color: '#1A202C', fontFamily: 'var(--font-playfair), serif' }}>
+                    {customAgencyName}
+                  </h2>
+                </div>
               </div>
               <div style={{ textAlign: 'right', fontSize: '0.9rem', color: '#4A5568', lineHeight: 1.6 }}>
                 {customAgencyPhone && <div>📞 {customAgencyPhone}</div>}
@@ -5816,7 +5977,85 @@ ${proposal}
                 <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>📁 White-Label Branding</h3>
                 <button onClick={() => setShowBranding(false)} style={{ border: 'none', background: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#718096' }}>✕</button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {/* Agency Logo */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: '#4A5568' }}>Agency Logo (PDF & Itineraries)</label>
+                  {customAgencyLogoUrl ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                      <div style={{ width: '64px', height: '40px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '2px' }}>
+                        <img src={customAgencyLogoUrl} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                      </div>
+                      <div style={{ flex: 1, fontSize: '0.75rem', color: '#0F172A', fontWeight: 600 }}>Active Agency Logo</div>
+                      <label style={{ cursor: 'pointer', padding: '0.35rem 0.6rem', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, color: '#334155' }}>
+                        Change
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                          style={{ display: 'none' }}
+                          onChange={async e => {
+                            const f = e.target.files?.[0]
+                            if (f) {
+                              setBrandingLogoUploading(true)
+                              try {
+                                const fd = new FormData()
+                                fd.append('file', f)
+                                if (activeAgent?.email) fd.append('agentEmail', activeAgent.email)
+                                const res = await fetch('/api/agent-portal/logo-upload', { method: 'POST', body: fd })
+                                const d = await res.json()
+                                if (d.success && d.url) {
+                                  setCustomAgencyLogoUrl(d.url)
+                                }
+                              } catch (err) {
+                                console.error('Logo upload error:', err)
+                              } finally {
+                                setBrandingLogoUploading(false)
+                              }
+                            }
+                          }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setCustomAgencyLogoUrl('')}
+                        style={{ padding: '0.35rem 0.6rem', background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, color: '#E11D48', cursor: 'pointer' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 0.85rem', border: '1px dashed #CBD5E1', borderRadius: '8px', background: '#F8FAFC', cursor: brandingLogoUploading ? 'wait' : 'pointer', fontSize: '0.78rem', color: '#4A5568' }}>
+                      <span>📁 {brandingLogoUploading ? 'Uploading Logo...' : 'Upload Agency Logo (PNG, JPG, SVG)'}</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                        style={{ display: 'none' }}
+                        disabled={brandingLogoUploading}
+                        onChange={async e => {
+                          const f = e.target.files?.[0]
+                          if (f) {
+                            setBrandingLogoUploading(true)
+                            try {
+                              const fd = new FormData()
+                              fd.append('file', f)
+                              if (activeAgent?.email) fd.append('agentEmail', activeAgent.email)
+                              const res = await fetch('/api/agent-portal/logo-upload', { method: 'POST', body: fd })
+                              const d = await res.json()
+                              if (d.success && d.url) {
+                                setCustomAgencyLogoUrl(d.url)
+                              }
+                            } catch (err) {
+                              console.error('Logo upload error:', err)
+                            } finally {
+                              setBrandingLogoUploading(false)
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+
                 <div><label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: '#4A5568' }}>Agency Name</label><input type="text" value={customAgencyName} onChange={e => setCustomAgencyName(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }} /></div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                   <div><label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem', color: '#4A5568' }}>Agency Email</label><input type="email" value={customAgencyEmail} onChange={e => setCustomAgencyEmail(e.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.85rem' }} /></div>

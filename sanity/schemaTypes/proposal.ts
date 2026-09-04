@@ -128,6 +128,11 @@ export const proposalSchema = defineType({
       type: 'string',
     }),
     defineField({
+      name: 'customAgencyLogoUrl',
+      title: 'Custom Agency Logo URL',
+      type: 'string',
+    }),
+    defineField({
       name: 'destinationMode',
       title: 'Destination Mode (singapore / malaysia / combined)',
       type: 'string',

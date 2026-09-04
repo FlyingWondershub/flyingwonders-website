@@ -28,7 +28,15 @@ export async function GET() {
     }
 
     const cleanEmail = sessionCookie.value.trim().toLowerCase()
-    const agent = await readClient.fetch(`*[_type == "b2bAgent" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
+    const agent = await readClient.fetch(`*[_type == "b2bAgent" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]{
+      _id,
+      companyName,
+      agentName,
+      email,
+      phone,
+      isActive,
+      "logoUrl": logo.asset->url
+    }`, { cleanEmail })
 
     if (!agent || !agent.isActive) {
       // Clear cookie if agent no longer exists or is deactivated
@@ -47,6 +55,7 @@ export async function GET() {
         email: agent.email,
         phone: agent.phone || '',
         role,
+        logoUrl: agent.logoUrl || '',
       },
     }, { headers })
   } catch (err) {

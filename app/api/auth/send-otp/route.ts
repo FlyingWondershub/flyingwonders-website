@@ -32,7 +32,7 @@ function createTransporter() {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { email, companyName, agentName, phone, source, isDirectory } = body
+    const { email, companyName, agentName, phone, source, isDirectory, logoAssetId } = body
 
     if (!email) {
       return NextResponse.json({ error: 'Email address is required.' }, { status: 400 })
@@ -54,16 +54,26 @@ export async function POST(req: Request) {
         if (!agent.isActive) {
           return NextResponse.json({ error: 'This agent account has been deactivated by admin.' }, { status: 403 })
         }
+        const patchData: any = { otp, otpExpiry }
+        if (logoAssetId) {
+          patchData.logo = {
+            _type: 'image',
+            asset: {
+              _type: 'reference',
+              _ref: logoAssetId,
+            },
+          }
+        }
         await writeClient
           .patch(agent._id)
-          .set({ otp, otpExpiry })
+          .set(patchData)
           .commit()
       } else {
         if (!companyName || !agentName) {
           return NextResponse.json({ error: "Account not found. Please click 'Register Agency' to sign up first." }, { status: 404 })
         }
 
-        await writeClient.create({
+        const newAgentDoc: any = {
           _type: 'b2bAgent',
           companyName: companyName || 'N/A',
           agentName: agentName || 'N/A',
@@ -72,7 +82,19 @@ export async function POST(req: Request) {
           isActive: true,
           otp,
           otpExpiry,
-        })
+        }
+
+        if (logoAssetId) {
+          newAgentDoc.logo = {
+            _type: 'image',
+            asset: {
+              _type: 'reference',
+              _ref: logoAssetId,
+            },
+          }
+        }
+
+        await writeClient.create(newAgentDoc)
 
         try {
           const existingSub = await writeClient.fetch(`*[_type == "newsletterSubscriber" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
