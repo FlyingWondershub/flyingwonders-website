@@ -12,50 +12,23 @@ export function LiveAttractionNameInput(props: StringInputProps) {
   const [searchFilter, setSearchFilter] = useState<string>('')
   const [isCustomMode, setIsCustomMode] = useState<boolean>(false)
 
-  // Fetch live attractions from Google Sheets CSV
+  // Fetch live attractions from internal API route (server parsed from Google Sheets)
   useEffect(() => {
     let isMounted = true
     async function fetchLiveAttractions() {
       try {
         setLoading(true)
-        const res = await fetch(GOOGLE_SHEET_CSV)
+        const res = await fetch('/api/attractions-list', { cache: 'no-store' })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const text = await res.text()
-        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+        const json = await res.json()
         
-        const extracted: string[] = []
-        const seen = new Set<string>()
-
-        // Parse CSV lines
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i]
-          let parts: string[] = []
-          let currentPart = ''
-          let insideQuote = false
-          for (let j = 0; j < line.length; j++) {
-            const char = line[j]
-            if (char === '"') { insideQuote = !insideQuote }
-            else if (char === ',' && !insideQuote) { parts.push(currentPart.trim()); currentPart = '' }
-            else { currentPart += char }
-          }
-          parts.push(currentPart.trim())
-
-          if (parts.length > 0) {
-            const rawName = parts[0].replace(/^"|"$/g, '').trim()
-            if (rawName && !seen.has(rawName.toLowerCase()) && !rawName.toLowerCase().startsWith('attraction')) {
-              seen.add(rawName.toLowerCase())
-              extracted.push(rawName)
-            }
-          }
-        }
-
-        if (isMounted && extracted.length > 0) {
-          setAttractions(extracted)
+        if (isMounted && json.success && Array.isArray(json.attractions) && json.attractions.length > 0) {
+          setAttractions(json.attractions)
           setIsLive(true)
+          return
         }
       } catch (err) {
-        console.warn('Live Google Sheet fetch in Sanity Studio fallback to static list:', err)
-        if (isMounted) setIsLive(false)
+        console.warn('Live attractions API fetch fallback to static list:', err)
       } finally {
         if (isMounted) setLoading(false)
       }
