@@ -25,8 +25,9 @@ async function getAttractions() {
     if (!res.ok) throw new Error('Failed to fetch attractions sheet')
     const text = await res.text()
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0)
-    const dataLines = lines.slice(1)
-    const attractions = dataLines.map((line, index) => {
+    if (lines.length === 0) return []
+
+    const parseCsvLine = (line: string): string[] => {
       let parts: string[] = []
       let currentPart = ''
       let insideQuote = false
@@ -37,21 +38,46 @@ async function getAttractions() {
         else { currentPart += char }
       }
       parts.push(currentPart.trim())
-      if (parts.length >= 3) {
-        const name = parts[0].replace(/^\"|\"$/g, '')
-        const adultPrice = parseFloat(parts[1]) || 0
-        const childPrice = parseFloat(parts[2]) || 0
-        return { id: `attr_${index}`, name, adultPrice, childPrice }
+      return parts.map(p => p.replace(/^"|"$/g, '').trim())
+    }
+
+    const header = parseCsvLine(lines[0]).map(h => h.toLowerCase())
+    let nameIdx = header.findIndex(h => h.includes('attraction') || h.includes('name'))
+    let adultIdx = header.findIndex(h => h.includes('adult'))
+    let childIdx = header.findIndex(h => h.includes('child'))
+    let areaIdx = header.findIndex(h => h.includes('area'))
+    let rateTypeIdx = header.findIndex(h => h.includes('rate') || h.includes('pricing') || h.includes('type'))
+
+    if (nameIdx === -1) nameIdx = 0
+    if (adultIdx === -1) adultIdx = 1
+    if (childIdx === -1) childIdx = 2
+    if (areaIdx === -1) areaIdx = 3
+    if (rateTypeIdx === -1) rateTypeIdx = 4
+
+    const dataLines = lines.slice(1)
+    const attractions = dataLines.map((line, index) => {
+      const parts = parseCsvLine(line)
+      if (parts.length >= 2) {
+        const name = parts[nameIdx] || parts[0] || ''
+        if (!name || name.toLowerCase().startsWith('attraction')) return null
+
+        const adultPrice = parseFloat(parts[adultIdx] || parts[1] || '0') || 0
+        const childPrice = parseFloat(parts[childIdx] || parts[2] || '0') || 0
+        const area = parts[areaIdx] || ''
+        const rawRateType = (parts[rateTypeIdx] || '').toLowerCase()
+        const rateType: 'person' | 'group' = rawRateType.includes('group') ? 'group' : 'person'
+
+        return { id: `attr_${index}`, name, adultPrice, childPrice, area, rateType }
       }
       return null
-    }).filter((a): a is { id: string; name: string; adultPrice: number; childPrice: number } => a !== null)
+    }).filter((a): a is { id: string; name: string; adultPrice: number; childPrice: number; area: string; rateType: 'person' | 'group' } => a !== null)
     return attractions
   } catch (err) {
     console.error('Error loading attractions sheet:', err)
     return [
-      { id: 'attr_fallback_1', name: 'Universal Studios Singapore - Fixed Date', adultPrice: 78, childPrice: 66 },
-      { id: 'attr_fallback_2', name: 'Gardens by the Bay Double Domes', adultPrice: 30, childPrice: 22 },
-      { id: 'attr_fallback_3', name: 'Night Safari with Tram Ride - Fixed Date', adultPrice: 45, childPrice: 35 }
+      { id: 'attr_fallback_1', name: 'Universal Studios Singapore - Fixed Date', adultPrice: 78, childPrice: 66, area: 'Sentosa', rateType: 'person' },
+      { id: 'attr_fallback_2', name: 'Gardens by the Bay Double Domes', adultPrice: 30, childPrice: 22, area: 'City', rateType: 'person' },
+      { id: 'attr_fallback_3', name: 'Night Safari with Tram Ride - Fixed Date', adultPrice: 45, childPrice: 35, area: 'Mandai', rateType: 'person' }
     ]
   }
 }

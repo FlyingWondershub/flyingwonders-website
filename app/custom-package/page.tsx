@@ -33,8 +33,8 @@ const FALLBACK_VEHICLES: { type: string; pricePerTransfer: number; serviceName?:
 ]
 
 const FALLBACK_ATTRACTIONS = [
-  { name: 'Universal Studios Singapore', adultPrice: 78, childPrice: 66 },
-  { name: 'Gardens by the Bay (Double Domes)', adultPrice: 30, childPrice: 22 },
+  { name: 'Universal Studios Singapore', adultPrice: 78, childPrice: 66, rateType: 'person' },
+  { name: 'Gardens by the Bay (Double Domes)', adultPrice: 30, childPrice: 22, rateType: 'person' },
 ]
 
 const ATTRACTION_DESCRIPTIONS: Record<string, string> = {
@@ -381,7 +381,7 @@ export default function PrototypeBuilder() {
   // Dynamic Master Data fetched from Google Sheets (SGD pricing)
   const [hotelsList, setHotelsList] = useState(FALLBACK_HOTELS)
   const [vehiclesList, setVehiclesList] = useState<{ type: string; pricePerTransfer: number; serviceName?: string }[]>(FALLBACK_VEHICLES)
-  const [attractionsList, setAttractionsList] = useState<{ name: string; adultPrice: number; childPrice: number; area?: string }[]>(FALLBACK_ATTRACTIONS)
+  const [attractionsList, setAttractionsList] = useState<{ name: string; adultPrice: number; childPrice: number; area?: string; rateType?: string }[]>(FALLBACK_ATTRACTIONS)
   const [attractionsMeta, setAttractionsMeta] = useState<Record<string, { shortDescription?: string; longDescription?: string; highlights?: string[]; tips?: string[]; rating?: number; category?: string; openingHours?: string; duration?: string; location?: string; photoUrl?: string | null }>>({})
   const [mealsList, setMealsList] = useState<any[]>([])
   const [guidesList, setGuidesList] = useState(FALLBACK_GUIDES)
@@ -845,7 +845,9 @@ export default function PrototypeBuilder() {
             const adult = Number(row['Adult ($)'] ?? row['Adult']) || 0
             const child = Number(row['Child ($)'] ?? row['Child']) || 0
             const area = row['Area'] || ''
-            return { name, adultPrice: adult, childPrice: child, area }
+            const rawRateType = String(row['Rate type'] ?? row['Rate Type'] ?? row['rate type'] ?? row['RateType'] ?? row['Pricing Type'] ?? row['Type'] ?? '').trim().toLowerCase()
+            const rateType = rawRateType.includes('group') ? 'group' : 'person'
+            return { name, adultPrice: adult, childPrice: child, area, rateType }
           }).filter(a => a.name.trim() !== '' && (a.adultPrice > 0 || a.childPrice > 0))
           if (parsedAttractions.length > 0) setAttractionsList(parsedAttractions)
         }
@@ -1378,17 +1380,30 @@ export default function PrototypeBuilder() {
       })
 
       day.attractions.forEach(attrRow => {
-        let attr: { name: string; adultPrice: number; childPrice: number; area?: string } | undefined = attractionsList[attrRow.attractionIndex]
+        let attr: { name: string; adultPrice: number; childPrice: number; area?: string; rateType?: string } | undefined = attractionsList[attrRow.attractionIndex]
         if (!attr && attrRow.attractionName) {
           attr = attractionsList.find(a => a.name.toLowerCase().trim() === attrRow.attractionName?.toLowerCase().trim())
         }
         if (attr) {
           const rowAdultCount = attrRow.adultTickets || 0
           const rowChildCount = attrRow.childTickets || 0
-          
-          attractionTotal += (attr.adultPrice * rowAdultCount) + (attr.childPrice * rowChildCount)
-          attractionAdultTotal += attr.adultPrice * rowAdultCount
-          attractionChildTotal += attr.childPrice * rowChildCount
+          const isGroup = attr.rateType === 'group'
+
+          if (isGroup) {
+            // Group rate: price is based on the whole group - not on the number of people
+            const groupCost = attr.adultPrice || attr.childPrice || 0
+            const hasPax = (rowAdultCount + rowChildCount) > 0 || (adults + kids) > 0
+            const rowCost = hasPax ? groupCost : 0
+            attractionTotal += rowCost
+            // Distribute group cost proportionally across adults and kids for per-person quotes
+            const totalPax = (adults + kids) || 1
+            attractionAdultTotal += rowCost * (adults / totalPax)
+            attractionChildTotal += rowCost * (kids / totalPax)
+          } else {
+            attractionTotal += (attr.adultPrice * rowAdultCount) + (attr.childPrice * rowChildCount)
+            attractionAdultTotal += attr.adultPrice * rowAdultCount
+            attractionChildTotal += attr.childPrice * rowChildCount
+          }
           totalAttractionsCount++
         }
         if (attrRow.hasTransfer) {
@@ -5550,14 +5565,17 @@ ${proposal}
                                 const name = attrObj?.name || a.attractionName || 'Attraction'
                                 const adultP = attrObj?.adultPrice || 0
                                 const childP = attrObj?.childPrice || 0
-                                const subTotal = (adults * adultP) + (kids * childP)
+                                const isGroup = attrObj?.rateType === 'group'
+                                const subTotal = isGroup ? (adultP || childP) : (adults * adultP) + (kids * childP)
                                 return (
                                   <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontSize: '0.8rem', borderTop: aIdx > 0 ? '1px dashed #E2E8F0' : 'none', paddingTop: aIdx > 0 ? '0.4rem' : 0 }}>
                                     <div style={{ paddingRight: '0.5rem' }}>
                                       <div style={{ fontWeight: 600, color: '#1E293B' }}>{name}</div>
-                                      <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>
-                                        {adults} Adult{adults > 1 ? 's' : ''} (S${adultP})
-                                        {kids > 0 ? ` + ${kids} Child${kids > 1 ? 'ren' : ''} (S$${childP})` : ''}
+                                      <div style={{ fontSize: '0.72rem', color: isGroup ? '#0F4C3A' : '#64748B', marginTop: '2px', fontWeight: isGroup ? 600 : 400 }}>
+                                        {isGroup ? `👥 Group Rate: S$ ${adultP || childP} (Flat rate for whole group)` : (
+                                          `${adults} Adult${adults > 1 ? 's' : ''} (S$${adultP})` +
+                                          (kids > 0 ? ` + ${kids} Child${kids > 1 ? 'ren' : ''} (S$${childP})` : '')
+                                        )}
                                       </div>
                                     </div>
                                     <div style={{ fontWeight: 700, color: '#0F4C3A', whiteSpace: 'nowrap' }}>
@@ -7930,7 +7948,14 @@ ${proposal}
                                             }}
                                             style={{ width: '1.05rem', height: '1.05rem', cursor: 'pointer' }}
                                           />
-                                          <span>{attraction.name} <span style={{ fontSize: '0.7rem', color: '#718096' }}>(Ad: S${attraction.adultPrice} / Ch: S${attraction.childPrice || 'N/A'})</span></span>
+                                          <span>
+                                            {attraction.name}{' '}
+                                            {attraction.rateType === 'group' ? (
+                                              <span style={{ fontSize: '0.7rem', color: '#0F4C3A', fontWeight: 700 }}>(Group: S${attraction.adultPrice || attraction.childPrice} / whole group)</span>
+                                            ) : (
+                                              <span style={{ fontSize: '0.7rem', color: '#718096' }}>(Ad: S${attraction.adultPrice} / Ch: S${attraction.childPrice || 'N/A'})</span>
+                                            )}
+                                          </span>
                                         </label>
 
                                         {isSelected && row && (
@@ -7949,54 +7974,62 @@ ${proposal}
                                                 </select>
                                               </div>
                                               
-                                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', border: '1px solid #CBD5E1', borderRadius: '4px', background: '#F8FAFC', padding: '0.15rem 0.35rem' }}>
-                                                <span style={{ fontSize: '0.72rem', color: '#4A5568', marginRight: '0.2rem' }}>Adults:</span>
-                                                <button 
-                                                  type="button"
-                                                  onClick={() => updateAttractionRow(dIdx, existingIdx, 'adultTickets', Math.max(0, row.adultTickets - 1))}
-                                                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.75rem', color: '#4A5568', padding: '0 0.15rem' }}
-                                                >
-                                                  −
-                                                </button>
-                                                <input 
-                                                  type="number" min="0" max="100"
-                                                  value={row.adultTickets}
-                                                  onChange={e => updateAttractionRow(dIdx, existingIdx, 'adultTickets', Math.max(0, parseInt(e.target.value) || 0))}
-                                                  style={{ width: '20px', border: 'none', background: 'transparent', fontSize: '0.75rem', fontWeight: 700, textAlign: 'center', outline: 'none' }}
-                                                />
-                                                <button 
-                                                  type="button"
-                                                  onClick={() => updateAttractionRow(dIdx, existingIdx, 'adultTickets', Math.min(100, row.adultTickets + 1))}
-                                                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.75rem', color: '#4A5568', padding: '0 0.15rem' }}
-                                                >
-                                                  +
-                                                </button>
-                                              </div>
-
-                                              {kids > 0 && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', border: '1px solid #CBD5E1', borderRadius: '4px', background: '#F8FAFC', padding: '0.15rem 0.35rem' }}>
-                                                  <span style={{ fontSize: '0.72rem', color: '#4A5568', marginRight: '0.2rem' }}>Kids:</span>
-                                                  <button 
-                                                    type="button"
-                                                    onClick={() => updateAttractionRow(dIdx, existingIdx, 'childTickets', Math.max(0, row.childTickets - 1))}
-                                                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.75rem', color: '#4A5568', padding: '0 0.15rem' }}
-                                                  >
-                                                    −
-                                                  </button>
-                                                  <input 
-                                                    type="number" min="0" max="100"
-                                                    value={row.childTickets}
-                                                    onChange={e => updateAttractionRow(dIdx, existingIdx, 'childTickets', Math.max(0, parseInt(e.target.value) || 0))}
-                                                    style={{ width: '20px', border: 'none', background: 'transparent', fontSize: '0.75rem', fontWeight: 700, textAlign: 'center', outline: 'none' }}
-                                                  />
-                                                  <button 
-                                                    type="button"
-                                                    onClick={() => updateAttractionRow(dIdx, existingIdx, 'childTickets', Math.min(100, row.childTickets + 1))}
-                                                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.75rem', color: '#4A5568', padding: '0 0.15rem' }}
-                                                  >
-                                                    +
-                                                  </button>
+                                              {attraction.rateType === 'group' ? (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '4px', padding: '0.2rem 0.5rem', fontSize: '0.73rem', color: '#065F46', fontWeight: 600 }}>
+                                                  👥 Group Rate: S$ {attraction.adultPrice || attraction.childPrice} (flat rate for entire party)
                                                 </div>
+                                              ) : (
+                                                <>
+                                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', border: '1px solid #CBD5E1', borderRadius: '4px', background: '#F8FAFC', padding: '0.15rem 0.35rem' }}>
+                                                    <span style={{ fontSize: '0.72rem', color: '#4A5568', marginRight: '0.2rem' }}>Adults:</span>
+                                                    <button 
+                                                      type="button"
+                                                      onClick={() => updateAttractionRow(dIdx, existingIdx, 'adultTickets', Math.max(0, row.adultTickets - 1))}
+                                                      style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.75rem', color: '#4A5568', padding: '0 0.15rem' }}
+                                                    >
+                                                      −
+                                                    </button>
+                                                    <input 
+                                                      type="number" min="0" max="100"
+                                                      value={row.adultTickets}
+                                                      onChange={e => updateAttractionRow(dIdx, existingIdx, 'adultTickets', Math.max(0, parseInt(e.target.value) || 0))}
+                                                      style={{ width: '20px', border: 'none', background: 'transparent', fontSize: '0.75rem', fontWeight: 700, textAlign: 'center', outline: 'none' }}
+                                                    />
+                                                    <button 
+                                                      type="button"
+                                                      onClick={() => updateAttractionRow(dIdx, existingIdx, 'adultTickets', Math.min(100, row.adultTickets + 1))}
+                                                      style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.75rem', color: '#4A5568', padding: '0 0.15rem' }}
+                                                    >
+                                                      +
+                                                    </button>
+                                                  </div>
+
+                                                  {kids > 0 && (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', border: '1px solid #CBD5E1', borderRadius: '4px', background: '#F8FAFC', padding: '0.15rem 0.35rem' }}>
+                                                      <span style={{ fontSize: '0.72rem', color: '#4A5568', marginRight: '0.2rem' }}>Kids:</span>
+                                                      <button 
+                                                        type="button"
+                                                        onClick={() => updateAttractionRow(dIdx, existingIdx, 'childTickets', Math.max(0, row.childTickets - 1))}
+                                                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.75rem', color: '#4A5568', padding: '0 0.15rem' }}
+                                                      >
+                                                        −
+                                                      </button>
+                                                      <input 
+                                                        type="number" min="0" max="100"
+                                                        value={row.childTickets}
+                                                        onChange={e => updateAttractionRow(dIdx, existingIdx, 'childTickets', Math.max(0, parseInt(e.target.value) || 0))}
+                                                        style={{ width: '20px', border: 'none', background: 'transparent', fontSize: '0.75rem', fontWeight: 700, textAlign: 'center', outline: 'none' }}
+                                                      />
+                                                      <button 
+                                                        type="button"
+                                                        onClick={() => updateAttractionRow(dIdx, existingIdx, 'childTickets', Math.min(100, row.childTickets + 1))}
+                                                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.75rem', color: '#4A5568', padding: '0 0.15rem' }}
+                                                      >
+                                                        +
+                                                      </button>
+                                                    </div>
+                                                  )}
+                                                </>
                                               )}
 
                                               <input 

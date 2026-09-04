@@ -8,6 +8,8 @@ interface Attraction {
   name: string
   adultPrice: number
   childPrice: number
+  area?: string
+  rateType?: 'person' | 'group' | string
 }
 
 interface SanityBundle {
@@ -40,7 +42,7 @@ interface SanityMeta {
   ageRecommendation?: string | null
 }
 
-type QuantityState = Record<string, { adult: number; child: number }>
+type QuantityState = Record<string, { adult: number; child: number; group?: number }>
 type DateState = Record<string, string>
 
 // ─── Static Fallback Data ─────────────────────────────────────────────────────
@@ -280,15 +282,20 @@ export default function AttractionsForm({
   }, [])
 
   // ── Quantity helpers ──
-  const handleQtyChange = (id: string, type: 'adult' | 'child', amount: number) => {
+  const handleQtyChange = (id: string, type: 'adult' | 'child' | 'group', amount: number) => {
     setQuantities(prev => {
       pushHistory(prev, dates)
-      const current = prev[id] || { adult: 0, child: 0 }
-      const newVal = Math.max(0, current[type] + amount)
-      if (newVal === 0 && current[type === 'adult' ? 'child' : 'adult'] === 0) {
-        const next = { ...prev }; delete next[id]; return next
+      const current = prev[id] || { adult: 0, child: 0, group: 0 }
+      const newVal = Math.max(0, (current[type] ?? 0) + amount)
+      const updated = { ...current, [type]: newVal }
+
+      const hasQty = (updated.group && updated.group > 0) || updated.adult > 0 || updated.child > 0
+      if (!hasQty) {
+        const next = { ...prev }
+        delete next[id]
+        return next
       }
-      return { ...prev, [id]: { ...current, [type]: newVal } }
+      return { ...prev, [id]: updated }
     })
   }
 
@@ -327,7 +334,13 @@ export default function AttractionsForm({
     const newQtys: QuantityState = { ...quantities }
     bundle.attractionKeywords.forEach(kw => {
       const match = attractions.find(a => a.name.toLowerCase().includes(kw))
-      if (match) newQtys[match.id] = { adult: bundle.adultQty, child: bundle.childQty }
+      if (match) {
+        if (match.rateType === 'group') {
+          newQtys[match.id] = { adult: 0, child: 0, group: 1 }
+        } else {
+          newQtys[match.id] = { adult: bundle.adultQty, child: bundle.childQty, group: 0 }
+        }
+      }
     })
     setQuantities(newQtys)
   }
@@ -415,11 +428,39 @@ export default function AttractionsForm({
   // ── Selected items ──
   const selectedItems = Object.entries(quantities).map(([id, qtys]) => {
     const attr = attractions.find(a => a.id === id)
-    const adultCost = (attr?.adultPrice || 0) * qtys.adult
-    const childCost = (attr?.childPrice || 0) * qtys.child
+    const isGroup = attr?.rateType === 'group'
+    const groupPrice = attr?.adultPrice || attr?.childPrice || 0
+    const groupQty = qtys.group !== undefined && qtys.group > 0 
+      ? qtys.group 
+      : ((qtys.adult > 0 || qtys.child > 0) ? (qtys.adult || qtys.child || 1) : 0)
+
+    let total = 0
+    if (isGroup) {
+      // Group rate: price is based on the whole group - not multiplied by number of people
+      total = groupQty * groupPrice
+    } else {
+      const adultCost = (attr?.adultPrice || 0) * (qtys.adult || 0)
+      const childCost = (attr?.childPrice || 0) * (qtys.child || 0)
+      total = adultCost + childCost
+    }
+
     const isFixedDate = attr?.name.toLowerCase().includes('fixed date') || false
-    return { id, name: attr?.name || '', adult: qtys.adult, child: qtys.child, adultPrice: attr?.adultPrice || 0, childPrice: attr?.childPrice || 0, total: adultCost + childCost, isFixedDate, date: dates[id] || '' }
-  }).filter(item => item.adult > 0 || item.child > 0)
+    return {
+      id,
+      name: attr?.name || '',
+      adult: qtys.adult || 0,
+      child: qtys.child || 0,
+      group: groupQty,
+      isGroup,
+      rateType: attr?.rateType || 'person',
+      adultPrice: attr?.adultPrice || 0,
+      childPrice: attr?.childPrice || 0,
+      groupPrice,
+      total,
+      isFixedDate,
+      date: dates[id] || ''
+    }
+  }).filter(item => item.isGroup ? item.group > 0 : (item.adult > 0 || item.child > 0))
 
   const grandTotal = selectedItems.reduce((sum, item) => sum + item.total, 0)
   const missingDates = selectedItems.filter(item => item.isFixedDate && !item.date)
@@ -436,8 +477,12 @@ export default function AttractionsForm({
       message += `• *${item.name}*`
       if (item.isFixedDate && item.date) message += ` — Date: ${item.date}`
       message += '\n'
-      if (item.adult > 0) message += `  ↳ ${item.adult} Adult${item.adult > 1 ? 's' : ''} @ S$ ${item.adultPrice} ea.\n`
-      if (item.child > 0) message += `  ↳ ${item.child} Child${item.child > 1 ? 'ren' : ''} @ S$ ${item.childPrice} ea.\n`
+      if (item.isGroup) {
+        message += `  ↳ ${item.group} Group${item.group > 1 ? 's' : ''} @ S$ ${item.groupPrice} (Whole Group Rate)\n`
+      } else {
+        if (item.adult > 0) message += `  ↳ ${item.adult} Adult${item.adult > 1 ? 's' : ''} @ S$ ${item.adultPrice} ea.\n`
+        if (item.child > 0) message += `  ↳ ${item.child} Child${item.child > 1 ? 'ren' : ''} @ S$ ${item.childPrice} ea.\n`
+      }
       message += `  Subtotal: S$ ${item.total}\n\n`
     })
     message += `💰 *Grand Total: S$ ${grandTotal}*\n\nKindly confirm availability and proceed with booking. Thank you!`
@@ -611,10 +656,13 @@ export default function AttractionsForm({
           <tbody>
             {selectedItems.map((item, i) => (
               <tr key={i} style={{ borderBottom: '1px solid #eee', background: i % 2 === 0 ? '#f9f9f9' : 'white' }}>
-                <td style={{ padding: '0.75rem' }}>{item.name}</td>
+                <td style={{ padding: '0.75rem' }}>
+                  {item.name}
+                  {item.isGroup && <span style={{ marginLeft: '6px', fontSize: '0.7rem', color: '#0F4C3A', fontWeight: 700, background: '#E6F4EA', padding: '2px 6px', borderRadius: '4px' }}>Group</span>}
+                </td>
                 <td style={{ padding: '0.75rem', textAlign: 'center' }}>{item.date || (item.isFixedDate ? '⚠ Required' : '—')}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{item.adult || '—'}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{item.child || '—'}</td>
+                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{item.isGroup ? '—' : (item.adult || '—')}</td>
+                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{item.isGroup ? `${item.group} Group${item.group > 1 ? 's' : ''}` : (item.child || '—')}</td>
                 <td style={{ padding: '0.75rem', textAlign: 'right', fontWeight: 700 }}>{item.total.toFixed(2)}</td>
               </tr>
             ))}
@@ -670,7 +718,7 @@ export default function AttractionsForm({
                   { icon: '🕐', label: 'Opening Hours', value: getHours(lightbox.name, meta) },
                   { icon: '⏳', label: 'Duration', value: meta?.duration || 'Flexible' },
                   { icon: '👨‍👩‍👧‍👦', label: 'Age & Accessibility', value: meta?.ageRecommendation || 'Suitable for all ages' },
-                  { icon: '💰', label: 'Ticket Price (SGD)', value: `Adult: S$ ${lightbox.adultPrice}  |  Child: S$ ${lightbox.childPrice}` },
+                  { icon: '💰', label: 'Ticket Price (SGD)', value: lightbox.rateType === 'group' ? `Group Price: S$ ${lightbox.adultPrice || lightbox.childPrice} (for the entire group)` : `Adult: S$ ${lightbox.adultPrice}  |  Child: S$ ${lightbox.childPrice}` },
                   { icon: '🔥', label: 'Popularity', value: `${getBookedCount(lightbox.name)} people booked this week` },
                 ].map(row => (
                   <div key={row.label} style={{ background: 'var(--bg-secondary)', borderRadius: '8px', padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
@@ -757,7 +805,15 @@ export default function AttractionsForm({
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-dark)', lineHeight: 1.3 }}>{item.name}</div>
                       <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.2rem' }}>
-                        {item.adult > 0 && `${item.adult} Adult${item.adult > 1 ? 's' : ''}`}{item.adult > 0 && item.child > 0 && ' + '}{item.child > 0 && `${item.child} Child${item.child > 1 ? 'ren' : ''}`}
+                        {item.isGroup ? (
+                          <span style={{ color: 'var(--emerald-secondary)', fontWeight: 600 }}>{item.group} Group{item.group > 1 ? 's' : ''} (Flat Rate)</span>
+                        ) : (
+                          <>
+                            {item.adult > 0 && `${item.adult} Adult${item.adult > 1 ? 's' : ''}`}
+                            {item.adult > 0 && item.child > 0 && ' + '}
+                            {item.child > 0 && `${item.child} Child${item.child > 1 ? 'ren' : ''}`}
+                          </>
+                        )}
                       </div>
                       {item.isFixedDate && (
                         <div style={{ fontSize: '0.72rem', color: item.date ? 'var(--emerald-secondary)' : 'var(--crimson-primary)', fontWeight: 600, marginTop: '0.15rem' }}>
@@ -862,13 +918,16 @@ export default function AttractionsForm({
             <div style={{ padding: '3rem', textAlign: 'center', opacity: 0.5, gridColumn: '1/-1' }}>No attractions found for &quot;{search}&quot;</div>
           ) : filtered.map(attr => {
             const meta = getMeta(attr.name)
-            const qty = quantities[attr.id] || { adult: 0, child: 0 }
+            const qty = quantities[attr.id] || { adult: 0, child: 0, group: 0 }
             const dateVal = dates[attr.id] || ''
-            const itemTotal = (qty.adult * attr.adultPrice) + (qty.child * attr.childPrice)
+            const isGroup = attr.rateType === 'group'
+            const groupPrice = attr.adultPrice || attr.childPrice || 0
+            const groupQty = qty.group !== undefined && qty.group > 0 ? qty.group : ((qty.adult > 0 || qty.child > 0) ? (qty.adult || qty.child || 1) : 0)
+            const itemTotal = isGroup ? (groupQty * groupPrice) : (qty.adult * attr.adultPrice) + (qty.child * attr.childPrice)
             const isFixedDate = attr.name.toLowerCase().includes('fixed date')
             const isPopular = meta ? meta.isPopular : STATIC_POPULAR.some(k => attr.name.toLowerCase().includes(k))
             const isTrending = meta ? meta.isTrending : STATIC_TRENDING.some(k => attr.name.toLowerCase().includes(k))
-            const isSelected = qty.adult > 0 || qty.child > 0
+            const isSelected = isGroup ? groupQty > 0 : (qty.adult > 0 || qty.child > 0)
 
             return (
               <div key={attr.id} className="attr-card glass" style={{ borderRadius: '12px', overflow: 'hidden', border: isSelected ? '2px solid var(--gold-accent)' : '1px solid var(--glass-border)', background: 'var(--bg-main)', boxShadow: isSelected ? 'var(--shadow-md)' : 'var(--shadow-sm)', transition: 'all 0.25s ease', display: 'flex', flexDirection: 'column' }}>
@@ -876,6 +935,7 @@ export default function AttractionsForm({
               <div className="attr-card-photo" style={{ position: 'relative', height: '155px', backgroundImage: `url(${getPhoto(attr.name, meta)})`, backgroundSize: 'cover', backgroundPosition: 'center', cursor: 'pointer' }} onClick={() => setLightbox(attr)}>
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)' }} />
                   <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    {isGroup && <span style={{ background: '#0F4C3A', color: '#FCD34D', fontSize: '0.62rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '10px' }}>👥 Group Rate</span>}
                     {isPopular && <span style={{ background: 'var(--crimson-primary)', color: 'white', fontSize: '0.62rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '10px' }}>⭐ Most Popular</span>}
                     {isTrending && <span style={{ background: 'var(--gold-accent)', color: 'white', fontSize: '0.62rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '10px' }}>🔥 Trending</span>}
                   </div>
@@ -893,11 +953,14 @@ export default function AttractionsForm({
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
+                    {isGroup && <span style={{ background: '#0F4C3A', color: '#FCD34D', fontSize: '0.58rem', fontWeight: 800, padding: '0.15rem 0.4rem', borderRadius: '8px' }}>👥 Group Rate</span>}
                     {isPopular && <span style={{ background: 'var(--crimson-primary)', color: 'white', fontSize: '0.58rem', fontWeight: 800, padding: '0.15rem 0.4rem', borderRadius: '8px' }}>⭐ Popular</span>}
                     {isTrending && <span style={{ background: 'var(--gold-accent)', color: 'white', fontSize: '0.58rem', fontWeight: 800, padding: '0.15rem 0.4rem', borderRadius: '8px' }}>🔥 Trending</span>}
                   </div>
                   <div onClick={() => setLightbox(attr)} style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-dark)', lineHeight: 1.3, cursor: 'pointer' }}>{attr.name}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-dark)', opacity: 0.65, marginTop: '0.15rem' }}>Ad: S${attr.adultPrice} · Ch: S${attr.childPrice}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-dark)', opacity: 0.65, marginTop: '0.15rem' }}>
+                    {isGroup ? `Group: S$${groupPrice} (Whole Group)` : `Ad: S$${attr.adultPrice} · Ch: S$${attr.childPrice}`}
+                  </div>
                 </div>
                 {itemTotal > 0 && <span style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--emerald-secondary)', flexShrink: 0 }}>S$ {itemTotal}</span>}
               </div>
@@ -914,22 +977,40 @@ export default function AttractionsForm({
                     <span style={{ fontSize: '0.68rem', color: 'var(--emerald-secondary)', fontWeight: 600 }}>🔥 {getBookedCount(attr.name)} this week</span>
                   </div>
                   <div style={{ fontSize: '0.73rem', color: 'var(--text-dark)', opacity: 0.7, fontWeight: 600 }}>
-                    Adult: S$ {attr.adultPrice} &nbsp;•&nbsp; Child: S$ {attr.childPrice}
+                    {isGroup ? (
+                      <span style={{ color: 'var(--emerald-secondary)', fontWeight: 700 }}>
+                        👥 S$ {groupPrice} <span style={{ fontSize: '0.68rem', opacity: 0.85 }}>(Whole Group Price)</span>
+                      </span>
+                    ) : (
+                      <>Adult: S$ {attr.adultPrice} &nbsp;•&nbsp; Child: S$ {attr.childPrice}</>
+                    )}
                   </div>
 
                   {/* Qty Controls */}
-                  <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
-                    {(['adult', 'child'] as const).map(type => (
-                      <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <span style={{ fontSize: '0.72rem', fontWeight: 700, opacity: 0.7 }}>{type === 'adult' ? 'Adult' : 'Child'}</span>
-                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--glass-border)', borderRadius: '6px', overflow: 'hidden', background: 'var(--bg-secondary)' }}>
-                          <button className="qty-btn" type="button" onClick={() => handleQtyChange(attr.id, type, -1)} style={{ border: 'none', background: 'transparent', padding: '0.28rem 0.5rem', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-dark)', transition: 'background 0.15s' }}>−</button>
-                          <span style={{ minWidth: '20px', textAlign: 'center', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark)' }}>{qty[type]}</span>
-                          <button className="qty-btn" type="button" onClick={() => handleQtyChange(attr.id, type, 1)} style={{ border: 'none', background: 'transparent', padding: '0.28rem 0.5rem', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-dark)', transition: 'background 0.15s' }}>+</button>
-                        </div>
+                  {isGroup ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700, opacity: 0.8 }}>Group:</span>
+                      <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--glass-border)', borderRadius: '6px', overflow: 'hidden', background: 'var(--bg-secondary)' }}>
+                        <button className="qty-btn" type="button" onClick={() => handleQtyChange(attr.id, 'group', -1)} style={{ border: 'none', background: 'transparent', padding: '0.28rem 0.5rem', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-dark)', transition: 'background 0.15s' }}>−</button>
+                        <span style={{ minWidth: '24px', textAlign: 'center', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark)' }}>{groupQty}</span>
+                        <button className="qty-btn" type="button" onClick={() => handleQtyChange(attr.id, 'group', 1)} style={{ border: 'none', background: 'transparent', padding: '0.28rem 0.5rem', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-dark)', transition: 'background 0.15s' }}>+</button>
                       </div>
-                    ))}
-                  </div>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--emerald-secondary)', fontWeight: 600 }}>Whole Group</span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
+                      {(['adult', 'child'] as const).map(type => (
+                        <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, opacity: 0.7 }}>{type === 'adult' ? 'Adult' : 'Child'}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--glass-border)', borderRadius: '6px', overflow: 'hidden', background: 'var(--bg-secondary)' }}>
+                            <button className="qty-btn" type="button" onClick={() => handleQtyChange(attr.id, type, -1)} style={{ border: 'none', background: 'transparent', padding: '0.28rem 0.5rem', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-dark)', transition: 'background 0.15s' }}>−</button>
+                            <span style={{ minWidth: '20px', textAlign: 'center', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-dark)' }}>{qty[type]}</span>
+                            <button className="qty-btn" type="button" onClick={() => handleQtyChange(attr.id, type, 1)} style={{ border: 'none', background: 'transparent', padding: '0.28rem 0.5rem', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-dark)', transition: 'background 0.15s' }}>+</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Date picker */}
                   {isFixedDate && isSelected && (
@@ -995,7 +1076,15 @@ export default function AttractionsForm({
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, color: 'var(--text-dark)', lineHeight: 1.3 }}>{item.name}</div>
                       <div style={{ fontSize: '0.76rem', opacity: 0.7, marginTop: '0.15rem' }}>
-                        {item.adult > 0 && `${item.adult} Ad`}{item.adult > 0 && item.child > 0 && ' + '}{item.child > 0 && `${item.child} Ch`}
+                        {item.isGroup ? (
+                          <span style={{ color: 'var(--emerald-secondary)', fontWeight: 600 }}>{item.group} Group{item.group > 1 ? 's' : ''} (Flat Rate)</span>
+                        ) : (
+                          <>
+                            {item.adult > 0 && `${item.adult} Ad`}
+                            {item.adult > 0 && item.child > 0 && ' + '}
+                            {item.child > 0 && `${item.child} Ch`}
+                          </>
+                        )}
                       </div>
                       {item.isFixedDate && (
                         <div style={{ fontSize: '0.73rem', color: item.date ? 'var(--emerald-secondary)' : 'var(--crimson-primary)', fontWeight: 600 }}>

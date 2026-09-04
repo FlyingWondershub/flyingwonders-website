@@ -31,9 +31,9 @@ async function fetchInventory() {
     const text = await res.text()
     
     const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0)
-    const dataLines = lines.slice(1)
-    
-    const inventory = dataLines.map((line) => {
+    if (lines.length === 0) return []
+
+    const parseCsvLine = (line: string): string[] => {
       let parts: string[] = []
       let currentPart = ''
       let insideQuote = false
@@ -44,11 +44,31 @@ async function fetchInventory() {
         else { currentPart += char }
       }
       parts.push(currentPart.trim())
-      if (parts.length >= 3) {
-        const name = parts[0].replace(/^\"|\"$/g, '')
-        const adultPrice = parseFloat(parts[1]) || 0
-        const childPrice = parseFloat(parts[2]) || 0
-        return { name, adultPrice, childPrice }
+      return parts.map(p => p.replace(/^"|"$/g, '').trim())
+    }
+
+    const header = parseCsvLine(lines[0]).map(h => h.toLowerCase())
+    let nameIdx = header.findIndex(h => h.includes('attraction') || h.includes('name'))
+    let adultIdx = header.findIndex(h => h.includes('adult'))
+    let childIdx = header.findIndex(h => h.includes('child'))
+    let rateTypeIdx = header.findIndex(h => h.includes('rate') || h.includes('pricing') || h.includes('type'))
+
+    if (nameIdx === -1) nameIdx = 0
+    if (adultIdx === -1) adultIdx = 1
+    if (childIdx === -1) childIdx = 2
+    if (rateTypeIdx === -1) rateTypeIdx = 4
+
+    const dataLines = lines.slice(1)
+    const inventory = dataLines.map((line) => {
+      const parts = parseCsvLine(line)
+      if (parts.length >= 2) {
+        const name = parts[nameIdx] || parts[0] || ''
+        if (!name || name.toLowerCase().startsWith('attraction')) return null
+        const adultPrice = parseFloat(parts[adultIdx] || parts[1] || '0') || 0
+        const childPrice = parseFloat(parts[childIdx] || parts[2] || '0') || 0
+        const rawRateType = (parts[rateTypeIdx] || '').toLowerCase()
+        const rateType: 'person' | 'group' = rawRateType.includes('group') ? 'group' : 'person'
+        return { name, adultPrice, childPrice, rateType }
       }
       return null
     }).filter(Boolean)
@@ -149,7 +169,10 @@ ${JSON.stringify(inventory)}
 RULES:
 1. Generate a day-by-day itinerary.
 2. For each day, include a title and a list of events.
-3. For events that are attractions, you MUST use the EXACT NAME from the inventory list and calculate its total price (Adult Price * Adults + Child Price * Kids). Set "isAvailableInSheet" to true.
+3. For events that are attractions, you MUST use the EXACT NAME from the inventory list and calculate its total price:
+   - If the attraction's rateType is "group", total price is the flat group price (Adult Price) for the entire group (do NOT multiply by number of people).
+   - If rateType is "person", calculate: (Adult Price * Adults + Child Price * Kids).
+   Set "isAvailableInSheet" to true.
 4. Calculate a total estimated price for the entire trip based on the selected inventory. 
 5. Provide a summary of the trip.
 6. The output must be valid JSON matching this exact structure:

@@ -40,8 +40,8 @@ export async function POST(req: Request) {
       <tr style="border-bottom: 1px solid #eee;">
         <td style="padding: 0.6rem 0.75rem; font-weight: 600;">${item.name}</td>
         <td style="padding: 0.6rem 0.75rem; text-align: center;">${item.isFixedDate ? (item.date || '⚠ Not set') : '—'}</td>
-        <td style="padding: 0.6rem 0.75rem; text-align: center;">${item.adult || 0}</td>
-        <td style="padding: 0.6rem 0.75rem; text-align: center;">${item.child || 0}</td>
+        <td style="padding: 0.6rem 0.75rem; text-align: center;">${item.isGroup ? '—' : (item.adult || 0)}</td>
+        <td style="padding: 0.6rem 0.75rem; text-align: center;">${item.isGroup ? `Group (${item.group || 1})` : (item.child || 0)}</td>
         <td style="padding: 0.6rem 0.75rem; text-align: right; font-weight: 700;">S$ ${item.total}</td>
       </tr>
     `).join('')
