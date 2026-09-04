@@ -46,6 +46,37 @@ const ATTRACTION_DESCRIPTIONS: Record<string, string> = {
   'Wings of Time': 'A spectacular night show set against the open sea, featuring water, laser, and fire effects.'
 }
 
+function getAttractionMetaInfo(attrName: string, attractionsMeta: Record<string, any>) {
+  if (!attrName || !attractionsMeta) return null
+  const rawKey = attrName.toLowerCase().trim()
+  if (attractionsMeta[rawKey]) return attractionsMeta[rawKey]
+
+  const cleanKey = attrName
+    .replace(/-\s*Fixed\s*Date\s*(\/\s*Time)?/gi, '')
+    .replace(/\(Peak\s*-\s*Fixed\s*date\s*\/Time\s*\)/gi, '')
+    .replace(/\(Peak\s*-\s*Fixed\s*Date\s*\)/gi, '')
+    .replace(/-\s*Fixed\s*Time/gi, '')
+    .replace(/-\s*Non\s*Peak/gi, '')
+    .replace(/\(.*?\)/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .trim()
+
+  if (attractionsMeta[cleanKey]) return attractionsMeta[cleanKey]
+
+  for (const [k, meta] of Object.entries(attractionsMeta)) {
+    if (k && (cleanKey.includes(k) || k.includes(cleanKey))) {
+      const hasConflict = (cleanKey.includes('arrival') && k.includes('departure')) ||
+                          (cleanKey.includes('departure') && k.includes('arrival')) ||
+                          (cleanKey.includes('lunch') && k.includes('dinner')) ||
+                          (cleanKey.includes('dinner') && k.includes('lunch'))
+      if (!hasConflict) return meta
+    }
+  }
+
+  return null
+}
+
 const MEAL_PRICES = {
   breakfast: 12,
   lunch: 17,
@@ -2408,10 +2439,9 @@ export default function PrototypeBuilder() {
           day.attractions.forEach(a => {
             const attrName = attractionsList[a.attractionIndex]?.name || 'Attraction'
             const notes = a.description ? a.description : ''
-            const metaKey = attrName.toLowerCase().trim()
-            const meta = attractionsMeta[metaKey] || null
+            const meta = getAttractionMetaInfo(attrName, attractionsMeta)
 
-            const shortDesc = meta?.shortDescription || ATTRACTION_DESCRIPTIONS[attrName] || 'One of Singapore\'s premier sightseeing attractions.'
+            const fullDesc = meta?.longDescription || meta?.shortDescription || ATTRACTION_DESCRIPTIONS[attrName] || 'One of Singapore\'s premier sightseeing attractions.'
             const highlights: string[] = meta?.highlights?.slice(0, 4) || []
             const rating = meta?.rating || null
             const openingHours = meta?.openingHours || ''
@@ -2420,7 +2450,7 @@ export default function PrototypeBuilder() {
             const hasPhoto = !!(meta?.photoUrl)
 
             const textW = hasPhoto ? CW - 48 : CW - 12
-            const descLines = doc.splitTextToSize(shortDesc, textW)
+            const descLines = doc.splitTextToSize(fullDesc, textW)
             const noteLines = notes ? doc.splitTextToSize(`Note: ${notes}`, textW) : []
             const highlightRows = Math.ceil(highlights.length / 2)
             const metaParts: string[] = []
@@ -3025,12 +3055,13 @@ export default function PrototypeBuilder() {
           } else if (dayAttrNames.length > 0) {
             const firstRawName = dayAttrNames[0].toLowerCase().trim()
             const firstCleanName = cleanItemTitle(dayAttrNames[0])
-            const firstMeta = attractionsMeta[firstRawName]
+            const firstMeta = getAttractionMetaInfo(dayAttrNames[0], attractionsMeta)
             
-            if (firstMeta?.shortDescription && !firstMeta.shortDescription.toLowerCase().includes('ticket and admission')) {
-              narrative = firstMeta.shortDescription
-            } else if (ATTRACTION_DESCRIPTIONS[firstCleanName]) {
-              narrative = ATTRACTION_DESCRIPTIONS[firstCleanName]
+            const metaDesc = firstMeta?.longDescription || firstMeta?.shortDescription
+            if (metaDesc && !metaDesc.toLowerCase().includes('ticket and admission')) {
+              narrative = metaDesc
+            } else if (ATTRACTION_DESCRIPTIONS[firstCleanName] || ATTRACTION_DESCRIPTIONS[firstRawName]) {
+              narrative = ATTRACTION_DESCRIPTIONS[firstCleanName] || ATTRACTION_DESCRIPTIONS[firstRawName]
             } else {
               if (firstRawName.includes('universal')) {
                 narrative = 'Experience cutting-edge rides, shows, and immersive themed zones based on blockbuster films at Universal Studios Singapore.'
