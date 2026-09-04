@@ -2003,6 +2003,47 @@ export default function PrototypeBuilder() {
     const MR = 196  // margin right
     const CW = MR - ML // content width
 
+    // ─── Tagged Agency Resolution ─────────────────────────────
+    const isAdminUser = activeAgent?.email?.toLowerCase() === 'info.flyingwonders@gmail.com'
+    const isTaggedToAgent = !!(
+      (selectedAgentDetails && selectedAgentDetails._id && selectedAgentDetails._id !== 'direct') ||
+      (selectedAgentId && selectedAgentId !== 'direct') ||
+      (!isAdminUser && activeAgent && (activeAgent.companyName || activeAgent.agentName || activeAgent.email)) ||
+      (customAgencyName && !customAgencyName.toUpperCase().includes('FLYING WONDERS') && customAgencyName.trim() !== 'My Travel Agency' && customAgencyName.trim() !== '')
+    )
+
+    const taggedAgencyName = (
+      (customAgencyName && !customAgencyName.toUpperCase().includes('FLYING WONDERS') && customAgencyName.trim() !== 'My Travel Agency' ? customAgencyName.trim() : '') ||
+      selectedAgentDetails?.companyName ||
+      selectedAgentDetails?.agentName ||
+      (!isAdminUser && activeAgent ? (activeAgent.companyName || activeAgent.agentName) : '') ||
+      customAgencyName ||
+      'Flying Wonders'
+    )
+
+    const taggedConsultantName = (
+      selectedAgentDetails?.agentName ||
+      (!isAdminUser && activeAgent?.agentName ? activeAgent.agentName : '') ||
+      agentName ||
+      (isTaggedToAgent ? 'Travel Specialist' : 'Flying Wonders Travel Specialist')
+    )
+
+    const taggedPhone = (
+      customAgencyPhone ||
+      selectedAgentDetails?.phone ||
+      (!isAdminUser && activeAgent?.phone ? activeAgent.phone : '') ||
+      agentPhone ||
+      (isTaggedToAgent ? '' : '+65 9689 0101')
+    )
+
+    const taggedEmail = (
+      customAgencyEmail ||
+      selectedAgentDetails?.email ||
+      (!isAdminUser && activeAgent?.email ? activeAgent.email : '') ||
+      agentEmail ||
+      (isTaggedToAgent ? '' : 'info.flyingwonders@gmail.com')
+    )
+
     // ─── Color Palette ───────────────────────────────────────
     const NAVY   = [10, 34, 64]    as [number,number,number]
     const GOLD   = [196, 156, 60]  as [number,number,number]
@@ -2049,7 +2090,7 @@ export default function PrototypeBuilder() {
       }
 
       font('bold', 7.5); setTxt(WHITE)
-      const headerAgency = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
+      const headerAgency = (isTaggedToAgent ? taggedAgencyName : (customAgencyName || 'FLYING WONDERS')).toUpperCase()
       const headerAgencyLines = doc.splitTextToSize(headerAgency, 60)
       doc.text(headerAgencyLines[0], pHeadX, 8.5)
       font('normal', 7); setTxt(GOLD)
@@ -2060,114 +2101,115 @@ export default function PrototypeBuilder() {
       }
     }
 
-      const addFooter = () => {
-        const fy = PH - 12
-        setFill(NAVY); doc.rect(0, fy - 2, PW, 14, 'F')
-        setFill(GOLD); doc.rect(0, fy - 2, PW, 0.8, 'F')
-        font('normal', 7); setTxt(GOLD)
-        doc.text('Singapore DMC Travel Partner', ML, fy + 3)
-        setTxt(WHITE)
-        doc.text(`Page ${pageNum}`, PW / 2, fy + 3, { align: 'center' })
-        const today = new Date().toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' })
-        font('normal', 7); setTxt(WHITE)
-        doc.text(`Generated: ${today}`, MR, fy + 3, { align: 'right' })
+    const addFooter = () => {
+      const fy = PH - 12
+      setFill(NAVY); doc.rect(0, fy - 2, PW, 14, 'F')
+      setFill(GOLD); doc.rect(0, fy - 2, PW, 0.8, 'F')
+      font('normal', 7); setTxt(GOLD)
+      const footerBrand = isTaggedToAgent ? taggedAgencyName : 'Flying Wonders · Singapore DMC'
+      doc.text(footerBrand, ML, fy + 3)
+      setTxt(WHITE)
+      doc.text(`Page ${pageNum}`, PW / 2, fy + 3, { align: 'center' })
+      const today = new Date().toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' })
+      font('normal', 7); setTxt(WHITE)
+      doc.text(`Generated: ${today}`, MR, fy + 3, { align: 'right' })
+    }
+
+    const sectionTitle = (label: string, minFollowSpace = 18) => {
+      checkPage(16 + minFollowSpace)
+      y += 2
+      setFill(NAVY); doc.rect(ML, y, CW, 7.5, 'F')
+      setFill(GOLD); doc.rect(ML, y, 3, 7.5, 'F')
+      font('bold', 9); setTxt(WHITE)
+      doc.text(label.toUpperCase(), ML + 6, y + 5.2)
+      y += 11
+    }
+
+    const twoCol = (label: string, value: string, yPos: number, colX = ML, colW = CW / 2) => {
+      font('bold', 8.5); setTxt(SLATE)
+      doc.text(label, colX + 2, yPos + 4)
+      font('normal', 8.5); setTxt(TEXT)
+      const lines = doc.splitTextToSize(value, colW - 4)
+      doc.text(lines, colX + 2, yPos + 9)
+      return lines.length
+    }
+
+    const hrLine = (col = LGRAY, weight = 0.3) => {
+      setDraw(col); doc.setLineWidth(weight)
+      doc.line(ML, y, MR, y)
+      y += 3
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  PAGE 1 — COVER HEADER
+    // ──────────────────────────────────────────────────────────
+
+    // ─── Big branded header band ───────────────────────────
+    setFill(NAVY); doc.rect(0, 0, PW, 54, 'F')
+    // Diagonal gold accent
+    setFill(GOLD); doc.rect(0, 54, PW, 2.5, 'F')
+    // Right-side accent bar
+    setFill(CRIM); doc.rect(PW - 22, 0, 22, 54, 'F')
+
+    // ─── Agency Logo Card (if available) ────────────────────
+    let agencyStartX = ML
+    let maxAgencyWidth = 110
+    if (logoRaster) {
+      const lBoxX = ML
+      const lBoxY = 8
+      const lBoxW = 40
+      const lBoxH = 26
+      // Crisp White Card container guaranteeing high contrast
+      setFill(WHITE); doc.roundedRect(lBoxX, lBoxY, lBoxW, lBoxH, 2.5, 2.5, 'F')
+      setDraw(GOLD); doc.setLineWidth(0.4); doc.roundedRect(lBoxX, lBoxY, lBoxW, lBoxH, 2.5, 2.5, 'S')
+
+      // Fit logo with preserved aspect ratio inside container
+      const maxW = lBoxW - 4
+      const maxH = lBoxH - 4
+      const ratio = logoRaster.width / logoRaster.height
+      let fitW = maxW
+      let fitH = fitW / ratio
+      if (fitH > maxH) {
+        fitH = maxH
+        fitW = fitH * ratio
       }
+      const posX = lBoxX + (lBoxW - fitW) / 2
+      const posY = lBoxY + (lBoxH - fitH) / 2
+      try {
+        doc.addImage(logoRaster.dataUrl, 'PNG', posX, posY, fitW, fitH, undefined, 'FAST')
+      } catch (ie) {}
 
-      const sectionTitle = (label: string) => {
-        checkPage(16)
-        y += 2
-        setFill(NAVY); doc.rect(ML, y, CW, 7.5, 'F')
-        setFill(GOLD); doc.rect(ML, y, 3, 7.5, 'F')
-        font('bold', 9); setTxt(WHITE)
-        doc.text(label.toUpperCase(), ML + 6, y + 5.2)
-        y += 11
-      }
+      agencyStartX = lBoxX + lBoxW + 5
+      maxAgencyWidth = 78
+    }
 
-      const twoCol = (label: string, value: string, yPos: number, colX = ML, colW = CW / 2) => {
-        font('bold', 8.5); setTxt(SLATE)
-        doc.text(label, colX + 2, yPos + 4)
-        font('normal', 8.5); setTxt(TEXT)
-        const lines = doc.splitTextToSize(value, colW - 4)
-        doc.text(lines, colX + 2, yPos + 9)
-        return lines.length
-      }
+    // Agency name (wrapped cleanly to avoid collision with badge)
+    font('bold', logoRaster ? 13 : 15); setTxt(WHITE)
+    const fullAgencyName = (isTaggedToAgent ? taggedAgencyName : (customAgencyName || 'FLYING WONDERS')).toUpperCase()
+    const agencyLines = doc.splitTextToSize(fullAgencyName, maxAgencyWidth)
+    const agencyStartY = agencyLines.length > 1 ? 16 : (logoRaster ? 18 : 22)
+    doc.text(agencyLines, agencyStartX, agencyStartY)
 
-      const hrLine = (col = LGRAY, weight = 0.3) => {
-        setDraw(col); doc.setLineWidth(weight)
-        doc.line(ML, y, MR, y)
-        y += 3
-      }
+    // Tagline
+    font('italic', 8); setTxt(GOLD)
+    const agencyTagline = isTaggedToAgent
+      ? `${taggedAgencyName} · Custom Tour Itinerary`
+      : 'Flying Wonders · Singapore & Malaysia Specialist DMC'
+    const taglineStartY = agencyLines.length > 1 ? (logoRaster ? 29 : 33) : (logoRaster ? 27 : 31)
+    doc.text(agencyTagline, agencyStartX, taglineStartY)
 
-      // ──────────────────────────────────────────────────────────
-      //  PAGE 1 — COVER HEADER
-      // ──────────────────────────────────────────────────────────
+    // Document label (vertical on right accent)
+    doc.setFont('Helvetica', 'bold'); doc.setFontSize(7.5); setTxt(WHITE)
+    doc.text('TOUR', PW - 11, 20, { angle: 90 })
+    doc.text(hidePricing ? 'ITINERARY' : 'PROPOSAL', PW - 11, 35, { angle: 90 })
 
-      // ─── Big branded header band ───────────────────────────
-      setFill(NAVY); doc.rect(0, 0, PW, 54, 'F')
-      // Diagonal gold accent
-      setFill(GOLD); doc.rect(0, 54, PW, 2.5, 'F')
-      // Right-side accent bar
-      setFill(CRIM); doc.rect(PW - 22, 0, 22, 54, 'F')
-
-      // ─── Agency Logo Card (if available) ────────────────────
-      let agencyStartX = ML
-      let maxAgencyWidth = 110
-      if (logoRaster) {
-        const lBoxX = ML
-        const lBoxY = 8
-        const lBoxW = 40
-        const lBoxH = 26
-        // Crisp White Card container guaranteeing high contrast
-        setFill(WHITE); doc.roundedRect(lBoxX, lBoxY, lBoxW, lBoxH, 2.5, 2.5, 'F')
-        setDraw(GOLD); doc.setLineWidth(0.4); doc.roundedRect(lBoxX, lBoxY, lBoxW, lBoxH, 2.5, 2.5, 'S')
-
-        // Fit logo with preserved aspect ratio inside container
-        const maxW = lBoxW - 4
-        const maxH = lBoxH - 4
-        const ratio = logoRaster.width / logoRaster.height
-        let fitW = maxW
-        let fitH = fitW / ratio
-        if (fitH > maxH) {
-          fitH = maxH
-          fitW = fitH * ratio
-        }
-        const posX = lBoxX + (lBoxW - fitW) / 2
-        const posY = lBoxY + (lBoxH - fitH) / 2
-        try {
-          doc.addImage(logoRaster.dataUrl, 'PNG', posX, posY, fitW, fitH, undefined, 'FAST')
-        } catch (ie) {}
-
-        agencyStartX = lBoxX + lBoxW + 5
-        maxAgencyWidth = 78
-      }
-
-      // Agency name (wrapped cleanly to avoid collision with badge)
-      font('bold', logoRaster ? 13 : 15); setTxt(WHITE)
-      const fullAgencyName = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
-      const agencyLines = doc.splitTextToSize(fullAgencyName, maxAgencyWidth)
-      const agencyStartY = agencyLines.length > 1 ? 16 : (logoRaster ? 18 : 22)
-      doc.text(agencyLines, agencyStartX, agencyStartY)
-
-      // Tagline
-      font('italic', 8); setTxt(GOLD)
-      const agencyTagline = activeAgent?.companyName
-        ? `${activeAgent.companyName} · Singapore DMC Travel Partner`
-        : 'Singapore DMC Travel Partner · Singapore Specialist'
-      const taglineStartY = agencyLines.length > 1 ? (logoRaster ? 29 : 33) : (logoRaster ? 27 : 31)
-      doc.text(agencyTagline, agencyStartX, taglineStartY)
-
-      // Document label (vertical on right accent)
-      doc.setFont('Helvetica', 'bold'); doc.setFontSize(7.5); setTxt(WHITE)
-      doc.text('TOUR', PW - 11, 20, { angle: 90 })
-      doc.text(hidePricing ? 'ITINERARY' : 'PROPOSAL', PW - 11, 35, { angle: 90 })
-
-      // Contact row
-      font('normal', 7.5); setTxt(GOLD)
-      const ctLine = [
-        customAgencyPhone ? `Tel: ${customAgencyPhone}` : (activeAgent?.phone ? `Tel: ${activeAgent.phone}` : ''),
-        customAgencyEmail ? `Email: ${customAgencyEmail}` : (activeAgent?.email ? `Email: ${activeAgent.email}` : ''),
-      ].filter(Boolean).join('   |   ')
-      doc.text(ctLine, agencyStartX, 44)
+    // Contact row
+    font('normal', 7.5); setTxt(GOLD)
+    const ctLine = [
+      taggedPhone ? `Tel: ${taggedPhone}` : '',
+      taggedEmail ? `Email: ${taggedEmail}` : '',
+    ].filter(Boolean).join('   |   ')
+    if (ctLine) doc.text(ctLine, agencyStartX, 44)
 
       // Proposal ref badge
       const refCode = pNum || savedProposalNum
@@ -2539,7 +2581,72 @@ export default function PrototypeBuilder() {
         // Check if this day has anything
         const hasContent = nonAttrItems.length > 0 || day.attractions.length > 0
 
-        checkPage(20)
+        // Pre-calculate estimated height for this entire day to ensure it completes fully on one page if possible
+        let estDayHeight = 11.5 // Day header height + margin
+        if (!hasContent) {
+          estDayHeight += 12
+        } else {
+          // Pre-calculate non-attraction row heights
+          nonAttrItems.forEach(item => {
+            font('bold', 8)
+            const labelLines = doc.splitTextToSize(item.label, CW - 26)
+            font('italic', 7)
+            const detailLines = item.detail ? doc.splitTextToSize(item.detail, CW - 26) : []
+            const labelH = labelLines.length * 3.8
+            const detailH = detailLines.length * 3.2
+            const rowHeight = Math.max(8, 3 + labelH + detailH + 2)
+            estDayHeight += rowHeight
+          })
+
+          // Pre-calculate attraction card heights
+          day.attractions.forEach(a => {
+            const attrName = attractionsList[a.attractionIndex]?.name || 'Attraction'
+            const notes = a.description ? a.description : ''
+            const meta = getAttractionMetaInfo(attrName, attractionsMeta)
+            const fullDesc = meta?.longDescription || meta?.shortDescription || ATTRACTION_DESCRIPTIONS[attrName] || "One of Singapore's premier sightseeing attractions."
+            const highlights: string[] = meta?.highlights?.slice(0, 4) || []
+            const openingHours = meta?.openingHours || ''
+            const duration = meta?.duration || ''
+            const location = meta?.location || ''
+            const hasPhoto = !!(meta?.photoUrl)
+            const textW = hasPhoto ? CW - 52 : CW - 12
+            font('normal', 7.2)
+            const descLines = doc.splitTextToSize(fullDesc, textW)
+            const noteLines = notes ? doc.splitTextToSize(`Note: ${notes}`, textW) : []
+            const highlightRows = Math.ceil(highlights.length / 2)
+            let metaCount = 0
+            if (openingHours) metaCount++
+            if (duration) metaCount++
+            if (location) metaCount++
+            const cardH = Math.max(
+              hasPhoto ? 32 : 26,
+              13 + descLines.length * 3.8 + noteLines.length * 3.4 + (highlights.length > 0 ? highlightRows * 5.5 + 4 : 0) + (metaCount > 0 ? metaCount * 3.8 + 2 : 0)
+            )
+            estDayHeight += cardH + 3
+          })
+          estDayHeight += 4
+        }
+
+        // Ensure daywise block is completed together on a single page wherever possible:
+        // Available printable height on a single page is PH - 20 (top) - 20 (footer) = 257mm
+        if (estDayHeight <= (PH - 45)) {
+          if (y + estDayHeight > PH - 20 && y > 25) {
+            addFooter()
+            doc.addPage()
+            pageNum++
+            addPageHeader()
+            y = 20
+          }
+        } else {
+          // If unusually large day exceeding a single page, ensure header doesn't orphan at bottom
+          if (y + 65 > PH - 20 && y > 25) {
+            addFooter()
+            doc.addPage()
+            pageNum++
+            addPageHeader()
+            y = 20
+          }
+        }
 
         // Day header
         setFill(GOLD); doc.roundedRect(ML, y, CW, 8.5, 2, 2, 'F')
@@ -2719,7 +2826,9 @@ export default function PrototypeBuilder() {
         'Rates are subject to change due to peak seasons, public holidays, or third-party surcharges.',
         'FIT room rates are subject to a marginal increase.',
         'Itinerary sequence may be adjusted based on operational requirements without notice.',
-        'Cancellation policy and payment terms apply as per Flying Wonders\' standard terms and conditions.',
+        isTaggedToAgent
+          ? `Cancellation policy and payment terms apply as per ${taggedAgencyName}'s standard terms and conditions.`
+          : "Cancellation policy and payment terms apply as per Flying Wonders' standard terms and conditions.",
         'Valid travel documents (passport, visa) are the sole responsibility of the traveler.',
         'Travel insurance is highly recommended for all international travel.',
       ]
@@ -2739,26 +2848,26 @@ export default function PrototypeBuilder() {
       setFill(NAVY); doc.roundedRect(ML, y, CW, 30, 3, 3, 'F')
       font('bold', 9.5); setTxt(GOLD)
       doc.text('Your Travel Consultant', ML + 5, y + 8)
-      if (activeAgent) {
-        font('bold', 11.5); setTxt(WHITE)
-        doc.text(activeAgent.agentName || 'Travel Consultant', ML + 5, y + 16.5)
-        font('normal', 8); setTxt(GOLD)
-        const agentContactParts: string[] = []
-        if (activeAgent.phone) agentContactParts.push(`Tel: ${activeAgent.phone}`)
-        if (activeAgent.email) agentContactParts.push(`Email: ${activeAgent.email}`)
-        doc.text(agentContactParts.join('   |   '), ML + 5, y + 24)
 
-        // Company name on the right
-        if (activeAgent.companyName) {
-          font('bold', 8.5); setTxt(GOLD)
-          doc.text(activeAgent.companyName.toUpperCase(), MR - 5, y + 16.5, { align: 'right' })
-        }
-        font('normal', 7); setTxt(WHITE)
-        doc.text('Singapore DMC Travel Partner', MR - 5, y + 24, { align: 'right' })
+      font('bold', 11.5); setTxt(WHITE)
+      doc.text(taggedConsultantName, ML + 5, y + 16.5)
+      font('normal', 8); setTxt(GOLD)
+      const agentContactParts: string[] = []
+      if (taggedPhone) agentContactParts.push(`Tel: ${taggedPhone}`)
+      if (taggedEmail) agentContactParts.push(`Email: ${taggedEmail}`)
+      if (agentContactParts.length > 0) {
+        doc.text(agentContactParts.join('   |   '), ML + 5, y + 24)
+      }
+
+      // Company name on the right
+      font('bold', 8.5); setTxt(GOLD)
+      const rAgencyLines = doc.splitTextToSize(taggedAgencyName.toUpperCase(), 75)
+      doc.text(rAgencyLines[0], MR - 5, y + 16.5, { align: 'right' })
+
+      font('normal', 7); setTxt(WHITE)
+      if (isTaggedToAgent) {
+        doc.text('Authorized Travel Partner', MR - 5, y + 24, { align: 'right' })
       } else {
-        font('bold', 8.5); setTxt(GOLD)
-        doc.text('FLYING WONDERS', MR - 5, y + 16.5, { align: 'right' })
-        font('normal', 7); setTxt(WHITE)
         doc.text('Singapore DMC Travel Partner', MR - 5, y + 24, { align: 'right' })
       }
       y += 34
@@ -2768,7 +2877,8 @@ export default function PrototypeBuilder() {
 
       const guestSlug = (guestName || 'Guest').replace(/\s+/g, '-')
       const docType = hidePricing ? 'Itinerary' : 'Proposal'
-      doc.save(`FW-${docType}-${guestSlug}-${pNum || savedProposalNum || 'Draft'}.pdf`)
+      const filePrefix = isTaggedToAgent ? (taggedAgencyName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'Travel') : 'FW'
+      doc.save(`${filePrefix}-${docType}-${guestSlug}-${pNum || savedProposalNum || 'Draft'}.pdf`)
       notifyAgentActivity('pdf_download')
   }
 
@@ -2791,6 +2901,23 @@ export default function PrototypeBuilder() {
       const ML = 12
       const MR = 198
       const CW = MR - ML
+
+      // Tagged Agency Resolution
+      const isAdminUser = activeAgent?.email?.toLowerCase() === 'info.flyingwonders@gmail.com'
+      const isTaggedToAgent = !!(
+        (selectedAgentDetails && selectedAgentDetails._id && selectedAgentDetails._id !== 'direct') ||
+        (selectedAgentId && selectedAgentId !== 'direct') ||
+        (!isAdminUser && activeAgent && (activeAgent.companyName || activeAgent.agentName || activeAgent.email)) ||
+        (customAgencyName && !customAgencyName.toUpperCase().includes('FLYING WONDERS') && customAgencyName.trim() !== 'My Travel Agency' && customAgencyName.trim() !== '')
+      )
+      const taggedAgencyName = (
+        (customAgencyName && !customAgencyName.toUpperCase().includes('FLYING WONDERS') && customAgencyName.trim() !== 'My Travel Agency' ? customAgencyName.trim() : '') ||
+        selectedAgentDetails?.companyName ||
+        selectedAgentDetails?.agentName ||
+        (!isAdminUser && activeAgent ? (activeAgent.companyName || activeAgent.agentName) : '') ||
+        customAgencyName ||
+        'FLYING WONDERS'
+      )
 
       // Refined Luxury Color Palette
       const EMERALD = [15, 76, 58]     as [number,number,number] // #0F4C3A
@@ -3114,7 +3241,7 @@ export default function PrototypeBuilder() {
         }
 
         font('bold', 8); setTxt(WHITE)
-        const headerAgency = (customAgencyName || activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
+        const headerAgency = (isTaggedToAgent ? taggedAgencyName : (customAgencyName || 'FLYING WONDERS')).toUpperCase()
         const headerAgencyLines = doc.splitTextToSize(headerAgency, logoRaster ? 52 : 65)
         doc.text(headerAgencyLines[0], barAgencyX, 8.2)
 
@@ -3431,11 +3558,13 @@ export default function PrototypeBuilder() {
       doc.text('Customizing Your Travel Choices...', ML, footY + 4)
       font('normal', 7); setTxt(WHITE)
       doc.text(`Page ${pageIdx + 1} of ${totalPages}`, PW / 2, footY + 4, { align: 'center' })
-      doc.text('Singapore DMC Travel Partner', MR, footY + 4, { align: 'right' })
+      const sFooterRight = isTaggedToAgent ? taggedAgencyName : 'Flying Wonders · Singapore DMC'
+      doc.text(sFooterRight, MR, footY + 4, { align: 'right' })
     }
 
     const guestSlug = (guestName || 'Guest').replace(/\s+/g, '-')
-    doc.save(`FW-Visual-Itinerary-${guestSlug}-${savedProposalNum || 'Draft'}.pdf`)
+    const filePrefix = isTaggedToAgent ? (taggedAgencyName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'Travel') : 'FW'
+    doc.save(`${filePrefix}-Visual-Itinerary-${guestSlug}-${savedProposalNum || 'Draft'}.pdf`)
     notifyAgentActivity('pdf_download')
   }
 
