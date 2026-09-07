@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function B2BPage() {
-  redirect('/agent-portal')
+  redirect('/b2b-directory')
 }

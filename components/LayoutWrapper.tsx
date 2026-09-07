@@ -225,7 +225,7 @@ export default function LayoutWrapper({
             {/* Left Action: Agent Portal */}
             <div style={{ flex: '1 0 150px', display: 'flex', alignItems: 'center' }}>
               {!pageVisibility?.hideCustomPackage && (
-                <Link href="/agent-portal" className="nav-link" style={{ color: 'var(--emerald-secondary)', fontWeight: 700, fontSize: '0.85rem' }}>
+                <Link href="/agent-portal" rel="nofollow" className="nav-link" style={{ color: 'var(--emerald-secondary)', fontWeight: 700, fontSize: '0.85rem' }}>
                   {loggedInCompanyName ? `🏢 ${loggedInCompanyName}` : '🔑 Agent Login'}
                 </Link>
               )}

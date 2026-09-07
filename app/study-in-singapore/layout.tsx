@@ -18,12 +18,12 @@ export const metadata: Metadata = {
     'Flying Wonders education consultant Singapore',
   ],
   alternates: {
-    canonical: 'https://www.flyingwonders.net/study-in-singapore',
+    canonical: 'https://flyingwonders.net/study-in-singapore',
   },
   openGraph: {
     title: 'Study in Singapore for Indian Students | Free Guidance | Flying Wonders',
     description: 'Free expert consultation to study at NUS, NTU, SMU and more. Explore costs, MOE scholarships, Student\'s Pass visa, and career pathways in Singapore.',
-    url: 'https://www.flyingwonders.net/study-in-singapore',
+    url: 'https://flyingwonders.net/study-in-singapore',
     siteName: 'Flying Wonders',
     images: [
       {
@@ -95,7 +95,7 @@ const jsonLd = {
     {
       '@type': 'EducationalOrganization',
       name: 'Flying Wonders — Singapore Education Consultancy',
-      url: 'https://www.flyingwonders.net/study-in-singapore',
+      url: 'https://flyingwonders.net/study-in-singapore',
       description: 'Free expert education consultancy helping Indian and international students study at Singapore\'s top universities including NUS, NTU, SMU, Curtin, and SIM.',
       contactPoint: {
         '@type': 'ContactPoint',
@@ -109,9 +109,9 @@ const jsonLd = {
     {
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.flyingwonders.net/' },
-        { '@type': 'ListItem', position: 2, name: 'Services', item: 'https://www.flyingwonders.net/services-catalog' },
-        { '@type': 'ListItem', position: 3, name: 'Study in Singapore', item: 'https://www.flyingwonders.net/study-in-singapore' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://flyingwonders.net/' },
+        { '@type': 'ListItem', position: 2, name: 'Services', item: 'https://flyingwonders.net/services-catalog' },
+        { '@type': 'ListItem', position: 3, name: 'Study in Singapore', item: 'https://flyingwonders.net/study-in-singapore' },
       ],
     },
   ],
