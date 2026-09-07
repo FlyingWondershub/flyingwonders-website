@@ -1,5 +1,14 @@
+import type { Metadata } from 'next'
 import LegalPageClient from '../../components/LegalPageClient'
 import { client } from '../../sanity/lib/client'
+
+export const metadata: Metadata = {
+  title: 'Refund & Cancellation Policy | Flying Wonders Singapore DMC',
+  description: 'Understand the booking cancellation timelines, refund processing guidelines, and merchant terms for Flying Wonders travel packages.',
+  alternates: {
+    canonical: 'https://flyingwonders.net/refund',
+  },
+}
 
 const FALLBACK_SECTIONS = [
   {

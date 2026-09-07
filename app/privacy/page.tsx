@@ -1,5 +1,14 @@
+import type { Metadata } from 'next'
 import LegalPageClient from '../../components/LegalPageClient'
 import { client } from '../../sanity/lib/client'
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy | Flying Wonders Singapore DMC',
+  description: 'Understand how Flying Wonders protects your personal and business travel data in compliance with PDPA, GDPR, and CCPA regulations.',
+  alternates: {
+    canonical: 'https://flyingwonders.net/privacy',
+  },
+}
 
 const FALLBACK_SECTIONS = [
   {

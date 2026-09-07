@@ -1,5 +1,14 @@
+import type { Metadata } from 'next'
 import LegalPageClient from '../../components/LegalPageClient'
 import { client } from '../../sanity/lib/client'
+
+export const metadata: Metadata = {
+  title: 'Terms of Service | Flying Wonders Singapore DMC',
+  description: 'Terms and conditions governing the booking of Singapore travel packages, B2B wholesale agent rates, attraction tickets, and DMC ground services.',
+  alternates: {
+    canonical: 'https://flyingwonders.net/terms',
+  },
+}
 
 const FALLBACK_SECTIONS = [
   {
