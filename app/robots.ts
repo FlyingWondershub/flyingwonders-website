@@ -27,7 +27,12 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/'],
       },
       {
-        userAgent: 'Mediapartners-Google',
+        userAgent: [
+          'Mediapartners-Google',
+          'Google-Display-Ads-Bot',
+          'AdsBot-Google',
+          'AdsBot-Google-Mobile',
+        ],
         allow: '/',
         disallow: ['/studio', '/api/', '/admin-dashboard', '/agent-portal'],
       },

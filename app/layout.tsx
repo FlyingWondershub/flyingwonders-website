@@ -151,8 +151,6 @@ export default async function RootLayout({
       <head>
         <meta name="color-scheme" content="light dark" />
         <SeoSchema />
-        {/* Google AdSense Publisher Account & Site Verification Meta Tag */}
-        <meta name="google-adsense-account" content="ca-pub-3967023851392009" />
         {/* Google AdSense Official Script */}
         <script
           async
