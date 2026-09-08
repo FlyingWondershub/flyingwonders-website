@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flying Wonders — Agent Quick Start Card</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        @page { size: A4; margin: 12mm; }
+        body { font-family: 'Inter', system-ui, sans-serif; color: #1E293B; background: #fff; }
+        .page { max-width: 210mm; margin: 0 auto; padding: 20px; }
+
+        .header { display: flex; align-items: center; gap: 16px; padding-bottom: 16px; border-bottom: 4px solid #0F4C3A; margin-bottom: 20px; }
+        .header img { height: 52px; width: auto; border-radius: 50%; border: 2px solid #D4AF37; }
+        .header-text h1 { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: #0F4C3A; letter-spacing: 0.15em; text-transform: uppercase; line-height: 1.2; }
+        .header-text p { font-size: 0.78rem; color: #64748B; font-weight: 600; }
+        .header-badge { margin-left: auto; background: #D4AF37; color: #0F172A; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+
+        .section-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: #0F4C3A; margin-bottom: 10px; padding-bottom: 4px; border-bottom: 2px solid #E2E8F0; display: flex; align-items: center; gap: 8px; }
+        .section-title span { font-size: 1.1rem; }
+
+        .steps { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 20px; }
+        .step { display: flex; gap: 12px; align-items: flex-start; padding: 10px 14px; border-radius: 10px; background: #F0FDF4; border: 1px solid #BBF7D0; }
+        .step-num { width: 28px; height: 28px; border-radius: 50%; background: #0F4C3A; color: #fff; font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .step-content h4 { font-size: 0.88rem; font-weight: 800; color: #0F4C3A; margin-bottom: 2px; }
+        .step-content p { font-size: 0.78rem; color: #4A5568; line-height: 1.4; }
+
+        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+        .tool-card { padding: 8px 12px; border-radius: 8px; background: #F8FAFC; border: 1px solid #E2E8F0; }
+        .tool-card h4 { font-size: 0.8rem; font-weight: 800; color: #1E293B; margin-bottom: 2px; }
+        .tool-card p { font-size: 0.72rem; color: #64748B; }
+        .tool-card .url { font-size: 0.68rem; color: #0F4C3A; font-weight: 700; font-family: monospace; }
+
+        .contact-bar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .contact-item { padding: 10px; border-radius: 8px; background: #0F172A; color: #E2E8F0; text-align: center; }
+        .contact-item .label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; margin-bottom: 4px; }
+        .contact-item .value { font-size: 0.85rem; font-weight: 700; color: #D4AF37; }
+
+        .shortcuts { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+        .shortcut { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #475569; }
+        .shortcut kbd { background: #E2E8F0; padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 0.72rem; font-family: monospace; border: 1px solid #CBD5E1; }
+
+        .footer { text-align: center; padding-top: 12px; border-top: 2px solid #E2E8F0; font-size: 0.7rem; color: #94A3B8; }
+        .footer a { color: #0F4C3A; text-decoration: none; font-weight: 700; }
+
+        .highlight-box { background: linear-gradient(135deg, #B83A4B 0%, #8B1A2B 100%); color: #fff; padding: 14px 18px; border-radius: 10px; margin-bottom: 20px; }
+        .highlight-box h3 { font-family: 'Playfair Display', serif; font-size: 1rem; margin-bottom: 4px; color: #D4AF37; }
+        .highlight-box p { font-size: 0.82rem; opacity: 0.95; line-height: 1.4; }
+
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .page { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <!-- Header -->
+    <div class="header">
+        <img src="/images/logo.png" alt="Flying Wonders" onerror="this.style.display='none'">
+        <div class="header-text">
+            <h1>Flying Wonders</h1>
+            <p>Premier Singapore DMC & B2B Travel Agent Partner</p>
+        </div>
+        <div class="header-badge">🔑 Agent Quick Start</div>
+    </div>
+
+    <!-- Value Prop -->
+    <div class="highlight-box">
+        <h3>Welcome, Partner! Here's Your 8-Minute Earning Blueprint</h3>
+        <p>5 min to set up your account + 3 min to create your first white-label proposal = your first earning opportunity in under 8 minutes. Unlimited markup. Your brand. Our execution.</p>
+    </div>
+
+    <!-- 5-Step Quick Start -->
+    <div class="section-title"><span>🚀</span> 5-Step Quick Start</div>
+    <div class="steps">
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+                <h4>Sign Up at Agent Portal</h4>
+                <p>Visit <strong>flyingwonders.net/agent-portal</strong> → Enter your email → Verify OTP → You're in! (2 min)</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+                <h4>Upload Your Agency Branding</h4>
+                <p>Add your logo, company name, phone & email. All proposals will display YOUR brand, not ours. (1 min)</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+                <h4>Browse Packages or Build Custom</h4>
+                <p>Choose from 9 readymade tiers OR open the Package Builder to create from scratch. (1 min)</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+                <h4>Set Your Markup & Generate Proposal</h4>
+                <p>Set custom profit (% or flat ₹/S$) → Export white-label PDF or WhatsApp quote → Share with client. (2 min)</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">5</div>
+            <div class="step-content">
+                <h4>Collect Payment & Settle via UPI</h4>
+                <p>Client pays you → You pay Flying Wonders via ICICI UPI QR (ZERO fees) → We issue vouchers & handle ground ops.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Tools & URLs -->
+    <div class="section-title"><span>🛠️</span> Your Key Tools & URLs</div>
+    <div class="tools-grid">
+        <div class="tool-card">
+            <h4>📋 Agent Dashboard</h4>
+            <p>Track bookings, revenue & proposals</p>
+            <div class="url">flyingwonders.net/agent-portal</div>
+        </div>
+        <div class="tool-card">
+            <h4>⚙️ Package Builder</h4>
+            <p>Build custom white-label itineraries</p>
+            <div class="url">flyingwonders.net/custom-package</div>
+        </div>
+        <div class="tool-card">
+            <h4>🎫 Live E-Tickets</h4>
+            <p>Wholesale attraction tickets (instant)</p>
+            <div class="url">flyingwonders.net/attractions-live</div>
+        </div>
+        <div class="tool-card">
+            <h4>📦 Ready Packages</h4>
+            <p>9 curated tiers (S$550-S$1,200)</p>
+            <div class="url">flyingwonders.net/packages</div>
+        </div>
+        <div class="tool-card">
+            <h4>🎯 Instant Quote</h4>
+            <p>Fast hotel/transfer nett rates</p>
+            <div class="url">flyingwonders.net/instant-quote</div>
+        </div>
+        <div class="tool-card">
+            <h4>🔍 Attractions Catalog</h4>
+            <p>100+ attractions with cart builder</p>
+            <div class="url">flyingwonders.net/singapore-attractions</div>
+        </div>
+        <div class="tool-card">
+            <h4>📈 B2B Live Leads</h4>
+            <p>Real-time agent RFQs & inquiries</p>
+            <div class="url">flyingwonders.net/b2b-leads</div>
+        </div>
+        <div class="tool-card">
+            <h4>🌐 DMC Directory</h4>
+            <p>Global verified partner network</p>
+            <div class="url">flyingwonders.net/b2b-directory</div>
+        </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="section-title"><span>📞</span> Direct Contact</div>
+    <div class="contact-bar">
+        <div class="contact-item">
+            <div class="label">Singapore</div>
+            <div class="value">+65 9472 2830</div>
+        </div>
+        <div class="contact-item">
+            <div class="label">India</div>
+            <div class="value">+91 98861 71251</div>
+        </div>
+        <div class="contact-item">
+            <div class="label">Email</div>
+            <div class="value" style="font-size: 0.75rem;">contact@flyingwonders.net</div>
+        </div>
+    </div>
+
+    <!-- Presentation Shortcuts -->
+    <div class="section-title"><span>⌨️</span> Presentation Keyboard Shortcuts</div>
+    <div class="shortcuts">
+        <div class="shortcut"><kbd>← →</kbd> Navigate slides</div>
+        <div class="shortcut"><kbd>Esc</kbd> Overview grid</div>
+        <div class="shortcut"><kbd>F</kbd> Fullscreen</div>
+        <div class="shortcut"><kbd>A</kbd> Auto-play (8s)</div>
+        <div class="shortcut"><kbd>D</kbd> Dark/Light mode</div>
+        <div class="shortcut"><kbd>N</kbd> Speaker notes</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>© 2026 Flying Wonders Pvt Ltd · <a href="https://flyingwonders.net">flyingwonders.net</a> · WhatsApp: <a href="https://wa.me/919886171251">wa.me/919886171251</a></p>
+        <p style="margin-top: 4px;">#74, 4th Cross, SBM Colony, BSK 1st Stage, Bangalore 560050 · YouTube · Instagram · Facebook</p>
+    </div>
+</div>
+</body>
+</html>
