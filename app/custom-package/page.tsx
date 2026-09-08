@@ -134,6 +134,7 @@ interface AttractionEntry {
   childTickets: number
   time: string
   description: string
+  isOptional?: boolean
   hasTransfer?: boolean
   pickupEnabled?: boolean
   pickupTime?: string
@@ -145,6 +146,22 @@ interface AttractionEntry {
   dropVehicleIndex?: number
   dropVehicleType?: string
   dropNotes?: string
+}
+
+export interface OptionalAddonItem {
+  name: string
+  dIdx: number
+  attractionIndex: number
+  time: string
+  adultTickets: number
+  childTickets: number
+  adultAddonPrice: number
+  childAddonPrice: number
+  totalAddonPrice: number
+  totalAddonPriceINR: number
+  transferCost: number
+  description?: string
+  hasTransfer?: boolean
 }
 
 interface DayPlan {
@@ -1369,7 +1386,10 @@ export default function PrototypeBuilder() {
 
     const totalPax = (adults + kids) > 0 ? (adults + kids) : 1
 
-    itinerary.forEach(day => {
+    const optionalAddonsList: OptionalAddonItem[] = []
+    const markupFactor = 1 + markupPercent / 100
+
+    itinerary.forEach((day, dIdx) => {
       day.transfers.forEach(trans => {
         let vehicle: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[trans.vehicleIndex]
         if (!vehicle && (trans.type || trans.serviceName)) {
@@ -1390,28 +1410,13 @@ export default function PrototypeBuilder() {
         if (!attr && attrRow.attractionName) {
           attr = attractionsList.find(a => a.name.toLowerCase().trim() === attrRow.attractionName?.toLowerCase().trim())
         }
-        if (attr) {
-          const rowAdultCount = attrRow.adultTickets || 0
-          const rowChildCount = attrRow.childTickets || 0
-          const isGroup = attr.rateType === 'group'
 
-          if (isGroup) {
-            // Group rate: price is based on the whole group - not on the number of people
-            const groupCost = attr.adultPrice || attr.childPrice || 0
-            const hasPax = (rowAdultCount + rowChildCount) > 0 || (adults + kids) > 0
-            const rowCost = hasPax ? groupCost : 0
-            attractionTotal += rowCost
-            // Distribute group cost proportionally across adults and kids for per-person quotes
-            const totalPax = (adults + kids) || 1
-            attractionAdultTotal += rowCost * (adults / totalPax)
-            attractionChildTotal += rowCost * (kids / totalPax)
-          } else {
-            attractionTotal += (attr.adultPrice * rowAdultCount) + (attr.childPrice * rowChildCount)
-            attractionAdultTotal += attr.adultPrice * rowAdultCount
-            attractionChildTotal += attr.childPrice * rowChildCount
-          }
-          totalAttractionsCount++
-        }
+        const rowAdultCount = attrRow.adultTickets || 0
+        const rowChildCount = attrRow.childTickets || 0
+        const isGroup = attr?.rateType === 'group'
+
+        // Compute transfer cost tied to this attraction
+        let rowTransferCost = 0
         if (attrRow.hasTransfer) {
           if (attrRow.pickupEnabled !== false) {
             let pv: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[attrRow.pickupVehicleIndex ?? 0]
@@ -1420,8 +1425,7 @@ export default function PrototypeBuilder() {
             }
             if (pv) {
               const paxMult = isVehicleSIC(pv) ? totalPax : 1
-              transportTotal += pv.pricePerTransfer * paxMult
-              totalTransfers++
+              rowTransferCost += pv.pricePerTransfer * paxMult
             }
           }
           if (attrRow.dropEnabled !== false) {
@@ -1431,9 +1435,78 @@ export default function PrototypeBuilder() {
             }
             if (dv) {
               const paxMult = isVehicleSIC(dv) ? totalPax : 1
-              transportTotal += dv.pricePerTransfer * paxMult
-              totalTransfers++
+              rowTransferCost += dv.pricePerTransfer * paxMult
             }
+          }
+        }
+
+        if (attrRow.isOptional) {
+          // ── OPTIONAL ATTRACTION: Excluded from baseline package quotation ──
+          // Calculate add-on cost breakdown (including attached transfer cost with markup)
+          if (attr) {
+            let baseAdultNet = 0
+            let baseChildNet = 0
+            let baseGroupNet = 0
+
+            if (isGroup) {
+              baseGroupNet = (attr.adultPrice || attr.childPrice || 0) + rowTransferCost
+              const totalRowPax = (rowAdultCount + rowChildCount) || (adults + kids) || 1
+              baseAdultNet = baseGroupNet / totalRowPax
+              baseChildNet = baseGroupNet / totalRowPax
+            } else {
+              const totalTickets = (rowAdultCount + rowChildCount) || (adults + kids) || 1
+              const transferPerTicket = rowTransferCost / totalTickets
+              baseAdultNet = attr.adultPrice + transferPerTicket
+              baseChildNet = (attr.childPrice || 0) + transferPerTicket
+              baseGroupNet = (attr.adultPrice * rowAdultCount) + (attr.childPrice * rowChildCount) + rowTransferCost
+            }
+
+            const adultAddonPrice = Math.round(baseAdultNet * markupFactor)
+            const childAddonPrice = Math.round(baseChildNet * markupFactor)
+            const totalAddonPrice = isGroup 
+              ? Math.round(baseGroupNet * markupFactor)
+              : Math.round((adultAddonPrice * rowAdultCount) + (childAddonPrice * rowChildCount))
+            const totalAddonPriceINR = Math.round(totalAddonPrice * sgdToInrRate)
+
+            optionalAddonsList.push({
+              name: attr.name,
+              dIdx,
+              attractionIndex: attrRow.attractionIndex,
+              time: attrRow.time || '10:00',
+              adultTickets: rowAdultCount,
+              childTickets: rowChildCount,
+              adultAddonPrice,
+              childAddonPrice,
+              totalAddonPrice,
+              totalAddonPriceINR,
+              transferCost: Math.round(rowTransferCost * markupFactor),
+              description: attrRow.description,
+              hasTransfer: attrRow.hasTransfer
+            })
+          }
+        } else {
+          // ── CONFIRMED ATTRACTION: Included in baseline package quotation ──
+          if (attr) {
+            if (isGroup) {
+              const groupCost = attr.adultPrice || attr.childPrice || 0
+              const hasPax = (rowAdultCount + rowChildCount) > 0 || (adults + kids) > 0
+              const rowCost = hasPax ? groupCost : 0
+              attractionTotal += rowCost
+              const totalPax = (adults + kids) || 1
+              attractionAdultTotal += rowCost * (adults / totalPax)
+              attractionChildTotal += rowCost * (kids / totalPax)
+            } else {
+              attractionTotal += (attr.adultPrice * rowAdultCount) + (attr.childPrice * rowChildCount)
+              attractionAdultTotal += attr.adultPrice * rowAdultCount
+              attractionChildTotal += attr.childPrice * rowChildCount
+            }
+            totalAttractionsCount++
+          }
+
+          if (attrRow.hasTransfer && rowTransferCost > 0) {
+            transportTotal += rowTransferCost
+            if (attrRow.pickupEnabled !== false) totalTransfers++
+            if (attrRow.dropEnabled !== false) totalTransfers++
           }
         }
       })
@@ -1477,7 +1550,6 @@ export default function PrototypeBuilder() {
     const totalDiscount = discountPerPerson * totalPeople
     const netCost = Math.max(0, rawNetCost - totalDiscount)
     
-    const markupFactor = 1 + markupPercent / 100
     const totalClientPrice = Math.round(netCost * markupFactor + markupAbsolute)
 
     const sharedNetPerHead = (hotelTotal + transportTotal + guideTotal) / (totalPeople || 1)
@@ -1492,6 +1564,9 @@ export default function PrototypeBuilder() {
 
     const netCostINR = Math.round(netCost * sgdToInrRate)
     const totalClientPriceINR = Math.round(totalClientPrice * sgdToInrRate)
+
+    const totalOptionalPrice = optionalAddonsList.reduce((acc, curr) => acc + curr.totalAddonPrice, 0)
+    const totalOptionalPriceINR = Math.round(totalOptionalPrice * sgdToInrRate)
 
     return {
       hotelTotal,
@@ -1514,6 +1589,9 @@ export default function PrototypeBuilder() {
       totalDinnerCount,
       totalBreakfastCount,
       totalGuidesCount,
+      optionalAddonsList,
+      totalOptionalPrice,
+      totalOptionalPriceINR,
     }
   }, [itinerary, hotelsList, vehiclesList, attractionsList, mealsList, guidesList, adults, kids, nightsCount, miscCostPerPerson, globalHotelIndex, globalRoomIndex, globalRoomCount, globalSuppIndex, globalSuppCount, markupPercent, markupAbsolute, discountPerPerson, isAuthenticated, hotelRequired, sgdToInrRate, customHotelEnabled, customHotelName, customHotelRoomType, customHotelPrice, customHotelSuppName, customHotelSuppCost])
 
@@ -1673,10 +1751,22 @@ export default function PrototypeBuilder() {
 
         // Attraction Entry
         const attrTimePrefix = currentOpts.showTimings !== false && a.time ? `${a.time} — ` : ''
-        dayItems.push({
-          time: a.time || '00:00',
-          text: `🎟️ ${attrTimePrefix}${name}${paxStr}${a.description ? ' · ' + a.description : ''}`
-        })
+        if (a.isOptional) {
+          const optAddon = costBreakdown.optionalAddonsList?.find(o => o.dIdx === dIdx && o.name === name)
+          let priceSnippet = ''
+          if (currentOpts.showPrice !== false && optAddon) {
+            priceSnippet = ` (+SGD ${optAddon.adultAddonPrice} / Adult${kids > 0 ? ` | +SGD ${optAddon.childAddonPrice} / Child` : ''} — Total: +SGD ${optAddon.totalAddonPrice.toLocaleString()} for group)`
+          }
+          dayItems.push({
+            time: a.time || '00:00',
+            text: `✨ ${attrTimePrefix}[OPTIONAL] ${name}${paxStr}${a.description ? ' · ' + a.description : ''}${priceSnippet} *(Available on request)*`
+          })
+        } else {
+          dayItems.push({
+            time: a.time || '00:00',
+            text: `🎟️ ${attrTimePrefix}${name}${paxStr}${a.description ? ' · ' + a.description : ''}`
+          })
+        }
 
         // Interline Drop Transfer
         if (a.hasTransfer && a.dropEnabled !== false) {
@@ -1739,7 +1829,23 @@ export default function PrototypeBuilder() {
       })
     }
 
-    t += `${sep}\n`
+    // Optional Add-on Experiences section
+    if (costBreakdown.optionalAddonsList && costBreakdown.optionalAddonsList.length > 0) {
+      t += `\n${sep}\n`
+      t += `✨ *OPTIONAL ADD-ON EXPERIENCES (Available on request):*\n`
+      costBreakdown.optionalAddonsList.forEach(opt => {
+        let optPrice = ''
+        if (currentOpts.showPrice !== false) {
+          optPrice = ` (+SGD ${opt.adultAddonPrice}/Ad${kids > 0 ? ` | +SGD ${opt.childAddonPrice}/Ch` : ''} — Total: +SGD ${opt.totalAddonPrice.toLocaleString()} for group)`
+        }
+        t += `  • Day ${opt.dIdx + 1}: ${opt.name}${optPrice}\n`
+      })
+      if (currentOpts.showPrice !== false) {
+        t += `  *Total Optional:* +SGD ${costBreakdown.totalOptionalPrice.toLocaleString()} (≈₹${costBreakdown.totalOptionalPriceINR.toLocaleString('en-IN')})\n`
+      }
+    }
+
+    t += `\n${sep}\n`
     t += `📊 *SUMMARY STATS:*\n`
     t += `  • Total Rooms: ${totalRooms}\n`
     t += `  • Total Transfers: ${totalTransfers}\n`
@@ -2394,16 +2500,18 @@ export default function PrototypeBuilder() {
       const hasXfer  = itinerary.some(d => (d.transfers && d.transfers.length > 0) || d.attractions?.some(a => a.hasTransfer))
       const hasMeals = itinerary.some(d => d.breakfast || d.lunch || d.dinner || (d.meals && d.meals.length > 0))
 
-      // Gather all distinct attractions for the inclusions summary
+      // Gather all confirmed distinct attractions for the inclusions summary (omit optional)
       const allAttractionsSet = new Set<string>()
       itinerary.forEach(d => {
         d.attractions?.forEach(a => {
-          const name = attractionsList[a.attractionIndex]?.name || a.attractionName
-          if (name) allAttractionsSet.add(name)
+          if (!a.isOptional) {
+            const name = attractionsList[a.attractionIndex]?.name || a.attractionName
+            if (name) allAttractionsSet.add(name)
+          }
         })
       })
 
-      // Gather all distinct vehicles
+      // Gather all distinct vehicles (excluding transfers from optional attractions)
       const allVehiclesSet = new Set<string>()
       itinerary.forEach(d => {
         d.transfers?.forEach(t => {
@@ -2411,7 +2519,7 @@ export default function PrototypeBuilder() {
           if (v) allVehiclesSet.add(v)
         })
         d.attractions?.forEach(a => {
-          if (a.hasTransfer) {
+          if (!a.isOptional && a.hasTransfer) {
             if (a.pickupVehicleType) allVehiclesSet.add(a.pickupVehicleType)
             else if (a.pickupVehicleIndex !== undefined && vehiclesList[a.pickupVehicleIndex]) allVehiclesSet.add(vehiclesList[a.pickupVehicleIndex].type)
           }
@@ -2511,7 +2619,56 @@ export default function PrototypeBuilder() {
         curExY += lines.length * 4.2
       })
 
-      y += boxH + 6
+      y += boxH + 4
+
+      // ─── DEDICATED 3RD BOX: OPTIONAL ADD-ON EXPERIENCES (Available on request) ───
+      if (costBreakdown.optionalAddonsList && costBreakdown.optionalAddonsList.length > 0) {
+        const optAddons = costBreakdown.optionalAddonsList
+        const optLines: string[] = []
+        optAddons.forEach(opt => {
+          if (hidePricing) {
+            optLines.push(`• Day ${opt.dIdx + 1}: ${opt.name} — Available on request (Contact your travel consultant to include)`)
+          } else {
+            const priceBreakdown = `+S$ ${opt.adultAddonPrice} / Adult${kids > 0 ? ` | +S$ ${opt.childAddonPrice} / Child` : ''} (Total: +S$ ${opt.totalAddonPrice.toLocaleString()} for group)`
+            optLines.push(`• Day ${opt.dIdx + 1}: ${opt.name} — ${priceBreakdown}`)
+          }
+        })
+
+        let optTotalLines = 0
+        optLines.forEach(item => {
+          const lns = doc.splitTextToSize(item, CW - 8)
+          optTotalLines += lns.length
+        })
+
+        const optBoxH = Math.max(22, 10 + optTotalLines * 4.4 + (hidePricing ? 0 : 5))
+        checkPage(optBoxH + 5)
+
+        // Soft Warm Amber Box with Gold Border
+        setFill([254, 250, 240] as [number,number,number]); doc.roundedRect(ML, y, CW, optBoxH, 2, 2, 'F')
+        setDraw(GOLD); doc.setLineWidth(0.5); doc.roundedRect(ML, y, CW, optBoxH, 2, 2, 'S')
+        // Left Amber accent strip
+        setFill([217, 119, 6] as [number,number,number]); doc.rect(ML, y, 3, optBoxH, 'F')
+
+        font('bold', 8.5); setTxt([180, 83, 9] as [number,number,number])
+        doc.text('OPTIONAL ADD-ON EXPERIENCES (Available on request)', ML + 6, y + 6)
+
+        let curOptY = y + 11
+        font('normal', 7.5); setTxt(SLATE)
+        optLines.forEach(item => {
+          const lns = doc.splitTextToSize(item, CW - 10)
+          doc.text(lns, ML + 6, curOptY)
+          curOptY += lns.length * 4.2
+        })
+
+        if (!hidePricing) {
+          font('bold', 7.5); setTxt([180, 83, 9] as [number,number,number])
+          doc.text(`Total for all optional experiences: +S$ ${costBreakdown.totalOptionalPrice.toLocaleString()} (approx. ₹${costBreakdown.totalOptionalPriceINR.toLocaleString('en-IN')})`, ML + 6, curOptY + 1)
+        }
+
+        y += optBoxH + 5
+      } else {
+        y += 2
+      }
 
       // ─── DAY-BY-DAY ITINERARY ─────────────────────────────
       sectionTitle('DAY-BY-DAY ITINERARY')
@@ -2567,15 +2724,16 @@ export default function PrototypeBuilder() {
         // 3. Attractions with optional pickup/drop transfers
         day.attractions.forEach(a => {
           const name = attractionsList[a.attractionIndex]?.name || 'Attraction'
+          const isOpt = !!a.isOptional
           if (a.hasTransfer) {
             if (a.pickupEnabled !== false) {
               const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Vehicle'
               timelineItems.push({
                 time: a.pickupTime || '09:00',
                 type: 'transfer',
-                label: `Pickup Transfer — ${pvName}`,
-                detail: a.pickupNotes || `Transfer to ${name}`,
-                color: TEAL
+                label: isOpt ? `[Optional] Pickup Transfer — ${pvName}` : `Pickup Transfer — ${pvName}`,
+                detail: a.pickupNotes || (isOpt ? `Optional transfer to ${name}` : `Transfer to ${name}`),
+                color: isOpt ? ([217, 119, 6] as [number,number,number]) : TEAL
               })
             }
             if (a.dropEnabled !== false) {
@@ -2583,9 +2741,9 @@ export default function PrototypeBuilder() {
               timelineItems.push({
                 time: a.dropTime || '17:00',
                 type: 'transfer',
-                label: `Drop Transfer — ${dvName}`,
-                detail: a.dropNotes || `Transfer from ${name}`,
-                color: TEAL
+                label: isOpt ? `[Optional] Drop Transfer — ${dvName}` : `Drop Transfer — ${dvName}`,
+                detail: a.dropNotes || (isOpt ? `Optional return transfer from ${name}` : `Transfer from ${name}`),
+                color: isOpt ? ([217, 119, 6] as [number,number,number]) : TEAL
               })
             }
           }
@@ -2769,16 +2927,28 @@ export default function PrototypeBuilder() {
               if (duration) metaParts.push(`Duration: ${duration}`)
               if (location) metaParts.push(`Location: ${location}`)
 
-              const cardH = Math.max(hasPhoto ? 32 : 26, 13 + descLines.length * 3.8 + noteLines.length * 3.4 + (highlights.length > 0 ? highlightRows * 5.5 + 4 : 0) + (metaParts.length > 0 ? metaParts.length * 3.8 + 2 : 0))
+              const isOpt = !!a.isOptional
+              const optItem = isOpt && costBreakdown.optionalAddonsList ? costBreakdown.optionalAddonsList.find(o => o.dIdx === dIdx && o.attractionIndex === a.attractionIndex) : null
+
+              const cardBorderColor: [number,number,number] = isOpt ? [217, 119, 6] : GOLD
+              const cardAccentColor: [number,number,number] = isOpt ? [217, 119, 6] : CRIM
+              const cardBgColor: [number,number,number] = isOpt ? [254, 250, 240] : [248, 246, 240]
+
+              // If optional, add space for CTA and add-on price
+              const optCtaText = "Optional suggested experience — Contact your travel agent to include."
+              const optPriceText = (!hidePricing && optItem) ? `Add-on Cost: +S$ ${optItem.adultAddonPrice} / Adult${kids > 0 ? ` | +S$ ${optItem.childAddonPrice} / Child` : ''} (Total: +S$ ${optItem.totalAddonPrice.toLocaleString()} for group)` : ''
+              const extraOptH = isOpt ? (optPriceText ? 9 : 5) : 0
+
+              const cardH = Math.max(hasPhoto ? 32 : 26, 13 + descLines.length * 3.8 + noteLines.length * 3.4 + (highlights.length > 0 ? highlightRows * 5.5 + 4 : 0) + (metaParts.length > 0 ? metaParts.length * 3.8 + 2 : 0) + extraOptH)
               checkPage(cardH + 4)
 
               // Card background
-              setFill([248, 246, 240] as [number,number,number])
+              setFill(cardBgColor)
               doc.roundedRect(ML, y, CW, cardH, 2, 2, 'F')
-              setDraw(GOLD); doc.setLineWidth(0.4)
+              setDraw(cardBorderColor); doc.setLineWidth(0.4)
               doc.roundedRect(ML, y, CW, cardH, 2, 2, 'S')
               // Left accent bar
-              setFill(CRIM); doc.rect(ML, y, 3, cardH, 'F')
+              setFill(cardAccentColor); doc.rect(ML, y, 3, cardH, 'F')
 
               let cy = y + 4.5
 
@@ -2794,11 +2964,23 @@ export default function PrototypeBuilder() {
               // Attraction name + time badge
               font('bold', 9.5); setTxt(NAVY)
               doc.text(`${item.time ? item.time + '  —  ' : ''}${attrName}`, ML + 6, cy)
+              
+              if (isOpt) {
+                // Optional Badge on right
+                const optBadgeW = 38
+                const optBadgeX = hasPhoto ? MR - 42 - optBadgeW - 2 : MR - optBadgeW - 2
+                setFill([254, 243, 199] as [number,number,number])
+                doc.roundedRect(optBadgeX, cy - 3.5, optBadgeW, 4.8, 1, 1, 'F')
+                setDraw([217, 119, 6] as [number,number,number]); doc.setLineWidth(0.3)
+                doc.roundedRect(optBadgeX, cy - 3.5, optBadgeW, 4.8, 1, 1, 'S')
+                font('bold', 6.5); setTxt([180, 83, 9] as [number,number,number])
+                doc.text('OPTIONAL SUGGESTION', optBadgeX + optBadgeW / 2, cy - 0.3, { align: 'center' })
+              }
               cy += 4.5
 
               // Ticket count chips inline
               const ticketInfo = `Adult x${a.adultTickets}${kids > 0 ? `  |  Child x${a.childTickets}` : ''}`
-              font('bold', 7.2); setTxt(CRIM)
+              font('bold', 7.2); setTxt(isOpt ? ([180, 83, 9] as [number,number,number]) : CRIM)
               doc.text(ticketInfo, ML + 6, cy)
 
               if (rating) {
@@ -2848,6 +3030,18 @@ export default function PrototypeBuilder() {
                   doc.text(mpLines, ML + 6, cy + mpi * 3.8)
                 })
                 cy += metaParts.length * 3.8
+              }
+
+              // Optional Suggestion CTA & Price Note
+              if (isOpt) {
+                cy += 1
+                font('italic', 6.8); setTxt([180, 83, 9] as [number,number,number])
+                doc.text(`* ${optCtaText}`, ML + 6, cy)
+                if (optPriceText) {
+                  cy += 3.8
+                  font('bold', 7.2); setTxt([180, 83, 9] as [number,number,number])
+                  doc.text(optPriceText, ML + 6, cy)
+                }
               }
 
               y += cardH + 3
@@ -3454,6 +3648,7 @@ export default function PrototypeBuilder() {
             type: 'transit' | 'attraction' | 'hotel' | 'service' | 'meal'
             label: string
             text: string
+            isOptional?: boolean
           }
 
           const highlights: HighlightEntry[] = []
@@ -3492,15 +3687,34 @@ export default function PrototypeBuilder() {
           day.attractions.forEach(a => {
             const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
             const name = cleanItemTitle(rawName)
+            const isOpt = !!a.isOptional
             if (a.hasTransfer) {
               if (a.pickupEnabled !== false) {
-                highlights.push({ time: a.pickupTime || '09:00', type: 'transit', label: 'HOTEL PICKUP', text: `Hotel Pickup for ${name}` })
+                highlights.push({
+                  time: a.pickupTime || '09:00',
+                  type: 'transit',
+                  label: isOpt ? 'OPTIONAL PICKUP' : 'HOTEL PICKUP',
+                  text: `${isOpt ? '[Optional] ' : ''}Hotel Pickup for ${name}`,
+                  isOptional: isOpt
+                })
               }
             }
-            highlights.push({ time: a.time || '10:00', type: 'attraction', label: 'CURATED SIGHTSEEING', text: `${a.time ? a.time + ' — ' : ''}${name}` })
+            highlights.push({
+              time: a.time || '10:00',
+              type: 'attraction',
+              label: isOpt ? 'OPTIONAL SIGHTSEEING' : 'CURATED SIGHTSEEING',
+              text: `${a.time ? a.time + ' — ' : ''}${isOpt ? '[Optional] ' : ''}${name}`,
+              isOptional: isOpt
+            })
             if (a.hasTransfer) {
               if (a.dropEnabled !== false) {
-                highlights.push({ time: a.dropTime || '17:00', type: 'transit', label: 'RETURN DROP-OFF', text: `Return Transfer from ${name}` })
+                highlights.push({
+                  time: a.dropTime || '17:00',
+                  type: 'transit',
+                  label: isOpt ? 'OPTIONAL DROP-OFF' : 'RETURN DROP-OFF',
+                  text: `${isOpt ? '[Optional] ' : ''}Return Transfer from ${name}`,
+                  isOptional: isOpt
+                })
               }
             }
           })
@@ -3576,7 +3790,8 @@ export default function PrototypeBuilder() {
               drawVectorBadge(h.type, textX + 3, rowY + 0.5, 6.5)
 
               // Category Label in color
-              if (h.type === 'transit') setTxt([30, 58, 138])
+              if (h.isOptional) setTxt([180, 83, 9])
+              else if (h.type === 'transit') setTxt([30, 58, 138])
               else if (h.type === 'attraction') setTxt([6, 95, 70])
               else if (h.type === 'hotel') setTxt([146, 64, 14])
               else if (h.type === 'meal') setTxt([22, 101, 52])
@@ -8532,6 +8747,16 @@ ${proposal}
                                                 style={{ flex: '1 1 120px', padding: '0.15rem 0.35rem', borderRadius: '3px', border: '1px solid #CBD5E1', fontSize: '0.75rem' }}
                                               />
 
+                                              {/* [ ] Optional Checkbox */}
+                                              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 700, color: row.isOptional ? '#B45309' : '#475569', cursor: 'pointer', userSelect: 'none', background: row.isOptional ? '#FEF3C7' : 'transparent', padding: '0.15rem 0.4rem', borderRadius: '4px', border: row.isOptional ? '1px solid #FDE68A' : '1px solid transparent' }}>
+                                                <input 
+                                                  type="checkbox"
+                                                  checked={row.isOptional || false}
+                                                  onChange={e => updateAttractionRow(dIdx, existingIdx, 'isOptional', e.target.checked)}
+                                                />
+                                                Optional
+                                              </label>
+
                                               {destinationMode !== 'malaysia' && (
                                                 <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', fontWeight: 700, color: '#6B46C1', cursor: 'pointer', marginLeft: 'auto', userSelect: 'none' }}>
                                                   <input 
@@ -8544,6 +8769,25 @@ ${proposal}
                                               )}
                                             </div>
  
+                                            {/* Optional Add-on Pricing Badge */}
+                                            {row.isOptional && (() => {
+                                              const addon = costBreakdown.optionalAddonsList?.find(o => o.dIdx === dIdx && o.name === attraction.name)
+                                              if (!addon) return null
+                                              return (
+                                                <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '4px', padding: '0.25rem 0.5rem', fontSize: '0.72rem', color: '#92400E', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                                  <span style={{ fontWeight: 800, background: '#F59E0B', color: '#FFF', padding: '1px 5px', borderRadius: '3px', fontSize: '0.65rem' }}>OPTIONAL ADD-ON</span>
+                                                  <span>
+                                                    {attraction.rateType === 'group' 
+                                                      ? `Total: +S$ ${addon.totalAddonPrice.toLocaleString()} for group (${addon.totalAddonPriceINR ? `≈₹${addon.totalAddonPriceINR.toLocaleString('en-IN')}` : ''})`
+                                                      : `+S$ ${addon.adultAddonPrice} / Adult ${kids > 0 ? `| +S$ ${addon.childAddonPrice} / Child ` : ''}(Total: +S$ ${addon.totalAddonPrice.toLocaleString()} for group)`}
+                                                  </span>
+                                                  {addon.transferCost > 0 && (
+                                                    <span style={{ color: '#6B21A8', fontWeight: 600 }}>[includes transfer: +S$ {addon.transferCost}]</span>
+                                                  )}
+                                                </div>
+                                              )
+                                            })()}
+
                                             {row.hasTransfer && destinationMode !== 'malaysia' && (
                                               <div style={{ marginTop: '0.5rem', background: '#F3E8FF', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #E9D5FF', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                                 {/* Pickup Transfer Line */}
@@ -9014,6 +9258,45 @@ ${proposal}
                   <span style={{ fontSize: '0.68rem', opacity: 0.6, fontWeight: 400, color: '#FFF' }}>approx. INR</span>
                 </div>
               </div>
+
+              {/* Optional Add-ons Section (if any attractions are marked optional) */}
+              {costBreakdown.optionalAddonsList && costBreakdown.optionalAddonsList.length > 0 && (
+                <div style={{ 
+                  background: 'rgba(245, 158, 11, 0.12)', 
+                  border: '1px solid rgba(245, 158, 11, 0.35)', 
+                  borderRadius: '6px', 
+                  padding: '0.65rem 0.85rem', 
+                  marginTop: '0.75rem' 
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: '#FCD34D', letterSpacing: '0.04em' }}>
+                      ✨ Optional Experiences ({costBreakdown.optionalAddonsList.length})
+                    </span>
+                    <span style={{ fontSize: '0.65rem', background: '#F59E0B', color: '#FFF', padding: '1px 5px', borderRadius: '3px', fontWeight: 700 }}>
+                      ON REQUEST
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.72rem' }}>
+                    {costBreakdown.optionalAddonsList.map((addon, aIdx) => (
+                      <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderTop: aIdx > 0 ? '1px dashed rgba(255,255,255,0.08)' : 'none', paddingTop: aIdx > 0 ? '0.3rem' : 0 }}>
+                        <span style={{ color: '#E2E8F0', flex: 1, paddingRight: '0.5rem' }}>
+                          • {addon.name}
+                        </span>
+                        <span style={{ fontWeight: 700, color: '#FDE68A', whiteSpace: 'nowrap' }}>
+                          +S$ {addon.totalAddonPrice.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ borderTop: '1px solid rgba(245, 158, 11, 0.3)', marginTop: '0.45rem', paddingTop: '0.35rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.73rem', fontWeight: 700 }}>
+                    <span style={{ color: '#FCD34D' }}>Total Optional:</span>
+                    <span style={{ color: '#FDE68A' }}>
+                      +S$ {costBreakdown.totalOptionalPrice.toLocaleString()}{' '}
+                      <span style={{ fontSize: '0.65rem', opacity: 0.75, fontWeight: 400 }}>(≈₹{costBreakdown.totalOptionalPriceINR.toLocaleString('en-IN')})</span>
+                    </span>
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.25rem', marginTop: '1rem' }}>
                 <button 
