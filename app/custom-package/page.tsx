@@ -1973,12 +1973,18 @@ export default function PrototypeBuilder() {
     const pNum = await ensureProposalSaved(true)
     const { jsPDF } = await import('jspdf')
 
-    // Helper to fetch raster logo
+    // Helper to fetch raster logo & meal assets
     const effectiveLogoUrl = customAgencyLogoUrl || activeAgent?.logoUrl || ''
     let logoRaster: { dataUrl: string; width: number; height: number; format: string } | null = null
     if (effectiveLogoUrl) {
       logoRaster = await fetchRasterLogo(effectiveLogoUrl)
     }
+
+    // Preload meal images for breakfast & buffet dining cards
+    const [breakfastRaster, buffetRaster] = await Promise.all([
+      fetchRasterLogo('/images/meals-breakfast.jpg'),
+      fetchRasterLogo('/images/meals-buffet.jpg')
+    ])
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
@@ -2511,114 +2517,150 @@ export default function PrototypeBuilder() {
       sectionTitle('DAY-BY-DAY ITINERARY')
 
       itinerary.forEach((day, dIdx) => {
-        // Build non-attraction items (transfers, meals, guides)
-        const nonAttrItems: { time: string; label: string; detail: string; color: [number,number,number] }[] = []
+        // Build unified chronological timeline items (meals, transfers, attractions, guides)
+        interface DayTimelineItem {
+          time: string
+          type: 'transfer' | 'attraction' | 'meal_card' | 'guide' | 'service'
+          label: string
+          detail?: string
+          color?: [number,number,number]
+          attractionData?: any
+          mealData?: {
+            title: string
+            subtitle: string
+            description: string
+            imageRaster: { dataUrl: string; width: number; height: number; format: string } | null
+          }
+        }
 
+        const timelineItems: DayTimelineItem[] = []
+
+        // 1. Hotel Breakfast (included if hotel is required OR explicitly enabled for this day)
+        const isBreakfastIncluded = !!(day.breakfast || hotelRequired)
+        if (isBreakfastIncluded) {
+          timelineItems.push({
+            time: '07:30',
+            type: 'meal_card',
+            label: 'Breakfast Included',
+            mealData: {
+              title: 'Have breakfast at hotel and start your trip',
+              subtitle: 'Daily Morning Breakfast Spread',
+              description: "Begin your morning with a wholesome, energizing Indian breakfast spread served fresh at your hotel dining hall before commencing today's exciting journey across Singapore. Savor classic morning favorites including crisp golden dosas, steaming soft idlis, savory medu vadas, fragrant sambar, fresh coconut and tomato chutneys, along with hot spiced tea, South Indian filter coffee, and continental accompaniments. (Please note: daily breakfast menu depends on the hotel and keeps changing).",
+              imageRaster: breakfastRaster
+            }
+          })
+        }
+
+        // 2. Scheduled Transfers
         day.transfers.forEach(t => {
           const vehicle = vehiclesList[t.vehicleIndex]?.type || 'Vehicle'
           const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
-          nonAttrItems.push({ time: t.time||'00:00', label: `Private Transfer — ${vehicle}${qtyStr}`, detail: t.description || 'Point-to-point transfer', color: TEAL })
+          timelineItems.push({
+            time: t.time || '08:30',
+            type: 'transfer',
+            label: `Private Transfer — ${vehicle}${qtyStr}`,
+            detail: t.description || 'Point-to-point transfer',
+            color: TEAL
+          })
         })
+
+        // 3. Attractions with optional pickup/drop transfers
         day.attractions.forEach(a => {
           const name = attractionsList[a.attractionIndex]?.name || 'Attraction'
           if (a.hasTransfer) {
             if (a.pickupEnabled !== false) {
               const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Vehicle'
-              nonAttrItems.push({ time: a.pickupTime || '09:00', label: `Pickup Transfer — ${pvName}`, detail: a.pickupNotes || `Transfer to ${name}`, color: TEAL })
+              timelineItems.push({
+                time: a.pickupTime || '09:00',
+                type: 'transfer',
+                label: `Pickup Transfer — ${pvName}`,
+                detail: a.pickupNotes || `Transfer to ${name}`,
+                color: TEAL
+              })
             }
             if (a.dropEnabled !== false) {
               const dvName = vehiclesList[a.dropVehicleIndex ?? 0]?.type || 'Vehicle'
-              nonAttrItems.push({ time: a.dropTime || '17:00', label: `Drop Transfer — ${dvName}`, detail: a.dropNotes || `Transfer from ${name}`, color: TEAL })
+              timelineItems.push({
+                time: a.dropTime || '17:00',
+                type: 'transfer',
+                label: `Drop Transfer — ${dvName}`,
+                detail: a.dropNotes || `Transfer from ${name}`,
+                color: TEAL
+              })
             }
           }
+
+          timelineItems.push({
+            time: a.time || '10:00',
+            type: 'attraction',
+            label: name,
+            attractionData: a
+          })
         })
-        if (day.breakfast || day.lunch || day.dinner) {
-          const cbMeals = [day.breakfast&&'Breakfast', day.lunch&&'Lunch', day.dinner&&'Dinner'].filter(Boolean).join(', ')
-          nonAttrItems.push({ time: '07:00', label: 'Meals Included', detail: cbMeals as string, color: [60, 120, 90] as [number,number,number] })
+
+        // 4. Lunch (ONLY if explicitly added to daywise itinerary)
+        if (day.lunch) {
+          timelineItems.push({
+            time: '13:00',
+            type: 'meal_card',
+            label: 'Lunch Included',
+            mealData: {
+              title: 'Authentic Indian Lunch Buffet',
+              subtitle: 'Midday Dining Interlude',
+              description: 'Enjoy a delicious midday Indian dining interlude featuring a hearty selection of warm rotis, fragrant basmati pulao/biryani, paneer delicacies, dal tadka, seasoned vegetable curries, crisp papad, raita, and refreshing accompaniments to recharge before afternoon sightseeing. (Please note: menu depends on hotel/restaurant and keeps changing).',
+              imageRaster: buffetRaster
+            }
+          })
         }
+
+        // 5. Dinner (ONLY if explicitly added to daywise itinerary)
+        if (day.dinner) {
+          timelineItems.push({
+            time: '19:30',
+            type: 'meal_card',
+            label: 'Dinner Included',
+            mealData: {
+              title: 'Special Indian Dinner Buffet',
+              subtitle: 'Lavish Evening Dining Experience',
+              description: 'Unwind after a rewarding day of sightseeing with a rich, authentic Indian buffet dinner. Delight in a freshly prepared spread of tandoori specialties, rich gravies, slow-simmered dal makhani, assorted naan breads, aromatic biryani, and traditional Indian sweet desserts such as gulab jamun or kheer. (Please note: menu depends on hotel/restaurant and keeps changing).',
+              imageRaster: buffetRaster
+            }
+          })
+        }
+
+        // 6. Custom extra meals if any
         if (day.meals && Array.isArray(day.meals)) {
           day.meals.forEach(m => {
             const mt = mealsList[m.mealIndex]?.type || 'Meal'
-            nonAttrItems.push({ time: m.time||'00:00', label: mt, detail: m.description || 'Dining experience', color: [60, 120, 90] as [number,number,number] })
+            timelineItems.push({
+              time: m.time || '12:00',
+              type: 'service',
+              label: mt,
+              detail: m.description || 'Curated dining experience',
+              color: [60, 120, 90] as [number,number,number]
+            })
           })
         }
+
+        // 7. Tour Guides
         day.guides.forEach(g => {
           const gt = guidesList[g.guideIndex]?.type || 'Guide'
-          nonAttrItems.push({ time: g.time||'00:00', label: gt, detail: g.description || 'Professional tour assistance', color: SLATE })
+          timelineItems.push({
+            time: g.time || '09:00',
+            type: 'guide',
+            label: gt,
+            detail: g.description || 'Professional tour assistance',
+            color: SLATE
+          })
         })
-        nonAttrItems.sort((a, b) => a.time.localeCompare(b.time))
 
-        // Check if this day has anything
-        const hasContent = nonAttrItems.length > 0 || day.attractions.length > 0
+        // Sort STRICTLY chronologically by 24-hour time (00:00 -> 23:59)
+        timelineItems.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'))
 
-        // Pre-calculate estimated height for this entire day to ensure it completes fully on one page if possible
-        let estDayHeight = 11.5 // Day header height + margin
-        if (!hasContent) {
-          estDayHeight += 12
-        } else {
-          // Pre-calculate non-attraction row heights
-          nonAttrItems.forEach(item => {
-            font('bold', 8)
-            const labelLines = doc.splitTextToSize(item.label, CW - 26)
-            font('italic', 7)
-            const detailLines = item.detail ? doc.splitTextToSize(item.detail, CW - 26) : []
-            const labelH = labelLines.length * 3.8
-            const detailH = detailLines.length * 3.2
-            const rowHeight = Math.max(8, 3 + labelH + detailH + 2)
-            estDayHeight += rowHeight
-          })
-
-          // Pre-calculate attraction card heights
-          day.attractions.forEach(a => {
-            const attrName = attractionsList[a.attractionIndex]?.name || 'Attraction'
-            const notes = a.description ? a.description : ''
-            const meta = getAttractionMetaInfo(attrName, attractionsMeta)
-            const fullDesc = meta?.longDescription || meta?.shortDescription || ATTRACTION_DESCRIPTIONS[attrName] || "One of Singapore's premier sightseeing attractions."
-            const highlights: string[] = meta?.highlights?.slice(0, 4) || []
-            const openingHours = meta?.openingHours || ''
-            const duration = meta?.duration || ''
-            const location = meta?.location || ''
-            const hasPhoto = !!(meta?.photoUrl)
-            const textW = hasPhoto ? CW - 52 : CW - 12
-            font('normal', 7.2)
-            const descLines = doc.splitTextToSize(fullDesc, textW)
-            const noteLines = notes ? doc.splitTextToSize(`Note: ${notes}`, textW) : []
-            const highlightRows = Math.ceil(highlights.length / 2)
-            let metaCount = 0
-            if (openingHours) metaCount++
-            if (duration) metaCount++
-            if (location) metaCount++
-            const cardH = Math.max(
-              hasPhoto ? 32 : 26,
-              13 + descLines.length * 3.8 + noteLines.length * 3.4 + (highlights.length > 0 ? highlightRows * 5.5 + 4 : 0) + (metaCount > 0 ? metaCount * 3.8 + 2 : 0)
-            )
-            estDayHeight += cardH + 3
-          })
-          estDayHeight += 4
-        }
-
-        // Ensure daywise block is completed together on a single page wherever possible:
-        // Available printable height on a single page is PH - 20 (top) - 20 (footer) = 257mm
-        if (estDayHeight <= (PH - 45)) {
-          if (y + estDayHeight > PH - 20 && y > 25) {
-            addFooter()
-            doc.addPage()
-            pageNum++
-            addPageHeader()
-            y = 20
-          }
-        } else {
-          // If unusually large day exceeding a single page, ensure header doesn't orphan at bottom
-          if (y + 65 > PH - 20 && y > 25) {
-            addFooter()
-            doc.addPage()
-            pageNum++
-            addPageHeader()
-            y = 20
-          }
-        }
+        const hasContent = timelineItems.length > 0
 
         // Day header
+        checkPage(18)
         setFill(GOLD); doc.roundedRect(ML, y, CW, 8.5, 2, 2, 'F')
         font('bold', 9.5); setTxt(NAVY)
         doc.text(`DAY ${dIdx + 1}`, ML + 4, y + 5.8)
@@ -2627,141 +2669,189 @@ export default function PrototypeBuilder() {
         const dayLabel = day.dayTitle ? day.dayTitle : (dIdx === 0 ? 'Arrival Day' : dIdx === nightsCount ? 'Departure Day' : 'Tour Day')
         font('italic', 7.5); setTxt(NAVY)
         doc.text(dayLabel, MR - 2, y + 5.8, { align: 'right' })
-        y += 10.5
+        y += 11.5
 
         if (!hasContent) {
           font('italic', 8.5); setTxt(MGRAY)
           doc.text('Free & Easy / Rest Day — Itinerary to be confirmed.', ML + 4, y + 5)
           y += 10
         } else {
-          // ── Render non-attraction items as compact timeline rows ──
-          nonAttrItems.forEach((item, iIdx) => {
-            const labelLines = doc.splitTextToSize(item.label, CW - 26)
-            const detailLines = item.detail ? doc.splitTextToSize(item.detail, CW - 26) : []
-            const labelH = labelLines.length * 3.8
-            const detailH = detailLines.length * 3.2
-            const rowHeight = Math.max(8, 3 + labelH + detailH + 2)
+          // Render each item strictly in chronological 24-hour sequence
+          timelineItems.forEach((item, itemIdx) => {
+            if (item.type === 'transfer' || item.type === 'guide' || item.type === 'service') {
+              const labelLines = doc.splitTextToSize(item.label, CW - 26)
+              const detailLines = item.detail ? doc.splitTextToSize(item.detail, CW - 26) : []
+              const labelH = labelLines.length * 3.8
+              const detailH = detailLines.length * 3.2
+              const rowHeight = Math.max(8, 3 + labelH + detailH + 2)
 
-            checkPage(rowHeight + 2)
-            if (iIdx % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, rowHeight, 'F') }
-            setFill(item.color); doc.circle(ML + 5.5, y + 4.5, 2.2, 'F')
-            font('bold', 7.5); setTxt(item.color)
-            doc.text(item.time, ML + 9.5, y + 4.8)
-            font('bold', 8); setTxt(NAVY)
-            doc.text(labelLines, ML + 22, y + 4.8)
-            if (detailLines.length > 0) {
-              font('italic', 7); setTxt(SLATE)
-              doc.text(detailLines, ML + 22, y + 4.8 + labelH + 0.8)
+              checkPage(rowHeight + 2)
+              if (itemIdx % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, rowHeight, 'F') }
+              const dotColor = item.color || TEAL
+              setFill(dotColor); doc.circle(ML + 5.5, y + 4.5, 2.2, 'F')
+              font('bold', 7.5); setTxt(dotColor)
+              doc.text(item.time, ML + 9.5, y + 4.8)
+              font('bold', 8); setTxt(NAVY)
+              doc.text(labelLines, ML + 22, y + 4.8)
+              if (detailLines.length > 0) {
+                font('italic', 7); setTxt(SLATE)
+                doc.text(detailLines, ML + 22, y + 4.8 + labelH + 0.8)
+              }
+              y += rowHeight + 1.5
+            } else if (item.type === 'meal_card' && item.mealData) {
+              // ── Rich Meal Card (Breakfast, Lunch, Dinner) ──
+              const md = item.mealData
+              const hasPhoto = !!md.imageRaster
+              const imgW = 34
+              const imgH = 26
+              const textW = hasPhoto ? CW - 44 : CW - 12
+              font('normal', 7.1)
+              const descLines = doc.splitTextToSize(md.description, textW)
+              const cardH = Math.max(hasPhoto ? 30 : 22, 12 + descLines.length * 3.6 + 4)
+
+              checkPage(cardH + 3)
+
+              // Card background
+              setFill([254, 252, 246] as [number,number,number])
+              doc.roundedRect(ML, y, CW, cardH, 2, 2, 'F')
+              setDraw([217, 180, 110] as [number,number,number]); doc.setLineWidth(0.4)
+              doc.roundedRect(ML, y, CW, cardH, 2, 2, 'S')
+              // Left accent strip (Emerald Green for Dining)
+              setFill([22, 101, 52] as [number,number,number]); doc.rect(ML, y, 3, cardH, 'F')
+
+              let cy = y + 4.5
+              if (hasPhoto && md.imageRaster) {
+                try {
+                  const imgX = MR - imgW - 2
+                  doc.addImage(md.imageRaster.dataUrl, 'JPEG', imgX, y + (cardH - imgH) / 2, imgW, imgH, undefined, 'MEDIUM')
+                  setDraw(GOLD); doc.setLineWidth(0.3)
+                  doc.rect(imgX, y + (cardH - imgH) / 2, imgW, imgH, 'S')
+                } catch (e) {}
+              }
+
+              // Meal Headline & Time
+              font('bold', 8.8); setTxt([22, 101, 52] as [number,number,number])
+              doc.text(`${item.time}  |  ${md.title}`, ML + 6, cy)
+              cy += 4.2
+
+              // Meal Subtitle
+              font('italic', 7.2); setTxt([180, 83, 9] as [number,number,number])
+              doc.text(md.subtitle, ML + 6, cy)
+              cy += 4.2
+
+              // Curated Narrative
+              font('normal', 7.0); setTxt(SLATE)
+              doc.text(descLines, ML + 6, cy)
+
+              y += cardH + 2.5
+            } else if (item.type === 'attraction' && item.attractionData) {
+              // ── Rich Attraction Card (Placed at exact 24-hour time) ──
+              const a = item.attractionData
+              const attrName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+              const notes = a.description ? a.description : ''
+              const meta = getAttractionMetaInfo(attrName, attractionsMeta)
+
+              const fullDesc = meta?.longDescription || meta?.shortDescription || ATTRACTION_DESCRIPTIONS[attrName] || "One of Singapore's premier sightseeing attractions."
+              const highlights: string[] = meta?.highlights?.slice(0, 4) || []
+              const rating = meta?.rating || null
+              const openingHours = meta?.openingHours || ''
+              const duration = meta?.duration || ''
+              const location = meta?.location || ''
+              const hasPhoto = !!(meta?.photoUrl)
+
+              const textW = hasPhoto ? CW - 52 : CW - 12
+              font('normal', 7.2)
+              const descLines = doc.splitTextToSize(fullDesc, textW)
+              const noteLines = notes ? doc.splitTextToSize(`Note: ${notes}`, textW) : []
+              const highlightRows = Math.ceil(highlights.length / 2)
+              const metaParts: string[] = []
+              if (openingHours) metaParts.push(`Hours: ${openingHours}`)
+              if (duration) metaParts.push(`Duration: ${duration}`)
+              if (location) metaParts.push(`Location: ${location}`)
+
+              const cardH = Math.max(hasPhoto ? 32 : 26, 13 + descLines.length * 3.8 + noteLines.length * 3.4 + (highlights.length > 0 ? highlightRows * 5.5 + 4 : 0) + (metaParts.length > 0 ? metaParts.length * 3.8 + 2 : 0))
+              checkPage(cardH + 4)
+
+              // Card background
+              setFill([248, 246, 240] as [number,number,number])
+              doc.roundedRect(ML, y, CW, cardH, 2, 2, 'F')
+              setDraw(GOLD); doc.setLineWidth(0.4)
+              doc.roundedRect(ML, y, CW, cardH, 2, 2, 'S')
+              // Left accent bar
+              setFill(CRIM); doc.rect(ML, y, 3, cardH, 'F')
+
+              let cy = y + 4.5
+
+              if (hasPhoto) {
+                const imgX = MR - 42
+                const imgW = 40
+                const imgH = Math.min(cardH - 6, 28)
+                try {
+                  doc.addImage(meta!.photoUrl!, 'JPEG', imgX, y + 3, imgW, imgH, undefined, 'MEDIUM')
+                } catch (e) {}
+              }
+
+              // Attraction name + time badge
+              font('bold', 9.5); setTxt(NAVY)
+              doc.text(`${item.time ? item.time + '  —  ' : ''}${attrName}`, ML + 6, cy)
+              cy += 4.5
+
+              // Ticket count chips inline
+              const ticketInfo = `Adult x${a.adultTickets}${kids > 0 ? `  |  Child x${a.childTickets}` : ''}`
+              font('bold', 7.2); setTxt(CRIM)
+              doc.text(ticketInfo, ML + 6, cy)
+
+              if (rating) {
+                const ratingStr = `Rating: ${rating.toFixed(1)} / 5.0`
+                font('bold', 7.2); setTxt([180, 130, 20] as [number,number,number])
+                doc.text(ratingStr, ML + 6 + textW, cy, { align: 'right' })
+              }
+              cy += 4.5
+
+              // Description
+              font('normal', 7.2); setTxt(SLATE)
+              doc.text(descLines, ML + 6, cy)
+              cy += descLines.length * 3.8
+
+              // Notes from agent
+              if (noteLines.length > 0) {
+                font('italic', 6.8); setTxt(TEAL)
+                doc.text(noteLines, ML + 6, cy)
+                cy += noteLines.length * 3.4
+              }
+
+              // Highlights as pills
+              if (highlights.length > 0) {
+                font('bold', 6.8); setTxt(NAVY)
+                doc.text('Highlights:', ML + 6, cy)
+                cy += 3.5
+
+                const hlAvailW = textW - 4
+                const pillW = (hlAvailW - 4) / 2
+
+                highlights.forEach((h, hi) => {
+                  const colX = hi % 2 === 0 ? ML + 6 : ML + 6 + pillW + 4
+                  if (hi % 2 === 0 && hi > 0) cy += 5
+                  setFill(GOLD_L)
+                  doc.roundedRect(colX, cy - 2.8, pillW, 4.5, 1, 1, 'F')
+                  font('normal', 6); setTxt(NAVY)
+                  doc.text(`• ${h}`, colX + 1.5, cy + 0.3, { maxWidth: pillW - 3 })
+                })
+                cy += 5.5
+              }
+
+              // Opening hours / duration / location metadata
+              if (metaParts.length > 0) {
+                font('normal', 6.2); setTxt(MGRAY)
+                metaParts.forEach((mp, mpi) => {
+                  const mpLines = doc.splitTextToSize(mp, textW)
+                  doc.text(mpLines, ML + 6, cy + mpi * 3.8)
+                })
+                cy += metaParts.length * 3.8
+              }
+
+              y += cardH + 3
             }
-            y += rowHeight
-          })
-
-          // ── Render attractions as rich cards ──
-          day.attractions.forEach(a => {
-            const attrName = attractionsList[a.attractionIndex]?.name || 'Attraction'
-            const notes = a.description ? a.description : ''
-            const meta = getAttractionMetaInfo(attrName, attractionsMeta)
-
-            const fullDesc = meta?.longDescription || meta?.shortDescription || ATTRACTION_DESCRIPTIONS[attrName] || 'One of Singapore\'s premier sightseeing attractions.'
-            const highlights: string[] = meta?.highlights?.slice(0, 4) || []
-            const rating = meta?.rating || null
-            const openingHours = meta?.openingHours || ''
-            const duration = meta?.duration || ''
-            const location = meta?.location || ''
-            const hasPhoto = !!(meta?.photoUrl)
-
-            const textW = hasPhoto ? CW - 52 : CW - 12
-            font('normal', 7.2)
-            const descLines = doc.splitTextToSize(fullDesc, textW)
-            const noteLines = notes ? doc.splitTextToSize(`Note: ${notes}`, textW) : []
-            const highlightRows = Math.ceil(highlights.length / 2)
-            const metaParts: string[] = []
-            if (openingHours) metaParts.push(`Hours: ${openingHours}`)
-            if (duration) metaParts.push(`Duration: ${duration}`)
-            if (location) metaParts.push(`Location: ${location}`)
-
-            const cardH = Math.max(hasPhoto ? 32 : 26, 13 + descLines.length * 3.8 + noteLines.length * 3.4 + (highlights.length > 0 ? highlightRows * 5.5 + 4 : 0) + (metaParts.length > 0 ? metaParts.length * 3.8 + 2 : 0))
-            checkPage(cardH + 4)
-
-            // Card background
-            setFill([248, 246, 240] as [number,number,number])
-            doc.roundedRect(ML, y, CW, cardH, 2, 2, 'F')
-            setDraw(GOLD); doc.setLineWidth(0.4)
-            doc.roundedRect(ML, y, CW, cardH, 2, 2, 'S')
-            // Left accent bar
-            setFill(CRIM); doc.rect(ML, y, 3, cardH, 'F')
-
-            let cy = y + 4.5
-
-            if (hasPhoto) {
-              const imgX = MR - 42
-              const imgW = 40
-              const imgH = Math.min(cardH - 6, 28)
-              try {
-                doc.addImage(meta!.photoUrl!, 'JPEG', imgX, y + 3, imgW, imgH, undefined, 'MEDIUM')
-              } catch (e) {}
-            }
-
-            // Attraction name + time badge
-            font('bold', 9.5); setTxt(NAVY)
-            doc.text(attrName, ML + 6, cy)
-            cy += 4.5
-
-            // Time + ticket count chips inline
-            const ticketInfo = `${a.time ? a.time + '  |  ' : ''}Adult x${a.adultTickets}${kids > 0 ? `  |  Child x${a.childTickets}` : ''}`
-            font('bold', 7.2); setTxt(CRIM)
-            doc.text(ticketInfo, ML + 6, cy)
-
-            if (rating) {
-              const ratingStr = `Rating: ${rating.toFixed(1)} / 5.0`
-              font('bold', 7.2); setTxt([180, 130, 20] as [number,number,number])
-              doc.text(ratingStr, ML + 6 + textW, cy, { align: 'right' })
-            }
-            cy += 4.5
-
-            // Description
-            font('normal', 7.2); setTxt(SLATE)
-            doc.text(descLines, ML + 6, cy)
-            cy += descLines.length * 3.8
-
-            // Notes from agent
-            if (noteLines.length > 0) {
-              font('italic', 6.8); setTxt(TEAL)
-              doc.text(noteLines, ML + 6, cy)
-              cy += noteLines.length * 3.4
-            }
-
-            // Highlights as pills
-            if (highlights.length > 0) {
-              font('bold', 6.8); setTxt(NAVY)
-              doc.text('Highlights:', ML + 6, cy)
-              cy += 3.5
-
-              const hlAvailW = textW - 4
-              const pillW = (hlAvailW - 4) / 2
-
-              highlights.forEach((h, hi) => {
-                const colX = hi % 2 === 0 ? ML + 6 : ML + 6 + pillW + 4
-                if (hi % 2 === 0 && hi > 0) cy += 5
-                setFill(GOLD_L)
-                doc.roundedRect(colX, cy - 2.8, pillW, 4.5, 1, 1, 'F')
-                font('normal', 6); setTxt(NAVY)
-                doc.text(`• ${h}`, colX + 1.5, cy + 0.3, { maxWidth: pillW - 3 })
-              })
-              cy += 5.5
-            }
-
-            // Opening hours / duration / location metadata
-            if (metaParts.length > 0) {
-              font('normal', 6.2); setTxt(MGRAY)
-              metaParts.forEach((mp, mpi) => {
-                const mpLines = doc.splitTextToSize(mp, textW)
-                doc.text(mpLines, ML + 6, cy + mpi * 3.8)
-              })
-              cy += metaParts.length * 3.8
-            }
-
-            y += cardH + 3
           })
         }
 
@@ -3340,57 +3430,120 @@ export default function PrototypeBuilder() {
             narrative = `Enjoy a relaxed day exploring Singapore's iconic neighborhoods, dining, and scenic waterfront attractions at your own pace.`
           }
 
+          const isSpdfBreakfast = !!(day.breakfast || hotelRequired)
+
           if (!narrative.endsWith('.')) narrative += '.'
+          if (isSpdfBreakfast && dIdx > 0) {
+            narrative += ` Have breakfast at hotel and start your trip with delicious Indian selections before embarking on your itinerary (hotel daily menu varies).`
+          } else if (day.lunch && day.dinner) {
+            narrative += ` Authentic Indian lunch and dinner buffet included today (menu depends on hotel/restaurant).`
+          } else if (day.lunch) {
+            narrative += ` Authentic Indian lunch buffet included today (menu depends on hotel/restaurant).`
+          } else if (day.dinner) {
+            narrative += ` Delicious Indian dinner buffet included this evening (menu depends on hotel/restaurant).`
+          }
 
           font('normal', 7.2); setTxt(BODY)
           const descLines = doc.splitTextToSize(narrative, textW)
           doc.text(descLines.slice(0, 3), textX, curY)
           curY += Math.min(descLines.length, 3) * 3.5 + 3
 
-          // Sights & Inclusions Data (Zero Emojis to prevent font corruption!)
-          const highlights: { type: 'transit' | 'attraction' | 'hotel' | 'service'; label: string; text: string }[] = []
+          // Sights & Inclusions Data (Chronologically sorted by 24-hour time, Zero Emojis)
+          interface HighlightEntry {
+            time: string
+            type: 'transit' | 'attraction' | 'hotel' | 'service' | 'meal'
+            label: string
+            text: string
+          }
+
+          const highlights: HighlightEntry[] = []
+
+          // Breakfast (if hotel is included or breakfast is added)
+          if (isSpdfBreakfast) {
+            highlights.push({
+              time: '07:30',
+              type: 'meal',
+              label: 'HOTEL BREAKFAST',
+              text: 'Have breakfast at hotel & start your trip'
+            })
+          }
+
+          // Transfers
           day.transfers.forEach(t => {
             const v = vehiclesList[t.vehicleIndex]?.type || t.type || 'Private Transfer'
             let desc = t.description ? t.description.trim() : ''
+            const timeVal = t.time || '08:30'
             if (desc.toLowerCase().startsWith('airport to hotel') || desc.toLowerCase().includes('arrival')) {
-              highlights.push({ type: 'transit', label: 'AIRPORT TRANSFER', text: `${v} - Changi Airport Arrival` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'AIRPORT TRANSFER', text: `${v} - Changi Airport Arrival` })
             } else if (desc.toLowerCase().startsWith('hotel to airport') || desc.toLowerCase().includes('departure')) {
-              highlights.push({ type: 'transit', label: 'AIRPORT TRANSFER', text: `${v} - Changi Airport Departure` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'AIRPORT TRANSFER', text: `${v} - Changi Airport Departure` })
             } else if (desc.toLowerCase().includes('city tour')) {
-              highlights.push({ type: 'transit', label: 'CITY TOUR TRANSFER', text: `${v} - Singapore City Tour` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'CITY TOUR TRANSFER', text: `${v} - Singapore City Tour` })
             } else if (desc.toLowerCase().includes('fireworks')) {
-              highlights.push({ type: 'transit', label: 'SPECIAL TRANSFER', text: `${v} - Special Fireworks Transfer` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'SPECIAL TRANSFER', text: `${v} - Special Fireworks Transfer` })
             } else if (desc) {
-              highlights.push({ type: 'transit', label: 'PRIVATE TRANSFER', text: `${v} - ${cleanItemTitle(desc)}` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'PRIVATE TRANSFER', text: `${v} - ${cleanItemTitle(desc)}` })
             } else {
-              highlights.push({ type: 'transit', label: 'PRIVATE TRANSFER', text: `${v} - Scheduled Private Transfer` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'PRIVATE TRANSFER', text: `${v} - Scheduled Private Transfer` })
             }
           })
 
+          // Attractions (with optional pickup/drop)
           day.attractions.forEach(a => {
             const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
             const name = cleanItemTitle(rawName)
-            highlights.push({ type: 'attraction', label: 'CURATED EXPERIENCE', text: name })
             if (a.hasTransfer) {
-              if (a.pickupEnabled !== false) highlights.push({ type: 'transit', label: 'HOTEL PICKUP', text: `Hotel Pickup for ${name}` })
-              if (a.dropEnabled !== false) highlights.push({ type: 'transit', label: 'RETURN DROP-OFF', text: `Return Transfer from ${name}` })
+              if (a.pickupEnabled !== false) {
+                highlights.push({ time: a.pickupTime || '09:00', type: 'transit', label: 'HOTEL PICKUP', text: `Hotel Pickup for ${name}` })
+              }
+            }
+            highlights.push({ time: a.time || '10:00', type: 'attraction', label: 'CURATED SIGHTSEEING', text: `${a.time ? a.time + ' — ' : ''}${name}` })
+            if (a.hasTransfer) {
+              if (a.dropEnabled !== false) {
+                highlights.push({ time: a.dropTime || '17:00', type: 'transit', label: 'RETURN DROP-OFF', text: `Return Transfer from ${name}` })
+              }
             }
           })
 
+          // Lunch (ONLY if explicitly added)
+          if (day.lunch) {
+            highlights.push({
+              time: '13:00',
+              type: 'meal',
+              label: 'INDIAN LUNCH BUFFET',
+              text: 'Deluxe Indian Lunch Spread'
+            })
+          }
+
+          // Dinner (ONLY if explicitly added)
+          if (day.dinner) {
+            highlights.push({
+              time: '19:30',
+              type: 'meal',
+              label: 'INDIAN DINNER BUFFET',
+              text: 'Special Indian Dinner Spread'
+            })
+          }
+
+          // Tour Guides
           day.guides.forEach(g => {
             const gt = guidesList[g.guideIndex]?.type || g.type || 'Tour Guide'
-            highlights.push({ type: 'service', label: 'GUIDE SERVICE', text: gt })
+            highlights.push({ time: g.time || '09:00', type: 'service', label: 'GUIDE SERVICE', text: gt })
           })
 
+          // Accommodation on Day 1
           if (dIdx === 0 && hotelRequired) {
             const hName = customHotelEnabled ? customHotelName : (hotelsList[globalHotelIndex]?.name || 'Hotel')
-            highlights.push({ type: 'hotel', label: 'ACCOMMODATION', text: `Overnight at ${cleanItemTitle(hName)}` })
+            highlights.push({ time: '14:00', type: 'hotel', label: 'ACCOMMODATION', text: `Check-in at ${cleanItemTitle(hName)}` })
           }
+
+          // Sort highlights chronologically by 24-hour time
+          highlights.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'))
 
           // ─── Meals Included Calculation ───
           const mealY = topY + cardH - 12
           const dayMeals: string[] = []
-          if (day.breakfast) dayMeals.push('Breakfast')
+          if (isSpdfBreakfast) dayMeals.push('Breakfast')
           if (day.lunch) dayMeals.push('Lunch')
           if (day.dinner) dayMeals.push('Dinner')
           if (day.meals && Array.isArray(day.meals)) {
@@ -3426,6 +3579,7 @@ export default function PrototypeBuilder() {
               if (h.type === 'transit') setTxt([30, 58, 138])
               else if (h.type === 'attraction') setTxt([6, 95, 70])
               else if (h.type === 'hotel') setTxt([146, 64, 14])
+              else if (h.type === 'meal') setTxt([22, 101, 52])
               else setTxt([107, 33, 168])
 
               font('bold', 6.5)
