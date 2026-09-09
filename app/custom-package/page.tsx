@@ -2119,6 +2119,21 @@ export default function PrototypeBuilder() {
       fetchRasterLogo('/images/meals-buffet.jpg', 320, 240, true, 0.82)
     ])
 
+    // Preload and heavily optimize attraction card photos (max 320x220 px JPEG at 0.75 quality ~25KB each instead of multi-MB full images)
+    const attractionPhotosMap = new Map<string, string>()
+    const distinctAttractionNames = Array.from(new Set(itinerary.flatMap(d => (d.attractions || []).map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '')))).filter(Boolean)
+    await Promise.all(
+      distinctAttractionNames.map(async (name) => {
+        const meta = getAttractionMetaInfo(name, attractionsMeta)
+        if (meta?.photoUrl) {
+          const raster = await fetchRasterLogo(meta.photoUrl, 320, 220, true, 0.75)
+          if (raster?.dataUrl) {
+            attractionPhotosMap.set(name.toLowerCase().trim(), raster.dataUrl)
+          }
+        }
+      })
+    )
+
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true })
 
     const PW = 210  // page width
@@ -2983,8 +2998,9 @@ export default function PrototypeBuilder() {
                 const imgX = MR - 42
                 const imgW = 40
                 const imgH = Math.min(cardH - 6, 28)
+                const optimizedPhotoData = attractionPhotosMap.get(attrName.toLowerCase().trim()) || meta!.photoUrl!
                 try {
-                  doc.addImage(meta!.photoUrl!, 'JPEG', imgX, y + 3, imgW, imgH, undefined, 'FAST')
+                  doc.addImage(optimizedPhotoData, 'JPEG', imgX, y + 3, imgW, imgH, undefined, 'FAST')
                 } catch (e) {}
               }
 
