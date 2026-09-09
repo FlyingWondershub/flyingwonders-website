@@ -268,6 +268,7 @@ export default function PrototypeBuilder() {
   const agentComboboxRef = useRef<HTMLDivElement>(null)
   const [showPdfDropdown, setShowPdfDropdown] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
+  const [showPayModal, setShowPayModal] = useState(false)
   const pdfDropdownRef = useRef<HTMLDivElement>(null)
 
   // Filtered B2B Agents based on search query
@@ -5381,18 +5382,18 @@ ${proposal}
               🔍 Preview Package
             </button>
           )}
-          {!hideIciciCustomPackage && (
+          {(!hideIciciCustomPackage || !hideCashfreeCustomPackage) && (
             <button
               type="button"
-              onClick={() => setIsIciciModalOpen(true)}
+              onClick={() => setShowPayModal(true)}
               style={{
-                padding: '0.35rem 0.8rem',
+                padding: '0.45rem 1rem',
                 background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
                 color: '#FFF',
                 border: 'none',
                 borderRadius: '6px',
                 fontWeight: 700,
-                fontSize: '0.8rem',
+                fontSize: '0.85rem',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 display: 'flex',
@@ -5400,36 +5401,9 @@ ${proposal}
                 gap: '0.35rem',
                 boxShadow: '0 3px 8px rgba(16, 185, 129, 0.25)'
               }}
+              title="Select Payment Method (UPI or Credit Card)"
             >
-              📱 UPI - Pay
-            </button>
-          )}
-
-          {!hideCashfreeCustomPackage && (
-            <button
-              type="button"
-              onClick={handleCashfreePayment}
-              disabled={cashfreeLoading}
-              style={{
-                padding: '0.35rem 0.8rem',
-                background: 'linear-gradient(135deg, #1A365D 0%, #2A4365 100%)',
-                color: '#FFF',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: 700,
-                fontSize: '0.8rem',
-                cursor: cashfreeLoading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: '150px',
-                gap: '0.35rem',
-                boxShadow: '0 3px 8px rgba(26, 54, 93, 0.25)',
-                opacity: cashfreeLoading ? 0.7 : 1
-              }}
-            >
-              {cashfreeLoading ? <Loader2 size={16} className="animate-spin" /> : '💳 Credit Card - Pay'}
+              💳 Pay <ChevronDown size={14} />
             </button>
           )}
       </div>
@@ -6475,6 +6449,86 @@ ${proposal}
                     <div style={{ fontSize: '0.72rem', color: '#C2410C', marginTop: '2px' }}>High-res photos, curved organic masks & travel doodles</div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══ PAYMENT METHOD SELECTION MODAL ══ */}
+        {showPayModal && (
+          <div className="cp-modal-overlay" onClick={() => setShowPayModal(false)}>
+            <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+              <div className="cp-modal-handle" />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.3rem' }}>💳</span>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>Choose Payment Method</h3>
+                </div>
+                <button onClick={() => setShowPayModal(false)} style={{ border: 'none', background: '#F1F5F9', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', cursor: 'pointer', color: '#64748B', fontWeight: 700 }}>✕</button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* 1. UPI Payment */}
+                {!hideIciciCustomPackage && (
+                  <div
+                    onClick={() => { setShowPayModal(false); setIsIciciModalOpen(true); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '0.85rem 1rem',
+                      background: '#F0FDF4',
+                      border: '1.5px solid #BBF7D0',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#DCFCE7'; e.currentTarget.style.borderColor = '#86EFAC' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#F0FDF4'; e.currentTarget.style.borderColor = '#BBF7D0' }}
+                  >
+                    <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#DCFCE7', color: '#15803D', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
+                      📱
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 800, color: '#14532D', fontSize: '0.88rem' }}>UPI - Pay</div>
+                      <div style={{ fontSize: '0.72rem', color: '#166534', marginTop: '2px' }}>Instant UPI transfer & QR code payment via ICICI</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Credit Card Payment */}
+                {!hideCashfreeCustomPackage && (
+                  <div
+                    onClick={() => { 
+                      if (!cashfreeLoading) {
+                        setShowPayModal(false); 
+                        handleCashfreePayment(); 
+                      }
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '0.85rem 1rem',
+                      background: '#F8FAFC',
+                      border: '1.5px solid #E2E8F0',
+                      borderRadius: '10px',
+                      cursor: cashfreeLoading ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.15s ease',
+                      opacity: cashfreeLoading ? 0.7 : 1
+                    }}
+                    onMouseEnter={e => { if (!cashfreeLoading) { e.currentTarget.style.background = '#EFF6FF'; e.currentTarget.style.borderColor = '#93C5FD'; } }}
+                    onMouseLeave={e => { if (!cashfreeLoading) { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.borderColor = '#E2E8F0'; } }}
+                  >
+                    <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#DBEAFE', color: '#1E40AF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
+                      {cashfreeLoading ? <Loader2 size={18} className="animate-spin" /> : '💳'}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 800, color: '#1E3A8A', fontSize: '0.88rem' }}>Credit Card - Pay</div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>Pay securely via Credit/Debit Cards (Cashfree Gateway)</div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
