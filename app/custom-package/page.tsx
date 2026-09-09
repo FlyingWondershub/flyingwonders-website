@@ -6730,8 +6730,6 @@ ${proposal}
             📄 PDF <ChevronDown size={13} style={{ marginLeft: '-2px' }} />
           </button>
 
-          <button className="cp-tool-btn whatsapp" onClick={sendOnWhatsApp}>💬 WhatsApp</button>
-          
           <button className="cp-tool-btn" onClick={handleSaveProposal} style={{ background: '#FAF5FF', border: '1px solid #D6BCFA', color: '#6B46C1' }}>
             💾 {saveStatus === 'saving' ? 'Saving...' : (savedProposalNum ? 'Update Proposal' : 'Save Proposal')}
           </button>
