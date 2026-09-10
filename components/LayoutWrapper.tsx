@@ -67,7 +67,10 @@ export default function LayoutWrapper({
     pathname === '/education-tours' ||
     pathname === '/b2b-leads' ||
     pathname?.startsWith('/b2b-directory') ||
-    pathname === '/insurance'
+    pathname === '/insurance' ||
+    pathname === '/sgac' ||
+    pathname === '/mdac' ||
+    pathname === '/air-suvidha'
   
   const [subEmail, setSubEmail] = useState('')
   const [subStatus, setSubStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')

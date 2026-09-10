@@ -41,7 +41,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Percent,
-  Tag
+  Tag,
+  Copy,
+  Check
 } from 'lucide-react'
 
 // Helper function to format YouTube embed URLs
@@ -321,8 +323,16 @@ function ToolCommunityFooter({ toolId, toolName, summaryText }: { toolId: string
 }
 
 export default function TravelToolsPage() {
-  // Official Arrival Cards Tab: SGAC (default), MDAC, or Air Suvidha
-  const [arrivalCardTab, setArrivalCardTab] = useState<'sgac' | 'mdac' | 'airsuvidha'>('sgac')
+  // Official Arrival Cards State
+  const [copiedCardUrl, setCopiedCardUrl] = useState<string | null>(null)
+
+  const copyOfficialUrl = (url: string, cardId: string) => {
+    if (typeof window !== 'undefined' && navigator?.clipboard) {
+      navigator.clipboard.writeText(url)
+      setCopiedCardUrl(cardId)
+      setTimeout(() => setCopiedCardUrl(null), 2500)
+    }
+  }
   
   // Real-time Search Filter
   const [searchFilter, setSearchFilter] = useState<string>('')
@@ -636,7 +646,7 @@ export default function TravelToolsPage() {
   const sgacLink = sanitySettings.sgacOfficialLink || 'https://eservices.ica.gov.sg/sgarrivalcard/'
   const mdacLink = sanitySettings.mdacOfficialLink || 'https://imigresen-online.imi.gov.my/mdac/main'
   const sgVisaLink = sanitySettings.sgVisaStatusLink || 'https://eservices.ica.gov.sg/save/sso/login.xhtml'
-  const airSuvidhaLink = sanitySettings.airSuvidhaLink || 'https://www.airsuvidha.app.nic.in/'
+  const airSuvidhaLink = sanitySettings.airSuvidhaLink || 'https://www.newdelhiairport.in/airsuvidha/ap-registration'
 
   // Search filter helper
   const matchesSearch = (text: string) => {
@@ -837,216 +847,620 @@ export default function TravelToolsPage() {
       <div style={{ maxWidth: '1600px', width: '96%', margin: '2rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
         
         {/* 1. 🇸🇬 OFFICIAL SGAC, MDAC & AIR SUVIDHA ARRIVAL CARDS SECTION */}
+        {/* 1. 🇸🇬 OFFICIAL SGAC, MDAC & AIR SUVIDHA ARRIVAL CARDS (3 SEPARATE DISPLAY CARDS) */}
         {!sanitySettings.hideOfficialPortals && matchesSearch('sgac mdac arrival card air suvidha singapore malaysia india') && (
           <div id="tool-official-portals" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
             
-            {/* Header & Country Tabs */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+            {/* Master Section Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '1rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: 900, color: '#0F4C3A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <ShieldCheck size={24} color="#059669" /> Official Arrival Cards (SGAC, MDAC & Air Suvidha)
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0F4C3A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <ShieldCheck size={26} color="#059669" /> Official Mandatory Arrival Cards
                 </h3>
-                <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0.25rem 0 0', fontWeight: 600 }}>
-                  Mandatory zero-fee arrival card portals for Singapore, Malaysia & India travel.
+                <p style={{ fontSize: '0.88rem', color: '#64748B', margin: '0.35rem 0 0', fontWeight: 500 }}>
+                  Mandatory zero-fee electronic arrival card portals for Singapore, Malaysia & India travel. Each portal is displayed separately below with official URLs.
                 </p>
               </div>
 
-              {/* SGAC vs MDAC vs Air Suvidha Toggle Tabs */}
-              <div style={{ display: 'flex', gap: '6px', background: '#F1F5F9', padding: '4px', borderRadius: '10px' }}>
-                <button
-                  onClick={() => setArrivalCardTab('sgac')}
-                  style={{
-                    padding: '0.5rem 0.9rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: arrivalCardTab === 'sgac' ? '#0F4C3A' : 'transparent',
-                    color: arrivalCardTab === 'sgac' ? '#FFF' : '#475569',
-                    fontWeight: 800,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px'
-                  }}
-                >
-                  🇸🇬 SGAC (Singapore)
-                </button>
-                <button
-                  onClick={() => setArrivalCardTab('mdac')}
-                  style={{
-                    padding: '0.5rem 0.9rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: arrivalCardTab === 'mdac' ? '#0F4C3A' : 'transparent',
-                    color: arrivalCardTab === 'mdac' ? '#FFF' : '#475569',
-                    fontWeight: 800,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px'
-                  }}
-                >
-                  🇲🇾 MDAC (Malaysia)
-                </button>
-                <button
-                  onClick={() => setArrivalCardTab('airsuvidha')}
-                  style={{
-                    padding: '0.5rem 0.9rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: arrivalCardTab === 'airsuvidha' ? '#0F4C3A' : 'transparent',
-                    color: arrivalCardTab === 'airsuvidha' ? '#FFF' : '#475569',
-                    fontWeight: 800,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px'
-                  }}
-                >
-                  🇮🇳 Air Suvidha (India)
-                </button>
+              {/* Verified Trust Badges */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534', background: '#DCFCE7', border: '1px solid #BBF7D0', padding: '4px 10px', borderRadius: '20px' }}>
+                  ✓ 100% Free Official Gov Portals
+                </span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1E40AF', background: '#DBEAFE', border: '1px solid #BFDBFE', padding: '4px 10px', borderRadius: '20px' }}>
+                  ⚡ Submit Within 3 Days Prior
+                </span>
               </div>
             </div>
 
-            {/* TAB CONTENT: 🇸🇬 SGAC SINGAPORE ARRIVAL CARD */}
-            {arrivalCardTab === 'sgac' && (
-              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '1.5rem', borderRadius: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                  <div>
-                    <span style={{ background: '#059669', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '5px', textTransform: 'uppercase' }}>
-                      🇸🇬 Singapore ICA Portal • 100% Free
+            {/* ═══ 3 SEPARATE ARRIVAL CARDS GRID ═══ */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gap: '1.5rem',
+              alignItems: 'stretch'
+            }}>
+              
+              {/* ── CARD 1: 🇸🇬 SGAC SINGAPORE ── */}
+              <div id="tool-sgac" style={{
+                background: '#F0FDF4',
+                border: '1.5px solid #BBF7D0',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                boxShadow: '0 4px 14px rgba(5,150,105,0.06)',
+                position: 'relative'
+              }}>
+                <div>
+                  {/* Top Badges */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                    <span style={{ background: '#059669', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '3px 9px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      🇸🇬 Singapore ICA • 100% Free
                     </span>
-                    <h4 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#166534', margin: '0.4rem 0 0.25rem' }}>
-                      SG Arrival Card (SGAC) Electronic Submission
-                    </h4>
-                    <p style={{ fontSize: '0.85rem', color: '#14532D', margin: '0 0 1rem', lineHeight: 1.5, maxWidth: '680px' }}>
-                      All foreign visitors (including Indian, Chinese, US, UK, & Australian passport holders) MUST submit the electronic SG Arrival Card within <strong>3 days prior to arrival</strong> in Singapore.
-                    </p>
-                    
-                    <ul style={{ margin: '0 0 1.25rem', paddingLeft: '1.2rem', fontSize: '0.82rem', color: '#166534', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <li>✓ Zero government fee (Do NOT pay scam agencies charging $30-$80).</li>
-                      <li>✓ Instant QR confirmation sent to your email.</li>
-                      <li>✓ Passport must have at least 6 months validity from entry date.</li>
-                    </ul>
+                    <span style={{ background: '#DCFCE7', color: '#166534', fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', border: '1px solid #A7F3D0' }}>
+                      3 Days Prior
+                    </span>
                   </div>
 
-                  <a
-                    href={sgacLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)',
-                      color: '#FFF',
-                      padding: '0.85rem 1.75rem',
-                      borderRadius: '10px',
-                      fontWeight: 800,
-                      fontSize: '0.9rem',
-                      textDecoration: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      boxShadow: '0 4px 15px rgba(5,150,105,0.3)'
-                    }}
-                  >
-                    <span>Submit Official SGAC</span> <ExternalLink size={16} />
-                  </a>
-                </div>
-              </div>
-            )}
-
-            {/* TAB CONTENT: 🇲🇾 MDAC MALAYSIA DIGITAL ARRIVAL CARD */}
-            {arrivalCardTab === 'mdac' && (
-              <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '1.5rem', borderRadius: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                  <div>
-                    <span style={{ background: '#1D4ED8', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '5px', textTransform: 'uppercase' }}>
-                      🇲🇾 Malaysia Immigration Portal • 100% Free
-                    </span>
-                    <h4 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#1E40AF', margin: '0.4rem 0 0.25rem' }}>
-                      Malaysia Digital Arrival Card (MDAC) Submission
-                    </h4>
-                    <p style={{ fontSize: '0.85rem', color: '#1E3A8A', margin: '0 0 1rem', lineHeight: 1.5, maxWidth: '680px' }}>
-                      Mandatory for all foreign travelers entering Malaysia via Kuala Lumpur (KLIA), Penang, or Woodlands/Tuas land checkpoints. Submit online within <strong>3 days before arrival</strong>.
-                    </p>
-                    
-                    <ul style={{ margin: '0 0 1.25rem', paddingLeft: '1.2rem', fontSize: '0.82rem', color: '#1E40AF', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <li>✓ Zero fee on official Malaysian Immigration MDAC website.</li>
-                      <li>✓ Indian & Chinese passport holders enjoy 30-day visa exemption through 2026.</li>
-                      <li>✓ Print or save PDF PIN confirmation on mobile for border officer inspection.</li>
-                    </ul>
+                  {/* Title & Subtitle */}
+                  <h4 style={{ fontSize: '1.18rem', fontWeight: 900, color: '#166534', margin: '0 0 0.2rem' }}>
+                    SG Arrival Card (SGAC)
+                  </h4>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', marginBottom: '0.65rem' }}>
+                    Electronic Health Declaration & Entry Clearance
                   </div>
 
-                  <a
-                    href={mdacLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      background: 'linear-gradient(135deg, #1E40AF 0%, #1D4ED8 100%)',
-                      color: '#FFF',
-                      padding: '0.85rem 1.75rem',
-                      borderRadius: '10px',
-                      fontWeight: 800,
-                      fontSize: '0.9rem',
-                      textDecoration: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      boxShadow: '0 4px 15px rgba(29,78,216,0.3)'
-                    }}
-                  >
-                    <span>Submit Official MDAC</span> <ExternalLink size={16} />
-                  </a>
-                </div>
-              </div>
-            )}
+                  {/* Description */}
+                  <p style={{ fontSize: '0.84rem', color: '#14532D', margin: '0 0 1rem', lineHeight: 1.5 }}>
+                    Mandatory for all foreign travelers entering Singapore (via Changi Airport, Seletar, Cruise Centre, or Woodlands/Tuas causeways).
+                  </p>
 
-            {/* TAB CONTENT: 🇮🇳 AIR SUVIDHA */}
-            {arrivalCardTab === 'airsuvidha' && (
-              <div style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', padding: '1.5rem', borderRadius: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
-                  <div>
-                    <span style={{ background: '#EA580C', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '5px', textTransform: 'uppercase' }}>
-                      🇮🇳 India Civil Aviation Portal • 100% Free
-                    </span>
-                    <h4 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#C2410C', margin: '0.4rem 0 0.25rem' }}>
-                      Air Suvidha Self-Declaration & Entry Guidelines
-                    </h4>
-                    <p style={{ fontSize: '0.85rem', color: '#9A3412', margin: '0 0 1rem', lineHeight: 1.5, maxWidth: '680px' }}>
-                      Official health declaration and arrival guidelines portal for passengers travelling to India (Delhi, Mumbai, Bengaluru, Chennai, Hyderabad, Kochi, Kolkata).
-                    </p>
-                    
-                    <ul style={{ margin: '0 0 1.25rem', paddingLeft: '1.2rem', fontSize: '0.82rem', color: '#C2410C', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <li>✓ Official Ministry of Civil Aviation self-declaration portal.</li>
-                      <li>✓ Check destination airport health protocols & quarantine updates.</li>
-                      <li>✓ Direct access to New Delhi Airport (MoCA) portal.</li>
-                    </ul>
+                  {/* Key Rules List */}
+                  <ul style={{ margin: '0 0 1.25rem', paddingLeft: '1.15rem', fontSize: '0.8rem', color: '#166534', display: 'flex', flexDirection: 'column', gap: '6px', lineHeight: 1.45 }}>
+                    <li><strong>Zero Government Fee:</strong> Beware of third-party broker websites charging $30–$80.</li>
+                    <li><strong>Submission Window:</strong> Submit online within <strong>3 days before arrival</strong>.</li>
+                    <li><strong>Instant QR Barcode:</strong> Electronic PDF & email barcode for automated immigration gantries.</li>
+                    <li><strong>Passport Validity:</strong> Minimum 6 months validity from entry date.</li>
+                  </ul>
+                </div>
+
+                {/* Bottom Section: Dedicated URL Box + Official Gov URL Box + Action CTAs */}
+                <div>
+                  {/* 1. Dedicated Flying Wonders Card URL */}
+                  <div style={{ background: '#FFFFFF', border: '1px solid #86EFAC', borderRadius: '10px', padding: '0.65rem 0.85rem', marginBottom: '0.65rem' }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>Card Direct Link:</span>
+                      <span style={{ fontSize: '0.65rem', background: '#DCFCE7', color: '#166534', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>Direct Share</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <Link 
+                        href="/sgac"
+                        style={{ fontSize: '0.75rem', fontWeight: 700, color: '#047857', textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}
+                        title="https://flyingwonders.net/sgac"
+                      >
+                        https://flyingwonders.net/sgac
+                      </Link>
+                      <button
+                        onClick={() => copyOfficialUrl('https://flyingwonders.net/sgac', 'sgac-card')}
+                        style={{
+                          background: copiedCardUrl === 'sgac-card' ? '#059669' : '#ECFDF5',
+                          color: copiedCardUrl === 'sgac-card' ? '#FFF' : '#047857',
+                          border: '1px solid #6EE7B7',
+                          padding: '0.3rem 0.65rem',
+                          borderRadius: '6px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          flexShrink: 0,
+                          transition: 'all 0.15s'
+                        }}
+                        title="Copy direct card URL to clipboard"
+                      >
+                        {copiedCardUrl === 'sgac-card' ? (
+                          <>
+                            <Check size={12} />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} />
+                            <span>Copy Card URL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
-                  <a
-                    href={airSuvidhaLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      background: 'linear-gradient(135deg, #C2410C 0%, #EA580C 100%)',
-                      color: '#FFF',
-                      padding: '0.85rem 1.75rem',
-                      borderRadius: '10px',
-                      fontWeight: 800,
-                      fontSize: '0.9rem',
-                      textDecoration: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      boxShadow: '0 4px 15px rgba(234,88,12,0.3)'
-                    }}
-                  >
-                    <span>Open Official Air Suvidha</span> <ExternalLink size={16} />
-                  </a>
+                  {/* 2. Official Government Portal URL Box */}
+                  <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '10px', padding: '0.65rem 0.85rem', marginBottom: '0.85rem' }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                      Official Gov Portal URL:
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <a 
+                        href={sgacLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}
+                        title={sgacLink}
+                      >
+                        {sgacLink}
+                      </a>
+                      <button
+                        onClick={() => copyOfficialUrl(sgacLink, 'sgac-gov')}
+                        style={{
+                          background: copiedCardUrl === 'sgac-gov' ? '#0F4C3A' : '#F8FAFC',
+                          color: copiedCardUrl === 'sgac-gov' ? '#FFF' : '#334155',
+                          border: '1px solid #CBD5E1',
+                          padding: '0.3rem 0.65rem',
+                          borderRadius: '6px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          flexShrink: 0,
+                          transition: 'all 0.15s'
+                        }}
+                        title="Copy official ICA government URL"
+                      >
+                        {copiedCardUrl === 'sgac-gov' ? (
+                          <>
+                            <Check size={12} />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} />
+                            <span>Copy Gov URL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Dual Action Buttons: Submit Official + Open Dedicated Guide */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <a
+                      href={sgacLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)',
+                        color: '#FFF',
+                        padding: '0.75rem 1.25rem',
+                        borderRadius: '10px',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 14px rgba(5,150,105,0.25)',
+                        transition: 'transform 0.15s ease'
+                      }}
+                    >
+                      <span>Submit Official SGAC (ica.gov.sg)</span> <ExternalLink size={15} />
+                    </a>
+                    
+                    <Link
+                      href="/sgac"
+                      style={{
+                        background: '#FFFFFF',
+                        color: '#059669',
+                        border: '1.5px solid #86EFAC',
+                        padding: '0.65rem 1.25rem',
+                        borderRadius: '10px',
+                        fontWeight: 800,
+                        fontSize: '0.84rem',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span>View Full SGAC Guide & FAQs →</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
-            )}
+
+              {/* ── CARD 2: 🇲🇾 MDAC MALAYSIA ── */}
+              <div id="tool-mdac" style={{
+                background: '#EFF6FF',
+                border: '1.5px solid #BFDBFE',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                boxShadow: '0 4px 14px rgba(29,78,216,0.06)',
+                position: 'relative'
+              }}>
+                <div>
+                  {/* Top Badges */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                    <span style={{ background: '#1D4ED8', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '3px 9px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      🇲🇾 Malaysia JIM • 100% Free
+                    </span>
+                    <span style={{ background: '#DBEAFE', color: '#1E40AF', fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', border: '1px solid #93C5FD' }}>
+                      3 Days Prior
+                    </span>
+                  </div>
+
+                  {/* Title & Subtitle */}
+                  <h4 style={{ fontSize: '1.18rem', fontWeight: 900, color: '#1E40AF', margin: '0 0 0.2rem' }}>
+                    Malaysia Digital Arrival Card (MDAC)
+                  </h4>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2563EB', marginBottom: '0.65rem' }}>
+                    Jabatan Imigresen Malaysia (JIM) Official System
+                  </div>
+
+                  {/* Description */}
+                  <p style={{ fontSize: '0.84rem', color: '#1E3A8A', margin: '0 0 1rem', lineHeight: 1.5 }}>
+                    Mandatory for all foreign travelers entering Malaysia via Kuala Lumpur (KLIA1/KLIA2), Penang, Johor Bahru, or land checkpoints.
+                  </p>
+
+                  {/* Key Rules List */}
+                  <ul style={{ margin: '0 0 1.25rem', paddingLeft: '1.15rem', fontSize: '0.8rem', color: '#1E40AF', display: 'flex', flexDirection: 'column', gap: '6px', lineHeight: 1.45 }}>
+                    <li><strong>100% Free Submission:</strong> Zero charges on the official Malaysian Immigration website.</li>
+                    <li><strong>Submission Window:</strong> Submit online within <strong>3 days prior to arrival</strong>.</li>
+                    <li><strong>30-Day Visa Exemption:</strong> Indian & Chinese passport holders enjoy visa-free entry through 2026.</li>
+                    <li><strong>Confirmation:</strong> Print or save PDF PIN acknowledgment on your phone for border officers.</li>
+                  </ul>
+                </div>
+
+                {/* Bottom Section: Dedicated URL Box + Official Gov URL Box + Action CTAs */}
+                <div>
+                  {/* 1. Dedicated Flying Wonders Card URL */}
+                  <div style={{ background: '#FFFFFF', border: '1px solid #93C5FD', borderRadius: '10px', padding: '0.65rem 0.85rem', marginBottom: '0.65rem' }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#1D4ED8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>Card Direct Link:</span>
+                      <span style={{ fontSize: '0.65rem', background: '#DBEAFE', color: '#1E40AF', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>Direct Share</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <Link 
+                        href="/mdac"
+                        style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1D4ED8', textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}
+                        title="https://flyingwonders.net/mdac"
+                      >
+                        https://flyingwonders.net/mdac
+                      </Link>
+                      <button
+                        onClick={() => copyOfficialUrl('https://flyingwonders.net/mdac', 'mdac-card')}
+                        style={{
+                          background: copiedCardUrl === 'mdac-card' ? '#1D4ED8' : '#EFF6FF',
+                          color: copiedCardUrl === 'mdac-card' ? '#FFF' : '#1E40AF',
+                          border: '1px solid #93C5FD',
+                          padding: '0.3rem 0.65rem',
+                          borderRadius: '6px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          flexShrink: 0,
+                          transition: 'all 0.15s'
+                        }}
+                        title="Copy direct card URL to clipboard"
+                      >
+                        {copiedCardUrl === 'mdac-card' ? (
+                          <>
+                            <Check size={12} />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} />
+                            <span>Copy Card URL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 2. Official Government Portal URL Box */}
+                  <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '10px', padding: '0.65rem 0.85rem', marginBottom: '0.85rem' }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                      Official Gov Portal URL:
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <a 
+                        href={mdacLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}
+                        title={mdacLink}
+                      >
+                        {mdacLink}
+                      </a>
+                      <button
+                        onClick={() => copyOfficialUrl(mdacLink, 'mdac-gov')}
+                        style={{
+                          background: copiedCardUrl === 'mdac-gov' ? '#1E3A8A' : '#F8FAFC',
+                          color: copiedCardUrl === 'mdac-gov' ? '#FFF' : '#334155',
+                          border: '1px solid #CBD5E1',
+                          padding: '0.3rem 0.65rem',
+                          borderRadius: '6px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          flexShrink: 0,
+                          transition: 'all 0.15s'
+                        }}
+                        title="Copy official JIM government URL"
+                      >
+                        {copiedCardUrl === 'mdac-gov' ? (
+                          <>
+                            <Check size={12} />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} />
+                            <span>Copy Gov URL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Dual Action Buttons: Submit Official + Open Dedicated Guide */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <a
+                      href={mdacLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: 'linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 100%)',
+                        color: '#FFF',
+                        padding: '0.75rem 1.25rem',
+                        borderRadius: '10px',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 14px rgba(29,78,216,0.25)',
+                        transition: 'transform 0.15s ease'
+                      }}
+                    >
+                      <span>Submit Official MDAC (imi.gov.my)</span> <ExternalLink size={15} />
+                    </a>
+                    
+                    <Link
+                      href="/mdac"
+                      style={{
+                        background: '#FFFFFF',
+                        color: '#1D4ED8',
+                        border: '1.5px solid #93C5FD',
+                        padding: '0.65rem 1.25rem',
+                        borderRadius: '10px',
+                        fontWeight: 800,
+                        fontSize: '0.84rem',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span>View Full MDAC Guide & FAQs →</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── CARD 3: 🇮🇳 AIR SUVIDHA INDIA ── */}
+              <div id="tool-airsuvidha" style={{
+                background: '#FFF7ED',
+                border: '1.5px solid #FED7AA',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                boxShadow: '0 4px 14px rgba(234,88,12,0.06)',
+                position: 'relative'
+              }}>
+                <div>
+                  {/* Top Badges */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                    <span style={{ background: '#EA580C', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '3px 9px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      🇮🇳 India MoCA • 100% Free
+                    </span>
+                    <span style={{ background: '#FFEDD5', color: '#C2410C', fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', border: '1px solid #FDBA74' }}>
+                      Pre-Departure
+                    </span>
+                  </div>
+
+                  {/* Title & Subtitle */}
+                  <h4 style={{ fontSize: '1.18rem', fontWeight: 900, color: '#C2410C', margin: '0 0 0.2rem' }}>
+                    Air Suvidha Self-Declaration
+                  </h4>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#EA580C', marginBottom: '0.65rem' }}>
+                    Ministry of Civil Aviation (MoCA) International Portal
+                  </div>
+
+                  {/* Description */}
+                  <p style={{ fontSize: '0.84rem', color: '#9A3412', margin: '0 0 1rem', lineHeight: 1.5 }}>
+                    Official pre-departure health declaration and international arrival guidelines portal for passengers travelling to India (Delhi, Mumbai, Bengaluru, etc.).
+                  </p>
+
+                  {/* Key Rules List */}
+                  <ul style={{ margin: '0 0 1.25rem', paddingLeft: '1.15rem', fontSize: '0.8rem', color: '#C2410C', display: 'flex', flexDirection: 'column', gap: '6px', lineHeight: 1.45 }}>
+                    <li><strong>Official Government Service:</strong> Zero charges for self-declaration and arrival guidelines.</li>
+                    <li><strong>International Inbound:</strong> Fill prior to boarding international flight to India.</li>
+                    <li><strong>Airport Fast-Track:</strong> Keep generated application number ready on mobile.</li>
+                    <li><strong>Advisory Updates:</strong> Check real-time destination state quarantine and thermal screening rules.</li>
+                  </ul>
+                </div>
+
+                {/* Bottom Section: Dedicated URL Box + Official Gov URL Box + Action CTAs */}
+                <div>
+                  {/* 1. Dedicated Flying Wonders Card URL */}
+                  <div style={{ background: '#FFFFFF', border: '1px solid #FED7AA', borderRadius: '10px', padding: '0.65rem 0.85rem', marginBottom: '0.65rem' }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#EA580C', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>Card Direct Link:</span>
+                      <span style={{ fontSize: '0.65rem', background: '#FFEDD5', color: '#C2410C', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>Direct Share</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <Link 
+                        href="/air-suvidha"
+                        style={{ fontSize: '0.75rem', fontWeight: 700, color: '#C2410C', textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}
+                        title="https://flyingwonders.net/air-suvidha"
+                      >
+                        https://flyingwonders.net/air-suvidha
+                      </Link>
+                      <button
+                        onClick={() => copyOfficialUrl('https://flyingwonders.net/air-suvidha', 'airsuvidha-card')}
+                        style={{
+                          background: copiedCardUrl === 'airsuvidha-card' ? '#EA580C' : '#FFF7ED',
+                          color: copiedCardUrl === 'airsuvidha-card' ? '#FFF' : '#C2410C',
+                          border: '1px solid #FDBA74',
+                          padding: '0.3rem 0.65rem',
+                          borderRadius: '6px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          flexShrink: 0,
+                          transition: 'all 0.15s'
+                        }}
+                        title="Copy direct card URL to clipboard"
+                      >
+                        {copiedCardUrl === 'airsuvidha-card' ? (
+                          <>
+                            <Check size={12} />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} />
+                            <span>Copy Card URL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 2. Official Government Portal URL Box */}
+                  <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '10px', padding: '0.65rem 0.85rem', marginBottom: '0.85rem' }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                      Official Gov Portal URL:
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <a 
+                        href={airSuvidhaLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B', textDecoration: 'underline', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}
+                        title={airSuvidhaLink}
+                      >
+                        {airSuvidhaLink}
+                      </a>
+                      <button
+                        onClick={() => copyOfficialUrl(airSuvidhaLink, 'airsuvidha-gov')}
+                        style={{
+                          background: copiedCardUrl === 'airsuvidha-gov' ? '#C2410C' : '#F8FAFC',
+                          color: copiedCardUrl === 'airsuvidha-gov' ? '#FFF' : '#334155',
+                          border: '1px solid #CBD5E1',
+                          padding: '0.3rem 0.65rem',
+                          borderRadius: '6px',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          flexShrink: 0,
+                          transition: 'all 0.15s'
+                        }}
+                        title="Copy official Air Suvidha URL"
+                      >
+                        {copiedCardUrl === 'airsuvidha-gov' ? (
+                          <>
+                            <Check size={12} />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} />
+                            <span>Copy Gov URL</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Dual Action Buttons: Open Official + Open Dedicated Guide */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <a
+                      href={airSuvidhaLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: 'linear-gradient(135deg, #C2410C 0%, #EA580C 100%)',
+                        color: '#FFF',
+                        padding: '0.75rem 1.25rem',
+                        borderRadius: '10px',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 14px rgba(234,88,12,0.25)',
+                        transition: 'transform 0.15s ease'
+                      }}
+                    >
+                      <span>Open Official Air Suvidha (MoCA)</span> <ExternalLink size={15} />
+                    </a>
+                    
+                    <Link
+                      href="/air-suvidha"
+                      style={{
+                        background: '#FFFFFF',
+                        color: '#C2410C',
+                        border: '1.5px solid #FDBA74',
+                        padding: '0.65rem 1.25rem',
+                        borderRadius: '10px',
+                        fontWeight: 800,
+                        fontSize: '0.84rem',
+                        textDecoration: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span>View Full Air Suvidha Guide & FAQs →</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+            </div>
 
             <ToolCommunityFooter toolId="official-portals" toolName="Official SGAC, MDAC & Air Suvidha Portals" summaryText="Mandatory zero-fee electronic arrival card submission for Singapore, Malaysia & India." />
           </div>

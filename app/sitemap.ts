@@ -49,6 +49,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Standalone tool pages — daily frequency, high priority (high-volume keyword targets)
   const toolRoutes = [
+    { path: '/sgac', priority: 0.95, freq: 'daily' },
+    { path: '/mdac', priority: 0.95, freq: 'daily' },
+    { path: '/air-suvidha', priority: 0.95, freq: 'daily' },
     { path: '/visa-checker', priority: 0.95, freq: 'daily' },
     { path: '/currency-converter', priority: 0.95, freq: 'daily' },
     { path: '/border-traffic', priority: 0.9, freq: 'hourly' },

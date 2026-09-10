@@ -36,6 +36,26 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: '/singapore-arrival-card',
+        destination: '/sgac',
+        permanent: true,
+      },
+      {
+        source: '/malaysia-arrival-card',
+        destination: '/mdac',
+        permanent: true,
+      },
+      {
+        source: '/malaysia-digital-arrival-card',
+        destination: '/mdac',
+        permanent: true,
+      },
+      {
+        source: '/airsuvidha',
+        destination: '/air-suvidha',
+        permanent: true,
+      },
+      {
         source: '/product/13-seater-toyota-hiace',
         destination: '/services-catalog',
         permanent: true,

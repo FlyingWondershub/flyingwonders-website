@@ -1273,6 +1273,9 @@ export default function AdminDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                 {[
                   { name: 'Travel Tools Master Hub', path: '/travel-tools', desc: 'Complete interactive utility suite' },
+                  { name: 'SG Arrival Card (SGAC)', path: '/sgac', desc: '100% Free official ICA Singapore arrival portal & guide' },
+                  { name: 'Malaysia Arrival Card (MDAC)', path: '/mdac', desc: 'Official Malaysian Immigration MDAC portal & guide' },
+                  { name: 'Air Suvidha Self-Declaration', path: '/air-suvidha', desc: 'Official India MoCA pre-departure portal & guide' },
                   { name: 'Visa Requirements Checker', path: '/visa-checker', desc: 'Live Singapore & Malaysia entry rules' },
                   { name: 'SGD / INR Currency Converter', path: '/currency-converter', desc: 'Live exchange rates with conversion' },
                   { name: 'Causeway Border Traffic', path: '/border-traffic', desc: 'Tuas & Woodlands live traffic cameras' },
