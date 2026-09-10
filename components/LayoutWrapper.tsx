@@ -190,7 +190,16 @@ export default function LayoutWrapper({
   return (
     <>
       <header className="main-header">
-        <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem' }}>
+        <div 
+          className="container" 
+          style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            gap: '0.2rem',
+            ...(pathname === '/custom-package' ? { maxWidth: '1600px', width: '96%' } : {})
+          }}
+        >
           
           {/* Top Brand Logo Section */}
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem' }}>
@@ -445,7 +454,7 @@ export default function LayoutWrapper({
       </main>
 
       <footer style={{ background: 'var(--bg-dark)', color: 'var(--text-light)', padding: '6rem 0 2rem 0', marginTop: '4rem', borderTop: '4px solid var(--emerald-secondary)' }}>
-        <div className="container">
+        <div className="container" style={pathname === '/custom-package' ? { maxWidth: '1600px', width: '96%' } : undefined}>
           {/* Lead Magnet Section */}
           <div style={{ background: 'linear-gradient(135deg, var(--crimson-primary) 0%, #4a0000 100%)', padding: '4rem 2rem', borderRadius: '16px', marginBottom: '4rem', textAlign: 'center', boxShadow: 'var(--shadow-xl)' }}>
             <h3 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: 'white' }}>Unlock the Singapore Insider Guide.</h3>
@@ -507,7 +516,7 @@ export default function LayoutWrapper({
             </div>
           </div>
         </div>
-        <div className="container" style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.15)', textAlign: 'center', color: '#CBD5E1', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="container" style={{ marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.15)', textAlign: 'center', color: '#CBD5E1', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', ...(pathname === '/custom-package' ? { maxWidth: '1600px', width: '96%' } : {}) }}>
           <span>© {new Date().getFullYear()} Flying Wonders Pvt Ltd. All rights reserved.</span>
           <div style={{ display: 'flex', gap: '1.5rem' }}>
             {!pageVisibility?.hideFaq && <Link href="/faq" style={{ textDecoration: 'underline', color: '#E2E8F0' }}>FAQ</Link>}

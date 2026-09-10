@@ -502,7 +502,7 @@ a {
 /* B2B Builder responsive classes */
 .builder-layout {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: 1fr 310px;
   gap: 1.5rem;
   align-items: start;
 }

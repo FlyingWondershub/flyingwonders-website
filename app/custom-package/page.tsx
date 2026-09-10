@@ -5403,7 +5403,7 @@ ${proposal}
 
   // 5. Main authenticated cost estimator rendering
   return (
-    <div className="container" style={{ paddingTop: '1.5rem', paddingBottom: '4rem', maxWidth: '1200px' }}>
+    <div className="container" style={{ paddingTop: '1.5rem', paddingBottom: '4rem', maxWidth: '1600px', width: '96%' }}>
       
       {/* Header Banner */}
       <div className="glass" style={{ 
