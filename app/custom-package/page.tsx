@@ -268,6 +268,16 @@ export default function PrototypeBuilder() {
   const agentComboboxRef = useRef<HTMLDivElement>(null)
   const [showPdfDropdown, setShowPdfDropdown] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
+  // Promotional Flyer Modal States
+  const [showFlyerModal, setShowFlyerModal] = useState(false)
+  const [flyerLoading, setFlyerLoading] = useState(false)
+  const [flyerImageBase64, setFlyerImageBase64] = useState('')
+  const [flyerSizeKb, setFlyerSizeKb] = useState(0)
+  const [flyerHeadlineType, setFlyerHeadlineType] = useState<'getaway' | 'tour' | 'custom'>('getaway')
+  const [flyerCustomHeadline, setFlyerCustomHeadline] = useState('')
+  const [flyerShowPricing, setFlyerShowPricing] = useState(true)
+  const [flyerCurrency, setFlyerCurrency] = useState<'SGD' | 'INR'>('SGD')
+  const [flyerCopied, setFlyerCopied] = useState(false)
   const [showPayModal, setShowPayModal] = useState(false)
   const pdfDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -3952,6 +3962,216 @@ export default function PrototypeBuilder() {
     notifyAgentActivity('pdf_download')
   }
 
+  // ─── Promotional Flyer Modal Handlers ───────────────────────
+  const openFlyerModal = () => {
+    setShowFlyerModal(true)
+    generateFlyerImage(flyerHeadlineType, flyerCustomHeadline, flyerShowPricing, flyerCurrency)
+  }
+
+  const generateFlyerImage = async (
+    hType = flyerHeadlineType,
+    customH = flyerCustomHeadline,
+    showPrice = flyerShowPricing,
+    curr = flyerCurrency
+  ) => {
+    setFlyerLoading(true)
+    try {
+      const cleanGuest = (guestName || '').trim()
+      let finalHeadline = ''
+      if (hType === 'custom' && customH.trim()) {
+        finalHeadline = customH.trim().toUpperCase()
+      } else if (hType === 'tour') {
+        finalHeadline = cleanGuest ? `${cleanGuest.toUpperCase()} — SINGAPORE TOUR` : 'SINGAPORE TOUR'
+      } else {
+        finalHeadline = cleanGuest ? `${cleanGuest.toUpperCase()} — SINGAPORE GETAWAY` : 'SINGAPORE GETAWAY'
+      }
+
+      // Check vehicle types across transfers
+      const allTransfers = itinerary.flatMap(d => d.transfers || [])
+      const hasSIC = allTransfers.some(t => {
+        const desc = (t.description || '').toLowerCase()
+        return desc.includes('sic') || desc.includes('sharing') || desc.includes('shared')
+      })
+
+      // Inclusions extraction
+      const extractedInclusions: any[] = []
+      extractedInclusions.push({
+        title: 'Return Airport Transfers',
+        tag: !hasSIC ? 'Private Air-Conditioned Vehicle' : 'Sharing Seat-in-Coach (SIC)',
+        type: !hasSIC ? 'private' : 'sharing',
+        icon: '🚗'
+      })
+
+      itinerary.forEach(day => {
+        (day.attractions || []).forEach(attr => {
+          const attrObj = attractionsList[attr.attractionIndex]
+          const name = attrObj?.name || attr.attractionName || ''
+          if (name && !extractedInclusions.some(inc => inc.title.toLowerCase().includes(name.toLowerCase().slice(0, 10)))) {
+            let icon = '✨'
+            const lower = name.toLowerCase()
+            if (lower.includes('safari') || lower.includes('zoo')) icon = '🦁'
+            else if (lower.includes('universal')) icon = '🎢'
+            else if (lower.includes('gardens')) icon = '🌸'
+            else if (lower.includes('cable') || lower.includes('wings') || lower.includes('sentosa')) icon = '🚡'
+            else if (lower.includes('flyer')) icon = '🎡'
+            else if (lower.includes('mbs') || lower.includes('sands')) icon = '🏙️'
+            else if (lower.includes('aquarium')) icon = '🐠'
+
+            extractedInclusions.push({
+              title: name.replace(/\(.*?\)/g, '').replace(/-\s*Fixed\s*Date.*/i, '').trim(),
+              tag: 'Admission & Experience Included (Sharing)',
+              type: 'sharing',
+              icon
+            })
+          }
+        })
+      })
+
+      // Tagged Agency Resolution
+      const isAdminUser = activeAgent?.email?.toLowerCase() === 'info.flyingwonders@gmail.com'
+      const isTaggedToAgent = !!(
+        (selectedAgentDetails && selectedAgentDetails._id && selectedAgentDetails._id !== 'direct') ||
+        (selectedAgentId && selectedAgentId !== 'direct') ||
+        (!isAdminUser && activeAgent && (activeAgent.companyName || activeAgent.agentName || activeAgent.email)) ||
+        (customAgencyName && !customAgencyName.toUpperCase().includes('FLYING WONDERS') && customAgencyName.trim() !== 'My Travel Agency' && customAgencyName.trim() !== '')
+      )
+      const taggedAgencyName = (
+        (customAgencyName && !customAgencyName.toUpperCase().includes('FLYING WONDERS') && customAgencyName.trim() !== 'My Travel Agency' ? customAgencyName.trim() : '') ||
+        selectedAgentDetails?.companyName ||
+        selectedAgentDetails?.agentName ||
+        (!isAdminUser && activeAgent ? (activeAgent.companyName || activeAgent.agentName) : '') ||
+        customAgencyName ||
+        'FLYING WONDERS DMC'
+      )
+
+      const effectiveLogoUrl = customAgencyLogoUrl || activeAgent?.logoUrl || ''
+      const effectivePhone = customAgencyPhone || selectedAgentDetails?.phone || activeAgent?.phone || '+91 98861 71251'
+      const effectiveEmail = customAgencyEmail || selectedAgentDetails?.email || activeAgent?.email || 'ops@flyingwonders.com'
+
+      const effectiveHotel = hotelRequired
+        ? (customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || '4★ Hotel Accommodation'))
+        : ''
+
+      // Pricing values
+      const figureStr = curr === 'INR'
+        ? Math.round(costBreakdown.adultQuote * (sgdToInrRate || DEFAULT_SGD_TO_INR)).toLocaleString('en-IN')
+        : costBreakdown.adultQuote.toLocaleString()
+
+      const inrEquivStr = curr === 'SGD'
+        ? `≈ Rs. ${Math.round(costBreakdown.adultQuote * (sgdToInrRate || DEFAULT_SGD_TO_INR)).toLocaleString('en-IN')} INR / Pax`
+        : `≈ S$ ${costBreakdown.adultQuote.toLocaleString()} SGD`
+
+      // Photos from itinerary
+      const distinctNames = Array.from(new Set(itinerary.flatMap(d => (d.attractions || []).map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '')))).filter(Boolean)
+      const attractionPhotos = distinctNames.map(name => {
+        const meta = getAttractionMetaInfo(name, attractionsMeta)
+        return {
+          name,
+          photoUrl: meta?.photoUrl || ''
+        }
+      })
+
+      const payload = {
+        guestName,
+        headline: finalHeadline,
+        nightsCount,
+        travelDates: 'SPECIAL PROMOTIONAL TOUR',
+        hotelRequired,
+        hotelName: effectiveHotel,
+        isPrivateTransfers: !hasSIC,
+        inclusions: extractedInclusions,
+        pricing: {
+          showPrice,
+          figure: figureStr,
+          currency: curr,
+          inrEquivalent: inrEquivStr,
+          label: 'PER PERSON ONLY'
+        },
+        attractionPhotos,
+        agency: {
+          name: taggedAgencyName,
+          tagline: isTaggedToAgent ? `${taggedAgencyName} · Tour Specialist` : 'SINGAPORE B2B DESTINATION SPECIALIST',
+          logoUrl: effectiveLogoUrl,
+          phone: effectivePhone,
+          deskPhone: isTaggedToAgent ? '' : '+65 9689 0101',
+          email: effectiveEmail,
+          singaporeAddress: '160 Robinson Road, #14-04 SBF Center, Singapore 068914',
+          indiaAddress: isTaggedToAgent ? ((selectedAgentDetails as any)?.city || 'Partner Travel Agency') : 'Bangalore & Delhi NCR B2B Operations Hub'
+        },
+        returnBase64: true
+      }
+
+      const res = await fetch('/api/flyer/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      const json = await res.json()
+      if (json.success && json.base64) {
+        setFlyerImageBase64(json.base64)
+        setFlyerSizeKb(json.sizeKb || 350)
+      } else {
+        throw new Error(json.error || 'Failed to generate flyer image')
+      }
+    } catch (err: any) {
+      console.error('Error generating flyer:', err)
+      setToast({ type: 'error', message: err.message || 'Could not generate flyer image. Please try again.' })
+    } finally {
+      setFlyerLoading(false)
+    }
+  }
+
+  const downloadFlyerImage = () => {
+    if (!flyerImageBase64) return
+    const link = document.createElement('a')
+    const guestSlug = (guestName || 'Singapore').replace(/[^a-zA-Z0-9]/g, '-')
+    const prefix = (customAgencyName || 'Travel').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'FW'
+    link.download = `${prefix}-Flyer-${guestSlug}.jpg`
+    link.href = flyerImageBase64
+    link.click()
+    setToast({ type: 'success', message: 'Promotional flyer image downloaded!' })
+    notifyAgentActivity('flyer_download')
+  }
+
+  const copyFlyerImageToClipboard = async () => {
+    if (!flyerImageBase64) return
+    try {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.src = flyerImageBase64
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+      })
+      
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth || img.width || 1200
+      canvas.height = img.naturalHeight || img.height || 1800
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.drawImage(img, 0, 0)
+        canvas.toBlob(async (pngBlob) => {
+          if (pngBlob) {
+            try {
+              await navigator.clipboard.write([
+                new ClipboardItem({ 'image/png': pngBlob })
+              ])
+              setFlyerCopied(true)
+              setTimeout(() => setFlyerCopied(false), 2500)
+              setToast({ type: 'success', message: 'Flyer copied! Paste directly into WhatsApp Web (Ctrl+V).' })
+            } catch (ce) {
+              setToast({ type: 'error', message: 'Browser prevented copying directly. Please use Download JPG instead.' })
+            }
+          }
+        }, 'image/png')
+      }
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err)
+      setToast({ type: 'error', message: 'Browser prevented copying directly. Please use Download JPG instead.' })
+    }
+  }
+
   // Helper to ensure proposal is saved & assigned a Proposal ID before copying, sharing, or downloading
   const ensureProposalSaved = async (quiet = true): Promise<string | null> => {
     if (savedProposalNum) return savedProposalNum
@@ -6449,6 +6669,328 @@ ${proposal}
                     <div style={{ fontSize: '0.72rem', color: '#C2410C', marginTop: '2px' }}>High-res photos, curved organic masks & travel doodles</div>
                   </div>
                 </div>
+
+                {/* 4. Promo Flyer Image (JPG / WhatsApp) */}
+                <div
+                  onClick={() => { setShowPdfModal(false); openFlyerModal(); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '0.85rem 1rem',
+                    background: '#FEF3C7',
+                    border: '1.5px solid #FDE68A',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#FDE68A'; e.currentTarget.style.borderColor = '#F59E0B' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#FEF3C7'; e.currentTarget.style.borderColor = '#FDE68A' }}
+                >
+                  <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#FDE68A', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
+                    🖼️
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, color: '#92400E', fontSize: '0.88rem' }}>Promo Flyer Image (JPG / WhatsApp)</div>
+                    <div style={{ fontSize: '0.72rem', color: '#B45309', marginTop: '2px' }}>Single-page promotional image with hero collage & agent branding</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══ PROMOTIONAL FLYER PREVIEW & DOWNLOAD MODAL ══ */}
+        {showFlyerModal && (
+          <div className="cp-modal-overlay" onClick={() => setShowFlyerModal(false)} style={{ zIndex: 99999 }}>
+            <div 
+              className="cp-modal" 
+              onClick={e => e.stopPropagation()} 
+              style={{ 
+                maxWidth: '960px', 
+                width: '95vw', 
+                maxHeight: '92vh', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                padding: '1.25rem',
+                borderRadius: '16px',
+                background: '#FFFFFF',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+                color: '#0F172A',
+                fontFamily: 'var(--font-inter, sans-serif)'
+              }}
+            >
+              <div className="cp-modal-handle" />
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.85rem', borderBottom: '1px solid #E2E8F0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <span style={{ fontSize: '1.4rem' }}>🖼️</span>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--emerald-secondary, #0F4C3A)' }}>Promotional Flyer Generator</h3>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748B', fontWeight: 500 }}>Single-page image formatted for WhatsApp Status, direct chat sharing & Instagram</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowFlyerModal(false)} 
+                  style={{ border: 'none', background: '#F1F5F9', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', cursor: 'pointer', color: '#64748B', fontWeight: 700 }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Body: Split 2-pane (Left: Flyer Preview, Right: Controls & Actions) */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 330px', gap: '1.25rem', marginTop: '1rem', flex: 1, overflow: 'hidden' }}>
+                
+                {/* Left Pane: Image Preview Box */}
+                <div style={{ 
+                  background: '#081224', 
+                  borderRadius: '12px', 
+                  border: '1px solid #1E293B', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  overflow: 'auto', 
+                  padding: '1rem',
+                  position: 'relative',
+                  minHeight: '420px'
+                }}>
+                  {flyerLoading ? (
+                    <div style={{ textAlign: 'center', color: '#FFFFFF', padding: '2rem' }}>
+                      <Loader2 size={36} className="animate-spin" style={{ margin: '0 auto 1rem', color: '#F3D279' }} />
+                      <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#F8E29A' }}>Rendering Luxury Flyer...</div>
+                      <div style={{ fontSize: '0.78rem', color: '#94A3B8', marginTop: '6px' }}>Curating attraction photos from catalog, price card & agency branding</div>
+                    </div>
+                  ) : flyerImageBase64 ? (
+                    <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%', maxHeight: '100%' }}>
+                      <img 
+                        src={flyerImageBase64} 
+                        alt="Promotional Flyer Preview" 
+                        style={{ 
+                          maxHeight: 'calc(78vh - 120px)', 
+                          maxWidth: '100%', 
+                          objectFit: 'contain', 
+                          borderRadius: '8px', 
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.6)' 
+                        }} 
+                      />
+                      {flyerSizeKb > 0 && (
+                        <div style={{ 
+                          position: 'absolute', 
+                          bottom: '10px', 
+                          right: '10px', 
+                          background: 'rgba(0,0,0,0.8)', 
+                          backdropFilter: 'blur(4px)', 
+                          color: '#F8E29A', 
+                          fontSize: '0.72rem', 
+                          fontWeight: 700, 
+                          padding: '4px 10px', 
+                          borderRadius: '6px', 
+                          border: '1px solid rgba(212,175,55,0.4)' 
+                        }}>
+                          ⚡ {flyerSizeKb} KB (Compressed JPG)
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ color: '#94A3B8', textAlign: 'center' }}>No preview available</div>
+                  )}
+                </div>
+
+                {/* Right Pane: Controls & Download Options */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', overflowY: 'auto', paddingRight: '4px' }}>
+                  
+                  {/* Headline Style */}
+                  <div style={{ background: '#F8FAFC', padding: '0.85rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#334155', marginBottom: '0.5rem' }}>
+                      Headline Formula
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => { setFlyerHeadlineType('getaway'); generateFlyerImage('getaway', flyerCustomHeadline, flyerShowPricing, flyerCurrency); }}
+                        style={{
+                          textAlign: 'left',
+                          padding: '0.45rem 0.65rem',
+                          borderRadius: '6px',
+                          border: flyerHeadlineType === 'getaway' ? '2px solid #0F4C3A' : '1px solid #CBD5E1',
+                          background: flyerHeadlineType === 'getaway' ? '#F0FDF4' : '#FFFFFF',
+                          color: flyerHeadlineType === 'getaway' ? '#0F4C3A' : '#475569',
+                          fontWeight: flyerHeadlineType === 'getaway' ? 800 : 600,
+                          fontSize: '0.78rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {guestName ? `${guestName.toUpperCase()} — ` : ''}SINGAPORE GETAWAY
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => { setFlyerHeadlineType('tour'); generateFlyerImage('tour', flyerCustomHeadline, flyerShowPricing, flyerCurrency); }}
+                        style={{
+                          textAlign: 'left',
+                          padding: '0.45rem 0.65rem',
+                          borderRadius: '6px',
+                          border: flyerHeadlineType === 'tour' ? '2px solid #0F4C3A' : '1px solid #CBD5E1',
+                          background: flyerHeadlineType === 'tour' ? '#F0FDF4' : '#FFFFFF',
+                          color: flyerHeadlineType === 'tour' ? '#0F4C3A' : '#475569',
+                          fontWeight: flyerHeadlineType === 'tour' ? 800 : 600,
+                          fontSize: '0.78rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {guestName ? `${guestName.toUpperCase()} — ` : ''}SINGAPORE TOUR
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => { setFlyerHeadlineType('custom'); }}
+                        style={{
+                          textAlign: 'left',
+                          padding: '0.45rem 0.65rem',
+                          borderRadius: '6px',
+                          border: flyerHeadlineType === 'custom' ? '2px solid #0F4C3A' : '1px solid #CBD5E1',
+                          background: flyerHeadlineType === 'custom' ? '#F0FDF4' : '#FFFFFF',
+                          color: flyerHeadlineType === 'custom' ? '#0F4C3A' : '#475569',
+                          fontWeight: flyerHeadlineType === 'custom' ? 800 : 600,
+                          fontSize: '0.78rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Custom Headline...
+                      </button>
+
+                      {flyerHeadlineType === 'custom' && (
+                        <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                          <input
+                            type="text"
+                            placeholder="e.g. SEP & OCT LAND PART PROMO"
+                            value={flyerCustomHeadline}
+                            onChange={e => setFlyerCustomHeadline(e.target.value)}
+                            style={{ flex: 1, padding: '0.4rem 0.6rem', fontSize: '0.78rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF', color: '#0F172A' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => generateFlyerImage('custom', flyerCustomHeadline, flyerShowPricing, flyerCurrency)}
+                            style={{ padding: '0.4rem 0.75rem', background: '#0F4C3A', color: '#FFFFFF', border: 'none', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            Apply
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Pricing Options */}
+                  <div style={{ background: '#F8FAFC', padding: '0.85rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155' }}>
+                        Include Pricing Ribbon
+                      </label>
+                      <input
+                        type="checkbox"
+                        checked={flyerShowPricing}
+                        onChange={e => {
+                          const val = e.target.checked
+                          setFlyerShowPricing(val)
+                          generateFlyerImage(flyerHeadlineType, flyerCustomHeadline, val, flyerCurrency)
+                        }}
+                        style={{ width: '1.1rem', height: '1.1rem', cursor: 'pointer' }}
+                      />
+                    </div>
+
+                    {flyerShowPricing && (
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => { setFlyerCurrency('SGD'); generateFlyerImage(flyerHeadlineType, flyerCustomHeadline, flyerShowPricing, 'SGD'); }}
+                          style={{
+                            flex: 1,
+                            padding: '0.4rem',
+                            borderRadius: '6px',
+                            border: flyerCurrency === 'SGD' ? '2px solid #0F4C3A' : '1px solid #CBD5E1',
+                            background: flyerCurrency === 'SGD' ? '#F0FDF4' : '#FFFFFF',
+                            color: flyerCurrency === 'SGD' ? '#0F4C3A' : '#475569',
+                            fontWeight: 700,
+                            fontSize: '0.75rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          SGD ($)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setFlyerCurrency('INR'); generateFlyerImage(flyerHeadlineType, flyerCustomHeadline, flyerShowPricing, 'INR'); }}
+                          style={{
+                            flex: 1,
+                            padding: '0.4rem',
+                            borderRadius: '6px',
+                            border: flyerCurrency === 'INR' ? '2px solid #0F4C3A' : '1px solid #CBD5E1',
+                            background: flyerCurrency === 'INR' ? '#F0FDF4' : '#FFFFFF',
+                            color: flyerCurrency === 'INR' ? '#0F4C3A' : '#475569',
+                            fontWeight: 700,
+                            fontSize: '0.75rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          INR (₹)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions Area */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: 'auto' }}>
+                    <button
+                      type="button"
+                      onClick={downloadFlyerImage}
+                      disabled={flyerLoading || !flyerImageBase64}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '0.75rem 1rem',
+                        background: '#0F4C3A',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        cursor: flyerLoading || !flyerImageBase64 ? 'not-allowed' : 'pointer',
+                        boxShadow: '0 4px 12px rgba(15,76,58,0.3)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      📥 Download Flyer Image (JPG)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={copyFlyerImageToClipboard}
+                      disabled={flyerLoading || !flyerImageBase64}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '0.7rem 1rem',
+                        background: flyerCopied ? '#DCFCE7' : '#EFF6FF',
+                        color: flyerCopied ? '#15803D' : '#1D4ED8',
+                        border: flyerCopied ? '1.5px solid #86EFAC' : '1.5px solid #BFDBFE',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        cursor: flyerLoading || !flyerImageBase64 ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {flyerCopied ? '✅ Copied to Clipboard!' : '📋 Copy Image to Clipboard'}
+                    </button>
+                  </div>
+
+                </div>
+
               </div>
             </div>
           </div>

@@ -1217,7 +1217,7 @@ export default function AdminDashboard() {
                 {[
                   { name: 'Sanity Studio CMS', path: '/studio', desc: 'Manage database schemas & live content' },
                   { name: 'B2B Agent Portal', path: '/agent-portal', desc: 'Partner agent workspace & dashboard' },
-                  { name: 'Custom Package Builder', path: '/custom-package', desc: 'FIT custom tour quotation engine' },
+                  { name: 'Custom Package Builder', path: '/custom-package', desc: 'FIT quotation engine, PDF & Promo Flyer image generator' },
                   { name: 'B2B Travel Directory', path: '/b2b-directory', desc: 'Verified agencies & DMC directory' },
                   { name: 'B2B Leads & RFQs', path: '/b2b-leads', desc: 'Live buyer inquiries & trade leads' },
                   { name: 'B2B Partnership Hub', path: '/b2b', desc: 'Trade partner registration & perks' },

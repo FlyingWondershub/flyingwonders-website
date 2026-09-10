@@ -113,7 +113,8 @@ async function startWhatsAppGateway() {
 
   // Listen to incoming messages (Group Inquiries & 2-Way Bot Commands)
   sock.ev.on('messages.upsert', async ({ messages, type }) => {
-    if (type !== 'notify') return
+    // Process both 'notify' and 'append' (some Baileys versions and group types deliver as append)
+    if (!messages || !Array.isArray(messages) || messages.length === 0) return
 
     for (const msg of messages) {
       if (msg.key.fromMe) continue
@@ -137,6 +138,8 @@ async function startWhatsAppGateway() {
       const senderJid = msg.key.participant || msg.key.remoteJid || ''
       const senderPhone = senderJid.split('@')[0]
       const senderName = msg.pushName || ''
+
+      console.log(`[FW-Gateway] 📩 Incoming [${isGroup ? 'GROUP' : 'DM'}]: ${remoteJid} from ${senderName || senderPhone} (type=${type})`)
 
       // CASE 1: 1-on-1 Direct Message to the Bot (Two-Way Interactive Commands: STOP / START / STATUS)
       if (!isGroup) {
@@ -171,12 +174,13 @@ async function startWhatsAppGateway() {
           groupName = meta.subject || 'WhatsApp Group'
           groupNameCache.set(remoteJid, groupName)
         } catch (e) {
+          console.warn(`[FW-Gateway] Could not fetch groupMetadata for ${remoteJid}:`, e.message)
           groupName = 'WhatsApp Group'
         }
       }
 
       const timestamp = new Date((msg.messageTimestamp || Date.now() / 1000) * 1000).toISOString()
-      console.log(`[FW-Gateway] 📩 Processing msg from [${groupName}] (${senderName} / ${senderPhone})`)
+      console.log(`[FW-Gateway] 🚀 Forwarding lead from [${groupName}] (${senderName} / ${senderPhone})`)
 
       try {
         const headers = { 'Content-Type': 'application/json' }
