@@ -21,10 +21,9 @@ const SINGAPORE_ATTRACTIONS_PHOTO_MAP = {
 };
 
 async function renderFlyer() {
-  const heroImg = getBase64Image(path.join(__dirname, '../public/images/hero/singapore-hero-1.jpg'));
   const logoImg = getBase64Image(path.join(__dirname, '../public/images/logo.png'));
   
-  // Use singapore-attractions page source photos with base64 local fallback
+  // Use singapore-attractions page source photos with local fallback
   const universalImg = SINGAPORE_ATTRACTIONS_PHOTO_MAP.universal || getBase64Image(path.join(__dirname, '../public/images/attractions/universal-studios-singapore/cover.jpg'));
   const nightSafariImg = SINGAPORE_ATTRACTIONS_PHOTO_MAP['night safari'] || getBase64Image(path.join(__dirname, '../public/images/attractions/night-safari-singapore/cover.jpg'));
   const gardensImg = SINGAPORE_ATTRACTIONS_PHOTO_MAP.gardens || getBase64Image(path.join(__dirname, '../public/images/attractions/gardens-by-the-bay/cover.jpg'));
@@ -55,211 +54,211 @@ async function renderFlyer() {
       position: relative;
     }
 
-    /* Top Header Bar */
-    .header-bar {
+    /* ─── Premium Header (No Skyline Image — Focus on Branding & Headline) ─── */
+    .header-section {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
-      height: 92px;
-      background: linear-gradient(180deg, rgba(6, 14, 28, 0.98) 0%, rgba(8, 18, 36, 0.85) 100%);
-      backdrop-filter: blur(8px);
+      height: 275px;
+      background: linear-gradient(180deg, #050C18 0%, #09172E 60%, #0C1E3C 100%);
+      padding: 24px 50px 20px 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-bottom: 2.5px solid #D4AF37;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       z-index: 20;
+    }
+
+    .top-branding-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 50px;
-      border-bottom: 2px solid rgba(212, 175, 55, 0.35);
     }
 
     .agency-branding {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 18px;
     }
 
     .agency-logo-container {
       background: #FFFFFF;
-      padding: 6px 14px;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      padding: 6px 16px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.35);
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 56px;
+      height: 62px;
     }
 
     .agency-logo-container img {
-      max-height: 44px;
-      max-width: 150px;
+      max-height: 50px;
+      max-width: 160px;
       object-fit: contain;
     }
 
     .agency-text-title {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 900;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       color: #FFFFFF;
       text-transform: uppercase;
     }
 
     .agency-tagline {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 2.5px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 3px;
       color: #E2B755;
       text-transform: uppercase;
+      margin-top: 2px;
     }
 
     .dmc-badge {
       background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0.05) 100%);
       border: 1.5px solid rgba(212, 175, 55, 0.6);
-      padding: 8px 20px;
+      padding: 9px 24px;
       border-radius: 30px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 800;
       letter-spacing: 2px;
       color: #F6D884;
       text-transform: uppercase;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
     }
 
-    /* Hero Section */
-    .hero-banner {
-      position: absolute;
-      top: 92px;
-      left: 0;
-      width: 100%;
-      height: 485px;
-      overflow: hidden;
-      z-index: 10;
-    }
-
-    .hero-bg-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center 25%;
-      filter: brightness(0.85) contrast(1.1);
-    }
-
-    .hero-gradient-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(180deg, 
-        rgba(8, 18, 36, 0.15) 0%, 
-        rgba(8, 18, 36, 0.45) 45%, 
-        rgba(8, 18, 36, 0.95) 85%, 
-        #081224 100%
-      );
-    }
-
-    .hero-content {
-      position: absolute;
-      bottom: 25px;
-      left: 50px;
-      right: 50px;
-      z-index: 15;
+    .hero-titles-row {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      margin-top: 10px;
     }
 
-    /* Season Ribbon */
     .season-ribbon {
       background: linear-gradient(135deg, #F3D279 0%, #C9972E 50%, #E6C265 100%);
       color: #071731;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 900;
       letter-spacing: 2px;
       text-transform: uppercase;
-      padding: 6px 20px;
+      padding: 5px 18px;
       border-radius: 4px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      margin-bottom: 8px;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
-    /* Bold Title matching user requested formula: Guest Name -- followed with Singapore Gateway or Singapore Tour */
     .hero-headline {
       font-family: 'Cinzel', serif;
-      font-size: 44px;
+      font-size: 42px;
       font-weight: 900;
       line-height: 1.15;
       text-transform: uppercase;
       letter-spacing: 1px;
-      background: linear-gradient(180deg, #FFFFFF 20%, #E2E8F0 50%, #D4AF37 100%);
+      background: linear-gradient(180deg, #FFFFFF 20%, #F1F5F9 50%, #D4AF37 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.7));
-      margin-bottom: 6px;
+      filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+      margin-bottom: 4px;
     }
 
     .hero-subtitle {
       font-family: 'Playfair Display', serif;
       font-style: italic;
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 700;
       color: #F8E29A;
       letter-spacing: 0.5px;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
     }
 
-    /* Main Body (2 Columns) */
+    /* ─── Main Content Body (y: 295 to 1465 = 1170px of space!) ─── */
     .main-body {
       position: absolute;
-      top: 575px;
+      top: 295px;
       left: 50px;
       right: 50px;
-      height: 875px;
+      height: 1150px;
       z-index: 15;
       display: flex;
       gap: 36px;
     }
 
-    /* Left Column: Inclusions & Price */
+    /* Left Column: Day-Wise Itinerary & Inclusions + Price Card */
     .left-col {
-      flex: 1.15;
+      flex: 1.12;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
     }
 
+    .inclusions-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1.5px solid rgba(212, 175, 55, 0.3);
+    }
+
+    .inclusions-header-title {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #E2B755;
+      text-transform: uppercase;
+    }
+
     .inclusions-list {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 13px;
+      flex: 1;
     }
 
     .inclusion-item {
       display: flex;
       align-items: center;
       gap: 16px;
-      background: rgba(15, 29, 56, 0.75);
+      background: rgba(15, 29, 56, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      border-left: 4.5px solid #E2B755;
-      padding: 12px 18px;
+      border-left: 5px solid #E2B755;
+      padding: 13px 18px;
       border-radius: 12px;
-      backdrop-filter: blur(4px);
       box-shadow: 0 4px 15px rgba(0,0,0,0.25);
     }
 
-    .inc-icon-circle {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
+    .day-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
       background: linear-gradient(135deg, #091D3E 0%, #153265 100%);
       border: 1.5px solid rgba(226, 183, 85, 0.7);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
       flex-shrink: 0;
       box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+    }
+
+    .day-badge-lbl {
+      font-size: 9px;
+      font-weight: 800;
+      color: #E2B755;
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+
+    .day-badge-num {
+      font-size: 18px;
+      font-weight: 900;
+      color: #FFFFFF;
+      line-height: 1.1;
     }
 
     .inc-details {
@@ -279,7 +278,7 @@ async function renderFlyer() {
     .inc-tag {
       font-size: 13px;
       font-weight: 600;
-      margin-top: 2px;
+      margin-top: 3px;
     }
 
     .inc-tag.sharing {
@@ -292,7 +291,7 @@ async function renderFlyer() {
 
     /* Luxury Price Badge */
     .price-card {
-      margin-top: 15px;
+      margin-top: 14px;
       background: linear-gradient(135deg, #06152F 0%, #0D2654 100%);
       border: 2.5px solid #D4AF37;
       border-radius: 16px;
@@ -338,7 +337,7 @@ async function renderFlyer() {
 
     .price-figure {
       font-family: 'Cinzel', serif;
-      font-size: 58px;
+      font-size: 56px;
       font-weight: 900;
       color: #FFFFFF;
       line-height: 1;
@@ -372,17 +371,19 @@ async function renderFlyer() {
       font-weight: 600;
     }
 
-    /* Right Column: Photo Collage */
+    /* ─── Right Column: 4 Landscape Attraction Cards (No Awkward Cropping!) ─── */
     .right-col {
-      flex: 1.05;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
+      flex: 1.08;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       gap: 16px;
     }
 
     .photo-card {
       position: relative;
+      flex: 1;
+      min-height: 220px;
       border-radius: 14px;
       overflow: hidden;
       border: 3.5px solid rgba(255, 255, 255, 0.9);
@@ -394,6 +395,7 @@ async function renderFlyer() {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center center;
       display: block;
     }
 
@@ -402,20 +404,34 @@ async function renderFlyer() {
       bottom: 0;
       left: 0;
       right: 0;
-      background: linear-gradient(180deg, transparent 0%, rgba(6, 14, 28, 0.92) 100%);
-      padding: 24px 12px 10px 12px;
+      background: linear-gradient(180deg, transparent 0%, rgba(6, 14, 28, 0.94) 100%);
+      padding: 26px 16px 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .photo-label {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 800;
       color: #FFFFFF;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
       text-shadow: 0 2px 6px rgba(0,0,0,0.8);
     }
 
-    /* Features Badges Strip */
+    .photo-tag-pill {
+      background: rgba(212, 175, 55, 0.2);
+      border: 1px solid rgba(212, 175, 55, 0.6);
+      color: #F8E29A;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 12px;
+      letter-spacing: 1px;
+    }
+
+    /* ─── Features Badges Strip ─── */
     .features-strip {
       position: absolute;
       top: 1465px;
@@ -456,7 +472,7 @@ async function renderFlyer() {
       background: rgba(212, 175, 55, 0.3);
     }
 
-    /* Footer / Agent Details */
+    /* ─── Footer / Agent Details ─── */
     .footer-bar {
       position: absolute;
       top: 1537px;
@@ -563,81 +579,107 @@ async function renderFlyer() {
 </head>
 <body>
 
-  <!-- Top Header Bar -->
-  <div class="header-bar">
-    <div class="agency-branding">
-      ${logoImg ? `
-      <div class="agency-logo-container">
-        <img src="${logoImg}" alt="Agency Logo" />
+  <!-- Top Header Section (No Skyline Image — Focus on Logo & Headline) -->
+  <div class="header-section">
+    <div class="top-branding-row">
+      <div class="agency-branding">
+        ${logoImg ? `
+        <div class="agency-logo-container">
+          <img src="${logoImg}" alt="Agency Logo" />
+        </div>
+        ` : ''}
+        <div>
+          <div class="agency-text-title">FLYING WONDERS DMC</div>
+          <div class="agency-tagline">SINGAPORE B2B DESTINATION SPECIALIST</div>
+        </div>
       </div>
-      ` : ''}
-      <div>
-        <div class="agency-text-title">FLYING WONDERS DMC</div>
-        <div class="agency-tagline">SINGAPORE B2B DESTINATION SPECIALIST</div>
-      </div>
+      <div class="dmc-badge">★ EXCLUSIVE DMC RATES ★</div>
     </div>
-    <div class="dmc-badge">★ EXCLUSIVE DMC RATES ★</div>
-  </div>
 
-  <!-- Hero Section -->
-  <div class="hero-banner">
-    <img class="hero-bg-img" src="${heroImg}" alt="Singapore Skyline" />
-    <div class="hero-gradient-overlay"></div>
-    <div class="hero-content">
+    <div class="hero-titles-row">
       <div class="season-ribbon">✨ SPECIAL PROMOTIONAL TOUR</div>
       <!-- User requested headline: Guest Name -- followed with Singapore Gateway or Singapore Tour -->
       <h1 class="hero-headline">MR. AMIT SHARMA — SINGAPORE GETAWAY</h1>
-      <div class="hero-subtitle">4 Days / 3 Nights (Land Package & Transfers)</div>
+      <div class="hero-subtitle">4 Days / 3 Nights · Land Package (Without Hotels)</div>
     </div>
   </div>
 
   <!-- Main Body -->
   <div class="main-body">
-    <!-- Left Column: Inclusions & Price -->
+    <!-- Left Column: Day-Wise Itinerary & Inclusions + Price Card -->
     <div class="left-col">
+      <div class="inclusions-header">
+        <span style="font-size: 16px;">📋</span>
+        <span class="inclusions-header-title">DAY-WISE TOUR ITINERARY & INCLUSIONS</span>
+      </div>
+
       <div class="inclusions-list">
+        <!-- Day 1 -->
         <div class="inclusion-item">
-          <div class="inc-icon-circle">🚗</div>
+          <div class="day-badge">
+            <span class="day-badge-lbl">DAY</span>
+            <span class="day-badge-num">01</span>
+          </div>
           <div class="inc-details">
             <div class="inc-title">Return Airport Transfers</div>
-            <div class="inc-tag private">Private Air-Conditioned Vehicle</div>
+            <div class="inc-tag private">Private Air-Conditioned Vehicle (Changi ⇄ Hotel)</div>
           </div>
         </div>
 
+        <!-- Day 2 -->
         <div class="inclusion-item">
-          <div class="inc-icon-circle">🦁</div>
+          <div class="day-badge">
+            <span class="day-badge-lbl">DAY</span>
+            <span class="day-badge-num">02</span>
+          </div>
           <div class="inc-details">
             <div class="inc-title">Night Safari + Tram Ride</div>
-            <div class="inc-tag sharing">Admission & Tram Ride Included (Sharing)</div>
+            <div class="inc-tag sharing">World's 1st Nocturnal Wildlife Park (Sharing)</div>
           </div>
         </div>
 
+        <!-- Day 3 -->
         <div class="inclusion-item">
-          <div class="inc-icon-circle">🏙️</div>
+          <div class="day-badge">
+            <span class="day-badge-lbl">DAY</span>
+            <span class="day-badge-num">03</span>
+          </div>
           <div class="inc-details">
             <div class="inc-title">Singapore Panoramic Drive</div>
             <div class="inc-tag sharing">Merlion Park, Civic District & Marina Bay (Sharing)</div>
           </div>
         </div>
 
+        <!-- Day 4 -->
         <div class="inclusion-item">
-          <div class="inc-icon-circle">🚡</div>
+          <div class="day-badge">
+            <span class="day-badge-lbl">DAY</span>
+            <span class="day-badge-num">04</span>
+          </div>
           <div class="inc-details">
             <div class="inc-title">Sentosa Cable Car + Wings of Time</div>
-            <div class="inc-tag sharing">Mount Faber Line & Evening Spectacular (Sharing)</div>
+            <div class="inc-tag sharing">Mount Faber Sky Network & Laser Fireworks Show</div>
           </div>
         </div>
 
+        <!-- Day 5 -->
         <div class="inclusion-item">
-          <div class="inc-icon-circle">🎢</div>
+          <div class="day-badge">
+            <span class="day-badge-lbl">DAY</span>
+            <span class="day-badge-num">05</span>
+          </div>
           <div class="inc-details">
             <div class="inc-title">Universal Studios Singapore</div>
-            <div class="inc-tag sharing">1-Day Full Access Ticket (Sharing)</div>
+            <div class="inc-tag sharing">1-Day Full Access Ticket & Thrill Rides (Sharing)</div>
           </div>
         </div>
 
+        <!-- Day 6 -->
         <div class="inclusion-item">
-          <div class="inc-icon-circle">🌸</div>
+          <div class="day-badge">
+            <span class="day-badge-lbl">DAY</span>
+            <span class="day-badge-num">06</span>
+          </div>
           <div class="inc-details">
             <div class="inc-title">Gardens by the Bay</div>
             <div class="inc-tag sharing">Flower Dome + Cloud Forest Double Domes (Sharing)</div>
@@ -661,39 +703,47 @@ async function renderFlyer() {
       </div>
     </div>
 
-    <!-- Right Column: Photo Collage -->
+    <!-- Right Column: 4 Landscape Attraction Cards (Sourced from Singapore Attractions, Wide Proportions) -->
     <div class="right-col">
+      <!-- 1. Night Safari -->
       <div class="photo-card">
-        <img src="${nightSafariImg}" alt="Night Safari" />
+        <img src="${nightSafariImg}" alt="Night Safari" style="object-position: center 35%;" />
         <div class="photo-label-bar">
-          <div class="photo-label">Night Safari</div>
+          <div class="photo-label">Night Safari Wildlife Park</div>
+          <div class="photo-tag-pill">MANDAI WILDLIFE</div>
         </div>
       </div>
 
+      <!-- 2. Sentosa Cable Car -->
       <div class="photo-card">
-        <img src="${cableCarImg}" alt="Sentosa Cable Car" />
+        <img src="${cableCarImg}" alt="Sentosa Cable Car" style="object-position: center 40%;" />
         <div class="photo-label-bar">
-          <div class="photo-label">Sentosa Island</div>
+          <div class="photo-label">Sentosa Island & Cable Car</div>
+          <div class="photo-tag-pill">SCENIC SKY NETWORK</div>
         </div>
       </div>
 
+      <!-- 3. Universal Studios -->
       <div class="photo-card">
-        <img src="${universalImg}" alt="Universal Studios" />
+        <img src="${universalImg}" alt="Universal Studios" style="object-position: center 30%;" />
         <div class="photo-label-bar">
-          <div class="photo-label">Universal Studios</div>
+          <div class="photo-label">Universal Studios Singapore</div>
+          <div class="photo-tag-pill">THEME PARK</div>
         </div>
       </div>
 
+      <!-- 4. Gardens by the Bay -->
       <div class="photo-card">
-        <img src="${gardensImg}" alt="Gardens by the Bay" />
+        <img src="${gardensImg}" alt="Gardens by the Bay" style="object-position: center 40%;" />
         <div class="photo-label-bar">
-          <div class="photo-label">Gardens by the Bay</div>
+          <div class="photo-label">Gardens by the Bay Double Domes</div>
+          <div class="photo-tag-pill">CLOUD FOREST & FLOWER DOME</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Features Strip -->
+  <!-- Features Strip: With/Without Hotels, Private/Group Transfers, Guaranteed Departures, Best Price -->
   <div class="features-strip">
     <div class="feature-item">
       <span class="feature-icon">🏨</span>
@@ -771,7 +821,7 @@ async function renderFlyer() {
   const outputPath = path.join(__dirname, '../sample_flyer.jpg');
   const artifactPath = 'C:\\Users\\Flying Wonders\\.gemini\\antigravity\\brain\\61d378aa-b049-4400-a34a-0df4d7e82141\\sample_flyer.jpg';
 
-  console.log('Launching browser...');
+  console.log('Launching browser for test sample...');
   const browser = await puppeteer.launch({
     headless: 'new',
     executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -780,7 +830,8 @@ async function renderFlyer() {
 
   const page = await browser.newPage();
   await page.setViewport({ width: 1200, height: 1800, deviceScaleFactor: 1 });
-  await page.setContent(html, { waitUntil: 'networkidle0' });
+  await page.setContent(html, { waitUntil: 'domcontentloaded' });
+  await new Promise(r => setTimeout(r, 400));
 
   console.log('Taking screenshot...');
   const buffer = await page.screenshot({

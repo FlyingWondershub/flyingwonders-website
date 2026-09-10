@@ -38,6 +38,7 @@ export interface FlyerInclusion {
   tag: string
   type: 'private' | 'sharing'
   icon: string
+  dayNumber?: string | number
 }
 
 export interface FlyerPayload {
@@ -151,7 +152,48 @@ function drawRoundedRect(
   if (stroke) ctx.stroke()
 }
 
+export function getAttractionCategoryTag(name: string): string {
+  const lower = name.toLowerCase()
+  if (lower.includes('universal')) return 'THEME PARK'
+  if (lower.includes('night safari')) return 'MANDAI WILDLIFE'
+  if (lower.includes('zoo')) return 'MANDAI WILDLIFE'
+  if (lower.includes('bird')) return 'MANDAI WILDLIFE'
+  if (lower.includes('river')) return 'MANDAI WILDLIFE'
+  if (lower.includes('cable') || lower.includes('sentosa') || lower.includes('wings')) return 'SCENIC SKY NETWORK'
+  if (lower.includes('garden')) return 'CLOUD FOREST & FLOWER DOME'
+  if (lower.includes('sands') || lower.includes('mbs') || lower.includes('skypark')) return 'MARINA BAY SKYPARK'
+  if (lower.includes('flyer')) return 'PANORAMIC FLIGHT'
+  if (lower.includes('luge')) return 'SENTOSA ATTRACTION'
+  if (lower.includes('aquarium')) return 'RESORTS WORLD SENTOSA'
+  return 'SINGAPORE ATTRACTION'
+}
+
+export function getAttractionCleanLabel(name: string): string {
+  const lower = name.toLowerCase()
+  if (lower.includes('night safari')) return 'Night Safari Wildlife Park'
+  if (lower.includes('cable car') || (lower.includes('sentosa') && !lower.includes('universal'))) return 'Sentosa Island & Cable Car'
+  if (lower.includes('universal')) return 'Universal Studios Singapore'
+  if (lower.includes('garden')) return 'Gardens by the Bay Double Domes'
+  if (lower.includes('bird')) return 'Bird Paradise Mandai'
+  if (lower.includes('river')) return 'River Wonders Singapore'
+  if (lower.includes('zoo')) return 'Singapore Zoological Gardens'
+  if (lower.includes('mbs') || lower.includes('sands')) return 'Marina Bay Sands SkyPark'
+  if (lower.includes('flyer')) return 'Singapore Flyer Observation Wheel'
+  if (lower.includes('aquarium')) return 'S.E.A. Aquarium Sentosa'
+  if (lower.includes('luge')) return 'Skyline Luge & Skyride'
+  return name.replace(/\(.*?\)/g, '').replace(/-\s*Fixed\s*Date.*/i, '').trim()
+}
+
 export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanvasElement> {
+  // Ensure document fonts are loaded if browser environment supports it
+  if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+    try {
+      await document.fonts.ready
+    } catch {
+      // Continue gracefully
+    }
+  }
+
   const canvas = document.createElement('canvas')
   canvas.width = 1200
   canvas.height = 1800
@@ -163,57 +205,54 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
   ctx.fillRect(0, 0, 1200, 1800)
 
   // 1. Resolve Images
-  const heroSrc = '/images/hero/singapore-hero-1.jpg'
   const logoSrc = data.agency?.logoUrl || '/images/logo.png'
 
-  // Match 4 attractions
+  // Default 4 distinct attractions with wide landscape photos
   const distinctKeywords = [
-    { key: 'night safari', label: 'NIGHT SAFARI' },
-    { key: 'cable car', label: 'SENTOSA ISLAND' },
-    { key: 'universal', label: 'UNIVERSAL STUDIOS' },
-    { key: 'gardens', label: 'GARDENS BY THE BAY' }
+    { key: 'night safari', label: 'Night Safari Wildlife Park', tag: 'MANDAI WILDLIFE' },
+    { key: 'cable car', label: 'Sentosa Island & Cable Car', tag: 'SCENIC SKY NETWORK' },
+    { key: 'universal', label: 'Universal Studios Singapore', tag: 'THEME PARK' },
+    { key: 'gardens', label: 'Gardens by the Bay Double Domes', tag: 'CLOUD FOREST & FLOWER DOME' }
   ]
 
   // Override with user attractions if available
-  const userAttrNames = (data.attractionPhotos || []).map(p => p.name.toLowerCase())
-  const selectedCards: { label: string; url: string }[] = []
+  const selectedCards: { label: string; tag: string; url: string }[] = []
 
-  // Try matching user selections first
   for (const item of (data.attractionPhotos || [])) {
     if (selectedCards.length >= 4) break
     const lower = item.name.toLowerCase()
     let matchedUrl = item.photoUrl || ''
-    let label = item.name.replace(/\(.*?\)/g, '').replace(/-\s*Fixed\s*Date.*/i, '').trim().toUpperCase()
+    const label = getAttractionCleanLabel(item.name)
+    const tag = getAttractionCategoryTag(item.name)
 
     if (!matchedUrl) {
       for (const [k, url] of Object.entries(SINGAPORE_ATTRACTIONS_PHOTO_MAP)) {
         if (lower.includes(k)) {
           matchedUrl = url
-          label = k.toUpperCase()
           break
         }
       }
     }
 
     if (matchedUrl && !selectedCards.some(c => c.label === label)) {
-      selectedCards.push({ label, url: matchedUrl })
+      selectedCards.push({ label, tag, url: matchedUrl })
     }
   }
 
   // Fill remaining slots from defaults
   for (const def of distinctKeywords) {
     if (selectedCards.length >= 4) break
-    if (!selectedCards.some(c => c.label.includes(def.label) || def.label.includes(c.label))) {
+    if (!selectedCards.some(c => c.label.toLowerCase().includes(def.key) || def.label.toLowerCase().includes(c.label.toLowerCase()))) {
       selectedCards.push({
         label: def.label,
+        tag: def.tag,
         url: SINGAPORE_ATTRACTIONS_PHOTO_MAP[def.key] || LOCAL_FALLBACK_PHOTOS[def.key]
       })
     }
   }
 
   // Preload and proxy all images concurrently
-  const [heroImg, logoImg, ...photoImgs] = await Promise.all([
-    loadImage(heroSrc),
+  const [logoImg, ...photoImgs] = await Promise.all([
     resolveProxyImage(logoSrc).then(url => loadImage(url)),
     ...selectedCards.map(async (c, i) => {
       const proxyUrl = await resolveProxyImage(c.url)
@@ -226,30 +265,31 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
     })
   ])
 
-  // ── 2. Top Header Bar (0 to 92) ──
-  const headGrad = ctx.createLinearGradient(0, 0, 0, 92)
-  headGrad.addColorStop(0, 'rgba(6, 14, 28, 0.98)')
-  headGrad.addColorStop(1, 'rgba(8, 18, 36, 0.85)')
+  // ── 2. Top Header Bar (0 to 275) — Avoid Skyline Image, Focus on Branding & Headline ──
+  const headGrad = ctx.createLinearGradient(0, 0, 0, 275)
+  headGrad.addColorStop(0, '#050C18')
+  headGrad.addColorStop(0.6, '#09172E')
+  headGrad.addColorStop(1, '#0C1E3C')
   ctx.fillStyle = headGrad
-  ctx.fillRect(0, 0, 1200, 92)
+  ctx.fillRect(0, 0, 1200, 275)
 
-  // Gold divider
-  ctx.fillStyle = 'rgba(212, 175, 55, 0.35)'
-  ctx.fillRect(0, 90, 1200, 2)
+  // Gold bottom border
+  ctx.fillStyle = '#D4AF37'
+  ctx.fillRect(0, 273, 1200, 2.5)
 
-  // Agency Logo Card
+  // Top Branding Row
   let textStartX = 50
   if (logoImg && logoImg.naturalWidth > 0) {
     const lBoxW = 150
-    const lBoxH = 56
+    const lBoxH = 62
     const lBoxX = 50
-    const lBoxY = 18
+    const lBoxY = 22
     ctx.fillStyle = '#FFFFFF'
-    drawRoundedRect(ctx, lBoxX, lBoxY, lBoxW, lBoxH, 8, true, false)
+    drawRoundedRect(ctx, lBoxX, lBoxY, lBoxW, lBoxH, 10, true, false)
 
     // Draw logo inside container
-    const maxW = lBoxW - 16
-    const maxH = lBoxH - 10
+    const maxW = lBoxW - 20
+    const maxH = lBoxH - 12
     const ratio = logoImg.naturalWidth / logoImg.naturalHeight
     let fitW = maxW
     let fitH = fitW / ratio
@@ -261,58 +301,42 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
     const ly = lBoxY + (lBoxH - fitH) / 2
     ctx.drawImage(logoImg, lx, ly, fitW, fitH)
 
-    textStartX = lBoxX + lBoxW + 16
+    textStartX = lBoxX + lBoxW + 18
   }
 
   // Agency Title & Tagline
   ctx.fillStyle = '#FFFFFF'
-  ctx.font = '900 22px Inter, sans-serif'
+  ctx.font = '900 24px Inter, -apple-system, sans-serif'
   const agencyName = (data.agency?.name || 'FLYING WONDERS DMC').toUpperCase()
-  ctx.fillText(agencyName, textStartX, 44)
+  ctx.fillText(agencyName, textStartX, 48)
 
   ctx.fillStyle = '#E2B755'
-  ctx.font = '600 11px Inter, sans-serif'
+  ctx.font = '700 11.5px Inter, -apple-system, sans-serif'
   const agencyTagline = (data.agency?.tagline || 'SINGAPORE B2B DESTINATION SPECIALIST').toUpperCase()
-  ctx.fillText(agencyTagline, textStartX, 64)
+  ctx.fillText(agencyTagline, textStartX, 70)
 
   // DMC Badge on Right
   const badgeW = 270
   const badgeH = 40
   const badgeX = 1200 - 50 - badgeW
-  const badgeY = 26
+  const badgeY = 32
   ctx.fillStyle = 'rgba(212, 175, 55, 0.12)'
   ctx.strokeStyle = 'rgba(212, 175, 55, 0.6)'
   ctx.lineWidth = 1.5
   drawRoundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 20, true, true)
 
   ctx.fillStyle = '#F6D884'
-  ctx.font = '800 12px Inter, sans-serif'
+  ctx.font = '800 12.5px Inter, sans-serif'
   ctx.textAlign = 'center'
   ctx.fillText('★ EXCLUSIVE DMC RATES ★', badgeX + badgeW / 2, badgeY + 25)
   ctx.textAlign = 'left'
 
-  // ── 3. Hero Section (92 to 575) ──
-  const heroY = 92
-  const heroH = 485
-  if (heroImg && heroImg.naturalWidth > 0) {
-    drawCoverImage(ctx, heroImg, 0, heroY, 1200, heroH)
-  }
-
-  // Hero Gradient Overlay
-  const heroGrad = ctx.createLinearGradient(0, heroY, 0, heroY + heroH)
-  heroGrad.addColorStop(0, 'rgba(8, 18, 36, 0.15)')
-  heroGrad.addColorStop(0.45, 'rgba(8, 18, 36, 0.45)')
-  heroGrad.addColorStop(0.85, 'rgba(8, 18, 36, 0.95)')
-  heroGrad.addColorStop(1, '#081224')
-  ctx.fillStyle = heroGrad
-  ctx.fillRect(0, heroY, 1200, heroH)
-
-  // Hero Content: Season Ribbon
+  // Season / Promotional Tour Ribbon
   const ribbonX = 50
-  const ribbonY = 430
-  const ribbonH = 32
+  const ribbonY = 110
+  const ribbonH = 30
   const ribbonText = `✨ ${(data.travelDates || 'SPECIAL PROMOTIONAL TOUR').toUpperCase()}`
-  ctx.font = '900 13px Inter, sans-serif'
+  ctx.font = '900 12px Inter, sans-serif'
   const ribbonTextW = ctx.measureText(ribbonText).width
   const ribbonW = ribbonTextW + 36
 
@@ -324,7 +348,7 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
   drawRoundedRect(ctx, ribbonX, ribbonY, ribbonW, ribbonH, 4, true, false)
 
   ctx.fillStyle = '#071731'
-  ctx.fillText(ribbonText, ribbonX + 18, ribbonY + 21)
+  ctx.fillText(ribbonText, ribbonX + 18, ribbonY + 20)
 
   // Hero Headline: Guest Name -- followed with Singapore Gateway or Singapore Tour
   let headlineText = (data.headline || '').trim().toUpperCase()
@@ -333,96 +357,139 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
     headlineText = cleanGuest ? `${cleanGuest} — SINGAPORE GETAWAY` : 'SINGAPORE GETAWAY'
   }
 
-  ctx.font = '900 42px Cinzel, "Playfair Display", Georgia, serif'
-  const headTextGrad = ctx.createLinearGradient(50, 480, 50, 520)
+  let fontSize = 42
+  ctx.font = `900 ${fontSize}px Cinzel, "Playfair Display", Georgia, serif`
+  while (ctx.measureText(headlineText).width > 1100 && fontSize > 26) {
+    fontSize -= 2
+    ctx.font = `900 ${fontSize}px Cinzel, "Playfair Display", Georgia, serif`
+  }
+
+  const headTextGrad = ctx.createLinearGradient(50, 150, 50, 190)
   headTextGrad.addColorStop(0, '#FFFFFF')
-  headTextGrad.addColorStop(0.5, '#E2E8F0')
+  headTextGrad.addColorStop(0.5, '#F1F5F9')
   headTextGrad.addColorStop(1, '#D4AF37')
   ctx.fillStyle = headTextGrad
-
-  // Measure and truncate if too long
-  let displayHead = headlineText
-  if (ctx.measureText(displayHead).width > 1100) {
-    ctx.font = '900 36px Cinzel, "Playfair Display", Georgia, serif'
-  }
-  ctx.fillText(displayHead, 50, 515)
+  ctx.fillText(headlineText, 50, 186)
 
   // Subtitle
   const nights = data.nightsCount || 3
   const hotelSuffix = data.hotelRequired 
-    ? `(With ${data.hotelName ? data.hotelName.split(' ').slice(0, 2).join(' ') : 'Hotel Accommodation'})` 
-    : '(Land Package & Transfers)'
+    ? `· Land Package (With ${data.hotelName ? data.hotelName.split(' ').slice(0, 3).join(' ') : 'Hotel Accommodation'})` 
+    : '· Land Package (Without Hotels)'
   const subtitleText = `${nights + 1} Days / ${nights} Nights ${hotelSuffix}`
-  ctx.font = 'italic 700 25px "Playfair Display", Georgia, serif'
+  ctx.font = 'italic 700 23px "Playfair Display", Georgia, serif'
   ctx.fillStyle = '#F8E29A'
-  ctx.fillText(subtitleText, 50, 552)
+  ctx.fillText(subtitleText, 50, 230)
 
-  // ── 4. Main Body: Left Column (Inclusions & Price) ──
-  const incY = 590
-  const inclusions = (data.inclusions && data.inclusions.length > 0)
-    ? data.inclusions.slice(0, 6)
-    : [
-        { title: 'Return Airport Transfers', tag: data.isPrivateTransfers ? 'Private Air-Conditioned Vehicle' : 'Sharing Seat-in-Coach (SIC)', type: (data.isPrivateTransfers ? 'private' : 'sharing') as 'private' | 'sharing', icon: '🚗' },
-        { title: 'Night Safari + Tram Ride', tag: 'Admission & Tram Ride Included (Sharing)', type: 'sharing' as const, icon: '🦁' },
-        { title: 'Singapore Panoramic Drive', tag: 'Merlion Park, Civic District & Marina Bay (Sharing)', type: 'sharing' as const, icon: '🏙️' },
-        { title: 'Sentosa Cable Car + Wings of Time', tag: 'Mount Faber Line & Evening Spectacular (Sharing)', type: 'sharing' as const, icon: '🚡' },
-        { title: 'Universal Studios Singapore', tag: '1-Day Full Access Ticket (Sharing)', type: 'sharing' as const, icon: '🎢' },
-        { title: 'Gardens by the Bay', tag: 'Flower Dome + Cloud Forest Double Domes (Sharing)', type: 'sharing' as const, icon: '🌸' }
-      ]
+  // ── 3. Main Body (y: 295 to 1445) ──
+  const leftColX = 50
+  const leftColW = 535
+  const rightColX = 620
+  const rightColW = 530
+
+  // ── 3A. Left Column: Day-Wise Itinerary & Inclusions ──
+  const headerY = 328
+  ctx.font = '16px sans-serif'
+  ctx.fillText('📋', leftColX, headerY)
+
+  ctx.fillStyle = '#E2B755'
+  ctx.font = '900 13px Inter, sans-serif'
+  ctx.fillText('DAY-WISE TOUR ITINERARY & INCLUSIONS', leftColX + 26, headerY - 1)
+
+  ctx.fillStyle = 'rgba(212, 175, 55, 0.3)'
+  ctx.fillRect(leftColX, headerY + 12, leftColW, 1.5)
+
+  // Default Inclusions
+  const defaultInclusions: FlyerInclusion[] = [
+    { dayNumber: '01', title: 'Return Airport Transfers', tag: data.isPrivateTransfers ? 'Private Air-Conditioned Vehicle (Changi ⇄ Hotel)' : 'Sharing Seat-in-Coach (SIC)', type: data.isPrivateTransfers ? 'private' : 'sharing', icon: '🚗' },
+    { dayNumber: '02', title: 'Night Safari + Tram Ride', tag: "World's 1st Nocturnal Wildlife Park (Sharing)", type: 'sharing', icon: '🦁' },
+    { dayNumber: '03', title: 'Singapore Panoramic Drive', tag: 'Merlion Park, Civic District & Marina Bay (Sharing)', type: 'sharing', icon: '🏙️' },
+    { dayNumber: '04', title: 'Sentosa Cable Car + Wings of Time', tag: 'Mount Faber Sky Network & Laser Fireworks Show', type: 'sharing', icon: '🚡' },
+    { dayNumber: '05', title: 'Universal Studios Singapore', tag: '1-Day Full Access Ticket & Thrill Rides (Sharing)', type: 'sharing', icon: '🎢' },
+    { dayNumber: '06', title: 'Gardens by the Bay', tag: 'Flower Dome + Cloud Forest Double Domes (Sharing)', type: 'sharing', icon: '🌸' }
+  ]
+
+  let inclusions: FlyerInclusion[] = (data.inclusions && data.inclusions.length > 0)
+    ? [...data.inclusions.slice(0, 6)]
+    : defaultInclusions
+
+  // Pad if fewer than 6 items to ensure full vertical balance
+  if (inclusions.length < 6) {
+    for (const def of defaultInclusions) {
+      if (inclusions.length >= 6) break
+      if (!inclusions.some(inc => inc.title.toLowerCase().includes(def.title.toLowerCase().slice(0, 10)))) {
+        inclusions.push({
+          ...def,
+          dayNumber: String(inclusions.length + 1).padStart(2, '0')
+        })
+      }
+    }
+  }
+
+  const listY = 358
+  const itemH = 110
+  const itemGap = 16
 
   inclusions.forEach((inc, i) => {
-    const cardY = incY + i * 92
-    const cardW = 530
-    const cardH = 76
-    const cardX = 50
+    const cardY = listY + i * (itemH + itemGap)
 
     // Card background
-    ctx.fillStyle = 'rgba(15, 29, 56, 0.75)'
+    ctx.fillStyle = 'rgba(15, 29, 56, 0.85)'
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)'
     ctx.lineWidth = 1
-    drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 12, true, true)
+    drawRoundedRect(ctx, leftColX, cardY, leftColW, itemH, 12, true, true)
 
-    // Left gold bar
+    // Left gold vertical accent
     ctx.fillStyle = '#E2B755'
-    drawRoundedRect(ctx, cardX, cardY, 5, cardH, 2, true, false)
+    drawRoundedRect(ctx, leftColX, cardY, 5, itemH, 2, true, false)
 
-    // Circular Icon Badge
-    const cx = cardX + 38
-    const cy = cardY + 38
-    const r = 22
-    const iconGrad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r)
-    iconGrad.addColorStop(0, '#091D3E')
-    iconGrad.addColorStop(1, '#153265')
-    ctx.fillStyle = iconGrad
+    // Day Badge
+    const bx = leftColX + 16
+    const by = cardY + (itemH - 56) / 2
+    const bw = 54
+    const bh = 56
+    const br = 10
+
+    const bGrad = ctx.createLinearGradient(bx, by, bx + bw, by + bh)
+    bGrad.addColorStop(0, '#091D3E')
+    bGrad.addColorStop(1, '#153265')
+    ctx.fillStyle = bGrad
     ctx.strokeStyle = 'rgba(226, 183, 85, 0.7)'
     ctx.lineWidth = 1.5
-    ctx.beginPath()
-    ctx.arc(cx, cy, r, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
+    drawRoundedRect(ctx, bx, by, bw, bh, br, true, true)
 
-    // Icon Emoji
-    ctx.font = '20px sans-serif'
+    ctx.fillStyle = '#E2B755'
+    ctx.font = '800 10px Inter, sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText(inc.icon || '✨', cx, cy + 7)
+    ctx.fillText('DAY', bx + bw / 2, by + 18)
+
+    const dayNumStr = (inc.dayNumber || (i + 1)).toString().padStart(2, '0')
+    ctx.fillStyle = '#FFFFFF'
+    ctx.font = '900 22px Inter, sans-serif'
+    ctx.fillText(dayNumStr, bx + bw / 2, by + 44)
     ctx.textAlign = 'left'
 
-    // Title
+    // Details
+    const tx = leftColX + 86
     ctx.fillStyle = '#FFFFFF'
     ctx.font = '800 16px Inter, sans-serif'
-    ctx.fillText(inc.title.toUpperCase(), cardX + 72, cardY + 33)
+    ctx.fillText(inc.title.toUpperCase(), tx, cardY + 36)
 
-    // Tag
     ctx.fillStyle = inc.type === 'private' ? '#6EE7B7' : '#93C5FD'
     ctx.font = '600 13px Inter, sans-serif'
-    ctx.fillText(inc.tag, cardX + 72, cardY + 55)
+    ctx.fillText(inc.tag, tx, cardY + 62)
+
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = '500 11.5px Inter, sans-serif'
+    const extraNote = inc.type === 'private' ? 'Dedicated Chauffeur & Sanitized Vehicle' : 'Pre-booked Admission · Instant QR Access'
+    ctx.fillText(extraNote, tx, cardY + 86)
   })
 
-  // Price Card
-  const priceCardX = 50
-  const priceCardY = 1205
-  const priceCardW = 530
-  const priceCardH = 175
+  // ── 3B. Left Column Bottom: Luxury Price Card ──
+  const priceCardX = leftColX
+  const priceCardY = 1234
+  const priceCardW = leftColW
+  const priceCardH = 150
 
   const priceGrad = ctx.createLinearGradient(priceCardX, priceCardY, priceCardX + priceCardW, priceCardY + priceCardH)
   priceGrad.addColorStop(0, '#06152F')
@@ -436,30 +503,32 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
   if (showPrice) {
     ctx.fillStyle = '#E2B755'
     ctx.font = '800 12px Inter, sans-serif'
-    ctx.fillText('SPECIAL PROMOTIONAL RATE', priceCardX + 26, priceCardY + 35)
+    ctx.fillText('SPECIAL PROMOTIONAL RATE', priceCardX + 24, priceCardY + 34)
 
     ctx.fillStyle = '#F8E29A'
     ctx.font = '900 24px Inter, sans-serif'
-    ctx.fillText(data.pricing?.currency || 'SGD', priceCardX + 26, priceCardY + 95)
+    ctx.fillText(data.pricing?.currency || 'SGD', priceCardX + 24, priceCardY + 98)
 
     ctx.fillStyle = '#FFFFFF'
     ctx.font = '900 56px Cinzel, "Playfair Display", Inter, serif'
     const fig = data.pricing?.figure || '315'
-    ctx.fillText(fig, priceCardX + 90, priceCardY + 100)
+    ctx.fillText(fig, priceCardX + 92, priceCardY + 104)
 
     // Right Unit Tag
-    const unitX = priceCardX + priceCardW - 195
-    const unitY = priceCardY + 52
-    const unitGrad = ctx.createLinearGradient(unitX, unitY, unitX + 170, unitY + 36)
+    const unitW = 168
+    const unitH = 34
+    const unitX = priceCardX + priceCardW - unitW - 24
+    const unitY = priceCardY + 48
+    const unitGrad = ctx.createLinearGradient(unitX, unitY, unitX + unitW, unitY + unitH)
     unitGrad.addColorStop(0, '#F3D279')
     unitGrad.addColorStop(1, '#C9972E')
     ctx.fillStyle = unitGrad
-    drawRoundedRect(ctx, unitX, unitY, 170, 36, 6, true, false)
+    drawRoundedRect(ctx, unitX, unitY, unitW, unitH, 6, true, false)
 
     ctx.fillStyle = '#071731'
-    ctx.font = '900 13px Inter, sans-serif'
+    ctx.font = '900 12.5px Inter, sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText(data.pricing?.label || 'PER PERSON ONLY', unitX + 85, unitY + 23)
+    ctx.fillText(data.pricing?.label || 'PER PERSON ONLY', unitX + unitW / 2, unitY + 22)
     ctx.textAlign = 'left'
 
     // Subtitle conversion note
@@ -467,67 +536,82 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
       ctx.fillStyle = '#94A3B8'
       ctx.font = '600 12px Inter, sans-serif'
       ctx.textAlign = 'right'
-      ctx.fillText(data.pricing.inrEquivalent, priceCardX + priceCardW - 25, priceCardY + 115)
+      ctx.fillText(data.pricing.inrEquivalent, priceCardX + priceCardW - 24, priceCardY + 112)
       ctx.textAlign = 'left'
     }
   } else {
     ctx.fillStyle = '#E2B755'
     ctx.font = '800 18px Inter, sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillText('★ EXCLUSIVE ALL-INCLUSIVE B2B PACKAGE ★', priceCardX + priceCardW / 2, priceCardY + 95)
+    ctx.fillText('★ EXCLUSIVE ALL-INCLUSIVE B2B PACKAGE ★', priceCardX + priceCardW / 2, priceCardY + 74)
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = '600 12.5px Inter, sans-serif'
+    ctx.fillText('Contact your travel consultant for custom pricing & group rates', priceCardX + priceCardW / 2, priceCardY + 102)
     ctx.textAlign = 'left'
   }
 
-  // ── 5. Main Body: Right Column (Photo Collage) ──
-  const photoColX = 610
-  const photoW = 260
-  const photoH = 395
-  const gap = 20
+  // ── 3C. Right Column: 4 Landscape Attraction Cards (No Cropping!) ──
+  const photoStartY = 330
+  const photoH = 250
+  const photoGap = 18
 
-  const photoPositions = [
-    { x: photoColX, y: 590 },
-    { x: photoColX + photoW + gap, y: 590 },
-    { x: photoColX, y: 590 + photoH + gap },
-    { x: photoColX + photoW + gap, y: 590 + photoH + gap }
-  ]
-
-  photoPositions.forEach((pos, idx) => {
+  for (let idx = 0; idx < 4; idx++) {
+    const py = photoStartY + idx * (photoH + photoGap)
     const pImg = photoImgs[idx]
     const cardInfo = selectedCards[idx] || distinctKeywords[idx]
-    const label = cardInfo?.label || 'SINGAPORE'
 
     ctx.save()
-    drawRoundedRect(ctx, pos.x, pos.y, photoW, photoH, 14, false, false)
+    drawRoundedRect(ctx, rightColX, py, rightColW, photoH, 14, false, false)
     ctx.clip()
 
     if (pImg && pImg.naturalWidth > 0) {
-      drawCoverImage(ctx, pImg, pos.x, pos.y, photoW, photoH)
+      drawCoverImage(ctx, pImg, rightColX, py, rightColW, photoH)
     } else {
-      ctx.fillStyle = '#0F2752'
-      ctx.fillRect(pos.x, pos.y, photoW, photoH)
+      ctx.fillStyle = '#0B192C'
+      ctx.fillRect(rightColX, py, rightColW, photoH)
     }
 
     // Bottom dark gradient overlay for label
-    const labelH = 75
-    const labelGrad = ctx.createLinearGradient(pos.x, pos.y + photoH - labelH, pos.x, pos.y + photoH)
+    const labelH = 68
+    const labelGrad = ctx.createLinearGradient(rightColX, py + photoH - labelH, rightColX, py + photoH)
     labelGrad.addColorStop(0, 'transparent')
     labelGrad.addColorStop(1, 'rgba(6, 14, 28, 0.94)')
     ctx.fillStyle = labelGrad
-    ctx.fillRect(pos.x, pos.y + photoH - labelH, photoW, labelH)
+    ctx.fillRect(rightColX, py + photoH - labelH, rightColW, labelH)
 
-    // Label Text
+    // Attraction Label
     ctx.fillStyle = '#FFFFFF'
-    ctx.font = '800 13px Inter, sans-serif'
-    ctx.fillText(label, pos.x + 14, pos.y + photoH - 14)
+    ctx.font = '800 14.5px Inter, sans-serif'
+    ctx.fillText(cardInfo.label.toUpperCase(), rightColX + 16, py + photoH - 18)
+
+    // Category Tag Pill
+    const tagText = cardInfo.tag.toUpperCase()
+    ctx.font = '800 10px Inter, sans-serif'
+    const tagTextW = ctx.measureText(tagText).width
+    const pillW = tagTextW + 20
+    const pillH = 24
+    const pillX = rightColX + rightColW - pillW - 14
+    const pillY = py + photoH - 32
+
+    ctx.fillStyle = 'rgba(212, 175, 55, 0.22)'
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.65)'
+    ctx.lineWidth = 1
+    drawRoundedRect(ctx, pillX, pillY, pillW, pillH, 12, true, true)
+
+    ctx.fillStyle = '#F8E29A'
+    ctx.textAlign = 'center'
+    ctx.fillText(tagText, pillX + pillW / 2, pillY + 16)
+    ctx.textAlign = 'left'
+
     ctx.restore()
 
-    // White Border
+    // White Crisp Border
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'
     ctx.lineWidth = 3.5
-    drawRoundedRect(ctx, pos.x, pos.y, photoW, photoH, 14, false, true)
-  })
+    drawRoundedRect(ctx, rightColX, py, rightColW, photoH, 14, false, true)
+  }
 
-  // ── 6. Features Badges Strip (1465 to 1537) ──
+  // ── 4. Features Badges Strip (1465 to 1537) ──
   const stripY = 1465
   const stripH = 72
   ctx.fillStyle = '#050C18'
@@ -563,7 +647,7 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
   })
   ctx.textAlign = 'left'
 
-  // ── 7. Footer / Contact Card (1537 to 1800) ──
+  // ── 5. Footer / Contact Card (1537 to 1800) ──
   const footY = 1537
   const footH = 1800 - footY
   ctx.fillStyle = '#FFFFFF'
@@ -604,7 +688,7 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
     ctx.fillText(c.label, cx + 54, cy - 4)
 
     ctx.fillStyle = '#0F172A'
-    ctx.font = '800 16px Inter, sans-serif'
+    ctx.font = '800 15px Inter, sans-serif'
     ctx.fillText(c.val, cx + 54, cy + 16)
   })
 
@@ -674,3 +758,4 @@ export async function generateFlyerDataUrl(data: FlyerPayload, quality = 0.84): 
   const canvas = await generateFlyerCanvas(data)
   return canvas.toDataURL('image/jpeg', quality)
 }
+

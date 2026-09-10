@@ -3997,8 +3997,9 @@ export default function PrototypeBuilder() {
       // Inclusions extraction
       const extractedInclusions: any[] = []
       extractedInclusions.push({
+        dayNumber: '01',
         title: 'Return Airport Transfers',
-        tag: !hasSIC ? 'Private Air-Conditioned Vehicle' : 'Sharing Seat-in-Coach (SIC)',
+        tag: !hasSIC ? 'Private Air-Conditioned Vehicle (Changi ⇄ Hotel)' : 'Sharing Seat-in-Coach (SIC)',
         type: !hasSIC ? 'private' : 'sharing',
         icon: '🚗'
       })
@@ -4018,7 +4019,9 @@ export default function PrototypeBuilder() {
             else if (lower.includes('mbs') || lower.includes('sands')) icon = '🏙️'
             else if (lower.includes('aquarium')) icon = '🐠'
 
+            const dayNum = String(extractedInclusions.length + 1).padStart(2, '0')
             extractedInclusions.push({
+              dayNumber: dayNum,
               title: name.replace(/\(.*?\)/g, '').replace(/-\s*Fixed\s*Date.*/i, '').trim(),
               tag: 'Admission & Experience Included (Sharing)',
               type: 'sharing',
