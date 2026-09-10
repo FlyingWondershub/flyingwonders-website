@@ -843,7 +843,7 @@ export default function EducationToursPage() {
       
       {/* ─── Breadcrumb ─── */}
       <div style={{ background: '#FFF', borderBottom: '1px solid #E2E8F0', padding: '0.45rem 1.2rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: SLATE }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: SLATE }}>
           <Link href="/" style={{ color: SLATE, textDecoration: 'none' }}>Home</Link>
           <ChevronRight size={12} />
           <Link href="/services-catalog" style={{ color: SLATE, textDecoration: 'none' }}>Services</Link>
@@ -1003,7 +1003,7 @@ export default function EducationToursPage() {
       </section>
 
       {/* ─── Compact Floating Trust Stats Bar ─── */}
-      <section style={{ maxWidth: '1100px', margin: '-1.8rem auto 3.2rem', padding: '0 1.2rem', position: 'relative', zIndex: 10 }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '-1.8rem auto 3.2rem', padding: '0 1.2rem', position: 'relative', zIndex: 10 }}>
         <div style={{
           background: '#FFF',
           borderRadius: '16px',
@@ -1057,7 +1057,7 @@ export default function EducationToursPage() {
       </section>
 
       {/* ─── 5 Learning Pillars ─── */}
-      <section style={{ maxWidth: '1200px', margin: '0 auto 4.5rem', padding: '0 1.2rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 4.5rem', padding: '0 1.2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Academic Excellence</span>
           <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.9rem', fontWeight: 800, color: '#0F172A', marginTop: '0.2rem', marginBottom: '0.35rem' }}>
@@ -1097,7 +1097,7 @@ export default function EducationToursPage() {
 
       {/* ─── Enhanced Featured 7 Institutions ─── */}
       <section id="institutions" style={{ background: '#FFF', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0', padding: '4.5rem 1.2rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1.2rem', marginBottom: '2.5rem' }}>
             <div>
               <span style={{ fontSize: '0.75rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Direct Faculty & Lab Access</span>
@@ -1352,7 +1352,7 @@ export default function EducationToursPage() {
       </section>
 
       {/* ─── Curated Itinerary Matrix ─── */}
-      <section id="circuits" style={{ maxWidth: '1200px', margin: '4.5rem auto', padding: '0 1.2rem' }}>
+      <section id="circuits" style={{ maxWidth: '1600px', width: '96%', margin: '4.5rem auto', padding: '0 1.2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Fully Customizable Curriculums</span>
           <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2rem', fontWeight: 800, color: '#0F172A', marginTop: '0.2rem', marginBottom: '0.35rem' }}>
@@ -1594,7 +1594,7 @@ export default function EducationToursPage() {
 
       {/* ─── Interactive Estimator ─── */}
       <section id="estimator" style={{ background: '#FFF', borderTop: '1px solid #E2E8F0', borderBottom: '1px solid #E2E8F0', padding: '4.5rem 1.2rem' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: EMERALD, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Budgeting & Transparency</span>
             <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2rem', fontWeight: 800, color: '#0F172A', marginTop: '0.2rem', marginBottom: '0.4rem' }}>

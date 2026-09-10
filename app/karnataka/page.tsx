@@ -183,7 +183,7 @@ export default function KarnatakaPage() {
       
       {/* ── Breadcrumb Navigation ── */}
       <div style={{ background: '#FFF', borderBottom: '1px solid #E2E8F0', padding: '0.6rem 1.5rem', fontSize: '0.78rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748B' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748B' }}>
           <Link href="/" style={{ color: '#0F4C3A', textDecoration: 'none', fontWeight: 600 }}>Home</Link>
           <span>/</span>
           <Link href="/services-catalog" style={{ color: '#0F4C3A', textDecoration: 'none', fontWeight: 600 }}>Services</Link>
@@ -208,7 +208,7 @@ export default function KarnatakaPage() {
           pointerEvents: 'none'
         }} />
 
-        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', position: 'relative', zIndex: 2 }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
             
@@ -354,7 +354,7 @@ export default function KarnatakaPage() {
 
       {/* ── SPOTLIGHT: Bengaluru Hop-On Hop-Off (HOHO) Ambaari Bus ── */}
       <section id="bangalore-hoho-service" style={{ padding: 'clamp(2rem, 4vw, 3rem) 1.5rem', background: '#FFF' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto' }}>
           
           <div style={{
             background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 45%, #FFFBEB 100%)',
@@ -469,7 +469,7 @@ export default function KarnatakaPage() {
 
       {/* ── Tour Circuits Grid Section ── */}
       <section id="circuits" style={{ padding: 'clamp(2rem, 4vw, 3.5rem) 1.5rem', background: '#F8FAFC', borderTop: '1px solid #E2E8F0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto' }}>
           
           <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
             <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.7rem', fontWeight: 800, padding: '0.2rem 0.7rem', borderRadius: '16px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>

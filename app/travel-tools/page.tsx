@@ -656,7 +656,7 @@ export default function TravelToolsPage() {
         position: 'relative',
         overflow: 'hidden'
       }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', position: 'relative', zIndex: 2 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
             <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.6rem, 3.5vw, 2.2rem)', fontWeight: 800, margin: 0, display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
               <Sparkles size={24} color="#D4AF37" /> Flying Wonders Travel Tools & Community
@@ -744,7 +744,8 @@ export default function TravelToolsPage() {
       >
         <div
           style={{
-            maxWidth: '1200px',
+            maxWidth: '1600px',
+            width: '96%',
             margin: '0 auto',
             display: 'flex',
             alignItems: 'center',
@@ -829,11 +830,11 @@ export default function TravelToolsPage() {
       </div>
 
       {/* TOP ADSENSE BANNER SPACE */}
-      <div style={{ maxWidth: '1200px', margin: '1.5rem auto 0', padding: '0 1.5rem' }}>
+      <div style={{ maxWidth: '1600px', width: '96%', margin: '1.5rem auto 0', padding: '0 1.5rem' }}>
         <AdBanner slotId="7788990011" format="horizontal" />
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '2rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
+      <div style={{ maxWidth: '1600px', width: '96%', margin: '2rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
         
         {/* 1. 🇸🇬 OFFICIAL SGAC, MDAC & AIR SUVIDHA ARRIVAL CARDS SECTION */}
         {!sanitySettings.hideOfficialPortals && matchesSearch('sgac mdac arrival card air suvidha singapore malaysia india') && (

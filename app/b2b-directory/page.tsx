@@ -444,7 +444,7 @@ export default function B2BDirectoryPage() {
       
       {/* ══ 1. SLIM COMPACT HEADER STRIP ══ */}
       <header style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1E1B4B 100%)', color: '#FFF', padding: '1.25rem 1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <h1 style={{ fontSize: '1.25rem', fontWeight: 900, margin: 0, letterSpacing: '-0.02em', color: '#FFF', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -479,7 +479,7 @@ export default function B2BDirectoryPage() {
       </header>
 
       {/* ══ 2. SLEEK UNIFIED COMPACT TOOLBAR (SEARCH + FILTERS + REGION CHIPS) ══ */}
-      <div style={{ maxWidth: '1280px', margin: '1rem auto 1.5rem', padding: '0 1.5rem' }}>
+      <div style={{ maxWidth: '1600px', width: '96%', margin: '1rem auto 1.5rem', padding: '0 1.5rem' }}>
         <div style={{ background: '#FFFFFF', borderRadius: '14px', border: '1px solid #CBD5E1', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', padding: '0.85rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           
           {/* Top Line: Search Input + Select Dropdowns + Sort */}
@@ -572,7 +572,7 @@ export default function B2BDirectoryPage() {
       </div>
 
       {/* ══ 3. COMPACT SHOWCASE CARDS GRID ══ */}
-      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem' }}>
+      <main style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 1.5rem' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
             <Sparkles className="animate-spin" size={28} color="#0F4C3A" style={{ margin: '0 auto 0.75rem' }} />

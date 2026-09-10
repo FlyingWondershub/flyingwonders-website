@@ -268,7 +268,7 @@ export default async function CorporateTravelPage() {
           pointerEvents: 'none'
         }} />
 
-        <div className="corp-hero-grid" style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 380px', gap: '3rem', alignItems: 'center' }}>
+        <div className="corp-hero-grid" style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 380px', gap: '3rem', alignItems: 'center' }}>
           <div>
             <span style={{
               display: 'inline-block',
@@ -338,7 +338,7 @@ export default async function CorporateTravelPage() {
 
 
       {/* 2. THE CORPORATE TRAVEL CHALLENGE */}
-      <section style={{ maxWidth: '1200px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '4rem auto 0', padding: '0 1.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.2rem', fontWeight: 800, color: '#1A365D' }}>
             {cms.challengesSectionTitle}
@@ -376,12 +376,12 @@ export default async function CorporateTravelPage() {
       </section>
 
       {/* AdSense Unit */}
-      <div className="container" style={{ padding: '4rem 1.5rem 0' }}>
+      <div className="container container-wide" style={{ padding: '4rem 1.5rem 0' }}>
         <AdBanner slotId="corporate_travel_mid_slot" category="b2b" />
       </div>
 
       {/* 3. FOUR PILLARS / DIFFERENCE */}
-      <section style={{ maxWidth: '1200px', margin: '5rem auto 0', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '5rem auto 0', padding: '0 1.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <span style={{ color: '#DD6B20', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{cms.pillarsSectionTag}</span>
           <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.3rem', fontWeight: 800, color: '#1A365D', marginTop: '0.25rem' }}>
@@ -409,7 +409,7 @@ export default async function CorporateTravelPage() {
 
 
       {/* 4. SERVICE TIERS OVERVIEW */}
-      <section id="tiers" style={{ maxWidth: '1200px', margin: '5rem auto 0', padding: '0 1.5rem' }}>
+      <section id="tiers" style={{ maxWidth: '1600px', width: '96%', margin: '5rem auto 0', padding: '0 1.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <span style={{ color: '#319795', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{cms.tiersSectionTag}</span>
           <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.3rem', fontWeight: 800, color: '#1A365D', marginTop: '0.25rem' }}>
@@ -462,7 +462,7 @@ export default async function CorporateTravelPage() {
 
 
       {/* 5. PRICING STRUCTURE COMPARISON TABLE */}
-      <section style={{ maxWidth: '1200px', margin: '5rem auto 0', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '5rem auto 0', padding: '0 1.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.1rem', fontWeight: 800, color: '#1A365D' }}>
             {cms.matrixSectionTitle}
@@ -501,7 +501,7 @@ export default async function CorporateTravelPage() {
 
 
       {/* 6. AFTER-HOURS & EMERGENCY SUPPORT */}
-      <section style={{ maxWidth: '1200px', margin: '5rem auto 0', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '5rem auto 0', padding: '0 1.5rem' }}>
         <div style={{ background: '#FFF', borderRadius: '16px', padding: '2.5rem 2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
           <div style={{ marginBottom: '2rem' }}>
             <span style={{ color: '#E53E3E', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{cms.supportSectionTag}</span>
@@ -527,7 +527,7 @@ export default async function CorporateTravelPage() {
 
 
       {/* 7. VALUE ADD-ONS & IMPLEMENTATION TIMELINE */}
-      <section style={{ maxWidth: '1200px', margin: '5rem auto 0', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '5rem auto 0', padding: '0 1.5rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem' }}>
 
           <div>
@@ -571,7 +571,7 @@ export default async function CorporateTravelPage() {
 
 
       {/* 8. THE ROI CASE / COMPARISON */}
-      <section style={{ maxWidth: '1200px', margin: '5rem auto 0', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '5rem auto 0', padding: '0 1.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
           <span style={{ color: '#38A169', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{cms.roiSectionTag}</span>
           <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.2rem', fontWeight: 800, color: '#1A365D', marginTop: '0.25rem' }}>
@@ -614,7 +614,7 @@ export default async function CorporateTravelPage() {
 
 
       {/* 9. READY TO GET STARTED / CALL TO ACTION & CONTACT */}
-      <section id="discovery-call" style={{ maxWidth: '1200px', margin: '5rem auto 0', padding: '0 1.5rem' }}>
+      <section id="discovery-call" style={{ maxWidth: '1600px', width: '96%', margin: '5rem auto 0', padding: '0 1.5rem' }}>
         <div className="corp-cta-card" style={{
           background: 'linear-gradient(135deg, #1A365D 0%, #0F4C3A 100%)',
           color: '#FFF',

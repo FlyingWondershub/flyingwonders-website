@@ -312,7 +312,7 @@ export default function StudyInSingaporePage() {
 
       {/* ── Breadcrumb ── */}
       <div style={{ background: '#FFF', borderBottom: '1px solid #E2E8F0', padding: '0.6rem 1.5rem' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: SLATE }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: SLATE }}>
           <Link href="/" style={{ color: SLATE, textDecoration: 'none' }}>Home</Link>
           <ChevronRight size={13} />
           <Link href="/services-catalog" style={{ color: SLATE, textDecoration: 'none' }}>Services</Link>
@@ -446,7 +446,7 @@ export default function StudyInSingaporePage() {
       </section>
 
       {/* ─────────── STATS ─────────── */}
-      <section style={{ maxWidth: '1100px', margin: '-3.5rem auto 5rem', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '-3.5rem auto 5rem', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
         <div ref={statsRef} style={{
           background: '#FFF',
           borderRadius: '20px',
@@ -493,7 +493,7 @@ export default function StudyInSingaporePage() {
       </section>
 
       {/* ─────────── WHY STUDY ─────────── */}
-      <section style={{ maxWidth: '1100px', margin: '0 auto 5rem', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 5rem', padding: '0 1.5rem' }}>
         {sectionTitle('Why Study in Singapore?')}
         {sectionSubtitle('Discover why Singapore is the top destination for ambitious students from across Asia and beyond.')}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
@@ -558,7 +558,7 @@ export default function StudyInSingaporePage() {
 
       {/* ─────────── UNIVERSITIES ─────────── */}
       <section style={{ background: LIGHT, padding: '5rem 1.5rem' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto' }}>
           {sectionTitle('Top Universities in Singapore')}
           {sectionSubtitle('Choose from globally ranked institutions with high graduate employment rates and world-class research facilities.')}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
@@ -619,7 +619,7 @@ export default function StudyInSingaporePage() {
       </section>
 
       {/* ─────────── INTAKE CALENDAR ─────────── */}
-      <section style={{ maxWidth: '1100px', margin: '5rem auto', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '5rem auto', padding: '0 1.5rem' }}>
         {sectionTitle('Upcoming Intake Dates')}
         {sectionSubtitle('Plan your application early — Singapore universities have limited seats per intake period.')}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
@@ -668,7 +668,7 @@ export default function StudyInSingaporePage() {
 
       {/* ─────────── COURSES ─────────── */}
       <section style={{ background: LIGHT, padding: '5rem 1.5rem' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto' }}>
           {sectionTitle('Popular Courses in Singapore')}
           {sectionSubtitle('From tech to hospitality — Singapore offers world-class programs across every discipline.')}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.25rem' }}>
@@ -706,7 +706,7 @@ export default function StudyInSingaporePage() {
       </section>
 
       {/* ─────────── COUNTRY COMPARISON ─────────── */}
-      <section style={{ maxWidth: '1100px', margin: '5rem auto', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '5rem auto', padding: '0 1.5rem' }}>
         {sectionTitle('Singapore vs. Other Study Destinations')}
         {sectionSubtitle('See how Singapore stacks up against other popular choices for international students.')}
         <div style={{
@@ -781,7 +781,7 @@ export default function StudyInSingaporePage() {
 
       {/* ─────────── COST OF STUDYING ─────────── */}
       <section style={{ background: EMERALD, color: '#FFF', padding: '5rem 1.5rem' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: 'clamp(1.6rem, 3.5vw, 2.2rem)', fontWeight: 800, textAlign: 'center', marginBottom: '0.75rem' }}>
             Cost of Studying in Singapore
           </h2>
@@ -852,12 +852,12 @@ export default function StudyInSingaporePage() {
       </section>
 
       {/* AdSense Unit */}
-      <div style={{ maxWidth: '1100px', margin: '2rem auto 0', padding: '0 1.5rem' }}>
+      <div style={{ maxWidth: '1600px', width: '96%', margin: '2rem auto 0', padding: '0 1.5rem' }}>
         <AdBanner slotId="study_singapore_mid_slot" category="education" />
       </div>
 
       {/* ─────────── TESTIMONIALS ─────────── */}
-      <section style={{ maxWidth: '1100px', margin: '3rem auto 5rem', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '3rem auto 5rem', padding: '0 1.5rem' }}>
         {sectionTitle('What Our Students Say')}
         {sectionSubtitle('Real experiences from students we helped successfully enroll in Singapore\'s top institutions.')}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
@@ -952,7 +952,7 @@ export default function StudyInSingaporePage() {
       </section>
 
       {/* ─────────── NEIGHBOURHOOD GUIDE ─────────── */}
-      <section style={{ maxWidth: '1100px', margin: '5rem auto', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '5rem auto', padding: '0 1.5rem' }}>
         {sectionTitle('Where Will You Live?')}
         {sectionSubtitle('Singapore\'s neighbourhoods each have a distinct personality. Here are the top student-friendly areas.')}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
@@ -992,7 +992,7 @@ export default function StudyInSingaporePage() {
 
       {/* ─────────── SCHOLARSHIPS ─────────── */}
       <section style={{ background: LIGHT, padding: '5rem 1.5rem' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto' }}>
           <div style={{
             background: '#FFF',
             border: '1px solid #E2E8F0',
@@ -1166,7 +1166,7 @@ export default function StudyInSingaporePage() {
       </section>
 
       {/* ─────────── WHY FLYING WONDERS ─────────── */}
-      <section style={{ maxWidth: '1100px', margin: '5rem auto', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '5rem auto', padding: '0 1.5rem' }}>
         {sectionTitle('Why Choose Flying Wonders?')}
         {sectionSubtitle('We\'re not just a travel company — we\'re your end-to-end education partner in Singapore.')}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>

@@ -522,7 +522,7 @@ export default function InsurancePage() {
 
       {/* ── Interactive Quote Calculator Box ── */}
       {!siteSettings?.hideInsuranceCalculator && (
-        <div style={{ maxWidth: '1120px', margin: '-1.75rem auto 0', padding: '0 1.25rem', position: 'relative', zIndex: 10 }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '-1.75rem auto 0', padding: '0 1.25rem', position: 'relative', zIndex: 10 }}>
           <div style={{ background: '#FFFFFF', borderRadius: '16px', padding: '1.5rem 1.75rem', boxShadow: '0 15px 35px -10px rgba(0, 0, 0, 0.08)', border: '1px solid #E2E8F0' }}>
             
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #EEF2F6', paddingBottom: '1.25rem', marginBottom: '1.5rem', gap: '0.75rem' }}>
@@ -703,7 +703,7 @@ export default function InsurancePage() {
       )}
 
       {/* ── Plans Display Grid ── */}
-      <section style={{ maxWidth: '1120px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '4rem auto 0', padding: '0 1.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
           <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
             Choose Your Protection Plan
@@ -853,7 +853,7 @@ export default function InsurancePage() {
 
       {/* ── Comparison Table ── */}
       {!siteSettings?.hideInsuranceComparisonTable && (
-        <section style={{ maxWidth: '1120px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+        <section style={{ maxWidth: '1600px', width: '96%', margin: '4rem auto 0', padding: '0 1.5rem' }}>
           <div style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.03)' }}>
             <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.35rem' }}>
               Detailed Plan Benefits Comparison
@@ -932,7 +932,7 @@ export default function InsurancePage() {
 
       {/* ── 4-Step Claim Process ── */}
       {!siteSettings?.hideInsuranceClaimProcess && (
-        <section style={{ maxWidth: '1120px', margin: '4rem auto 0', padding: '0 1.5rem' }}>
+        <section style={{ maxWidth: '1600px', width: '96%', margin: '4rem auto 0', padding: '0 1.5rem' }}>
           <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
             <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)', fontWeight: 800, color: '#0F4C3A', fontFamily: 'var(--font-playfair), serif', margin: '0 0 0.5rem' }}>
               How to File an Overseas Claim

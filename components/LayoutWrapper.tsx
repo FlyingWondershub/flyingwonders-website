@@ -59,7 +59,15 @@ export default function LayoutWrapper({
     pathname?.toLowerCase() === '/singapore_attractions' || 
     pathname === '/blog' || 
     pathname === '/reviews' || 
-    pathname === '/custom-package'
+    pathname === '/custom-package' ||
+    pathname === '/travel-tools' ||
+    pathname === '/corporate-travel' ||
+    pathname === '/karnataka' ||
+    pathname === '/study-in-singapore' ||
+    pathname === '/education-tours' ||
+    pathname === '/b2b-leads' ||
+    pathname?.startsWith('/b2b-directory') ||
+    pathname === '/insurance'
   
   const [subEmail, setSubEmail] = useState('')
   const [subStatus, setSubStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')

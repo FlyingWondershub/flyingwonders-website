@@ -419,7 +419,7 @@ export default function B2BLeadsPage() {
       
       {/* Top Header Bar with Search + Status + Alerts + Actions on 1 Line */}
       <header style={{ position: 'sticky', top: 0, zIndex: 40, background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 12px' }}>
-        <div style={{ maxWidth: '1440px', margin: '0 auto', minHeight: '50px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', padding: '6px 0' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', minHeight: '50px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', padding: '6px 0' }}>
           
           {/* Left: Brand & Verified DMC Link */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -525,7 +525,7 @@ export default function B2BLeadsPage() {
       </header>
 
       {/* Main Container */}
-      <main style={{ maxWidth: '1440px', margin: '0 auto', padding: '8px 12px 48px' }}>
+      <main style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '8px 12px 48px' }}>
 
         {/* Compact Secondary Filter Bar (Category Pills & Hot Destinations) */}
         <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '8px 10px', marginBottom: '10px', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
