@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
 import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X, Sparkles, Search, ChevronDown, Check, Mail, Share2, Eye, RefreshCw, Layers, CheckCircle2, ArrowRight } from 'lucide-react'
+import { generateFlyerDataUrl, generateFlyerBlob, FlyerInclusion } from '../../lib/flyer-generator'
 
 // Default Fallback Master Data (Configured in SGD)
 const FALLBACK_HOTELS = [
@@ -4101,19 +4102,10 @@ export default function PrototypeBuilder() {
         returnBase64: true
       }
 
-      const res = await fetch('/api/flyer/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-
-      const json = await res.json()
-      if (json.success && json.base64) {
-        setFlyerImageBase64(json.base64)
-        setFlyerSizeKb(json.sizeKb || 350)
-      } else {
-        throw new Error(json.error || 'Failed to generate flyer image')
-      }
+      const dataUrl = await generateFlyerDataUrl(payload as any, 0.85)
+      setFlyerImageBase64(dataUrl)
+      const approxBytes = Math.round((dataUrl.length - 23) * 0.75)
+      setFlyerSizeKb(Math.round(approxBytes / 1024))
     } catch (err: any) {
       console.error('Error generating flyer:', err)
       setToast({ type: 'error', message: err.message || 'Could not generate flyer image. Please try again.' })
