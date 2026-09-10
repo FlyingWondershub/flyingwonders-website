@@ -4019,12 +4019,25 @@ export default function PrototypeBuilder() {
             else if (lower.includes('mbs') || lower.includes('sands')) icon = '🏙️'
             else if (lower.includes('aquarium')) icon = '🐠'
 
+            const isPrivate = lower.includes('private')
+            const cleanTitle = name
+              .replace(/\(.*?upto.*?\)/gi, '')
+              .replace(/\(.*?\)/g, '')
+              .replace(/-\s*Fixed\s*Date\s*(\/\s*Time)?/gi, '')
+              .replace(/\(Peak\s*-\s*Fixed\s*date\s*\/Time\s*\)/gi, '')
+              .replace(/\(Peak\s*-\s*Fixed\s*Date\s*\)/gi, '')
+              .replace(/-\s*Fixed\s*Time/gi, '')
+              .replace(/-\s*Non\s*Peak/gi, '')
+              .replace(/-\s*SIC/gi, '')
+              .replace(/\s+/g, ' ')
+              .trim()
+
             const dayNum = String(extractedInclusions.length + 1).padStart(2, '0')
             extractedInclusions.push({
               dayNumber: dayNum,
-              title: name.replace(/\(.*?\)/g, '').replace(/-\s*Fixed\s*Date.*/i, '').trim(),
-              tag: 'Admission & Experience Included (Sharing)',
-              type: 'sharing',
+              title: cleanTitle,
+              tag: isPrivate ? 'Private Tour · Dedicated Vehicle & Guide' : 'Admission & Experience Included (Sharing)',
+              type: isPrivate ? 'private' : 'sharing',
               icon
             })
           }
@@ -4065,23 +4078,13 @@ export default function PrototypeBuilder() {
         ? `≈ Rs. ${Math.round(costBreakdown.adultQuote * (sgdToInrRate || DEFAULT_SGD_TO_INR)).toLocaleString('en-IN')} INR / Pax`
         : `≈ S$ ${costBreakdown.adultQuote.toLocaleString()} SGD`
 
-      // Photos from itinerary
+      // Photos from itinerary - prioritize Sanity CMS photoUrl
       const distinctNames = Array.from(new Set(itinerary.flatMap(d => (d.attractions || []).map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '')))).filter(Boolean)
       const attractionPhotos = distinctNames.map(name => {
-        const lower = name.toLowerCase()
-        let photoUrl = ''
-        if (lower.includes('city') || lower.includes('panoramic')) {
-          photoUrl = '/images/hero/singapore-hero-2.jpg'
-        } else {
-          const meta = getAttractionMetaInfo(name, attractionsMeta)
-          photoUrl = meta?.photoUrl || ''
-          if (photoUrl && (photoUrl.includes('4fa6289b') || photoUrl.includes('1024x1536'))) {
-            photoUrl = '/images/hero/singapore-hero-2.jpg'
-          }
-        }
+        const meta = getAttractionMetaInfo(name, attractionsMeta)
         return {
           name,
-          photoUrl
+          photoUrl: meta?.photoUrl || ''
         }
       })
 

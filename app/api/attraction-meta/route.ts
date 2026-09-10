@@ -42,7 +42,7 @@ export async function GET() {
     const resolved = (meta || []).map((m: any) => ({
       ...m,
       photoUrl: m.photo
-        ? imageBuilder.image(m.photo).auto('format').width(600).height(400).url()
+        ? imageBuilder.image(m.photo).auto('format').width(1200).fit('max').url()
         : null,
     }))
 

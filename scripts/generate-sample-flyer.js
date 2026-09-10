@@ -23,12 +23,12 @@ const SINGAPORE_ATTRACTIONS_PHOTO_MAP = {
 async function renderFlyer() {
   const logoImg = getBase64Image(path.join(__dirname, '../public/images/logo.png'));
   
-  // Use singapore-attractions page source photos with local fallback
+  // Use singapore-attractions page source photos with Sanity image for City Tour
   const universalImg = SINGAPORE_ATTRACTIONS_PHOTO_MAP.universal || getBase64Image(path.join(__dirname, '../public/images/attractions/universal-studios-singapore/cover.jpg'));
   const nightSafariImg = SINGAPORE_ATTRACTIONS_PHOTO_MAP['night safari'] || getBase64Image(path.join(__dirname, '../public/images/attractions/night-safari-singapore/cover.jpg'));
   const gardensImg = SINGAPORE_ATTRACTIONS_PHOTO_MAP.gardens || getBase64Image(path.join(__dirname, '../public/images/attractions/gardens-by-the-bay/cover.jpg'));
   const cableCarImg = SINGAPORE_ATTRACTIONS_PHOTO_MAP['cable car'] || getBase64Image(path.join(__dirname, '../public/images/attractions/singapore-cable-car/cover.jpg'));
-  const cityTourImg = getBase64Image(path.join(__dirname, '../public/images/hero/singapore-hero-2.jpg'));
+  const cityTourImg = 'https://cdn.sanity.io/images/8xtd7yiv/production/4fa6289b528bde4f476afa0157beb9b8409aea70-1024x1536.png';
 
   const html = `
 <!DOCTYPE html>
@@ -265,21 +265,29 @@ async function renderFlyer() {
     .inc-details {
       display: flex;
       flex-direction: column;
+      max-width: 420px;
+      overflow: hidden;
     }
 
     .inc-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
       color: #FFFFFF;
       letter-spacing: 0.3px;
       text-transform: uppercase;
       line-height: 1.25;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
     }
 
     .inc-tag {
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       margin-top: 3px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
     }
 
     .inc-tag.sharing {
@@ -378,16 +386,15 @@ async function renderFlyer() {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
     }
 
     .photo-card {
       position: relative;
       flex: 1;
-      min-height: 220px;
-      border-radius: 14px;
+      border-radius: 12px;
       overflow: hidden;
-      border: 3.5px solid rgba(255, 255, 255, 0.9);
+      border: 2.5px solid rgba(255, 255, 255, 0.9);
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
       background: #0B192C;
     }
@@ -717,7 +724,7 @@ async function renderFlyer() {
 
       <!-- 2. Singapore City Private Tour -->
       <div class="photo-card">
-        <img src="${cityTourImg}" alt="Singapore City Private Tour" style="object-position: center 30%;" />
+        <img src="${cityTourImg}" alt="Singapore City Private Tour" style="object-position: top center;" />
         <div class="photo-label-bar">
           <div class="photo-label">Singapore City Private Tour</div>
           <div class="photo-tag-pill">PRIVATE SIGHTSEEING</div>
@@ -739,6 +746,15 @@ async function renderFlyer() {
         <div class="photo-label-bar">
           <div class="photo-label">Gardens by the Bay Double Domes</div>
           <div class="photo-tag-pill">CLOUD FOREST & FLOWER DOME</div>
+        </div>
+      </div>
+
+      <!-- 5. Sentosa Cable Car & Wings of Time -->
+      <div class="photo-card">
+        <img src="${cableCarImg}" alt="Sentosa Cable Car" style="object-position: center 40%;" />
+        <div class="photo-label-bar">
+          <div class="photo-label">Sentosa Island & Cable Car</div>
+          <div class="photo-tag-pill">SCENIC SKY NETWORK</div>
         </div>
       </div>
     </div>

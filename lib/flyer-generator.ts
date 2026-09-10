@@ -131,8 +131,9 @@ function drawCoverImage(
     sx = (img.naturalWidth - sw) / 2
   } else {
     sh = img.naturalWidth / targetRatio
-    // Bias towards upper center (22% from top) so landmark headers and skylines remain uncropped
-    sy = Math.max(0, (img.naturalHeight - sh) * 0.22)
+    // For portrait images (e.g. 1024x1536 city tour infographics), anchor at sy = 0 so the top hero header and skyline are perfectly framed
+    // For moderate aspect ratios, bias slightly towards top (15%)
+    sy = imgRatio < 0.9 ? 0 : Math.max(0, (img.naturalHeight - sh) * 0.15)
   }
 
   ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h)
@@ -181,6 +182,21 @@ export function getAttractionCategoryTag(name: string): string {
   return 'SINGAPORE ATTRACTION'
 }
 
+export function cleanInclusionTitle(title: string): string {
+  if (!title) return ''
+  return title
+    .replace(/\(.*?upto.*?\)/gi, '')
+    .replace(/\(.*?\)/g, '')
+    .replace(/-\s*Fixed\s*Date\s*(\/\s*Time)?/gi, '')
+    .replace(/\(Peak\s*-\s*Fixed\s*date\s*\/Time\s*\)/gi, '')
+    .replace(/\(Peak\s*-\s*Fixed\s*Date\s*\)/gi, '')
+    .replace(/-\s*Fixed\s*Time/gi, '')
+    .replace(/-\s*Non\s*Peak/gi, '')
+    .replace(/-\s*SIC/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export function getAttractionCleanLabel(name: string): string {
   const lower = name.toLowerCase()
   if (lower.includes('city') && lower.includes('private')) return 'Singapore City Private Tour'
@@ -196,7 +212,116 @@ export function getAttractionCleanLabel(name: string): string {
   if (lower.includes('flyer')) return 'Singapore Flyer Observation Wheel'
   if (lower.includes('aquarium')) return 'S.E.A. Aquarium Sentosa'
   if (lower.includes('luge')) return 'Skyline Luge & Skyride'
-  return name.replace(/\(.*?\)/g, '').replace(/-\s*Fixed\s*Date.*/i, '').trim()
+  return cleanInclusionTitle(name)
+}
+
+export interface PhotoCardSlot {
+  x: number
+  y: number
+  w: number
+  h: number
+  isCompact: boolean
+}
+
+export function calculatePhotoCardSlots(
+  totalCount: number,
+  containerX: number,
+  containerY: number,
+  containerW: number,
+  containerH: number
+): PhotoCardSlot[] {
+  const count = Math.max(1, totalCount)
+  const slots: PhotoCardSlot[] = []
+
+  // 1 to 5 attractions: Single column of wide landscape cards
+  if (count <= 5) {
+    const gap = count <= 3 ? 18 : (count === 4 ? 16 : 12)
+    const cardH = Math.floor((containerH - (count - 1) * gap) / count)
+
+    if (count === 1) {
+      const singleH = Math.min(640, containerH)
+      const singleY = containerY + (containerH - singleH) / 2
+      slots.push({ x: containerX, y: singleY, w: containerW, h: singleH, isCompact: false })
+      return slots
+    }
+
+    for (let i = 0; i < count; i++) {
+      slots.push({
+        x: containerX,
+        y: containerY + i * (cardH + gap),
+        w: containerW,
+        h: cardH,
+        isCompact: false
+      })
+    }
+    return slots
+  }
+
+  // 6 or more attractions: 2-column responsive grid
+  const gapX = 12
+  const colW = Math.floor((containerW - gapX) / 2) // 259px
+
+  if (count === 6) {
+    const gapY = 12
+    const rowH = Math.floor((containerH - 2 * gapY) / 3) // ~365px
+    for (let i = 0; i < 6; i++) {
+      const col = i % 2
+      const row = Math.floor(i / 2)
+      slots.push({
+        x: containerX + col * (colW + gapX),
+        y: containerY + row * (rowH + gapY),
+        w: colW,
+        h: rowH,
+        isCompact: true
+      })
+    }
+    return slots
+  }
+
+  if (count === 7) {
+    // 1 Full-width hero card on top (height 230px) + 3 rows of 2 columns (6 cards)
+    const gapY = 10
+    const topHeroH = 230
+    slots.push({
+      x: containerX,
+      y: containerY,
+      w: containerW,
+      h: topHeroH,
+      isCompact: false
+    })
+
+    const remainingH = containerH - topHeroH - gapY
+    const rowH = Math.floor((remainingH - 2 * gapY) / 3)
+    for (let i = 0; i < 6; i++) {
+      const col = i % 2
+      const row = Math.floor(i / 2)
+      slots.push({
+        x: containerX + col * (colW + gapX),
+        y: containerY + topHeroH + gapY + row * (rowH + gapY),
+        w: colW,
+        h: rowH,
+        isCompact: true
+      })
+    }
+    return slots
+  }
+
+  const rows = Math.ceil(count / 2)
+  const gapY = 10
+  const rowH = Math.floor((containerH - (rows - 1) * gapY) / rows)
+  for (let i = 0; i < count; i++) {
+    const col = i % 2
+    const row = Math.floor(i / 2)
+    const isLastOdd = (i === count - 1 && count % 2 === 1)
+    slots.push({
+      x: isLastOdd ? containerX : containerX + col * (colW + gapX),
+      y: containerY + row * (rowH + gapY),
+      w: isLastOdd ? containerW : colW,
+      h: rowH,
+      isCompact: !isLastOdd
+    })
+  }
+  return slots
 }
 
 export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanvasElement> {
@@ -230,23 +355,27 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
     { key: 'gardens', label: 'Gardens by the Bay Double Domes', tag: 'CLOUD FOREST & FLOWER DOME' }
   ]
 
-  // Override with user attractions if available
+  // User attractions - include all attractions added by user
   const selectedCards: { label: string; tag: string; url: string }[] = []
 
   for (const item of (data.attractionPhotos || [])) {
-    if (selectedCards.length >= 4) break
+    if (selectedCards.length >= 10) break // Cap at 10 to ensure images remain crisp and prominent
     const lower = item.name.toLowerCase()
     let matchedUrl = item.photoUrl || ''
     const label = getAttractionCleanLabel(item.name)
     const tag = getAttractionCategoryTag(item.name)
 
-    // Override city tour with landscape hero to prevent vertical infographic cropping
-    if (lower.includes('city') || lower.includes('panoramic') || matchedUrl.includes('4fa6289b') || matchedUrl.includes('1024x1536')) {
-      matchedUrl = '/images/hero/singapore-hero-2.jpg'
+    if (!matchedUrl) {
+      for (const [k, url] of Object.entries(SINGAPORE_ATTRACTIONS_PHOTO_MAP)) {
+        if (lower.includes(k)) {
+          matchedUrl = url
+          break
+        }
+      }
     }
 
     if (!matchedUrl) {
-      for (const [k, url] of Object.entries(SINGAPORE_ATTRACTIONS_PHOTO_MAP)) {
+      for (const [k, url] of Object.entries(LOCAL_FALLBACK_PHOTOS)) {
         if (lower.includes(k)) {
           matchedUrl = url
           break
@@ -259,10 +388,9 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
     }
   }
 
-  // Fill remaining slots from defaults
-  for (const def of distinctKeywords) {
-    if (selectedCards.length >= 4) break
-    if (!selectedCards.some(c => c.label.toLowerCase().includes(def.key) || def.label.toLowerCase().includes(c.label.toLowerCase()))) {
+  // If user provided NO attractions at all, fill with defaults
+  if (selectedCards.length === 0) {
+    for (const def of distinctKeywords) {
       selectedCards.push({
         label: def.label,
         tag: def.tag,
@@ -279,7 +407,7 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
       const loaded = await loadImage(proxyUrl)
       if (loaded) return loaded
       // Try local fallback
-      const key = distinctKeywords[i]?.key || 'gardens'
+      const key = distinctKeywords[i % distinctKeywords.length]?.key || 'gardens'
       const fallbackUrl = LOCAL_FALLBACK_PHOTOS[key]
       return loadImage(fallbackUrl)
     })
@@ -491,18 +619,37 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
 
     // Details
     const tx = leftColX + 86
-    ctx.fillStyle = '#FFFFFF'
-    ctx.font = '800 16px Inter, sans-serif'
-    ctx.fillText(inc.title.toUpperCase(), tx, cardY + 36)
+    const maxTextW = leftColW - 86 - 16 // 433px
 
+    // Dynamic Title Auto-Fit
+    const displayTitle = cleanInclusionTitle(inc.title).toUpperCase()
+    let titleFontSize = 15.5
+    ctx.font = `800 ${titleFontSize}px Inter, sans-serif`
+    let titleMeasuredW = ctx.measureText(displayTitle).width
+    while (titleMeasuredW > maxTextW && titleFontSize > 11.5) {
+      titleFontSize -= 0.5
+      ctx.font = `800 ${titleFontSize}px Inter, sans-serif`
+      titleMeasuredW = ctx.measureText(displayTitle).width
+    }
+    ctx.fillStyle = '#FFFFFF'
+    ctx.fillText(displayTitle, tx, cardY + 36, maxTextW)
+
+    // Dynamic Tag Auto-Fit
+    let tagFontSize = 12.5
+    ctx.font = `600 ${tagFontSize}px Inter, sans-serif`
+    let tagMeasuredW = ctx.measureText(inc.tag).width
+    while (tagMeasuredW > maxTextW && tagFontSize > 10) {
+      tagFontSize -= 0.5
+      ctx.font = `600 ${tagFontSize}px Inter, sans-serif`
+      tagMeasuredW = ctx.measureText(inc.tag).width
+    }
     ctx.fillStyle = inc.type === 'private' ? '#6EE7B7' : '#93C5FD'
-    ctx.font = '600 13px Inter, sans-serif'
-    ctx.fillText(inc.tag, tx, cardY + 62)
+    ctx.fillText(inc.tag, tx, cardY + 62, maxTextW)
 
     ctx.fillStyle = '#94A3B8'
     ctx.font = '500 11.5px Inter, sans-serif'
     const extraNote = inc.type === 'private' ? 'Dedicated Chauffeur & Sanitized Vehicle' : 'Pre-booked Admission · Instant QR Access'
-    ctx.fillText(extraNote, tx, cardY + 86)
+    ctx.fillText(extraNote, tx, cardY + 86, maxTextW)
   })
 
   // ── 3B. Left Column Bottom: Luxury Price Card ──
@@ -570,65 +717,110 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
     ctx.textAlign = 'left'
   }
 
-  // ── 3C. Right Column: 4 Landscape Attraction Cards (No Cropping!) ──
+  // ── 3C. Right Column: Dynamic Attraction Photo Collage (All User Attractions!) ──
   const photoStartY = 330
-  const photoH = 250
-  const photoGap = 18
+  const photoContainerH = 1120
+  const slots = calculatePhotoCardSlots(selectedCards.length, rightColX, photoStartY, rightColW, photoContainerH)
 
-  for (let idx = 0; idx < 4; idx++) {
-    const py = photoStartY + idx * (photoH + photoGap)
+  for (let idx = 0; idx < selectedCards.length; idx++) {
+    const slot = slots[idx]
+    if (!slot) break
+
     const pImg = photoImgs[idx]
-    const cardInfo = selectedCards[idx] || distinctKeywords[idx]
+    const cardInfo = selectedCards[idx]
 
     ctx.save()
-    drawRoundedRect(ctx, rightColX, py, rightColW, photoH, 14, false, false)
+    drawRoundedRect(ctx, slot.x, slot.y, slot.w, slot.h, 12, false, false)
     ctx.clip()
 
     if (pImg && pImg.naturalWidth > 0) {
-      drawCoverImage(ctx, pImg, rightColX, py, rightColW, photoH)
+      drawCoverImage(ctx, pImg, slot.x, slot.y, slot.w, slot.h)
     } else {
       ctx.fillStyle = '#0B192C'
-      ctx.fillRect(rightColX, py, rightColW, photoH)
+      ctx.fillRect(slot.x, slot.y, slot.w, slot.h)
     }
 
     // Bottom dark gradient overlay for label
-    const labelH = 68
-    const labelGrad = ctx.createLinearGradient(rightColX, py + photoH - labelH, rightColX, py + photoH)
+    const labelH = slot.isCompact ? 68 : (slot.h < 200 ? 48 : 58)
+    const labelGrad = ctx.createLinearGradient(slot.x, slot.y + slot.h - labelH, slot.x, slot.y + slot.h)
     labelGrad.addColorStop(0, 'transparent')
-    labelGrad.addColorStop(1, 'rgba(6, 14, 28, 0.94)')
+    labelGrad.addColorStop(1, 'rgba(6, 14, 28, 0.95)')
     ctx.fillStyle = labelGrad
-    ctx.fillRect(rightColX, py + photoH - labelH, rightColW, labelH)
+    ctx.fillRect(slot.x, slot.y + slot.h - labelH, slot.w, labelH)
 
-    // Attraction Label
-    ctx.fillStyle = '#FFFFFF'
-    ctx.font = '800 14.5px Inter, sans-serif'
-    ctx.fillText(cardInfo.label.toUpperCase(), rightColX + 16, py + photoH - 18)
+    if (slot.isCompact) {
+      // 2-column layout: Tag pill on top, attraction title below
+      const tagText = cardInfo.tag.toUpperCase()
+      ctx.font = '800 8.5px Inter, sans-serif'
+      const tagTextW = ctx.measureText(tagText).width
+      const pillW = tagTextW + 14
+      const pillH = 18
+      const pillX = slot.x + 10
+      const pillY = slot.y + slot.h - 44
 
-    // Category Tag Pill
-    const tagText = cardInfo.tag.toUpperCase()
-    ctx.font = '800 10px Inter, sans-serif'
-    const tagTextW = ctx.measureText(tagText).width
-    const pillW = tagTextW + 20
-    const pillH = 24
-    const pillX = rightColX + rightColW - pillW - 14
-    const pillY = py + photoH - 32
+      ctx.fillStyle = 'rgba(212, 175, 55, 0.25)'
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.7)'
+      ctx.lineWidth = 1
+      drawRoundedRect(ctx, pillX, pillY, pillW, pillH, 5, true, true)
 
-    ctx.fillStyle = 'rgba(212, 175, 55, 0.22)'
-    ctx.strokeStyle = 'rgba(212, 175, 55, 0.65)'
-    ctx.lineWidth = 1
-    drawRoundedRect(ctx, pillX, pillY, pillW, pillH, 12, true, true)
+      ctx.fillStyle = '#F8E29A'
+      ctx.textAlign = 'center'
+      ctx.fillText(tagText, pillX + pillW / 2, pillY + 12)
+      ctx.textAlign = 'left'
 
-    ctx.fillStyle = '#F8E29A'
-    ctx.textAlign = 'center'
-    ctx.fillText(tagText, pillX + pillW / 2, pillY + 16)
-    ctx.textAlign = 'left'
+      // Attraction Label
+      const displayLabel = cardInfo.label.toUpperCase()
+      let labelFontSize = 11.5
+      ctx.font = `800 ${labelFontSize}px Inter, sans-serif`
+      const maxLabelW = slot.w - 20
+      while (ctx.measureText(displayLabel).width > maxLabelW && labelFontSize > 8.5) {
+        labelFontSize -= 0.5
+        ctx.font = `800 ${labelFontSize}px Inter, sans-serif`
+      }
+      ctx.fillStyle = '#FFFFFF'
+      ctx.fillText(displayLabel, slot.x + 10, slot.y + slot.h - 14, maxLabelW)
+    } else {
+      // Wide layout: Attraction Title on left, Tag pill on right
+      const tagText = cardInfo.tag.toUpperCase()
+      const isShortCard = slot.h < 200
+      const tagFontSize = isShortCard ? 9 : 10
+      ctx.font = `800 ${tagFontSize}px Inter, sans-serif`
+      const tagTextW = ctx.measureText(tagText).width
+      const pillW = tagTextW + 18
+      const pillH = isShortCard ? 20 : 24
+      const pillX = slot.x + slot.w - pillW - 14
+      const pillY = slot.y + slot.h - (isShortCard ? 27 : 32)
+
+      // Tag pill
+      ctx.fillStyle = 'rgba(212, 175, 55, 0.22)'
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.65)'
+      ctx.lineWidth = 1
+      drawRoundedRect(ctx, pillX, pillY, pillW, pillH, 10, true, true)
+
+      ctx.fillStyle = '#F8E29A'
+      ctx.textAlign = 'center'
+      ctx.fillText(tagText, pillX + pillW / 2, pillY + (isShortCard ? 14 : 16))
+      ctx.textAlign = 'left'
+
+      // Attraction Label
+      const displayLabel = cardInfo.label.toUpperCase()
+      let labelFontSize = isShortCard ? 13 : 14.5
+      ctx.font = `800 ${labelFontSize}px Inter, sans-serif`
+      const maxLabelW = slot.w - pillW - 36
+      while (ctx.measureText(displayLabel).width > maxLabelW && labelFontSize > 10) {
+        labelFontSize -= 0.5
+        ctx.font = `800 ${labelFontSize}px Inter, sans-serif`
+      }
+      ctx.fillStyle = '#FFFFFF'
+      ctx.fillText(displayLabel, slot.x + 16, slot.y + slot.h - (isShortCard ? 14 : 18), maxLabelW)
+    }
 
     ctx.restore()
 
-    // White Crisp Border
+    // Crisp White Outer Border
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'
-    ctx.lineWidth = 3.5
-    drawRoundedRect(ctx, rightColX, py, rightColW, photoH, 14, false, true)
+    ctx.lineWidth = 2.5
+    drawRoundedRect(ctx, slot.x, slot.y, slot.w, slot.h, 12, false, true)
   }
 
   // ── 4. Features Badges Strip (1465 to 1537) ──
