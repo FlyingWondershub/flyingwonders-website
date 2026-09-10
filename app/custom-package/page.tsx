@@ -4068,10 +4068,20 @@ export default function PrototypeBuilder() {
       // Photos from itinerary
       const distinctNames = Array.from(new Set(itinerary.flatMap(d => (d.attractions || []).map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '')))).filter(Boolean)
       const attractionPhotos = distinctNames.map(name => {
-        const meta = getAttractionMetaInfo(name, attractionsMeta)
+        const lower = name.toLowerCase()
+        let photoUrl = ''
+        if (lower.includes('city') || lower.includes('panoramic')) {
+          photoUrl = '/images/hero/singapore-hero-2.jpg'
+        } else {
+          const meta = getAttractionMetaInfo(name, attractionsMeta)
+          photoUrl = meta?.photoUrl || ''
+          if (photoUrl && (photoUrl.includes('4fa6289b') || photoUrl.includes('1024x1536'))) {
+            photoUrl = '/images/hero/singapore-hero-2.jpg'
+          }
+        }
         return {
           name,
-          photoUrl: meta?.photoUrl || ''
+          photoUrl
         }
       })
 

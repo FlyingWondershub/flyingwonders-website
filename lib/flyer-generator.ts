@@ -18,6 +18,12 @@ export const SINGAPORE_ATTRACTIONS_PHOTO_MAP: Record<string, string> = {
   skyhelix: 'https://www.pelago.com/img/products/SG-Singapore/skyhelix-sentosa---singapores-highest-open-air-panoramic-ride/2a56a2ef-f675-4011-9410-b8e64bbed146_skyhelix-sentosa-ticket-singapore-s-highest-open-air-panoramic-ride-xlarge.jpg',
   wings: 'https://www.pelago.com/img/products/SG-Singapore/wings-of-time--spectacular-light-water-show/0616-0636_0109-0846_1600-x-900_wotfs-(new-2025-dec)-xlarge.jpg',
   jewel: 'https://images.unsplash.com/photo-1600420673889-c6d4f64bdf5c?auto=format&fit=crop&w=600&q=80',
+  'city private': '/images/hero/singapore-hero-2.jpg',
+  'private city': '/images/hero/singapore-hero-2.jpg',
+  'city tour': '/images/hero/singapore-hero-2.jpg',
+  'singapore city': '/images/hero/singapore-hero-2.jpg',
+  city: '/images/hero/singapore-hero-2.jpg',
+  panoramic: '/images/hero/singapore-hero-4.jpg',
 }
 
 export const LOCAL_FALLBACK_PHOTOS: Record<string, string> = {
@@ -30,7 +36,11 @@ export const LOCAL_FALLBACK_PHOTOS: Record<string, string> = {
   'river wonders': '/images/attractions/river-wonders-singapore/cover.jpg',
   aquarium: '/images/attractions/sea-aquarium-singapore/cover.jpg',
   luge: '/images/attractions/sentosa-skyline-luge/cover.jpg',
-  flyer: '/images/attractions/singapore-flyer/cover.jpg'
+  flyer: '/images/attractions/singapore-flyer/cover.jpg',
+  'city tour': '/images/hero/singapore-hero-2.jpg',
+  'singapore city': '/images/hero/singapore-hero-2.jpg',
+  city: '/images/hero/singapore-hero-2.jpg',
+  panoramic: '/images/hero/singapore-hero-4.jpg',
 }
 
 export interface FlyerInclusion {
@@ -121,7 +131,8 @@ function drawCoverImage(
     sx = (img.naturalWidth - sw) / 2
   } else {
     sh = img.naturalWidth / targetRatio
-    sy = (img.naturalHeight - sh) / 2
+    // Bias towards upper center (22% from top) so landmark headers and skylines remain uncropped
+    sy = Math.max(0, (img.naturalHeight - sh) * 0.22)
   }
 
   ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h)
@@ -165,11 +176,15 @@ export function getAttractionCategoryTag(name: string): string {
   if (lower.includes('flyer')) return 'PANORAMIC FLIGHT'
   if (lower.includes('luge')) return 'SENTOSA ATTRACTION'
   if (lower.includes('aquarium')) return 'RESORTS WORLD SENTOSA'
+  if (lower.includes('city') && lower.includes('private')) return 'PRIVATE SIGHTSEEING'
+  if (lower.includes('city') || lower.includes('panoramic')) return 'CITY ORIENTATION'
   return 'SINGAPORE ATTRACTION'
 }
 
 export function getAttractionCleanLabel(name: string): string {
   const lower = name.toLowerCase()
+  if (lower.includes('city') && lower.includes('private')) return 'Singapore City Private Tour'
+  if (lower.includes('city') || lower.includes('panoramic')) return 'Singapore City Orientation Tour'
   if (lower.includes('night safari')) return 'Night Safari Wildlife Park'
   if (lower.includes('cable car') || (lower.includes('sentosa') && !lower.includes('universal'))) return 'Sentosa Island & Cable Car'
   if (lower.includes('universal')) return 'Universal Studios Singapore'
@@ -224,6 +239,11 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
     let matchedUrl = item.photoUrl || ''
     const label = getAttractionCleanLabel(item.name)
     const tag = getAttractionCategoryTag(item.name)
+
+    // Override city tour with landscape hero to prevent vertical infographic cropping
+    if (lower.includes('city') || lower.includes('panoramic') || matchedUrl.includes('4fa6289b') || matchedUrl.includes('1024x1536')) {
+      matchedUrl = '/images/hero/singapore-hero-2.jpg'
+    }
 
     if (!matchedUrl) {
       for (const [k, url] of Object.entries(SINGAPORE_ATTRACTIONS_PHOTO_MAP)) {
@@ -647,27 +667,57 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
   })
   ctx.textAlign = 'left'
 
-  // ── 5. Footer / Contact Card (1537 to 1800) ──
+  // ── 5. Footer / Contact Card (1537 to 1800) — No Address, Only Agency Name, Contact Number & Email ──
   const footY = 1537
   const footH = 1800 - footY
   ctx.fillStyle = '#FFFFFF'
   ctx.fillRect(0, footY, 1200, footH)
 
-  // Contact Row
+  // Top Row: Agency Name & Tagline
+  ctx.fillStyle = '#0F172A'
+  ctx.font = '900 24px Inter, -apple-system, sans-serif'
+  const footAgencyName = (data.agency?.name || 'FLYING WONDERS DMC').toUpperCase()
+  ctx.fillText(footAgencyName, 50, footY + 44)
+
+  ctx.fillStyle = '#C9972E'
+  ctx.font = '700 11.5px Inter, -apple-system, sans-serif'
+  const footAgencyTagline = (data.agency?.tagline || 'SINGAPORE B2B DESTINATION SPECIALIST').toUpperCase()
+  ctx.fillText(footAgencyTagline, 50, footY + 66)
+
+  // Right pill badge
+  const deskBadgeW = 170
+  const deskBadgeH = 32
+  const deskBadgeX = 1200 - 50 - deskBadgeW
+  const deskBadgeY = footY + 36
+  ctx.fillStyle = '#F1F5F9'
+  ctx.strokeStyle = '#CBD5E1'
+  ctx.lineWidth = 1
+  drawRoundedRect(ctx, deskBadgeX, deskBadgeY, deskBadgeW, deskBadgeH, 16, true, true)
+  ctx.fillStyle = '#64748B'
+  ctx.font = '800 11.5px Inter, sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText('DIRECT DMC DESK', deskBadgeX + deskBadgeW / 2, deskBadgeY + 20)
+  ctx.textAlign = 'left'
+
+  // Divider
+  ctx.fillStyle = '#E2E8F0'
+  ctx.fillRect(50, footY + 88, 1100, 1)
+
+  // Contact Row: Retain ONLY Contact Number & Email
   const phone = data.agency?.phone || '+91 98861 71251'
   const deskPhone = data.agency?.deskPhone || '+65 9689 0101'
   const email = data.agency?.email || 'ops@flyingwonders.com'
 
   const contactItems = [
     { icon: '📞', label: 'MOBILE / WHATSAPP', val: phone },
-    { icon: '☎️', label: 'SINGAPORE DIRECT DESK', val: deskPhone },
+    ...(deskPhone ? [{ icon: '☎️', label: 'SINGAPORE DIRECT DESK', val: deskPhone }] : []),
     { icon: '✉️', label: 'EMAIL SUPPORT', val: email }
   ]
 
-  const cColW = (1200 - 100) / 3
+  const cColW = 1100 / contactItems.length
   contactItems.forEach((c, i) => {
     const cx = 50 + i * cColW
-    const cy = footY + 42
+    const cy = footY + 140
 
     // Circle icon
     ctx.fillStyle = '#F1F5F9'
@@ -688,57 +738,19 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
     ctx.fillText(c.label, cx + 54, cy - 4)
 
     ctx.fillStyle = '#0F172A'
-    ctx.font = '800 15px Inter, sans-serif'
-    ctx.fillText(c.val, cx + 54, cy + 16)
+    ctx.font = '800 16px Inter, sans-serif'
+    ctx.fillText(c.val, cx + 54, cy + 17)
   })
 
   // Divider
-  ctx.fillStyle = '#E2E8F0'
-  ctx.fillRect(50, footY + 80, 1100, 1)
-
-  // Address Row
-  const sgAddr = data.agency?.singaporeAddress || '160 Robinson Road, #14-04 SBF Center, Singapore 068914'
-  const inAddr = data.agency?.indiaAddress || 'Bangalore & Delhi NCR B2B Operations Hub'
-
-  const addrs = [
-    { icon: '📍', title: 'SINGAPORE HEADQUARTERS', body: sgAddr },
-    { icon: '🇮🇳', title: 'PARTNER B2B DESK', body: inAddr }
-  ]
-
-  addrs.forEach((a, i) => {
-    const ax = 50 + i * 570
-    const ay = footY + 122
-
-    ctx.fillStyle = '#F1F5F9'
-    ctx.strokeStyle = '#CBD5E1'
-    ctx.lineWidth = 1
-    ctx.beginPath()
-    ctx.arc(ax + 18, ay, 18, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
-
-    ctx.font = '16px sans-serif'
-    ctx.textAlign = 'center'
-    ctx.fillText(a.icon, ax + 18, ay + 6)
-    ctx.textAlign = 'left'
-
-    ctx.fillStyle = '#0F172A'
-    ctx.font = '800 12px Inter, sans-serif'
-    ctx.fillText(a.title, ax + 46, ay - 3)
-
-    ctx.fillStyle = '#475569'
-    ctx.font = '500 12px Inter, sans-serif'
-    ctx.fillText(a.body, ax + 46, ay + 15)
-  })
+  ctx.fillStyle = '#F1F5F9'
+  ctx.fillRect(50, footY + 194, 1100, 1)
 
   // Disclaimer
-  ctx.fillStyle = '#E2E8F0'
-  ctx.fillRect(50, footY + 180, 1100, 1)
-
   ctx.fillStyle = '#94A3B8'
   ctx.font = '500 11px Inter, sans-serif'
   ctx.textAlign = 'center'
-  ctx.fillText('Rates are dynamic and subject to seasonal ticket & vehicle availability upon confirmation. White-label B2B generated proposal.', 600, footY + 215)
+  ctx.fillText('Rates are dynamic and subject to seasonal ticket & vehicle availability upon confirmation. White-label B2B generated proposal.', 600, footY + 225)
   ctx.textAlign = 'left'
 
   return canvas

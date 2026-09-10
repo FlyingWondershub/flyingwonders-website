@@ -28,6 +28,7 @@ async function renderFlyer() {
   const nightSafariImg = SINGAPORE_ATTRACTIONS_PHOTO_MAP['night safari'] || getBase64Image(path.join(__dirname, '../public/images/attractions/night-safari-singapore/cover.jpg'));
   const gardensImg = SINGAPORE_ATTRACTIONS_PHOTO_MAP.gardens || getBase64Image(path.join(__dirname, '../public/images/attractions/gardens-by-the-bay/cover.jpg'));
   const cableCarImg = SINGAPORE_ATTRACTIONS_PHOTO_MAP['cable car'] || getBase64Image(path.join(__dirname, '../public/images/attractions/singapore-cable-car/cover.jpg'));
+  const cityTourImg = getBase64Image(path.join(__dirname, '../public/images/hero/singapore-hero-2.jpg'));
 
   const html = `
 <!DOCTYPE html>
@@ -633,8 +634,8 @@ async function renderFlyer() {
             <span class="day-badge-num">02</span>
           </div>
           <div class="inc-details">
-            <div class="inc-title">Night Safari + Tram Ride</div>
-            <div class="inc-tag sharing">World's 1st Nocturnal Wildlife Park (Sharing)</div>
+            <div class="inc-title">Singapore City Private Tour</div>
+            <div class="inc-tag private">Private Air-Conditioned Vehicle · Dedicated Guide</div>
           </div>
         </div>
 
@@ -714,12 +715,12 @@ async function renderFlyer() {
         </div>
       </div>
 
-      <!-- 2. Sentosa Cable Car -->
+      <!-- 2. Singapore City Private Tour -->
       <div class="photo-card">
-        <img src="${cableCarImg}" alt="Sentosa Cable Car" style="object-position: center 40%;" />
+        <img src="${cityTourImg}" alt="Singapore City Private Tour" style="object-position: center 30%;" />
         <div class="photo-label-bar">
-          <div class="photo-label">Sentosa Island & Cable Car</div>
-          <div class="photo-tag-pill">SCENIC SKY NETWORK</div>
+          <div class="photo-label">Singapore City Private Tour</div>
+          <div class="photo-tag-pill">PRIVATE SIGHTSEEING</div>
         </div>
       </div>
 
@@ -766,9 +767,19 @@ async function renderFlyer() {
     </div>
   </div>
 
-  <!-- Footer / Contact Card -->
+  <!-- Footer / Contact Card (No Address — Only Agency Name, Contact Number & Email) -->
   <div class="footer-bar">
-    <div class="contact-row">
+    <div class="footer-top-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px;">
+      <div>
+        <div style="font-size: 24px; font-weight: 900; color: #0F172A; letter-spacing: 1px; text-transform: uppercase;">FLYING WONDERS DMC</div>
+        <div style="font-size: 11.5px; font-weight: 700; color: #C9972E; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px;">SINGAPORE B2B DESTINATION SPECIALIST</div>
+      </div>
+      <div style="font-size: 12px; font-weight: 800; color: #64748B; letter-spacing: 1px; text-transform: uppercase; background: #F1F5F9; padding: 6px 16px; border-radius: 20px; border: 1px solid #CBD5E1;">
+        DIRECT DMC DESK
+      </div>
+    </div>
+
+    <div class="contact-row" style="padding-top: 10px; border-bottom: none;">
       <div class="contact-pill">
         <div class="contact-icon-bg">📞</div>
         <div class="contact-texts">
@@ -788,23 +799,6 @@ async function renderFlyer() {
         <div class="contact-texts">
           <span class="contact-label">Email Support</span>
           <span class="contact-val">ops@flyingwonders.com</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="address-row">
-      <div class="address-col">
-        <div class="contact-icon-bg" style="width:36px; height:36px; font-size:15px;">📍</div>
-        <div class="address-texts">
-          <span class="address-title">Singapore Headquarters</span>
-          <span class="address-body">160 Robinson Road, #14-04 SBF Center, Singapore 068914</span>
-        </div>
-      </div>
-      <div class="address-col">
-        <div class="contact-icon-bg" style="width:36px; height:36px; font-size:15px;">🇮🇳</div>
-        <div class="address-texts">
-          <span class="address-title">India B2B Desk</span>
-          <span class="address-body">Bangalore & Delhi NCR B2B Operations Hub</span>
         </div>
       </div>
     </div>
