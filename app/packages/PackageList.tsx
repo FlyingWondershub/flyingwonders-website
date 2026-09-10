@@ -75,19 +75,82 @@ export default function PackageList({ initialPackages, exchangeRate = 74.81 }: {
               <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'start' }}>
                 
                 {/* Image Section */}
-                <div style={{ flex: '1 0 250px', height: '220px', background: 'var(--bg-secondary)', borderRadius: '12px', overflow: 'hidden', position: 'relative' }}>
+                <Link
+                  href={`/packages/${pkg.slug || pkg._id.replace(/_/g, '-')}`}
+                  style={{
+                    flex: '1 0 250px',
+                    maxWidth: '320px',
+                    minHeight: '260px',
+                    alignSelf: 'stretch',
+                    background: 'var(--bg-secondary)',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid var(--glass-border)',
+                    textDecoration: 'none'
+                  }}
+                  title={`View ${pkg.title} full itinerary`}
+                >
+                  {/* Subtle ambient blur of the image in the background */}
+                  {pkg.image && (
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundImage: `url(${typeof pkg.image === 'string' ? pkg.image : urlForImage(pkg.image).url()})`,
+                        backgroundPosition: 'center',
+                        backgroundSize: 'cover',
+                        filter: 'blur(20px) brightness(0.6)',
+                        opacity: 0.3,
+                        transform: 'scale(1.2)'
+                      }}
+                    />
+                  )}
+
                   {pkg.image ? (
                     <img 
                       src={typeof pkg.image === 'string' ? pkg.image : urlForImage(pkg.image).url()} 
                       alt={pkg.title} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        maxHeight: '340px', 
+                        objectFit: 'contain',
+                        display: 'block',
+                        position: 'relative',
+                        zIndex: 1
+                      }} 
                     />
                   ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dark)', opacity: 0.6 }}>
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-dark)', opacity: 0.6, position: 'relative', zIndex: 1 }}>
                       No Image Available
                     </div>
                   )}
-                </div>
+
+                  {/* Quick indicator badge */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '8px',
+                      right: '8px',
+                      zIndex: 2,
+                      background: 'rgba(0, 0, 0, 0.65)',
+                      color: '#FFF',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      padding: '3px 8px',
+                      borderRadius: '12px',
+                      backdropFilter: 'blur(4px)',
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    🔍 View Flyer
+                  </div>
+                </Link>
 
                 {/* Text Details Section */}
                 <div style={{ flex: '2 0 300px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>

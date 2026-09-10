@@ -10,6 +10,23 @@ export const metadata = {
     title: 'Singapore Tour Packages 2026 (SGD & INR Net Rates) | Flying Wonders',
     description: 'Explore curated 4D3N and 5D4N Singapore tour packages with live exchange rate calculations.',
     url: 'https://flyingwonders.net/packages',
+    siteName: 'Flying Wonders',
+    images: [
+      {
+        url: 'https://flyingwonders.net/images/hero/singapore-hero-1.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Singapore Tour Packages | Flying Wonders'
+      }
+    ],
+    locale: 'en_US',
+    type: 'website'
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Singapore Tour Packages 2026 | Flying Wonders',
+    description: 'Explore curated 4D3N and 5D4N Singapore tour packages with live exchange rate calculations.',
+    images: ['https://flyingwonders.net/images/hero/singapore-hero-1.jpg']
   }
 }
 

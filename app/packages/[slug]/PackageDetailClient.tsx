@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { urlForImage } from '../../../sanity/lib/image'
 import IciciQrModal from '../../../components/IciciQrModal'
@@ -18,7 +18,20 @@ interface Props {
 
 export default function PackageDetailClient({ pkg, exchangeRate, inrPrice, cleanSlug }: Props) {
   const [showQrModal, setShowQrModal] = useState(false)
+  const [showImageLightbox, setShowImageLightbox] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowImageLightbox(false)
+      }
+    }
+    if (showImageLightbox) {
+      window.addEventListener('keydown', handleKeyDown)
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showImageLightbox])
 
   const imageUrl = typeof pkg.image === 'string'
     ? pkg.image
@@ -223,19 +236,76 @@ export default function PackageDetailClient({ pkg, exchangeRate, inrPrice, clean
         </div>
 
         {/* ── Cover Hero Image ── */}
-        <div style={{ 
-          height: 'clamp(280px, 45vw, 460px)', 
-          borderRadius: '20px', 
-          overflow: 'hidden', 
-          marginBottom: '3rem', 
-          boxShadow: 'var(--shadow-md)',
-          position: 'relative'
-        }}>
+        <div 
+          onClick={() => setShowImageLightbox(true)}
+          style={{ 
+            borderRadius: '20px', 
+            overflow: 'hidden', 
+            marginBottom: '3rem', 
+            boxShadow: 'var(--shadow-md)',
+            position: 'relative',
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--glass-border)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '320px',
+            maxHeight: '85vh',
+            cursor: 'zoom-in'
+          }}
+          title="Click to view full resolution flyer"
+        >
+          {/* Ambient background blur for letterboxed areas */}
+          <div 
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `url(${imageUrl})`,
+              backgroundPosition: 'center',
+              backgroundSize: 'cover',
+              filter: 'blur(35px) brightness(0.6)',
+              opacity: 0.35,
+              transform: 'scale(1.15)'
+            }} 
+          />
+
           <img 
             src={imageUrl} 
             alt={pkg.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{ 
+              width: 'auto', 
+              maxWidth: '100%', 
+              height: 'auto', 
+              maxHeight: '85vh', 
+              objectFit: 'contain', 
+              display: 'block',
+              position: 'relative',
+              zIndex: 1,
+              boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
+            }}
           />
+
+          <div style={{
+            position: 'absolute',
+            bottom: '16px',
+            right: '16px',
+            zIndex: 2,
+            background: 'rgba(15, 76, 58, 0.9)',
+            color: '#FFFFFF',
+            padding: '7px 16px',
+            borderRadius: '24px',
+            fontSize: '0.82rem',
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+            backdropFilter: 'blur(6px)',
+            cursor: 'pointer'
+          }}>
+            🔍 Click to Enlarge / Full Flyer
+          </div>
         </div>
 
         {/* ── Hotel Options & Inclusions Bar ── */}
@@ -411,6 +481,120 @@ export default function PackageDetailClient({ pkg, exchangeRate, inrPrice, clean
           amountSgd={pkg.price}
           bookingReference={`FW-PKG-${cleanSlug.toUpperCase()}`}
         />
+      )}
+
+      {/* ── Fullscreen Image Lightbox Modal ── */}
+      {showImageLightbox && (
+        <div 
+          onClick={() => setShowImageLightbox(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            background: 'rgba(0, 0, 0, 0.94)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          {/* Top Controls Bar */}
+          <div 
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              left: '1rem',
+              right: '1rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              zIndex: 10,
+              maxWidth: '1200px',
+              margin: '0 auto'
+            }}
+          >
+            <div style={{ color: '#FFF', fontWeight: 800, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>📸</span>
+              <span>{pkg.title}</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <a
+                href={imageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: '#FFF',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  padding: '7px 16px',
+                  borderRadius: '20px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'background 0.2s'
+                }}
+              >
+                ↗ Open Full Original
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setShowImageLightbox(false)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  color: '#FFF',
+                  border: 'none',
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  fontSize: '1.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                title="Close (Esc)"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Centered Image Container */}
+          <div 
+            onClick={e => e.stopPropagation()}
+            style={{
+              maxHeight: '88vh',
+              maxWidth: '94vw',
+              overflow: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingTop: '2.5rem'
+            }}
+          >
+            <img 
+              src={imageUrl} 
+              alt={pkg.title}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '84vh',
+                objectFit: 'contain',
+                borderRadius: '8px',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+                display: 'block'
+              }}
+            />
+          </div>
+        </div>
       )}
 
     </div>

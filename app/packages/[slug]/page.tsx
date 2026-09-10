@@ -27,9 +27,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
 
-  const imageUrl = typeof pkg.image === 'string' 
-    ? (pkg.image.startsWith('http') ? pkg.image : `https://flyingwonders.net${pkg.image}`)
-    : (pkg.image ? urlForImage(pkg.image).url() : 'https://flyingwonders.net/images/hero/singapore-hero-1.jpg')
+  let ogImageUrl = 'https://flyingwonders.net/images/hero/singapore-hero-1.jpg'
+  let ogSquareUrl = 'https://flyingwonders.net/images/hero/singapore-hero-1.jpg'
+
+  if (pkg.image && typeof pkg.image === 'object') {
+    ogImageUrl = urlForImage(pkg.image).width(1200).height(630).fit('fill').bg('0F4C3A').url()
+    ogSquareUrl = urlForImage(pkg.image).width(800).height(800).fit('fill').bg('0F4C3A').url()
+  } else if (typeof pkg.image === 'string' && pkg.image) {
+    if (pkg.image.includes('cdn.sanity.io')) {
+      const base = pkg.image.split('?')[0]
+      ogImageUrl = `${base}?w=1200&h=630&fit=fill&bg=0F4C3A`
+      ogSquareUrl = `${base}?w=800&h=800&fit=fill&bg=0F4C3A`
+    } else if (pkg.image.startsWith('http')) {
+      ogImageUrl = pkg.image
+      ogSquareUrl = pkg.image
+    } else {
+      ogImageUrl = `https://flyingwonders.net${pkg.image}`
+      ogSquareUrl = `https://flyingwonders.net${pkg.image}`
+    }
+  }
 
   return {
     title: `${pkg.title} (SGD ${pkg.price}) | Flying Wonders Singapore DMC`,
@@ -48,10 +64,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       siteName: 'Flying Wonders',
       images: [
         {
-          url: imageUrl,
+          url: ogImageUrl,
           width: 1200,
           height: 630,
           alt: pkg.title,
+        },
+        {
+          url: ogSquareUrl,
+          width: 800,
+          height: 800,
+          alt: `${pkg.title} Square Preview`,
         }
       ],
       locale: 'en_US',
@@ -61,7 +83,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       card: 'summary_large_image',
       title: `${pkg.title} | Flying Wonders Singapore`,
       description: pkg.description,
-      images: [imageUrl],
+      images: [ogImageUrl],
     },
     alternates: {
       canonical: `https://flyingwonders.net/packages/${pkg.slug || normalizeSlug(pkg._id)}`

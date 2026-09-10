@@ -6365,8 +6365,8 @@ ${proposal}
               <div className="cp-modal-handle" />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '1.3rem' }}>📄</span>
-                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>Download PDF Document</h3>
+                  <span style={{ fontSize: '1.3rem' }}>📥</span>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>Download Documents & Itineraries</h3>
                 </div>
                 <button onClick={() => setShowPdfModal(false)} style={{ border: 'none', background: '#F1F5F9', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', cursor: 'pointer', color: '#64748B', fontWeight: 700 }}>✕</button>
               </div>
@@ -6719,15 +6719,15 @@ ${proposal}
             📋 Copy Proposal <ChevronDown size={13} style={{ marginLeft: '-2px' }} />
           </button>
 
-          {/* PDF Format Trigger (Opens Global Format Selector Modal) */}
+          {/* Download Format Trigger (Opens Global Format Selector Modal) */}
           <button 
             type="button"
             className="cp-tool-btn" 
             onClick={() => setShowPdfModal(true)}
             style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', fontWeight: 700 }}
-            title="Download PDF (Full Proposal with Pricing or Presentation Itinerary)"
+            title="Download Documents (Full Proposal, Client Itinerary, S-PDF & More)"
           >
-            📄 PDF <ChevronDown size={13} style={{ marginLeft: '-2px' }} />
+            📥 Download <ChevronDown size={13} style={{ marginLeft: '-2px' }} />
           </button>
 
           <button className="cp-tool-btn" onClick={handleSaveProposal} style={{ background: '#FAF5FF', border: '1px solid #D6BCFA', color: '#6B46C1' }}>
