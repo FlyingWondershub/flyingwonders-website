@@ -29,7 +29,7 @@ export default async function PromotionsPage() {
       
       {/* Back button */}
       <Link 
-        href="/Singapore_Attractions"
+        href="/singapore-attractions"
         style={{ 
           display: 'inline-flex', 
           alignItems: 'center', 

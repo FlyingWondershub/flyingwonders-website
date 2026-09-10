@@ -159,7 +159,7 @@ export default async function SingaporeAttractionsPage() {
         {/* Promotions link */}
         <div style={{ marginTop: '1.25rem' }}>
           <a 
-            href="/Singapore_Attractions/promotions"
+            href="/singapore-attractions/promotions"
             style={{ 
               background: '#FFF5F5', 
               color: '#C53030', 
