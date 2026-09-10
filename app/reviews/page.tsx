@@ -108,7 +108,7 @@ export default function ReviewsPage() {
   }
 
   return (
-    <div className="container" style={{ paddingTop: '5rem', paddingBottom: '6rem' }}>
+    <div className="container container-wide" style={{ paddingTop: '5rem', paddingBottom: '6rem' }}>
       
       {/* Header Section */}
       <div style={{ textAlign: 'center', marginBottom: '4rem' }}>

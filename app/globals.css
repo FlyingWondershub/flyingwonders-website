@@ -211,12 +211,27 @@ a {
   border-color: var(--gold-accent) !important;
 }
 
-/* Container */
+/* Container System */
 .container {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
+}
+
+.container-wide {
+  width: 96% !important;
+  max-width: 1600px !important;
+  margin: 0 auto !important;
+  padding: 0 1.5rem !important;
+}
+
+@media (max-width: 768px) {
+  .container,
+  .container-wide {
+    padding: 0 1rem !important;
+    width: 100% !important;
+  }
 }
 
 /* Buttons */

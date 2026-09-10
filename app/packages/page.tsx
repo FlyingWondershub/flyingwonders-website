@@ -43,7 +43,7 @@ export default async function PackagesPage() {
   const packages = await getAllPackages()
 
   return (
-    <div className="container" style={{ paddingTop: '5rem', paddingBottom: '6rem' }}>
+    <div className="container container-wide" style={{ paddingTop: '5rem', paddingBottom: '6rem' }}>
       <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
         <span style={{ color: 'var(--gold-accent)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.25em', fontSize: '0.8rem', display: 'inline-block', marginBottom: '0.75rem' }}>
           Curated Singapore Packages

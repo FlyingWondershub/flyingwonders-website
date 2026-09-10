@@ -39,7 +39,7 @@ export default async function BlogFeedPage() {
   const articles = await getAllBlogArticles()
 
   return (
-    <div className="container" style={{ padding: '2.5rem 1.5rem', minHeight: '80vh', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="container container-wide" style={{ padding: '2.5rem 1.5rem', minHeight: '80vh', maxWidth: '1600px', width: '96%', margin: '0 auto' }}>
       
       {/* Blog Header Banner */}
       <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>

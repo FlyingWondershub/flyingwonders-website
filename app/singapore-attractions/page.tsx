@@ -142,7 +142,7 @@ export default async function SingaporeAttractionsPage() {
   }
 
   return (
-    <div className="container" style={{ paddingTop: '2rem', paddingBottom: '6rem' }}>
+    <div className="container container-wide" style={{ paddingTop: '2rem', paddingBottom: '6rem' }}>
       
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>

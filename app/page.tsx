@@ -119,7 +119,7 @@ export default async function Home() {
         {/* CSS Crossfade Background with High-quality Unsplash Images */}
         <HeroBackground />
         
-        <div className="container" style={{ position: 'relative', zIndex: 10, textAlign: 'center', color: 'white', marginTop: '-1.5rem' }}>
+        <div className="container container-wide" style={{ position: 'relative', zIndex: 10, textAlign: 'center', color: 'white', marginTop: '-1.5rem' }}>
           <span style={{ 
             color: 'var(--gold-accent)', 
             textTransform: 'uppercase', 
@@ -186,7 +186,7 @@ export default async function Home() {
 
       {/* 🏙️ Section 2: The Core Pillars (Interactive Bento-Grid) */}
       <section style={{ padding: '8rem 0', background: 'var(--bg-main)' }}>
-        <div className="container">
+        <div className="container container-wide">
           <span style={{ 
             color: 'var(--crimson-primary)', 
             textTransform: 'uppercase', 
@@ -314,7 +314,7 @@ export default async function Home() {
 
       {/* 🛍️ Section 3: The Curated Marketplace */}
       <section style={{ padding: '8rem 0', background: 'var(--bg-secondary)', overflow: 'hidden' }}>
-        <div className="container">
+        <div className="container container-wide">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '4rem', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span style={{ color: 'var(--crimson-primary)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.15em', fontSize: '0.85rem' }}>
@@ -394,7 +394,7 @@ export default async function Home() {
 
       {/* 📈 Section 4: Social Proof & Metrics (The Trust Builder) */}
       <section style={{ padding: '8rem 0', background: 'var(--bg-dark)' }}>
-        <div className="container">
+        <div className="container container-wide">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '4rem' }}>
             <MetricsCounter prefix="#" end={1} label="World's Safest & Cleanest Travel Destination" />
             <MetricsCounter end={94} suffix="%" label="Visitor Satisfaction & Return Intent Index" />
