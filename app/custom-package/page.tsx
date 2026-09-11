@@ -3239,19 +3239,10 @@ export default function PrototypeBuilder() {
               const incText = inclusions.length > 0 ? `Inclusions: ${inclusions.join('  •  ')}` : ''
               const incLines = incText ? doc.splitTextToSize(incText, textW) : []
 
-              const noteLines = item.detail ? doc.splitTextToSize(`Note: ${item.detail}`, textW) : []
-              const capParts: string[] = []
-              if (meta.passengerCapacity) capParts.push(`Pax: ${meta.passengerCapacity}`)
-              if (meta.luggageCapacity) capParts.push(`Luggage: ${meta.luggageCapacity}`)
-              if (meta.vehicleCategory) capParts.push(`Category: ${meta.vehicleCategory}`)
-              const capText = capParts.join('  •  ')
-
-              // Dynamic content height calculation (accounting for full description and inclusions)
+              // Dynamic content height calculation (strictly for title, full description, and inclusions from Sanity)
               let contentH = 4.5 + 4.0 // top padding + title
-              if (capText) contentH += 3.5
+              if (descLines.length > 0) contentH += descLines.length * 3.3 + 1.5
               if (incLines.length > 0) contentH += incLines.length * 3.1 + 1.2
-              if (descLines.length > 0) contentH += descLines.length * 3.2 + 1.2
-              if (noteLines.length > 0) contentH += noteLines.length * 3.0 + 0.8
               contentH += 3.5 // bottom padding
 
               const minCardH = hasPhoto ? 34 : 22
@@ -3285,29 +3276,17 @@ export default function PrototypeBuilder() {
               let cy = y + 4.5
               font('bold', 8.5); setTxt(NAVY)
               doc.text(`${item.time}  —  ${item.label}`, ML + 6, cy)
-              cy += 4.0
+              cy += 4.2
 
-              if (capText) {
-                font('bold', 7.0); setTxt([13, 148, 136])
-                doc.text(capText, ML + 6, cy)
-                cy += 3.5
+              if (descLines.length > 0) {
+                font('normal', 7.1); setTxt(TEXT)
+                doc.text(descLines, ML + 6, cy)
+                cy += descLines.length * 3.3 + 1.5
               }
 
               if (incLines.length > 0) {
                 font('bold', 6.8); setTxt([15, 118, 110])
                 doc.text(incLines, ML + 6, cy)
-                cy += incLines.length * 3.1 + 1.2
-              }
-
-              if (descLines.length > 0) {
-                font('normal', 7.0); setTxt(TEXT)
-                doc.text(descLines, ML + 6, cy)
-                cy += descLines.length * 3.2 + 1.0
-              }
-
-              if (noteLines.length > 0) {
-                font('italic', 6.8); setTxt(SLATE)
-                doc.text(noteLines, ML + 6, cy)
               }
 
               y += cardH + 2.5
