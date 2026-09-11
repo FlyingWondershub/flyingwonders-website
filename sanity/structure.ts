@@ -28,7 +28,7 @@ const HANDLED_SCHEMAS = new Set([
   'bookingRequest',
   'promotion',
   'promotionInquiry',
-  'corporateTravel',
+  'corporateTravelSettings',
   'eventsPage',
   'competitorPrice',
 
@@ -144,7 +144,7 @@ export const structure: StructureResolver = (S) =>
               S.documentTypeListItem('bookingRequest').title('🛎️ Booking Reservations'),
               S.documentTypeListItem('promotion').title('🏷️ Special Promotions & Deals'),
               S.documentTypeListItem('promotionInquiry').title('💬 Promotion Inquiries'),
-              S.documentTypeListItem('corporateTravel').title('🏢 Corporate MICE Travel'),
+              S.documentTypeListItem('corporateTravelSettings').title('🏢 Corporate MICE Travel'),
               S.documentTypeListItem('eventsPage').title('🎪 Events & Groups'),
               S.documentTypeListItem('competitorPrice').title('🏷️ Market Price Benchmarks'),
             ])
