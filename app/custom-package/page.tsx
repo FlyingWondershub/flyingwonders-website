@@ -78,21 +78,119 @@ function getAttractionMetaInfo(attrName: string, attractionsMeta: Record<string,
   return null
 }
 
-function getTransferMetaInfo(compositeKey: string, vehicleType: string, transfersMeta: Record<string, any>) {
-  if (!transfersMeta) return null
+function getTransferMetaInfo(
+  compositeKey: string,
+  vehicleType: string,
+  transfersMeta: Record<string, any>,
+  contextHint?: string
+) {
+  if (!transfersMeta || Object.keys(transfersMeta).length === 0) return null
+
   const cleanComp = (compositeKey || '').toLowerCase().trim()
+  const cleanVeh = (vehicleType || '').toLowerCase().trim()
+  const cleanHint = (contextHint || '').toLowerCase().trim()
+  const allText = `${cleanComp} ${cleanVeh} ${cleanHint}`.toLowerCase()
+
+  // 1. Exact match on compositeKey
   if (cleanComp && transfersMeta[cleanComp]) return transfersMeta[cleanComp]
 
-  const cleanVeh = (vehicleType || '').toLowerCase().trim()
-  if (cleanVeh && transfersMeta[cleanVeh]) return transfersMeta[cleanVeh]
+  // 2. Normalized compositeKey match (handles "arrivals" / "departures" from Google Sheet -> "arrival / departure")
+  const normalizedComp = cleanComp
+    .replace(/\barrivals?\b|\bdepartures?\b/g, 'arrival / departure')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (normalizedComp && transfersMeta[normalizedComp]) return transfersMeta[normalizedComp]
+
+  // 3. Detect Vehicle Size / Category
+  let detectedSize = ''
+  if (allText.includes('13-seater') || allText.includes('13 seater') || allText.includes('minibus')) {
+    detectedSize = '13-seater'
+  } else if (allText.includes('24-seater') || allText.includes('24 seater') || allText.includes('medium coach')) {
+    detectedSize = '24-seater'
+  } else if (allText.includes('45-seater') || allText.includes('45 seater') || allText.includes('full coach')) {
+    detectedSize = '45-seater'
+  } else if (allText.includes('55-seater') || allText.includes('55 seater') || allText.includes('super coach')) {
+    detectedSize = '55-seater'
+  } else if (allText.includes('sedan') || allText.includes('camry') || allText.includes('car')) {
+    detectedSize = 'sedan'
+  } else if (allText.includes('sic') || allText.includes('seat-in-coach') || allText.includes('shared')) {
+    detectedSize = 'sic'
+  }
+
+  // 4. Detect Service Type / Intent
+  let detectedService = 'transfers' // default fallback is standard transfers
+  if (allText.includes('additional hotel pickup') || allText.includes('extra pickup') || allText.includes('additional pickup')) {
+    detectedService = 'additional hotel pickup'
+  } else if (
+    allText.includes('arrival') ||
+    allText.includes('departure') ||
+    allText.includes('airport') ||
+    allText.includes('changi') ||
+    allText.includes('flight')
+  ) {
+    detectedService = 'arrival / departure'
+  } else if (allText.includes('city tour') || allText.includes('citytour') || allText.includes('sightseeing')) {
+    detectedService = 'city tour'
+  } else if (allText.includes('disposal') || allText.includes('hourly') || allText.includes('disposal / hour') || allText.includes('per hour')) {
+    detectedService = 'disposal / hour'
+  }
+
+  // 5. Look for document matching both detectedSize and detectedService
+  if (detectedSize) {
+    for (const [k, meta] of Object.entries(transfersMeta)) {
+      if (k.includes(detectedSize)) {
+        if (detectedService === 'arrival / departure' && (k.includes('arrival') || k.includes('departure'))) {
+          return meta
+        }
+        if (detectedService === 'city tour' && k.includes('city tour')) {
+          return meta
+        }
+        if (detectedService === 'disposal / hour' && (k.includes('disposal') || k.includes('hour'))) {
+          return meta
+        }
+        if (detectedService === 'additional hotel pickup' && k.includes('additional hotel pickup')) {
+          return meta
+        }
+        if (detectedService === 'transfers' && k.includes('transfers') && !k.includes('additional')) {
+          return meta
+        }
+      }
+    }
+
+    // Secondary fallback for detectedSize: prefer " - transfers", NEVER "additional hotel pickup"
+    for (const [k, meta] of Object.entries(transfersMeta)) {
+      if (k.includes(detectedSize) && k.includes('transfers') && !k.includes('additional')) {
+        return meta
+      }
+    }
+    // Any non-additional match for this vehicle size
+    for (const [k, meta] of Object.entries(transfersMeta)) {
+      if (k.includes(detectedSize) && !k.includes('additional hotel pickup')) {
+        return meta
+      }
+    }
+  }
+
+  // 6. Generic Fallback: Match cleanComp or cleanVeh against keys, STRICTLY EXCLUDING "additional hotel pickup" unless requested
+  for (const [k, meta] of Object.entries(transfersMeta)) {
+    if (k.includes('additional hotel pickup') && !allText.includes('additional')) continue
+    if (cleanComp && (cleanComp.includes(k) || k.includes(cleanComp))) return meta
+  }
+  for (const [k, meta] of Object.entries(transfersMeta)) {
+    if (k.includes('additional hotel pickup') && !allText.includes('additional')) continue
+    if (cleanVeh && (cleanVeh.includes(k) || k.includes(cleanVeh))) return meta
+  }
+
+  // 7. Last resort: Return standard Sedan or 45-Seater transfer, never additional pickup
+  for (const [k, meta] of Object.entries(transfersMeta)) {
+    if (k.includes('transfers') && !k.includes('additional')) return meta
+  }
 
   for (const [k, meta] of Object.entries(transfersMeta)) {
-    if (k && cleanComp && (cleanComp.includes(k) || k.includes(cleanComp))) return meta
+    if (!k.includes('additional hotel pickup')) return meta
   }
-  for (const [k, meta] of Object.entries(transfersMeta)) {
-    if (k && cleanVeh && (cleanVeh.includes(k) || k.includes(cleanVeh))) return meta
-  }
-  return null
+
+  return Object.values(transfersMeta)[0] || null
 }
 
 function getGuideMetaInfo(guideType: string, guidesMeta: Record<string, any>) {
@@ -2253,21 +2351,34 @@ export default function PrototypeBuilder() {
 
     // Preload transfer photos
     const transferPhotosMap = new Map<string, string>()
-    const distinctTransfers = Array.from(new Set(itinerary.flatMap(d => (d.transfers || []).map(t => {
-      const v = vehiclesList[t.vehicleIndex]
-      return v?.compositeKey || v?.type || ''
-    })))).filter(Boolean)
-    await Promise.all(
-      distinctTransfers.map(async (key) => {
-        const meta = getTransferMetaInfo(key, key, transfersMeta)
-        if (meta?.photoUrl) {
-          const raster = await fetchRasterLogo(meta.photoUrl, 320, 220, true, 0.75)
-          if (raster?.dataUrl) {
-            transferPhotosMap.set(key.toLowerCase().trim(), raster.dataUrl)
+    if (transfersMeta && typeof transfersMeta === 'object') {
+      await Promise.all(
+        Object.entries(transfersMeta).map(async ([key, meta]: [string, any]) => {
+          if (meta?.photoUrl) {
+            const raster = await fetchRasterLogo(meta.photoUrl, 360, 240, true, 0.75)
+            if (raster?.dataUrl) {
+              const dUrl = raster.dataUrl
+              transferPhotosMap.set(key.toLowerCase().trim(), dUrl)
+              if (meta.name) transferPhotosMap.set(meta.name.toLowerCase().trim(), dUrl)
+              transferPhotosMap.set(meta.photoUrl, dUrl)
+              if (meta.vehicleCategory) transferPhotosMap.set(meta.vehicleCategory.toLowerCase().trim(), dUrl)
+            }
           }
+        })
+      )
+    }
+    // Also map all vehicle list entries and composite keys to preloaded raster
+    vehiclesList.forEach(v => {
+      const meta = getTransferMetaInfo(v.compositeKey || '', v.type || '', transfersMeta)
+      if (meta) {
+        const dUrl = (meta.photoUrl && transferPhotosMap.get(meta.photoUrl)) ||
+                     (meta.name && transferPhotosMap.get(meta.name.toLowerCase().trim()))
+        if (dUrl) {
+          if (v.compositeKey) transferPhotosMap.set(v.compositeKey.toLowerCase().trim(), dUrl)
+          if (v.type) transferPhotosMap.set(v.type.toLowerCase().trim(), dUrl)
         }
-      })
-    )
+      }
+    })
 
     // Preload guide photos
     const guidePhotosMap = new Map<string, string>()
@@ -2964,7 +3075,7 @@ export default function PrototypeBuilder() {
           const vObj = vehiclesList[t.vehicleIndex]
           const vehicle = vObj?.type || 'Vehicle'
           const compKey = vObj?.compositeKey || ''
-          const tMeta = getTransferMetaInfo(compKey, vehicle, transfersMeta)
+          const tMeta = getTransferMetaInfo(compKey, vehicle, transfersMeta, t.description || 'Point-to-point transfer')
           const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
           timelineItems.push({
             time: t.time || '08:30',
@@ -2983,23 +3094,33 @@ export default function PrototypeBuilder() {
           const isOpt = !!a.isOptional
           if (a.hasTransfer) {
             if (a.pickupEnabled !== false) {
-              const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Vehicle'
+              const pvObj = vehiclesList[a.pickupVehicleIndex ?? 0]
+              const pvName = pvObj?.type || a.pickupVehicleType || 'Vehicle'
+              const pCompKey = pvObj?.compositeKey || ''
+              const pMeta = getTransferMetaInfo(pCompKey, pvName, transfersMeta, a.pickupNotes || `Transfer to ${name}`)
               timelineItems.push({
                 time: a.pickupTime || '09:00',
                 type: 'transfer',
                 label: isOpt ? `[Optional] Pickup Transfer — ${pvName}` : `Pickup Transfer — ${pvName}`,
                 detail: a.pickupNotes || (isOpt ? `Optional transfer to ${name}` : `Transfer to ${name}`),
-                color: isOpt ? ([217, 119, 6] as [number,number,number]) : TEAL
+                color: isOpt ? ([217, 119, 6] as [number,number,number]) : TEAL,
+                meta: pMeta,
+                itemKey: pCompKey || pvName
               })
             }
             if (a.dropEnabled !== false) {
-              const dvName = vehiclesList[a.dropVehicleIndex ?? 0]?.type || 'Vehicle'
+              const dvObj = vehiclesList[a.dropVehicleIndex ?? 0]
+              const dvName = dvObj?.type || a.dropVehicleType || 'Vehicle'
+              const dCompKey = dvObj?.compositeKey || ''
+              const dMeta = getTransferMetaInfo(dCompKey, dvName, transfersMeta, a.dropNotes || `Transfer from ${name}`)
               timelineItems.push({
                 time: a.dropTime || '17:00',
                 type: 'transfer',
                 label: isOpt ? `[Optional] Drop Transfer — ${dvName}` : `Drop Transfer — ${dvName}`,
                 detail: a.dropNotes || (isOpt ? `Optional return transfer from ${name}` : `Transfer from ${name}`),
-                color: isOpt ? ([217, 119, 6] as [number,number,number]) : TEAL
+                color: isOpt ? ([217, 119, 6] as [number,number,number]) : TEAL,
+                meta: dMeta,
+                itemKey: dCompKey || dvName
               })
             }
           }
@@ -3098,14 +3219,26 @@ export default function PrototypeBuilder() {
         } else {
           // Render each item strictly in chronological 24-hour sequence
           timelineItems.forEach((item, itemIdx) => {
-            if (item.type === 'transfer' && item.meta && (item.meta.photoUrl || item.meta.shortDescription || item.meta.passengerCapacity || item.meta.longDescription)) {
+            if (item.type === 'transfer' && item.meta && (item.meta.photoUrl || item.meta.shortDescription || item.meta.passengerCapacity || item.meta.longDescription || (Array.isArray(item.meta.features) && item.meta.features.length > 0))) {
               // ── Rich Visual Transfer Card ──
               const meta = item.meta
-              const photoData = transferPhotosMap.get((item.itemKey || '').toLowerCase().trim()) || meta.photoUrl
-              const hasPhoto = !!photoData
-              const textW = hasPhoto ? CW - 44 : CW - 10
-              const descText = meta.shortDescription || meta.longDescription || ''
+              const cleanItemKey = (item.itemKey || '').toLowerCase().trim()
+              const cleanMetaName = (meta.name || '').toLowerCase().trim()
+              const photoData = transferPhotosMap.get(cleanItemKey) ||
+                                transferPhotosMap.get(cleanMetaName) ||
+                                (meta.photoUrl ? transferPhotosMap.get(meta.photoUrl) : null)
+              const hasPhoto = !!photoData && typeof photoData === 'string' && photoData.startsWith('data:image')
+
+              const textW = hasPhoto ? CW - 48 : CW - 12
+              // Full Description (prioritize rich longDescription from Sanity)
+              const descText = (meta.longDescription || meta.shortDescription || '').trim()
               const descLines = descText ? doc.splitTextToSize(descText, textW) : []
+
+              // Features / Inclusions from Sanity
+              const inclusions: string[] = Array.isArray(meta.features) && meta.features.length > 0 ? meta.features : []
+              const incText = inclusions.length > 0 ? `Inclusions: ${inclusions.join('  •  ')}` : ''
+              const incLines = incText ? doc.splitTextToSize(incText, textW) : []
+
               const noteLines = item.detail ? doc.splitTextToSize(`Note: ${item.detail}`, textW) : []
               const capParts: string[] = []
               if (meta.passengerCapacity) capParts.push(`Pax: ${meta.passengerCapacity}`)
@@ -3113,28 +3246,46 @@ export default function PrototypeBuilder() {
               if (meta.vehicleCategory) capParts.push(`Category: ${meta.vehicleCategory}`)
               const capText = capParts.join('  •  ')
 
-              const cardH = Math.max(hasPhoto ? 26 : 18, 11 + descLines.slice(0, 2).length * 3.4 + noteLines.slice(0, 1).length * 3.2 + (capText ? 4.0 : 0))
+              // Dynamic content height calculation (accounting for full description and inclusions)
+              let contentH = 4.5 + 4.0 // top padding + title
+              if (capText) contentH += 3.5
+              if (incLines.length > 0) contentH += incLines.length * 3.1 + 1.2
+              if (descLines.length > 0) contentH += descLines.length * 3.2 + 1.2
+              if (noteLines.length > 0) contentH += noteLines.length * 3.0 + 0.8
+              contentH += 3.5 // bottom padding
+
+              const minCardH = hasPhoto ? 34 : 22
+              const cardH = Math.max(minCardH, contentH)
               checkPage(cardH + 3)
 
+              // Optional vs Standard styling
+              const isOptionalTransfer = item.label.startsWith('[Optional]')
+              const cardBg: [number, number, number] = isOptionalTransfer ? [254, 252, 246] : [240, 253, 250]
+              const cardBorder: [number, number, number] = isOptionalTransfer ? [217, 119, 6] : TEAL
+              const barColor: [number, number, number] = isOptionalTransfer ? [217, 119, 6] : TEAL
+
               // Card background
-              setFill([240, 253, 250]); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'F')
-              setDraw(TEAL); doc.setLineWidth(0.35); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'S')
-              // Left Accent bar (Teal)
-              setFill(TEAL); doc.rect(ML, y, 3, cardH, 'F')
+              setFill(cardBg); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'F')
+              setDraw(cardBorder); doc.setLineWidth(0.35); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'S')
+              // Left Accent bar
+              setFill(barColor); doc.rect(ML, y, 3, cardH, 'F')
 
               if (hasPhoto && photoData) {
-                const imgW = 34
-                const imgH = Math.min(cardH - 4, 22)
+                const imgW = 40
+                const imgH = Math.min(cardH - 6, 28)
                 const imgX = MR - imgW - 2
+                const imgY = y + (cardH - imgH) / 2
                 try {
-                  doc.addImage(photoData, 'JPEG', imgX, y + (cardH - imgH) / 2, imgW, imgH, undefined, 'FAST')
+                  doc.addImage(photoData, 'JPEG', imgX, imgY, imgW, imgH, undefined, 'FAST')
+                  setDraw([204, 251, 241]); doc.setLineWidth(0.25)
+                  doc.rect(imgX, imgY, imgW, imgH, 'S')
                 } catch (e) {}
               }
 
-              let cy = y + 4.2
+              let cy = y + 4.5
               font('bold', 8.5); setTxt(NAVY)
               doc.text(`${item.time}  —  ${item.label}`, ML + 6, cy)
-              cy += 3.8
+              cy += 4.0
 
               if (capText) {
                 font('bold', 7.0); setTxt([13, 148, 136])
@@ -3142,18 +3293,24 @@ export default function PrototypeBuilder() {
                 cy += 3.5
               }
 
+              if (incLines.length > 0) {
+                font('bold', 6.8); setTxt([15, 118, 110])
+                doc.text(incLines, ML + 6, cy)
+                cy += incLines.length * 3.1 + 1.2
+              }
+
               if (descLines.length > 0) {
                 font('normal', 7.0); setTxt(TEXT)
-                doc.text(descLines.slice(0, 2), ML + 6, cy)
-                cy += Math.min(descLines.length, 2) * 3.2
+                doc.text(descLines, ML + 6, cy)
+                cy += descLines.length * 3.2 + 1.0
               }
 
               if (noteLines.length > 0) {
                 font('italic', 6.8); setTxt(SLATE)
-                doc.text(noteLines[0], ML + 6, cy)
+                doc.text(noteLines, ML + 6, cy)
               }
 
-              y += cardH + 2
+              y += cardH + 2.5
             } else if (item.type === 'guide' && item.meta && (item.meta.photoUrl || item.meta.shortDescription || item.meta.certifications || item.meta.longDescription)) {
               // ── Rich Visual Guide Card ──
               const meta = item.meta
@@ -3820,7 +3977,7 @@ export default function PrototypeBuilder() {
         if (!chosenUrl && day.transfers.length > 0) {
           for (const t of day.transfers) {
             const vObj = vehiclesList[t.vehicleIndex]
-            const meta = getTransferMetaInfo(vObj?.compositeKey || '', vObj?.type || '', transfersMeta)
+            const meta = getTransferMetaInfo(vObj?.compositeKey || '', vObj?.type || '', transfersMeta, t.description)
             if (meta?.photoUrl && !isPromotionalPoster(meta.photoUrl)) {
               chosenUrl = meta.photoUrl
               break
@@ -4059,7 +4216,7 @@ export default function PrototypeBuilder() {
             const vObj = vehiclesList[t.vehicleIndex]
             const v = vObj?.type || t.type || 'Private Transfer'
             const compKey = vObj?.compositeKey || ''
-            const meta = getTransferMetaInfo(compKey, v, transfersMeta)
+            const meta = getTransferMetaInfo(compKey, v, transfersMeta, t.description)
             const capStr = meta?.passengerCapacity ? ` (${meta.passengerCapacity})` : ''
             let desc = t.description ? t.description.trim() : ''
             const timeVal = t.time || '08:30'
