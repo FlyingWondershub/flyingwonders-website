@@ -1,6 +1,7 @@
 import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {schema} from './sanity/schemaTypes'
+import {structure} from './sanity/structure'
 import {SyncAttractionsTool} from './sanity/tools/SyncAttractionsTool'
 import React from 'react'
 
@@ -11,7 +12,7 @@ export default defineConfig({
   title: 'Flying Wonders',
   schema,
   plugins: [
-    structureTool(),
+    structureTool({ structure }),
   ],
   tools: (prev) => [
     ...prev,

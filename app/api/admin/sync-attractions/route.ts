@@ -82,6 +82,8 @@ export async function POST(request: Request) {
     revalidatePath('/singapore-attractions')
     revalidatePath('/custom-package')
     revalidatePath('/api/attraction-meta')
+    revalidatePath('/api/custom-package-meta')
+    revalidatePath('/api/custom-package-catalog')
 
     return NextResponse.json({
       success: true,

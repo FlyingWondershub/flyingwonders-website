@@ -16,6 +16,10 @@ import { newsletterCampaignSchema } from './newsletterCampaign'
 import { attractionsUserSchema } from './attractionsUser'
 import { attractionBundleSchema } from './attractionBundle'
 import { attractionMetaSchema } from './attractionMeta'
+import { transferMetaSchema } from './transferMeta'
+import { guideMetaSchema } from './guideMeta'
+import { hotelMetaSchema } from './hotelMeta'
+import { mealMetaSchema } from './mealMeta'
 import { proposalSchema } from './proposal'
 import { promotionSchema } from './promotion'
 import { promotionInquirySchema } from './promotionInquiry'
@@ -84,6 +88,10 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     attractionsUserSchema,
     attractionBundleSchema,
     attractionMetaSchema,
+    transferMetaSchema,
+    guideMetaSchema,
+    hotelMetaSchema,
+    mealMetaSchema,
     proposalSchema,
     promotionSchema,
     promotionInquirySchema,

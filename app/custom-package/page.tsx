@@ -78,6 +78,60 @@ function getAttractionMetaInfo(attrName: string, attractionsMeta: Record<string,
   return null
 }
 
+function getTransferMetaInfo(compositeKey: string, vehicleType: string, transfersMeta: Record<string, any>) {
+  if (!transfersMeta) return null
+  const cleanComp = (compositeKey || '').toLowerCase().trim()
+  if (cleanComp && transfersMeta[cleanComp]) return transfersMeta[cleanComp]
+
+  const cleanVeh = (vehicleType || '').toLowerCase().trim()
+  if (cleanVeh && transfersMeta[cleanVeh]) return transfersMeta[cleanVeh]
+
+  for (const [k, meta] of Object.entries(transfersMeta)) {
+    if (k && cleanComp && (cleanComp.includes(k) || k.includes(cleanComp))) return meta
+  }
+  for (const [k, meta] of Object.entries(transfersMeta)) {
+    if (k && cleanVeh && (cleanVeh.includes(k) || k.includes(cleanVeh))) return meta
+  }
+  return null
+}
+
+function getGuideMetaInfo(guideType: string, guidesMeta: Record<string, any>) {
+  if (!guideType || !guidesMeta) return null
+  const clean = guideType.toLowerCase().trim()
+  if (guidesMeta[clean]) return guidesMeta[clean]
+  for (const [k, meta] of Object.entries(guidesMeta)) {
+    if (k && (clean.includes(k) || k.includes(clean))) return meta
+  }
+  return null
+}
+
+function getHotelMetaInfo(hotelName: string, hotelsMeta: Record<string, any>) {
+  if (!hotelName || !hotelsMeta) return null
+  const clean = hotelName.toLowerCase().trim()
+  if (hotelsMeta[clean]) return hotelsMeta[clean]
+
+  const cleanNoRating = clean.replace(/^[0-9]\*\s*/i, '').replace(/\(.*?\)/g, '').trim()
+  if (cleanNoRating && hotelsMeta[cleanNoRating]) return hotelsMeta[cleanNoRating]
+
+  for (const [k, meta] of Object.entries(hotelsMeta)) {
+    const kClean = k.replace(/^[0-9]\*\s*/i, '').replace(/\(.*?\)/g, '').trim()
+    if (k && (clean.includes(k) || k.includes(clean) || (cleanNoRating && kClean && (cleanNoRating.includes(kClean) || kClean.includes(cleanNoRating))))) {
+      return meta
+    }
+  }
+  return null
+}
+
+function getMealMetaInfo(mealName: string, mealsMeta: Record<string, any>) {
+  if (!mealName || !mealsMeta) return null
+  const clean = mealName.toLowerCase().trim()
+  if (mealsMeta[clean]) return mealsMeta[clean]
+  for (const [k, meta] of Object.entries(mealsMeta)) {
+    if (k && (clean.includes(k) || k.includes(clean))) return meta
+  }
+  return null
+}
+
 const MEAL_PRICES = {
   breakfast: 12,
   lunch: 17,
@@ -413,9 +467,13 @@ export default function PrototypeBuilder() {
 
   // Dynamic Master Data fetched from Google Sheets (SGD pricing)
   const [hotelsList, setHotelsList] = useState(FALLBACK_HOTELS)
-  const [vehiclesList, setVehiclesList] = useState<{ type: string; pricePerTransfer: number; serviceName?: string }[]>(FALLBACK_VEHICLES)
+  const [vehiclesList, setVehiclesList] = useState<{ type: string; pricePerTransfer: number; serviceName?: string; compositeKey?: string; vehicleType?: string; transferType?: string; rateType?: string }[]>(FALLBACK_VEHICLES)
   const [attractionsList, setAttractionsList] = useState<{ name: string; adultPrice: number; childPrice: number; area?: string; rateType?: string }[]>(FALLBACK_ATTRACTIONS)
   const [attractionsMeta, setAttractionsMeta] = useState<Record<string, { shortDescription?: string; longDescription?: string; highlights?: string[]; tips?: string[]; rating?: number; category?: string; openingHours?: string; duration?: string; location?: string; photoUrl?: string | null }>>({})
+  const [transfersMeta, setTransfersMeta] = useState<Record<string, any>>({})
+  const [guidesMeta, setGuidesMeta] = useState<Record<string, any>>({})
+  const [hotelsMeta, setHotelsMeta] = useState<Record<string, any>>({})
+  const [mealsMeta, setMealsMeta] = useState<Record<string, any>>({})
   const [mealsList, setMealsList] = useState<any[]>([])
   const [guidesList, setGuidesList] = useState(FALLBACK_GUIDES)
   const [sheetLoading, setSheetLoading] = useState(false)
@@ -857,14 +915,20 @@ export default function PrototypeBuilder() {
         if (transfersSheet) {
           const transferRows: any[] = XLSX.utils.sheet_to_json(transfersSheet)
           const parsedTransfers = transferRows.map(row => {
-            const vType = row['Vehicle Type'] || ''
-            const tType = row['Transfer Type'] || ''
-            const transName = row['Transfers'] || ''
-            const serviceName = row['Service Name'] || row['Service'] || row['Transfers'] || 'Transfers'
+            const vType = (row['Vehicle Type'] || '').trim()
+            const tType = (row['Transfer Type'] || '').trim()
+            const rType = (row['Rate type'] || row['Rate Type'] || '').trim()
+            const transName = (row['Transfers'] || '').trim()
+            const serviceName = (row['Service Name'] || row['Service'] || row['Transfers'] || 'Transfers').trim()
             const rate = Number(row['Rate($)'] ?? row['Rate']) || 0
+            const compositeKey = [vType, tType, rType, serviceName].filter(Boolean).join(' - ')
             return {
               type: `${vType}${tType ? ` - ${tType}` : ''}`,
+              vehicleType: vType,
+              transferType: tType,
+              rateType: rType,
               serviceName,
+              compositeKey,
               pricePerTransfer: rate
             }
           }).filter(t => t.pricePerTransfer > 0 && t.type.trim() !== '')
@@ -956,18 +1020,51 @@ export default function PrototypeBuilder() {
       })
       .catch(() => {})
 
-    // Fetch attraction meta (photos, descriptions, highlights) from Sanity
-    fetch('/api/attraction-meta')
+    // Fetch attraction, transfer, guide, hotel, and meal meta from Sanity
+    fetch('/api/custom-package-meta')
       .then(res => res.json())
       .then(data => {
-        if (data.success && Array.isArray(data.meta)) {
-          const metaMap: Record<string, any> = {}
-          data.meta.forEach((m: any) => {
-            // Index by name and by matchKeyword for flexible matching
-            if (m.name) metaMap[m.name.toLowerCase().trim()] = m
-            if (m.matchKeyword) metaMap[m.matchKeyword.toLowerCase().trim()] = m
-          })
-          setAttractionsMeta(metaMap)
+        if (data.success) {
+          if (Array.isArray(data.attractions)) {
+            const metaMap: Record<string, any> = {}
+            data.attractions.forEach((m: any) => {
+              if (m.name) metaMap[m.name.toLowerCase().trim()] = m
+              if (m.matchKeyword) metaMap[m.matchKeyword.toLowerCase().trim()] = m
+            })
+            setAttractionsMeta(metaMap)
+          }
+
+          if (Array.isArray(data.transfers)) {
+            const transMap: Record<string, any> = {}
+            data.transfers.forEach((m: any) => {
+              if (m.name) transMap[m.name.toLowerCase().trim()] = m
+            })
+            setTransfersMeta(transMap)
+          }
+
+          if (Array.isArray(data.guides)) {
+            const guideMap: Record<string, any> = {}
+            data.guides.forEach((m: any) => {
+              if (m.name) guideMap[m.name.toLowerCase().trim()] = m
+            })
+            setGuidesMeta(guideMap)
+          }
+
+          if (Array.isArray(data.hotels)) {
+            const hotelMap: Record<string, any> = {}
+            data.hotels.forEach((m: any) => {
+              if (m.name) hotelMap[m.name.toLowerCase().trim()] = m
+            })
+            setHotelsMeta(hotelMap)
+          }
+
+          if (Array.isArray(data.meals)) {
+            const mealMap: Record<string, any> = {}
+            data.meals.forEach((m: any) => {
+              if (m.name) mealMap[m.name.toLowerCase().trim()] = m
+            })
+            setMealsMeta(mealMap)
+          }
         }
       })
       .catch(() => {})
@@ -2146,6 +2243,47 @@ export default function PrototypeBuilder() {
       })
     )
 
+    // Preload hotel photo if present
+    const effectiveHotelForPdf = customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || 'TBD')
+    const hotelMetaInfo = hotelRequired ? getHotelMetaInfo(effectiveHotelForPdf, hotelsMeta) : null
+    let hotelRaster: { dataUrl: string; width: number; height: number; format: string } | null = null
+    if (hotelMetaInfo?.photoUrl) {
+      hotelRaster = await fetchRasterLogo(hotelMetaInfo.photoUrl, 320, 220, true, 0.75)
+    }
+
+    // Preload transfer photos
+    const transferPhotosMap = new Map<string, string>()
+    const distinctTransfers = Array.from(new Set(itinerary.flatMap(d => (d.transfers || []).map(t => {
+      const v = vehiclesList[t.vehicleIndex]
+      return v?.compositeKey || v?.type || ''
+    })))).filter(Boolean)
+    await Promise.all(
+      distinctTransfers.map(async (key) => {
+        const meta = getTransferMetaInfo(key, key, transfersMeta)
+        if (meta?.photoUrl) {
+          const raster = await fetchRasterLogo(meta.photoUrl, 320, 220, true, 0.75)
+          if (raster?.dataUrl) {
+            transferPhotosMap.set(key.toLowerCase().trim(), raster.dataUrl)
+          }
+        }
+      })
+    )
+
+    // Preload guide photos
+    const guidePhotosMap = new Map<string, string>()
+    const distinctGuides = Array.from(new Set(itinerary.flatMap(d => (d.guides || []).map(g => guidesList[g.guideIndex]?.type || g.type || '')))).filter(Boolean)
+    await Promise.all(
+      distinctGuides.map(async (gt) => {
+        const meta = getGuideMetaInfo(gt, guidesMeta)
+        if (meta?.photoUrl) {
+          const raster = await fetchRasterLogo(meta.photoUrl, 240, 240, true, 0.75)
+          if (raster?.dataUrl) {
+            guidePhotosMap.set(gt.toLowerCase().trim(), raster.dataUrl)
+          }
+        }
+      })
+    )
+
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true })
 
     const PW = 210  // page width
@@ -2450,24 +2588,81 @@ export default function PrototypeBuilder() {
       const effectiveSuppType  = customHotelEnabled ? customHotelSuppName : (hotelsList[globalHotelIndex]?.rooms[globalSuppIndex]?.type || '')
 
       if (hotelRequired) {
-        setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F')
-        font('bold', 9); setTxt(NAVY)
-        doc.text('Property', ML + 2, y + 5)
-        doc.text('Room Configuration', ML + 90, y + 5)
-        doc.text('Nights', MR - 18, y + 5)
-        y += 7
-        setDraw(LGRAY); doc.setLineWidth(0.2); doc.line(ML, y, MR, y)
+        if (hotelMetaInfo && (hotelRaster?.dataUrl || hotelMetaInfo.shortDescription || hotelMetaInfo.longDescription || hotelMetaInfo.amenities)) {
+          // Editorial Hotel Showcase Card
+          const hasPhoto = !!hotelRaster?.dataUrl
+          const textW = hasPhoto ? CW - 48 : CW - 12
+          const descText = hotelMetaInfo.shortDescription || hotelMetaInfo.longDescription || ''
+          const descLines = descText ? doc.splitTextToSize(descText, textW) : []
+          const amenitiesText = hotelMetaInfo.amenities && Array.isArray(hotelMetaInfo.amenities)
+            ? hotelMetaInfo.amenities.slice(0, 5).join('  •  ')
+            : ''
+          const cardH = Math.max(hasPhoto ? 34 : 24, 16 + descLines.slice(0, 3).length * 3.6 + (amenitiesText ? 4.5 : 0))
+          checkPage(cardH + 4)
 
-        font('normal', 9); setTxt(TEXT)
-        doc.text(effectiveHotelName, ML + 2, y + 6)
-        doc.text(`${effectiveRoomType} x ${globalRoomCount}`, ML + 90, y + 6)
-        doc.text(`${nightsCount}`, MR - 18, y + 6)
-        y += 9
+          // Background card
+          setFill([248, 250, 252]); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'F')
+          setDraw(GOLD); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'S')
+          // Left Accent Strip (Navy)
+          setFill(NAVY); doc.rect(ML, y, 3, cardH, 'F')
 
-        if (effectiveSuppType && globalSuppCount > 0) {
-          font('italic', 8.5); setTxt(SLATE)
-          doc.text(`+ Supplement: ${effectiveSuppType} x ${globalSuppCount}`, ML + 2, y + 4)
-          y += 8
+          if (hasPhoto && hotelRaster) {
+            const imgX = MR - 42
+            const imgW = 40
+            const imgH = Math.min(cardH - 4, 30)
+            try {
+              doc.addImage(hotelRaster.dataUrl, 'JPEG', imgX, y + (cardH - imgH) / 2, imgW, imgH, undefined, 'FAST')
+            } catch (e) {}
+          }
+
+          let hy = y + 4.8
+          font('bold', 9.5); setTxt(NAVY)
+          const starBadge = hotelMetaInfo.starRating ? `[${hotelMetaInfo.starRating}] ` : ''
+          doc.text(`${starBadge}${effectiveHotelName}`, ML + 6, hy)
+          hy += 4.2
+
+          font('bold', 7.8); setTxt([180, 83, 9])
+          doc.text(`Room: ${effectiveRoomType} x ${globalRoomCount}  |  Nights: ${nightsCount}${effectiveSuppType && globalSuppCount > 0 ? `  |  + Supp: ${effectiveSuppType} x${globalSuppCount}` : ''}`, ML + 6, hy)
+          hy += 4.2
+
+          if (hotelMetaInfo.addressLocation) {
+            font('italic', 7.0); setTxt(SLATE)
+            doc.text(`Location: ${hotelMetaInfo.addressLocation}`, ML + 6, hy)
+            hy += 3.8
+          }
+
+          if (descLines.length > 0) {
+            font('normal', 7.1); setTxt(TEXT)
+            doc.text(descLines.slice(0, 3), ML + 6, hy)
+            hy += Math.min(descLines.length, 3) * 3.4
+          }
+
+          if (amenitiesText) {
+            font('bold', 6.8); setTxt([22, 101, 52])
+            doc.text(`Amenities: ${amenitiesText}`, ML + 6, hy + 1)
+          }
+
+          y += cardH + 3
+        } else {
+          setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F')
+          font('bold', 9); setTxt(NAVY)
+          doc.text('Property', ML + 2, y + 5)
+          doc.text('Room Configuration', ML + 90, y + 5)
+          doc.text('Nights', MR - 18, y + 5)
+          y += 7
+          setDraw(LGRAY); doc.setLineWidth(0.2); doc.line(ML, y, MR, y)
+
+          font('normal', 9); setTxt(TEXT)
+          doc.text(effectiveHotelName, ML + 2, y + 6)
+          doc.text(`${effectiveRoomType} x ${globalRoomCount}`, ML + 90, y + 6)
+          doc.text(`${nightsCount}`, MR - 18, y + 6)
+          y += 9
+
+          if (effectiveSuppType && globalSuppCount > 0) {
+            font('italic', 8.5); setTxt(SLATE)
+            doc.text(`+ Supplement: ${effectiveSuppType} x ${globalSuppCount}`, ML + 2, y + 4)
+            y += 8
+          }
         }
       } else {
         font('italic', 9); setTxt(MGRAY)
@@ -2736,6 +2931,8 @@ export default function PrototypeBuilder() {
           detail?: string
           color?: [number,number,number]
           attractionData?: any
+          meta?: any
+          itemKey?: string
           mealData?: {
             title: string
             subtitle: string
@@ -2764,14 +2961,19 @@ export default function PrototypeBuilder() {
 
         // 2. Scheduled Transfers
         day.transfers.forEach(t => {
-          const vehicle = vehiclesList[t.vehicleIndex]?.type || 'Vehicle'
+          const vObj = vehiclesList[t.vehicleIndex]
+          const vehicle = vObj?.type || 'Vehicle'
+          const compKey = vObj?.compositeKey || ''
+          const tMeta = getTransferMetaInfo(compKey, vehicle, transfersMeta)
           const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
           timelineItems.push({
             time: t.time || '08:30',
             type: 'transfer',
             label: `Private Transfer — ${vehicle}${qtyStr}`,
             detail: t.description || 'Point-to-point transfer',
-            color: TEAL
+            color: TEAL,
+            meta: tMeta,
+            itemKey: compKey || vehicle
           })
         })
 
@@ -2844,12 +3046,15 @@ export default function PrototypeBuilder() {
         if (day.meals && Array.isArray(day.meals)) {
           day.meals.forEach(m => {
             const mt = mealsList[m.mealIndex]?.type || 'Meal'
+            const mMeta = getMealMetaInfo(mt, mealsMeta)
             timelineItems.push({
               time: m.time || '12:00',
               type: 'service',
               label: mt,
               detail: m.description || 'Curated dining experience',
-              color: [60, 120, 90] as [number,number,number]
+              color: [60, 120, 90] as [number,number,number],
+              meta: mMeta,
+              itemKey: mt
             })
           })
         }
@@ -2857,12 +3062,15 @@ export default function PrototypeBuilder() {
         // 7. Tour Guides
         day.guides.forEach(g => {
           const gt = guidesList[g.guideIndex]?.type || 'Guide'
+          const gMeta = getGuideMetaInfo(gt, guidesMeta)
           timelineItems.push({
             time: g.time || '09:00',
             type: 'guide',
             label: gt,
             detail: g.description || 'Professional tour assistance',
-            color: SLATE
+            color: SLATE,
+            meta: gMeta,
+            itemKey: gt
           })
         })
 
@@ -2890,7 +3098,115 @@ export default function PrototypeBuilder() {
         } else {
           // Render each item strictly in chronological 24-hour sequence
           timelineItems.forEach((item, itemIdx) => {
-            if (item.type === 'transfer' || item.type === 'guide' || item.type === 'service') {
+            if (item.type === 'transfer' && item.meta && (item.meta.photoUrl || item.meta.shortDescription || item.meta.passengerCapacity || item.meta.longDescription)) {
+              // ── Rich Visual Transfer Card ──
+              const meta = item.meta
+              const photoData = transferPhotosMap.get((item.itemKey || '').toLowerCase().trim()) || meta.photoUrl
+              const hasPhoto = !!photoData
+              const textW = hasPhoto ? CW - 44 : CW - 10
+              const descText = meta.shortDescription || meta.longDescription || ''
+              const descLines = descText ? doc.splitTextToSize(descText, textW) : []
+              const noteLines = item.detail ? doc.splitTextToSize(`Note: ${item.detail}`, textW) : []
+              const capParts: string[] = []
+              if (meta.passengerCapacity) capParts.push(`Pax: ${meta.passengerCapacity}`)
+              if (meta.luggageCapacity) capParts.push(`Luggage: ${meta.luggageCapacity}`)
+              if (meta.vehicleCategory) capParts.push(`Category: ${meta.vehicleCategory}`)
+              const capText = capParts.join('  •  ')
+
+              const cardH = Math.max(hasPhoto ? 26 : 18, 11 + descLines.slice(0, 2).length * 3.4 + noteLines.slice(0, 1).length * 3.2 + (capText ? 4.0 : 0))
+              checkPage(cardH + 3)
+
+              // Card background
+              setFill([240, 253, 250]); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'F')
+              setDraw(TEAL); doc.setLineWidth(0.35); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'S')
+              // Left Accent bar (Teal)
+              setFill(TEAL); doc.rect(ML, y, 3, cardH, 'F')
+
+              if (hasPhoto && photoData) {
+                const imgW = 34
+                const imgH = Math.min(cardH - 4, 22)
+                const imgX = MR - imgW - 2
+                try {
+                  doc.addImage(photoData, 'JPEG', imgX, y + (cardH - imgH) / 2, imgW, imgH, undefined, 'FAST')
+                } catch (e) {}
+              }
+
+              let cy = y + 4.2
+              font('bold', 8.5); setTxt(NAVY)
+              doc.text(`${item.time}  —  ${item.label}`, ML + 6, cy)
+              cy += 3.8
+
+              if (capText) {
+                font('bold', 7.0); setTxt([13, 148, 136])
+                doc.text(capText, ML + 6, cy)
+                cy += 3.5
+              }
+
+              if (descLines.length > 0) {
+                font('normal', 7.0); setTxt(TEXT)
+                doc.text(descLines.slice(0, 2), ML + 6, cy)
+                cy += Math.min(descLines.length, 2) * 3.2
+              }
+
+              if (noteLines.length > 0) {
+                font('italic', 6.8); setTxt(SLATE)
+                doc.text(noteLines[0], ML + 6, cy)
+              }
+
+              y += cardH + 2
+            } else if (item.type === 'guide' && item.meta && (item.meta.photoUrl || item.meta.shortDescription || item.meta.certifications || item.meta.longDescription)) {
+              // ── Rich Visual Guide Card ──
+              const meta = item.meta
+              const photoData = guidePhotosMap.get((item.itemKey || '').toLowerCase().trim()) || meta.photoUrl
+              const hasPhoto = !!photoData
+              const textW = hasPhoto ? CW - 36 : CW - 10
+              const descText = meta.shortDescription || meta.longDescription || ''
+              const descLines = descText ? doc.splitTextToSize(descText, textW) : []
+              const noteLines = item.detail ? doc.splitTextToSize(`Activity: ${item.detail}`, textW) : []
+              const certText = meta.certifications && Array.isArray(meta.certifications) ? meta.certifications.join('  •  ') : ''
+
+              const cardH = Math.max(hasPhoto ? 24 : 18, 11 + descLines.slice(0, 2).length * 3.4 + noteLines.slice(0, 1).length * 3.2 + (certText ? 4.0 : 0))
+              checkPage(cardH + 3)
+
+              // Card background
+              setFill([248, 250, 252]); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'F')
+              setDraw(SLATE); doc.setLineWidth(0.35); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'S')
+              // Left Accent (Slate)
+              setFill(SLATE); doc.rect(ML, y, 3, cardH, 'F')
+
+              if (hasPhoto && photoData) {
+                const imgW = 26
+                const imgH = Math.min(cardH - 4, 20)
+                const imgX = MR - imgW - 2
+                try {
+                  doc.addImage(photoData, 'JPEG', imgX, y + (cardH - imgH) / 2, imgW, imgH, undefined, 'FAST')
+                } catch (e) {}
+              }
+
+              let cy = y + 4.2
+              font('bold', 8.5); setTxt(NAVY)
+              doc.text(`${item.time}  —  ${item.label}`, ML + 6, cy)
+              cy += 3.8
+
+              if (certText) {
+                font('bold', 7.0); setTxt([79, 70, 229])
+                doc.text(certText, ML + 6, cy)
+                cy += 3.5
+              }
+
+              if (descLines.length > 0) {
+                font('normal', 7.0); setTxt(TEXT)
+                doc.text(descLines.slice(0, 2), ML + 6, cy)
+                cy += Math.min(descLines.length, 2) * 3.2
+              }
+
+              if (noteLines.length > 0) {
+                font('italic', 6.8); setTxt(SLATE)
+                doc.text(noteLines[0], ML + 6, cy)
+              }
+
+              y += cardH + 2
+            } else if (item.type === 'transfer' || item.type === 'guide' || item.type === 'service') {
               const labelLines = doc.splitTextToSize(item.label, CW - 26)
               const detailLines = item.detail ? doc.splitTextToSize(item.detail, CW - 26) : []
               const labelH = labelLines.length * 3.8
@@ -3500,6 +3816,25 @@ export default function PrototypeBuilder() {
           }
         }
 
+        // 3. Check transfer metadata photo if day has transfers
+        if (!chosenUrl && day.transfers.length > 0) {
+          for (const t of day.transfers) {
+            const vObj = vehiclesList[t.vehicleIndex]
+            const meta = getTransferMetaInfo(vObj?.compositeKey || '', vObj?.type || '', transfersMeta)
+            if (meta?.photoUrl && !isPromotionalPoster(meta.photoUrl)) {
+              chosenUrl = meta.photoUrl
+              break
+            }
+          }
+        }
+
+        // 4. Check hotel metadata photo for Day 1
+        const effectiveHotelS = customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || '')
+        const hotelMetaS = getHotelMetaInfo(effectiveHotelS, hotelsMeta)
+        if (!chosenUrl && idx === 0 && hotelMetaS?.photoUrl) {
+          chosenUrl = hotelMetaS.photoUrl
+        }
+
         if (!chosenUrl) {
           chosenUrl = idx === 0 ? SCENIC_PHOTOS.arrival : SCENIC_PHOTOS.singapore
         }
@@ -3721,21 +4056,25 @@ export default function PrototypeBuilder() {
 
           // Transfers
           day.transfers.forEach(t => {
-            const v = vehiclesList[t.vehicleIndex]?.type || t.type || 'Private Transfer'
+            const vObj = vehiclesList[t.vehicleIndex]
+            const v = vObj?.type || t.type || 'Private Transfer'
+            const compKey = vObj?.compositeKey || ''
+            const meta = getTransferMetaInfo(compKey, v, transfersMeta)
+            const capStr = meta?.passengerCapacity ? ` (${meta.passengerCapacity})` : ''
             let desc = t.description ? t.description.trim() : ''
             const timeVal = t.time || '08:30'
             if (desc.toLowerCase().startsWith('airport to hotel') || desc.toLowerCase().includes('arrival')) {
-              highlights.push({ time: timeVal, type: 'transit', label: 'AIRPORT TRANSFER', text: `${v} - Changi Airport Arrival` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'AIRPORT TRANSFER', text: `${v}${capStr} - Changi Airport Arrival` })
             } else if (desc.toLowerCase().startsWith('hotel to airport') || desc.toLowerCase().includes('departure')) {
-              highlights.push({ time: timeVal, type: 'transit', label: 'AIRPORT TRANSFER', text: `${v} - Changi Airport Departure` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'AIRPORT TRANSFER', text: `${v}${capStr} - Changi Airport Departure` })
             } else if (desc.toLowerCase().includes('city tour')) {
-              highlights.push({ time: timeVal, type: 'transit', label: 'CITY TOUR TRANSFER', text: `${v} - Singapore City Tour` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'CITY TOUR TRANSFER', text: `${v}${capStr} - Singapore City Tour` })
             } else if (desc.toLowerCase().includes('fireworks')) {
-              highlights.push({ time: timeVal, type: 'transit', label: 'SPECIAL TRANSFER', text: `${v} - Special Fireworks Transfer` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'SPECIAL TRANSFER', text: `${v}${capStr} - Special Fireworks Transfer` })
             } else if (desc) {
-              highlights.push({ time: timeVal, type: 'transit', label: 'PRIVATE TRANSFER', text: `${v} - ${cleanItemTitle(desc)}` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'PRIVATE TRANSFER', text: `${v}${capStr} - ${cleanItemTitle(desc)}` })
             } else {
-              highlights.push({ time: timeVal, type: 'transit', label: 'PRIVATE TRANSFER', text: `${v} - Scheduled Private Transfer` })
+              highlights.push({ time: timeVal, type: 'transit', label: 'PRIVATE TRANSFER', text: `${v}${capStr} - Scheduled Private Transfer` })
             }
           })
 
@@ -3798,13 +4137,17 @@ export default function PrototypeBuilder() {
           // Tour Guides
           day.guides.forEach(g => {
             const gt = guidesList[g.guideIndex]?.type || g.type || 'Tour Guide'
-            highlights.push({ time: g.time || '09:00', type: 'service', label: 'GUIDE SERVICE', text: gt })
+            const gMeta = getGuideMetaInfo(gt, guidesMeta)
+            const badge = gMeta?.certifications?.[0] ? ` (${gMeta.certifications[0]})` : ''
+            highlights.push({ time: g.time || '09:00', type: 'service', label: 'GUIDE SERVICE', text: `${gt}${badge}` })
           })
 
           // Accommodation on Day 1
           if (dIdx === 0 && hotelRequired) {
             const hName = customHotelEnabled ? customHotelName : (hotelsList[globalHotelIndex]?.name || 'Hotel')
-            highlights.push({ time: '14:00', type: 'hotel', label: 'ACCOMMODATION', text: `Check-in at ${cleanItemTitle(hName)}` })
+            const hMeta = getHotelMetaInfo(hName, hotelsMeta)
+            const starStr = hMeta?.starRating ? ` [${hMeta.starRating}]` : ''
+            highlights.push({ time: '14:00', type: 'hotel', label: 'ACCOMMODATION', text: `Check-in at ${cleanItemTitle(hName)}${starStr}` })
           }
 
           // Sort highlights chronologically by 24-hour time
