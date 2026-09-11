@@ -104,21 +104,21 @@ const PHOTO_MAP: Record<string, string> = {
   zoo: 'https://www.pelago.com/img/products/SG-Singapore/singapore-zoo-wildlife-park/0717-0924_singapore-zoo-wildlife-park-singapore-pelago0-xlarge.jpg',
   'bird paradise': 'https://www.pelago.com/img/products/SG-Singapore/bird-paradise-tickets/0716-0618_bird-paradise-tickets-singapore-pelago1-xlarge.jpg',
   'river wonders': 'https://www.pelago.com/img/products/SG-Singapore/2in1-park-hopper-singapore-zoo--river-wonders/4b855f65-62ee-4d9c-94e7-56c0b32437c0_combo-singapore-zoo-river-wonders-ticket-xlarge.jpg',
-  luge: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=600&q=80',
+  luge: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&w=800&q=80',
   tussauds: 'https://www.pelago.com/img/products/SG-Singapore/madame-tussauds-sentosa-tickets/1224-0812_mtsg-images-of-singapore---entrance-landscape-(1)-xlarge.jpg',
   'ice cream': 'https://www.pelago.com/img/products/SG-Singapore/moic/0425-0905_moic-sg-night-at-the-museum---sprinkle-pool---jan-2022-xlarge.jpg',
-  aquarium: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=600&q=80',
-  oceanarium: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=600&q=80',
+  aquarium: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&w=800&q=80',
+  oceanarium: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&w=800&q=80',
   mbs: 'https://www.pelago.com/img/products/SG-Singapore/marina-bay-sands-skypark-observation-deck-new/0430-0606_marina-bay-sands-skypark-observation-deck_1-xlarge.jpg',
   sands: 'https://www.pelago.com/img/products/SG-Singapore/marina-bay-sands-skypark-observation-deck-new/0430-0606_marina-bay-sands-skypark-observation-deck_1-xlarge.jpg',
   ifly: 'https://www.pelago.com/img/products/SG-Singapore/altitudeX-indoor-skydiving-experience-singapore/58fa4c8e-5146-4c53-8182-cffb11536cec_altitudex-indoor-skydiving-experience-in-singapore-xlarge.jpg',
   flyer: 'https://www.pelago.com/img/products/SG-Singapore/singapore-flyer--time-capsule/0522-0609_singapore-flyer-time-capsule-singapore-pelago0.jpg-xlarge.jpg',
   'science centre': 'https://www.pelago.com/img/products/SG-Singapore/science-centre-singapore/f445e23d-fb23-11e9-9d08-029860b28508_science-centre-singapore-omni-theatre-and-kidsstop-singapore-ticket-xlarge.jpg',
-  jewel: 'https://images.unsplash.com/photo-1600420673889-c6d4f64bdf5c?auto=format&fit=crop&w=600&q=80',
+  jewel: 'https://images.unsplash.com/photo-1600420673889-c6d4f64bdf5c?auto=format&w=800&q=80',
   duck: 'https://www.pelago.com/img/products/SG-Singapore/singapore-ducktours/37bfd608-dc93-4fd1-90f7-088677e85831_singapore-ducktours-ticket-xlarge.jpg',
   'cable car': 'https://www.pelago.com/img/products/SG-Singapore/singapore-cable-car/0616-0638_1125-0343_pokémon-day-to-night-adventure-presented-by-singapore-cable-car-1-large-xlarge.jpeg',
   skyhelix: 'https://www.pelago.com/img/products/SG-Singapore/skyhelix-sentosa---singapores-highest-open-air-panoramic-ride/2a56a2ef-f675-4011-9410-b8e64bbed146_skyhelix-sentosa-ticket-singapore-s-highest-open-air-panoramic-ride-xlarge.jpg',
-  trick: 'https://images.unsplash.com/photo-1588607170133-7848600d832a?auto=format&fit=crop&w=600&q=80',
+  trick: 'https://images.unsplash.com/photo-1588607170133-7848600d832a?auto=format&w=800&q=80',
   artscience: 'https://www.pelago.com/img/products/SG-Singapore/artscience-museum/f446025f-fb23-11e9-9d08-029860b28508_artscience-museum-xlarge.jpg',
   cove: 'https://www.pelago.com/img/products/SG-Singapore/adventure-cove-waterpark/0422-0417_acw1399-acw-sanrio-summer-r12-ota_-pelago-1920x1080-en-xlarge.jpeg',
   '4d': 'https://www.pelago.com/img/products/SG-Singapore/4d-adventureland-sentosa/0108-0703_4d-adventureland-sentosa-singapore-pelago-xlarge.jpg',
@@ -126,7 +126,7 @@ const PHOTO_MAP: Record<string, string> = {
   wings: 'https://www.pelago.com/img/products/SG-Singapore/wings-of-time--spectacular-light-water-show/0616-0636_0109-0846_1600-x-900_wotfs-(new-2025-dec)-xlarge.jpg',
   bus: 'https://www.pelago.com/img/products/SG-Singapore/singapore-big-bus-tour-ticket/0210-0900_singapore-big-bus-tour-ticket-singapore-pelago1-xlarge.jpg',
   kidsstop: 'https://www.pelago.com/img/products/SG-Singapore/kidsstop-singapore/98213e40-a32e-568a-be6c-cf70187f0c17_kidsstop-singapore-ticket-xlarge.jpg',
-  default: 'https://images.unsplash.com/photo-1557343467-33e9b114d7cc?auto=format&fit=crop&w=600&q=80',
+  default: 'https://images.unsplash.com/photo-1557343467-33e9b114d7cc?auto=format&w=800&q=80',
 }
 
 function getPhoto(name: string, meta?: SanityMeta): string {
@@ -599,6 +599,9 @@ export default function AttractionsForm({
         }
         /* ── Compact mobile card ── */
         .attr-card-photo { display: block; }
+        .attr-card:hover .attr-img-element {
+          transform: scale(1.04);
+        }
         .attr-card-compact { display: none; }
         /* ── Desktop sidebar visible, mobile fab hidden ── */
         .desktop-sidebar { display: block; }
@@ -682,11 +685,87 @@ export default function AttractionsForm({
       {/* ── Lightbox ── */}
       {lightbox && (() => { const meta = getMeta(lightbox.name); return (
         <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 10000, display: 'flex', justifyContent: 'flex-end' }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '480px', background: 'var(--bg-main)', height: '100%', overflowY: 'auto', boxShadow: '-8px 0 40px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ height: '240px', backgroundImage: `url(${getPhoto(lightbox.name, meta)})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', flexShrink: 0 }}>
-              <button onClick={() => setLightbox(null)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', width: '36px', height: '36px', borderRadius: '50%', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-              <div style={{ position: 'absolute', bottom: '1rem', left: '1rem' }}>
-                <span style={{ background: 'var(--gold-accent)', color: 'white', fontSize: '0.7rem', fontWeight: 700, padding: '0.25rem 0.65rem', borderRadius: '12px', textTransform: 'uppercase' }}>{getCategory(lightbox.name, meta)}</span>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: '500px', background: 'var(--bg-main)', height: '100%', overflowY: 'auto', boxShadow: '-8px 0 40px rgba(0,0,0,0.25)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ height: '280px', position: 'relative', overflow: 'hidden', backgroundColor: '#0B132B', flexShrink: 0 }}>
+              {/* Blurred ambient backdrop to eliminate awkward letterbox borders for any aspect ratio */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: '-15px',
+                  backgroundImage: `url(${getPhoto(lightbox.name, meta)})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  filter: 'blur(20px) brightness(0.4)',
+                  transform: 'scale(1.2)'
+                }}
+              />
+              {/* Full uncropped high-res image */}
+              <img
+                src={getPhoto(lightbox.name, meta)}
+                alt={lightbox.name}
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  objectPosition: 'center',
+                  display: 'block',
+                  zIndex: 1
+                }}
+              />
+              {/* Bottom gradient overlay */}
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 40%)', zIndex: 2, pointerEvents: 'none' }} />
+
+              <button
+                onClick={() => setLightbox(null)}
+                aria-label="Close"
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'rgba(0,0,0,0.6)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  color: 'white',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  fontSize: '1.1rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 3,
+                  backdropFilter: 'blur(6px)'
+                }}
+              >
+                ✕
+              </button>
+
+              <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', zIndex: 3, display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <span style={{ background: 'var(--gold-accent)', color: 'white', fontSize: '0.7rem', fontWeight: 700, padding: '0.25rem 0.65rem', borderRadius: '12px', textTransform: 'uppercase' }}>
+                  {getCategory(lightbox.name, meta)}
+                </span>
+                <a
+                  href={getPhoto(lightbox.name, meta)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: 'rgba(0,0,0,0.55)',
+                    color: '#FFF',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    padding: '0.25rem 0.65rem',
+                    borderRadius: '12px',
+                    textDecoration: 'none',
+                    backdropFilter: 'blur(6px)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  🔍 View Full Photo ↗
+                </a>
               </div>
             </div>
             <div style={{ padding: '2rem', flex: 1 }}>
@@ -932,25 +1011,100 @@ export default function AttractionsForm({
             return (
               <div key={attr.id} className="attr-card glass" style={{ borderRadius: '12px', overflow: 'hidden', border: isSelected ? '2px solid var(--gold-accent)' : '1px solid var(--glass-border)', background: 'var(--bg-main)', boxShadow: isSelected ? 'var(--shadow-md)' : 'var(--shadow-sm)', transition: 'all 0.25s ease', display: 'flex', flexDirection: 'column' }}>
               {/* Desktop Photo (hidden on mobile) */}
-              <div className="attr-card-photo" style={{ position: 'relative', height: '155px', backgroundImage: `url(${getPhoto(attr.name, meta)})`, backgroundSize: 'cover', backgroundPosition: 'center', cursor: 'pointer' }} onClick={() => setLightbox(attr)}>
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%)' }} />
-                  <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                    {isGroup && <span style={{ background: '#0F4C3A', color: '#FCD34D', fontSize: '0.62rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '10px' }}>👥 Group Rate</span>}
-                    {isPopular && <span style={{ background: 'var(--crimson-primary)', color: 'white', fontSize: '0.62rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '10px' }}>⭐ Most Popular</span>}
-                    {isTrending && <span style={{ background: 'var(--gold-accent)', color: 'white', fontSize: '0.62rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '10px' }}>🔥 Trending</span>}
-                  </div>
-                  <div style={{ position: 'absolute', bottom: '0.6rem', left: '0.75rem' }}>
-                    <span style={{ background: 'rgba(0,0,0,0.45)', color: 'white', fontSize: '0.65rem', padding: '0.2rem 0.55rem', borderRadius: '8px', backdropFilter: 'blur(4px)', fontWeight: 600 }}>{getCategory(attr.name, meta)}</span>
-                  </div>
-                  <button onClick={e => { e.stopPropagation(); setLightbox(attr) }} style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: 'white', width: '28px', height: '28px', borderRadius: '50%', fontSize: '0.75rem', cursor: 'pointer', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>ℹ</button>
+              <div
+                className="attr-card-photo"
+                style={{
+                  position: 'relative',
+                  height: '185px',
+                  overflow: 'hidden',
+                  backgroundColor: '#0F172A',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setLightbox(attr)}
+              >
+                {/* Ambient blurred backdrop for seamless framing across mixed aspect ratios */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '-10px',
+                    backgroundImage: `url(${getPhoto(attr.name, meta)})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    filter: 'blur(16px) brightness(0.5)',
+                    transform: 'scale(1.15)'
+                  }}
+                />
+                {/* Crisp uncropped foreground image */}
+                <img
+                  src={getPhoto(attr.name, meta)}
+                  alt={attr.name}
+                  loading="lazy"
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    objectPosition: 'center',
+                    display: 'block',
+                    zIndex: 1,
+                    transition: 'transform 0.3s ease'
+                  }}
+                  className="attr-img-element"
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 40%, rgba(0,0,0,0.25) 100%)', zIndex: 2, pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap', zIndex: 3 }}>
+                  {isGroup && <span style={{ background: '#0F4C3A', color: '#FCD34D', fontSize: '0.62rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>👥 Group Rate</span>}
+                  {isPopular && <span style={{ background: 'var(--crimson-primary)', color: 'white', fontSize: '0.62rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>⭐ Most Popular</span>}
+                  {isTrending && <span style={{ background: 'var(--gold-accent)', color: 'white', fontSize: '0.62rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '10px', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>🔥 Trending</span>}
                 </div>
+                <div style={{ position: 'absolute', bottom: '0.6rem', left: '0.75rem', zIndex: 3 }}>
+                  <span style={{ background: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.65rem', padding: '0.2rem 0.55rem', borderRadius: '8px', backdropFilter: 'blur(4px)', fontWeight: 600 }}>{getCategory(attr.name, meta)}</span>
+                </div>
+                <button onClick={e => { e.stopPropagation(); setLightbox(attr) }} aria-label="Attraction Information" style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.3)', color: 'white', width: '28px', height: '28px', borderRadius: '50%', fontSize: '0.75rem', cursor: 'pointer', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3 }}>ℹ</button>
+              </div>
 
               {/* Mobile Compact Header (thumbnail + name side by side, shown only on mobile) */}
               <div className="attr-card-compact" style={{ alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem 0', display: 'none' }}>
                 <div
                   onClick={() => setLightbox(attr)}
-                  style={{ width: '60px', height: '60px', borderRadius: '8px', backgroundImage: `url(${getPhoto(attr.name, meta)})`, backgroundSize: 'cover', backgroundPosition: 'center', flexShrink: 0, cursor: 'pointer', border: '1px solid var(--glass-border)' }}
-                />
+                  style={{
+                    width: '70px',
+                    height: '70px',
+                    borderRadius: '8px',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    backgroundColor: '#0F172A',
+                    flexShrink: 0,
+                    cursor: 'pointer',
+                    border: '1px solid var(--glass-border)'
+                  }}
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: '-6px',
+                      backgroundImage: `url(${getPhoto(attr.name, meta)})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      filter: 'blur(10px) brightness(0.5)',
+                      transform: 'scale(1.2)'
+                    }}
+                  />
+                  <img
+                    src={getPhoto(attr.name, meta)}
+                    alt={attr.name}
+                    loading="lazy"
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      objectPosition: 'center',
+                      display: 'block',
+                      zIndex: 1
+                    }}
+                  />
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginBottom: '0.2rem' }}>
                     {isGroup && <span style={{ background: '#0F4C3A', color: '#FCD34D', fontSize: '0.58rem', fontWeight: 800, padding: '0.15rem 0.4rem', borderRadius: '8px' }}>👥 Group Rate</span>}

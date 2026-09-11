@@ -12,12 +12,16 @@ const client = createClient({
 
 async function main() {
   const counts = await client.fetch(`{
+    "attractions": count(*[_type == "attractionMeta"]),
     "transfers": count(*[_type == "transferMeta"]),
     "guides": count(*[_type == "guideMeta"]),
     "hotels": count(*[_type == "hotelMeta"]),
     "meals": count(*[_type == "mealMeta"])
   }`);
   console.log('SANITY_DOCUMENT_COUNTS:', JSON.stringify(counts));
+
+  const allAttrs = await client.fetch(`*[_type == "attractionMeta" && defined(photo.asset)]{ name }`);
+  console.log('Total attractions with photos in Sanity:', allAttrs.length);
 
   const samples = await client.fetch(`{
     "transfer": *[_type == "transferMeta"][0]{ name, vehicleCategory, passengerCapacity, shortDescription, "hasPhoto": defined(photo.asset) },

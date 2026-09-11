@@ -132,10 +132,10 @@ export default async function SingaporeAttractionsPage() {
     const rawMeta = await client.fetch(`*[_type == "attractionMeta"] {
       _id, name, matchKeyword, photo, officialWebsite, shortDescription, openingHours, rating, category, isPopular, isTrending, longDescription, highlights, tips, duration, location, ageRecommendation
     }`, {}, { next: { revalidate: 60 } })
-    // Resolve photo URLs
+    // Resolve photo URLs without forced aspect crop
     sanityMeta = (rawMeta || []).map((m: any) => ({
       ...m,
-      photoUrl: m.photo ? urlForImage(m.photo)?.width(800).height(600).url() : null
+      photoUrl: m.photo ? urlForImage(m.photo)?.width(1000).auto('format').fit('max').url() : null
     }))
   } catch (err) {
     console.error('Error fetching attraction meta from Sanity:', err)
