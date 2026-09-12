@@ -2,15 +2,15 @@ import { defineField, defineType } from 'sanity'
 
 export const readyPackageTemplateSchema = defineType({
   name: 'readyPackageTemplate',
-  title: 'Ready-Made Package Templates (B2B)',
+  title: 'Ready-Made Land Package Templates (B2B)',
   type: 'document',
   fields: [
     defineField({
       name: 'title',
-      title: 'Template Package Title',
+      title: 'Package Title',
       type: 'string',
+      placeholder: 'e.g. 3N/4D Singapore Highlights & City Essentials',
       validation: (Rule) => Rule.required(),
-      placeholder: 'e.g. 4N/5D Singapore Classic & Sentosa Highlights',
     }),
     defineField({
       name: 'slug',
@@ -22,12 +22,13 @@ export const readyPackageTemplateSchema = defineType({
       name: 'nightsCount',
       title: 'Number of Nights',
       type: 'number',
-      initialValue: 4,
+      initialValue: 3,
       validation: (Rule) => Rule.required().min(1).max(30),
+      description: 'e.g. 3 nights = 4 days package',
     }),
     defineField({
       name: 'category',
-      title: 'Package Category / Theme',
+      title: 'Package Category',
       type: 'string',
       options: {
         list: [
@@ -44,19 +45,20 @@ export const readyPackageTemplateSchema = defineType({
       name: 'badgeText',
       title: 'Badge Ribbon Text (Optional)',
       type: 'string',
-      placeholder: 'e.g. Bestseller, 15% Off MICE',
+      placeholder: 'e.g. BESTSELLER, FAMILY FAVORITE',
     }),
     defineField({
       name: 'coverImage',
-      title: 'Package Cover Photo',
+      title: 'Cover Image',
       type: 'image',
       options: { hotspot: true },
     }),
     defineField({
       name: 'summary',
-      title: 'Brief Highlights Summary',
+      title: 'Highlights Summary',
       type: 'text',
-      placeholder: 'Includes Gardens by the Bay, Universal Studios, Night Safari, Airport Private Transfers...',
+      rows: 2,
+      placeholder: 'Private Airport Transfers + City Tour + Gardens by the Bay + Universal Studios Singapore',
     }),
     defineField({
       name: 'startingPriceSGD',
@@ -65,33 +67,44 @@ export const readyPackageTemplateSchema = defineType({
     }),
     defineField({
       name: 'hideTemplate',
-      title: '🙈 Hide This Specific Template from B2B Portal',
+      title: '🙈 Hide This Template from B2B Portal',
       type: 'boolean',
       initialValue: false,
     }),
 
-    // DAYWISE ITINERARY TEMPLATE STRUCTURE
+    // DAYWISE ITINERARY STRUCTURE (NO MEALS, NO GUIDES)
     defineField({
       name: 'itinerary',
-      title: 'Daywise Pre-Configured Itinerary',
+      title: 'Daywise Itinerary (Prefilled for Agents)',
       type: 'array',
       of: [
         {
           type: 'object',
+          name: 'dayPlan',
           title: 'Day Plan',
           fields: [
             defineField({
-              name: 'dayTitle',
-              title: 'Day Subtitle / Focus',
-              type: 'string',
-              placeholder: 'e.g. Arrival & Changi Jewel Tour',
+              name: 'dayNumber',
+              title: 'Day Number',
+              type: 'number',
+              initialValue: 1,
             }),
             defineField({
-              name: 'isBreakTrip',
-              title: 'Is Custom Day / Break Trip',
-              type: 'boolean',
-              initialValue: false,
+              name: 'dayTitle',
+              title: 'Day Focus / Title',
+              type: 'string',
+              placeholder: 'e.g. Arrival & Changi Jewel Tour',
+              validation: (Rule) => Rule.required(),
             }),
+            defineField({
+              name: 'dayDescription',
+              title: 'Day Overview / Client Narrative (Optional)',
+              type: 'text',
+              rows: 2,
+              placeholder: 'Arrive at Changi Airport, private transfer to hotel, leisure evening...',
+            }),
+
+            // 1. TRANSFERS ON THIS DAY
             defineField({
               name: 'transfers',
               title: 'Transfers',
@@ -99,68 +112,136 @@ export const readyPackageTemplateSchema = defineType({
               of: [
                 {
                   type: 'object',
+                  name: 'transferItem',
+                  title: 'Transfer',
                   fields: [
-                    defineField({ name: 'vehicleIndex', title: 'Vehicle Type Index (0=Sedan, 1=7-Seater, 2=13-Seater Minibus, 3=Coach)', type: 'number', initialValue: 0 }),
-                    defineField({ name: 'time', title: 'Pickup Time', type: 'string', initialValue: '09:00' }),
-                    defineField({ name: 'description', title: 'Transfer Description', type: 'string', placeholder: 'e.g. Changi Airport to Hotel Private Transfer' }),
-                    defineField({ name: 'qty', title: 'Vehicle Quantity', type: 'number', initialValue: 1 }),
+                    defineField({
+                      name: 'serviceType',
+                      title: 'Transfer Type',
+                      type: 'string',
+                      options: {
+                        list: [
+                          { title: '🛬 Airport Arrival (Always Private 13-Seater)', value: 'arrival' },
+                          { title: '🛫 Airport Departure (Always Private 13-Seater)', value: 'departure' },
+                          { title: '🏙️ Half-Day City Tour (3 Hours)', value: 'cityTour' },
+                          { title: '📍 Inter-Attraction / Point-to-Point Transfer', value: 'interAttraction' },
+                        ],
+                      },
+                      initialValue: 'arrival',
+                      validation: (Rule) => Rule.required(),
+                    }),
+                    defineField({
+                      name: 'routeDescription',
+                      title: 'Route / Details',
+                      type: 'string',
+                      placeholder: 'e.g. Changi Airport T3 to City Hotel',
+                    }),
+                    defineField({
+                      name: 'time',
+                      title: 'Pickup Time',
+                      type: 'string',
+                      initialValue: '10:00',
+                    }),
                   ],
+                  preview: {
+                    select: {
+                      serviceType: 'serviceType',
+                      route: 'routeDescription',
+                      time: 'time',
+                    },
+                    prepare({ serviceType, route, time }) {
+                      const icons: Record<string, string> = {
+                        arrival: '🛬',
+                        departure: '🛫',
+                        cityTour: '🏙️',
+                        interAttraction: '📍',
+                      }
+                      return {
+                        title: route || serviceType,
+                        subtitle: `${icons[serviceType] || '🚗'} ${serviceType} @ ${time || 'TBA'}`,
+                      }
+                    },
+                  },
                 },
               ],
             }),
+
+            // 2. ATTRACTIONS ON THIS DAY
             defineField({
               name: 'attractions',
-              title: 'Attraction Tickets',
+              title: 'Prefilled Attractions & Tickets',
               type: 'array',
               of: [
                 {
                   type: 'object',
+                  name: 'attractionItem',
+                  title: 'Attraction Ticket',
                   fields: [
-                    defineField({ name: 'attractionIndex', title: 'Attraction Index (Corresponds to master list)', type: 'number', initialValue: 0 }),
-                    defineField({ name: 'attractionName', title: 'Attraction Name (Fallback match)', type: 'string' }),
-                    defineField({ name: 'time', title: 'Time Slot', type: 'string', initialValue: '10:00' }),
-                    defineField({ name: 'adultQty', title: 'Adult Quantity', type: 'number', initialValue: 2 }),
-                    defineField({ name: 'childQty', title: 'Child Quantity', type: 'number', initialValue: 0 }),
-                    defineField({ name: 'pickupNotes', title: 'Special Notes / Options', type: 'string' }),
+                    defineField({
+                      name: 'attractionName',
+                      title: 'Attraction Name',
+                      type: 'string',
+                      description: 'Exact name matching Google Sheet Attractions tab',
+                      placeholder: 'e.g. Universal Studios Singapore',
+                      validation: (Rule) => Rule.required(),
+                    }),
+                    defineField({
+                      name: 'time',
+                      title: 'Visiting Time / Slot',
+                      type: 'string',
+                      initialValue: '10:00',
+                    }),
+                    defineField({
+                      name: 'inclusionsNotes',
+                      title: 'Ticket Notes / Inclusions',
+                      type: 'string',
+                      placeholder: 'e.g. Includes 2 Domes Admission or Tram Ride',
+                    }),
                   ],
-                },
-              ],
-            }),
-            defineField({
-              name: 'breakfast',
-              title: 'Breakfast Included',
-              type: 'boolean',
-              initialValue: true,
-            }),
-            defineField({
-              name: 'lunch',
-              title: 'Lunch Included',
-              type: 'boolean',
-              initialValue: false,
-            }),
-            defineField({
-              name: 'dinner',
-              title: 'Dinner Included',
-              type: 'boolean',
-              initialValue: false,
-            }),
-            defineField({
-              name: 'guides',
-              title: 'Guide Escort Assigned',
-              type: 'array',
-              of: [
-                {
-                  type: 'object',
-                  fields: [
-                    defineField({ name: 'guideType', title: 'Guide Type Index (0=Half Day 4h, 1=Full Day 8h)', type: 'number', initialValue: 0 }),
-                    defineField({ name: 'notes', title: 'Languages / Special Instructions', type: 'string', initialValue: 'English Speaking Licensed Guide' }),
-                  ],
+                  preview: {
+                    select: {
+                      name: 'attractionName',
+                      time: 'time',
+                    },
+                    prepare({ name, time }) {
+                      return {
+                        title: name || 'Attraction Ticket',
+                        subtitle: `🎟️ Ticket @ ${time || 'Anytime'}`,
+                      }
+                    },
+                  },
                 },
               ],
             }),
           ],
+          preview: {
+            select: {
+              dayNumber: 'dayNumber',
+              title: 'dayTitle',
+              transfers: 'transfers',
+              attractions: 'attractions',
+            },
+            prepare({ dayNumber, title, transfers, attractions }) {
+              const tCount = transfers?.length || 0
+              const aCount = attractions?.length || 0
+              return {
+                title: `Day ${dayNumber || '?'}: ${title || 'Untitled'}`,
+                subtitle: `🚗 ${tCount} Transfer${tCount === 1 ? '' : 's'} • 🎟️ ${aCount} Attraction${aCount === 1 ? '' : 's'}`,
+              }
+            },
+          },
         },
       ],
+    }),
+
+    // CUSTOMIZABLE PROPOSAL FOOTER / TERMS & INCLUSIONS
+    defineField({
+      name: 'termsAndInclusions',
+      title: 'Proposal Footer (Terms & Inclusions)',
+      type: 'text',
+      rows: 6,
+      description: 'Leave blank to use the global default message, or customize specifically for this template.',
+      initialValue: `Terms & Inclusions:\n\n📌 Land Package Only: Hotel accommodation is not included.\n🚐 Transfers: Airport arrival & departure transfers are provided by Private 13-Seater Minibus. Sightseeing transfers are as selected (SIC / Private 13-Seater). Surcharges applicable for flights between 22:00 - 07:00 hours.\nℹ️ Customizations: For hotel room bookings, meal plans, licensed English/Hindi guides, or coach upgrades for groups >12 Pax, please contact DMC.`,
     }),
   ],
 })

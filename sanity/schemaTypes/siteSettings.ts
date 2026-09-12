@@ -68,6 +68,15 @@ export const siteSettingsSchema = {
       description: 'Published Google Sheet URL for Malaysia Hotels, Transfers, Guides, and Meals master rates.',
       group: 'b2bToggles',
     },
+    {
+      name: 'defaultLandPackageTerms',
+      title: '📋 Default Land Package Proposal Terms & Inclusions',
+      type: 'text',
+      rows: 6,
+      description: 'Default Terms & Inclusions text shown at the bottom of Ready-Made Land Package proposals (WhatsApp & PDF).',
+      initialValue: `Terms & Inclusions:\n\n📌 Land Package Only: Hotel accommodation is not included.\n🚐 Transfers: Airport arrival & departure transfers are provided by Private 13-Seater Minibus. Sightseeing transfers are as selected (SIC / Private 13-Seater). Surcharges applicable for flights between 22:00 - 07:00 hours.\nℹ️ Customizations: For hotel room bookings, meal plans, licensed English/Hindi guides, or coach upgrades for groups >12 Pax, please contact DMC.`,
+      group: 'b2bToggles',
+    },
 
 
     /* ══════ 2. NAVIGATION & MAIN SITE HIDE TOGGLES ══════ */

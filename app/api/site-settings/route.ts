@@ -49,7 +49,8 @@ export async function GET() {
       hideIciciInstantQuote,
       hideIciciAttractions,
       hideIciciPackages,
-      hideIciciPayDirect
+      hideIciciPayDirect,
+      defaultLandPackageTerms
     }`)
 
     return NextResponse.json({
