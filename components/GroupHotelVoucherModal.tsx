@@ -401,14 +401,18 @@ export default function GroupHotelVoucherModal({
 
         // Header mapping
         const headers = rawRows[0].map((h: any) => (h || '').toString().toLowerCase().trim())
-        const roomCol = headers.findIndex((h: string) => h.includes('room'))
-        const catCol = headers.findIndex((h: string) => h.includes('cat') || h.includes('type'))
+        const roomColExact = headers.findIndex((h: string) => 
+          (h.includes('room') && (h.includes('#') || h.includes('no') || h.includes('num') || h.includes('id'))) ||
+          h === 'room' || h === 'rm' || h === 'rm #' || h === 'rm no' || h === 'room #'
+        )
+        const roomCol = roomColExact !== -1 ? roomColExact : headers.findIndex((h: string) => h.includes('room') && !h.includes('type') && !h.includes('cat'))
+        const catCol = headers.findIndex((h: string) => h.includes('cat') || h.includes('type') || h.includes('category'))
         const bedCol = headers.findIndex((h: string) => h.includes('bed'))
         const titleCol = headers.findIndex((h: string) => h.includes('title'))
-        const nameCol = headers.findIndex((h: string) => h.includes('name') || h.includes('guest'))
+        const nameCol = headers.findIndex((h: string) => h.includes('name') || h.includes('guest') || h.includes('pax'))
         const passCol = headers.findIndex((h: string) => h.includes('pass') || h.includes('ppt'))
         const natCol = headers.findIndex((h: string) => h.includes('nat') || h.includes('country'))
-        const typeCol = headers.findIndex((h: string) => h.includes('adult') || h.includes('type') || h.includes('pax'))
+        const typeCol = headers.findIndex((h: string) => (h.includes('adult') || h.includes('child')) && !h.includes('bed'))
 
         const roomMap: Record<string, HotelRoomAllocation> = {}
 
@@ -416,8 +420,22 @@ export default function GroupHotelVoucherModal({
           const row = rawRows[i]
           if (!row || row.length === 0) continue
 
-          const rNum = (row[roomCol] || `Room ${i}`).toString().trim()
-          const rCat = catCol !== -1 && row[catCol] ? row[catCol].toString().trim() : 'Deluxe Twin Room'
+          let rawRNum = roomCol !== -1 && row[roomCol] !== undefined ? row[roomCol].toString().trim() : ''
+          let rCat = catCol !== -1 && row[catCol] ? row[catCol].toString().trim() : 'Deluxe Twin Room'
+          
+          let rNum = rawRNum
+          if (!rNum) {
+            rNum = `Room ${i}`
+          } else {
+            const numMatch = rNum.match(/\d+/)
+            if (numMatch) {
+              rNum = `Room ${numMatch[0]}`
+            } else if (rCat && rNum.toLowerCase() === rCat.toLowerCase()) {
+              // User data had category in room number column
+              rNum = `Room ${i}`
+            }
+          }
+
           const rBed = bedCol !== -1 && row[bedCol] ? row[bedCol].toString().trim() : 'Twin Beds'
 
           const gTitle = titleCol !== -1 && row[titleCol] ? row[titleCol].toString().trim() : 'Mr'
