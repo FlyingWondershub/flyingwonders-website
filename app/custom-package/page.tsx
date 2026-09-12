@@ -2484,17 +2484,18 @@ export default function PrototypeBuilder() {
     const effectiveLogoUrl = customAgencyLogoUrl || activeAgent?.logoUrl || ''
     let logoRaster: { dataUrl: string; width: number; height: number; format: string } | null = null
     if (effectiveLogoUrl) {
-      logoRaster = await fetchRasterLogo(effectiveLogoUrl, 640, 320, false, 0.95, 'scale')
+      logoRaster = await fetchRasterLogo(effectiveLogoUrl, 400, 200, false, 0.85, 'scale')
     }
 
-    // Preload meal images for breakfast & buffet dining cards
-    // 640x480 at 0.92 JPEG quality gives flawless print crispness
+    // Preload meal images for breakfast & buffet dining cards only if used in itinerary
+    const hasAnyBreakfast = itinerary.some(d => d.breakfast || hotelRequired)
+    const hasAnyDinner = itinerary.some(d => d.dinner)
     const [breakfastRaster, buffetRaster] = await Promise.all([
-      fetchRasterLogo('/images/meals-breakfast.jpg', 640, 480, true, 0.92, 'cover'),
-      fetchRasterLogo('/images/meals-buffet.jpg', 640, 480, true, 0.92, 'cover')
+      hasAnyBreakfast ? fetchRasterLogo('/images/meals-breakfast.jpg', 480, 360, true, 0.80, 'cover') : Promise.resolve(null),
+      hasAnyDinner ? fetchRasterLogo('/images/meals-buffet.jpg', 480, 360, true, 0.80, 'cover') : Promise.resolve(null)
     ])
 
-    // Preload attraction card photos (640x416 px exact 40mm x 26mm ratio: zero distortion, razor-sharp 300+ DPI print)
+    // Preload attraction card photos (480x312 px exact 40mm x 26mm ratio: zero distortion, razor-sharp 305 DPI print)
     const attractionPhotosMap = new Map<string, string>()
     const distinctAttractionNames = Array.from(new Set(itinerary.flatMap(d => (d.attractions || []).map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '')))).filter(Boolean)
     await Promise.all(
@@ -2505,7 +2506,7 @@ export default function PrototypeBuilder() {
           pUrl = getLocalAttractionPhoto(name) || pUrl
         }
         if (pUrl) {
-          const raster = await fetchRasterLogo(pUrl, 640, 416, true, 0.92, 'cover')
+          const raster = await fetchRasterLogo(pUrl, 480, 312, true, 0.80, 'cover')
           if (raster?.dataUrl) {
             const dUrl = raster.dataUrl
             attractionPhotosMap.set(name.toLowerCase().trim(), dUrl)
@@ -2516,7 +2517,7 @@ export default function PrototypeBuilder() {
       })
     )
 
-    // Preload hotel photo if present
+    // Preload hotel photo if present and required
     const effectiveHotelForPdf = customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || 'TBD')
     const hotelMetaInfo = hotelRequired ? getHotelMetaInfo(effectiveHotelForPdf, hotelsMeta) : null
     let hotelRaster: { dataUrl: string; width: number; height: number; format: string } | null = null
@@ -2524,78 +2525,99 @@ export default function PrototypeBuilder() {
     if (!hotelUrl && hotelRequired) {
       hotelUrl = '/images/hero/singapore-hero-1.jpg'
     }
-    if (hotelUrl) {
-      hotelRaster = await fetchRasterLogo(hotelUrl, 640, 416, true, 0.92, 'cover')
+    if (hotelUrl && hotelRequired) {
+      hotelRaster = await fetchRasterLogo(hotelUrl, 480, 360, true, 0.80, 'cover')
     }
 
-    // Preload transfer photos (640x416 px cover: zero vehicle squishing, crisp retina quality)
+    // Preload transfer photos (480x312 px cover: zero distortion, 305 DPI retina print quality)
+    // Only preloads the vehicles actually used in this itinerary, avoiding 45+ redundant network fetches
     const transferPhotosMap = new Map<string, string>()
 
-    // 1. Preload verified local fallback fleet images
+    const usedVehicleLookups: { compKey: string; type: string; hint?: string; label: string }[] = []
+    itinerary.forEach(d => {
+      (d.transfers || []).forEach(t => {
+        const vObj = vehiclesList[t.vehicleIndex]
+        usedVehicleLookups.push({
+          compKey: vObj?.compositeKey || '',
+          type: vObj?.type || t.type || '',
+          hint: t.description || 'Point-to-point transfer',
+          label: `Private Transfer — ${vObj?.type || t.type || 'Vehicle'}`
+        })
+      })
+      ;(d.attractions || []).forEach(a => {
+        if (a.hasTransfer) {
+          if (a.pickupEnabled !== false) {
+            const pvObj = vehiclesList[a.pickupVehicleIndex ?? 0]
+            usedVehicleLookups.push({
+              compKey: pvObj?.compositeKey || '',
+              type: pvObj?.type || a.pickupVehicleType || '',
+              hint: a.pickupNotes || `Transfer to ${a.attractionName || ''}`,
+              label: `Pickup Transfer — ${pvObj?.type || a.pickupVehicleType || 'Vehicle'}`
+            })
+          }
+          if (a.dropEnabled !== false) {
+            const dvObj = vehiclesList[a.dropVehicleIndex ?? 0]
+            usedVehicleLookups.push({
+              compKey: dvObj?.compositeKey || '',
+              type: dvObj?.type || a.dropVehicleType || '',
+              hint: a.dropNotes || `Transfer from ${a.attractionName || ''}`,
+              label: `Drop Transfer — ${dvObj?.type || a.dropVehicleType || 'Vehicle'}`
+            })
+          }
+        }
+      })
+    })
+
+    const neededTransferImages = new Set<string>()
+    const vehicleKeyToPhotoSrc = new Map<string, string>()
+
+    usedVehicleLookups.forEach(lookup => {
+      const meta = getTransferMetaInfo(lookup.compKey, lookup.type, transfersMeta, lookup.hint)
+      let photoSrc = meta?.photoUrl
+      if (!photoSrc || isPromotionalPoster(photoSrc)) {
+        photoSrc = getLocalTransferPhoto(lookup.compKey) ||
+                   getLocalTransferPhoto(lookup.type) ||
+                   (meta?.name ? getLocalTransferPhoto(meta.name) : null) ||
+                   getLocalTransferPhoto(lookup.label) || ''
+      }
+      if (photoSrc) {
+        neededTransferImages.add(photoSrc)
+        if (lookup.compKey) vehicleKeyToPhotoSrc.set(lookup.compKey.toLowerCase().trim(), photoSrc)
+        if (lookup.type) vehicleKeyToPhotoSrc.set(lookup.type.toLowerCase().trim(), photoSrc)
+        if (meta?.name) vehicleKeyToPhotoSrc.set(meta.name.toLowerCase().trim(), photoSrc)
+        if (lookup.label) vehicleKeyToPhotoSrc.set(lookup.label.toLowerCase().trim(), photoSrc)
+        if (photoSrc.startsWith('/')) vehicleKeyToPhotoSrc.set(photoSrc.toLowerCase().trim(), photoSrc)
+        vehicleKeyToPhotoSrc.set(photoSrc, photoSrc)
+      }
+    })
+
+    // Fetch and rasterize only needed transfer photos (typically 1 to 3 images instead of 45+)
     await Promise.all(
-      Object.entries(LOCAL_TRANSFER_FALLBACKS).map(async ([key, localPath]) => {
-        const raster = await fetchRasterLogo(localPath, 640, 416, true, 0.92, 'cover')
+      Array.from(neededTransferImages).map(async (src) => {
+        const raster = await fetchRasterLogo(src, 480, 312, true, 0.80, 'cover')
         if (raster?.dataUrl) {
-          transferPhotosMap.set(key.toLowerCase().trim(), raster.dataUrl)
-          transferPhotosMap.set(localPath.toLowerCase().trim(), raster.dataUrl)
+          transferPhotosMap.set(src, raster.dataUrl)
+          transferPhotosMap.set(src.toLowerCase().trim(), raster.dataUrl)
         }
       })
     )
 
-    // 2. Preload Sanity CMS transfer photos
-    if (transfersMeta && typeof transfersMeta === 'object') {
-      await Promise.all(
-        Object.entries(transfersMeta).map(async ([key, meta]: [string, any]) => {
-          if (meta?.photoUrl) {
-            const raster = await fetchRasterLogo(meta.photoUrl, 640, 416, true, 0.92, 'cover')
-            if (raster?.dataUrl) {
-              const dUrl = raster.dataUrl
-              transferPhotosMap.set(key.toLowerCase().trim(), dUrl)
-              if (meta.name) transferPhotosMap.set(meta.name.toLowerCase().trim(), dUrl)
-              transferPhotosMap.set(meta.photoUrl, dUrl)
-              if (meta.vehicleCategory) transferPhotosMap.set(meta.vehicleCategory.toLowerCase().trim(), dUrl)
-            }
-          }
-        })
-      )
-    }
-
-    // 3. Map all vehicle list entries and composite keys to preloaded raster
-    // Sort so canonical transfers ('transfers', 'disposal', 'point to point') take precedence over specific airport graphics
-    const sortedVehicles = [...vehiclesList].sort((a, b) => {
-      const aS = (a.serviceName || '').toLowerCase()
-      const bS = (b.serviceName || '').toLowerCase()
-      const isACanonical = aS.includes('transfer') || aS.includes('disposal')
-      const isBCanonical = bS.includes('transfer') || bS.includes('disposal')
-      if (isACanonical && !isBCanonical) return -1
-      if (!isACanonical && isBCanonical) return 1
-      return 0
-    })
-
-    sortedVehicles.forEach(v => {
-      const meta = getTransferMetaInfo(v.compositeKey || '', v.type || '', transfersMeta)
-      if (meta) {
-        const dUrl = (meta.photoUrl && transferPhotosMap.get(meta.photoUrl)) ||
-                     (meta.name && transferPhotosMap.get(meta.name.toLowerCase().trim()))
-        if (dUrl) {
-          if (v.compositeKey) transferPhotosMap.set(v.compositeKey.toLowerCase().trim(), dUrl)
-          const pairKey = `${(v.type || '').toLowerCase().trim()}::${(v.serviceName || '').toLowerCase().trim()}`
-          transferPhotosMap.set(pairKey, dUrl)
-          if (v.type && !transferPhotosMap.has(v.type.toLowerCase().trim())) {
-            transferPhotosMap.set(v.type.toLowerCase().trim(), dUrl)
-          }
-        }
+    // Map all vehicle keys and composite keys to the raster data
+    vehicleKeyToPhotoSrc.forEach((src, key) => {
+      const dUrl = transferPhotosMap.get(src) || transferPhotosMap.get(src.toLowerCase().trim())
+      if (dUrl) {
+        transferPhotosMap.set(key, dUrl)
       }
     })
 
-    // Preload guide photos
+    // Preload guide photos (only if guides are present in itinerary)
     const guidePhotosMap = new Map<string, string>()
     const distinctGuides = Array.from(new Set(itinerary.flatMap(d => (d.guides || []).map(g => guidesList[g.guideIndex]?.type || g.type || '')))).filter(Boolean)
     await Promise.all(
       distinctGuides.map(async (gt) => {
         const meta = getGuideMetaInfo(gt, guidesMeta)
         if (meta?.photoUrl) {
-          const raster = await fetchRasterLogo(meta.photoUrl, 480, 480, true, 0.92, 'cover')
+          const raster = await fetchRasterLogo(meta.photoUrl, 400, 400, true, 0.80, 'cover')
           if (raster?.dataUrl) {
             guidePhotosMap.set(gt.toLowerCase().trim(), raster.dataUrl)
           }
@@ -3255,6 +3277,13 @@ export default function PrototypeBuilder() {
       }
 
       // ─── DAY-BY-DAY ITINERARY ─────────────────────────────
+      if (y > 25) {
+        addFooter()
+        doc.addPage()
+        pageNum++
+        addPageHeader()
+        y = 20
+      }
       sectionTitle('DAY-BY-DAY ITINERARY')
 
       itinerary.forEach((day, dIdx) => {
@@ -3424,8 +3453,18 @@ export default function PrototypeBuilder() {
 
         const hasContent = timelineItems.length > 0
 
+        // Ensure every subsequent day (Day 2, Day 3, ...) starts cleanly at the top of a fresh page
+        if (dIdx > 0) {
+          addFooter()
+          doc.addPage()
+          pageNum++
+          addPageHeader()
+          y = 20
+        } else {
+          checkPage(18)
+        }
+
         // Day header
-        checkPage(18)
         setFill(GOLD); doc.roundedRect(ML, y, CW, 8.5, 2, 2, 'F')
         font('bold', 9.5); setTxt(NAVY)
         doc.text(`DAY ${dIdx + 1}`, ML + 4, y + 5.8)
@@ -3437,9 +3476,36 @@ export default function PrototypeBuilder() {
         y += 11.5
 
         if (!hasContent) {
-          font('italic', 8.5); setTxt(MGRAY)
-          doc.text('Free & Easy / Rest Day — Itinerary to be confirmed.', ML + 4, y + 5)
-          y += 10
+          // Elegant Curated Leisure Day Card (Transforms empty rest day into a high-value editorial feature)
+          const restCardH = 46
+          checkPage(restCardH + 4)
+          setFill([254, 252, 246] as [number,number,number])
+          doc.roundedRect(ML, y, CW, restCardH, 2, 2, 'F')
+          setDraw([217, 180, 110] as [number,number,number]); doc.setLineWidth(0.4)
+          doc.roundedRect(ML, y, CW, restCardH, 2, 2, 'S')
+          // Left accent bar (Gold)
+          setFill(GOLD); doc.rect(ML, y, 3, restCardH, 'F')
+
+          font('bold', 9.0); setTxt(NAVY)
+          doc.text('🌴 Free & Easy Leisure & Exploration Day', ML + 6, y + 6.5)
+          font('italic', 7.5); setTxt([180, 83, 9] as [number,number,number])
+          doc.text('Personal time to relax, shop, and explore Singapore at your own leisure pace', ML + 6, y + 11.5)
+
+          font('normal', 7.2); setTxt(SLATE)
+          const leisureTips = [
+            '• Stroll world-class shopping precincts along Orchard Road or Marina Bay Sands Shoppes.',
+            '• Discover Singapore\'s vibrant heritage precincts in Little India, Chinatown, or Kampong Glam.',
+            '• Savor iconic culinary delights at Lau Pa Sat, Newton, or Maxwell Hawker Food Centre.',
+            '• Unwind with an evening waterfront promenade walk along Marina Bay or Clarke Quay.'
+          ]
+          leisureTips.forEach((tip, tIdx) => {
+            doc.text(tip, ML + 6, y + 18.0 + tIdx * 5.0)
+          })
+
+          font('italic', 6.8); setTxt(MGRAY)
+          doc.text('Need private transport or additional ticket bookings for this day? Contact your travel consultant anytime.', ML + 6, y + restCardH - 4.2)
+
+          y += restCardH + 3
         } else {
           // Render each item strictly in chronological 24-hour sequence
           timelineItems.forEach((item, itemIdx) => {
@@ -4083,7 +4149,7 @@ export default function PrototypeBuilder() {
       }
 
       // Helper to load image and crop cleanly into crisp, modern rounded rectangle with luxury border
-      const fetchBase64Image = async (url: string, targetW = 800, targetH = 540, r = 14): Promise<string | null> => {
+      const fetchBase64Image = async (url: string, targetW = 600, targetH = 405, r = 10): Promise<string | null> => {
         try {
           let rawDataUrl = ''
           if (!url) return null
@@ -4185,7 +4251,7 @@ export default function PrototypeBuilder() {
                 ctx.stroke()
                 ctx.restore()
 
-                resolve(canvas.toDataURL('image/jpeg', 0.92))
+                resolve(canvas.toDataURL('image/jpeg', 0.82))
               } catch (err) {
                 resolve(rawDataUrl)
               }
@@ -4324,12 +4390,12 @@ export default function PrototypeBuilder() {
         dayImageUrls.push({ url1, url2 })
       })
 
-      // Pre-fetch all day images into base64 pairs concurrently (800x540 px: exact 1.48 landscape ratio, 254+ DPI)
+      // Pre-fetch all day images into base64 pairs concurrently (600x405 px: exact 1.48 landscape ratio, 190+ DPI)
       const base64ImagePairs: DayImagePair[] = await Promise.all(
         dayImageUrls.map(async ({ url1, url2 }) => {
           const [p1, p2] = await Promise.all([
-            fetchBase64Image(url1, 800, 540, 12),
-            fetchBase64Image(url2, 800, 540, 12)
+            fetchBase64Image(url1, 600, 405, 10),
+            fetchBase64Image(url2, 600, 405, 10)
           ])
           return { p1, p2 }
         })
