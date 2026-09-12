@@ -8,8 +8,10 @@ import {
   Calendar, Eye, Filter, ChevronLeft, ChevronRight, AlertCircle, Clock,
   ChevronDown, ChevronUp, CalendarCheck, CheckCheck, LayoutDashboard, Database,
   ArrowRight, ShieldCheck, CreditCard, Menu, PanelLeftClose, PanelLeftOpen, Megaphone,
-  Wrench, Globe, ShoppingBag, FileSpreadsheet
+  Wrench, Globe, ShoppingBag, FileSpreadsheet, Building2, Printer, Share2, Plus, Search
 } from 'lucide-react'
+import GroupHotelVoucherModal from '../../components/GroupHotelVoucherModal'
+import { generateMasterGroupVoucherPdf, generateAllVisaVouchersPdf, generateSingleRoomVisaPdf } from '../../utils/hotelVoucherPdf'
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
@@ -43,6 +45,14 @@ export default function AdminDashboard() {
   
   // Expand / Collapse row tracking
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({})
+
+  // ── Hotel Vouchers State ──
+  const [hotelVouchers, setHotelVouchers] = useState<any[]>([])
+  const [loadingVouchers, setLoadingVouchers] = useState(false)
+  const [voucherModalOpen, setVoucherModalOpen] = useState(false)
+  const [editingVoucher, setEditingVoucher] = useState<any | null>(null)
+  const [voucherSearch, setVoucherSearch] = useState('')
+  const [voucherFilter, setVoucherFilter] = useState('all')
 
   // Calendar State
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date())
@@ -264,12 +274,28 @@ export default function AdminDashboard() {
           setProposals(propData.list)
         }
         await fetchCompetitorPrices()
+        await fetchHotelVouchers()
       }
     } catch (e) {
       console.error(e)
     } finally {
       setLoading(false)
       setRefreshing(false)
+    }
+  }
+
+  const fetchHotelVouchers = async () => {
+    setLoadingVouchers(true)
+    try {
+      const res = await fetch(`/api/hotel-vouchers?cb=${Date.now()}`)
+      const data = await res.json()
+      if (data.success && Array.isArray(data.vouchers)) {
+        setHotelVouchers(data.vouchers)
+      }
+    } catch (e) {
+      console.error('Failed to fetch hotel vouchers:', e)
+    } finally {
+      setLoadingVouchers(false)
     }
   }
 
@@ -423,6 +449,7 @@ export default function AdminDashboard() {
   const navItems = [
     { id: 'section-metrics', label: 'KPI Overview', icon: LayoutDashboard },
     { id: 'section-packages', label: 'Packages & Calendar', icon: Package, badge: totalPackages },
+    { id: 'section-hotel-vouchers', label: 'Hotel Vouchers (Visa)', icon: Building2, badge: hotelVouchers.length },
     { id: 'section-approvals', label: 'Pending Approvals', icon: Clock, badge: pendingApprovalsCount },
     { id: 'section-accounts', label: 'Accounts & Ledger', icon: DollarSign },
     { id: 'section-sitemap', label: 'Site Map & Links', icon: Map },
@@ -1077,6 +1104,244 @@ export default function AdminDashboard() {
 
         </div>
 
+        {/* ── SECTION: GROUP HOTEL CONFIRMATION VOUCHERS (VISA-COMPLIANT) ── */}
+        <div id="section-hotel-vouchers" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '2.5rem', border: '1px solid #EDF2F7' }}>
+          
+          {/* Section Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <Building2 color="#0A2240" size={22} />
+                <h2 style={{ fontSize: '1.35rem', color: '#0A2240', margin: 0, fontFamily: 'var(--font-playfair), serif', fontWeight: 800 }}>
+                  Group Hotel Confirmation Vouchers (Visa-Ready)
+                </h2>
+              </div>
+              <p style={{ color: '#64748B', fontSize: '0.84rem', margin: 0 }}>
+                Generate official Embassy & Consulate visa vouchers with individual guest passport mapping, hotel CRS confirmation codes, and live QR verification.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button
+                onClick={fetchHotelVouchers}
+                disabled={loadingVouchers}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.55rem 0.9rem', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#334155', cursor: 'pointer' }}
+              >
+                <RefreshCw size={13} className={loadingVouchers ? 'animate-spin' : ''} />
+                <span>Refresh</span>
+              </button>
+              <button
+                onClick={() => {
+                  setEditingVoucher(null)
+                  setVoucherModalOpen(true)
+                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.25rem', background: '#0A2240', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
+              >
+                <Plus size={15} />
+                <span>Create Group Hotel Voucher</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Metrics Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+              <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700 }}>TOTAL ISSUED VOUCHERS</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0A2240', marginTop: '0.2rem' }}>{hotelVouchers.length}</div>
+            </div>
+            <div style={{ background: '#F0FDF4', padding: '1rem', borderRadius: '10px', border: '1px solid #BBF7D0' }}>
+              <div style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 700 }}>CONFIRMED & GUARANTEED</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#14532D', marginTop: '0.2rem' }}>
+                {hotelVouchers.filter(v => v.bookingStatus === 'Confirmed & Guaranteed').length}
+              </div>
+            </div>
+            <div style={{ background: '#EFF6FF', padding: '1rem', borderRadius: '10px', border: '1px solid #BFDBFE' }}>
+              <div style={{ fontSize: '0.72rem', color: '#1E40AF', fontWeight: 700 }}>TOTAL ROOMS UNDER VOUCHER</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1E3A8A', marginTop: '0.2rem' }}>
+                {hotelVouchers.reduce((sum, v) => sum + (v.rooms?.length || 0), 0)}
+              </div>
+            </div>
+            <div style={{ background: '#FFFBEB', padding: '1rem', borderRadius: '10px', border: '1px solid #FDE68A' }}>
+              <div style={{ fontSize: '0.72rem', color: '#92400E', fontWeight: 700 }}>REGISTERED GUEST PASSPORTS</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#78350F', marginTop: '0.2rem' }}>
+                {hotelVouchers.reduce((sum, v) => sum + (v.rooms || []).reduce((acc: number, r: any) => acc + (r.guests?.length || 0), 0), 0)}
+              </div>
+            </div>
+          </div>
+
+          {/* Search & Filters */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            <div style={{ position: 'relative', minWidth: '260px', flex: 1 }}>
+              <Search size={16} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+              <input
+                type="text"
+                placeholder="Search by Voucher Ref, Hotel, Group Name..."
+                value={voucherSearch}
+                onChange={(e) => setVoucherSearch(e.target.value)}
+                style={{ width: '100%', padding: '0.45rem 0.75rem 0.45rem 2.2rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.82rem', color: '#0F172A', background: '#FFF' }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              {['all', 'Confirmed & Guaranteed', 'Pending'].map(st => (
+                <button
+                  key={st}
+                  onClick={() => setVoucherFilter(st)}
+                  style={{
+                    padding: '0.4rem 0.8rem',
+                    borderRadius: '6px',
+                    fontSize: '0.76rem',
+                    fontWeight: 700,
+                    border: '1px solid',
+                    borderColor: voucherFilter === st ? '#0A2240' : '#CBD5E1',
+                    background: voucherFilter === st ? '#0A2240' : '#FFF',
+                    color: voucherFilter === st ? '#FFF' : '#475569',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {st === 'all' ? 'All Status' : st}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Vouchers Table */}
+          {loadingVouchers ? (
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#64748B' }}>
+              <Loader2 className="animate-spin" size={32} style={{ margin: '0 auto 0.5rem' }} />
+              <div>Loading hotel vouchers...</div>
+            </div>
+          ) : hotelVouchers.length === 0 ? (
+            <div style={{ background: '#F8FAFC', border: '2px dashed #CBD5E1', borderRadius: '12px', padding: '3rem 1.5rem', textAlign: 'center' }}>
+              <Building2 size={40} color="#94A3B8" style={{ margin: '0 auto 0.75rem' }} />
+              <h3 style={{ color: '#334155', margin: '0 0 0.4rem', fontSize: '1.05rem' }}>No Group Hotel Vouchers Created Yet</h3>
+              <p style={{ color: '#64748B', fontSize: '0.85rem', margin: '0 0 1.25rem' }}>
+                Generate Embassy-compliant vouchers with rooming lists, CRS codes, and verification QR links for your groups.
+              </p>
+              <button
+                onClick={() => {
+                  setEditingVoucher(null)
+                  setVoucherModalOpen(true)
+                }}
+                style={{ padding: '0.6rem 1.5rem', background: '#0A2240', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
+              >
+                + Create First Group Hotel Voucher
+              </button>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ background: '#F8FAFC', color: '#475569', borderBottom: '2px solid #E2E8F0' }}>
+                    <th style={{ padding: '0.75rem' }}>Voucher Ref</th>
+                    <th style={{ padding: '0.75rem' }}>Group / Delegation</th>
+                    <th style={{ padding: '0.75rem' }}>Hotel & Property</th>
+                    <th style={{ padding: '0.75rem' }}>Dates & Nights</th>
+                    <th style={{ padding: '0.75rem' }}>Rooms & Pax</th>
+                    <th style={{ padding: '0.75rem' }}>CRS Conf No</th>
+                    <th style={{ padding: '0.75rem' }}>Status</th>
+                    <th style={{ padding: '0.75rem', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hotelVouchers
+                    .filter(v => {
+                      const matchesF = voucherFilter === 'all' || v.bookingStatus === voucherFilter
+                      const s = voucherSearch.toLowerCase()
+                      const matchesS = !s ||
+                        (v.voucherNumber && v.voucherNumber.toLowerCase().includes(s)) ||
+                        (v.hotelName && v.hotelName.toLowerCase().includes(s)) ||
+                        (v.groupName && v.groupName.toLowerCase().includes(s)) ||
+                        (v.hotelConfirmationNo && v.hotelConfirmationNo.toLowerCase().includes(s))
+                      return matchesF && matchesS
+                    })
+                    .map((v: any) => {
+                      const totalGuests = (v.rooms || []).reduce((acc: number, r: any) => acc + (r.guests?.length || 0), 0)
+                      return (
+                        <tr key={v._id || v.voucherNumber} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                          <td style={{ padding: '0.75rem', fontWeight: 700, color: '#0A2240' }}>
+                            <div>{v.voucherNumber}</div>
+                            {v.proposalNumber && (
+                              <div style={{ fontSize: '0.72rem', color: '#2563EB', fontWeight: 600 }}>Proposal: {v.proposalNumber}</div>
+                            )}
+                          </td>
+                          <td style={{ padding: '0.75rem', color: '#1E293B', fontWeight: 600 }}>
+                            {v.groupName || 'Tour Group'}
+                          </td>
+                          <td style={{ padding: '0.75rem', color: '#0F172A' }}>
+                            <div style={{ fontWeight: 700 }}>{v.hotelName}</div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748B' }}>{v.starRating || '4-Star'} • {v.mealPlan || 'Breakfast'}</div>
+                          </td>
+                          <td style={{ padding: '0.75rem', color: '#334155' }}>
+                            <div>{v.checkInDate} → {v.checkOutDate}</div>
+                            <div style={{ fontSize: '0.72rem', color: '#64748B' }}>{v.nights} Nights</div>
+                          </td>
+                          <td style={{ padding: '0.75rem', color: '#0F172A' }}>
+                            <strong>{v.rooms?.length || 0} Rooms</strong>
+                            <div style={{ fontSize: '0.72rem', color: '#64748B' }}>{totalGuests} Guests</div>
+                          </td>
+                          <td style={{ padding: '0.75rem', fontFamily: 'monospace', color: '#B45309', fontWeight: 700 }}>
+                            {v.hotelConfirmationNo || 'TBD'}
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <span style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              background: v.bookingStatus === 'Confirmed & Guaranteed' ? '#DCFCE7' : '#FEF3C7',
+                              color: v.bookingStatus === 'Confirmed & Guaranteed' ? '#166534' : '#92400E',
+                            }}>
+                              {v.bookingStatus || 'Confirmed'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', gap: '0.35rem', alignItems: 'center' }}>
+                              <button
+                                onClick={() => {
+                                  setEditingVoucher(v)
+                                  setVoucherModalOpen(true)
+                                }}
+                                style={{ padding: '0.3rem 0.6rem', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 600, color: '#334155', cursor: 'pointer' }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => generateMasterGroupVoucherPdf(v)}
+                                style={{ padding: '0.3rem 0.6rem', background: '#0A2240', border: 'none', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 700, color: '#FFF', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                                title="Download Master Group PDF"
+                              >
+                                <Download size={11} />
+                                <span>Master</span>
+                              </button>
+                              <button
+                                onClick={() => generateAllVisaVouchersPdf(v)}
+                                style={{ padding: '0.3rem 0.6rem', background: '#C49C3C', border: 'none', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 700, color: '#0A2240', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                                title="Download All Visa Dossier PDFs"
+                              >
+                                <Printer size={11} />
+                                <span>Visa Dossier</span>
+                              </button>
+                              <a
+                                href={`/verify-voucher?ref=${encodeURIComponent(v.voucherNumber)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ padding: '0.3rem 0.5rem', background: '#E2E8F0', borderRadius: '6px', color: '#0A2240', display: 'inline-flex', alignItems: 'center' }}
+                                title="Open Live Verification Gateway"
+                              >
+                                <ExternalLink size={12} />
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+        </div>
+
         {/* ── SECTION: PENDING STATUS REQUEST APPROVALS ── */}
         <div id="section-approvals" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '2.5rem', border: '1px solid #EDF2F7' }}>
           <h2 style={{ fontSize: '1.35rem', color: '#2D3748', margin: '0 0 0.5rem 0', fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1252,6 +1517,8 @@ export default function AdminDashboard() {
                   { name: 'B2B Travel Directory', path: '/b2b-directory', desc: 'Verified agencies & DMC directory' },
                   { name: 'B2B Leads & RFQs', path: '/b2b-leads', desc: 'Live buyer inquiries & trade leads' },
                   { name: 'B2B Partnership Hub', path: '/b2b', desc: 'Trade partner registration & perks' },
+                  { name: 'Group Hotel Voucher Hub', path: '/admin-dashboard#section-hotel-vouchers', desc: 'Generate & manage Visa-compliant group hotel confirmation vouchers' },
+                  { name: 'Live Voucher Verification Portal', path: '/verify-voucher', desc: 'Official Embassy & Border Control accommodation authentication gateway' },
                   { name: 'Card Scanner / Contact Ingest', path: '/add-contact', desc: 'Optical card reader & contact save' },
                   { name: 'Competitor Price Tracker', path: '/api/admin/price-tracker', desc: 'Real-time JSON market price tracker' },
                 ].map(link => (
@@ -2392,6 +2659,19 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* ── Group Hotel Voucher Generator Modal ── */}
+        <GroupHotelVoucherModal
+          isOpen={voucherModalOpen}
+          onClose={() => {
+            setVoucherModalOpen(false)
+            setEditingVoucher(null)
+          }}
+          onSaved={() => {
+            fetchHotelVouchers()
+          }}
+          existingVoucher={editingVoucher}
+        />
 
       </main>
     </div>

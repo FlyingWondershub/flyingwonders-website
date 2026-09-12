@@ -59,6 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/flight-tracker', priority: 0.9, freq: 'hourly' },
     { path: '/age-calculator', priority: 0.95, freq: 'daily' },
     { path: '/gst-customs-guide', priority: 0.9, freq: 'weekly' },
+    { path: '/verify-voucher', priority: 0.85, freq: 'daily' },
   ]
 
    // Convert core routes to sitemap entries
