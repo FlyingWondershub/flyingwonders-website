@@ -2910,22 +2910,27 @@ export default function PrototypeBuilder() {
         if (hotelMetaInfo && (hotelRaster?.dataUrl || hotelMetaInfo.shortDescription || hotelMetaInfo.longDescription || hotelMetaInfo.amenities)) {
           // Editorial Hotel Showcase Card
           const hasPhoto = !!hotelRaster?.dataUrl
-          const textW = hasPhoto ? CW - 48 : CW - 12
+          const textW = hasPhoto ? CW - 58 : CW - 12
           const starBadge = hotelMetaInfo.starRating ? `[${hotelMetaInfo.starRating}] ` : ''
+          font('bold', 9.5)
           const hotelTitleLines = doc.splitTextToSize(`${starBadge}${cleanPdfText(effectiveHotelName)}`, textW)
+          font('bold', 7.8)
           const roomLines = doc.splitTextToSize(`Room: ${effectiveRoomType} x ${globalRoomCount}  |  Nights: ${nightsCount}${effectiveSuppType && globalSuppCount > 0 ? `  |  + Supp: ${effectiveSuppType} x${globalSuppCount}` : ''}`, textW)
+          font('italic', 7.0)
           const locLines = hotelMetaInfo.addressLocation ? doc.splitTextToSize(`Location: ${cleanPdfText(hotelMetaInfo.addressLocation)}`, textW) : []
           const descText = hotelMetaInfo.shortDescription || hotelMetaInfo.longDescription || ''
+          font('normal', 7.1)
           const descLines = descText ? doc.splitTextToSize(cleanPdfText(descText), textW) : []
           const amenitiesText = hotelMetaInfo.amenities && Array.isArray(hotelMetaInfo.amenities)
             ? hotelMetaInfo.amenities.slice(0, 5).join('  •  ')
             : ''
+          font('bold', 6.8)
           const amenLines = amenitiesText ? doc.splitTextToSize(`Amenities: ${cleanPdfText(amenitiesText)}`, textW) : []
 
           const titleH = (hotelTitleLines.length - 1) * 3.8 + 4.2
           const roomH = (roomLines.length - 1) * 3.2 + 4.0
           const locH = locLines.length > 0 ? ((locLines.length - 1) * 2.8 + 3.8) : 0
-          const descH = descLines.slice(0, 3).length > 0 ? ((descLines.slice(0, 3).length - 1) * 2.8 + 3.4) : 0
+          const descH = descLines.slice(0, 3).length > 0 ? ((descLines.slice(0, 3).length - 1) * 2.92 + 3.4) : 0
           const amenH = amenLines.length > 0 ? ((amenLines.length - 1) * 2.8 + 3.8) : 0
           const cardH = Math.max(hasPhoto ? 34 : 24, 7 + titleH + roomH + locH + descH + amenH + 3)
           checkPage(cardH + 4)
@@ -2962,7 +2967,8 @@ export default function PrototypeBuilder() {
 
           if (descLines.length > 0) {
             font('normal', 7.1); setTxt(TEXT)
-            doc.text(descLines.slice(0, 3), ML + 6, hy)
+            const displayDesc = descLines.slice(0, 3).join(' ')
+            doc.text(displayDesc, ML + 6, hy, { align: 'justify', maxWidth: textW, lineHeightFactor: 1.15 })
             hy += descH
           }
 
@@ -3455,14 +3461,16 @@ export default function PrototypeBuilder() {
               }
               const hasPhoto = !!photoData && typeof photoData === 'string' && photoData.startsWith('data:image')
 
-              // 6mm breathing gutter before photo
-              const textW = hasPhoto ? CW - 54 : CW - 12
+              // 10mm breathing gutter before photo (stops at X=144mm, photo at X=154mm)
+              const textW = hasPhoto ? CW - 58 : CW - 12
+              font('bold', 8.5)
               const titleLines = doc.splitTextToSize(`${item.time}  —  ${cleanPdfText(item.label)}`, textW)
               const titleH = (titleLines.length - 1) * 3.5 + 4.2
 
               // Full Description (sanitized, flowing narrative with zero truncation)
               const rawDesc = (meta.longDescription || meta.shortDescription || '').trim()
               const descText = cleanPdfText(rawDesc)
+              font('normal', 7.1)
               const descLines = descText ? doc.splitTextToSize(descText, textW) : []
 
               // Features / Inclusions from Sanity
@@ -3473,7 +3481,7 @@ export default function PrototypeBuilder() {
               // Compute inclusion rows (2-column layout)
               const incRows = Math.ceil(inclusions.length / 2)
               const incH = inclusions.length > 0 ? (3.8 + incRows * 3.3) : 0
-              const descH = descLines.length > 0 ? ((descLines.length - 1) * 2.85 + 4.2) : 0
+              const descH = descLines.length > 0 ? ((descLines.length - 1) * 2.92 + 4.0) : 0
 
               // Dynamic content height calculation
               const contentH = 4.5 + titleH + descH + incH + 3.5
@@ -3510,10 +3518,10 @@ export default function PrototypeBuilder() {
               doc.text(titleLines, ML + 6, cy)
               cy += titleH
 
-              if (descLines.length > 0) {
+              if (descText) {
                 font('normal', 7.1); setTxt(TEXT)
-                doc.text(descLines, ML + 6, cy)
-                cy += (descLines.length - 1) * 2.85 + 4.2
+                doc.text(descText, ML + 6, cy, { align: 'justify', maxWidth: textW, lineHeightFactor: 1.15 })
+                cy += descH
               }
 
               if (inclusions.length > 0) {
@@ -3540,17 +3548,21 @@ export default function PrototypeBuilder() {
               const meta = item.meta
               const photoData = guidePhotosMap.get((item.itemKey || '').toLowerCase().trim()) || meta.photoUrl
               const hasPhoto = !!photoData
-              const textW = hasPhoto ? CW - 42 : CW - 10
+              const textW = hasPhoto ? CW - 44 : CW - 10
+              font('bold', 8.5)
               const titleLines = doc.splitTextToSize(`${item.time}  —  ${cleanPdfText(item.label)}`, textW)
               const titleH = (titleLines.length - 1) * 3.5 + 4.0
               const descText = cleanPdfText(meta.longDescription || meta.shortDescription || '')
+              font('normal', 7.1)
               const descLines = descText ? doc.splitTextToSize(descText, textW) : []
               const noteText = cleanPdfText(item.detail || '')
+              font('italic', 6.8)
               const noteLines = noteText ? doc.splitTextToSize(`Activity: ${noteText}`, textW) : []
               const certRaw = meta.certifications && Array.isArray(meta.certifications) ? meta.certifications.map((c: string) => cleanPdfText(c)).join('  •  ') : ''
+              font('bold', 7.0)
               const certLines = certRaw ? doc.splitTextToSize(certRaw, textW) : []
 
-              const descH = descLines.length > 0 ? ((descLines.length - 1) * 2.85 + 3.8) : 0
+              const descH = descLines.length > 0 ? ((descLines.length - 1) * 2.92 + 3.8) : 0
               const noteH = noteLines.length > 0 ? ((noteLines.length - 1) * 2.7 + 3.2) : 0
               const certH = certLines.length > 0 ? ((certLines.length - 1) * 2.6 + 3.8) : 0
 
@@ -3584,10 +3596,10 @@ export default function PrototypeBuilder() {
                 cy += certH
               }
 
-              if (descLines.length > 0) {
+              if (descText) {
                 font('normal', 7.1); setTxt(TEXT)
-                doc.text(descLines, ML + 6, cy)
-                cy += (descLines.length - 1) * 2.85 + 3.8
+                doc.text(descText, ML + 6, cy, { align: 'justify', maxWidth: textW, lineHeightFactor: 1.15 })
+                cy += descH
               }
 
               if (noteLines.length > 0) {
@@ -3597,7 +3609,9 @@ export default function PrototypeBuilder() {
 
               y += cardH + 2.5
             } else if (item.type === 'transfer' || item.type === 'guide' || item.type === 'service') {
+              font('bold', 8)
               const labelLines = doc.splitTextToSize(item.label, CW - 26)
+              font('italic', 7)
               const detailLines = item.detail ? doc.splitTextToSize(item.detail, CW - 26) : []
               const labelH = labelLines.length * 3.8
               const detailH = detailLines.length * 3.2
@@ -3622,15 +3636,17 @@ export default function PrototypeBuilder() {
               const hasPhoto = !!md.imageRaster
               const imgW = 34
               const imgH = 26
-              const textW = hasPhoto ? CW - 48 : CW - 12
+              const textW = hasPhoto ? CW - 50 : CW - 12
+              font('bold', 8.8)
               const titleLines = doc.splitTextToSize(`${item.time}  |  ${cleanPdfText(md.title)}`, textW)
               const titleH = (titleLines.length - 1) * 3.5 + 4.2
+              font('italic', 7.2)
               const subLines = md.subtitle ? doc.splitTextToSize(cleanPdfText(md.subtitle), textW) : []
               const subH = subLines.length > 0 ? ((subLines.length - 1) * 2.8 + 4.0) : 0
-              font('normal', 7.1)
               const cleanDesc = cleanPdfText(md.description)
-              const descLines = doc.splitTextToSize(cleanDesc, textW)
-              const descBlockH = descLines.length > 0 ? (descLines.length - 1) * 2.85 + 3.8 : 0
+              font('normal', 7.1)
+              const descLines = cleanDesc ? doc.splitTextToSize(cleanDesc, textW) : []
+              const descBlockH = descLines.length > 0 ? (descLines.length - 1) * 2.92 + 3.8 : 0
               const cardH = Math.max(hasPhoto ? 30 : 20, 9 + titleH + subH + descBlockH + 3)
 
               checkPage(cardH + 3)
@@ -3665,10 +3681,10 @@ export default function PrototypeBuilder() {
                 cy += subH
               }
 
-              // Curated Narrative
-              if (descLines.length > 0) {
+              // Curated Narrative (Justified)
+              if (cleanDesc) {
                 font('normal', 7.0); setTxt(SLATE)
-                doc.text(descLines, ML + 6, cy)
+                doc.text(cleanDesc, ML + 6, cy, { align: 'justify', maxWidth: textW, lineHeightFactor: 1.15 })
               }
 
               y += cardH + 2.5
@@ -3693,20 +3709,49 @@ export default function PrototypeBuilder() {
                                 (meta?.photoUrl?.startsWith('data:') ? meta.photoUrl : null)
               const hasPhoto = !!photoData
 
-              const textW = hasPhoto ? CW - 54 : CW - 12
+              const textW = hasPhoto ? CW - 58 : CW - 12
               const isOpt = !!a.isOptional
               const optBadgeW = 38
               const titleMaxW = isOpt ? textW - optBadgeW - 4 : textW
+              font('bold', 9.5)
               const titleLines = doc.splitTextToSize(`${item.time ? item.time + '  —  ' : ''}${attrName}`, titleMaxW)
               const titleH = (titleLines.length - 1) * 3.8 + 4.5
 
               font('normal', 7.2)
               const descLines = fullDesc ? doc.splitTextToSize(fullDesc, textW) : []
+              font('italic', 6.8)
               const noteLines = notes ? doc.splitTextToSize(`Note: ${notes}`, textW) : []
-              const descH = descLines.length > 0 ? (descLines.length - 1) * 2.85 + 3.8 : 0
-              const noteH = noteLines.length > 0 ? (noteLines.length - 1) * 2.85 + 3.4 : 0
-              const highlightRows = Math.ceil(highlights.length / 2)
-              const highlightH = highlights.length > 0 ? highlightRows * 5.2 + 4.5 : 0
+              const descH = descLines.length > 0 ? ((descLines.length - 1) * 2.92 + 3.8) : 0
+              const noteH = noteLines.length > 0 ? ((noteLines.length - 1) * 2.85 + 3.4) : 0
+
+              // Dynamic Highlights calculation with line-wrapped pills
+              const hlAvailW = textW - 4
+              const pillW = (hlAvailW - 4) / 2
+              let highlightH = 0
+              interface HighlightRowConfig {
+                h1: string
+                h2: string
+                l1: string[]
+                l2: string[]
+                rowH: number
+              }
+              const highlightRowConfigs: HighlightRowConfig[] = []
+
+              if (highlights.length > 0) {
+                highlightH = 4.0
+                font('normal', 6.0)
+                for (let r = 0; r < Math.ceil(highlights.length / 2); r++) {
+                  const h1 = highlights[r * 2] || ''
+                  const h2 = highlights[r * 2 + 1] || ''
+                  const l1 = h1 ? doc.splitTextToSize(`• ${cleanPdfText(h1)}`, pillW - 4) : []
+                  const l2 = h2 ? doc.splitTextToSize(`• ${cleanPdfText(h2)}`, pillW - 4) : []
+                  const maxLines = Math.max(l1.length, l2.length, 1)
+                  const rowH = maxLines > 1 ? 7.6 : 4.8
+                  highlightRowConfigs.push({ h1, h2, l1, l2, rowH })
+                  highlightH += rowH + 1.8
+                }
+                highlightH += 1.5
+              }
               
               const metaParts: string[] = []
               if (openingHours) metaParts.push(`Hours: ${openingHours}`)
@@ -3777,10 +3822,10 @@ export default function PrototypeBuilder() {
               }
               cy += 4.5
 
-              // Description
-              if (descLines.length > 0) {
+              // Description (Justified)
+              if (fullDesc) {
                 font('normal', 7.2); setTxt(SLATE)
-                doc.text(descLines, ML + 6, cy)
+                doc.text(fullDesc, ML + 6, cy, { align: 'justify', maxWidth: textW, lineHeightFactor: 1.15 })
                 cy += descH
               }
 
@@ -3791,24 +3836,31 @@ export default function PrototypeBuilder() {
                 cy += noteH
               }
 
-              // Highlights as pills
+              // Highlights as dynamic pills (properly line-wrapped and padded)
               if (highlights.length > 0) {
                 font('bold', 6.8); setTxt(NAVY)
                 doc.text('Highlights:', ML + 6, cy)
                 cy += 3.5
 
-                const hlAvailW = textW - 4
-                const pillW = (hlAvailW - 4) / 2
-
-                highlights.forEach((h, hi) => {
-                  const colX = hi % 2 === 0 ? ML + 6 : ML + 6 + pillW + 4
-                  if (hi % 2 === 0 && hi > 0) cy += 5
-                  setFill(GOLD_L)
-                  doc.roundedRect(colX, cy - 2.8, pillW, 4.5, 1, 1, 'F')
-                  font('normal', 6); setTxt(NAVY)
-                  doc.text(`• ${cleanPdfText(h)}`, colX + 1.5, cy + 0.3, { maxWidth: pillW - 3 })
+                highlightRowConfigs.forEach(({ h1, h2, l1, l2, rowH }) => {
+                  if (h1 && l1.length > 0) {
+                    setFill(GOLD_L)
+                    doc.roundedRect(ML + 6, cy - 2.8, pillW, rowH, 1, 1, 'F')
+                    font('normal', 6.0); setTxt(NAVY)
+                    const textY = l1.length > 1 ? cy - 0.2 : cy + 0.3
+                    doc.text(l1, ML + 7.5, textY, { lineHeightFactor: 1.15 })
+                  }
+                  if (h2 && l2.length > 0) {
+                    const col2X = ML + 6 + pillW + 4
+                    setFill(GOLD_L)
+                    doc.roundedRect(col2X, cy - 2.8, pillW, rowH, 1, 1, 'F')
+                    font('normal', 6.0); setTxt(NAVY)
+                    const textY = l2.length > 1 ? cy - 0.2 : cy + 0.3
+                    doc.text(l2, col2X + 1.5, textY, { lineHeightFactor: 1.15 })
+                  }
+                  cy += rowH + 1.8
                 })
-                cy += 5.2
+                cy += 1.5
               }
 
               // Opening hours / duration / location metadata
@@ -4479,8 +4531,9 @@ export default function PrototypeBuilder() {
           const cleanStory = cleanPdfText(narrative)
           const descLines = doc.splitTextToSize(cleanStory, textW)
           const displayLines = descLines.slice(0, 3)
-          doc.text(displayLines, textX, curY)
-          curY += (displayLines.length - 1) * 2.85 + 4.0
+          const storyText = displayLines.join(' ')
+          doc.text(storyText, textX, curY, { align: 'justify', maxWidth: textW, lineHeightFactor: 1.15 })
+          curY += (displayLines.length - 1) * 2.92 + 4.0
 
           // Sights & Inclusions Data (Chronologically sorted by 24-hour time, Zero Emojis)
           interface HighlightEntry {
