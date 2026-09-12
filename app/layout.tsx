@@ -71,9 +71,6 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  other: {
-    'google-adsense-account': 'ca-pub-3967023851392009'
-  }
 }
 
 import { client } from '../sanity/lib/client'
@@ -151,12 +148,6 @@ export default async function RootLayout({
       <head>
         <meta name="color-scheme" content="light dark" />
         <SeoSchema />
-        {/* Google AdSense Official Script */}
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3967023851392009"
-          crossOrigin="anonymous"
-        />
         {/* Google Analytics 4 Setup */}
         <script
           async
