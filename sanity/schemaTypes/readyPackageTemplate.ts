@@ -1,4 +1,6 @@
 import { defineField, defineType } from 'sanity'
+import { LiveAttractionNameInput } from '../components/LiveAttractionNameInput'
+import { LandPackagePriceSummary } from '../components/LandPackagePriceSummary'
 
 export const readyPackageTemplateSchema = defineType({
   name: 'readyPackageTemplate',
@@ -64,6 +66,10 @@ export const readyPackageTemplateSchema = defineType({
       name: 'startingPriceSGD',
       title: 'Estimated Starting Net Cost / Pax (SGD)',
       type: 'number',
+      components: {
+        input: LandPackagePriceSummary,
+      },
+      description: 'Auto-calculated from daywise 13-seater transfers and attractions, or override manually.',
     }),
     defineField({
       name: 'hideTemplate',
@@ -183,6 +189,9 @@ export const readyPackageTemplateSchema = defineType({
                       type: 'string',
                       description: 'Exact name matching Google Sheet Attractions tab',
                       placeholder: 'e.g. Universal Studios Singapore',
+                      components: {
+                        input: LiveAttractionNameInput,
+                      },
                       validation: (Rule) => Rule.required(),
                     }),
                     defineField({
@@ -244,4 +253,22 @@ export const readyPackageTemplateSchema = defineType({
       initialValue: `Terms & Inclusions:\n\n📌 Land Package Only: Hotel accommodation is not included.\n🚐 Transfers: Airport arrival & departure transfers are provided by Private 13-Seater Minibus. Sightseeing transfers are as selected (SIC / Private 13-Seater). Surcharges applicable for flights between 22:00 - 07:00 hours.\nℹ️ Customizations: For hotel room bookings, meal plans, licensed English/Hindi guides, or coach upgrades for groups >12 Pax, please contact DMC.`,
     }),
   ],
+  preview: {
+    select: {
+      title: 'title',
+      nights: 'nightsCount',
+      price: 'startingPriceSGD',
+      media: 'coverImage',
+      badge: 'badgeText',
+    },
+    prepare({ title, nights, price, media, badge }) {
+      const bText = badge ? `[${badge}] ` : ''
+      const priceText = price ? `Starting S$ ${price}` : 'Starting price TBA'
+      return {
+        title: `${bText}${title || 'Untitled Package'}`,
+        subtitle: `${nights || 0}N/${(nights || 0) + 1}D • Total ${priceText}`,
+        media,
+      }
+    },
+  },
 })

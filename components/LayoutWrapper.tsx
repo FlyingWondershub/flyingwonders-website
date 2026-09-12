@@ -70,7 +70,8 @@ export default function LayoutWrapper({
     pathname === '/insurance' ||
     pathname === '/sgac' ||
     pathname === '/mdac' ||
-    pathname === '/air-suvidha'
+    pathname === '/air-suvidha' ||
+    pathname === '/ready-made'
   
   const [subEmail, setSubEmail] = useState('')
   const [subStatus, setSubStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
