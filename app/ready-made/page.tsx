@@ -90,7 +90,10 @@ export default function ReadyMadePackagesPage() {
   const [guestPhone, setGuestPhone] = useState('')
   const [daywiseItinerary, setDaywiseItinerary] = useState<any[]>([])
 
-  // Modal Sub-interactions
+  // Modal Sub-interactions & Saving
+  const [savedProposalNum, setSavedProposalNum] = useState<string | null>(null)
+  const [savingProposal, setSavingProposal] = useState(false)
+  const [newTransferHours, setNewTransferHours] = useState(4)
   const [attractionModalDay, setAttractionModalDay] = useState<number | null>(null)
   const [searchAttraction, setSearchAttraction] = useState('')
   const [newTransferDay, setNewTransferDay] = useState<number | null>(null)
@@ -102,6 +105,15 @@ export default function ReadyMadePackagesPage() {
   const [sendingWA, setSendingWA] = useState(false)
   const [copiedCardId, setCopiedCardId] = useState<string | null>(null)
   const [sendingCardId, setSendingCardId] = useState<string | null>(null)
+
+  // Admin Check for Net Pricing Visibility
+  const isAdmin = useMemo(() => {
+    if (!activeAgent) return false
+    const email = (activeAgent.email || '').toLowerCase().trim()
+    return email === 'info.flyingwonders@gmail.com' ||
+           activeAgent.role === 'admin' ||
+           activeAgent.isAdmin === true
+  }, [activeAgent])
 
   // Fetch Templates, Rates & Agent on Mount
   useEffect(() => {
@@ -227,7 +239,7 @@ export default function ReadyMadePackagesPage() {
       ta.value = text
       ta.style.position = 'fixed'
       ta.style.top = '0'
-      ta.style.left = '-9999px'
+      ta.style.left = '0'
       ta.style.width = '2em'
       ta.style.height = '2em'
       ta.style.padding = '0'
@@ -235,6 +247,8 @@ export default function ReadyMadePackagesPage() {
       ta.style.outline = 'none'
       ta.style.boxShadow = 'none'
       ta.style.background = 'transparent'
+      ta.style.opacity = '0.01'
+      ta.style.zIndex = '99999'
       ta.style.fontSize = '16px' // Prevents iOS Safari auto-zoom
       ta.setAttribute('readonly', '')
       document.body.appendChild(ta)
@@ -261,44 +275,32 @@ export default function ReadyMadePackagesPage() {
     }
   }
 
-  // Safe WhatsApp Launcher (avoids browser popup blockers by executing synchronously within user click)
+  // Safe WhatsApp Launcher (avoids browser popup blockers by executing cleanly within user click)
   const openWhatsAppSafely = (text: string, phone?: string) => {
     if (!text) return
-    const cleanPhone = (phone || '').replace(/[^0-9]/g, '')
+    const rawDigits = (phone || '').replace(/[^0-9]/g, '')
+    const validPhone = rawDigits.length >= 10 ? rawDigits : ''
 
-    // Guard against URI length limits in WhatsApp Web/Mobile (>1500 chars)
+    // Guard against URI length limits in WhatsApp Web/Mobile (>1800 chars)
     let waText = text
-    if (text.length > 1500) {
+    if (text.length > 1800) {
       const lines = text.split('\n')
-      const summaryHeader = lines.slice(0, 15).join('\n')
-      waText = `${summaryHeader}\n\n📋 *Full itemized day-by-day itinerary & inclusions copied to your clipboard! Simply paste (Ctrl+V) here to send.*`
+      const summaryHeader = lines.slice(0, 18).join('\n')
+      waText = `${summaryHeader}\n\n📋 *Full itemized day-by-day ground itinerary & inclusions copied to your clipboard! Paste (Ctrl+V) here to send.*`
     }
 
     const encoded = encodeURIComponent(waText)
-    const url = cleanPhone
-      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`
+    const url = validPhone
+      ? `https://api.whatsapp.com/send?phone=${validPhone}&text=${encoded}`
       : `https://api.whatsapp.com/send?text=${encoded}`
 
-    let opened = false
     try {
-      const win = window.open(url, '_blank')
-      if (win && !win.closed) opened = true
-    } catch (e) {
-      console.warn('window.open failed:', e)
-    }
-
-    if (!opened) {
-      try {
-        const link = document.createElement('a')
-        link.href = url
-        link.target = '_blank'
-        link.rel = 'noopener noreferrer'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-      } catch {
-        window.open(url, '_blank')
+      const win = window.open(url, '_blank', 'noopener,noreferrer')
+      if (!win) {
+        window.location.href = url
       }
+    } catch {
+      window.location.href = url
     }
   }
 
@@ -352,6 +354,9 @@ export default function ReadyMadePackagesPage() {
     setTravelDate('')
     setGuestName('')
     setGuestPhone('')
+    setSavedProposalNum(null)
+    setSavingProposal(false)
+    setNewTransferHours(4)
 
     if (tmpl.termsAndInclusions) {
       setTermsText(tmpl.termsAndInclusions)
@@ -365,7 +370,8 @@ export default function ReadyMadePackagesPage() {
         transfers: Array.isArray(d.transfers) ? d.transfers.map((t: any) => ({
           serviceType: t.serviceType || 'interAttraction',
           routeDescription: t.routeDescription || t.description || 'Transfer',
-          time: t.time || '10:00'
+          time: t.time || '10:00',
+          hours: t.hours || (t.serviceType === 'disposal' ? 4 : undefined)
         })) : [],
         attractions: Array.isArray(d.attractions) ? d.attractions.map((a: any) => {
           const matched = findMatchingAttraction(a.attractionName || '', attractionsList)
@@ -397,11 +403,13 @@ export default function ReadyMadePackagesPage() {
     const v13Dep = vehiclesList.find(v => (v.vehicleType?.toLowerCase().includes('13') || v.type?.toLowerCase().includes('13')) && (v.serviceName?.toLowerCase().includes('departure') || v.type?.toLowerCase().includes('departure')))
     const v13City = vehiclesList.find(v => (v.vehicleType?.toLowerCase().includes('13') || v.type?.toLowerCase().includes('13')) && (v.serviceName?.toLowerCase().includes('city') || v.type?.toLowerCase().includes('city')))
     const v13Xfer = vehiclesList.find(v => (v.vehicleType?.toLowerCase().includes('13') || v.type?.toLowerCase().includes('13')) && (v.serviceName?.toLowerCase().includes('transfer') || v.type?.toLowerCase().includes('transfer')))
+    const v13Disposal = vehiclesList.find(v => (v.vehicleType?.toLowerCase().includes('13') || v.type?.toLowerCase().includes('13')) && (v.serviceName?.toLowerCase().includes('disposal') || v.type?.toLowerCase().includes('disposal')))
 
     const rate13Arrival = v13Arr?.pricePerTransfer || 45
     const rate13Departure = v13Dep?.pricePerTransfer || 45
     const rate13City = v13City?.pricePerTransfer || 120
     const rate13Transfer = v13Xfer?.pricePerTransfer || 45
+    const rate13Disposal = v13Disposal?.pricePerTransfer || 45
 
     const isSic = (v: any) => {
       const s = `${v?.type || ''} ${v?.serviceName || ''}`.toLowerCase()
@@ -423,6 +431,9 @@ export default function ReadyMadePackagesPage() {
           transferArrivalCost += rate13Arrival
         } else if (sType === 'departure') {
           transferDepartureCost += rate13Departure
+        } else if (sType === 'disposal') {
+          const hours = Number(tr.hours) > 0 ? Number(tr.hours) : 4
+          sightseeingTransfersCost += rate13Disposal * hours
         } else if (sType === 'cityTour') {
           sightseeingTransfersCost += transferMode === 'sic' ? rateSicCity * Math.max(1, totalPax) : rate13City
         } else {
@@ -473,6 +484,13 @@ export default function ReadyMadePackagesPage() {
       transferDepartureCost,
       sightseeingTransfersCost,
       totalTransfersNet,
+      rate13Arrival,
+      rate13Departure,
+      rate13City,
+      rate13Transfer,
+      rate13Disposal,
+      rateSicCity,
+      rateSicXfer,
       adultTicketCount,
       childTicketCount,
       infantCount,
@@ -540,7 +558,8 @@ export default function ReadyMadePackagesPage() {
             {
               serviceType: newTransferType,
               routeDescription: newTransferRoute.trim(),
-              time: newTransferTime || '14:00'
+              time: newTransferTime || '14:00',
+              hours: newTransferType === 'disposal' ? (newTransferHours || 4) : undefined
             }
           ]
         }
@@ -549,7 +568,21 @@ export default function ReadyMadePackagesPage() {
     })
     setNewTransferDay(null)
     setNewTransferRoute('')
+    setNewTransferHours(4)
     showToast(`Added transfer to Day ${dIdx + 1}! 🚗`, 'success')
+  }
+
+  const updateTransferHours = (dIdx: number, tIdx: number, hours: number) => {
+    const validHours = Math.max(1, Math.min(24, hours || 4))
+    setDaywiseItinerary(prev => {
+      const next = [...prev]
+      if (next[dIdx] && next[dIdx].transfers?.[tIdx]) {
+        const trs = [...next[dIdx].transfers]
+        trs[tIdx] = { ...trs[tIdx], hours: validHours }
+        next[dIdx] = { ...next[dIdx], transfers: trs }
+      }
+      return next
+    })
   }
 
   const removeTransferFromDay = (dIdx: number, tIdx: number) => {
@@ -563,6 +596,64 @@ export default function ReadyMadePackagesPage() {
       }
       return next
     })
+  }
+
+  // Handle Save Proposal Directly from Ready-Made Modal
+  const handleSaveProposal = async () => {
+    if (!selectedTemplate || !calculation) return
+    setSavingProposal(true)
+    try {
+      const payload = {
+        proposalNumber: savedProposalNum || undefined,
+        isTemplateBased: true,
+        templateName: selectedTemplate.title || 'Singapore Land Package',
+        agentEmail: activeAgent?.email,
+        agentId: activeAgent?._id,
+        guestName: guestName.trim() || 'Valued Guest',
+        guestPhone: guestPhone.trim() || '',
+        adults: paxAdults,
+        kids: paxKids,
+        childAges,
+        arrivalDate: travelDate || new Date().toISOString().split('T')[0],
+        nights: selectedTemplate.nightsCount || 3,
+        hotelRequired: false,
+        transferMode,
+        markupPercent,
+        itineraryNotes: termsText,
+        costBreakdown: {
+          roomCostTotal: 0,
+          suppCostTotal: 0,
+          transportTotal: calculation.totalTransfersNet,
+          attractionTotal: calculation.totalAttractionsNet,
+          mealTotal: 0,
+          guideTotal: 0,
+          netCost: calculation.totalNetCostSGD,
+          totalClientPrice: calculation.totalClientPriceSGD,
+          totalClientPriceINR: calculation.totalClientPriceINR,
+          adultQuote: calculation.adultQuoteSGD,
+          childQuote: calculation.childQuoteSGD
+        },
+        itinerary: daywiseItinerary
+      }
+
+      const res = await fetch('/api/proposals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setSavedProposalNum(data.proposalNumber)
+        showToast(`Proposal ${data.proposalNumber} saved successfully! 🎉`, 'success')
+      } else {
+        showToast(data.error || 'Failed to save proposal.', 'error')
+      }
+    } catch (err: any) {
+      console.error('handleSaveProposal error:', err)
+      showToast('Error saving proposal: ' + (err?.message || 'Network error'), 'error')
+    } finally {
+      setSavingProposal(false)
+    }
   }
 
   // Shared WhatsApp Text Generator
@@ -592,17 +683,19 @@ export default function ReadyMadePackagesPage() {
       const childAgeStr = (params.paxKids > 0 && params.childAges && params.childAges.length > 0)
         ? ` (Ages: ${params.childAges.slice(0, params.paxKids).join(', ')} yrs)`
         : ''
-      const modeLabel = params.transferMode === 'sic' ? 'Seat-In-Coach (SIC)' : 'Private 13-Seater Minibus'
+      const privateTransLabel = '13-Seater - Private - group - Transfers'
+      const sicTransLabel = 'SIC - SIC - per person - Transfers ( Round Trip )'
+      const modeLabel = params.transferMode === 'sic' ? sicTransLabel : privateTransLabel
 
       let t = `✈️ *SINGAPORE LAND PACKAGE ITINERARY*  (Ref: ${pNum})\n`
       t += `*${title}*\n`
       t += `${sep}\n`
-      if (params.guestName) t += `👤 *Guest Name:* ${params.guestName}\n`
+      t += `👤 *Guest Name:* ${params.guestName || 'Valued Guest'}\n`
       if (params.guestPhone) t += `📞 *Guest Contact:* ${params.guestPhone}\n`
       t += `👥 *Pax:* ${params.paxAdults} Adult${params.paxAdults !== 1 ? 's' : ''}${params.paxKids > 0 ? ` & ${params.paxKids} Child${params.paxKids !== 1 ? 'ren' : ''}${childAgeStr}` : ''}\n`
       t += `📅 *Travel Date:* ${params.travelDate || 'TBD'} (${params.nightsCount}N/${params.nightsCount + 1}D Land Package)\n`
       t += `🏨 *Hotel:* Not Included (Land Package Only)\n`
-      t += `🚐 *Airport Transfers:* Private 13-Seater Minibus (Arrival & Departure)\n`
+      t += `🚐 *Airport Transfers:* ${privateTransLabel} (Arrival & Departure)\n`
       t += `🚌 *Tour Transfers:* ${modeLabel}\n`
       t += `${sep}\n\n`
 
@@ -622,7 +715,12 @@ export default function ReadyMadePackagesPage() {
         ;(day.transfers || []).forEach((tr: any) => {
           const icon = tr.serviceType === 'arrival' ? '🛬' : tr.serviceType === 'departure' ? '🛫' : '🚗'
           const timeStr = tr.time ? `${tr.time} — ` : ''
-          const mStr = (tr.serviceType === 'arrival' || tr.serviceType === 'departure') ? 'Private 13-Seater' : modeLabel
+          let mStr = modeLabel
+          if (tr.serviceType === 'arrival' || tr.serviceType === 'departure') {
+            mStr = privateTransLabel
+          } else if (tr.serviceType === 'disposal') {
+            mStr = `${tr.hours || 4} Hours Disposal (${privateTransLabel})`
+          }
           t += `  ${icon} ${timeStr}${tr.routeDescription || tr.serviceType} (${mStr})\n`
         })
         ;(day.attractions || []).forEach((attr: any) => {
@@ -650,7 +748,14 @@ export default function ReadyMadePackagesPage() {
 
   // Generate WhatsApp Text for Modal
   const generateWhatsAppText = () => {
-    if (!selectedTemplate || !calculation) return ''
+    if (!selectedTemplate) return ''
+    const calc = calculation || {
+      totalClientPriceSGD: selectedTemplate.startingPriceSGD || 0,
+      totalClientPriceINR: Math.round((selectedTemplate.startingPriceSGD || 0) * sgdToInrRate),
+      adultQuoteSGD: Math.round((selectedTemplate.startingPriceSGD || 0) / Math.max(1, paxAdults)),
+      childQuoteSGD: 0,
+      childTicketCount: 0
+    }
     return generateWhatsAppProposalText({
       title: selectedTemplate.title || 'Singapore Land Package',
       nightsCount: selectedTemplate.nightsCount || 3,
@@ -658,14 +763,14 @@ export default function ReadyMadePackagesPage() {
       paxKids,
       childAges,
       travelDate,
-      guestName,
-      guestPhone,
+      guestName: guestName.trim() || 'Valued Guest',
+      guestPhone: guestPhone.trim(),
       transferMode,
-      totalPriceSGD: calculation.totalClientPriceSGD ?? 0,
-      totalPriceINR: calculation.totalClientPriceINR ?? 0,
-      adultQuoteSGD: calculation.adultQuoteSGD ?? 0,
-      childQuoteSGD: calculation.childQuoteSGD ?? 0,
-      childTicketCount: calculation.childTicketCount ?? 0,
+      totalPriceSGD: calc.totalClientPriceSGD ?? 0,
+      totalPriceINR: calc.totalClientPriceINR ?? 0,
+      adultQuoteSGD: calc.adultQuoteSGD ?? 0,
+      childQuoteSGD: calc.childQuoteSGD ?? 0,
+      childTicketCount: calc.childTicketCount ?? 0,
       itinerary: daywiseItinerary,
       terms: termsText,
       agentCompany: activeAgent?.companyName
@@ -957,11 +1062,15 @@ export default function ReadyMadePackagesPage() {
       // ── INCLUSIONS & EXCLUSIONS ──
       sectionTitle('LAND PACKAGE INCLUSIONS & EXCLUSIONS')
 
+      const privateTransLabel = '13-Seater - Private - group - Transfers'
+      const sicTransLabel = 'SIC - SIC - per person - Transfers ( Round Trip )'
+      const modeLabel = transferMode === 'sic' ? sicTransLabel : privateTransLabel
+
       const inclItems = [
         'Land Package Only (Hotel Accommodation excluded)',
         transferMode === 'sic'
-          ? 'Airport Arrival & Departure by Private 13-Seater Minibus; Sightseeing by Shared Coach (SIC)'
-          : 'Airport Arrival & Departure + All Sightseeing by Private 13-Seater Minibus',
+          ? `Airport Arrival & Departure by ${privateTransLabel}; Sightseeing by ${sicTransLabel}`
+          : `Airport Arrival & Departure + All Sightseeing by ${privateTransLabel}`,
         'English-speaking driver assistance for scheduled transfers',
       ]
       const exclItems = [
@@ -1028,7 +1137,12 @@ export default function ReadyMadePackagesPage() {
           font('bold', 7); setTxt(TEAL)
           doc.text(`[${t.time || '10:00'}] Transfer:`, ML + 4, y + 4.8)
           font('normal', 7); setTxt(TEXT)
-          const modeTag = (t.serviceType === 'arrival' || t.serviceType === 'departure') ? 'Private 13-Seater' : (transferMode === 'sic' ? 'SIC' : 'Private 13-Seater')
+          let modeTag = modeLabel
+          if (t.serviceType === 'arrival' || t.serviceType === 'departure') {
+            modeTag = privateTransLabel
+          } else if (t.serviceType === 'disposal') {
+            modeTag = `${t.hours || 4} Hours Disposal (${privateTransLabel})`
+          }
           doc.text(`${t.routeDescription || t.serviceType} (${modeTag})`, ML + 28, y + 4.8)
           y += 8.5
         })
@@ -1542,15 +1656,30 @@ export default function ReadyMadePackagesPage() {
             {/* Modal Header */}
             <div style={{ background: 'linear-gradient(135deg, #0A2240 0%, #0F4C3A 100%)', color: '#FFF', padding: '1.25rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <span style={{ background: '#D4AF37', color: '#111', fontSize: '0.68rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Land Package Quoter (Hotel Excluded)
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <span style={{ background: '#D4AF37', color: '#111', fontSize: '0.68rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Land Package Quoter (Hotel Excluded)
+                  </span>
+                  {savedProposalNum && (
+                    <span style={{ background: '#059669', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
+                      Ref: {savedProposalNum}
+                    </span>
+                  )}
+                </div>
                 <h3 style={{ margin: '0.4rem 0 0.15rem', fontSize: '1.35rem', fontWeight: 800, fontFamily: 'var(--font-playfair), serif' }}>
                   {selectedTemplate.title}
                 </h3>
-                <span style={{ fontSize: '0.78rem', color: '#CBD5E1' }}>
-                  🌙 {selectedTemplate.nightsCount} Nights / {selectedTemplate.nightsCount + 1} Days · Max 12 Pax Private 13-Seater
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', fontSize: '0.78rem', color: '#CBD5E1' }}>
+                  <span>🌙 {selectedTemplate.nightsCount} Nights / {selectedTemplate.nightsCount + 1} Days · Max 12 Pax</span>
+                  <span>•</span>
+                  <span>👤 Guest: <strong style={{ color: '#FCD34D' }}>{guestName.trim() || 'Valued Guest'}</strong></span>
+                  {guestPhone.trim() && (
+                    <>
+                      <span>•</span>
+                      <span>📞 {guestPhone.trim()}</span>
+                    </>
+                  )}
+                </div>
               </div>
               <button
                 type="button"
@@ -1786,15 +1915,51 @@ export default function ReadyMadePackagesPage() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                           {(day.transfers || []).map((tr: any, tIdx: number) => {
                             const isAirport = tr.serviceType === 'arrival' || tr.serviceType === 'departure'
-                            const modeBadge = isAirport ? 'Private 13-Seater' : (transferMode === 'sic' ? 'SIC (Shared)' : 'Private 13-Seater')
+                            const isDisposal = tr.serviceType === 'disposal'
+                            const modeBadge = isAirport
+                              ? '13-Seater - Private - group - Transfers'
+                              : isDisposal
+                              ? `${tr.hours || 4} Hours Disposal (13-Seater - Private - group - Transfers)`
+                              : (transferMode === 'sic' ? 'SIC - SIC - per person - Transfers ( Round Trip )' : '13-Seater - Private - group - Transfers')
+
+                            // Calculate admin net cost for transfer
+                            const sType = tr.serviceType || 'interAttraction'
+                            let trNet = 45
+                            if (sType === 'arrival') trNet = calculation?.rate13Arrival ?? 45
+                            else if (sType === 'departure') trNet = calculation?.rate13Departure ?? 45
+                            else if (sType === 'disposal') trNet = (calculation?.rate13Disposal ?? 45) * (Number(tr.hours) || 4)
+                            else if (sType === 'cityTour') trNet = transferMode === 'sic' ? (calculation?.rateSicCity ?? 15) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13City ?? 120)
+                            else trNet = transferMode === 'sic' ? (calculation?.rateSicXfer ?? 12) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13Transfer ?? 45)
+
                             return (
-                              <div key={tIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC', padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '0.76rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <div key={tIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC', padding: '0.4rem 0.65rem', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '0.76rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                   <span style={{ color: '#0F4C3A', fontWeight: 700 }}>{tr.time || '10:00'}</span>
                                   <span style={{ color: '#1E293B', fontWeight: 600 }}>{tr.routeDescription || tr.serviceType}</span>
-                                  <span style={{ background: isAirport ? '#EFF6FF' : '#F0FDF4', color: isAirport ? '#1D4ED8' : '#15803D', padding: '1px 5px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 700 }}>
+                                  <span style={{ background: isAirport ? '#EFF6FF' : '#F0FDF4', color: isAirport ? '#1D4ED8' : '#15803D', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 700 }}>
                                     {modeBadge}
                                   </span>
+                                  {isDisposal && (
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: '#FEF3C7', padding: '1px 6px', borderRadius: '4px', border: '1px solid #FCD34D' }}>
+                                      <span style={{ fontSize: '0.68rem', color: '#92400E', fontWeight: 700 }}>Hours:</span>
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        max="24"
+                                        value={tr.hours || 4}
+                                        onChange={e => updateTransferHours(dIdx, tIdx, parseInt(e.target.value) || 4)}
+                                        style={{ width: '42px', padding: '1px 3px', borderRadius: '3px', border: '1px solid #CBD5E1', fontSize: '0.72rem', textAlign: 'center', fontWeight: 800, background: '#FFF', color: '#1E293B' }}
+                                      />
+                                    </div>
+                                  )}
+                                  {isAdmin && (
+                                    <span
+                                      title="Admin Tariff Net Cost"
+                                      style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '1px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 800, whiteSpace: 'nowrap' }}
+                                    >
+                                      Admin Net: S$ {trNet}
+                                    </span>
+                                  )}
                                 </div>
                                 {!isAirport && (
                                   <button
@@ -1817,10 +1982,15 @@ export default function ReadyMadePackagesPage() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                         {(day.attractions || []).map((attr: any, aIdx: number) => {
                           const matched = findMatchingAttraction(attr.attractionName || '', attractionsList)
+                          const adPrice = attr.adultPrice || matched?.adultPrice || 0
+                          const chPrice = attr.childPrice || matched?.childPrice || 0
+                          const adPax = calculation?.adultTicketCount ?? paxAdults
+                          const chPax = calculation?.childTicketCount ?? paxKids
+                          const dayAttrTotal = (adPrice * adPax) + (chPrice * chPax)
                           return (
-                            <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFDF5', padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid #FEF3C7', fontSize: '0.76rem' }}>
+                            <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFDF5', padding: '0.4rem 0.65rem', borderRadius: '6px', border: '1px solid #FEF3C7', fontSize: '0.76rem', flexWrap: 'wrap', gap: '0.4rem' }}>
                               <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                   <span style={{ color: '#B45309', fontWeight: 700 }}>{attr.time || '10:00'}</span>
                                   <span style={{ color: '#1E293B', fontWeight: 700 }}>{attr.attractionName}</span>
                                   {attr.isOptional && (
@@ -1835,10 +2005,18 @@ export default function ReadyMadePackagesPage() {
                                   </span>
                                 )}
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                 {matched && (
                                   <span style={{ fontSize: '0.72rem', color: '#92400E', fontWeight: 700 }}>
-                                    Ad: S${matched.adultPrice} | Ch: S${matched.childPrice}
+                                    Ad: S${adPrice} | Ch: S${chPrice}
+                                  </span>
+                                )}
+                                {isAdmin && (
+                                  <span
+                                    title="Admin Tariff Net Cost"
+                                    style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '1px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 800, whiteSpace: 'nowrap' }}
+                                  >
+                                    Admin Net: S$ {adPrice}/Ad, S$ {chPrice}/Ch (Total: S$ {dayAttrTotal})
                                   </span>
                                 )}
                                 <button
@@ -1861,7 +2039,7 @@ export default function ReadyMadePackagesPage() {
                         <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1E40AF', display: 'block', marginBottom: '0.4rem' }}>
                           Add Interline Transfer to Day {dIdx + 1}
                         </span>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 80px auto', gap: '0.5rem', alignItems: 'center' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: newTransferType === 'disposal' ? '1fr 1.3fr 75px 75px auto' : '1fr 1.5fr 80px auto', gap: '0.5rem', alignItems: 'center' }}>
                           <select
                             value={newTransferType}
                             onChange={e => setNewTransferType(e.target.value)}
@@ -1885,6 +2063,19 @@ export default function ReadyMadePackagesPage() {
                             onChange={e => setNewTransferTime(e.target.value)}
                             style={{ padding: '0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
                           />
+                          {newTransferType === 'disposal' && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                              <span style={{ fontSize: '0.7rem', color: '#1E40AF', fontWeight: 700 }}>Hrs:</span>
+                              <input
+                                type="number"
+                                min="1"
+                                max="24"
+                                value={newTransferHours}
+                                onChange={e => setNewTransferHours(Math.max(1, parseInt(e.target.value) || 4))}
+                                style={{ width: '44px', padding: '0.35rem 0.2rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', textAlign: 'center', fontWeight: 700, background: '#FFF', color: '#1E293B' }}
+                              />
+                            </div>
+                          )}
                           <div style={{ display: 'flex', gap: '0.3rem' }}>
                             <button
                               type="button"
@@ -2001,8 +2192,9 @@ export default function ReadyMadePackagesPage() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ fontSize: '0.72rem', opacity: 0.85, marginTop: '2px' }}>
-                    Quote: <strong>S$ {calculation.adultQuoteSGD}</strong> / Adult
+                  <div style={{ fontSize: '0.72rem', opacity: 0.9, marginTop: '3px' }}>
+                    <span>👤 Guest: <strong style={{ color: '#FCD34D' }}>{guestName.trim() || 'Valued Guest'}</strong></span>
+                    <span> · Quote: <strong>S$ {calculation.adultQuoteSGD}</strong> / Adult</span>
                     {calculation.childTicketCount > 0 && (
                       <span> · <strong>S$ {calculation.childQuoteSGD}</strong> / Child</span>
                     )}
@@ -2012,7 +2204,37 @@ export default function ReadyMadePackagesPage() {
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <button
                     type="button"
-                    onClick={handleCopyWhatsApp}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleSaveProposal()
+                    }}
+                    disabled={savingProposal}
+                    title="Save land package proposal directly to Sanity"
+                    style={{
+                      background: savedProposalNum ? '#059669' : '#0284C7',
+                      color: '#FFF',
+                      border: 'none',
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: '8px',
+                      fontSize: '0.78rem',
+                      fontWeight: 800,
+                      cursor: savingProposal ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      transition: 'all 0.2s ease',
+                      boxShadow: savedProposalNum ? '0 0 12px rgba(5, 150, 105, 0.5)' : 'none'
+                    }}
+                  >
+                    <span>{savingProposal ? 'Saving... ⏳' : savedProposalNum ? `Saved (${savedProposalNum}) ✓` : '💾 Save Proposal'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleCopyWhatsApp()
+                    }}
                     style={{
                       background: copiedWA ? '#059669' : '#F59E0B',
                       color: '#FFF',
@@ -2035,7 +2257,10 @@ export default function ReadyMadePackagesPage() {
 
                   <button
                     type="button"
-                    onClick={handleSendWhatsApp}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleSendWhatsApp()
+                    }}
                     style={{
                       background: sendingWA ? '#047857' : '#10B981',
                       color: '#FFF',
@@ -2057,7 +2282,10 @@ export default function ReadyMadePackagesPage() {
 
                   <button
                     type="button"
-                    onClick={handleDownloadPDF}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDownloadPDF()
+                    }}
                     style={{ background: '#2563EB', color: '#FFF', border: 'none', padding: '0.6rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
                   >
                     <FileDown size={14} color="#FFF" />
@@ -2066,7 +2294,10 @@ export default function ReadyMadePackagesPage() {
 
                   <button
                     type="button"
-                    onClick={() => handleOpenInBuilder(selectedTemplate)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleOpenInBuilder(selectedTemplate)
+                    }}
                     title="Add hotel rooms and customize further in full builder"
                     style={{ background: 'rgba(255,255,255,0.15)', color: '#FFF', border: '1px solid rgba(255,255,255,0.3)', padding: '0.6rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
                   >

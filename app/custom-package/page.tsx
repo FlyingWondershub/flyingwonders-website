@@ -385,6 +385,8 @@ interface TransferEntry {
   qty?: number
   type?: string
   serviceName?: string
+  serviceType?: string
+  hours?: number
 }
 
 interface MealEntry {
@@ -406,6 +408,8 @@ interface AttractionEntry {
   attractionName?: string
   adultTickets: number
   childTickets: number
+  adultPrice?: number
+  childPrice?: number
   time: string
   description: string
   isOptional?: boolean
@@ -2519,7 +2523,9 @@ export default function PrototypeBuilder() {
         }
         if (vehicle) {
           const qty = trans.qty || 1
-          transportTotal += vehicle.pricePerTransfer * qty
+          const isDisposal = (trans as any).serviceType === 'disposal' || (trans.description || '').toLowerCase().includes('disposal')
+          const mult = isDisposal ? (Number((trans as any).hours) || 4) : 1
+          transportTotal += vehicle.pricePerTransfer * qty * mult
           totalTransfers += qty
         }
       })
@@ -2528,6 +2534,14 @@ export default function PrototypeBuilder() {
         let attr: { name: string; adultPrice: number; childPrice: number; area?: string; rateType?: string } | undefined = attractionsList[attrRow.attractionIndex]
         if (!attr && attrRow.attractionName) {
           attr = attractionsList.find(a => a.name.toLowerCase().trim() === attrRow.attractionName?.toLowerCase().trim())
+        }
+        if (!attr && (typeof (attrRow as any).adultPrice === 'number' || typeof (attrRow as any).childPrice === 'number')) {
+          attr = {
+            name: attrRow.attractionName || 'Attraction',
+            adultPrice: Number((attrRow as any).adultPrice) || 0,
+            childPrice: Number((attrRow as any).childPrice) || 0,
+            rateType: 'person'
+          }
         }
 
         const rowAdultCount = attrRow.adultTickets || 0
@@ -6615,18 +6629,22 @@ export default function PrototypeBuilder() {
             transfers: Array.isArray(day.transfers) ? day.transfers.map((t: any) => {
               let vIdx = typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 ? t.vehicleIndex : 0
               const search = (t.routeDescription || t.serviceType || t.description || t.type || t.serviceName || '').toLowerCase()
-              if (search.includes('13') || search.includes('arrival') || search.includes('departure')) {
+              if (search.includes('13') || search.includes('arrival') || search.includes('departure') || search.includes('private')) {
                 const found = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
                 if (found >= 0) vIdx = found
               } else if (search.includes('sic') || search.includes('coach')) {
                 const found = vehiclesList.findIndex(v => isVehicleSIC(v))
                 if (found >= 0) vIdx = found
               }
+              const sType = t.serviceType || (search.includes('arrival') ? 'arrival' : search.includes('departure') ? 'departure' : search.includes('disposal') ? 'disposal' : 'interAttraction')
+              const isDisposal = sType === 'disposal' || search.includes('disposal')
               return {
                 ...t,
                 vehicleIndex: vIdx,
+                serviceType: sType,
                 time: sanitizeTime(t.time),
                 description: t.routeDescription || t.serviceType || t.description || 'Transfer',
+                hours: typeof t.hours === 'number' && t.hours > 0 ? t.hours : (isDisposal ? 4 : undefined),
                 qty: typeof t.qty === 'number' ? t.qty : 1
               }
             }) : [],
@@ -6642,10 +6660,14 @@ export default function PrototypeBuilder() {
                   if (foundPos >= 0) aIdx = foundPos
                 }
               }
+              const defaultAdultPrice = typeof a.adultPrice === 'number' ? a.adultPrice : (aIdx >= 0 ? attractionsList[aIdx]?.adultPrice : 0)
+              const defaultChildPrice = typeof a.childPrice === 'number' ? a.childPrice : (aIdx >= 0 ? attractionsList[aIdx]?.childPrice : 0)
               return {
                 ...a,
                 attractionIndex: aIdx,
                 attractionName: aName || (aIdx >= 0 ? attractionsList[aIdx]?.name : ''),
+                adultPrice: defaultAdultPrice,
+                childPrice: defaultChildPrice,
                 adultTickets: typeof a.adultTickets === 'number' ? a.adultTickets : (typeof a.adultQty === 'number' ? a.adultQty : (prop.adults || 2)),
                 childTickets: typeof a.childTickets === 'number' ? a.childTickets : (typeof a.childQty === 'number' ? a.childQty : (prop.kids || 0)),
                 description: a.description || aName || '',
@@ -6657,8 +6679,9 @@ export default function PrototypeBuilder() {
           }))
           setItinerary(sanitizedItin)
         }
-        // Force days open if loaded
+        // Force days open if loaded and switch directly to editor
         setCollapsedDays(new Set())
+        setActiveTab('editor')
         if (showAlert) {
           alert(`Loaded Proposal: ${prop.proposalNumber}`)
         }
@@ -6672,6 +6695,49 @@ export default function PrototypeBuilder() {
       if (showAlert) alert('Failed to fetch proposal details.')
     }
   }
+
+  // Re-match loaded proposal items if Google Sheet attractions/vehicles load after proposal was fetched
+  useEffect(() => {
+    if (attractionsList.length === 0 && vehiclesList.length === 0) return
+    setItinerary(prev => {
+      let changed = false
+      const next = prev.map(day => {
+        let dayChanged = false
+        const updatedAttractions = day.attractions.map(a => {
+          if ((a.attractionIndex === -1 || a.attractionIndex === undefined) && a.attractionName) {
+            const matched = findMatchingAttraction(a.attractionName, attractionsList)
+            if (matched) {
+              const f = attractionsList.findIndex(item => item.name.toLowerCase().trim() === matched.name.toLowerCase().trim())
+              if (f >= 0) {
+                dayChanged = true
+                return { ...a, attractionIndex: f, adultPrice: a.adultPrice || matched.adultPrice, childPrice: a.childPrice || matched.childPrice }
+              }
+            }
+          }
+          return a
+        })
+        const updatedTransfers = day.transfers.map(t => {
+          if (t.vehicleIndex === 0 || t.vehicleIndex === undefined) {
+            const search = (t.description || t.serviceType || '').toLowerCase()
+            if (search.includes('13') || search.includes('arrival') || search.includes('departure') || search.includes('private')) {
+              const f = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
+              if (f >= 0 && f !== t.vehicleIndex) {
+                dayChanged = true
+                return { ...t, vehicleIndex: f }
+              }
+            }
+          }
+          return t
+        })
+        if (dayChanged) {
+          changed = true
+          return { ...day, attractions: updatedAttractions, transfers: updatedTransfers }
+        }
+        return day
+      })
+      return changed ? next : prev
+    })
+  }, [attractionsList, vehiclesList])
 
   // Handle Search Form Submission
   const handleSearchProposal = async (e: React.FormEvent) => {
