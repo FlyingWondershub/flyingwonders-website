@@ -885,6 +885,8 @@ export default function PrototypeBuilder() {
   const [newTransferRoute, setNewTransferRoute] = useState('')
   const [newTransferTime, setNewTransferTime] = useState('14:00')
   const [defaultLandPackageTerms, setDefaultLandPackageTerms] = useState(`Terms & Inclusions:\n\n📌 Land Package Only: Hotel accommodation is not included.\n🚐 Transfers: Airport arrival & departure transfers are provided by Private 13-Seater Minibus. Sightseeing transfers are as selected (SIC / Private 13-Seater). Surcharges applicable for flights between 22:00 - 07:00 hours.\nℹ️ Customizations: For hotel room bookings, meal plans, licensed English/Hindi guides, or coach upgrades for groups >12 Pax, please contact DMC.`)
+  const [copiedLandPackageWA, setCopiedLandPackageWA] = useState(false)
+  const [sendingLandPackageWA, setSendingLandPackageWA] = useState(false)
 
   // UI Layout States
   const [collapsedDays, setCollapsedDays] = useState<Set<number>>(new Set(Array.from({ length: 15 }, (_, i) => i)))
@@ -1089,6 +1091,132 @@ export default function PrototypeBuilder() {
       }
     } catch { /* noop */ }
   }, [])
+
+  // Ready-Made Package Draft Pre-fill: detect ?template= in URL or pending_ready_template in sessionStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const templateParam = params.get('template')
+    const rawDraft = sessionStorage.getItem('pending_ready_template')
+    if (!templateParam && !rawDraft) return
+
+    let draft: any = null
+    if (rawDraft) {
+      try { draft = JSON.parse(rawDraft) } catch (e) {}
+    }
+
+    const loadDraftOrTemplate = (tmplToUse: any, draftData: any) => {
+      const title = draftData?.templateTitle || tmplToUse?.title || templateParam || 'Ready Package'
+      const nNights = draftData?.nightsCount || tmplToUse?.nightsCount || 3
+      const gName = draftData?.guestName || ''
+      const gPhone = draftData?.guestPhone || ''
+      const nAdults = draftData?.adults || 2
+      const nKids = draftData?.kids || 0
+      const cAges = draftData?.childAges || []
+      const aDate = draftData?.arrivalDate || ''
+      const tMode = draftData?.transferMode || 'private13'
+      const itinSource = draftData?.itinerary || tmplToUse?.itinerary || []
+
+      if (gName) setGuestName(gName)
+      if (gPhone) setGuestPhone(gPhone)
+      setAdults(nAdults)
+      setKids(nKids)
+      if (Array.isArray(cAges) && cAges.length > 0) setChildAges(cAges)
+      if (aDate) setArrivalDate(aDate)
+      setNightsCount(nNights)
+      setActiveTemplateName(title)
+      setSavedProposalNum(null)
+      setHotelRequired(true)
+
+      // Map daywise itinerary into DayPlan[]
+      if (Array.isArray(itinSource) && itinSource.length > 0) {
+        const mapped: DayPlan[] = itinSource.map((d: any, dIdx: number) => {
+          // Map transfers
+          const trs: TransferEntry[] = (d.transfers || []).map((t: any) => {
+            const sType = t.serviceType || ''
+            let vIdx = 0
+            if (sType === 'arrival' || sType === 'departure') {
+              const f = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
+              if (f >= 0) vIdx = f
+            } else if (tMode === 'sic') {
+              const f = vehiclesList.findIndex(v => isVehicleSIC(v))
+              if (f >= 0) vIdx = f
+            } else {
+              const f = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
+              if (f >= 0) vIdx = f
+            }
+            return {
+              vehicleIndex: vIdx,
+              time: t.time || '10:00',
+              description: t.routeDescription || t.serviceType || t.description || `Transfer Day ${dIdx + 1}`,
+              qty: 1
+            }
+          })
+
+          // Map attractions
+          const attrs: AttractionEntry[] = (d.attractions || []).map((a: any) => {
+            const aName = a.attractionName || a.name || ''
+            let aIdx = typeof a.attractionIndex === 'number' && a.attractionIndex >= 0 ? a.attractionIndex : -1
+            if (aIdx === -1 && aName && attractionsList.length > 0) {
+              const matched = findMatchingAttraction(aName, attractionsList)
+              if (matched) {
+                const foundPos = attractionsList.findIndex(item => item.name.toLowerCase().trim() === matched.name.toLowerCase().trim())
+                if (foundPos >= 0) aIdx = foundPos
+              }
+            }
+            return {
+              attractionIndex: aIdx,
+              attractionName: aName,
+              adultTickets: nAdults,
+              childTickets: nKids,
+              time: a.time || '10:00',
+              description: a.description || aName,
+              pickupNotes: a.inclusionsNotes || a.pickupNotes || '',
+              isOptional: !!a.isOptional
+            }
+          })
+
+          return {
+            dayTitle: d.dayTitle || '',
+            transfers: trs,
+            attractions: attrs,
+            breakfast: true,
+            lunch: false,
+            dinner: false,
+            guides: []
+          }
+        })
+        setItinerary(mapped)
+      }
+
+      setActiveTab('editor')
+      setCollapsedDays(new Set())
+      try { sessionStorage.removeItem('pending_ready_template') } catch (e) {}
+      showToast(`Loaded "${title}" into Builder Workspace! 🚀`, 'success')
+    }
+
+    // If draft already contains full itinerary, load immediately
+    if (draft && Array.isArray(draft.itinerary) && draft.itinerary.length > 0) {
+      loadDraftOrTemplate(null, draft)
+      return
+    }
+
+    // If template title in URL, fetch from ready-packages API or readyTemplatesList
+    const targetTitle = templateParam || draft?.templateTitle
+    if (targetTitle) {
+      fetch('/api/ready-packages')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && Array.isArray(data.templates)) {
+            const found = data.templates.find((t: any) => t.title.toLowerCase().trim() === targetTitle.toLowerCase().trim())
+            if (found) {
+              loadDraftOrTemplate(found, draft)
+            }
+          }
+        })
+        .catch(() => {})
+    }
+  }, [attractionsList, vehiclesList])
 
   // Destination Mode State ('singapore' | 'malaysia' | 'combined')
   const [destinationMode, setDestinationMode] = useState<'singapore' | 'malaysia' | 'combined'>('singapore')
@@ -1516,28 +1644,43 @@ export default function PrototypeBuilder() {
     setNightsCount(tmpl.nightsCount || 3)
     setActiveTemplateName(tmpl.title)
     setSavedProposalNum(null)
+    setHotelRequired(true)
 
     if (tmpl.itinerary && Array.isArray(tmpl.itinerary)) {
       const mappedItinerary: DayPlan[] = tmpl.itinerary.map((day: any) => ({
-        transfers: Array.isArray(day.transfers) ? day.transfers.map((t: any) => ({
-          vehicleIndex: typeof t.vehicleIndex === 'number' ? t.vehicleIndex : 0,
-          time: t.time || '09:00',
-          description: t.description || '',
-          qty: typeof t.qty === 'number' ? t.qty : 1
-        })) : [],
+        dayTitle: day.dayTitle || '',
+        transfers: Array.isArray(day.transfers) ? day.transfers.map((t: any) => {
+          let vIdx = typeof t.vehicleIndex === 'number' ? t.vehicleIndex : 0
+          if (t.serviceType === 'arrival' || t.serviceType === 'departure') {
+            const found = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
+            if (found >= 0) vIdx = found
+          }
+          return {
+            vehicleIndex: vIdx,
+            time: t.time || '09:00',
+            description: t.routeDescription || t.serviceType || t.description || 'Transfer',
+            qty: typeof t.qty === 'number' ? t.qty : 1
+          }
+        }) : [],
         attractions: Array.isArray(day.attractions) ? day.attractions.map((a: any) => {
-          let idx = typeof a.attractionIndex === 'number' ? a.attractionIndex : 0
-          if (a.attractionName) {
-            const found = attractionsList.findIndex(item => item.name.toLowerCase() === a.attractionName.toLowerCase())
-            if (found >= 0) idx = found
+          const aName = a.attractionName || a.name || ''
+          let idx = typeof a.attractionIndex === 'number' && a.attractionIndex >= 0 ? a.attractionIndex : -1
+          if (aName && attractionsList.length > 0) {
+            const matched = findMatchingAttraction(aName, attractionsList)
+            if (matched) {
+              const found = attractionsList.findIndex(item => item.name.toLowerCase().trim() === matched.name.toLowerCase().trim())
+              if (found >= 0) idx = found
+            }
           }
           return {
             attractionIndex: idx,
-            attractionName: a.attractionName || (attractionsList[idx]?.name || ''),
+            attractionName: aName || (idx >= 0 ? attractionsList[idx]?.name : ''),
             time: a.time || '10:00',
-            adultQty: typeof a.adultQty === 'number' ? a.adultQty : adults,
-            childQty: typeof a.childQty === 'number' ? a.childQty : kids,
-            pickupNotes: a.pickupNotes || ''
+            adultTickets: typeof a.adultTickets === 'number' ? a.adultTickets : (typeof a.adultQty === 'number' ? a.adultQty : adults),
+            childTickets: typeof a.childTickets === 'number' ? a.childTickets : (typeof a.childQty === 'number' ? a.childQty : kids),
+            description: a.description || aName || '',
+            pickupNotes: a.inclusionsNotes || a.pickupNotes || '',
+            isOptional: !!a.isOptional
           }
         }) : [],
         breakfast: !!day.breakfast,
@@ -1555,30 +1698,43 @@ export default function PrototypeBuilder() {
 
     setTemplateModalItem(null)
     setActiveTab('editor')
-    alert(`✅ Loaded template "${tmpl.title}" into Builder Workspace! You can now customize every detail.`)
+    setCollapsedDays(new Set())
+    showToast(`Loaded template "${tmpl.title}" into Builder Workspace! 🚀`, 'success')
   }
 
-  // Helper for cross-platform resilient clipboard copy (mobile, Safari, iframe, un-focused windows)
+  // Helper for cross-platform resilient clipboard copy (mobile, Safari, iOS, iframe, un-focused windows)
   const copyTextWithFallback = async (text: string): Promise<boolean> => {
     if (!text) return false
-    if (typeof window !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+    // 1. Try modern Async Clipboard API first
+    if (typeof window !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
       try {
         await navigator.clipboard.writeText(text)
         return true
       } catch (err) {
-        console.warn('navigator.clipboard.writeText failed, falling back:', err)
+        console.warn('navigator.clipboard.writeText failed, falling back to DOM execCommand:', err)
       }
     }
+    // 2. Resilient DOM fallback (safe for iOS Safari, Android Chrome, and desktop)
     try {
       const textarea = document.createElement('textarea')
       textarea.value = text
       textarea.style.position = 'fixed'
-      textarea.style.left = '-9999px'
-      textarea.style.top = '-9999px'
-      textarea.setAttribute('readonly', '')
+      textarea.style.top = '0'
+      textarea.style.left = '0'
+      textarea.style.width = '2em'
+      textarea.style.height = '2em'
+      textarea.style.padding = '0'
+      textarea.style.border = 'none'
+      textarea.style.outline = 'none'
+      textarea.style.boxShadow = 'none'
+      textarea.style.background = 'transparent'
+      textarea.style.opacity = '0.01'
+      textarea.style.pointerEvents = 'none'
+      // Note: do NOT set readonly attribute or iOS Safari refuses to select!
       document.body.appendChild(textarea)
+      textarea.focus()
       textarea.select()
-      textarea.setSelectionRange(0, 99999)
+      textarea.setSelectionRange(0, text.length)
       const ok = document.execCommand('copy')
       document.body.removeChild(textarea)
       return ok
@@ -1922,25 +2078,48 @@ export default function PrototypeBuilder() {
 
   const handleCopyLandPackageWhatsApp = async () => {
     const text = generateLandPackageWhatsAppText()
-    if (!text) return
+    if (!text) {
+      showToast('No package details available to copy.', 'error')
+      return
+    }
     const success = await copyTextWithFallback(text)
     if (success) {
+      setCopiedLandPackageWA(true)
+      setTimeout(() => setCopiedLandPackageWA(false), 3000)
       showToast('Land Package WhatsApp Proposal copied to clipboard! 📋', 'success')
     } else {
       showToast('Could not copy automatically. Please try again.', 'error')
     }
   }
 
-  const handleSendLandPackageWhatsApp = () => {
+  const handleSendLandPackageWhatsApp = async () => {
     const text = generateLandPackageWhatsAppText()
-    if (!text) return
-    const encoded = encodeURIComponent(text)
-    const url = `https://wa.me/?text=${encoded}`
-    const win = window.open(url, '_blank')
-    if (!win || win.closed || typeof win.closed === 'undefined') {
-      window.location.href = url
+    if (!text) {
+      showToast('No package details available to send.', 'error')
+      return
     }
-    showToast('Opening WhatsApp with Land Package Proposal... 💬', 'info')
+    setSendingLandPackageWA(true)
+    setTimeout(() => setSendingLandPackageWA(false), 3000)
+
+    // Automatically copy full itemized proposal to clipboard
+    await copyTextWithFallback(text)
+
+    const encoded = encodeURIComponent(text)
+    const url = `https://api.whatsapp.com/send?text=${encoded}`
+
+    try {
+      const link = document.createElement('a')
+      link.href = url
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch {
+      window.open(url, '_blank')
+    }
+
+    showToast('Opening WhatsApp... Full proposal also copied to clipboard! 💬📋', 'info')
   }
 
   const handleDownloadLandPackagePDF = async () => {
@@ -2019,33 +2198,53 @@ export default function PrototypeBuilder() {
 
   const handleLoadLandPackageIntoBuilder = () => {
     if (!landPackageModalItem) return
+    setNightsCount(landPackageModalItem.nightsCount || 3)
     setArrivalDate(landPackageDate)
     setAdults(landPackageAdults)
     setKids(landPackageKids)
     setChildAges(landPackageChildAges)
+    if (landPackageGuestName) setGuestName(landPackageGuestName)
+    if (landPackageGuestPhone) setGuestPhone(landPackageGuestPhone)
     setHotelRequired(true)
     setActiveTemplateName(landPackageModalItem.title)
 
     const mappedItinerary: DayPlan[] = landPackageDays.map((d: any) => ({
       dayTitle: d.dayTitle || '',
-      transfers: (d.transfers || []).map((t: any) => ({
-        vehicleIndex: 0,
-        time: t.time || '10:00',
-        description: t.routeDescription || t.serviceType || 'Transfer',
-        qty: 1
-      })),
+      transfers: (d.transfers || []).map((t: any) => {
+        let vIdx = 0
+        if (t.serviceType === 'arrival' || t.serviceType === 'departure') {
+          const found = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
+          if (found >= 0) vIdx = found
+        } else if (landPackageTransferMode === 'sic') {
+          const found = vehiclesList.findIndex(v => isVehicleSIC(v))
+          if (found >= 0) vIdx = found
+        } else {
+          const found = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
+          if (found >= 0) vIdx = found
+        }
+        return {
+          vehicleIndex: vIdx,
+          time: t.time || '10:00',
+          description: t.routeDescription || t.serviceType || 'Transfer',
+          qty: 1
+        }
+      }),
       attractions: (d.attractions || []).map((a: any) => {
-        let aIdx = 0
+        let aIdx = -1
         if (a.attractionName) {
-          const found = attractionsList.findIndex(item => item.name.toLowerCase().trim() === a.attractionName.toLowerCase().trim())
-          if (found >= 0) aIdx = found
+          const matched = findMatchingAttraction(a.attractionName, attractionsList)
+          if (matched) {
+            const found = attractionsList.findIndex(item => item.name.toLowerCase().trim() === matched.name.toLowerCase().trim())
+            if (found >= 0) aIdx = found
+          }
         }
         return {
           attractionIndex: aIdx,
           attractionName: a.attractionName,
+          adultTickets: landPackageAdults,
+          childTickets: landPackageKids,
           time: a.time || '10:00',
-          adultQty: landPackageAdults,
-          childQty: landPackageKids,
+          description: a.attractionName || '',
           pickupNotes: a.inclusionsNotes || '',
           isOptional: !!a.isOptional
         }
@@ -2059,6 +2258,7 @@ export default function PrototypeBuilder() {
     setItinerary(mappedItinerary)
     setLandPackageModalItem(null)
     setActiveTab('editor')
+    setCollapsedDays(new Set())
     showToast(`Loaded ${landPackageModalItem.title} into Builder Workspace! 🚀`, 'success')
   }
 
@@ -6026,11 +6226,24 @@ export default function PrototypeBuilder() {
   const sendOnWhatsApp = async () => {
     const pNum = await ensureProposalSaved(true)
     const text = generateProposalText(pNum || undefined)
+    if (text) {
+      await copyTextWithFallback(text)
+    }
     const encodedText = encodeURIComponent(text)
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`
-    window.open(whatsappUrl, '_blank')
+    try {
+      const link = document.createElement('a')
+      link.href = whatsappUrl
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch {
+      window.open(whatsappUrl, '_blank')
+    }
     notifyAgentActivity('whatsapp_share')
-    showToast('Opening WhatsApp with proposal... 💬', 'info')
+    showToast('Opening WhatsApp... Proposal also copied to clipboard! 💬📋', 'info')
   }
 
   // Handle Save Proposal to Sanity (Updates existing proposal if reloaded/active, or creates new if fresh)
@@ -6223,13 +6436,13 @@ export default function PrototypeBuilder() {
       t += `\n${sep}\n📝 *Important Notes & Special Instructions:*\n${p.itineraryNotes.trim()}\n`
     }
     t += `\n${sep}\n📞 Flying Wonders Singapore`
-    try {
-      await navigator.clipboard.writeText(t)
+    const ok = await copyTextWithFallback(t)
+    if (ok) {
       setRegistryCopiedId(pNum)
       showToast(`Copied itinerary for ${pNum}! 📋`, 'success')
       setTimeout(() => setRegistryCopiedId(null), 2500)
-    } catch (err) {
-      console.error(err)
+    } else {
+      showToast('Could not copy to clipboard. Please try again.', 'error')
     }
   }
 
@@ -6324,6 +6537,14 @@ export default function PrototypeBuilder() {
         if (prop.destinationMode && ['singapore', 'malaysia', 'combined'].includes(prop.destinationMode)) {
           setDestinationMode(prop.destinationMode as any)
         }
+        if (prop.templateName) {
+          setActiveTemplateName(prop.templateName)
+        } else if (prop.isTemplateBased) {
+          setActiveTemplateName('Template')
+        } else {
+          setActiveTemplateName(null)
+        }
+
         let rawItin = prop.itinerary
         if (typeof rawItin === 'string') {
           try {
@@ -6350,15 +6571,49 @@ export default function PrototypeBuilder() {
 
           const sanitizedItin = rawItin.map((day: any) => ({
             ...day,
-            transfers: Array.isArray(day.transfers) ? day.transfers.map((t: any) => ({ ...t, time: sanitizeTime(t.time) })) : [],
+            dayTitle: day.dayTitle || '',
+            transfers: Array.isArray(day.transfers) ? day.transfers.map((t: any) => {
+              let vIdx = typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 ? t.vehicleIndex : 0
+              const search = (t.routeDescription || t.serviceType || t.description || t.type || t.serviceName || '').toLowerCase()
+              if (search.includes('13') || search.includes('arrival') || search.includes('departure')) {
+                const found = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
+                if (found >= 0) vIdx = found
+              } else if (search.includes('sic') || search.includes('coach')) {
+                const found = vehiclesList.findIndex(v => isVehicleSIC(v))
+                if (found >= 0) vIdx = found
+              }
+              return {
+                ...t,
+                vehicleIndex: vIdx,
+                time: sanitizeTime(t.time),
+                description: t.routeDescription || t.serviceType || t.description || 'Transfer',
+                qty: typeof t.qty === 'number' ? t.qty : 1
+              }
+            }) : [],
             guides: Array.isArray(day.guides) ? day.guides.map((g: any) => ({ ...g, time: sanitizeTime(g.time) })) : [],
             meals: Array.isArray(day.meals) ? day.meals.map((m: any) => ({ ...m, time: sanitizeTime(m.time) })) : [],
-            attractions: Array.isArray(day.attractions) ? day.attractions.map((a: any) => ({ 
-              ...a, 
-              time: sanitizeTime(a.time),
-              pickupTime: sanitizeTime(a.pickupTime || '09:00'),
-              dropTime: sanitizeTime(a.dropTime || '17:00')
-            })) : []
+            attractions: Array.isArray(day.attractions) ? day.attractions.map((a: any) => {
+              const aName = a.attractionName || a.name || ''
+              let aIdx = typeof a.attractionIndex === 'number' && a.attractionIndex >= 0 ? a.attractionIndex : -1
+              if (aIdx === -1 && aName && attractionsList.length > 0) {
+                const matched = findMatchingAttraction(aName, attractionsList)
+                if (matched) {
+                  const foundPos = attractionsList.findIndex(item => item.name.toLowerCase().trim() === matched.name.toLowerCase().trim())
+                  if (foundPos >= 0) aIdx = foundPos
+                }
+              }
+              return {
+                ...a,
+                attractionIndex: aIdx,
+                attractionName: aName || (aIdx >= 0 ? attractionsList[aIdx]?.name : ''),
+                adultTickets: typeof a.adultTickets === 'number' ? a.adultTickets : (typeof a.adultQty === 'number' ? a.adultQty : (prop.adults || 2)),
+                childTickets: typeof a.childTickets === 'number' ? a.childTickets : (typeof a.childQty === 'number' ? a.childQty : (prop.kids || 0)),
+                description: a.description || aName || '',
+                time: sanitizeTime(a.time),
+                pickupTime: sanitizeTime(a.pickupTime || '09:00'),
+                dropTime: sanitizeTime(a.dropTime || '17:00')
+              }
+            }) : []
           }))
           setItinerary(sanitizedItin)
         }
@@ -10972,7 +11227,10 @@ ${proposal}
                             {/* Area Header Bar */}
                             {(() => {
                               const areaOriginalIndices = new Set(areaAttractions.map(a => a.originalIdx))
-                              const selectedInAreaCount = day.attractions.filter(sel => areaOriginalIndices.has(sel.attractionIndex)).length
+                              const selectedInAreaCount = day.attractions.filter(sel => 
+                                areaOriginalIndices.has(sel.attractionIndex) ||
+                                areaAttractions.some(a => a.name.toLowerCase().trim() === sel.attractionName?.toLowerCase().trim())
+                              ).length
 
                               return (
                                 <div 
@@ -11001,7 +11259,10 @@ ${proposal}
                                   <p style={{ margin: 0, fontSize: '0.75rem', color: '#718096', fontStyle: 'italic' }}>No attractions found in this area</p>
                                 ) : (
                                   areaAttractions.map(attraction => {
-                                    const existingIdx = day.attractions.findIndex(sel => sel.attractionIndex === attraction.originalIdx)
+                                    const existingIdx = day.attractions.findIndex(sel => 
+                                      sel.attractionIndex === attraction.originalIdx ||
+                                      (sel.attractionName && sel.attractionName.toLowerCase().trim() === attraction.name.toLowerCase().trim())
+                                    )
                                     const isSelected = existingIdx >= 0
                                     const row = isSelected ? day.attractions[existingIdx] : null
 
@@ -11013,10 +11274,10 @@ ${proposal}
                                             checked={isSelected}
                                             onChange={e => {
                                               if (e.target.checked) {
-                                                const nextAttrs = [...day.attractions, { attractionIndex: attraction.originalIdx, time: '10:00', adultTickets: adults, childTickets: kids, description: '' }]
+                                                const nextAttrs = [...day.attractions, { attractionIndex: attraction.originalIdx, attractionName: attraction.name, time: '10:00', adultTickets: adults, childTickets: kids, description: '' }]
                                                 updateDay(dIdx, 'attractions', nextAttrs)
                                               } else {
-                                                const nextAttrs = day.attractions.filter(sel => sel.attractionIndex !== attraction.originalIdx)
+                                                const nextAttrs = day.attractions.filter((_, i) => i !== existingIdx)
                                                 updateDay(dIdx, 'attractions', nextAttrs)
                                               }
                                             }}
@@ -12493,19 +12754,46 @@ ${proposal}
                   <button
                     type="button"
                     onClick={handleCopyLandPackageWhatsApp}
-                    style={{ background: '#F59E0B', color: '#FFF', border: 'none', padding: '0.6rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                    style={{
+                      background: copiedLandPackageWA ? '#059669' : '#F59E0B',
+                      color: '#FFF',
+                      border: 'none',
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: '8px',
+                      fontSize: '0.78rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      transition: 'all 0.2s ease',
+                      boxShadow: copiedLandPackageWA ? '0 0 12px rgba(5, 150, 105, 0.6)' : 'none'
+                    }}
                   >
-                    <CopyCheck size={14} color="#FFF" />
-                    <span>Copy WA</span>
+                    {copiedLandPackageWA ? <Check size={14} color="#FFF" /> : <CopyCheck size={14} color="#FFF" />}
+                    <span>{copiedLandPackageWA ? 'Copied! ✓' : 'Copy WA'}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleSendLandPackageWhatsApp}
-                    style={{ background: '#10B981', color: '#FFF', border: 'none', padding: '0.6rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                    style={{
+                      background: sendingLandPackageWA ? '#047857' : '#10B981',
+                      color: '#FFF',
+                      border: 'none',
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: '8px',
+                      fontSize: '0.78rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      transition: 'all 0.2s ease'
+                    }}
                   >
                     <MessageCircle size={14} color="#FFF" />
-                    <span>WhatsApp</span>
+                    <span>{sendingLandPackageWA ? 'Opening... 💬' : 'WhatsApp'}</span>
                   </button>
 
                   <button

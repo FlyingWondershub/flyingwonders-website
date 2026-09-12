@@ -24,7 +24,8 @@ import {
   Plus,
   X,
   Layers,
-  ArrowUpDown
+  ArrowUpDown,
+  Check
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
 
@@ -97,6 +98,8 @@ export default function ReadyMadePackagesPage() {
   const [newTransferRoute, setNewTransferRoute] = useState('')
   const [newTransferTime, setNewTransferTime] = useState('14:00')
   const [termsText, setTermsText] = useState(DEFAULT_TERMS)
+  const [copiedWA, setCopiedWA] = useState(false)
+  const [sendingWA, setSendingWA] = useState(false)
 
   // Fetch Templates, Rates & Agent on Mount
   useEffect(() => {
@@ -204,29 +207,44 @@ export default function ReadyMadePackagesPage() {
     fetchSheet()
   }, [])
 
-  // Resilient Clipboard Copy Helper
+  // Resilient Clipboard Copy Helper (mobile, Safari, iOS, iframe, un-focused windows)
   const copyTextWithFallback = async (text: string): Promise<boolean> => {
     if (!text) return false
-    try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard && window.isSecureContext) {
+    // 1. Try modern Async Clipboard API first
+    if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      try {
         await navigator.clipboard.writeText(text)
         return true
+      } catch (e) {
+        console.warn('navigator.clipboard.writeText failed, falling back to DOM execCommand:', e)
       }
-    } catch (e) {}
+    }
+    // 2. Resilient DOM fallback (safe for iOS Safari, Android Chrome, and desktop)
     try {
       const ta = document.createElement('textarea')
       ta.value = text
       ta.style.position = 'fixed'
-      ta.style.left = '-9999px'
-      ta.style.top = '-9999px'
-      ta.setAttribute('readonly', '')
+      ta.style.top = '0'
+      ta.style.left = '0'
+      ta.style.width = '2em'
+      ta.style.height = '2em'
+      ta.style.padding = '0'
+      ta.style.border = 'none'
+      ta.style.outline = 'none'
+      ta.style.boxShadow = 'none'
+      ta.style.background = 'transparent'
+      ta.style.opacity = '0.01'
+      ta.style.pointerEvents = 'none'
+      // Note: do NOT set readonly attribute or iOS Safari refuses to select!
       document.body.appendChild(ta)
       ta.focus()
       ta.select()
+      ta.setSelectionRange(0, text.length)
       const ok = document.execCommand('copy')
       document.body.removeChild(ta)
       return ok
     } catch (err) {
+      console.error('Fallback clipboard copy failed:', err)
       return false
     }
   }
@@ -554,9 +572,14 @@ export default function ReadyMadePackagesPage() {
   // Handle WhatsApp Copy
   const handleCopyWhatsApp = async () => {
     const text = generateWhatsAppText()
-    if (!text) return
+    if (!text) {
+      showToast('No package details available to copy.', 'error')
+      return
+    }
     const success = await copyTextWithFallback(text)
     if (success) {
+      setCopiedWA(true)
+      setTimeout(() => setCopiedWA(false), 3000)
       showToast('Land Package WhatsApp Proposal copied to clipboard! 📋', 'success')
     } else {
       showToast('Failed to copy. Please copy manually.', 'error')
@@ -564,16 +587,34 @@ export default function ReadyMadePackagesPage() {
   }
 
   // Handle WhatsApp Send
-  const handleSendWhatsApp = () => {
+  const handleSendWhatsApp = async () => {
     const text = generateWhatsAppText()
-    if (!text) return
-    const encoded = encodeURIComponent(text)
-    const url = `https://wa.me/?text=${encoded}`
-    const win = window.open(url, '_blank')
-    if (!win || win.closed || typeof win.closed === 'undefined') {
-      window.location.href = url
+    if (!text) {
+      showToast('No package details available to send.', 'error')
+      return
     }
-    showToast('Opening WhatsApp with Land Package Proposal... 💬', 'info')
+    setSendingWA(true)
+    setTimeout(() => setSendingWA(false), 3000)
+
+    // Automatically copy full itemized proposal to clipboard
+    await copyTextWithFallback(text)
+
+    const encoded = encodeURIComponent(text)
+    const url = `https://api.whatsapp.com/send?text=${encoded}`
+
+    try {
+      const link = document.createElement('a')
+      link.href = url
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch {
+      window.open(url, '_blank')
+    }
+
+    showToast('Opening WhatsApp... Full proposal also copied to clipboard! 💬📋', 'info')
   }
 
   // Handle PDF Generation
@@ -847,6 +888,28 @@ export default function ReadyMadePackagesPage() {
 
   // Load into full builder
   const handleOpenInBuilder = (tmpl: any) => {
+    if (!tmpl) return
+    const isModalTmpl = selectedTemplate && selectedTemplate._id === tmpl._id
+    const draft = {
+      templateTitle: tmpl.title || '',
+      nightsCount: tmpl.nightsCount || 3,
+      guestName: isModalTmpl ? (guestName || '') : '',
+      guestPhone: isModalTmpl ? (guestPhone || '') : '',
+      adults: isModalTmpl ? (paxAdults || 2) : 2,
+      kids: isModalTmpl ? (paxKids || 0) : 0,
+      childAges: isModalTmpl ? (childAges || []) : [],
+      arrivalDate: isModalTmpl ? (travelDate || '') : '',
+      transferMode: isModalTmpl ? transferMode : 'private13',
+      itinerary: (isModalTmpl && Array.isArray(daywiseItinerary) && daywiseItinerary.length > 0)
+        ? daywiseItinerary
+        : (tmpl.itinerary || []),
+      termsAndInclusions: isModalTmpl ? termsText : (tmpl.termsAndInclusions || '')
+    }
+    try {
+      sessionStorage.setItem('pending_ready_template', JSON.stringify(draft))
+    } catch (e) {
+      console.warn('Could not store pending_ready_template:', e)
+    }
     router.push(`/custom-package?template=${encodeURIComponent(tmpl.title || '')}`)
   }
 
@@ -1705,19 +1768,46 @@ export default function ReadyMadePackagesPage() {
                   <button
                     type="button"
                     onClick={handleCopyWhatsApp}
-                    style={{ background: '#F59E0B', color: '#FFF', border: 'none', padding: '0.6rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                    style={{
+                      background: copiedWA ? '#059669' : '#F59E0B',
+                      color: '#FFF',
+                      border: 'none',
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: '8px',
+                      fontSize: '0.78rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      transition: 'all 0.2s ease',
+                      boxShadow: copiedWA ? '0 0 12px rgba(5, 150, 105, 0.6)' : 'none'
+                    }}
                   >
-                    <CopyCheck size={14} color="#FFF" />
-                    <span>Copy WA</span>
+                    {copiedWA ? <Check size={14} color="#FFF" /> : <CopyCheck size={14} color="#FFF" />}
+                    <span>{copiedWA ? 'Copied! ✓' : 'Copy WA'}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleSendWhatsApp}
-                    style={{ background: '#10B981', color: '#FFF', border: 'none', padding: '0.6rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                    style={{
+                      background: sendingWA ? '#047857' : '#10B981',
+                      color: '#FFF',
+                      border: 'none',
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: '8px',
+                      fontSize: '0.78rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      transition: 'all 0.2s ease'
+                    }}
                   >
                     <MessageCircle size={14} color="#FFF" />
-                    <span>WhatsApp</span>
+                    <span>{sendingWA ? 'Opening... 💬' : 'WhatsApp'}</span>
                   </button>
 
                   <button
