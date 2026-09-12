@@ -100,6 +100,8 @@ export default function ReadyMadePackagesPage() {
   const [termsText, setTermsText] = useState(DEFAULT_TERMS)
   const [copiedWA, setCopiedWA] = useState(false)
   const [sendingWA, setSendingWA] = useState(false)
+  const [copiedCardId, setCopiedCardId] = useState<string | null>(null)
+  const [sendingCardId, setSendingCardId] = useState<string | null>(null)
 
   // Fetch Templates, Rates & Agent on Mount
   useEffect(() => {
@@ -207,7 +209,7 @@ export default function ReadyMadePackagesPage() {
     fetchSheet()
   }, [])
 
-  // Resilient Clipboard Copy Helper (mobile, Safari, iOS, iframe, un-focused windows)
+  // Resilient Clipboard Copy Helper (mobile, Safari, iOS, Android, iframe, un-focused windows)
   const copyTextWithFallback = async (text: string): Promise<boolean> => {
     if (!text) return false
     // 1. Try modern Async Clipboard API first
@@ -225,7 +227,7 @@ export default function ReadyMadePackagesPage() {
       ta.value = text
       ta.style.position = 'fixed'
       ta.style.top = '0'
-      ta.style.left = '0'
+      ta.style.left = '-9999px'
       ta.style.width = '2em'
       ta.style.height = '2em'
       ta.style.padding = '0'
@@ -233,19 +235,70 @@ export default function ReadyMadePackagesPage() {
       ta.style.outline = 'none'
       ta.style.boxShadow = 'none'
       ta.style.background = 'transparent'
-      ta.style.opacity = '0.01'
-      ta.style.pointerEvents = 'none'
-      // Note: do NOT set readonly attribute or iOS Safari refuses to select!
+      ta.style.fontSize = '16px' // Prevents iOS Safari auto-zoom
+      ta.setAttribute('readonly', '')
       document.body.appendChild(ta)
-      ta.focus()
+      ta.focus({ preventScroll: true })
       ta.select()
       ta.setSelectionRange(0, text.length)
+
+      if (typeof window !== 'undefined' && window.getSelection) {
+        const range = document.createRange()
+        range.selectNodeContents(ta)
+        const sel = window.getSelection()
+        if (sel) {
+          sel.removeAllRanges()
+          sel.addRange(range)
+        }
+      }
+
       const ok = document.execCommand('copy')
       document.body.removeChild(ta)
       return ok
     } catch (err) {
       console.error('Fallback clipboard copy failed:', err)
       return false
+    }
+  }
+
+  // Safe WhatsApp Launcher (avoids browser popup blockers by executing synchronously within user click)
+  const openWhatsAppSafely = (text: string, phone?: string) => {
+    if (!text) return
+    const cleanPhone = (phone || '').replace(/[^0-9]/g, '')
+
+    // Guard against URI length limits in WhatsApp Web/Mobile (>1500 chars)
+    let waText = text
+    if (text.length > 1500) {
+      const lines = text.split('\n')
+      const summaryHeader = lines.slice(0, 15).join('\n')
+      waText = `${summaryHeader}\n\n📋 *Full itemized day-by-day itinerary & inclusions copied to your clipboard! Simply paste (Ctrl+V) here to send.*`
+    }
+
+    const encoded = encodeURIComponent(waText)
+    const url = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`
+      : `https://api.whatsapp.com/send?text=${encoded}`
+
+    let opened = false
+    try {
+      const win = window.open(url, '_blank')
+      if (win && !win.closed) opened = true
+    } catch (e) {
+      console.warn('window.open failed:', e)
+    }
+
+    if (!opened) {
+      try {
+        const link = document.createElement('a')
+        link.href = url
+        link.target = '_blank'
+        link.rel = 'noopener noreferrer'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      } catch {
+        window.open(url, '_blank')
+      }
     }
   }
 
@@ -512,109 +565,243 @@ export default function ReadyMadePackagesPage() {
     })
   }
 
-  // Generate WhatsApp Text
+  // Shared WhatsApp Text Generator
+  const generateWhatsAppProposalText = (params: {
+    title: string
+    nightsCount: number
+    paxAdults: number
+    paxKids: number
+    childAges?: number[]
+    travelDate?: string
+    guestName?: string
+    guestPhone?: string
+    transferMode?: string
+    totalPriceSGD: number
+    totalPriceINR: number
+    adultQuoteSGD: number
+    childQuoteSGD?: number
+    childTicketCount?: number
+    itinerary?: any[]
+    terms?: string
+    agentCompany?: string
+  }): string => {
+    try {
+      const pNum = `FW-LAND-${Math.floor(100000 + Math.random() * 900000)}`
+      const sep = '━━━━━━━━━━━━━━━━━━━━━━━━━━'
+      const title = params.title || 'Singapore Land Package'
+      const childAgeStr = (params.paxKids > 0 && params.childAges && params.childAges.length > 0)
+        ? ` (Ages: ${params.childAges.slice(0, params.paxKids).join(', ')} yrs)`
+        : ''
+      const modeLabel = params.transferMode === 'sic' ? 'Seat-In-Coach (SIC)' : 'Private 13-Seater Minibus'
+
+      let t = `✈️ *SINGAPORE LAND PACKAGE ITINERARY*  (Ref: ${pNum})\n`
+      t += `*${title}*\n`
+      t += `${sep}\n`
+      if (params.guestName) t += `👤 *Guest Name:* ${params.guestName}\n`
+      if (params.guestPhone) t += `📞 *Guest Contact:* ${params.guestPhone}\n`
+      t += `👥 *Pax:* ${params.paxAdults} Adult${params.paxAdults !== 1 ? 's' : ''}${params.paxKids > 0 ? ` & ${params.paxKids} Child${params.paxKids !== 1 ? 'ren' : ''}${childAgeStr}` : ''}\n`
+      t += `📅 *Travel Date:* ${params.travelDate || 'TBD'} (${params.nightsCount}N/${params.nightsCount + 1}D Land Package)\n`
+      t += `🏨 *Hotel:* Not Included (Land Package Only)\n`
+      t += `🚐 *Airport Transfers:* Private 13-Seater Minibus (Arrival & Departure)\n`
+      t += `🚌 *Tour Transfers:* ${modeLabel}\n`
+      t += `${sep}\n\n`
+
+      t += `💰 *PACKAGE PRICE SUMMARY:*\n`
+      t += `💵 *Total Package:* S$ ${(params.totalPriceSGD ?? 0).toLocaleString()}  _(≈ ₹${(params.totalPriceINR ?? 0).toLocaleString('en-IN')})_\n`
+      t += `👤 *Per Adult:* S$ ${(params.adultQuoteSGD ?? 0).toLocaleString()}`
+      if ((params.childTicketCount ?? 0) > 0 && (params.childQuoteSGD ?? 0) > 0) {
+        t += `  |  👶 *Per Child:* S$ ${params.childQuoteSGD!.toLocaleString()}`
+      }
+      t += `\n${sep}\n\n`
+
+      t += `📅 *DAY-BY-DAY ITINERARY:*\n`
+      const itin = Array.isArray(params.itinerary) ? params.itinerary : []
+      itin.forEach((day: any, idx: number) => {
+        t += `\n*Day ${day.dayNumber || idx + 1}: ${day.dayTitle || 'Tour Day'}*\n`
+        if (day.dayDescription) t += `  _${day.dayDescription}_\n`
+        ;(day.transfers || []).forEach((tr: any) => {
+          const icon = tr.serviceType === 'arrival' ? '🛬' : tr.serviceType === 'departure' ? '🛫' : '🚗'
+          const timeStr = tr.time ? `${tr.time} — ` : ''
+          const mStr = (tr.serviceType === 'arrival' || tr.serviceType === 'departure') ? 'Private 13-Seater' : modeLabel
+          t += `  ${icon} ${timeStr}${tr.routeDescription || tr.serviceType} (${mStr})\n`
+        })
+        ;(day.attractions || []).forEach((attr: any) => {
+          const timeStr = attr.time ? `${attr.time} — ` : ''
+          const optStr = attr.isOptional ? ' [OPTIONAL]' : ''
+          const notes = attr.inclusionsNotes ? ` · ${attr.inclusionsNotes}` : ''
+          t += `  🎟️ ${timeStr}${attr.attractionName}${optStr}${notes}\n`
+        })
+      })
+
+      t += `\n${sep}\n`
+      const tContent = params.terms || DEFAULT_TERMS
+      t += `📌 *${tContent}*\n`
+      t += `${sep}\n`
+      if (params.agentCompany) {
+        t += `🏢 *Quoted by Partner:* ${params.agentCompany}\n`
+      }
+      t += `_Powered by Flying Wonders Singapore DMC_`
+      return t
+    } catch (err) {
+      console.error('generateWhatsAppProposalText error:', err)
+      return ''
+    }
+  }
+
+  // Generate WhatsApp Text for Modal
   const generateWhatsAppText = () => {
     if (!selectedTemplate || !calculation) return ''
-    const pNum = `FW-LAND-${Math.floor(100000 + Math.random() * 900000)}`
-    const sep = '━━━━━━━━━━━━━━━━━━━━━━━━━━'
-    const title = selectedTemplate.title || 'Singapore Land Package'
-    const childAgeStr = paxKids > 0 && childAges.length > 0 ? ` (Ages: ${childAges.slice(0, paxKids).join(', ')} yrs)` : ''
-    const modeLabel = transferMode === 'sic' ? 'Seat-In-Coach (SIC)' : 'Private 13-Seater Minibus'
-
-    let t = `✈️ *SINGAPORE LAND PACKAGE ITINERARY*  (Ref: ${pNum})\n`
-    t += `*${title}*\n`
-    t += `${sep}\n`
-    if (guestName) t += `👤 *Guest Name:* ${guestName}\n`
-    if (guestPhone) t += `📞 *Guest Contact:* ${guestPhone}\n`
-    t += `👥 *Pax:* ${paxAdults} Adult${paxAdults !== 1 ? 's' : ''}${paxKids > 0 ? ` & ${paxKids} Child${paxKids !== 1 ? 'ren' : ''}${childAgeStr}` : ''}\n`
-    t += `📅 *Travel Date:* ${travelDate || 'TBD'} (${selectedTemplate.nightsCount}N/${selectedTemplate.nightsCount + 1}D Land Package)\n`
-    t += `🏨 *Hotel:* Not Included (Land Package Only)\n`
-    t += `🚐 *Airport Transfers:* Private 13-Seater Minibus (Arrival & Departure)\n`
-    t += `🚌 *Tour Transfers:* ${modeLabel}\n`
-    t += `${sep}\n\n`
-
-    t += `💰 *PACKAGE PRICE SUMMARY:*\n`
-    t += `💵 *Total Package:* S$ ${calculation.totalClientPriceSGD.toLocaleString()}  _(≈ ₹${calculation.totalClientPriceINR.toLocaleString('en-IN')})_\n`
-    t += `👤 *Per Adult:* S$ ${calculation.adultQuoteSGD.toLocaleString()}`
-    if (calculation.childTicketCount > 0) {
-      t += `  |  👶 *Per Child:* S$ ${calculation.childQuoteSGD.toLocaleString()}`
-    }
-    t += `\n${sep}\n\n`
-
-    t += `📅 *DAY-BY-DAY ITINERARY:*\n`
-    daywiseItinerary.forEach((day: any, idx: number) => {
-      t += `\n*Day ${day.dayNumber || idx + 1}: ${day.dayTitle || 'Tour Day'}*\n`
-      if (day.dayDescription) t += `  _${day.dayDescription}_\n`
-      ;(day.transfers || []).forEach((tr: any) => {
-        const icon = tr.serviceType === 'arrival' ? '🛬' : tr.serviceType === 'departure' ? '🛫' : '🚗'
-        const timeStr = tr.time ? `${tr.time} — ` : ''
-        const mStr = (tr.serviceType === 'arrival' || tr.serviceType === 'departure') ? 'Private 13-Seater' : modeLabel
-        t += `  ${icon} ${timeStr}${tr.routeDescription || tr.serviceType} (${mStr})\n`
-      })
-      ;(day.attractions || []).forEach((attr: any) => {
-        const timeStr = attr.time ? `${attr.time} — ` : ''
-        const optStr = attr.isOptional ? ' [OPTIONAL]' : ''
-        const notes = attr.inclusionsNotes ? ` · ${attr.inclusionsNotes}` : ''
-        t += `  🎟️ ${timeStr}${attr.attractionName}${optStr}${notes}\n`
-      })
+    return generateWhatsAppProposalText({
+      title: selectedTemplate.title || 'Singapore Land Package',
+      nightsCount: selectedTemplate.nightsCount || 3,
+      paxAdults,
+      paxKids,
+      childAges,
+      travelDate,
+      guestName,
+      guestPhone,
+      transferMode,
+      totalPriceSGD: calculation.totalClientPriceSGD ?? 0,
+      totalPriceINR: calculation.totalClientPriceINR ?? 0,
+      adultQuoteSGD: calculation.adultQuoteSGD ?? 0,
+      childQuoteSGD: calculation.childQuoteSGD ?? 0,
+      childTicketCount: calculation.childTicketCount ?? 0,
+      itinerary: daywiseItinerary,
+      terms: termsText,
+      agentCompany: activeAgent?.companyName
     })
-
-    t += `\n${sep}\n`
-    t += `📌 *${termsText}*\n`
-    t += `${sep}\n`
-    if (activeAgent?.companyName) {
-      t += `🏢 *Quoted by Partner:* ${activeAgent.companyName}\n`
-    }
-    t += `_Powered by Flying Wonders Singapore DMC_`
-    return t
   }
 
-  // Handle WhatsApp Copy
+  // Generate WhatsApp Text for Package Card (Standard 2-Pax Quote)
+  const generateCardWhatsAppText = (tmpl: any): string => {
+    if (!tmpl) return ''
+    const startingSGD = tmpl.startingPriceSGD || 0
+    const startingINR = Math.round(startingSGD * sgdToInrRate)
+    const adultQuote = Math.round(startingSGD / 2)
+
+    return generateWhatsAppProposalText({
+      title: tmpl.title || 'Singapore Land Package',
+      nightsCount: tmpl.nightsCount || 3,
+      paxAdults: 2,
+      paxKids: 0,
+      childAges: [],
+      travelDate: 'TBD (Customizable)',
+      transferMode: 'private13',
+      totalPriceSGD: startingSGD,
+      totalPriceINR: startingINR,
+      adultQuoteSGD: adultQuote,
+      childQuoteSGD: 0,
+      childTicketCount: 0,
+      itinerary: tmpl.itinerary || [],
+      terms: tmpl.termsAndInclusions || DEFAULT_TERMS,
+      agentCompany: activeAgent?.companyName
+    })
+  }
+
+  // Handle WhatsApp Copy (Modal)
   const handleCopyWhatsApp = async () => {
-    const text = generateWhatsAppText()
-    if (!text) {
-      showToast('No package details available to copy.', 'error')
-      return
-    }
-    const success = await copyTextWithFallback(text)
-    if (success) {
-      setCopiedWA(true)
-      setTimeout(() => setCopiedWA(false), 3000)
-      showToast('Land Package WhatsApp Proposal copied to clipboard! 📋', 'success')
-    } else {
-      showToast('Failed to copy. Please copy manually.', 'error')
+    try {
+      const text = generateWhatsAppText()
+      if (!text) {
+        showToast('No package details available to copy.', 'error')
+        return
+      }
+      const success = await copyTextWithFallback(text)
+      if (success) {
+        setCopiedWA(true)
+        setTimeout(() => setCopiedWA(false), 3000)
+        showToast('Land Package WhatsApp Proposal copied to clipboard! 📋', 'success')
+      } else {
+        showToast('Failed to copy. Please copy manually or check clipboard permissions.', 'error')
+      }
+    } catch (err: any) {
+      console.error('handleCopyWhatsApp error:', err)
+      showToast('Error preparing WhatsApp proposal: ' + (err?.message || 'Error'), 'error')
     }
   }
 
-  // Handle WhatsApp Send
-  const handleSendWhatsApp = async () => {
-    const text = generateWhatsAppText()
-    if (!text) {
-      showToast('No package details available to send.', 'error')
-      return
-    }
-    setSendingWA(true)
-    setTimeout(() => setSendingWA(false), 3000)
-
-    // Automatically copy full itemized proposal to clipboard
-    await copyTextWithFallback(text)
-
-    const encoded = encodeURIComponent(text)
-    const url = `https://api.whatsapp.com/send?text=${encoded}`
-
+  // Handle WhatsApp Send (Modal) - Synchronous launch to prevent popup blocking
+  const handleSendWhatsApp = () => {
     try {
-      const link = document.createElement('a')
-      link.href = url
-      link.target = '_blank'
-      link.rel = 'noopener noreferrer'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    } catch {
-      window.open(url, '_blank')
-    }
+      const text = generateWhatsAppText()
+      if (!text) {
+        showToast('No package details available to send.', 'error')
+        return
+      }
+      setSendingWA(true)
+      setTimeout(() => setSendingWA(false), 3000)
 
-    showToast('Opening WhatsApp... Full proposal also copied to clipboard! 💬📋', 'info')
+      // 1. Open WhatsApp synchronously immediately
+      openWhatsAppSafely(text, guestPhone)
+
+      // 2. Automatically copy full itemized proposal to clipboard in parallel
+      copyTextWithFallback(text).then(copied => {
+        if (copied) {
+          showToast('Opening WhatsApp... Full proposal also copied to clipboard! 💬📋', 'success')
+        } else {
+          showToast('Opening WhatsApp with Land Package proposal! 💬', 'info')
+        }
+      }).catch(() => {
+        showToast('Opening WhatsApp with Land Package proposal! 💬', 'info')
+      })
+    } catch (err: any) {
+      console.error('handleSendWhatsApp error:', err)
+      showToast('Error preparing WhatsApp proposal: ' + (err?.message || 'Error'), 'error')
+    }
+  }
+
+  // Handle WhatsApp Copy (Card Level)
+  const handleCardCopyWhatsApp = async (tmpl: any) => {
+    try {
+      const text = generateCardWhatsAppText(tmpl)
+      if (!text) {
+        showToast('No package details available to copy.', 'error')
+        return
+      }
+      const success = await copyTextWithFallback(text)
+      if (success) {
+        const id = tmpl._id || tmpl.title
+        setCopiedCardId(id)
+        setTimeout(() => setCopiedCardId(null), 3000)
+        showToast(`Copied "${tmpl.title}" WhatsApp proposal! 📋`, 'success')
+      } else {
+        showToast('Failed to copy. Please try again.', 'error')
+      }
+    } catch (err: any) {
+      console.error('handleCardCopyWhatsApp error:', err)
+      showToast('Could not copy proposal: ' + (err?.message || 'Error'), 'error')
+    }
+  }
+
+  // Handle WhatsApp Send (Card Level)
+  const handleCardSendWhatsApp = (tmpl: any) => {
+    try {
+      const text = generateCardWhatsAppText(tmpl)
+      if (!text) {
+        showToast('No package details available to send.', 'error')
+        return
+      }
+      const id = tmpl._id || tmpl.title
+      setSendingCardId(id)
+      setTimeout(() => setSendingCardId(null), 3000)
+
+      // Open synchronously
+      openWhatsAppSafely(text)
+
+      // Copy full proposal
+      copyTextWithFallback(text).then(copied => {
+        if (copied) {
+          showToast(`Opening WhatsApp... "${tmpl.title}" copied to clipboard! 💬📋`, 'success')
+        } else {
+          showToast('Opening WhatsApp! 💬', 'info')
+        }
+      }).catch(() => {
+        showToast('Opening WhatsApp! 💬', 'info')
+      })
+    } catch (err: any) {
+      console.error('handleCardSendWhatsApp error:', err)
+      showToast('Could not open WhatsApp: ' + (err?.message || 'Error'), 'error')
+    }
   }
 
   // Handle PDF Generation
@@ -1231,6 +1418,64 @@ export default function ReadyMadePackagesPage() {
                 >
                   <span>⚡</span> Instant Land Quote (No Hotels)
                 </button>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleCardCopyWhatsApp(tmpl)
+                    }}
+                    title="Quick copy 2-Pax standard land quote for WhatsApp"
+                    style={{
+                      background: copiedCardId === (tmpl._id || tmpl.title) ? '#059669' : '#FEF3C7',
+                      color: copiedCardId === (tmpl._id || tmpl.title) ? '#FFF' : '#92400E',
+                      border: '1px solid ' + (copiedCardId === (tmpl._id || tmpl.title) ? '#059669' : '#FDE68A'),
+                      padding: '0.45rem',
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      transition: 'all 0.2s ease',
+                      fontFamily: 'var(--font-inter), sans-serif'
+                    }}
+                  >
+                    {copiedCardId === (tmpl._id || tmpl.title) ? <Check size={13} /> : <CopyCheck size={13} />}
+                    <span>{copiedCardId === (tmpl._id || tmpl.title) ? 'Copied! ✓' : 'Copy WA'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleCardSendWhatsApp(tmpl)
+                    }}
+                    title="Send standard quote directly on WhatsApp"
+                    style={{
+                      background: sendingCardId === (tmpl._id || tmpl.title) ? '#047857' : '#D1FAE5',
+                      color: sendingCardId === (tmpl._id || tmpl.title) ? '#FFF' : '#065F46',
+                      border: '1px solid ' + (sendingCardId === (tmpl._id || tmpl.title) ? '#047857' : '#A7F3D0'),
+                      padding: '0.45rem',
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      transition: 'all 0.2s ease',
+                      fontFamily: 'var(--font-inter), sans-serif'
+                    }}
+                  >
+                    <MessageCircle size={13} />
+                    <span>{sendingCardId === (tmpl._id || tmpl.title) ? 'Opening... 💬' : 'WhatsApp'}</span>
+                  </button>
+                </div>
 
                 <button
                   type="button"

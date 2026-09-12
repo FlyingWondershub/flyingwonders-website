@@ -1702,7 +1702,7 @@ export default function PrototypeBuilder() {
     showToast(`Loaded template "${tmpl.title}" into Builder Workspace! 🚀`, 'success')
   }
 
-  // Helper for cross-platform resilient clipboard copy (mobile, Safari, iOS, iframe, un-focused windows)
+  // Helper for cross-platform resilient clipboard copy (mobile, Safari, iOS, Android, iframe, un-focused windows)
   const copyTextWithFallback = async (text: string): Promise<boolean> => {
     if (!text) return false
     // 1. Try modern Async Clipboard API first
@@ -1720,7 +1720,7 @@ export default function PrototypeBuilder() {
       textarea.value = text
       textarea.style.position = 'fixed'
       textarea.style.top = '0'
-      textarea.style.left = '0'
+      textarea.style.left = '-9999px'
       textarea.style.width = '2em'
       textarea.style.height = '2em'
       textarea.style.padding = '0'
@@ -1728,13 +1728,23 @@ export default function PrototypeBuilder() {
       textarea.style.outline = 'none'
       textarea.style.boxShadow = 'none'
       textarea.style.background = 'transparent'
-      textarea.style.opacity = '0.01'
-      textarea.style.pointerEvents = 'none'
-      // Note: do NOT set readonly attribute or iOS Safari refuses to select!
+      textarea.style.fontSize = '16px'
+      textarea.setAttribute('readonly', '')
       document.body.appendChild(textarea)
-      textarea.focus()
+      textarea.focus({ preventScroll: true })
       textarea.select()
       textarea.setSelectionRange(0, text.length)
+
+      if (typeof window !== 'undefined' && window.getSelection) {
+        const range = document.createRange()
+        range.selectNodeContents(textarea)
+        const sel = window.getSelection()
+        if (sel) {
+          sel.removeAllRanges()
+          sel.addRange(range)
+        }
+      }
+
       const ok = document.execCommand('copy')
       document.body.removeChild(textarea)
       return ok
@@ -2092,34 +2102,64 @@ export default function PrototypeBuilder() {
     }
   }
 
-  const handleSendLandPackageWhatsApp = async () => {
-    const text = generateLandPackageWhatsAppText()
-    if (!text) {
-      showToast('No package details available to send.', 'error')
-      return
-    }
-    setSendingLandPackageWA(true)
-    setTimeout(() => setSendingLandPackageWA(false), 3000)
-
-    // Automatically copy full itemized proposal to clipboard
-    await copyTextWithFallback(text)
-
-    const encoded = encodeURIComponent(text)
-    const url = `https://api.whatsapp.com/send?text=${encoded}`
-
+  const handleSendLandPackageWhatsApp = () => {
     try {
-      const link = document.createElement('a')
-      link.href = url
-      link.target = '_blank'
-      link.rel = 'noopener noreferrer'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    } catch {
-      window.open(url, '_blank')
-    }
+      const text = generateLandPackageWhatsAppText()
+      if (!text) {
+        showToast('No package details available to send.', 'error')
+        return
+      }
+      setSendingLandPackageWA(true)
+      setTimeout(() => setSendingLandPackageWA(false), 3000)
 
-    showToast('Opening WhatsApp... Full proposal also copied to clipboard! 💬📋', 'info')
+      const cleanPhone = (landPackageGuestPhone || '').replace(/[^0-9]/g, '')
+      let waText = text
+      if (text.length > 1500) {
+        const lines = text.split('\n')
+        const header = lines.slice(0, 15).join('\n')
+        waText = `${header}\n\n📋 *Full itemized day-by-day itinerary & inclusions copied to your clipboard! Simply paste (Ctrl+V) here to send.*`
+      }
+
+      const encoded = encodeURIComponent(waText)
+      const url = cleanPhone
+        ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encoded}`
+        : `https://api.whatsapp.com/send?text=${encoded}`
+
+      let opened = false
+      try {
+        const win = window.open(url, '_blank')
+        if (win && !win.closed) opened = true
+      } catch (e) {
+        console.warn('window.open failed:', e)
+      }
+
+      if (!opened) {
+        try {
+          const link = document.createElement('a')
+          link.href = url
+          link.target = '_blank'
+          link.rel = 'noopener noreferrer'
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        } catch {
+          window.open(url, '_blank')
+        }
+      }
+
+      copyTextWithFallback(text).then(copied => {
+        if (copied) {
+          showToast('Opening WhatsApp... Full proposal also copied to clipboard! 💬📋', 'success')
+        } else {
+          showToast('Opening WhatsApp with Land Package proposal! 💬', 'info')
+        }
+      }).catch(() => {
+        showToast('Opening WhatsApp with Land Package proposal! 💬', 'info')
+      })
+    } catch (err: any) {
+      console.error('handleSendLandPackageWhatsApp error:', err)
+      showToast('Error preparing WhatsApp proposal: ' + (err?.message || 'Error'), 'error')
+    }
   }
 
   const handleDownloadLandPackagePDF = async () => {
