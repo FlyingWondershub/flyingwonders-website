@@ -135,66 +135,81 @@ function drawHeader(
   doc: any,
   voucher: HotelVoucherData,
   subtitle: string,
-  headerLetterheadUrl?: string
+  logoUrl?: string
 ): number {
-  const PW = 210
   const ML = 14
   const MR = 196
   const CW = MR - ML
 
-  if (headerLetterheadUrl) {
+  // Left: Flying Wonders Logo
+  if (logoUrl) {
     try {
-      const headW = 148
-      const headH = headW / 4.3953
-      const headX = (PW - headW) / 2
-      doc.addImage(headerLetterheadUrl, 'PNG', headX, 6, headW, headH, undefined, 'FAST')
+      doc.addImage(logoUrl, 'PNG', ML, 6.5, 16.5, 16.5, undefined, 'FAST')
     } catch (e) {}
-  } else {
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(16)
-    doc.setTextColor(0, 112, 186)
-    doc.text('Flying Wonders Pvt Ltd', PW / 2, 12, { align: 'center' })
-
-    doc.setFont('helvetica', 'italic')
-    doc.setFontSize(9.5)
-    doc.setTextColor(21, 128, 61)
-    doc.text('Customizing your travel choices. . .', PW / 2, 17, { align: 'center' })
-
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(8)
-    doc.setTextColor(...SLATE)
-    doc.text('Office: 74, 4th Cross, SBM Colony, BSK 1st Stage, Bangalore, India - 560050', PW / 2, 23, { align: 'center' })
-    doc.text('India: +91 98861 71251   |   Singapore: +65 9472 2830   |   Web: www.flyingwonders.net', PW / 2, 28, { align: 'center' })
-    doc.text('Primary: contact@flyingwonders.net   |   General: info.flyingwonders@gmail.com', PW / 2, 33, { align: 'center' })
   }
 
-  const bannerY = 42
+  // Left-Center: Corporate Identity
+  const brandX = logoUrl ? (ML + 19) : ML
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(13.5)
+  doc.setTextColor(10, 34, 64)
+  doc.text('FLYING WONDERS PVT LTD', brandX, 11.5)
+
+  doc.setFont('helvetica', 'italic')
+  doc.setFontSize(8)
+  doc.setTextColor(196, 156, 60)
+  doc.text('Customizing your travel choices. . .', brandX, 15.5)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(6.8)
+  doc.setTextColor(100, 116, 139)
+  doc.text('B2B Destination Management Company • Singapore & International', brandX, 19.5)
+
+  // Right: Corporate Contact Information (Right-aligned)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.2)
+  doc.setTextColor(51, 65, 85)
+  doc.text('74, 4th Cross, SBM Colony, BSK 1st Stage, Bangalore, India - 560050', MR, 11, { align: 'right' })
+  doc.text('India: +91 98861 71251   •   Singapore: +65 9472 2830   •   www.flyingwonders.net', MR, 15.2, { align: 'right' })
+  doc.text('contact@flyingwonders.net   •   info.flyingwonders@gmail.com', MR, 19.4, { align: 'right' })
+
+  // Corporate dual-tone accent rule
+  doc.setDrawColor(10, 34, 64) // Navy primary
+  doc.setLineWidth(0.8)
+  doc.line(ML, 23.5, MR, 23.5)
+
+  doc.setDrawColor(196, 156, 60) // Warm gold accent
+  doc.setLineWidth(0.3)
+  doc.line(ML, 24.3, MR, 24.3)
+
+  // Subtitle & Voucher Ref Banner
+  const bannerY = 27
   doc.setFillColor(...LIGHT_BG)
   doc.setDrawColor(...BORDER_GRAY)
   doc.setLineWidth(0.3)
-  doc.roundedRect(ML, bannerY, CW, 14, 1.5, 1.5, 'FD')
+  doc.roundedRect(ML, bannerY, CW, 13, 1.5, 1.5, 'FD')
 
   doc.setTextColor(...NAVY)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10.5)
-  doc.text(subtitle.toUpperCase(), ML + 4, bannerY + 5.5)
+  doc.setFontSize(10)
+  doc.text(subtitle.toUpperCase(), ML + 4, bannerY + 5.2)
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.5)
+  doc.setFontSize(7.2)
   doc.setTextColor(...TEXT_MUTED)
-  doc.text('OFFICIAL DOCUMENT ISSUED FOR EMBASSY VISA APPLICATION & HOTEL FRONT DESK CHECK-IN', ML + 4, bannerY + 10.5)
+  doc.text('OFFICIAL DOCUMENT ISSUED FOR EMBASSY VISA APPLICATION & HOTEL FRONT DESK CHECK-IN', ML + 4, bannerY + 9.8)
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9)
   doc.setTextColor(...NAVY)
-  doc.text('Voucher Ref: ' + voucher.voucherNumber, MR - 4, bannerY + 5.5, { align: 'right' })
+  doc.text('Voucher Ref: ' + voucher.voucherNumber, MR - 4, bannerY + 5.2, { align: 'right' })
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.5)
+  doc.setFontSize(8.2)
   doc.setTextColor(180, 83, 9)
-  doc.text('CRS / Conf: ' + (voucher.hotelConfirmationNo || 'CONFIRMED ON ARRIVAL'), MR - 4, bannerY + 10.5, { align: 'right' })
+  doc.text('CRS / Conf: ' + (voucher.hotelConfirmationNo || 'CONFIRMED ON ARRIVAL'), MR - 4, bannerY + 9.8, { align: 'right' })
 
-  return bannerY + 17
+  return bannerY + 15.5
 }
 
 function drawFooter(
@@ -263,48 +278,48 @@ function drawHotelDetailsCard(doc: any, voucher: HotelVoucherData, startY: numbe
   let y = startY
 
   doc.setFillColor(...EMERALD_BG)
-  doc.roundedRect(ML, y, CW / 2 - 2, 8, 1.5, 1.5, 'F')
+  doc.roundedRect(ML, y, CW / 2 - 2, 7.5, 1.5, 1.5, 'F')
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.2)
+  doc.setFontSize(8)
   doc.setTextColor(...EMERALD_DARK)
-  doc.text('STATUS: ' + (voucher.bookingStatus || 'CONFIRMED & GUARANTEED').toUpperCase(), ML + 4, y + 5.5)
+  doc.text('STATUS: ' + (voucher.bookingStatus || 'CONFIRMED & GUARANTEED').toUpperCase(), ML + 4, y + 5.2)
 
   doc.setFillColor(254, 243, 199)
-  doc.roundedRect(ML + CW / 2 + 2, y, CW / 2 - 2, 8, 1.5, 1.5, 'F')
+  doc.roundedRect(ML + CW / 2 + 2, y, CW / 2 - 2, 7.5, 1.5, 1.5, 'F')
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8.2)
+  doc.setFontSize(8)
   doc.setTextColor(180, 83, 9)
-  doc.text('BILLING: ' + (voucher.paymentStatus || 'PREPAID / BILLED TO FLYING WONDERS DMC').toUpperCase(), ML + CW / 2 + 6, y + 5.5)
+  doc.text('BILLING: ' + (voucher.paymentStatus || 'PREPAID / BILLED TO FLYING WONDERS DMC').toUpperCase(), ML + CW / 2 + 6, y + 5.2)
 
-  y += 11
+  y += 10.5
 
   doc.setFillColor(...WHITE)
   doc.setDrawColor(...BORDER_GRAY)
   doc.setLineWidth(0.3)
-  doc.roundedRect(ML, y, CW, 35, 2, 2, 'FD')
+  doc.roundedRect(ML, y, CW, 34, 2, 2, 'FD')
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(12)
+  doc.setFontSize(11.5)
   doc.setTextColor(...NAVY)
-  doc.text(voucher.hotelName, ML + 5, y + 6.5)
+  doc.text(voucher.hotelName, ML + 5, y + 6.2)
 
   if (voucher.starRating) {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(8.5)
     doc.setTextColor(...GOLD)
-    doc.text('[ ' + voucher.starRating + ' Rating ]', MR - 5, y + 6.5, { align: 'right' })
+    doc.text('[ ' + voucher.starRating + ' Rating ]', MR - 5, y + 6.2, { align: 'right' })
   }
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
+  doc.setFontSize(7.8)
   doc.setTextColor(...TEXT_MUTED)
   const addrText = voucher.hotelAddress || 'Centrally located partner property'
   const addrLines = doc.splitTextToSize('Address: ' + addrText, CW - 10)
-  doc.text(addrLines, ML + 5, y + 11.5)
+  doc.text(addrLines, ML + 5, y + 11)
 
-  const contactY = y + 16.5
+  const contactY = y + 16
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
+  doc.setFontSize(7.8)
   doc.setTextColor(...NAVY)
   doc.text('Hotel Front Desk / Verification Contact:', ML + 5, contactY)
 
@@ -312,43 +327,43 @@ function drawHotelDetailsCard(doc: any, voucher: HotelVoucherData, startY: numbe
   doc.setTextColor(...TEXT_DARK)
   const phoneText = voucher.hotelPhone ? ('Tel: ' + voucher.hotelPhone) : 'Tel: Front Desk'
   const emailText = voucher.hotelEmail ? ('Email: ' + voucher.hotelEmail) : 'Email: reservations@hotel.com'
-  doc.text(phoneText + '   |   ' + emailText, ML + 5, contactY + 4.3)
+  doc.text(phoneText + '   |   ' + emailText, ML + 5, contactY + 4.2)
 
-  const datesY = y + 24
+  const datesY = y + 23.5
   doc.setFillColor(...LIGHT_BG)
-  doc.rect(ML + 0.3, datesY, CW - 0.6, 10.5, 'F')
+  doc.rect(ML + 0.3, datesY, CW - 0.6, 10.2, 'F')
   doc.setDrawColor(...BORDER_GRAY)
   doc.line(ML, datesY, MR, datesY)
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7.5)
+  doc.setFontSize(7.2)
   doc.setTextColor(...NAVY)
 
-  doc.text('CHECK-IN DATE & TIME:', ML + 5, datesY + 4)
+  doc.text('CHECK-IN DATE & TIME:', ML + 5, datesY + 3.8)
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
+  doc.setFontSize(7.8)
   doc.setTextColor(...TEXT_DARK)
-  doc.text(voucher.checkInDate + ' (From ' + (voucher.checkInTime || '15:00 hrs') + ')', ML + 5, datesY + 8)
+  doc.text(voucher.checkInDate + ' (From ' + (voucher.checkInTime || '15:00 hrs') + ')', ML + 5, datesY + 7.8)
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7.5)
+  doc.setFontSize(7.2)
   doc.setTextColor(...NAVY)
-  doc.text('CHECK-OUT DATE & TIME:', ML + 65, datesY + 4)
+  doc.text('CHECK-OUT DATE & TIME:', ML + 65, datesY + 3.8)
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
+  doc.setFontSize(7.8)
   doc.setTextColor(...TEXT_DARK)
-  doc.text(voucher.checkOutDate + ' (Until ' + (voucher.checkOutTime || '11:00 hrs') + ')', ML + 65, datesY + 8)
+  doc.text(voucher.checkOutDate + ' (Until ' + (voucher.checkOutTime || '11:00 hrs') + ')', ML + 65, datesY + 7.8)
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7.5)
+  doc.setFontSize(7.2)
   doc.setTextColor(...NAVY)
-  doc.text('TOTAL NIGHTS & MEALS:', ML + 125, datesY + 4)
+  doc.text('TOTAL NIGHTS & MEALS:', ML + 125, datesY + 3.8)
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
+  doc.setFontSize(7.8)
   doc.setTextColor(...TEXT_DARK)
-  doc.text(voucher.nights + ' Night(s)  •  ' + (voucher.mealPlan || 'Daily Buffet Breakfast'), ML + 125, datesY + 8)
+  doc.text(voucher.nights + ' Night(s)  •  ' + (voucher.mealPlan || 'Daily Buffet Breakfast'), ML + 125, datesY + 7.8)
 
-  return y + 38
+  return y + 37
 }
 
 function cleanRoomLabel(rawNumber: string, defaultIndex: number): string {
@@ -378,20 +393,19 @@ export async function generateMasterGroupVoucherPdf(voucher: HotelVoucherData): 
   const MR = 196
   const CW = MR - ML
 
-  const [qrDataUrl, watermarkUrl, headerLetterheadUrl, footerAccreditationUrl] = await Promise.all([
+  const [qrDataUrl, watermarkUrl, footerAccreditationUrl] = await Promise.all([
     generateQrDataUrl(voucher.voucherNumber),
     loadAssetDataUrl('/images/logo.png'),
-    loadAssetDataUrl('/images/voucher-header-letterhead.png'),
     loadAssetDataUrl('/images/voucher-footer-accreditations.png'),
   ])
 
   drawWatermark(doc, watermarkUrl)
-  drawHeader(doc, voucher, 'Group Master Hotel Accommodation Voucher', headerLetterheadUrl)
-  let curY = drawHotelDetailsCard(doc, voucher, 59)
+  const headerBottomY = drawHeader(doc, voucher, 'Group Master Hotel Accommodation Voucher', watermarkUrl)
+  let curY = drawHotelDetailsCard(doc, voucher, headerBottomY)
 
   doc.setDrawColor(...BORDER_GRAY)
   doc.setLineWidth(0.3)
-  doc.roundedRect(ML, curY, CW, 16, 1.5, 1.5, 'S')
+  doc.roundedRect(ML, curY, CW, 15, 1.5, 1.5, 'S')
 
   const totalRooms = voucher.rooms.length
   const totalGuests = voucher.rooms.reduce((acc, r) => acc + (r.guests?.length || 0), 0)
@@ -404,15 +418,15 @@ export async function generateMasterGroupVoucherPdf(voucher: HotelVoucherData): 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   doc.setTextColor(...TEXT_DARK)
-  doc.text('Group / Delegation: ' + (voucher.groupName || 'Tour Group Booking'), ML + 4, curY + 9)
-  doc.text('Total Rooms Blocked: ' + totalRooms + ' Room(s)', ML + 4, curY + 13.5)
+  doc.text('Group / Delegation: ' + (voucher.groupName || 'Tour Group Booking'), ML + 4, curY + 8.8)
+  doc.text('Total Rooms Blocked: ' + totalRooms + ' Room(s)', ML + 4, curY + 13)
 
-  doc.text('Total Group Occupants: ' + totalGuests + ' Confirmed Passenger(s)', ML + 95, curY + 9)
+  doc.text('Total Group Occupants: ' + totalGuests + ' Confirmed Passenger(s)', ML + 95, curY + 8.8)
   if (voucher.agentName) {
-    doc.text('Tour Leader / B2B Agent: ' + voucher.agentName + (voucher.agentPhone ? (' (' + voucher.agentPhone + ')') : ''), ML + 95, curY + 13.5)
+    doc.text('Tour Leader / B2B Agent: ' + voucher.agentName + (voucher.agentPhone ? (' (' + voucher.agentPhone + ')') : ''), ML + 95, curY + 13)
   }
 
-  curY += 19
+  curY += 18
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9.5)
@@ -446,8 +460,8 @@ export async function generateMasterGroupVoucherPdf(voucher: HotelVoucherData): 
       doc.addPage()
       pageNum++
       drawWatermark(doc, watermarkUrl)
-      drawHeader(doc, voucher, 'Group Master Hotel Accommodation Voucher (Cont.)', headerLetterheadUrl)
-      curY = 59
+      const contHeaderY = drawHeader(doc, voucher, 'Group Master Hotel Accommodation Voucher (Cont.)', watermarkUrl)
+      curY = contHeaderY + 2
       drawTableHeader(curY)
       curY += 7
     }
@@ -529,16 +543,15 @@ export async function generateSingleRoomVisaPdf(voucher: HotelVoucherData, roomI
   const MR = 196
   const CW = MR - ML
 
-  const [qrDataUrl, watermarkUrl, headerLetterheadUrl, footerAccreditationUrl] = await Promise.all([
+  const [qrDataUrl, watermarkUrl, footerAccreditationUrl] = await Promise.all([
     generateQrDataUrl(voucher.voucherNumber),
     loadAssetDataUrl('/images/logo.png'),
-    loadAssetDataUrl('/images/voucher-header-letterhead.png'),
     loadAssetDataUrl('/images/voucher-footer-accreditations.png'),
   ])
 
   drawWatermark(doc, watermarkUrl)
-  drawHeader(doc, voucher, 'Visa Application Accommodation Confirmation', headerLetterheadUrl)
-  let curY = drawHotelDetailsCard(doc, voucher, 59)
+  const headerBottomY = drawHeader(doc, voucher, 'Visa Application Accommodation Confirmation', watermarkUrl)
+  let curY = drawHotelDetailsCard(doc, voucher, headerBottomY)
 
   doc.setDrawColor(...BORDER_GRAY)
   doc.setLineWidth(0.3)
@@ -556,7 +569,7 @@ export async function generateSingleRoomVisaPdf(voucher: HotelVoucherData, roomI
   doc.text(
     'Category: ' + (room.roomType || 'Standard Room') + '   |   Bedding: ' + (room.bedding || 'Standard') + '   |   Meal: ' + (room.mealBasis || voucher.mealPlan || 'Buffet Breakfast'),
     ML + 4,
-    curY + 10
+    curY + 9.5
   )
 
   curY += 17
@@ -622,7 +635,7 @@ export async function generateSingleRoomVisaPdf(voucher: HotelVoucherData, roomI
   doc.setFillColor(254, 250, 235)
   doc.setDrawColor(245, 158, 11)
   doc.setLineWidth(0.4)
-  doc.roundedRect(ML, curY, CW, 30, 2, 2, 'FD')
+  doc.roundedRect(ML, curY, CW, 29, 2, 2, 'FD')
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(8.2)
@@ -630,7 +643,7 @@ export async function generateSingleRoomVisaPdf(voucher: HotelVoucherData, roomI
   doc.text('FORMAL GUARANTEE & DECLARATION FOR VISA ISSUING AUTHORITIES', ML + 5, curY + 5.5)
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.6)
+  doc.setFontSize(7.5)
   doc.setTextColor(69, 26, 3)
   const declText =
     'This is to certify that the above-named guest(s) have confirmed and guaranteed hotel accommodation booked through Flying Wonders Pvt Ltd for the entire specified itinerary duration. The hotel accommodation expenses have been prepaid and guaranteed under our tour operator billing facility. No room tariff remains payable by the guest(s) upon check-in.'
@@ -638,9 +651,9 @@ export async function generateSingleRoomVisaPdf(voucher: HotelVoucherData, roomI
   doc.text(declLines, ML + 5, curY + 11)
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7.4)
+  doc.setFontSize(7.2)
   doc.setTextColor(...NAVY)
-  doc.text('Authorized by: Inbound Operations Desk, Flying Wonders Pvt Ltd   •   CIN: U63090KA2016PTC095564', ML + 5, curY + 26)
+  doc.text('Authorized by: Inbound Operations Desk, Flying Wonders Pvt Ltd   •   CIN: U63090KA2016PTC095564', ML + 5, curY + 25.5)
 
   drawFooter(doc, 1, 1, qrDataUrl, footerAccreditationUrl, voucher.voucherNumber)
 
@@ -660,10 +673,9 @@ export async function generateAllVisaVouchersPdf(voucher: HotelVoucherData): Pro
   const MR = 196
   const CW = MR - ML
 
-  const [qrDataUrl, watermarkUrl, headerLetterheadUrl, footerAccreditationUrl] = await Promise.all([
+  const [qrDataUrl, watermarkUrl, footerAccreditationUrl] = await Promise.all([
     generateQrDataUrl(voucher.voucherNumber),
     loadAssetDataUrl('/images/logo.png'),
-    loadAssetDataUrl('/images/voucher-header-letterhead.png'),
     loadAssetDataUrl('/images/voucher-footer-accreditations.png'),
   ])
 
@@ -676,8 +688,8 @@ export async function generateAllVisaVouchersPdf(voucher: HotelVoucherData): Pro
 
     drawWatermark(doc, watermarkUrl)
     const displayRoomTitle = cleanRoomLabel(room.roomNumber, roomIndex)
-    drawHeader(doc, voucher, 'Visa Accommodation Voucher (' + displayRoomTitle + ')', headerLetterheadUrl)
-    let curY = drawHotelDetailsCard(doc, voucher, 59)
+    const headerBottomY = drawHeader(doc, voucher, 'Visa Accommodation Voucher (' + displayRoomTitle + ')', watermarkUrl)
+    let curY = drawHotelDetailsCard(doc, voucher, headerBottomY)
 
     doc.setDrawColor(...BORDER_GRAY)
     doc.setLineWidth(0.3)
@@ -694,7 +706,7 @@ export async function generateAllVisaVouchersPdf(voucher: HotelVoucherData): Pro
     doc.text(
       'Category: ' + (room.roomType || 'Standard Room') + '   |   Bedding: ' + (room.bedding || 'Standard') + '   |   Meal: ' + (room.mealBasis || voucher.mealPlan || 'Buffet Breakfast'),
       ML + 4,
-      curY + 10
+      curY + 9.5
     )
 
     curY += 17
@@ -760,7 +772,7 @@ export async function generateAllVisaVouchersPdf(voucher: HotelVoucherData): Pro
     doc.setFillColor(254, 250, 235)
     doc.setDrawColor(245, 158, 11)
     doc.setLineWidth(0.4)
-    doc.roundedRect(ML, curY, CW, 30, 2, 2, 'FD')
+    doc.roundedRect(ML, curY, CW, 29, 2, 2, 'FD')
 
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(8.2)
@@ -768,7 +780,7 @@ export async function generateAllVisaVouchersPdf(voucher: HotelVoucherData): Pro
     doc.text('FORMAL GUARANTEE & DECLARATION FOR VISA ISSUING AUTHORITIES', ML + 5, curY + 5.5)
 
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(7.6)
+    doc.setFontSize(7.5)
     doc.setTextColor(69, 26, 3)
     const declText =
       'This is to certify that the above-named guest(s) have confirmed and guaranteed hotel accommodation booked through Flying Wonders Pvt Ltd for the entire specified itinerary duration. The hotel accommodation expenses have been prepaid and guaranteed under our tour operator billing facility. No room tariff remains payable by the guest(s) upon check-in.'
@@ -776,9 +788,9 @@ export async function generateAllVisaVouchersPdf(voucher: HotelVoucherData): Pro
     doc.text(declLines, ML + 5, curY + 11)
 
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7.4)
+    doc.setFontSize(7.2)
     doc.setTextColor(...NAVY)
-    doc.text('Authorized by: Inbound Operations Desk, Flying Wonders Pvt Ltd   •   CIN: U63090KA2016PTC095564', ML + 5, curY + 26)
+    doc.text('Authorized by: Inbound Operations Desk, Flying Wonders Pvt Ltd   •   CIN: U63090KA2016PTC095564', ML + 5, curY + 25.5)
 
     drawFooter(doc, roomIndex + 1, totalPages, qrDataUrl, footerAccreditationUrl, voucher.voucherNumber)
   })
