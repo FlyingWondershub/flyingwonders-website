@@ -2,28 +2,39 @@
 // 100% runs in browser canvas — zero serverless Chrome dependencies!
 
 export const SINGAPORE_ATTRACTIONS_PHOTO_MAP: Record<string, string> = {
-  universal: 'https://www.pelago.com/img/products/SG-Singapore/universal-studios-singapore-express-pass/26453e06-f8b7-4eda-badc-9cdc06a6e229_universal-studios-singapore-express-pass-xlarge.jpg',
-  gardens: 'https://www.pelago.com/img/products/SG-Singapore/gardens-by-the-bay/0609-0615_jwe_gbtb_zone-03_petting-zoo_friends-group-selfie-xlarge.jpg',
-  'night safari': 'https://www.pelago.com/img/products/SG-Singapore/night-safari-wildlife-park/1114-0139_night-safari-wildlife-park-singapore-pelago6-xlarge.jpg',
-  zoo: 'https://www.pelago.com/img/products/SG-Singapore/singapore-zoo-wildlife-park/0717-0924_singapore-zoo-wildlife-park-singapore-pelago0-xlarge.jpg',
-  'bird paradise': 'https://www.pelago.com/img/products/SG-Singapore/bird-paradise-tickets/0716-0618_bird-paradise-tickets-singapore-pelago1-xlarge.jpg',
-  'river wonders': 'https://www.pelago.com/img/products/SG-Singapore/2in1-park-hopper-singapore-zoo--river-wonders/4b855f65-62ee-4d9c-94e7-56c0b32437c0_combo-singapore-zoo-river-wonders-ticket-xlarge.jpg',
-  luge: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=600&q=80',
-  tussauds: 'https://www.pelago.com/img/products/SG-Singapore/madame-tussauds-sentosa-tickets/1224-0812_mtsg-images-of-singapore---entrance-landscape-(1)-xlarge.jpg',
-  aquarium: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=600&q=80',
-  mbs: 'https://www.pelago.com/img/products/SG-Singapore/marina-bay-sands-skypark-observation-deck-new/0430-0606_marina-bay-sands-skypark-observation-deck_1-xlarge.jpg',
-  sands: 'https://www.pelago.com/img/products/SG-Singapore/marina-bay-sands-skypark-observation-deck-new/0430-0606_marina-bay-sands-skypark-observation-deck_1-xlarge.jpg',
-  flyer: 'https://www.pelago.com/img/products/SG-Singapore/singapore-flyer--time-capsule/0522-0609_singapore-flyer-time-capsule-singapore-pelago0.jpg-xlarge.jpg',
-  'cable car': 'https://www.pelago.com/img/products/SG-Singapore/singapore-cable-car/0616-0638_1125-0343_pokémon-day-to-night-adventure-presented-by-singapore-cable-car-1-large-xlarge.jpeg',
-  skyhelix: 'https://www.pelago.com/img/products/SG-Singapore/skyhelix-sentosa---singapores-highest-open-air-panoramic-ride/2a56a2ef-f675-4011-9410-b8e64bbed146_skyhelix-sentosa-ticket-singapore-s-highest-open-air-panoramic-ride-xlarge.jpg',
-  wings: 'https://www.pelago.com/img/products/SG-Singapore/wings-of-time--spectacular-light-water-show/0616-0636_0109-0846_1600-x-900_wotfs-(new-2025-dec)-xlarge.jpg',
-  jewel: 'https://images.unsplash.com/photo-1600420673889-c6d4f64bdf5c?auto=format&fit=crop&w=600&q=80',
+  universal: '/images/attractions/universal-studios-singapore/cover.jpg',
+  gardens: '/images/attractions/gardens-by-the-bay/cover.jpg',
+  dome: '/images/attractions/gardens-by-the-bay/cover.jpg',
+  cloud: '/images/attractions/gardens-by-the-bay/gallery-1.jpg',
+  flower: '/images/attractions/gardens-by-the-bay/gallery-2.jpg',
+  'night safari': '/images/attractions/night-safari-singapore/cover.jpg',
+  night: '/images/attractions/night-safari-singapore/cover.jpg',
+  zoo: '/images/attractions/singapore-zoo/cover.jpg',
+  'bird paradise': '/images/attractions/bird-paradise-singapore/cover.jpg',
+  bird: '/images/attractions/bird-paradise-singapore/cover.jpg',
+  'river wonders': '/images/attractions/river-wonders-singapore/cover.jpg',
+  river: '/images/attractions/river-wonders-singapore/cover.jpg',
+  luge: '/images/attractions/sentosa-skyline-luge/cover.jpg',
+  tussauds: '/images/attractions/sentosa-skyline-luge/gallery-2.jpg',
+  aquarium: '/images/attractions/sea-aquarium-singapore/cover.jpg',
+  sea: '/images/attractions/sea-aquarium-singapore/cover.jpg',
+  mbs: '/images/hero/singapore-hero-1.jpg',
+  sands: '/images/hero/singapore-hero-1.jpg',
+  skypark: '/images/hero/singapore-hero-1.jpg',
+  flyer: '/images/attractions/singapore-flyer/cover.jpg',
+  'cable car': '/images/attractions/singapore-cable-car/cover.jpg',
+  cable: '/images/attractions/singapore-cable-car/cover.jpg',
+  sentosa: '/images/attractions/singapore-cable-car/cover.jpg',
+  skyhelix: '/images/attractions/singapore-cable-car/gallery-3.jpg',
+  wings: '/images/attractions/singapore-cable-car/gallery-1.jpg',
+  jewel: '/images/hero/singapore-hero-4.jpg',
+  changi: '/images/hero/singapore-hero-4.jpg',
   'city private': '/images/hero/singapore-hero-2.jpg',
   'private city': '/images/hero/singapore-hero-2.jpg',
   'city tour': '/images/hero/singapore-hero-2.jpg',
   'singapore city': '/images/hero/singapore-hero-2.jpg',
   city: '/images/hero/singapore-hero-2.jpg',
-  panoramic: '/images/hero/singapore-hero-4.jpg',
+  panoramic: '/images/hero/singapore-hero-2.jpg',
 }
 
 export const LOCAL_FALLBACK_PHOTOS: Record<string, string> = {
@@ -40,7 +51,9 @@ export const LOCAL_FALLBACK_PHOTOS: Record<string, string> = {
   'city tour': '/images/hero/singapore-hero-2.jpg',
   'singapore city': '/images/hero/singapore-hero-2.jpg',
   city: '/images/hero/singapore-hero-2.jpg',
-  panoramic: '/images/hero/singapore-hero-4.jpg',
+  panoramic: '/images/hero/singapore-hero-2.jpg',
+  jewel: '/images/hero/singapore-hero-4.jpg',
+  mbs: '/images/hero/singapore-hero-1.jpg',
 }
 
 export interface FlyerInclusion {
@@ -119,6 +132,9 @@ function drawCoverImage(
   w: number,
   h: number
 ) {
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+
   const imgRatio = img.naturalWidth / img.naturalHeight
   const targetRatio = w / h
   let sw = img.naturalWidth
@@ -233,92 +249,114 @@ export function calculatePhotoCardSlots(
   const count = Math.max(1, totalCount)
   const slots: PhotoCardSlot[] = []
 
-  // 1 to 5 attractions: Single column of wide landscape cards
-  if (count <= 5) {
-    const gap = count <= 3 ? 18 : (count === 4 ? 16 : 12)
-    const cardH = Math.floor((containerH - (count - 1) * gap) / count)
+  // Ensure all slots maintain landscape aspect ratios (1.35 to 1.85)
+  // so landscape photos never suffer extreme side-cropping.
+  if (count === 1) {
+    const singleH = Math.min(360, containerH)
+    const singleY = containerY + (containerH - singleH) / 2
+    slots.push({ x: containerX, y: singleY, w: containerW, h: singleH, isCompact: false })
+    return slots
+  }
 
-    if (count === 1) {
-      const singleH = Math.min(640, containerH)
-      const singleY = containerY + (containerH - singleH) / 2
-      slots.push({ x: containerX, y: singleY, w: containerW, h: singleH, isCompact: false })
-      return slots
-    }
+  if (count === 2) {
+    const gap = 20
+    const cardH = 340
+    const startY = containerY + (containerH - (2 * cardH + gap)) / 2
+    slots.push({ x: containerX, y: startY, w: containerW, h: cardH, isCompact: false })
+    slots.push({ x: containerX, y: startY + cardH + gap, w: containerW, h: cardH, isCompact: false })
+    return slots
+  }
 
-    for (let i = 0; i < count; i++) {
-      slots.push({
-        x: containerX,
-        y: containerY + i * (cardH + gap),
-        w: containerW,
-        h: cardH,
-        isCompact: false
-      })
+  if (count === 3) {
+    const gap = 16
+    const cardH = 290
+    const startY = containerY + (containerH - (3 * cardH + 2 * gap)) / 2
+    for (let i = 0; i < 3; i++) {
+      slots.push({ x: containerX, y: startY + i * (cardH + gap), w: containerW, h: cardH, isCompact: false })
     }
     return slots
   }
 
-  // 6 or more attractions: 2-column responsive grid
+  if (count === 4) {
+    const gap = 14
+    const cardH = 230
+    const startY = containerY + (containerH - (4 * cardH + 3 * gap)) / 2
+    for (let i = 0; i < 4; i++) {
+      slots.push({ x: containerX, y: startY + i * (cardH + gap), w: containerW, h: cardH, isCompact: false })
+    }
+    return slots
+  }
+
+  // 5 or more attractions: 1 Full-width Hero card on top + 2-column landscape grid below
   const gapX = 12
   const colW = Math.floor((containerW - gapX) / 2) // 259px
+  const gridCardH = 185 // 259 / 185 = 1.40 (Natural 4:3 / 3:2 landscape, zero side-crop!)
+
+  if (count === 5) {
+    const topHeroH = 260
+    const gapY = 14
+    const startY = containerY + 12
+    slots.push({ x: containerX, y: startY, w: containerW, h: topHeroH, isCompact: false })
+    const gridStartY = startY + topHeroH + gapY
+    for (let i = 0; i < 4; i++) {
+      const col = i % 2
+      const row = Math.floor(i / 2)
+      slots.push({
+        x: containerX + col * (colW + gapX),
+        y: gridStartY + row * (gridCardH + gapY),
+        w: colW,
+        h: gridCardH,
+        isCompact: true
+      })
+    }
+    return slots
+  }
 
   if (count === 6) {
+    // 1 Hero Card (530x240, 16:9) + 4 grid cards (259x180) + 1 bottom wide card (530x180)
+    const topHeroH = 240
     const gapY = 12
-    const rowH = Math.floor((containerH - 2 * gapY) / 3) // ~365px
-    for (let i = 0; i < 6; i++) {
+    const startY = containerY + 10
+    slots.push({ x: containerX, y: startY, w: containerW, h: topHeroH, isCompact: false })
+    const gridStartY = startY + topHeroH + gapY
+    for (let i = 0; i < 4; i++) {
       const col = i % 2
       const row = Math.floor(i / 2)
       slots.push({
         x: containerX + col * (colW + gapX),
-        y: containerY + row * (rowH + gapY),
+        y: gridStartY + row * (gridCardH + gapY),
         w: colW,
-        h: rowH,
+        h: gridCardH,
         isCompact: true
       })
     }
-    return slots
-  }
-
-  if (count === 7) {
-    // 1 Full-width hero card on top (height 230px) + 3 rows of 2 columns (6 cards)
-    const gapY = 10
-    const topHeroH = 230
+    const bottomCardY = gridStartY + 2 * (gridCardH + gapY)
     slots.push({
       x: containerX,
-      y: containerY,
+      y: bottomCardY,
       w: containerW,
-      h: topHeroH,
+      h: gridCardH,
       isCompact: false
     })
-
-    const remainingH = containerH - topHeroH - gapY
-    const rowH = Math.floor((remainingH - 2 * gapY) / 3)
-    for (let i = 0; i < 6; i++) {
-      const col = i % 2
-      const row = Math.floor(i / 2)
-      slots.push({
-        x: containerX + col * (colW + gapX),
-        y: containerY + topHeroH + gapY + row * (rowH + gapY),
-        w: colW,
-        h: rowH,
-        isCompact: true
-      })
-    }
     return slots
   }
 
-  const rows = Math.ceil(count / 2)
+  // 7 or more attractions: 1 Hero Card (530x220) + 3 rows of 2 columns (6 cards, 259x175 each)
+  const topHeroH = 220
   const gapY = 10
-  const rowH = Math.floor((containerH - (rows - 1) * gapY) / rows)
-  for (let i = 0; i < count; i++) {
+  const cardH = 175
+  const startY = containerY + 8
+  slots.push({ x: containerX, y: startY, w: containerW, h: topHeroH, isCompact: false })
+  const gridStartY = startY + topHeroH + gapY
+  for (let i = 0; i < Math.min(6, count - 1); i++) {
     const col = i % 2
     const row = Math.floor(i / 2)
-    const isLastOdd = (i === count - 1 && count % 2 === 1)
     slots.push({
-      x: isLastOdd ? containerX : containerX + col * (colW + gapX),
-      y: containerY + row * (rowH + gapY),
-      w: isLastOdd ? containerW : colW,
-      h: rowH,
-      isCompact: !isLastOdd
+      x: containerX + col * (colW + gapX),
+      y: gridStartY + row * (cardH + gapY),
+      w: colW,
+      h: cardH,
+      isCompact: true
     })
   }
   return slots
@@ -339,6 +377,9 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
   canvas.height = 1800
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Could not create canvas 2D context')
+
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
 
   // Background
   ctx.fillStyle = '#081224'
@@ -948,7 +989,7 @@ export async function generateFlyerCanvas(data: FlyerPayload): Promise<HTMLCanva
   return canvas
 }
 
-export async function generateFlyerBlob(data: FlyerPayload, quality = 0.84): Promise<Blob> {
+export async function generateFlyerBlob(data: FlyerPayload, quality = 0.92): Promise<Blob> {
   const canvas = await generateFlyerCanvas(data)
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -958,7 +999,7 @@ export async function generateFlyerBlob(data: FlyerPayload, quality = 0.84): Pro
   })
 }
 
-export async function generateFlyerDataUrl(data: FlyerPayload, quality = 0.84): Promise<string> {
+export async function generateFlyerDataUrl(data: FlyerPayload, quality = 0.92): Promise<string> {
   const canvas = await generateFlyerCanvas(data)
   return canvas.toDataURL('image/jpeg', quality)
 }

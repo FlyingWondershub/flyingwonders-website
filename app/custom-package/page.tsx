@@ -103,7 +103,7 @@ function getTransferMetaInfo(
 
   // 3. Detect Vehicle Size / Category
   let detectedSize = ''
-  if (allText.includes('13-seater') || allText.includes('13 seater') || allText.includes('minibus')) {
+  if (allText.includes('13-seater') || allText.includes('13 seater') || allText.includes('minibus') || allText.includes('hiace')) {
     detectedSize = '13-seater'
   } else if (allText.includes('24-seater') || allText.includes('24 seater') || allText.includes('medium coach')) {
     detectedSize = '24-seater'
@@ -118,16 +118,14 @@ function getTransferMetaInfo(
   }
 
   // 4. Detect Service Type / Intent
-  let detectedService = 'transfers' // default fallback is standard transfers
+  let detectedService = 'transfers' // default fallback is standard point-to-point transfers
   if (allText.includes('additional hotel pickup') || allText.includes('extra pickup') || allText.includes('additional pickup')) {
     detectedService = 'additional hotel pickup'
-  } else if (
-    allText.includes('arrival') ||
-    allText.includes('departure') ||
-    allText.includes('airport') ||
-    allText.includes('changi') ||
-    allText.includes('flight')
-  ) {
+  } else if (allText.includes('arrival') || allText.includes('airport to hotel') || allText.includes('changi to hotel') || allText.includes('airport pickup')) {
+    detectedService = 'arrivals'
+  } else if (allText.includes('departure') || allText.includes('hotel to airport') || allText.includes('hotel to changi') || allText.includes('airport drop')) {
+    detectedService = 'departures'
+  } else if (allText.includes('airport') || allText.includes('changi') || allText.includes('flight')) {
     detectedService = 'arrival / departure'
   } else if (allText.includes('city tour') || allText.includes('citytour') || allText.includes('sightseeing')) {
     detectedService = 'city tour'
@@ -139,6 +137,12 @@ function getTransferMetaInfo(
   if (detectedSize) {
     for (const [k, meta] of Object.entries(transfersMeta)) {
       if (k.includes(detectedSize)) {
+        if (detectedService === 'arrivals' && (k.includes('arrival') || k.includes('arrival / departure')) && !k.includes('departure')) {
+          return meta
+        }
+        if (detectedService === 'departures' && (k.includes('departure') || k.includes('arrival / departure')) && !k.includes('arrival')) {
+          return meta
+        }
         if (detectedService === 'arrival / departure' && (k.includes('arrival') || k.includes('departure'))) {
           return meta
         }
@@ -157,7 +161,7 @@ function getTransferMetaInfo(
       }
     }
 
-    // Secondary fallback for detectedSize: prefer " - transfers", NEVER "additional hotel pickup"
+    // Secondary fallback for detectedSize: prefer " - transfers" (which holds the authentic vehicle photo)
     for (const [k, meta] of Object.entries(transfersMeta)) {
       if (k.includes(detectedSize) && k.includes('transfers') && !k.includes('additional')) {
         return meta
@@ -181,7 +185,7 @@ function getTransferMetaInfo(
     if (cleanVeh && (cleanVeh.includes(k) || k.includes(cleanVeh))) return meta
   }
 
-  // 7. Last resort: Return standard Sedan or 45-Seater transfer, never additional pickup
+  // 7. Last resort: Return standard vehicle transfer, never additional pickup
   for (const [k, meta] of Object.entries(transfersMeta)) {
     if (k.includes('transfers') && !k.includes('additional')) return meta
   }
@@ -228,6 +232,123 @@ function getMealMetaInfo(mealName: string, mealsMeta: Record<string, any>) {
     if (k && (clean.includes(k) || k.includes(clean))) return meta
   }
   return null
+}
+
+function cleanPdfText(text: string): string {
+  if (!text) return ''
+  return text
+    // Format links gracefully
+    .replace(/https?:\/\/(www\.)?flyingwonders\.net\/sgac/gi, '(SG Arrival Card: flyingwonders.net/sgac)')
+    .replace(/https?:\/\/\S+/gi, '')
+    // Fix typography spacing before punctuation
+    .replace(/\s+([,.:;!?])/g, '$1')
+    // Remove repeated punctuation artifacts
+    .replace(/,\s*,+/g, ', ')
+    .replace(/\.\s*\.+/g, '. ')
+    // Clean up Tip prefixes
+    .replace(/Tip\s*:\s*/gi, 'Tip: ')
+    // Strip unwanted HTML tags or entities
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    // Replace repeated dashes
+    .replace(/--+/g, '—')
+    // Normalize newlines to spaces so text flows smoothly
+    .replace(/[\r\n]+/g, ' ')
+    // Collapse multiple whitespace
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+const LOCAL_ATTRACTION_FALLBACKS: Record<string, string> = {
+  universal: '/images/attractions/universal-studios-singapore/cover.jpg',
+  gardens: '/images/attractions/gardens-by-the-bay/cover.jpg',
+  dome: '/images/attractions/gardens-by-the-bay/cover.jpg',
+  cloud: '/images/attractions/gardens-by-the-bay/gallery-1.jpg',
+  flower: '/images/attractions/gardens-by-the-bay/gallery-2.jpg',
+  'night safari': '/images/attractions/night-safari-singapore/cover.jpg',
+  night: '/images/attractions/night-safari-singapore/cover.jpg',
+  zoo: '/images/attractions/singapore-zoo/cover.jpg',
+  'bird paradise': '/images/attractions/bird-paradise-singapore/cover.jpg',
+  bird: '/images/attractions/bird-paradise-singapore/cover.jpg',
+  'river wonders': '/images/attractions/river-wonders-singapore/cover.jpg',
+  river: '/images/attractions/river-wonders-singapore/cover.jpg',
+  aquarium: '/images/attractions/sea-aquarium-singapore/cover.jpg',
+  sea: '/images/attractions/sea-aquarium-singapore/cover.jpg',
+  luge: '/images/attractions/sentosa-skyline-luge/cover.jpg',
+  skyline: '/images/attractions/sentosa-skyline-luge/cover.jpg',
+  'cable car': '/images/attractions/singapore-cable-car/cover.jpg',
+  cable: '/images/attractions/singapore-cable-car/cover.jpg',
+  sentosa: '/images/attractions/singapore-cable-car/cover.jpg',
+  wings: '/images/attractions/singapore-cable-car/gallery-1.jpg',
+  flyer: '/images/attractions/singapore-flyer/cover.jpg',
+  mbs: '/images/hero/singapore-hero-1.jpg',
+  sands: '/images/hero/singapore-hero-1.jpg',
+  skypark: '/images/hero/singapore-hero-1.jpg',
+  marina: '/images/hero/singapore-hero-1.jpg',
+  city: '/images/hero/singapore-hero-2.jpg',
+  merlion: '/images/hero/singapore-hero-2.jpg',
+  jewel: '/images/hero/singapore-hero-4.jpg',
+  changi: '/images/hero/singapore-hero-4.jpg',
+  arrival: '/images/hero/singapore-hero-4.jpg',
+  departure: '/images/hero/singapore-hero-2.jpg',
+}
+
+function getLocalAttractionPhoto(name: string): string | null {
+  if (!name) return null
+  const lower = name.toLowerCase().trim()
+  for (const [key, path] of Object.entries(LOCAL_ATTRACTION_FALLBACKS)) {
+    if (lower.includes(key)) return path
+  }
+  return null
+}
+
+const LOCAL_TRANSFER_FALLBACKS: Record<string, string> = {
+  '13-seater': '/images/transfers/13-seater-minibus.jpg',
+  '13 seater': '/images/transfers/13-seater-minibus.jpg',
+  'minibus': '/images/transfers/13-seater-minibus.jpg',
+  'hiace': '/images/transfers/13-seater-minibus.jpg',
+  'sedan': '/images/transfers/sedan.jpg',
+  'camry': '/images/transfers/sedan.jpg',
+  'medium coach': '/images/transfers/medium-coach.jpg',
+  '24-seater': '/images/transfers/medium-coach.jpg',
+  'full coach': '/images/transfers/full-coach.jpg',
+  '45-seater': '/images/transfers/full-coach.jpg',
+  'super coach': '/images/transfers/medium-coach.jpg',
+  '55-seater': '/images/transfers/medium-coach.jpg',
+  'sic': '/images/transfers/13-seater-minibus.jpg',
+}
+
+function getLocalTransferPhoto(nameOrType: string): string | null {
+  if (!nameOrType) return null
+  const lower = nameOrType.toLowerCase().trim()
+  for (const [key, path] of Object.entries(LOCAL_TRANSFER_FALLBACKS)) {
+    if (lower.includes(key)) return path
+  }
+  return null
+}
+
+function isPromotionalPoster(url: string): boolean {
+  if (!url) return false
+  const u = url.toLowerCase()
+  return u.includes('combo') || u.includes('poster') || u.includes('banner') || u.includes('flyer') || u.includes('ad_') || u.includes('graphic')
+}
+
+function cleanItemTitle(text: string): string {
+  if (!text) return ''
+  return text
+    .replace(/-\s*Fixed\s*Date\s*(\/\s*Time)?/gi, '')
+    .replace(/\(Peak\s*-\s*Fixed\s*date\s*\/Time\s*\)/gi, '')
+    .replace(/\(Peak\s*-\s*Fixed\s*Date\s*\)/gi, '')
+    .replace(/-\s*Fixed\s*Time/gi, '')
+    .replace(/-\s*Non\s*Peak/gi, '')
+    .replace(/Museum\s*Of\s*Icecram/gi, 'Museum of Ice Cream')
+    .replace(/Museum\s*Of\s*Icecreams/gi, 'Museum of Ice Cream')
+    .replace(/Combo\s*:\s*/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 const MEAL_PRICES = {
@@ -1231,10 +1352,28 @@ export default function PrototypeBuilder() {
         ...day,
         transfers: (day.transfers || []).map(t => {
           if (vehiclesList.length > 0 && (t.type || t.serviceName)) {
-            const vIdx = vehiclesList.findIndex(v => 
-              (t.type && v.type.toLowerCase().trim() === t.type.toLowerCase().trim()) ||
-              (t.serviceName && v.serviceName && v.serviceName.toLowerCase().trim() === t.serviceName.toLowerCase().trim())
-            )
+            const tType = (t.type || '').toLowerCase().trim()
+            const tService = (t.serviceName || '').toLowerCase().trim()
+            let vIdx = -1
+            // 1. Exact match on both vehicle type and serviceName
+            if (tType && tService) {
+              vIdx = vehiclesList.findIndex(v => 
+                v.type.toLowerCase().trim() === tType &&
+                (v.serviceName || '').toLowerCase().trim() === tService
+              )
+            }
+            // 2. Match on distinctive serviceName
+            if (vIdx < 0 && tService) {
+              vIdx = vehiclesList.findIndex(v => 
+                (v.serviceName || '').toLowerCase().trim() === tService
+              )
+            }
+            // 3. Fallback to vehicle type
+            if (vIdx < 0 && tType) {
+              vIdx = vehiclesList.findIndex(v => 
+                v.type.toLowerCase().trim() === tType
+              )
+            }
             if (vIdx >= 0) return { ...t, vehicleIndex: vIdx }
           }
           return t
@@ -2238,13 +2377,14 @@ export default function PrototypeBuilder() {
     `.trim()
   }
 
-  // Helper to fetch and compress raster image (logo or meal card) with CORS proxy fallback
+  // Helper to fetch and compress raster image (logo, attraction, vehicle, hotel, or meal card) with CORS proxy fallback
   const fetchRasterLogo = async (
     url: string, 
-    maxWidth = 400, 
-    maxHeight = 300, 
+    maxWidth = 640, 
+    maxHeight = 440, 
     asJpeg = false, 
-    quality = 0.82
+    quality = 0.92,
+    fitMode: 'contain' | 'cover' | 'scale' = 'scale'
   ): Promise<{ dataUrl: string; width: number; height: number; format: string } | null> => {
     if (!url) return null
     try {
@@ -2265,11 +2405,37 @@ export default function PrototypeBuilder() {
           try {
             const origW = img.naturalWidth || img.width || 400
             const origH = img.naturalHeight || img.height || 200
-            
-            // Constrain within maxWidth x maxHeight to prevent huge bitmap bloat
-            const scale = Math.min(1, maxWidth / origW, maxHeight / origH)
-            const targetW = Math.max(1, Math.round(origW * scale))
-            const targetH = Math.max(1, Math.round(origH * scale))
+
+            let targetW = maxWidth
+            let targetH = maxHeight
+            let dx = 0
+            let dy = 0
+            let dw = maxWidth
+            let dh = maxHeight
+
+            if (fitMode === 'cover') {
+              // Exact aspect-ratio box (e.g. 40mm x 26mm) with cover math: zero distortion in PDF!
+              const scale = Math.max(maxWidth / origW, maxHeight / origH)
+              dw = Math.round(origW * scale)
+              dh = Math.round(origH * scale)
+              dx = Math.round((maxWidth - dw) / 2)
+              dy = Math.round((maxHeight - dh) / 2)
+            } else if (fitMode === 'contain') {
+              const scale = Math.min(maxWidth / origW, maxHeight / origH)
+              dw = Math.round(origW * scale)
+              dh = Math.round(origH * scale)
+              dx = Math.round((maxWidth - dw) / 2)
+              dy = Math.round((maxHeight - dh) / 2)
+            } else {
+              // Proportional scale to fit within maxWidth x maxHeight
+              const scale = Math.min(1, maxWidth / origW, maxHeight / origH)
+              targetW = Math.max(1, Math.round(origW * scale))
+              targetH = Math.max(1, Math.round(origH * scale))
+              dx = 0
+              dy = 0
+              dw = targetW
+              dh = targetH
+            }
 
             const canvas = document.createElement('canvas')
             canvas.width = targetW
@@ -2277,12 +2443,15 @@ export default function PrototypeBuilder() {
             const ctx = canvas.getContext('2d')
             if (!ctx) return resolve(null)
 
+            ctx.imageSmoothingEnabled = true
+            ctx.imageSmoothingQuality = 'high'
+
             if (asJpeg) {
-              // Fill white background for JPEG exports (handles transparent backgrounds)
+              // Fill white background for JPEG exports
               ctx.fillStyle = '#FFFFFF'
               ctx.fillRect(0, 0, targetW, targetH)
             }
-            ctx.drawImage(img, 0, 0, targetW, targetH)
+            ctx.drawImage(img, dx, dy, dw, dh)
             
             const format = asJpeg ? 'JPEG' : 'PNG'
             const mimeType = asJpeg ? 'image/jpeg' : 'image/png'
@@ -2311,31 +2480,37 @@ export default function PrototypeBuilder() {
     const pNum = await ensureProposalSaved(true)
     const { jsPDF } = await import('jspdf')
 
-    // Helper to fetch raster logo & meal assets (optimized for small file size & crisp high-DPI display)
+    // Helper to fetch raster logo & meal assets (optimized for crisp high-DPI display)
     const effectiveLogoUrl = customAgencyLogoUrl || activeAgent?.logoUrl || ''
     let logoRaster: { dataUrl: string; width: number; height: number; format: string } | null = null
     if (effectiveLogoUrl) {
-      // Limit logo to max 320x160 px (crisp for 12mm-35mm header box without multi-megabyte bloat)
-      logoRaster = await fetchRasterLogo(effectiveLogoUrl, 320, 160, false)
+      logoRaster = await fetchRasterLogo(effectiveLogoUrl, 640, 320, false, 0.95, 'scale')
     }
 
     // Preload meal images for breakfast & buffet dining cards
-    // Printed at 34mm x 26mm: 320x240 px at 0.82 JPEG quality gives flawless print crispness at ~25KB per card
+    // 640x480 at 0.92 JPEG quality gives flawless print crispness
     const [breakfastRaster, buffetRaster] = await Promise.all([
-      fetchRasterLogo('/images/meals-breakfast.jpg', 320, 240, true, 0.82),
-      fetchRasterLogo('/images/meals-buffet.jpg', 320, 240, true, 0.82)
+      fetchRasterLogo('/images/meals-breakfast.jpg', 640, 480, true, 0.92, 'cover'),
+      fetchRasterLogo('/images/meals-buffet.jpg', 640, 480, true, 0.92, 'cover')
     ])
 
-    // Preload and heavily optimize attraction card photos (max 320x220 px JPEG at 0.75 quality ~25KB each instead of multi-MB full images)
+    // Preload attraction card photos (640x416 px exact 40mm x 26mm ratio: zero distortion, razor-sharp 300+ DPI print)
     const attractionPhotosMap = new Map<string, string>()
     const distinctAttractionNames = Array.from(new Set(itinerary.flatMap(d => (d.attractions || []).map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '')))).filter(Boolean)
     await Promise.all(
       distinctAttractionNames.map(async (name) => {
         const meta = getAttractionMetaInfo(name, attractionsMeta)
-        if (meta?.photoUrl) {
-          const raster = await fetchRasterLogo(meta.photoUrl, 320, 220, true, 0.75)
+        let pUrl = meta?.photoUrl
+        if (!pUrl || isPromotionalPoster(pUrl)) {
+          pUrl = getLocalAttractionPhoto(name) || pUrl
+        }
+        if (pUrl) {
+          const raster = await fetchRasterLogo(pUrl, 640, 416, true, 0.92, 'cover')
           if (raster?.dataUrl) {
-            attractionPhotosMap.set(name.toLowerCase().trim(), raster.dataUrl)
+            const dUrl = raster.dataUrl
+            attractionPhotosMap.set(name.toLowerCase().trim(), dUrl)
+            attractionPhotosMap.set(cleanItemTitle(name).toLowerCase().trim(), dUrl)
+            if (meta?.name) attractionPhotosMap.set(meta.name.toLowerCase().trim(), dUrl)
           }
         }
       })
@@ -2345,17 +2520,34 @@ export default function PrototypeBuilder() {
     const effectiveHotelForPdf = customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || 'TBD')
     const hotelMetaInfo = hotelRequired ? getHotelMetaInfo(effectiveHotelForPdf, hotelsMeta) : null
     let hotelRaster: { dataUrl: string; width: number; height: number; format: string } | null = null
-    if (hotelMetaInfo?.photoUrl) {
-      hotelRaster = await fetchRasterLogo(hotelMetaInfo.photoUrl, 320, 220, true, 0.75)
+    let hotelUrl = hotelMetaInfo?.photoUrl
+    if (!hotelUrl && hotelRequired) {
+      hotelUrl = '/images/hero/singapore-hero-1.jpg'
+    }
+    if (hotelUrl) {
+      hotelRaster = await fetchRasterLogo(hotelUrl, 640, 416, true, 0.92, 'cover')
     }
 
-    // Preload transfer photos
+    // Preload transfer photos (640x416 px cover: zero vehicle squishing, crisp retina quality)
     const transferPhotosMap = new Map<string, string>()
+
+    // 1. Preload verified local fallback fleet images
+    await Promise.all(
+      Object.entries(LOCAL_TRANSFER_FALLBACKS).map(async ([key, localPath]) => {
+        const raster = await fetchRasterLogo(localPath, 640, 416, true, 0.92, 'cover')
+        if (raster?.dataUrl) {
+          transferPhotosMap.set(key.toLowerCase().trim(), raster.dataUrl)
+          transferPhotosMap.set(localPath.toLowerCase().trim(), raster.dataUrl)
+        }
+      })
+    )
+
+    // 2. Preload Sanity CMS transfer photos
     if (transfersMeta && typeof transfersMeta === 'object') {
       await Promise.all(
         Object.entries(transfersMeta).map(async ([key, meta]: [string, any]) => {
           if (meta?.photoUrl) {
-            const raster = await fetchRasterLogo(meta.photoUrl, 360, 240, true, 0.75)
+            const raster = await fetchRasterLogo(meta.photoUrl, 640, 416, true, 0.92, 'cover')
             if (raster?.dataUrl) {
               const dUrl = raster.dataUrl
               transferPhotosMap.set(key.toLowerCase().trim(), dUrl)
@@ -2367,15 +2559,31 @@ export default function PrototypeBuilder() {
         })
       )
     }
-    // Also map all vehicle list entries and composite keys to preloaded raster
-    vehiclesList.forEach(v => {
+
+    // 3. Map all vehicle list entries and composite keys to preloaded raster
+    // Sort so canonical transfers ('transfers', 'disposal', 'point to point') take precedence over specific airport graphics
+    const sortedVehicles = [...vehiclesList].sort((a, b) => {
+      const aS = (a.serviceName || '').toLowerCase()
+      const bS = (b.serviceName || '').toLowerCase()
+      const isACanonical = aS.includes('transfer') || aS.includes('disposal')
+      const isBCanonical = bS.includes('transfer') || bS.includes('disposal')
+      if (isACanonical && !isBCanonical) return -1
+      if (!isACanonical && isBCanonical) return 1
+      return 0
+    })
+
+    sortedVehicles.forEach(v => {
       const meta = getTransferMetaInfo(v.compositeKey || '', v.type || '', transfersMeta)
       if (meta) {
         const dUrl = (meta.photoUrl && transferPhotosMap.get(meta.photoUrl)) ||
                      (meta.name && transferPhotosMap.get(meta.name.toLowerCase().trim()))
         if (dUrl) {
           if (v.compositeKey) transferPhotosMap.set(v.compositeKey.toLowerCase().trim(), dUrl)
-          if (v.type) transferPhotosMap.set(v.type.toLowerCase().trim(), dUrl)
+          const pairKey = `${(v.type || '').toLowerCase().trim()}::${(v.serviceName || '').toLowerCase().trim()}`
+          transferPhotosMap.set(pairKey, dUrl)
+          if (v.type && !transferPhotosMap.has(v.type.toLowerCase().trim())) {
+            transferPhotosMap.set(v.type.toLowerCase().trim(), dUrl)
+          }
         }
       }
     })
@@ -2387,7 +2595,7 @@ export default function PrototypeBuilder() {
       distinctGuides.map(async (gt) => {
         const meta = getGuideMetaInfo(gt, guidesMeta)
         if (meta?.photoUrl) {
-          const raster = await fetchRasterLogo(meta.photoUrl, 240, 240, true, 0.75)
+          const raster = await fetchRasterLogo(meta.photoUrl, 480, 480, true, 0.92, 'cover')
           if (raster?.dataUrl) {
             guidePhotosMap.set(gt.toLowerCase().trim(), raster.dataUrl)
           }
@@ -2484,7 +2692,7 @@ export default function PrototypeBuilder() {
       if (logoRaster) {
         try {
           setFill(WHITE); doc.roundedRect(ML, 1.5, 14, 9, 1.5, 1.5, 'F')
-          doc.addImage(logoRaster.dataUrl, 'PNG', ML + 1, 2, 12, 8, undefined, 'FAST')
+          doc.addImage(logoRaster.dataUrl, 'PNG', ML + 1, 2, 12, 8, undefined, 'MEDIUM')
           pHeadX = ML + 17
         } catch (e) {}
       }
@@ -2576,7 +2784,7 @@ export default function PrototypeBuilder() {
       const posX = lBoxX + (lBoxW - fitW) / 2
       const posY = lBoxY + (lBoxH - fitH) / 2
       try {
-        doc.addImage(logoRaster.dataUrl, 'PNG', posX, posY, fitW, fitH, undefined, 'FAST')
+        doc.addImage(logoRaster.dataUrl, 'PNG', posX, posY, fitW, fitH, undefined, 'MEDIUM')
       } catch (ie) {}
 
       agencyStartX = lBoxX + lBoxW + 5
@@ -2703,12 +2911,23 @@ export default function PrototypeBuilder() {
           // Editorial Hotel Showcase Card
           const hasPhoto = !!hotelRaster?.dataUrl
           const textW = hasPhoto ? CW - 48 : CW - 12
+          const starBadge = hotelMetaInfo.starRating ? `[${hotelMetaInfo.starRating}] ` : ''
+          const hotelTitleLines = doc.splitTextToSize(`${starBadge}${cleanPdfText(effectiveHotelName)}`, textW)
+          const roomLines = doc.splitTextToSize(`Room: ${effectiveRoomType} x ${globalRoomCount}  |  Nights: ${nightsCount}${effectiveSuppType && globalSuppCount > 0 ? `  |  + Supp: ${effectiveSuppType} x${globalSuppCount}` : ''}`, textW)
+          const locLines = hotelMetaInfo.addressLocation ? doc.splitTextToSize(`Location: ${cleanPdfText(hotelMetaInfo.addressLocation)}`, textW) : []
           const descText = hotelMetaInfo.shortDescription || hotelMetaInfo.longDescription || ''
-          const descLines = descText ? doc.splitTextToSize(descText, textW) : []
+          const descLines = descText ? doc.splitTextToSize(cleanPdfText(descText), textW) : []
           const amenitiesText = hotelMetaInfo.amenities && Array.isArray(hotelMetaInfo.amenities)
             ? hotelMetaInfo.amenities.slice(0, 5).join('  •  ')
             : ''
-          const cardH = Math.max(hasPhoto ? 34 : 24, 16 + descLines.slice(0, 3).length * 3.6 + (amenitiesText ? 4.5 : 0))
+          const amenLines = amenitiesText ? doc.splitTextToSize(`Amenities: ${cleanPdfText(amenitiesText)}`, textW) : []
+
+          const titleH = (hotelTitleLines.length - 1) * 3.8 + 4.2
+          const roomH = (roomLines.length - 1) * 3.2 + 4.0
+          const locH = locLines.length > 0 ? ((locLines.length - 1) * 2.8 + 3.8) : 0
+          const descH = descLines.slice(0, 3).length > 0 ? ((descLines.slice(0, 3).length - 1) * 2.8 + 3.4) : 0
+          const amenH = amenLines.length > 0 ? ((amenLines.length - 1) * 2.8 + 3.8) : 0
+          const cardH = Math.max(hasPhoto ? 34 : 24, 7 + titleH + roomH + locH + descH + amenH + 3)
           checkPage(cardH + 4)
 
           // Background card
@@ -2720,37 +2939,36 @@ export default function PrototypeBuilder() {
           if (hasPhoto && hotelRaster) {
             const imgX = MR - 42
             const imgW = 40
-            const imgH = Math.min(cardH - 4, 30)
+            const imgH = Math.min(cardH - 6, 30)
             try {
-              doc.addImage(hotelRaster.dataUrl, 'JPEG', imgX, y + (cardH - imgH) / 2, imgW, imgH, undefined, 'FAST')
+              doc.addImage(hotelRaster.dataUrl, 'JPEG', imgX, y + (cardH - imgH) / 2, imgW, imgH, undefined, 'MEDIUM')
             } catch (e) {}
           }
 
           let hy = y + 4.8
           font('bold', 9.5); setTxt(NAVY)
-          const starBadge = hotelMetaInfo.starRating ? `[${hotelMetaInfo.starRating}] ` : ''
-          doc.text(`${starBadge}${effectiveHotelName}`, ML + 6, hy)
-          hy += 4.2
+          doc.text(hotelTitleLines, ML + 6, hy)
+          hy += titleH
 
           font('bold', 7.8); setTxt([180, 83, 9])
-          doc.text(`Room: ${effectiveRoomType} x ${globalRoomCount}  |  Nights: ${nightsCount}${effectiveSuppType && globalSuppCount > 0 ? `  |  + Supp: ${effectiveSuppType} x${globalSuppCount}` : ''}`, ML + 6, hy)
-          hy += 4.2
+          doc.text(roomLines, ML + 6, hy)
+          hy += roomH
 
-          if (hotelMetaInfo.addressLocation) {
+          if (locLines.length > 0) {
             font('italic', 7.0); setTxt(SLATE)
-            doc.text(`Location: ${hotelMetaInfo.addressLocation}`, ML + 6, hy)
-            hy += 3.8
+            doc.text(locLines, ML + 6, hy)
+            hy += locH
           }
 
           if (descLines.length > 0) {
             font('normal', 7.1); setTxt(TEXT)
             doc.text(descLines.slice(0, 3), ML + 6, hy)
-            hy += Math.min(descLines.length, 3) * 3.4
+            hy += descH
           }
 
-          if (amenitiesText) {
+          if (amenLines.length > 0) {
             font('bold', 6.8); setTxt([22, 101, 52])
-            doc.text(`Amenities: ${amenitiesText}`, ML + 6, hy + 1)
+            doc.text(amenLines, ML + 6, hy + 0.5)
           }
 
           y += cardH + 3
@@ -3224,27 +3442,41 @@ export default function PrototypeBuilder() {
               const meta = item.meta
               const cleanItemKey = (item.itemKey || '').toLowerCase().trim()
               const cleanMetaName = (meta.name || '').toLowerCase().trim()
-              const photoData = transferPhotosMap.get(cleanItemKey) ||
-                                transferPhotosMap.get(cleanMetaName) ||
-                                (meta.photoUrl ? transferPhotosMap.get(meta.photoUrl) : null)
+              let photoData = transferPhotosMap.get(cleanItemKey) ||
+                              transferPhotosMap.get(cleanMetaName) ||
+                              (meta.photoUrl ? transferPhotosMap.get(meta.photoUrl) : null)
+              if (!photoData) {
+                const localPhotoPath = getLocalTransferPhoto(cleanItemKey) ||
+                                       getLocalTransferPhoto(cleanMetaName) ||
+                                       getLocalTransferPhoto(item.label)
+                if (localPhotoPath) {
+                  photoData = transferPhotosMap.get(localPhotoPath.toLowerCase().trim()) || null
+                }
+              }
               const hasPhoto = !!photoData && typeof photoData === 'string' && photoData.startsWith('data:image')
 
-              const textW = hasPhoto ? CW - 48 : CW - 12
-              // Full Description (prioritize rich longDescription from Sanity)
-              const descText = (meta.longDescription || meta.shortDescription || '').trim()
+              // 6mm breathing gutter before photo
+              const textW = hasPhoto ? CW - 54 : CW - 12
+              const titleLines = doc.splitTextToSize(`${item.time}  —  ${cleanPdfText(item.label)}`, textW)
+              const titleH = (titleLines.length - 1) * 3.5 + 4.2
+
+              // Full Description (sanitized, flowing narrative with zero truncation)
+              const rawDesc = (meta.longDescription || meta.shortDescription || '').trim()
+              const descText = cleanPdfText(rawDesc)
               const descLines = descText ? doc.splitTextToSize(descText, textW) : []
 
               // Features / Inclusions from Sanity
-              const inclusions: string[] = Array.isArray(meta.features) && meta.features.length > 0 ? meta.features : []
-              const incText = inclusions.length > 0 ? `Inclusions: ${inclusions.join('  •  ')}` : ''
-              const incLines = incText ? doc.splitTextToSize(incText, textW) : []
+              const inclusions: string[] = Array.isArray(meta.features) && meta.features.length > 0
+                ? meta.features.map((f: string) => cleanPdfText(f)).filter(Boolean)
+                : []
 
-              // Dynamic content height calculation (strictly for title, full description, and inclusions from Sanity)
-              let contentH = 4.5 + 4.0 // top padding + title
-              if (descLines.length > 0) contentH += descLines.length * 3.3 + 1.5
-              if (incLines.length > 0) contentH += incLines.length * 3.1 + 1.2
-              contentH += 3.5 // bottom padding
+              // Compute inclusion rows (2-column layout)
+              const incRows = Math.ceil(inclusions.length / 2)
+              const incH = inclusions.length > 0 ? (3.8 + incRows * 3.3) : 0
+              const descH = descLines.length > 0 ? ((descLines.length - 1) * 2.85 + 4.2) : 0
 
+              // Dynamic content height calculation
+              const contentH = 4.5 + titleH + descH + incH + 3.5
               const minCardH = hasPhoto ? 34 : 22
               const cardH = Math.max(minCardH, contentH)
               checkPage(cardH + 3)
@@ -3263,11 +3495,11 @@ export default function PrototypeBuilder() {
 
               if (hasPhoto && photoData) {
                 const imgW = 40
-                const imgH = Math.min(cardH - 6, 28)
+                const imgH = Math.min(cardH - 6, 26)
                 const imgX = MR - imgW - 2
                 const imgY = y + (cardH - imgH) / 2
                 try {
-                  doc.addImage(photoData, 'JPEG', imgX, imgY, imgW, imgH, undefined, 'FAST')
+                  doc.addImage(photoData, 'JPEG', imgX, imgY, imgW, imgH, undefined, 'MEDIUM')
                   setDraw([204, 251, 241]); doc.setLineWidth(0.25)
                   doc.rect(imgX, imgY, imgW, imgH, 'S')
                 } catch (e) {}
@@ -3275,18 +3507,31 @@ export default function PrototypeBuilder() {
 
               let cy = y + 4.5
               font('bold', 8.5); setTxt(NAVY)
-              doc.text(`${item.time}  —  ${item.label}`, ML + 6, cy)
-              cy += 4.2
+              doc.text(titleLines, ML + 6, cy)
+              cy += titleH
 
               if (descLines.length > 0) {
                 font('normal', 7.1); setTxt(TEXT)
                 doc.text(descLines, ML + 6, cy)
-                cy += descLines.length * 3.3 + 1.5
+                cy += (descLines.length - 1) * 2.85 + 4.2
               }
 
-              if (incLines.length > 0) {
-                font('bold', 6.8); setTxt([15, 118, 110])
-                doc.text(incLines, ML + 6, cy)
+              if (inclusions.length > 0) {
+                font('bold', 6.5); setTxt([13, 148, 136])
+                doc.text('INCLUSIONS & VEHICLE AMENITIES', ML + 6, cy)
+                cy += 3.4
+
+                const colW = (textW - 4) / 2
+                font('normal', 6.7); setTxt([15, 118, 110])
+                for (let i = 0; i < inclusions.length; i += 2) {
+                  const inc1Lines = doc.splitTextToSize(`•  ${inclusions[i]}`, colW - 2)
+                  doc.text(inc1Lines[0] || '', ML + 6, cy)
+                  if (inclusions[i + 1]) {
+                    const inc2Lines = doc.splitTextToSize(`•  ${inclusions[i + 1]}`, colW - 2)
+                    doc.text(inc2Lines[0] || '', ML + 6 + colW + 2, cy)
+                  }
+                  cy += 3.3
+                }
               }
 
               y += cardH + 2.5
@@ -3295,13 +3540,22 @@ export default function PrototypeBuilder() {
               const meta = item.meta
               const photoData = guidePhotosMap.get((item.itemKey || '').toLowerCase().trim()) || meta.photoUrl
               const hasPhoto = !!photoData
-              const textW = hasPhoto ? CW - 36 : CW - 10
-              const descText = meta.shortDescription || meta.longDescription || ''
+              const textW = hasPhoto ? CW - 42 : CW - 10
+              const titleLines = doc.splitTextToSize(`${item.time}  —  ${cleanPdfText(item.label)}`, textW)
+              const titleH = (titleLines.length - 1) * 3.5 + 4.0
+              const descText = cleanPdfText(meta.longDescription || meta.shortDescription || '')
               const descLines = descText ? doc.splitTextToSize(descText, textW) : []
-              const noteLines = item.detail ? doc.splitTextToSize(`Activity: ${item.detail}`, textW) : []
-              const certText = meta.certifications && Array.isArray(meta.certifications) ? meta.certifications.join('  •  ') : ''
+              const noteText = cleanPdfText(item.detail || '')
+              const noteLines = noteText ? doc.splitTextToSize(`Activity: ${noteText}`, textW) : []
+              const certRaw = meta.certifications && Array.isArray(meta.certifications) ? meta.certifications.map((c: string) => cleanPdfText(c)).join('  •  ') : ''
+              const certLines = certRaw ? doc.splitTextToSize(certRaw, textW) : []
 
-              const cardH = Math.max(hasPhoto ? 24 : 18, 11 + descLines.slice(0, 2).length * 3.4 + noteLines.slice(0, 1).length * 3.2 + (certText ? 4.0 : 0))
+              const descH = descLines.length > 0 ? ((descLines.length - 1) * 2.85 + 3.8) : 0
+              const noteH = noteLines.length > 0 ? ((noteLines.length - 1) * 2.7 + 3.2) : 0
+              const certH = certLines.length > 0 ? ((certLines.length - 1) * 2.6 + 3.8) : 0
+
+              const contentH = 4.5 + titleH + certH + descH + noteH + 3.5
+              const cardH = Math.max(hasPhoto ? 26 : 18, contentH)
               checkPage(cardH + 3)
 
               // Card background
@@ -3315,33 +3569,33 @@ export default function PrototypeBuilder() {
                 const imgH = Math.min(cardH - 4, 20)
                 const imgX = MR - imgW - 2
                 try {
-                  doc.addImage(photoData, 'JPEG', imgX, y + (cardH - imgH) / 2, imgW, imgH, undefined, 'FAST')
+                  doc.addImage(photoData, 'JPEG', imgX, y + (cardH - imgH) / 2, imgW, imgH, undefined, 'MEDIUM')
                 } catch (e) {}
               }
 
-              let cy = y + 4.2
+              let cy = y + 4.5
               font('bold', 8.5); setTxt(NAVY)
-              doc.text(`${item.time}  —  ${item.label}`, ML + 6, cy)
-              cy += 3.8
+              doc.text(titleLines, ML + 6, cy)
+              cy += titleH
 
-              if (certText) {
+              if (certLines.length > 0) {
                 font('bold', 7.0); setTxt([79, 70, 229])
-                doc.text(certText, ML + 6, cy)
-                cy += 3.5
+                doc.text(certLines, ML + 6, cy)
+                cy += certH
               }
 
               if (descLines.length > 0) {
-                font('normal', 7.0); setTxt(TEXT)
-                doc.text(descLines.slice(0, 2), ML + 6, cy)
-                cy += Math.min(descLines.length, 2) * 3.2
+                font('normal', 7.1); setTxt(TEXT)
+                doc.text(descLines, ML + 6, cy)
+                cy += (descLines.length - 1) * 2.85 + 3.8
               }
 
               if (noteLines.length > 0) {
                 font('italic', 6.8); setTxt(SLATE)
-                doc.text(noteLines[0], ML + 6, cy)
+                doc.text(noteLines, ML + 6, cy)
               }
 
-              y += cardH + 2
+              y += cardH + 2.5
             } else if (item.type === 'transfer' || item.type === 'guide' || item.type === 'service') {
               const labelLines = doc.splitTextToSize(item.label, CW - 26)
               const detailLines = item.detail ? doc.splitTextToSize(item.detail, CW - 26) : []
@@ -3368,10 +3622,16 @@ export default function PrototypeBuilder() {
               const hasPhoto = !!md.imageRaster
               const imgW = 34
               const imgH = 26
-              const textW = hasPhoto ? CW - 44 : CW - 12
+              const textW = hasPhoto ? CW - 48 : CW - 12
+              const titleLines = doc.splitTextToSize(`${item.time}  |  ${cleanPdfText(md.title)}`, textW)
+              const titleH = (titleLines.length - 1) * 3.5 + 4.2
+              const subLines = md.subtitle ? doc.splitTextToSize(cleanPdfText(md.subtitle), textW) : []
+              const subH = subLines.length > 0 ? ((subLines.length - 1) * 2.8 + 4.0) : 0
               font('normal', 7.1)
-              const descLines = doc.splitTextToSize(md.description, textW)
-              const cardH = Math.max(hasPhoto ? 30 : 22, 12 + descLines.length * 3.6 + 4)
+              const cleanDesc = cleanPdfText(md.description)
+              const descLines = doc.splitTextToSize(cleanDesc, textW)
+              const descBlockH = descLines.length > 0 ? (descLines.length - 1) * 2.85 + 3.8 : 0
+              const cardH = Math.max(hasPhoto ? 30 : 20, 9 + titleH + subH + descBlockH + 3)
 
               checkPage(cardH + 3)
 
@@ -3395,45 +3655,65 @@ export default function PrototypeBuilder() {
 
               // Meal Headline & Time
               font('bold', 8.8); setTxt([22, 101, 52] as [number,number,number])
-              doc.text(`${item.time}  |  ${md.title}`, ML + 6, cy)
-              cy += 4.2
+              doc.text(titleLines, ML + 6, cy)
+              cy += titleH
 
               // Meal Subtitle
-              font('italic', 7.2); setTxt([180, 83, 9] as [number,number,number])
-              doc.text(md.subtitle, ML + 6, cy)
-              cy += 4.2
+              if (subLines.length > 0) {
+                font('italic', 7.2); setTxt([180, 83, 9] as [number,number,number])
+                doc.text(subLines, ML + 6, cy)
+                cy += subH
+              }
 
               // Curated Narrative
-              font('normal', 7.0); setTxt(SLATE)
-              doc.text(descLines, ML + 6, cy)
+              if (descLines.length > 0) {
+                font('normal', 7.0); setTxt(SLATE)
+                doc.text(descLines, ML + 6, cy)
+              }
 
               y += cardH + 2.5
             } else if (item.type === 'attraction' && item.attractionData) {
               // ── Rich Attraction Card (Placed at exact 24-hour time) ──
               const a = item.attractionData
-              const attrName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
-              const notes = a.description ? a.description : ''
-              const meta = getAttractionMetaInfo(attrName, attractionsMeta)
+              const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+              const attrName = cleanPdfText(rawName)
+              const notes = a.description ? cleanPdfText(a.description) : ''
+              const meta = getAttractionMetaInfo(rawName, attractionsMeta) || getAttractionMetaInfo(attrName, attractionsMeta)
 
-              const fullDesc = meta?.longDescription || meta?.shortDescription || ATTRACTION_DESCRIPTIONS[attrName] || "One of Singapore's premier sightseeing attractions."
-              const highlights: string[] = meta?.highlights?.slice(0, 4) || []
+              const rawDesc = meta?.longDescription || meta?.shortDescription || ATTRACTION_DESCRIPTIONS[attrName] || ATTRACTION_DESCRIPTIONS[rawName] || "One of Singapore's premier sightseeing attractions."
+              const fullDesc = cleanPdfText(rawDesc)
+              const highlights: string[] = (meta?.highlights || []).slice(0, 4)
               const rating = meta?.rating || null
-              const openingHours = meta?.openingHours || ''
-              const duration = meta?.duration || ''
-              const location = meta?.location || ''
-              const hasPhoto = !!(meta?.photoUrl)
+              const openingHours = meta?.openingHours ? cleanPdfText(meta.openingHours) : ''
+              const duration = meta?.duration ? cleanPdfText(meta.duration) : ''
+              const location = meta?.location ? cleanPdfText(meta.location) : ''
+              
+              const photoData = attractionPhotosMap.get(rawName.toLowerCase().trim()) || 
+                                attractionPhotosMap.get(attrName.toLowerCase().trim()) || 
+                                (meta?.photoUrl?.startsWith('data:') ? meta.photoUrl : null)
+              const hasPhoto = !!photoData
 
-              const textW = hasPhoto ? CW - 52 : CW - 12
+              const textW = hasPhoto ? CW - 54 : CW - 12
+              const isOpt = !!a.isOptional
+              const optBadgeW = 38
+              const titleMaxW = isOpt ? textW - optBadgeW - 4 : textW
+              const titleLines = doc.splitTextToSize(`${item.time ? item.time + '  —  ' : ''}${attrName}`, titleMaxW)
+              const titleH = (titleLines.length - 1) * 3.8 + 4.5
+
               font('normal', 7.2)
-              const descLines = doc.splitTextToSize(fullDesc, textW)
+              const descLines = fullDesc ? doc.splitTextToSize(fullDesc, textW) : []
               const noteLines = notes ? doc.splitTextToSize(`Note: ${notes}`, textW) : []
+              const descH = descLines.length > 0 ? (descLines.length - 1) * 2.85 + 3.8 : 0
+              const noteH = noteLines.length > 0 ? (noteLines.length - 1) * 2.85 + 3.4 : 0
               const highlightRows = Math.ceil(highlights.length / 2)
+              const highlightH = highlights.length > 0 ? highlightRows * 5.2 + 4.5 : 0
+              
               const metaParts: string[] = []
               if (openingHours) metaParts.push(`Hours: ${openingHours}`)
               if (duration) metaParts.push(`Duration: ${duration}`)
               if (location) metaParts.push(`Location: ${location}`)
+              const metaH = metaParts.length > 0 ? metaParts.length * 3.4 + 1.5 : 0
 
-              const isOpt = !!a.isOptional
               const optItem = isOpt && costBreakdown.optionalAddonsList ? costBreakdown.optionalAddonsList.find(o => o.dIdx === dIdx && o.attractionIndex === a.attractionIndex) : null
 
               const cardBorderColor: [number,number,number] = isOpt ? [217, 119, 6] : GOLD
@@ -3445,7 +3725,7 @@ export default function PrototypeBuilder() {
               const optPriceText = (!hidePricing && optItem) ? `Add-on Cost: +S$ ${optItem.adultAddonPrice} / Adult${kids > 0 ? ` | +S$ ${optItem.childAddonPrice} / Child` : ''} (Total: +S$ ${optItem.totalAddonPrice.toLocaleString()} for group)` : ''
               const extraOptH = isOpt ? (optPriceText ? 9 : 5) : 0
 
-              const cardH = Math.max(hasPhoto ? 32 : 26, 13 + descLines.length * 3.8 + noteLines.length * 3.4 + (highlights.length > 0 ? highlightRows * 5.5 + 4 : 0) + (metaParts.length > 0 ? metaParts.length * 3.8 + 2 : 0) + extraOptH)
+              const cardH = Math.max(hasPhoto ? 34 : 26, 9.5 + titleH + descH + noteH + highlightH + metaH + extraOptH)
               checkPage(cardH + 4)
 
               // Card background
@@ -3458,24 +3738,24 @@ export default function PrototypeBuilder() {
 
               let cy = y + 4.5
 
-              if (hasPhoto) {
+              if (hasPhoto && photoData) {
                 const imgX = MR - 42
                 const imgW = 40
-                const imgH = Math.min(cardH - 6, 28)
-                const optimizedPhotoData = attractionPhotosMap.get(attrName.toLowerCase().trim()) || meta!.photoUrl!
+                const imgH = Math.min(cardH - 6, 26)
                 try {
-                  doc.addImage(optimizedPhotoData, 'JPEG', imgX, y + 3, imgW, imgH, undefined, 'FAST')
+                  doc.addImage(photoData, 'JPEG', imgX, y + 3, imgW, imgH, undefined, 'MEDIUM')
+                  setDraw(cardBorderColor); doc.setLineWidth(0.3)
+                  doc.rect(imgX, y + 3, imgW, imgH, 'S')
                 } catch (e) {}
               }
 
               // Attraction name + time badge
               font('bold', 9.5); setTxt(NAVY)
-              doc.text(`${item.time ? item.time + '  —  ' : ''}${attrName}`, ML + 6, cy)
+              doc.text(titleLines, ML + 6, cy)
               
               if (isOpt) {
                 // Optional Badge on right
-                const optBadgeW = 38
-                const optBadgeX = hasPhoto ? MR - 42 - optBadgeW - 2 : MR - optBadgeW - 2
+                const optBadgeX = hasPhoto ? MR - 44 - optBadgeW : MR - optBadgeW - 2
                 setFill([254, 243, 199] as [number,number,number])
                 doc.roundedRect(optBadgeX, cy - 3.5, optBadgeW, 4.8, 1, 1, 'F')
                 setDraw([217, 119, 6] as [number,number,number]); doc.setLineWidth(0.3)
@@ -3483,7 +3763,7 @@ export default function PrototypeBuilder() {
                 font('bold', 6.5); setTxt([180, 83, 9] as [number,number,number])
                 doc.text('OPTIONAL SUGGESTION', optBadgeX + optBadgeW / 2, cy - 0.3, { align: 'center' })
               }
-              cy += 4.5
+              cy += titleH
 
               // Ticket count chips inline
               const ticketInfo = `Adult x${a.adultTickets}${kids > 0 ? `  |  Child x${a.childTickets}` : ''}`
@@ -3498,15 +3778,17 @@ export default function PrototypeBuilder() {
               cy += 4.5
 
               // Description
-              font('normal', 7.2); setTxt(SLATE)
-              doc.text(descLines, ML + 6, cy)
-              cy += descLines.length * 3.8
+              if (descLines.length > 0) {
+                font('normal', 7.2); setTxt(SLATE)
+                doc.text(descLines, ML + 6, cy)
+                cy += descH
+              }
 
               // Notes from agent
               if (noteLines.length > 0) {
                 font('italic', 6.8); setTxt(TEAL)
                 doc.text(noteLines, ML + 6, cy)
-                cy += noteLines.length * 3.4
+                cy += noteH
               }
 
               // Highlights as pills
@@ -3524,9 +3806,9 @@ export default function PrototypeBuilder() {
                   setFill(GOLD_L)
                   doc.roundedRect(colX, cy - 2.8, pillW, 4.5, 1, 1, 'F')
                   font('normal', 6); setTxt(NAVY)
-                  doc.text(`• ${h}`, colX + 1.5, cy + 0.3, { maxWidth: pillW - 3 })
+                  doc.text(`• ${cleanPdfText(h)}`, colX + 1.5, cy + 0.3, { maxWidth: pillW - 3 })
                 })
-                cy += 5.5
+                cy += 5.2
               }
 
               // Opening hours / duration / location metadata
@@ -3534,9 +3816,9 @@ export default function PrototypeBuilder() {
                 font('normal', 6.2); setTxt(MGRAY)
                 metaParts.forEach((mp, mpi) => {
                   const mpLines = doc.splitTextToSize(mp, textW)
-                  doc.text(mpLines, ML + 6, cy + mpi * 3.8)
+                  doc.text(mpLines, ML + 6, cy + mpi * 3.4)
                 })
-                cy += metaParts.length * 3.8
+                cy += metaH
               }
 
               // Optional Suggestion CTA & Price Note
@@ -3565,9 +3847,9 @@ export default function PrototypeBuilder() {
         sectionTitle('SPECIAL INSTRUCTIONS & NOTES')
         const noteParagraphs = itineraryNotes.trim().split('\n').filter(Boolean)
         noteParagraphs.forEach((np) => {
-          const cleanText = np.trim().replace(/^[•\-\*]\s*/, '')
+          const cleanText = cleanPdfText(np.trim().replace(/^[•\-\*]\s*/, ''))
           const lines = doc.splitTextToSize(`•  ${cleanText}`, CW - 8)
-          const boxH = Math.max(6.5, lines.length * 3.8 + 2.5)
+          const boxH = Math.max(6.5, (lines.length - 1) * 3.0 + 5.5)
           checkPage(boxH + 2)
           setFill(GOLD_L); doc.roundedRect(ML, y, CW, boxH, 1.5, 1.5, 'F')
           setFill(GOLD); doc.rect(ML, y, 2.5, boxH, 'F')
@@ -3749,31 +4031,43 @@ export default function PrototypeBuilder() {
       }
 
       // Helper to load image and crop cleanly into crisp, modern rounded rectangle with luxury border
-      const fetchBase64Image = async (url: string): Promise<string | null> => {
+      const fetchBase64Image = async (url: string, targetW = 800, targetH = 540, r = 14): Promise<string | null> => {
         try {
           let rawDataUrl = ''
-          try {
-            const proxyRes = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`)
-            if (proxyRes.ok) {
-              const proxyData = await proxyRes.json()
-              if (proxyData.success && proxyData.base64) {
-                rawDataUrl = proxyData.base64
+          if (!url) return null
+          
+          if (url.startsWith('/')) {
+            rawDataUrl = url
+          } else if (url.startsWith('http')) {
+            try {
+              const proxyRes = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`)
+              if (proxyRes.ok) {
+                const proxyData = await proxyRes.json()
+                if (proxyData.success && proxyData.base64) {
+                  rawDataUrl = proxyData.base64
+                }
               }
-            }
-          } catch (e) {}
-
-          if (!rawDataUrl) {
-            const res = await fetch(url)
-            if (!res.ok) return null
-            const blob = await res.blob()
-            rawDataUrl = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader()
-              reader.onloadend = () => resolve(reader.result as string)
-              reader.onerror = reject
-              reader.readAsDataURL(blob)
-            })
+            } catch (e) {}
+          } else {
+            rawDataUrl = url
           }
 
+          if (!rawDataUrl) {
+            try {
+              const res = await fetch(url)
+              if (res.ok) {
+                const blob = await res.blob()
+                rawDataUrl = await new Promise<string>((resolve, reject) => {
+                  const reader = new FileReader()
+                  reader.onloadend = () => resolve(reader.result as string)
+                  reader.onerror = reject
+                  reader.readAsDataURL(blob)
+                })
+              }
+            } catch (e) {}
+          }
+
+          if (!rawDataUrl) return null
           if (typeof window === 'undefined') return rawDataUrl
 
           return new Promise((resolve) => {
@@ -3782,18 +4076,16 @@ export default function PrototypeBuilder() {
             img.onload = () => {
               try {
                 const canvas = document.createElement('canvas')
-                // Printed at 80mm x 113mm: 460x634 px provides >150 DPI print & ultra-sharp mobile retina clarity
-                const targetW = 460
-                const targetH = 634
                 canvas.width = targetW
                 canvas.height = targetH
                 const ctx = canvas.getContext('2d')
                 if (!ctx) return resolve(rawDataUrl)
 
+                ctx.imageSmoothingEnabled = true
+                ctx.imageSmoothingQuality = 'high'
                 ctx.clearRect(0, 0, targetW, targetH)
 
-                const r = 18
-                const pad = 3
+                const pad = 2
                 const w = targetW - pad * 2
                 const h = targetH - pad * 2
                 const x = pad
@@ -3815,11 +4107,11 @@ export default function PrototypeBuilder() {
                 ctx.clip()
 
                 // Standard CSS object-fit: cover math (Zero distortion / stretching)
-                const scale = Math.max(targetW / img.width, targetH / img.height)
-                const dw = img.width * scale
-                const dh = img.height * scale
-                const dx = (targetW - dw) / 2
-                const dy = (targetH - dh) / 2
+                const scale = Math.max(targetW / img.naturalWidth, targetH / img.naturalHeight)
+                const dw = Math.round(img.naturalWidth * scale)
+                const dh = Math.round(img.naturalHeight * scale)
+                const dx = Math.round((targetW - dw) / 2)
+                const dy = Math.round((targetH - dh) / 2)
                 ctx.drawImage(img, dx, dy, dw, dh)
                 ctx.restore()
 
@@ -3841,8 +4133,7 @@ export default function PrototypeBuilder() {
                 ctx.stroke()
                 ctx.restore()
 
-                // 0.80 JPEG quality reduces size from ~400KB per image to ~55KB per image
-                resolve(canvas.toDataURL('image/jpeg', 0.80))
+                resolve(canvas.toDataURL('image/jpeg', 0.92))
               } catch (err) {
                 resolve(rawDataUrl)
               }
@@ -3877,114 +4168,124 @@ export default function PrototypeBuilder() {
         return u.includes('combo') || u.includes('poster') || u.includes('banner') || u.includes('flyer') || u.includes('madame') || u.includes('tussaud') || u.includes('ad_') || u.includes('graphic')
       }
 
-      // High-resolution curated scenic photography for Singapore
+      // High-resolution curated scenic photography for Singapore (Local verified high-res assets)
       const SCENIC_PHOTOS: Record<string, string> = {
-        'arrival': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop&q=80', // Jewel Changi
-        'departure': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80', // Singapore Skyline at Sunset
-        'universal': 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=800&auto=format&fit=crop&q=80', // Universal Studios
-        'sentosa': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80', // Cable Car over ocean
-        'cable': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
-        'wings': 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=800&auto=format&fit=crop&q=80',
-        'mbs': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80', // Marina Bay Sands
-        'marina': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
-        'skypark': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
-        'garden': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80', // Gardens by the Bay
-        'dome': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
-        'flower': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
-        'cloud': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop&q=80',
-        'night': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80', // Night Safari
-        'safari': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
-        'zoo': 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80',
-        'ice cream': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=800&auto=format&fit=crop&q=80',
-        'icecream': 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=800&auto=format&fit=crop&q=80',
-        'bird': 'https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=800&auto=format&fit=crop&q=80',
-        'merlion': 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&auto=format&fit=crop&q=80',
-        'city': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80',
-        'jewel': 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?w=800&auto=format&fit=crop&q=80',
-        'singapore': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop&q=80'
+        'arrival': '/images/hero/singapore-hero-4.jpg', // Jewel Changi Waterfall
+        'departure': '/images/hero/singapore-hero-2.jpg', // Singapore Skyline at Sunset
+        'universal': '/images/attractions/universal-studios-singapore/cover.jpg',
+        'sentosa': '/images/attractions/singapore-cable-car/cover.jpg',
+        'cable': '/images/attractions/singapore-cable-car/cover.jpg',
+        'wings': '/images/attractions/singapore-cable-car/gallery-1.jpg',
+        'mbs': '/images/hero/singapore-hero-1.jpg',
+        'marina': '/images/hero/singapore-hero-1.jpg',
+        'skypark': '/images/hero/singapore-hero-1.jpg',
+        'sands': '/images/hero/singapore-hero-1.jpg',
+        'garden': '/images/attractions/gardens-by-the-bay/cover.jpg',
+        'dome': '/images/attractions/gardens-by-the-bay/cover.jpg',
+        'flower': '/images/attractions/gardens-by-the-bay/gallery-2.jpg',
+        'cloud': '/images/attractions/gardens-by-the-bay/gallery-1.jpg',
+        'night': '/images/attractions/night-safari-singapore/cover.jpg',
+        'safari': '/images/attractions/night-safari-singapore/cover.jpg',
+        'zoo': '/images/attractions/singapore-zoo/cover.jpg',
+        'bird': '/images/attractions/bird-paradise-singapore/cover.jpg',
+        'river': '/images/attractions/river-wonders-singapore/cover.jpg',
+        'aquarium': '/images/attractions/sea-aquarium-singapore/cover.jpg',
+        'sea': '/images/attractions/sea-aquarium-singapore/cover.jpg',
+        'luge': '/images/attractions/sentosa-skyline-luge/cover.jpg',
+        'flyer': '/images/attractions/singapore-flyer/cover.jpg',
+        'ice cream': '/images/attractions/sentosa-skyline-luge/gallery-2.jpg',
+        'icecream': '/images/attractions/sentosa-skyline-luge/gallery-2.jpg',
+        'merlion': '/images/hero/singapore-hero-2.jpg',
+        'city': '/images/hero/singapore-hero-2.jpg',
+        'jewel': '/images/hero/singapore-hero-4.jpg',
+        'singapore': '/images/hero/singapore-hero-2.jpg'
       }
 
-      // Resolve best scenic photo for each day
-      const dayImageUrls: string[] = []
-      itinerary.forEach((day, idx) => {
-        let chosenUrl = ''
-        
-        const allNames = [
-          ...day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || ''),
-          ...day.transfers.map(t => vehiclesList[t.vehicleIndex]?.type || t.type || ''),
-        ].join(' ').toLowerCase()
+      // Resolve up to 2 best scenic photos for each day (Stacked landscape format to eliminate cropping)
+      interface DayImagePair {
+        p1: string | null
+        p2: string | null
+      }
 
-        // 1. Check attraction metadata first if available and not a promotional poster
+      const dayImageUrls: { url1: string; url2: string }[] = []
+      itinerary.forEach((day, idx) => {
+        const attractionUrls: string[] = []
+
+        // Extract attractions with robust fallback
         for (const a of day.attractions) {
-          const name = (attractionsList[a.attractionIndex]?.name || a.attractionName || '').toLowerCase().trim()
-          const meta = attractionsMeta[name]
-          if (meta?.photoUrl && !isPromotionalPoster(meta.photoUrl)) {
-            chosenUrl = meta.photoUrl
-            break
+          const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || ''
+          const meta = getAttractionMetaInfo(rawName, attractionsMeta) || getAttractionMetaInfo(cleanItemTitle(rawName), attractionsMeta)
+          let u = meta?.photoUrl
+          if (!u || isPromotionalPoster(u)) {
+            u = getLocalAttractionPhoto(rawName) || u
+          }
+          if (u && !attractionUrls.includes(u)) {
+            attractionUrls.push(u)
           }
         }
 
-        // 2. Contextual scenic match
-        if (!chosenUrl) {
-          if (idx === 0) {
-            chosenUrl = SCENIC_PHOTOS.arrival
-          } else if (idx === nightsCount) {
-            chosenUrl = SCENIC_PHOTOS.departure
-          } else if (allNames.includes('mbs') || allNames.includes('skypark') || allNames.includes('marinabay')) {
-            chosenUrl = SCENIC_PHOTOS.mbs
-          } else if (allNames.includes('garden') || allNames.includes('dome') || allNames.includes('cloud')) {
-            chosenUrl = SCENIC_PHOTOS.garden
-          } else if (allNames.includes('sentosa') || allNames.includes('cable') || allNames.includes('wings') || allNames.includes('tussaud')) {
-            chosenUrl = SCENIC_PHOTOS.sentosa
-          } else if (allNames.includes('universal')) {
-            chosenUrl = SCENIC_PHOTOS.universal
-          } else if (allNames.includes('night') || allNames.includes('safari') || allNames.includes('zoo')) {
-            chosenUrl = SCENIC_PHOTOS.night
-          } else if (allNames.includes('ice cream') || allNames.includes('icecream')) {
-            chosenUrl = SCENIC_PHOTOS['ice cream']
-          } else {
-            for (const [kw, url] of Object.entries(SCENIC_PHOTOS)) {
-              if (allNames.includes(kw)) {
-                chosenUrl = url
-                break
-              }
+        let url1 = attractionUrls[0] || ''
+        let url2 = attractionUrls[1] || ''
+
+        // Fallbacks for url1
+        if (!url1) {
+          if (idx === 0) url1 = SCENIC_PHOTOS.arrival
+          else if (idx === nightsCount) url1 = SCENIC_PHOTOS.departure
+          else {
+            const allText = [
+              ...day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || ''),
+              ...day.transfers.map(t => vehiclesList[t.vehicleIndex]?.type || t.type || ''),
+            ].join(' ').toLowerCase()
+            for (const [kw, u] of Object.entries(SCENIC_PHOTOS)) {
+              if (allText.includes(kw)) { url1 = u; break }
             }
           }
         }
+        if (!url1) url1 = idx === 0 ? SCENIC_PHOTOS.arrival : SCENIC_PHOTOS.singapore
 
-        // 3. Check transfer metadata photo if day has transfers
-        if (!chosenUrl && day.transfers.length > 0) {
+        // Fallbacks for url2
+        if (!url2) {
+          // Check transfers
           for (const t of day.transfers) {
             const vObj = vehiclesList[t.vehicleIndex]
-            const meta = getTransferMetaInfo(vObj?.compositeKey || '', vObj?.type || '', transfersMeta, t.description)
-            if (meta?.photoUrl && !isPromotionalPoster(meta.photoUrl)) {
-              chosenUrl = meta.photoUrl
+            const vehicleName = vObj?.type || t.type || ''
+            const meta = getTransferMetaInfo(vObj?.compositeKey || '', vehicleName, transfersMeta, t.description)
+            let pUrl = meta?.photoUrl
+            if (!pUrl || isPromotionalPoster(pUrl)) {
+              pUrl = getLocalTransferPhoto(vehicleName) || pUrl
+            }
+            if (pUrl && !isPromotionalPoster(pUrl)) {
+              url2 = pUrl
               break
             }
           }
         }
-
-        // 4. Check hotel metadata photo for Day 1
-        const effectiveHotelS = customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || '')
-        const hotelMetaS = getHotelMetaInfo(effectiveHotelS, hotelsMeta)
-        if (!chosenUrl && idx === 0 && hotelMetaS?.photoUrl) {
-          chosenUrl = hotelMetaS.photoUrl
+        if (!url2 && idx === 0) {
+          const effectiveHotelS = customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || '')
+          const hotelMetaS = getHotelMetaInfo(effectiveHotelS, hotelsMeta)
+          if (hotelMetaS?.photoUrl) url2 = hotelMetaS.photoUrl
+        }
+        if (!url2 || url2 === url1) {
+          url2 = idx === 0 ? SCENIC_PHOTOS.singapore : (idx === nightsCount ? SCENIC_PHOTOS.arrival : SCENIC_PHOTOS.mbs)
         }
 
-        if (!chosenUrl) {
-          chosenUrl = idx === 0 ? SCENIC_PHOTOS.arrival : SCENIC_PHOTOS.singapore
-        }
-        dayImageUrls.push(chosenUrl)
+        dayImageUrls.push({ url1, url2 })
       })
 
-      // Pre-fetch all day images into base64
-      const base64Images: (string | null)[] = await Promise.all(
-        dayImageUrls.map(url => fetchBase64Image(url))
+      // Pre-fetch all day images into base64 pairs concurrently (800x540 px: exact 1.48 landscape ratio, 254+ DPI)
+      const base64ImagePairs: DayImagePair[] = await Promise.all(
+        dayImageUrls.map(async ({ url1, url2 }) => {
+          const [p1, p2] = await Promise.all([
+            fetchBase64Image(url1, 800, 540, 12),
+            fetchBase64Image(url2, 800, 540, 12)
+          ])
+          return { p1, p2 }
+        })
       )
 
       const totalDays = itinerary.length
       const daysPerPage = 2
-      const totalPages = Math.ceil(totalDays / daysPerPage)
+      const totalPages = Math.max(1, Math.ceil(totalDays / daysPerPage))
 
       for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
         if (pageIdx > 0) doc.addPage()
@@ -4016,7 +4317,7 @@ export default function PrototypeBuilder() {
         if (logoRaster) {
           try {
             setFill(WHITE); doc.roundedRect(ML, 1.5, 14, 9, 1.5, 1.5, 'F')
-            doc.addImage(logoRaster.dataUrl, 'PNG', ML + 1, 2, 12, 8, undefined, 'FAST')
+            doc.addImage(logoRaster.dataUrl, 'PNG', ML + 1, 2, 12, 8, undefined, 'MEDIUM')
             barAgencyX = ML + 16
           } catch (e) {}
         }
@@ -4042,7 +4343,7 @@ export default function PrototypeBuilder() {
         for (let dayPos = 0; dayPos < endDayIdx - startDayIdx; dayPos++) {
           const dIdx = startDayIdx + dayPos
           const day = itinerary[dIdx]
-          const imgData = base64Images[dIdx]
+          const pair = base64ImagePairs[dIdx]
 
           // Top slot (y = 19) or Bottom slot (y = 150)
           const topY = dayPos === 0 ? 19 : 150
@@ -4060,24 +4361,34 @@ export default function PrototypeBuilder() {
           const textW = 90
           const photoX = isPhotoRight ? ML + 100 : ML + 6
           const photoW = 80
-          const photoH = 113
-          const photoY = topY + 6
+          const p1Y = topY + 6
+          const p1H = 54
+          const p2Y = topY + 63.5
+          const p2H = 55.5
 
-          // ─── 1. Modern Architectural Photo Card ───
-          if (imgData) {
+          // ─── 1. Dual High-DPI Landscape Photo Cards (Zero Side-Cropping) ───
+          if (pair?.p1) {
             try {
-              doc.addImage(imgData, 'JPEG', photoX, photoY, photoW, photoH, undefined, 'FAST')
+              doc.addImage(pair.p1, 'JPEG', photoX, p1Y, photoW, p1H, undefined, 'MEDIUM')
             } catch (e) {
-              setFill(GOLD_L); doc.roundedRect(photoX, photoY, photoW, photoH, 3, 3, 'F')
-              setDraw(BORDER); doc.roundedRect(photoX, photoY, photoW, photoH, 3, 3, 'S')
-              font('italic', 8); setTxt(BODY)
-              doc.text('Singapore Sightseeing', photoX + photoW / 2, photoY + photoH / 2, { align: 'center' })
+              setFill(GOLD_L); doc.roundedRect(photoX, p1Y, photoW, p1H, 2.5, 2.5, 'F')
+              setDraw(BORDER); doc.roundedRect(photoX, p1Y, photoW, p1H, 2.5, 2.5, 'S')
             }
           } else {
-            setFill(GOLD_L); doc.roundedRect(photoX, photoY, photoW, photoH, 3, 3, 'F')
-            setDraw(BORDER); doc.roundedRect(photoX, photoY, photoW, photoH, 3, 3, 'S')
-            font('italic', 8); setTxt(BODY)
-            doc.text('Singapore Sightseeing', photoX + photoW / 2, photoY + photoH / 2, { align: 'center' })
+            setFill(GOLD_L); doc.roundedRect(photoX, p1Y, photoW, p1H, 2.5, 2.5, 'F')
+            setDraw(BORDER); doc.roundedRect(photoX, p1Y, photoW, p1H, 2.5, 2.5, 'S')
+          }
+
+          if (pair?.p2) {
+            try {
+              doc.addImage(pair.p2, 'JPEG', photoX, p2Y, photoW, p2H, undefined, 'MEDIUM')
+            } catch (e) {
+              setFill(GOLD_L); doc.roundedRect(photoX, p2Y, photoW, p2H, 2.5, 2.5, 'F')
+              setDraw(BORDER); doc.roundedRect(photoX, p2Y, photoW, p2H, 2.5, 2.5, 'S')
+            }
+          } else {
+            setFill(GOLD_L); doc.roundedRect(photoX, p2Y, photoW, p2H, 2.5, 2.5, 'F')
+            setDraw(BORDER); doc.roundedRect(photoX, p2Y, photoW, p2H, 2.5, 2.5, 'S')
           }
 
           // ─── 2. Text Column ───
@@ -4165,9 +4476,11 @@ export default function PrototypeBuilder() {
           }
 
           font('normal', 7.2); setTxt(BODY)
-          const descLines = doc.splitTextToSize(narrative, textW)
-          doc.text(descLines.slice(0, 3), textX, curY)
-          curY += Math.min(descLines.length, 3) * 3.5 + 3
+          const cleanStory = cleanPdfText(narrative)
+          const descLines = doc.splitTextToSize(cleanStory, textW)
+          const displayLines = descLines.slice(0, 3)
+          doc.text(displayLines, textX, curY)
+          curY += (displayLines.length - 1) * 2.85 + 4.0
 
           // Sights & Inclusions Data (Chronologically sorted by 24-hour time, Zero Emojis)
           interface HighlightEntry {
@@ -4333,11 +4646,11 @@ export default function PrototypeBuilder() {
               else setTxt([107, 33, 168])
 
               font('bold', 6.5)
-              doc.text(h.label, textX + 11.5, rowY + 2.8)
+              doc.text(cleanPdfText(h.label), textX + 11.5, rowY + 2.8)
 
               // Item Detail Text in dark body
               font('normal', 6.8); setTxt(BODY)
-              const txtLines = doc.splitTextToSize(h.text, textW - 14)
+              const txtLines = doc.splitTextToSize(cleanPdfText(h.text), textW - 14)
               doc.text(txtLines[0], textX + 11.5, rowY + 6.0)
             })
           }
@@ -4350,7 +4663,7 @@ export default function PrototypeBuilder() {
           setFill(GOLD_L); doc.roundedRect(textX + 27, mealY, textW - 27, 6.0, 1.5, 1.5, 'F')
           setDraw(BORDER); doc.setLineWidth(0.4); doc.roundedRect(textX + 27, mealY, textW - 27, 6.0, 1.5, 1.5, 'S')
           font('bold', 6.8); setTxt([180, 83, 9])
-          const mealsLines = doc.splitTextToSize(mealsText, textW - 31)
+          const mealsLines = doc.splitTextToSize(cleanPdfText(mealsText), textW - 31)
           doc.text(mealsLines[0], textX + 29, mealY + 4.2)
         }
 
