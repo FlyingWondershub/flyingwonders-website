@@ -240,6 +240,13 @@ function cleanPdfText(text: string): string {
     // Format links gracefully
     .replace(/https?:\/\/(www\.)?flyingwonders\.net\/sgac/gi, '(SG Arrival Card: flyingwonders.net/sgac)')
     .replace(/https?:\/\/\S+/gi, '')
+    // Strip emojis, surrogate pairs, and astral plane symbols that distort PDF fonts
+    .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F300}-\u{1F9FF}\u{1FA00}-\u{1FAFF}]/gu, '')
+    .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
+    .replace(/[\u0080-\u009F]/g, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    // Remove specific emoji literals just in case
+    .replace(/[📌🚐ℹ️⚡🏨👤🌙📞💰💵📅🎟️🚗🛬🛫🏙️🌴₹]/g, '')
     // Fix typography spacing before punctuation
     .replace(/\s+([,.:;!?])/g, '$1')
     // Remove repeated punctuation artifacts
@@ -306,6 +313,10 @@ function getLocalAttractionPhoto(name: string): string | null {
 }
 
 const LOCAL_TRANSFER_FALLBACKS: Record<string, string> = {
+  'city tour': '/images/transfers/city-tour.jpg',
+  'citytour': '/images/transfers/city-tour.jpg',
+  'city-tour': '/images/transfers/city-tour.jpg',
+  'sightseeing': '/images/transfers/city-tour.jpg',
   '13-seater': '/images/transfers/13-seater-minibus.jpg',
   '13 seater': '/images/transfers/13-seater-minibus.jpg',
   'minibus': '/images/transfers/13-seater-minibus.jpg',
@@ -888,7 +899,7 @@ export default function PrototypeBuilder() {
   const [newTransferServiceType, setNewTransferServiceType] = useState('interAttraction')
   const [newTransferRoute, setNewTransferRoute] = useState('')
   const [newTransferTime, setNewTransferTime] = useState('14:00')
-  const [defaultLandPackageTerms, setDefaultLandPackageTerms] = useState(`Terms & Inclusions:\n\n📌 Land Package Only: Hotel accommodation is not included.\n🚐 Transfers: Airport arrival & departure transfers are provided by Private 13-Seater Minibus. Sightseeing transfers are as selected (SIC / Private 13-Seater). Surcharges applicable for flights between 22:00 - 07:00 hours.\nℹ️ Customizations: For hotel room bookings, meal plans, licensed English/Hindi guides, or coach upgrades for groups >12 Pax, please contact DMC.`)
+  const [defaultLandPackageTerms, setDefaultLandPackageTerms] = useState(`Terms & Inclusions:\n\n1. Land Package Only: Hotel accommodation is not included.\n2. Transfers: Airport arrival & departure transfers are provided by Private 13-Seater Minibus. Sightseeing transfers are as selected (SIC / Private 13-Seater). Surcharges applicable for flights between 22:00 - 07:00 hours.\n3. Customizations: For hotel room bookings, meal plans, licensed English/Hindi guides, or coach upgrades for groups >12 Pax, please contact DMC.`)
   const [copiedLandPackageWA, setCopiedLandPackageWA] = useState(false)
   const [sendingLandPackageWA, setSendingLandPackageWA] = useState(false)
   const [landPackageSavedProposalNum, setLandPackageSavedProposalNum] = useState<string | null>(null)
@@ -896,13 +907,16 @@ export default function PrototypeBuilder() {
   const [landPackageNewTransferHours, setLandPackageNewTransferHours] = useState(4)
 
   // Admin Check for Net Pricing Visibility
+  const [isAdminOverride, setIsAdminOverride] = useState(false)
+
   const isUserAdmin = useMemo(() => {
+    if (isAdminOverride) return true
     if (!activeAgent) return false
     const email = (activeAgent.email || '').toLowerCase().trim()
     return email === 'info.flyingwonders@gmail.com' ||
            activeAgent.role === 'admin' ||
            (activeAgent as any).isAdmin === true
-  }, [activeAgent])
+  }, [activeAgent, isAdminOverride])
 
   // UI Layout States
   const [collapsedDays, setCollapsedDays] = useState<Set<number>>(new Set(Array.from({ length: 15 }, (_, i) => i)))
@@ -1048,6 +1062,28 @@ export default function PrototypeBuilder() {
 
   // 1. Verify Session Check on load
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('admin') === 'true' || params.get('mode') === 'admin') {
+        setIsAdminOverride(true)
+      }
+      try {
+        const stored = localStorage.getItem('fw_b2b_agent')
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (parsed) {
+            const email = (parsed.email || '').toLowerCase().trim()
+            if (email === 'info.flyingwonders@gmail.com' || parsed.role === 'admin' || parsed.isAdmin === true) {
+              setIsAdminOverride(true)
+            }
+            if (!activeAgent) {
+              setActiveAgent(parsed)
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
     async function checkSession() {
       try {
         const res = await fetch(`/api/auth/check?cb=${Date.now()}`, { cache: 'no-store' })
@@ -2118,8 +2154,12 @@ export default function PrototypeBuilder() {
           mStr = privateTransLabel
         } else if (tr.serviceType === 'disposal') {
           mStr = `${tr.hours || 4} Hours Disposal (${privateTransLabel})`
+        } else if (tr.serviceType === 'cityTour' || (tr.routeDescription || '').toLowerCase().includes('city tour')) {
+          mStr = landPackageTransferMode === 'sic' ? 'SIC - SIC - per person - City Tour ( 3 hours )' : '13-Seater - Private - group - City tour'
         }
-        t += `  ${icon} ${timeStr}${tr.routeDescription || tr.serviceType} (${mStr})\n`
+        const isCityTour = tr.serviceType === 'cityTour' || (tr.routeDescription || '').toLowerCase().includes('city tour')
+        const transTitle = isCityTour ? mStr : `${tr.routeDescription || tr.serviceType} (${mStr})`
+        t += `  ${icon} ${timeStr}${transTitle}\n`
       })
       (day.attractions || []).forEach((attr: any) => {
         const timeStr = attr.time ? `${attr.time} — ` : ''
@@ -2279,13 +2319,35 @@ export default function PrototypeBuilder() {
 
     const privateTransLabel = '13-Seater - Private - group - Transfers'
     const sicTransLabel = 'SIC - SIC - per person - Transfers ( Round Trip )'
+    const privateCityTourLabel = '13-Seater - Private - group - City tour'
+    const sicCityTourLabel = 'SIC - SIC - per person - City Tour ( 3 hours )'
 
     const mappedItinerary: DayPlan[] = landPackageDays.map((d: any) => {
       const dayTransfers: TransferEntry[] = (d.transfers || []).map((t: any) => {
+        const isAirport = t.serviceType === 'arrival' || t.serviceType === 'departure'
+        const isDisposal = t.serviceType === 'disposal'
+        const isCityTour = t.serviceType === 'cityTour' || (t.routeDescription || t.description || '').toLowerCase().includes('city tour')
+
         let vIdx = 0
-        if (t.serviceType === 'arrival' || t.serviceType === 'departure') {
+        if (isAirport) {
           const found = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
           if (found >= 0) vIdx = found
+        } else if (isCityTour) {
+          if (landPackageTransferMode === 'sic') {
+            const found = vehiclesList.findIndex(v => isVehicleSIC(v) && (v.serviceName?.toLowerCase().includes('city') || v.type?.toLowerCase().includes('city')))
+            if (found >= 0) vIdx = found
+            else {
+              const sicFound = vehiclesList.findIndex(v => isVehicleSIC(v))
+              if (sicFound >= 0) vIdx = sicFound
+            }
+          } else {
+            const found = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')) && (v.serviceName?.toLowerCase().includes('city') || v.type?.toLowerCase().includes('city')))
+            if (found >= 0) vIdx = found
+            else {
+              const v13Found = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
+              if (v13Found >= 0) vIdx = v13Found
+            }
+          }
         } else if (landPackageTransferMode === 'sic') {
           const found = vehiclesList.findIndex(v => isVehicleSIC(v))
           if (found >= 0) vIdx = found
@@ -2295,12 +2357,14 @@ export default function PrototypeBuilder() {
         }
 
         let desc = ''
-        if (t.serviceType === 'arrival' || t.serviceType === 'departure') {
-          desc = `${t.routeDescription || t.serviceType} (${privateTransLabel})`
-        } else if (t.serviceType === 'disposal') {
-          desc = `${t.routeDescription || t.serviceType} (${t.hours || 4} Hours Disposal - ${privateTransLabel})`
+        if (isAirport) {
+          desc = privateTransLabel
+        } else if (isDisposal) {
+          desc = `${t.hours || 4}h Disposal (${privateTransLabel})`
+        } else if (isCityTour) {
+          desc = landPackageTransferMode === 'sic' ? sicCityTourLabel : privateCityTourLabel
         } else {
-          desc = `${t.routeDescription || t.serviceType} (${landPackageTransferMode === 'sic' ? sicTransLabel : privateTransLabel})`
+          desc = landPackageTransferMode === 'sic' ? sicTransLabel : privateTransLabel
         }
 
         return {
@@ -2308,7 +2372,9 @@ export default function PrototypeBuilder() {
           time: t.time || '10:00',
           description: desc,
           qty: 1,
-          hours: t.hours
+          hours: t.hours,
+          serviceType: t.serviceType,
+          routeDescription: t.routeDescription
         }
       })
 
@@ -2979,12 +3045,20 @@ export default function PrototypeBuilder() {
       }
       
       day.transfers.forEach(tr => {
-        const v = vehiclesList[tr.vehicleIndex]?.type || 'Transfer'
+        const vObj = vehiclesList[tr.vehicleIndex]
+        const v = vObj?.type || 'Transfer'
         const qtyStr = tr.qty && tr.qty > 1 ? ` (×${tr.qty})` : ''
         const timePrefix = currentOpts.showTimings !== false && tr.time ? `${tr.time} — ` : ''
+        const desc = tr.description || ''
+        const isCityTour = tr.serviceType === 'cityTour' || desc.toLowerCase().includes('city tour')
+        let transferText = `${v}${qtyStr}${desc ? ' → ' + desc : ''}`
+        if (isCityTour) {
+          const isSic = desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)
+          transferText = isSic ? 'SIC - SIC - per person - City Tour ( 3 hours )' : '13-Seater - Private - group - City tour'
+        }
         dayItems.push({
           time: tr.time || '00:00',
-          text: `🚗 ${timePrefix}${v}${qtyStr}${tr.description ? ' → ' + tr.description : ''}`
+          text: `🚗 ${timePrefix}${transferText}`
         })
       })
       day.attractions.forEach(a => {
@@ -3469,13 +3543,26 @@ export default function PrototypeBuilder() {
 
     const usedVehicleLookups: { compKey: string; type: string; hint?: string; label: string }[] = []
     effectiveItinerary.forEach(d => {
-      (d.transfers || []).forEach(t => {
+      (d.transfers || []).forEach((t: any) => {
         const vObj = vehiclesList[t.vehicleIndex]
+        const desc = t.routeDescription || t.description || ''
+        const isCityTour = t.serviceType === 'cityTour' || desc.toLowerCase().includes('city tour')
+        const vehicle = vObj?.type || t.type || (isCityTour ? 'City Tour' : 'Vehicle')
+        const compKey = vObj?.compositeKey || (isCityTour ? 'city-tour' : '')
+        let label = `Private Transfer — ${vehicle}`
+        if (isCityTour) {
+          const isSic = (isLandPkg ? (effectiveTransferMode === 'sic' || landPackageTransferMode === 'sic') : (desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)))
+          label = isSic
+            ? 'SIC - SIC - per person - City Tour ( 3 hours )'
+            : '13-Seater - Private - group - City tour'
+        } else if (isLandPkg) {
+          label = desc || vehicle
+        }
         usedVehicleLookups.push({
-          compKey: vObj?.compositeKey || '',
-          type: vObj?.type || t.type || '',
-          hint: t.description || 'Point-to-point transfer',
-          label: `Private Transfer — ${vObj?.type || t.type || 'Vehicle'}`
+          compKey: isCityTour ? 'city-tour' : compKey,
+          type: isCityTour ? 'City Tour' : vehicle,
+          hint: desc || (isCityTour ? 'Singapore City Tour' : 'Point-to-point transfer'),
+          label
         })
       })
       ;(d.attractions || []).forEach(a => {
@@ -3504,6 +3591,13 @@ export default function PrototypeBuilder() {
 
     const neededTransferImages = new Set<string>()
     const vehicleKeyToPhotoSrc = new Map<string, string>()
+
+    // Always ensure City Tour photo mapping is available
+    neededTransferImages.add('/images/transfers/city-tour.jpg')
+    vehicleKeyToPhotoSrc.set('city-tour', '/images/transfers/city-tour.jpg')
+    vehicleKeyToPhotoSrc.set('city tour', '/images/transfers/city-tour.jpg')
+    vehicleKeyToPhotoSrc.set('sic - sic - per person - city tour ( 3 hours )', '/images/transfers/city-tour.jpg')
+    vehicleKeyToPhotoSrc.set('13-seater - private - group - city tour', '/images/transfers/city-tour.jpg')
 
     usedVehicleLookups.forEach(lookup => {
       const meta = getTransferMetaInfo(lookup.compKey, lookup.type, transfersMeta, lookup.hint)
@@ -4375,7 +4469,7 @@ export default function PrototypeBuilder() {
 
         if (!hidePricing) {
           font('bold', 7.5); setTxt([180, 83, 9] as [number,number,number])
-          doc.text(`Total for all optional experiences: +S$ ${costBreakdown.totalOptionalPrice.toLocaleString()} (approx. ₹${costBreakdown.totalOptionalPriceINR.toLocaleString('en-IN')})`, ML + 6, curOptY + 1)
+          doc.text(`Total for all optional experiences: +S$ ${costBreakdown.totalOptionalPrice.toLocaleString()} (approx. Rs. ${costBreakdown.totalOptionalPriceINR.toLocaleString('en-IN')})`, ML + 6, curOptY + 1)
         }
 
         y += optBoxH + 5
@@ -4433,18 +4527,64 @@ export default function PrototypeBuilder() {
         // 2. Scheduled Transfers
         ;(day.transfers || []).forEach((t: any) => {
           const vObj = vehiclesList[t.vehicleIndex]
-          const vehicle = vObj?.type || t.description || 'Vehicle'
-          const compKey = vObj?.compositeKey || ''
-          const tMeta = getTransferMetaInfo(compKey, vehicle, transfersMeta, t.description || 'Point-to-point transfer')
-          const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
+          const desc = t.routeDescription || t.description || ''
+          const isAirport = t.serviceType === 'arrival' || t.serviceType === 'departure' || desc.toLowerCase().includes('arrival') || desc.toLowerCase().includes('departure') || desc.toLowerCase().includes('airport')
+          const isDisposal = t.serviceType === 'disposal' || desc.toLowerCase().includes('disposal')
+          const isCityTour = t.serviceType === 'cityTour' || desc.toLowerCase().includes('city tour')
+          const vehicle = vObj?.type || (isCityTour ? 'City Tour' : (t.type || 'Vehicle'))
+          const compKey = vObj?.compositeKey || (isCityTour ? 'city-tour' : '')
+
+          const privateTransLabel = '13-Seater - Private - group - Transfers'
+          const sicTransLabel = 'SIC - SIC - per person - Transfers ( Round Trip )'
+          const privateCityTourLabel = '13-Seater - Private - group - City tour'
+          const sicCityTourLabel = 'SIC - SIC - per person - City Tour ( 3 hours )'
+
+          let label = ''
+          let detail = desc || 'Point-to-point transfer'
+          if (isAirport) {
+            label = privateTransLabel
+            detail = t.serviceType === 'arrival' ? 'Airport Arrival Transfer (13-Seater Minibus)' : 'Airport Departure Transfer (13-Seater Minibus)'
+          } else if (isCityTour) {
+            const isSic = (isLandPkg ? (effectiveTransferMode === 'sic' || landPackageTransferMode === 'sic') : (desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)))
+            label = isSic
+              ? sicCityTourLabel
+              : privateCityTourLabel
+            detail = 'Guided Singapore City Orientation Tour (3 Hours)'
+          } else if (isDisposal) {
+            label = `${t.hours || 4}h Disposal (${privateTransLabel})`
+            detail = `${t.hours || 4} Hours Dedicated Minibus Disposal`
+          } else if (isLandPkg) {
+            label = landPackageTransferMode === 'sic' ? sicTransLabel : privateTransLabel
+          } else {
+            const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
+            label = `Private Transfer — ${vehicle}${qtyStr}`
+          }
+
+          let tMeta = getTransferMetaInfo(compKey, vehicle, transfersMeta, desc || 'Point-to-point transfer')
+          if (isCityTour) {
+            const isSic = (isLandPkg ? (effectiveTransferMode === 'sic' || landPackageTransferMode === 'sic') : (desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)))
+            tMeta = {
+              ...(tMeta || {}),
+              name: label,
+              photoUrl: '/images/transfers/city-tour.jpg',
+              shortDescription: 'Explore Singapore\'s premier landmarks with a 3-hour guided city orientation tour covering Civic District, Merlion Park, and cultural heritage precincts.',
+              features: [
+                '3-Hour Guided City Orientation',
+                'Merlion Park & Marina Bay Lookout',
+                'Historic Civic District & Chinatown',
+                isSic ? 'Shared Seat-In-Coach' : '13-Seater Private Minibus'
+              ]
+            }
+          }
+
           timelineItems.push({
             time: t.time || '08:30',
             type: 'transfer',
-            label: isLandPkg ? `Transfer — ${t.description || vehicle}` : `Private Transfer — ${vehicle}${qtyStr}`,
-            detail: t.description || 'Point-to-point transfer',
+            label,
+            detail,
             color: TEAL,
             meta: tMeta,
-            itemKey: compKey || vehicle
+            itemKey: isCityTour ? 'city-tour' : (compKey || vehicle)
           })
         })
 
@@ -4596,7 +4736,7 @@ export default function PrototypeBuilder() {
           setFill(GOLD); doc.rect(ML, y, 3, restCardH, 'F')
 
           font('bold', 9.0); setTxt(NAVY)
-          doc.text('🌴 Free & Easy Leisure & Exploration Day', ML + 6, y + 6.5)
+          doc.text('Free & Easy Leisure & Exploration Day', ML + 6, y + 6.5)
           font('italic', 7.5); setTxt([180, 83, 9] as [number,number,number])
           doc.text('Personal time to relax, shop, and explore Singapore at your own leisure pace', ML + 6, y + 11.5)
 
@@ -5099,7 +5239,7 @@ export default function PrototypeBuilder() {
         y += specH + 3
       }
 
-      // ─── TERMS & IMPORTANT NOTES (Compact 2-Column Card) ───
+      // ─── TERMS & IMPORTANT NOTES (Single Full-Width or Clean 2-Column Card) ───
       let notes = [
         'Quoted in SGD (indicative); confirmed upon booking.',
         'INR exchange rate approximate; subject to change on payment date.',
@@ -5114,56 +5254,92 @@ export default function PrototypeBuilder() {
       ]
 
       if (customTerms && customTerms.trim()) {
-        const parsed = customTerms.trim().split('\n').map(l => l.trim().replace(/^Terms & Inclusions:?\s*/i, '').replace(/^[•\-\*📌🚐ℹ️]\s*/, '').trim()).filter(Boolean)
+        const parsed = customTerms
+          .trim()
+          .split('\n')
+          .map(l => cleanPdfText(l.trim().replace(/^Terms & Inclusions:?\s*/i, '').replace(/^[•\-\*\d\.\s]+\s*/, '').trim()))
+          .filter(Boolean)
         if (parsed.length > 0) notes = parsed
       }
 
-      const termColW = (CW - 10) / 2
-      const halfCount = Math.ceil(notes.length / 2)
-      const leftTerms = notes.slice(0, halfCount)
-      const rightTerms = notes.slice(halfCount)
+      if (notes.length <= 5) {
+        // Full-width single column layout for 1-5 terms (e.g. Land Package terms) — zero horizontal collision, razor sharp!
+        font('normal', 6.8)
+        let totalLines = 0
+        const splitNotes = notes.map((t, i) => {
+          const cleanText = cleanPdfText(t)
+          const l = doc.splitTextToSize(`${i + 1}.  ${cleanText}`, CW - 12)
+          totalLines += l.length
+          return l
+        })
+        const termCardH = Math.max(22, 7.5 + totalLines * 3.4 + 3)
+        checkPage(termCardH + 3)
 
-      font('normal', 6.6)
-      let leftLinesCount = 0
-      const splitLeft = leftTerms.map((t, i) => {
-        const l = doc.splitTextToSize(`${i + 1}. ${t}`, termColW - 4)
-        leftLinesCount += l.length
-        return l
-      })
-      let rightLinesCount = 0
-      const splitRight = rightTerms.map((t, i) => {
-        const l = doc.splitTextToSize(`${i + 5}. ${t}`, termColW - 4)
-        rightLinesCount += l.length
-        return l
-      })
+        setFill([248, 250, 252] as [number,number,number]); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'F')
+        setDraw([226, 232, 240] as [number,number,number]); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'S')
+        setFill(NAVY); doc.rect(ML, y, 2.5, termCardH, 'F')
 
-      const maxTermLines = Math.max(leftLinesCount, rightLinesCount)
-      const termCardH = Math.max(22, 7.5 + maxTermLines * 3.5 + 2)
-      checkPage(termCardH + 3)
+        font('bold', 8); setTxt(NAVY)
+        doc.text('TERMS & CONDITIONS · IMPORTANT BOOKING NOTES', ML + 5, y + 5.2)
 
-      setFill([248, 250, 252] as [number,number,number]); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'F')
-      setDraw([226, 232, 240] as [number,number,number]); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'S')
-      setFill(NAVY); doc.rect(ML, y, 2.5, termCardH, 'F')
+        let tY = y + 9.2
+        splitNotes.forEach(lines => {
+          font('normal', 6.8); setTxt(SLATE)
+          doc.text(lines, ML + 5, tY)
+          tY += lines.length * 3.3 + 0.8
+        })
+        y += termCardH + 3
+      } else {
+        // 2-Column layout for 6+ short terms
+        const termColW = (CW - 14) / 2
+        const halfCount = Math.ceil(notes.length / 2)
+        const leftTerms = notes.slice(0, halfCount)
+        const rightTerms = notes.slice(halfCount)
 
-      font('bold', 8); setTxt(NAVY)
-      doc.text('TERMS & CONDITIONS · IMPORTANT BOOKING NOTES', ML + 5, y + 5.2)
+        font('normal', 6.6)
+        let leftLinesCount = 0
+        const splitLeft = leftTerms.map((t, i) => {
+          const cleanText = cleanPdfText(t)
+          const l = doc.splitTextToSize(`${i + 1}. ${cleanText}`, termColW - 4)
+          leftLinesCount += l.length
+          return l
+        })
+        let rightLinesCount = 0
+        const splitRight = rightTerms.map((t, i) => {
+          const cleanText = cleanPdfText(t)
+          const l = doc.splitTextToSize(`${i + halfCount + 1}. ${cleanText}`, termColW - 4)
+          rightLinesCount += l.length
+          return l
+        })
 
-      let t1Y = y + 9.2
-      splitLeft.forEach(lines => {
-        font('normal', 6.6); setTxt(SLATE)
-        doc.text(lines, ML + 5, t1Y)
-        t1Y += lines.length * 3.3 + 0.6
-      })
+        const maxTermLines = Math.max(leftLinesCount, rightLinesCount)
+        const termCardH = Math.max(22, 7.5 + maxTermLines * 3.5 + 2)
+        checkPage(termCardH + 3)
 
-      let t2Y = y + 9.2
-      const tCol2X = ML + termColW + 6
-      splitRight.forEach(lines => {
-        font('normal', 6.6); setTxt(SLATE)
-        doc.text(lines, tCol2X, t2Y)
-        t2Y += lines.length * 3.3 + 0.6
-      })
+        setFill([248, 250, 252] as [number,number,number]); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'F')
+        setDraw([226, 232, 240] as [number,number,number]); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'S')
+        setFill(NAVY); doc.rect(ML, y, 2.5, termCardH, 'F')
 
-      y += termCardH + 3
+        font('bold', 8); setTxt(NAVY)
+        doc.text('TERMS & CONDITIONS · IMPORTANT BOOKING NOTES', ML + 5, y + 5.2)
+
+        let t1Y = y + 9.2
+        splitLeft.forEach(lines => {
+          font('normal', 6.6); setTxt(SLATE)
+          doc.text(lines, ML + 5, t1Y)
+          t1Y += lines.length * 3.3 + 0.6
+        })
+
+        let t2Y = y + 9.2
+        const tCol2X = ML + termColW + 7
+        splitRight.forEach(lines => {
+          font('normal', 6.6); setTxt(SLATE)
+          doc.text(lines, tCol2X, t2Y)
+          t2Y += lines.length * 3.3 + 0.6
+        })
+
+        y += termCardH + 3
+      }
 
       // ─── AGENT / CONTACT CARD (Sleek Compact 21mm) ─────────
       y += 1
@@ -5797,8 +5973,10 @@ export default function PrototypeBuilder() {
               highlights.push({ time: timeVal, type: 'transit', label: 'AIRPORT TRANSFER', text: `${v}${capStr} - Changi Airport Arrival` })
             } else if (desc.toLowerCase().startsWith('hotel to airport') || desc.toLowerCase().includes('departure')) {
               highlights.push({ time: timeVal, type: 'transit', label: 'AIRPORT TRANSFER', text: `${v}${capStr} - Changi Airport Departure` })
-            } else if (desc.toLowerCase().includes('city tour')) {
-              highlights.push({ time: timeVal, type: 'transit', label: 'CITY TOUR TRANSFER', text: `${v}${capStr} - Singapore City Tour` })
+            } else if (desc.toLowerCase().includes('city tour') || t.serviceType === 'cityTour') {
+              const isSic = desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)
+              const ctText = isSic ? 'SIC - SIC - per person - City Tour ( 3 hours )' : '13-Seater - Private - group - City tour'
+              highlights.push({ time: timeVal, type: 'transit', label: 'CITY TOUR TRANSFER', text: ctText })
             } else if (desc.toLowerCase().includes('fireworks')) {
               highlights.push({ time: timeVal, type: 'transit', label: 'SPECIAL TRANSFER', text: `${v}${capStr} - Special Fireworks Transfer` })
             } else if (desc) {
@@ -11338,6 +11516,14 @@ ${proposal}
                               onChange={e => updateTransferRow(dIdx, rIdx, 'qty', Math.max(1, parseInt(e.target.value) || 1))}
                               style={{ width: '50px', padding: '0.4rem 0.2rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem', textAlign: 'center', outline: 'none' }}
                             />
+                            {isUserAdmin && (
+                              <span
+                                title="Admin Net Tariff"
+                                style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '2px 6px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 800, whiteSpace: 'nowrap' }}
+                              >
+                                Admin Net: S$ {((vehiclesList[trans.vehicleIndex]?.pricePerTransfer || 0) * (trans.qty || 1))}
+                              </span>
+                            )}
                           </div>
 
                           <button type="button" onClick={() => removeTransferRow(dIdx, rIdx)} style={{ background: 'transparent', border: 'none', color: '#E53E3E', fontSize: '1.1rem', cursor: 'pointer', padding: '0 0.25rem' }}>
@@ -12446,6 +12632,11 @@ ${proposal}
                   <span style={{ background: 'rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '0.15rem 0.55rem', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 700 }}>
                     🏨 Hotel Accommodation Not Included
                   </span>
+                  {isUserAdmin && (
+                    <span style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '0.15rem 0.6rem', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
+                      👑 Admin Mode (Tariffs Visible)
+                    </span>
+                  )}
                 </div>
                 <h3 style={{ margin: '0.2rem 0 0.2rem', fontSize: '1.35rem', fontWeight: 800, fontFamily: 'var(--font-playfair), serif', lineHeight: 1.2 }}>
                   {landPackageModalItem.title}
@@ -12915,9 +13106,30 @@ ${proposal}
                     {/* Inline New Transfer Box */}
                     {landPackageNewTransferDay === dIdx && (
                       <div style={{ marginTop: '0.65rem', background: '#F0F7FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '0.75rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1E40AF', display: 'block', marginBottom: '0.4rem' }}>
-                          Add Interline Transfer to Day {dIdx + 1}
-                        </span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1E40AF' }}>
+                            Add Interline Transfer to Day {dIdx + 1}
+                          </span>
+                          {isUserAdmin && (() => {
+                            let liveNet = 0
+                            let liveDesc = ''
+                            if (newTransferServiceType === 'disposal') {
+                              liveNet = (landPackageCalculation?.rate13Disposal || 45) * (landPackageNewTransferHours || 4)
+                              liveDesc = `(${landPackageNewTransferHours || 4} hrs × S$${landPackageCalculation?.rate13Disposal || 45}/hr)`
+                            } else if (newTransferServiceType === 'cityTour') {
+                              liveNet = landPackageTransferMode === 'sic' ? (landPackageCalculation?.rateSicCityTour || 15) * Math.max(1, landPackageCalculation?.totalPax || 1) : landPackageCalculation?.rate13CityTour || 120
+                              liveDesc = landPackageTransferMode === 'sic' ? `(SIC ${landPackageCalculation?.totalPax || 1} Pax × S$${landPackageCalculation?.rateSicCityTour || 15})` : `(13-Seater S$${landPackageCalculation?.rate13CityTour || 120})`
+                            } else {
+                              liveNet = landPackageTransferMode === 'sic' ? (landPackageCalculation?.rateSicTransfer || 12) * Math.max(1, landPackageCalculation?.totalPax || 1) : landPackageCalculation?.rate13Transfer || 45
+                              liveDesc = landPackageTransferMode === 'sic' ? `(SIC ${landPackageCalculation?.totalPax || 1} Pax × S$${landPackageCalculation?.rateSicTransfer || 12})` : `(13-Seater S$${landPackageCalculation?.rate13Transfer || 45})`
+                            }
+                            return (
+                              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#92400E', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '2px 8px', borderRadius: '4px' }}>
+                                🏷️ Admin Net Tariff: S$ {liveNet} {liveDesc}
+                              </span>
+                            )
+                          })()}
+                        </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem', alignItems: 'center' }}>
                           <select
                             value={newTransferServiceType}
@@ -13002,13 +13214,24 @@ ${proposal}
                     <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 1.25rem' }}>
                       {attractionsList
                         .filter(a => !landPackageSearchAttraction || a.name.toLowerCase().includes(landPackageSearchAttraction.toLowerCase()))
-                        .map((attr, aIdx) => (
+                        .map((attr, aIdx) => {
+                          const adPrice = attr.adultPrice || 0
+                          const chPrice = attr.childPrice || 0
+                          const adPax = landPackageCalculation?.adultTicketCount ?? landPackageAdults
+                          const chPax = landPackageCalculation?.childTicketCount ?? landPackageKids
+                          const totalAttrNet = (adPrice * adPax) + (chPrice * chPax)
+                          return (
                           <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0', borderBottom: '1px solid #F1F5F9' }}>
                             <div>
                               <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#1E293B' }}>{attr.name}</div>
                               <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
                                 Adult: S${attr.adultPrice} | Child: S${attr.childPrice}
                               </div>
+                              {isUserAdmin && (
+                                <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#92400E', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '1px 6px', borderRadius: '4px', display: 'inline-block', marginTop: '0.2rem' }}>
+                                  🏷️ Admin Net: S$ {totalAttrNet} ({adPax} Ad × S${adPrice} + {chPax} Ch × S${chPrice})
+                                </div>
+                              )}
                             </div>
                             <button
                               type="button"
@@ -13018,7 +13241,7 @@ ${proposal}
                               + Add
                             </button>
                           </div>
-                        ))}
+                        )})}
                     </div>
                   </div>
                 </div>

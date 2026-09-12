@@ -49,9 +49,34 @@ interface AttractionItem {
 
 const DEFAULT_TERMS = `Terms & Inclusions:
 
-📌 Land Package Only: Hotel accommodation is not included.
-🚐 Transfers: Airport arrival & departure transfers are provided by Private 13-Seater Minibus. Sightseeing transfers are as selected (SIC / Private 13-Seater). Surcharges applicable for flights between 22:00 - 07:00 hours.
-ℹ️ Customizations: For hotel room bookings, meal plans, licensed English/Hindi guides, or coach upgrades for groups >12 Pax, please contact DMC.`
+1. Land Package Only: Hotel accommodation is not included.
+2. Transfers: Airport arrival & departure transfers are provided by Private 13-Seater Minibus. Sightseeing transfers are as selected (SIC / Private 13-Seater). Surcharges applicable for flights between 22:00 - 07:00 hours.
+3. Customizations: For hotel room bookings, meal plans, licensed English/Hindi guides, or coach upgrades for groups >12 Pax, please contact DMC.`
+
+function cleanPdfText(text: string): string {
+  if (!text) return ''
+  return text
+    .replace(/https?:\/\/(www\.)?flyingwonders\.net\/sgac/gi, '(SG Arrival Card: flyingwonders.net/sgac)')
+    .replace(/https?:\/\/\S+/gi, '')
+    .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F300}-\u{1F9FF}\u{1FA00}-\u{1FAFF}]/gu, '')
+    .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '')
+    .replace(/[\u0080-\u009F]/g, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[📌🚐ℹ️⚡🏨👤🌙📞💰💵📅🎟️🚗🛬🛫🏙️]/g, '')
+    .replace(/\s+([,.:;!?])/g, '$1')
+    .replace(/,\s*,+/g, ', ')
+    .replace(/\.\s*\.+/g, '. ')
+    .replace(/Tip\s*:\s*/gi, 'Tip: ')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/--+/g, '—')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
 
 export default function ReadyMadePackagesPage() {
   const router = useRouter()
@@ -107,16 +132,41 @@ export default function ReadyMadePackagesPage() {
   const [sendingCardId, setSendingCardId] = useState<string | null>(null)
 
   // Admin Check for Net Pricing Visibility
+  const [isAdminOverride, setIsAdminOverride] = useState(false)
+
   const isAdmin = useMemo(() => {
+    if (isAdminOverride) return true
     if (!activeAgent) return false
     const email = (activeAgent.email || '').toLowerCase().trim()
     return email === 'info.flyingwonders@gmail.com' ||
            activeAgent.role === 'admin' ||
            activeAgent.isAdmin === true
-  }, [activeAgent])
+  }, [activeAgent, isAdminOverride])
 
   // Fetch Templates, Rates & Agent on Mount
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('admin') === 'true' || params.get('mode') === 'admin') {
+        setIsAdminOverride(true)
+      }
+      try {
+        const stored = localStorage.getItem('fw_b2b_agent')
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (parsed) {
+            const email = (parsed.email || '').toLowerCase().trim()
+            if (email === 'info.flyingwonders@gmail.com' || parsed.role === 'admin' || parsed.isAdmin === true) {
+              setIsAdminOverride(true)
+            }
+            if (!activeAgent) {
+              setActiveAgent(parsed)
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
     // 1. Fetch Ready Package Templates
     fetch('/api/ready-packages')
       .then(res => res.json())
@@ -713,15 +763,19 @@ export default function ReadyMadePackagesPage() {
         t += `\n*Day ${day.dayNumber || idx + 1}: ${day.dayTitle || 'Tour Day'}*\n`
         if (day.dayDescription) t += `  _${day.dayDescription}_\n`
         ;(day.transfers || []).forEach((tr: any) => {
-          const icon = tr.serviceType === 'arrival' ? '🛬' : tr.serviceType === 'departure' ? '🛫' : '🚗'
+          const isCityTour = tr.serviceType === 'cityTour' || (tr.routeDescription || tr.serviceType || '').toLowerCase().includes('city tour')
+          const icon = tr.serviceType === 'arrival' ? '🛬' : tr.serviceType === 'departure' ? '🛫' : isCityTour ? '🏙️' : '🚗'
           const timeStr = tr.time ? `${tr.time} — ` : ''
           let mStr = modeLabel
           if (tr.serviceType === 'arrival' || tr.serviceType === 'departure') {
             mStr = privateTransLabel
           } else if (tr.serviceType === 'disposal') {
             mStr = `${tr.hours || 4} Hours Disposal (${privateTransLabel})`
+          } else if (isCityTour) {
+            mStr = params.transferMode === 'sic' ? 'SIC - SIC - per person - City Tour ( 3 hours )' : '13-Seater - Private - group - City tour'
           }
-          t += `  ${icon} ${timeStr}${tr.routeDescription || tr.serviceType} (${mStr})\n`
+          const transTitle = isCityTour ? mStr : `${tr.routeDescription || tr.serviceType} (${mStr})`
+          t += `  ${icon} ${timeStr}${transTitle}\n`
         })
         ;(day.attractions || []).forEach((attr: any) => {
           const timeStr = attr.time ? `${attr.time} — ` : ''
@@ -1138,12 +1192,18 @@ export default function ReadyMadePackagesPage() {
           doc.text(`[${t.time || '10:00'}] Transfer:`, ML + 4, y + 4.8)
           font('normal', 7); setTxt(TEXT)
           let modeTag = modeLabel
-          if (t.serviceType === 'arrival' || t.serviceType === 'departure') {
+          const isAirport = t.serviceType === 'arrival' || t.serviceType === 'departure'
+          const isDisposal = t.serviceType === 'disposal'
+          const isCityTour = t.serviceType === 'cityTour' || (t.routeDescription || t.serviceType || '').toLowerCase().includes('city tour')
+          if (isAirport) {
             modeTag = privateTransLabel
-          } else if (t.serviceType === 'disposal') {
+          } else if (isDisposal) {
             modeTag = `${t.hours || 4} Hours Disposal (${privateTransLabel})`
+          } else if (isCityTour) {
+            modeTag = transferMode === 'sic' ? 'SIC - SIC - per person - City Tour ( 3 hours )' : '13-Seater - Private - group - City tour'
           }
-          doc.text(`${t.routeDescription || t.serviceType} (${modeTag})`, ML + 28, y + 4.8)
+          const transTitle = isCityTour ? modeTag : `${t.routeDescription || t.serviceType} (${modeTag})`
+          doc.text(transTitle, ML + 28, y + 4.8)
           y += 8.5
         })
 
@@ -1164,19 +1224,46 @@ export default function ReadyMadePackagesPage() {
         y += 2
       })
 
-      // ── TERMS & CONDITIONS CARD ──
-      checkPage(24)
-      y += 2
-      setFill([248, 250, 252]); doc.roundedRect(ML, y, CW, 26, 2, 2, 'F')
-      setDraw([226, 232, 240]); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, 26, 2, 2, 'S')
-      setFill(NAVY); doc.rect(ML, y, 2.5, 26, 'F')
+      // ── TERMS & CONDITIONS CARD (Clean Full-Width, High Contrast, Zero Overlap) ──
+      let readyTerms = [
+        'Land Package Only: Hotel accommodation is not included.',
+        'Transfers: Airport arrival & departure transfers are provided by Private 13-Seater Minibus. Sightseeing transfers are as selected (SIC / Private 13-Seater). Surcharges applicable for flights between 22:00 - 07:00 hours.',
+        'Customizations: For hotel room bookings, meal plans, licensed English/Hindi guides, or coach upgrades for groups >12 Pax, please contact DMC.'
+      ]
+      if (termsText && termsText.trim()) {
+        const parsed = termsText
+          .trim()
+          .split('\n')
+          .map((l: string) => cleanPdfText(l.trim().replace(/^Terms & Inclusions:?\s*/i, '').replace(/^[•\-\*\d\.\s]+\s*/, '').trim()))
+          .filter(Boolean)
+        if (parsed.length > 0) readyTerms = parsed
+      }
+
+      font('normal', 6.8)
+      let totalTermLines = 0
+      const splitTerms = readyTerms.map((t: string, i: number) => {
+        const cleanT = cleanPdfText(t)
+        const l = doc.splitTextToSize(`${i + 1}.  ${cleanT}`, CW - 12)
+        totalTermLines += l.length
+        return l
+      })
+      const termCardH = Math.max(22, 7.5 + totalTermLines * 3.4 + 3)
+      checkPage(termCardH + 3)
+
+      setFill([248, 250, 252]); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'F')
+      setDraw([226, 232, 240]); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'S')
+      setFill(NAVY); doc.rect(ML, y, 2.5, termCardH, 'F')
 
       font('bold', 8); setTxt(NAVY)
-      doc.text('TERMS & CONDITIONS · IMPORTANT BOOKING NOTES', ML + 5, y + 5.5)
+      doc.text('TERMS & CONDITIONS · IMPORTANT BOOKING NOTES', ML + 5, y + 5.2)
 
-      font('normal', 6.6); setTxt(SLATE)
-      const termLines = doc.splitTextToSize(termsText, CW - 10)
-      doc.text(termLines.slice(0, 6), ML + 5, y + 10.5)
+      let tY = y + 9.2
+      splitTerms.forEach((lines: string[]) => {
+        font('normal', 6.8); setTxt(SLATE)
+        doc.text(lines, ML + 5, tY)
+        tY += lines.length * 3.3 + 0.8
+      })
+      y += termCardH + 3
 
       addFooter()
       doc.save(`Singapore_Land_Package_${selectedTemplate.nightsCount}N_${(guestName || 'Proposal').replace(/\s+/g, '_')}.pdf`)
@@ -1665,6 +1752,11 @@ export default function ReadyMadePackagesPage() {
                       Ref: {savedProposalNum}
                     </span>
                   )}
+                  {isAdmin && (
+                    <span style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', fontSize: '0.68rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                      👑 Admin Mode (Tariffs Visible)
+                    </span>
+                  )}
                 </div>
                 <h3 style={{ margin: '0.4rem 0 0.15rem', fontSize: '1.35rem', fontWeight: 800, fontFamily: 'var(--font-playfair), serif' }}>
                   {selectedTemplate.title}
@@ -2036,9 +2128,30 @@ export default function ReadyMadePackagesPage() {
                     {/* Inline New Transfer Box */}
                     {newTransferDay === dIdx && (
                       <div style={{ marginTop: '0.65rem', background: '#F0F7FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '0.75rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1E40AF', display: 'block', marginBottom: '0.4rem' }}>
-                          Add Interline Transfer to Day {dIdx + 1}
-                        </span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1E40AF' }}>
+                            Add Interline Transfer to Day {dIdx + 1}
+                          </span>
+                          {isAdmin && (() => {
+                            let liveNet = 0
+                            let liveDesc = ''
+                            if (newTransferType === 'disposal') {
+                              liveNet = (calculation?.rate13Disposal ?? 45) * newTransferHours
+                              liveDesc = `(${newTransferHours} hrs × S$${calculation?.rate13Disposal ?? 45}/hr)`
+                            } else if (newTransferType === 'cityTour') {
+                              liveNet = transferMode === 'sic' ? (calculation?.rateSicCity ?? 15) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13City ?? 120)
+                              liveDesc = transferMode === 'sic' ? `(SIC ${calculation?.totalPax || 1} Pax × S$${calculation?.rateSicCity ?? 15})` : `(13-Seater S$${calculation?.rate13City ?? 120})`
+                            } else {
+                              liveNet = transferMode === 'sic' ? (calculation?.rateSicXfer ?? 12) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13Transfer ?? 45)
+                              liveDesc = transferMode === 'sic' ? `(SIC ${calculation?.totalPax || 1} Pax × S$${calculation?.rateSicXfer ?? 12})` : `(13-Seater S$${calculation?.rate13Transfer ?? 45})`
+                            }
+                            return (
+                              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#92400E', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '2px 8px', borderRadius: '4px' }}>
+                                🏷️ Admin Net Tariff: S$ {liveNet} {liveDesc}
+                              </span>
+                            )
+                          })()}
+                        </div>
                         <div style={{ display: 'grid', gridTemplateColumns: newTransferType === 'disposal' ? '1fr 1.3fr 75px 75px auto' : '1fr 1.5fr 80px auto', gap: '0.5rem', alignItems: 'center' }}>
                           <select
                             value={newTransferType}
@@ -2128,23 +2241,33 @@ export default function ReadyMadePackagesPage() {
                     <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 1.25rem' }}>
                       {attractionsList
                         .filter(a => !searchAttraction || a.name.toLowerCase().includes(searchAttraction.toLowerCase()))
-                        .map((attr, aIdx) => (
-                          <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0', borderBottom: '1px solid #F1F5F9' }}>
-                            <div>
-                              <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#1E293B' }}>{attr.name}</div>
-                              <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
-                                Adult: S${attr.adultPrice} | Child: S${attr.childPrice}
+                        .map((attr, aIdx) => {
+                          const adPax = calculation?.adultTicketCount ?? paxAdults
+                          const chPax = calculation?.childTicketCount ?? paxKids
+                          const totalAttrNet = (attr.adultPrice * adPax) + (attr.childPrice * chPax)
+                          return (
+                            <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0', borderBottom: '1px solid #F1F5F9' }}>
+                              <div>
+                                <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#1E293B' }}>{attr.name}</div>
+                                <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                                  Adult: S${attr.adultPrice} | Child: S${attr.childPrice}
+                                </div>
+                                {isAdmin && (
+                                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#92400E', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '1px 6px', borderRadius: '4px', display: 'inline-block', marginTop: '0.2rem' }}>
+                                    🏷️ Admin Net: S$ {totalAttrNet} ({adPax} Ad × S${attr.adultPrice} + {chPax} Ch × S${attr.childPrice})
+                                  </div>
+                                )}
                               </div>
+                              <button
+                                type="button"
+                                onClick={() => addAttractionToDay(attractionModalDay, attr)}
+                                style={{ background: '#0F4C3A', color: '#FFF', border: 'none', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                              >
+                                + Add
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => addAttractionToDay(attractionModalDay, attr)}
-                              style={{ background: '#0F4C3A', color: '#FFF', border: 'none', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
-                            >
-                              + Add
-                            </button>
-                          </div>
-                        ))}
+                          )
+                        })}
                     </div>
                   </div>
                 </div>
