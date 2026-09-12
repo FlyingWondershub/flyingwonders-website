@@ -84,7 +84,7 @@ function VoucherVerifyContent() {
             Accommodation Voucher Verification
           </h1>
           <p style={{ color: '#475569', fontSize: '0.95rem', margin: 0, fontFamily: 'var(--font-inter), sans-serif' }}>
-            Flying Wonders Travel DMC · Singapore Tourism Board Licensed Operator (TA-03451)
+            Flying Wonders Pvt Ltd · Customizing your travel choices... (CIN: U63090KA2016PTC095564)
           </p>
         </div>
 
@@ -344,15 +344,22 @@ function VoucherVerifyContent() {
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
                           <thead>
                             <tr style={{ background: '#E2E8F0', color: '#334155', textAlign: 'left' }}>
-                              <th style={{ padding: '6px 8px', borderRadius: '4px 0 0 4px' }}>Applicant Full Name</th>
+                              <th style={{ padding: '6px 8px', borderRadius: '4px 0 0 4px' }}>Room #</th>
+                              <th style={{ padding: '6px 8px' }}>Room Category</th>
+                              <th style={{ padding: '6px 8px' }}>Occupant Full Name</th>
                               <th style={{ padding: '6px 8px' }}>Passport Number</th>
-                              <th style={{ padding: '6px 8px' }}>Nationality</th>
-                              <th style={{ padding: '6px 8px', borderRadius: '0 4px 4px 0' }}>Type</th>
+                              <th style={{ padding: '6px 8px', borderRadius: '0 4px 4px 0' }}>Nationality</th>
                             </tr>
                           </thead>
                           <tbody>
                             {room.guests && room.guests.map((g: any, gIdx: number) => (
                               <tr key={gIdx} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                                <td style={{ padding: '6px 8px', fontWeight: 800, color: '#0A2240' }}>
+                                  Room #{room.roomNumber || (rIdx + 1).toString().padStart(2, '0')}
+                                </td>
+                                <td style={{ padding: '6px 8px', color: '#334155' }}>
+                                  {room.roomType || 'Standard Room'}
+                                </td>
                                 <td style={{ padding: '6px 8px', fontWeight: 700, color: '#0F172A' }}>
                                   {g.title ? `${g.title} ` : ''}{g.fullName}
                                 </td>
@@ -361,9 +368,6 @@ function VoucherVerifyContent() {
                                 </td>
                                 <td style={{ padding: '6px 8px', color: '#475569' }}>
                                   {g.nationality || 'INDIAN'}
-                                </td>
-                                <td style={{ padding: '6px 8px', color: '#475569' }}>
-                                  {g.guestType || 'Adult'}
                                 </td>
                               </tr>
                             ))}
@@ -376,13 +380,22 @@ function VoucherVerifyContent() {
               </div>
 
               {/* Formal Declaration Notice */}
-              <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: '10px', padding: '1rem', color: '#78350F', fontSize: '0.82rem', lineHeight: '1.5' }}>
+              <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: '10px', padding: '1rem', color: '#78350F', fontSize: '0.82rem', lineHeight: '1.5', marginBottom: '1.5rem' }}>
                 <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Formal Certification for Visa Authorities & Border Officials:</strong>
-                Flying Wonders Pte Ltd confirms that all room accommodation listed on this voucher is confirmed and prepaid under our approved tour operator credit line. No further accommodation payment is required from the guests at check-in. For consular verification inquiries, contact our operations desk at <a href="mailto:info.flyingwonders@gmail.com" style={{ color: '#78350F', fontWeight: 800 }}>info.flyingwonders@gmail.com</a>.
+                Flying Wonders Pvt Ltd confirms that all room accommodation listed on this voucher is confirmed and prepaid under our approved tour operator credit line. No further accommodation payment is required from the guests at check-in. For consular verification inquiries, contact our operations desk at <a href="mailto:info.flyingwonders@gmail.com" style={{ color: '#78350F', fontWeight: 800 }}>info.flyingwonders@gmail.com</a>.
               </div>
 
-              <div style={{ textAlign: 'center', marginTop: '1.5rem', color: '#94A3B8', fontSize: '0.75rem' }}>
-                Verified digitally on {new Date().toUTCString()} · Flying Wonders Travel Portal
+              {/* Accreditation Badges Banner (Image 3) */}
+              <div style={{ textAlign: 'center', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' }}>
+                <img
+                  src="/images/voucher-footer-accreditations.png"
+                  alt="Accreditations - ISO 9001, ISO 27001, TOA, TAAI, Nidhi+, Dun & Bradstreet"
+                  style={{ maxWidth: '100%', height: 'auto', maxHeight: '75px', objectFit: 'contain' }}
+                />
+              </div>
+
+              <div style={{ textAlign: 'center', marginTop: '1rem', color: '#94A3B8', fontSize: '0.75rem' }}>
+                Verified digitally on {new Date().toUTCString()} · Flying Wonders Pvt Ltd
               </div>
 
             </div>

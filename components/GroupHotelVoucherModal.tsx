@@ -537,7 +537,7 @@ export default function GroupHotelVoucherModal({
 🔍 *Live Visa Verification Portal:*
 ${verifyUrl}
 
-_Authorized by Flying Wonders Travel DMC Singapore (STB TA-03451)_`
+_Authorized by Flying Wonders Pvt Ltd (CIN: U63090KA2016PTC095564)_`
 
     navigator.clipboard.writeText(text)
     alert('Pre-formatted WhatsApp confirmation message copied to clipboard! 📋')

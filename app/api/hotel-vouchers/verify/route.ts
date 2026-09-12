@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       success: true,
       verified: true,
       verifiedAt: new Date().toISOString(),
-      issuer: 'Flying Wonders Pte Ltd (Singapore Tourism Board Licensed DMC)',
+      issuer: 'Flying Wonders Pvt Ltd (CIN: U63090KA2016PTC095564)',
       voucher: {
         voucherNumber: voucher.voucherNumber,
         groupName: voucher.groupName,
