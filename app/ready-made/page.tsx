@@ -126,6 +126,7 @@ export default function ReadyMadePackagesPage() {
   const [newTransferRoute, setNewTransferRoute] = useState('')
   const [newTransferTime, setNewTransferTime] = useState('14:00')
   const [termsText, setTermsText] = useState(DEFAULT_TERMS)
+  const [showTerms, setShowTerms] = useState(false)
   const [copiedWA, setCopiedWA] = useState(false)
   const [sendingWA, setSendingWA] = useState(false)
   const [copiedCardId, setCopiedCardId] = useState<string | null>(null)
@@ -1743,10 +1744,11 @@ export default function ReadyMadePackagesPage() {
           <div
             style={{
               background: '#FFF',
-              borderRadius: '16px',
-              maxWidth: '850px',
-              width: '100%',
-              maxHeight: '92vh',
+              borderRadius: '14px',
+              maxWidth: '1360px',
+              width: '96vw',
+              height: '92vh',
+              maxHeight: '94vh',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
@@ -1754,50 +1756,57 @@ export default function ReadyMadePackagesPage() {
             }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div style={{ background: 'linear-gradient(135deg, #0A2240 0%, #0F4C3A 100%)', color: '#FFF', padding: '1.25rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span style={{ background: '#D4AF37', color: '#111', fontSize: '0.68rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Land Package Quoter (Hotel Excluded)
-                  </span>
-                  {savedProposalNum && (
-                    <span style={{ background: '#059669', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
-                      Ref: {savedProposalNum}
-                    </span>
-                  )}
-                  {isAdmin && (
-                    <span style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', fontSize: '0.68rem', fontWeight: 800, padding: '0.2rem 0.6rem', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                      👑 Admin Mode (Tariffs Visible)
-                    </span>
-                  )}
-                </div>
-                <h3 style={{ margin: '0.4rem 0 0.15rem', fontSize: '1.35rem', fontWeight: 800, fontFamily: 'var(--font-playfair), serif' }}>
+            {/* Modal Header (Ultra-Compact Streamlined Bar) */}
+            <div style={{
+              background: 'linear-gradient(135deg, #0A2240 0%, #0F4C3A 100%)',
+              color: '#FFF',
+              padding: '0.65rem 1.25rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+              flexShrink: 0
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, fontFamily: 'var(--font-playfair), serif' }}>
                   {selectedTemplate.title}
                 </h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', fontSize: '0.78rem', color: '#CBD5E1' }}>
-                  <span>🌙 {selectedTemplate.nightsCount} Nights / {selectedTemplate.nightsCount + 1} Days · Max 12 Pax</span>
-                  <span>•</span>
-                  <span>👤 Guest: <strong style={{ color: '#FCD34D' }}>{guestName.trim() || 'Valued Guest'}</strong></span>
-                  {guestPhone.trim() && (
-                    <>
-                      <span>•</span>
-                      <span>📞 {guestPhone.trim()}</span>
-                    </>
-                  )}
-                </div>
+                <span style={{ background: 'rgba(255,255,255,0.15)', color: '#FFF', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' }}>
+                  🌙 {selectedTemplate.nightsCount}N / {selectedTemplate.nightsCount + 1}D (Max 12 Pax)
+                </span>
+                <span style={{ background: '#D4AF37', color: '#111', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Land Package Only
+                </span>
+                {savedProposalNum && (
+                  <span style={{ background: '#059669', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px' }}>
+                    Ref: {savedProposalNum}
+                  </span>
+                )}
+                {isAdmin && (
+                  <span style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    👑 Admin Mode
+                  </span>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedTemplate(null)}
-                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                ✕
-              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#E2E8F0', background: 'rgba(255,255,255,0.08)', padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span>👤 <strong style={{ color: '#FCD34D' }}>{guestName.trim() || 'Valued Guest'}</strong></span>
+                  {guestPhone.trim() && <span>· 📞 {guestPhone.trim()}</span>}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedTemplate(null)}
+                  title="Close Quoter"
+                  style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {/* Modal Body */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               
               {/* Over 12 Pax Warning Banner */}
               {calculation && calculation.isOverCapacity && (
@@ -1823,93 +1832,145 @@ export default function ReadyMadePackagesPage() {
                 </div>
               )}
 
-              {/* Traveler Inputs */}
-              <div style={{ background: '#F8FAFC', padding: '1.1rem', borderRadius: '12px', border: '1px solid #E2E8F0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.85rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#475569', marginBottom: '0.3rem' }}>Guest Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Ramesh Kumar"
-                    value={guestName}
-                    onChange={e => setGuestName(e.target.value)}
-                    style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                  />
-                </div>
+              {/* Top Controls Toolbar: Traveler Details + Transport Policy */}
+              <div style={{ background: '#F8FAFC', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.65rem', alignItems: 'flex-end' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem' }}>Guest Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Ramesh Kumar"
+                      value={guestName}
+                      onChange={e => setGuestName(e.target.value)}
+                      style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
+                    />
+                  </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#475569', marginBottom: '0.3rem' }}>Guest Phone</label>
-                  <input
-                    type="text"
-                    placeholder="+91 9876543210"
-                    value={guestPhone}
-                    onChange={e => setGuestPhone(e.target.value)}
-                    style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                  />
-                </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem' }}>Guest Phone</label>
+                    <input
+                      type="text"
+                      placeholder="+91 9876543210"
+                      value={guestPhone}
+                      onChange={e => setGuestPhone(e.target.value)}
+                      style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
+                    />
+                  </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#475569', marginBottom: '0.3rem' }}>Arrival Date</label>
-                  <input
-                    type="date"
-                    value={travelDate}
-                    onChange={e => setTravelDate(e.target.value)}
-                    style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                  />
-                </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem' }}>Arrival Date</label>
+                    <input
+                      type="date"
+                      value={travelDate}
+                      onChange={e => setTravelDate(e.target.value)}
+                      style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
+                    />
+                  </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#475569', marginBottom: '0.3rem' }}>Adults (1-12)</label>
-                  <div style={{ display: 'flex', alignItems: 'center', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px' }}>
-                    <button type="button" onClick={() => setPaxAdults(p => Math.max(1, p - 1))} style={{ padding: '0.45rem 0.65rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569' }}>−</button>
-                    <span style={{ flex: 1, textAlign: 'center', fontWeight: 800, fontSize: '0.85rem' }}>{paxAdults}</span>
-                    <button type="button" onClick={() => setPaxAdults(p => Math.min(12, p + 1))} style={{ padding: '0.45rem 0.65rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569' }}>+</button>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem' }}>Adults (1-12)</label>
+                    <div style={{ display: 'flex', alignItems: 'center', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px', height: '32px' }}>
+                      <button type="button" onClick={() => setPaxAdults(p => Math.max(1, p - 1))} style={{ padding: '0 0.55rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569', height: '100%' }}>−</button>
+                      <span style={{ flex: 1, textAlign: 'center', fontWeight: 800, fontSize: '0.82rem' }}>{paxAdults}</span>
+                      <button type="button" onClick={() => setPaxAdults(p => Math.min(12, p + 1))} style={{ padding: '0 0.55rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569', height: '100%' }}>+</button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem' }}>Children (0-11)</label>
+                    <div style={{ display: 'flex', alignItems: 'center', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px', height: '32px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = Math.max(0, paxKids - 1)
+                          setPaxKids(next)
+                          setChildAges(prev => prev.slice(0, next))
+                        }}
+                        style={{ padding: '0 0.55rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569', height: '100%' }}
+                      >
+                        −
+                      </button>
+                      <span style={{ flex: 1, textAlign: 'center', fontWeight: 800, fontSize: '0.82rem' }}>{paxKids}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = Math.min(11, paxKids + 1)
+                          setPaxKids(next)
+                          setChildAges(prev => {
+                            const c = [...prev]
+                            while (c.length < next) c.push(5)
+                            return c
+                          })
+                        }}
+                        style={{ padding: '0 0.55rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569', height: '100%' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem' }}>Transport Policy</label>
+                    <div style={{ display: 'flex', height: '32px', alignItems: 'center' }}>
+                      {selectedTemplate?.transferPricingOption === 'private_only' ? (
+                        <span style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, background: '#0F4C3A', color: '#FFF', whiteSpace: 'nowrap' }}>
+                          🚐 Fixed Private 13-Seater
+                        </span>
+                      ) : selectedTemplate?.transferPricingOption === 'sic_only' ? (
+                        <span style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, background: '#0F4C3A', color: '#FFF', whiteSpace: 'nowrap' }}>
+                          🚌 Fixed SIC Sightseeing
+                        </span>
+                      ) : (
+                        <div style={{ display: 'inline-flex', background: '#E2E8F0', padding: '2px', borderRadius: '6px', width: '100%' }}>
+                          <button
+                            type="button"
+                            onClick={() => setTransferMode('private13')}
+                            style={{
+                              flex: 1,
+                              padding: '0.25rem 0.45rem',
+                              borderRadius: '5px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              border: 'none',
+                              cursor: 'pointer',
+                              background: transferMode === 'private13' ? '#0F4C3A' : 'transparent',
+                              color: transferMode === 'private13' ? '#FFF' : '#475569',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            🚐 13-Seater
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setTransferMode('sic')}
+                            style={{
+                              flex: 1,
+                              padding: '0.25rem 0.45rem',
+                              borderRadius: '5px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              border: 'none',
+                              cursor: 'pointer',
+                              background: transferMode === 'sic' ? '#0F4C3A' : 'transparent',
+                              color: transferMode === 'sic' ? '#FFF' : '#475569',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            🚌 SIC
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: '#475569', marginBottom: '0.3rem' }}>Children (0-11)</label>
-                  <div style={{ display: 'flex', alignItems: 'center', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = Math.max(0, paxKids - 1)
-                        setPaxKids(next)
-                        setChildAges(prev => prev.slice(0, next))
-                      }}
-                      style={{ padding: '0.45rem 0.65rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569' }}
-                    >
-                      −
-                    </button>
-                    <span style={{ flex: 1, textAlign: 'center', fontWeight: 800, fontSize: '0.85rem' }}>{paxKids}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = Math.min(11, paxKids + 1)
-                        setPaxKids(next)
-                        setChildAges(prev => {
-                          const c = [...prev]
-                          while (c.length < next) c.push(5)
-                          return c
-                        })
-                      }}
-                      style={{ padding: '0.45rem 0.65rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569' }}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Per-Child Age Inputs */}
-              {paxKids > 0 && (
-                <div style={{ background: '#FFFDF5', border: '1px solid #FDE68A', borderRadius: '8px', padding: '0.75rem 1rem' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#92400E', display: 'block', marginBottom: '0.35rem' }}>
-                    👶 Specify Child Ages for Accurate Ticket Pricing:
-                  </span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
+                {/* Child Ages row (conditional) */}
+                {paxKids > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', paddingTop: '0.35rem', borderTop: '1px dashed #CBD5E1' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#92400E' }}>👶 Child Ages:</span>
                     {Array.from({ length: paxKids }).map((_, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#78350F' }}>Child {i + 1}:</span>
+                      <div key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#FFFDF5', border: '1px solid #FDE68A', padding: '1px 5px', borderRadius: '4px' }}>
+                        <span style={{ fontSize: '0.7rem', color: '#78350F' }}>C{i + 1}:</span>
                         <input
                           type="number"
                           min="0"
@@ -1923,90 +1984,16 @@ export default function ReadyMadePackagesPage() {
                               return copy
                             })
                           }}
-                          style={{ width: '48px', padding: '0.25rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.78rem', textAlign: 'center', fontWeight: 700, background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
+                          style={{ width: '38px', padding: '1px 2px', borderRadius: '3px', border: '1px solid #CBD5E1', fontSize: '0.72rem', textAlign: 'center', fontWeight: 800, background: '#FFF', color: '#1E293B' }}
                         />
-                        <span style={{ fontSize: '0.7rem', color: '#94A3B8' }}>yrs</span>
+                        <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>yr</span>
                       </div>
                     ))}
+                    <span style={{ fontSize: '0.68rem', color: '#A16207', marginLeft: 'auto' }}>
+                      * 0-2 yrs: Free · 3-12 yrs: Child · 13+ yrs: Adult
+                    </span>
                   </div>
-                  <span style={{ fontSize: '0.7rem', color: '#A16207', display: 'block', marginTop: '0.35rem' }}>
-                    * Infant (0-2 yrs): Free admission · Child (3-12 yrs): Child rate · 13+ yrs: Adult ticket
-                  </span>
-                </div>
-              )}
-
-              {/* Transfer Mode Toggle */}
-              <div style={{ background: '#F8FAFC', padding: '0.85rem 1.1rem', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <div>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', display: 'block' }}>Sightseeing Transport Mode:</span>
-                  <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Airport arrival & departure always remain Private 13-Seater Minibus</span>
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {selectedTemplate?.transferPricingOption === 'private_only' ? (
-                    <span style={{
-                      padding: '0.45rem 0.85rem',
-                      borderRadius: '6px',
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      background: '#0F4C3A',
-                      color: '#FFF',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      🚐 Fixed Private 13-Seater Package
-                    </span>
-                  ) : selectedTemplate?.transferPricingOption === 'sic_only' ? (
-                    <span style={{
-                      padding: '0.45rem 0.85rem',
-                      borderRadius: '6px',
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      background: '#0F4C3A',
-                      color: '#FFF',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      🚌 Fixed SIC Sightseeing Package
-                    </span>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setTransferMode('private13')}
-                        style={{
-                          padding: '0.45rem 0.85rem',
-                          borderRadius: '6px',
-                          fontSize: '0.78rem',
-                          fontWeight: 800,
-                          border: 'none',
-                          cursor: 'pointer',
-                          background: transferMode === 'private13' ? '#0F4C3A' : '#E2E8F0',
-                          color: transferMode === 'private13' ? '#FFF' : '#475569'
-                        }}
-                      >
-                        🚐 All Private 13-Seater
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTransferMode('sic')}
-                        style={{
-                          padding: '0.45rem 0.85rem',
-                          borderRadius: '6px',
-                          fontSize: '0.78rem',
-                          fontWeight: 800,
-                          border: 'none',
-                          cursor: 'pointer',
-                          background: transferMode === 'sic' ? '#0F4C3A' : '#E2E8F0',
-                          color: transferMode === 'sic' ? '#FFF' : '#475569'
-                        }}
-                      >
-                        🚌 Sightseeing SIC (Shared)
-                      </button>
-                    </>
-                  )}
-                </div>
+                )}
               </div>
 
               {/* Day-by-Day Itinerary Editor */}
@@ -2016,42 +2003,59 @@ export default function ReadyMadePackagesPage() {
                 </span>
 
                 {daywiseItinerary.map((day: any, dIdx: number) => (
-                  <div key={dIdx} style={{ background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                  <div key={dIdx} style={{ background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.75rem 1rem', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
                     
                     {/* Day Title Row */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <strong style={{ fontSize: '0.88rem', color: '#0F4C3A' }}>
-                        Day {day.dayNumber || dIdx + 1}: {day.dayTitle || 'Tour Day'}
-                      </strong>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem', paddingBottom: '0.35rem', borderBottom: '1px solid #F1F5F9' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                        <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '5px' }}>
+                          Day {day.dayNumber || dIdx + 1}
+                        </span>
+                        <strong style={{ fontSize: '0.9rem', color: '#0F172A', fontWeight: 800 }}>
+                          {day.dayTitle || 'Tour Day'}
+                        </strong>
+                        {day.dayDescription && (
+                          <span style={{ fontSize: '0.74rem', color: '#64748B', fontStyle: 'italic' }}>
+                            — {day.dayDescription}
+                          </span>
+                        )}
+                      </div>
+
                       <div style={{ display: 'flex', gap: '0.35rem' }}>
                         <button
                           type="button"
-                          onClick={() => setAttractionModalDay(dIdx)}
-                          style={{ background: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                          onClick={() => setNewTransferDay(newTransferDay === dIdx ? null : dIdx)}
+                          style={{ background: '#F0F7FF', color: '#1E40AF', border: '1px solid #BFDBFE', padding: '0.2rem 0.55rem', borderRadius: '5px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
                         >
-                          + Attraction
+                          {newTransferDay === dIdx ? '✕ Close' : '+ Transfer'}
                         </button>
                         <button
                           type="button"
-                          onClick={() => setNewTransferDay(dIdx)}
-                          style={{ background: '#F0F7FF', color: '#1E40AF', border: '1px solid #BFDBFE', padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                          onClick={() => setAttractionModalDay(dIdx)}
+                          style={{ background: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', padding: '0.2rem 0.55rem', borderRadius: '5px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
                         >
-                          + Transfer
+                          + Attraction
                         </button>
                       </div>
                     </div>
 
-                    {day.dayDescription && (
-                      <p style={{ margin: '0 0 0.65rem', fontSize: '0.76rem', color: '#64748B', fontStyle: 'italic' }}>
-                        {day.dayDescription}
-                      </p>
-                    )}
+                    {/* 2-Column Responsive Grid: Column 1 = Transfers, Column 2 = Sightseeing Admissions */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '0.75rem' }}>
+                      
+                      {/* Left: Transfers Column */}
+                      <div style={{ background: '#F8FAFC', borderRadius: '8px', padding: '0.55rem 0.75rem', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            🚐 Scheduled Transfers ({(day.transfers || []).length})
+                          </span>
+                        </div>
 
-                    {/* Transfers */}
-                    {(day.transfers || []).length > 0 && (
-                      <div style={{ marginBottom: '0.65rem' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                          {(day.transfers || []).map((tr: any, tIdx: number) => {
+                        {(day.transfers || []).length === 0 ? (
+                          <div style={{ padding: '0.5rem', textAlign: 'center', color: '#94A3B8', fontSize: '0.72rem', fontStyle: 'italic', background: '#FFF', borderRadius: '6px', border: '1px dashed #CBD5E1' }}>
+                            No transfers scheduled on this day.
+                          </div>
+                        ) : (
+                          (day.transfers || []).map((tr: any, tIdx: number) => {
                             const isAirport = tr.serviceType === 'arrival' || tr.serviceType === 'departure'
                             const isDisposal = tr.serviceType === 'disposal'
                             const modeBadge = isAirport
@@ -2070,30 +2074,30 @@ export default function ReadyMadePackagesPage() {
                             else trNet = transferMode === 'sic' ? (calculation?.rateSicXfer ?? 12) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13Transfer ?? 45)
 
                             return (
-                              <div key={tIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC', padding: '0.4rem 0.65rem', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '0.76rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                  <span style={{ color: '#0F4C3A', fontWeight: 700 }}>{tr.time || '10:00'}</span>
+                              <div key={tIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', padding: '0.35rem 0.55rem', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '0.74rem', flexWrap: 'wrap', gap: '0.35rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                                  <span style={{ color: '#0F4C3A', fontWeight: 800 }}>{tr.time || '10:00'}</span>
                                   <span style={{ color: '#1E293B', fontWeight: 600 }}>{tr.routeDescription || tr.serviceType}</span>
-                                  <span style={{ background: isAirport ? '#EFF6FF' : '#F0FDF4', color: isAirport ? '#1D4ED8' : '#15803D', padding: '2px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 700 }}>
+                                  <span style={{ background: isAirport ? '#EFF6FF' : '#F0FDF4', color: isAirport ? '#1D4ED8' : '#15803D', padding: '1px 5px', borderRadius: '4px', fontSize: '0.66rem', fontWeight: 700 }}>
                                     {modeBadge}
                                   </span>
                                   {isDisposal && (
-                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: '#FEF3C7', padding: '1px 6px', borderRadius: '4px', border: '1px solid #FCD34D' }}>
-                                      <span style={{ fontSize: '0.68rem', color: '#92400E', fontWeight: 700 }}>Hours:</span>
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: '#FEF3C7', padding: '1px 5px', borderRadius: '4px', border: '1px solid #FCD34D' }}>
+                                      <span style={{ fontSize: '0.66rem', color: '#92400E', fontWeight: 700 }}>Hrs:</span>
                                       <input
                                         type="number"
                                         min="1"
                                         max="24"
                                         value={tr.hours || 4}
                                         onChange={e => updateTransferHours(dIdx, tIdx, parseInt(e.target.value) || 4)}
-                                        style={{ width: '42px', padding: '1px 3px', borderRadius: '3px', border: '1px solid #CBD5E1', fontSize: '0.72rem', textAlign: 'center', fontWeight: 800, background: '#FFF', color: '#1E293B' }}
+                                        style={{ width: '38px', padding: '1px 2px', borderRadius: '3px', border: '1px solid #CBD5E1', fontSize: '0.7rem', textAlign: 'center', fontWeight: 800, background: '#FFF', color: '#1E293B' }}
                                       />
                                     </div>
                                   )}
                                   {isAdmin && (
                                     <span
                                       title="Admin Tariff Net Cost"
-                                      style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '1px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 800, whiteSpace: 'nowrap' }}
+                                      style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '1px 5px', borderRadius: '4px', fontSize: '0.66rem', fontWeight: 800, whiteSpace: 'nowrap' }}
                                     >
                                       Admin Net: S$ {trNet}
                                     </span>
@@ -2103,158 +2107,170 @@ export default function ReadyMadePackagesPage() {
                                   <button
                                     type="button"
                                     onClick={() => removeTransferFromDay(dIdx, tIdx)}
-                                    style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: '0.75rem' }}
+                                    title="Remove Transfer"
+                                    style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: '0.75rem', padding: '0 4px' }}
                                   >
                                     ✕
                                   </button>
                                 )}
                               </div>
                             )
-                          })}
-                        </div>
-                      </div>
-                    )}
+                          })
+                        )}
 
-                    {/* Attractions */}
-                    {(day.attractions || []).length > 0 && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                        {(day.attractions || []).map((attr: any, aIdx: number) => {
-                          const matched = findMatchingAttraction(attr.attractionName || '', attractionsList)
-                          const adPrice = attr.adultPrice || matched?.adultPrice || 0
-                          const chPrice = attr.childPrice || matched?.childPrice || 0
-                          const adPax = calculation?.adultTicketCount ?? paxAdults
-                          const chPax = calculation?.childTicketCount ?? paxKids
-                          const dayAttrTotal = (adPrice * adPax) + (chPrice * chPax)
-                          return (
-                            <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFDF5', padding: '0.4rem 0.65rem', borderRadius: '6px', border: '1px solid #FEF3C7', fontSize: '0.76rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-                              <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                  <span style={{ color: '#B45309', fontWeight: 700 }}>{attr.time || '10:00'}</span>
-                                  <span style={{ color: '#1E293B', fontWeight: 700 }}>{attr.attractionName}</span>
-                                  {attr.isOptional && (
-                                    <span style={{ background: '#F59E0B', color: '#FFF', padding: '1px 4px', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 800 }}>
-                                      OPTIONAL
-                                    </span>
-                                  )}
+                        {/* Inline New Transfer Box */}
+                        {newTransferDay === dIdx && (
+                          <div style={{ marginTop: '0.4rem', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '6px', padding: '0.55rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', flexWrap: 'wrap', gap: '0.35rem' }}>
+                              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1E40AF' }}>
+                                + Add Transfer to Day {dIdx + 1}
+                              </span>
+                              {isAdmin && (() => {
+                                let liveNet = 0
+                                let liveDesc = ''
+                                if (newTransferType === 'disposal') {
+                                  liveNet = (calculation?.rate13Disposal ?? 45) * newTransferHours
+                                  liveDesc = `(${newTransferHours} hrs × S$${calculation?.rate13Disposal ?? 45})`
+                                } else if (newTransferType === 'cityTour') {
+                                  liveNet = transferMode === 'sic' ? (calculation?.rateSicCity ?? 15) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13City ?? 120)
+                                  liveDesc = transferMode === 'sic' ? `(SIC ${calculation?.totalPax || 1} Pax × S$${calculation?.rateSicCity ?? 15})` : `(13-Seater S$${calculation?.rate13City ?? 120})`
+                                } else {
+                                  liveNet = transferMode === 'sic' ? (calculation?.rateSicXfer ?? 12) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13Transfer ?? 45)
+                                  liveDesc = transferMode === 'sic' ? `(SIC ${calculation?.totalPax || 1} Pax × S$${calculation?.rateSicXfer ?? 12})` : `(13-Seater S$${calculation?.rate13Transfer ?? 45})`
+                                }
+                                return (
+                                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#92400E', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '1px 6px', borderRadius: '4px' }}>
+                                    Net: S$ {liveNet} {liveDesc}
+                                  </span>
+                                )
+                              })()}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: newTransferType === 'disposal' ? '1fr 1.3fr 70px 60px auto' : '1fr 1.5fr 75px auto', gap: '0.35rem', alignItems: 'center' }}>
+                              <select
+                                value={newTransferType}
+                                onChange={e => setNewTransferType(e.target.value)}
+                                style={{ padding: '0.3rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.72rem', background: '#FFF', color: '#1E293B' }}
+                              >
+                                <option value="interAttraction">Interline / Point-to-Point</option>
+                                <option value="cityTour">City Tour</option>
+                                <option value="disposal">Disposal</option>
+                              </select>
+                              <input
+                                type="text"
+                                placeholder="Route (e.g. Hotel to Sentosa)"
+                                value={newTransferRoute}
+                                onChange={e => setNewTransferRoute(e.target.value)}
+                                style={{ padding: '0.3rem 0.5rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.72rem', background: '#FFF', color: '#1E293B' }}
+                              />
+                              <input
+                                type="text"
+                                placeholder="14:00"
+                                value={newTransferTime}
+                                onChange={e => setNewTransferTime(e.target.value)}
+                                style={{ padding: '0.3rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.72rem', background: '#FFF', color: '#1E293B', textAlign: 'center' }}
+                              />
+                              {newTransferType === 'disposal' && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                  <span style={{ fontSize: '0.68rem', color: '#1E40AF', fontWeight: 700 }}>H:</span>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max="24"
+                                    value={newTransferHours}
+                                    onChange={e => setNewTransferHours(Math.max(1, parseInt(e.target.value) || 4))}
+                                    style={{ width: '38px', padding: '0.3rem 2px', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.72rem', textAlign: 'center', fontWeight: 700, background: '#FFF', color: '#1E293B' }}
+                                  />
                                 </div>
-                                {attr.inclusionsNotes && (
-                                  <span style={{ fontSize: '0.7rem', color: '#78716C', display: 'block' }}>
-                                    {attr.inclusionsNotes}
-                                  </span>
-                                )}
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                {matched && (
-                                  <span style={{ fontSize: '0.72rem', color: '#92400E', fontWeight: 700 }}>
-                                    Ad: S${adPrice} | Ch: S${chPrice}
-                                  </span>
-                                )}
-                                {isAdmin && (
-                                  <span
-                                    title="Admin Tariff Net Cost"
-                                    style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '1px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 800, whiteSpace: 'nowrap' }}
-                                  >
-                                    Admin Net: S$ {adPrice}/Ad, S$ {chPrice}/Ch (Total: S$ {dayAttrTotal})
-                                  </span>
-                                )}
+                              )}
+                              <div style={{ display: 'flex', gap: '3px' }}>
                                 <button
                                   type="button"
-                                  onClick={() => removeAttractionFromDay(dIdx, aIdx)}
-                                  style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: '0.75rem' }}
+                                  onClick={() => addTransferToDay(dIdx)}
+                                  style={{ background: '#1D4ED8', color: '#FFF', border: 'none', padding: '0.3rem 0.6rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}
+                                >
+                                  Add
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setNewTransferDay(null)}
+                                  style={{ background: '#E2E8F0', color: '#475569', border: 'none', padding: '0.3rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}
                                 >
                                   ✕
                                 </button>
                               </div>
                             </div>
-                          )
-                        })}
-                      </div>
-                    )}
-
-                    {/* Inline New Transfer Box */}
-                    {newTransferDay === dIdx && (
-                      <div style={{ marginTop: '0.65rem', background: '#F0F7FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '0.75rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1E40AF' }}>
-                            Add Interline Transfer to Day {dIdx + 1}
-                          </span>
-                          {isAdmin && (() => {
-                            let liveNet = 0
-                            let liveDesc = ''
-                            if (newTransferType === 'disposal') {
-                              liveNet = (calculation?.rate13Disposal ?? 45) * newTransferHours
-                              liveDesc = `(${newTransferHours} hrs × S$${calculation?.rate13Disposal ?? 45}/hr)`
-                            } else if (newTransferType === 'cityTour') {
-                              liveNet = transferMode === 'sic' ? (calculation?.rateSicCity ?? 15) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13City ?? 120)
-                              liveDesc = transferMode === 'sic' ? `(SIC ${calculation?.totalPax || 1} Pax × S$${calculation?.rateSicCity ?? 15})` : `(13-Seater S$${calculation?.rate13City ?? 120})`
-                            } else {
-                              liveNet = transferMode === 'sic' ? (calculation?.rateSicXfer ?? 12) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13Transfer ?? 45)
-                              liveDesc = transferMode === 'sic' ? `(SIC ${calculation?.totalPax || 1} Pax × S$${calculation?.rateSicXfer ?? 12})` : `(13-Seater S$${calculation?.rate13Transfer ?? 45})`
-                            }
-                            return (
-                              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#92400E', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '2px 8px', borderRadius: '4px' }}>
-                                🏷️ Admin Net Tariff: S$ {liveNet} {liveDesc}
-                              </span>
-                            )
-                          })()}
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: newTransferType === 'disposal' ? '1fr 1.3fr 75px 75px auto' : '1fr 1.5fr 80px auto', gap: '0.5rem', alignItems: 'center' }}>
-                          <select
-                            value={newTransferType}
-                            onChange={e => setNewTransferType(e.target.value)}
-                            style={{ padding: '0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                          >
-                            <option value="interAttraction">Inter-Attraction</option>
-                            <option value="cityTour">City Tour</option>
-                            <option value="disposal">Disposal</option>
-                          </select>
-                          <input
-                            type="text"
-                            placeholder="e.g. Hotel to Gardens by the Bay"
-                            value={newTransferRoute}
-                            onChange={e => setNewTransferRoute(e.target.value)}
-                            style={{ padding: '0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                          />
-                          <input
-                            type="text"
-                            placeholder="14:00"
-                            value={newTransferTime}
-                            onChange={e => setNewTransferTime(e.target.value)}
-                            style={{ padding: '0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                          />
-                          {newTransferType === 'disposal' && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                              <span style={{ fontSize: '0.7rem', color: '#1E40AF', fontWeight: 700 }}>Hrs:</span>
-                              <input
-                                type="number"
-                                min="1"
-                                max="24"
-                                value={newTransferHours}
-                                onChange={e => setNewTransferHours(Math.max(1, parseInt(e.target.value) || 4))}
-                                style={{ width: '44px', padding: '0.35rem 0.2rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', textAlign: 'center', fontWeight: 700, background: '#FFF', color: '#1E293B' }}
-                              />
-                            </div>
-                          )}
-                          <div style={{ display: 'flex', gap: '0.3rem' }}>
-                            <button
-                              type="button"
-                              onClick={() => addTransferToDay(dIdx)}
-                              style={{ background: '#1D4ED8', color: '#FFF', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
-                            >
-                              Add
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setNewTransferDay(null)}
-                              style={{ background: '#E2E8F0', color: '#475569', border: 'none', padding: '0.35rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer' }}
-                            >
-                              ✕
-                            </button>
                           </div>
-                        </div>
+                        )}
                       </div>
-                    )}
 
+                      {/* Right: Attractions Column */}
+                      <div style={{ background: '#FFFDF7', borderRadius: '8px', padding: '0.55rem 0.75rem', border: '1px solid #FEF3C7', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#92400E', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            🎟️ Sightseeing Admissions ({(day.attractions || []).length})
+                          </span>
+                        </div>
+
+                        {(day.attractions || []).length === 0 ? (
+                          <div style={{ padding: '0.5rem', textAlign: 'center', color: '#B45309', opacity: 0.7, fontSize: '0.72rem', fontStyle: 'italic', background: '#FFF', borderRadius: '6px', border: '1px dashed #FDE68A' }}>
+                            No admission tickets scheduled (Leisure / Transit day).
+                          </div>
+                        ) : (
+                          (day.attractions || []).map((attr: any, aIdx: number) => {
+                            const matched = findMatchingAttraction(attr.attractionName || '', attractionsList)
+                            const adPrice = attr.adultPrice || matched?.adultPrice || 0
+                            const chPrice = attr.childPrice || matched?.childPrice || 0
+                            const adPax = calculation?.adultTicketCount ?? paxAdults
+                            const chPax = calculation?.childTicketCount ?? paxKids
+                            const dayAttrTotal = (adPrice * adPax) + (chPrice * chPax)
+                            return (
+                              <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', padding: '0.35rem 0.55rem', borderRadius: '6px', border: '1px solid #FDE68A', fontSize: '0.74rem', flexWrap: 'wrap', gap: '0.35rem' }}>
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                                    <span style={{ color: '#B45309', fontWeight: 800 }}>{attr.time || '10:00'}</span>
+                                    <span style={{ color: '#1E293B', fontWeight: 700 }}>{attr.attractionName}</span>
+                                    {attr.isOptional && (
+                                      <span style={{ background: '#F59E0B', color: '#FFF', padding: '1px 4px', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 800 }}>
+                                        OPTIONAL
+                                      </span>
+                                    )}
+                                  </div>
+                                  {attr.inclusionsNotes && (
+                                    <span style={{ fontSize: '0.68rem', color: '#78716C', display: 'block' }}>
+                                      {attr.inclusionsNotes}
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                                  {matched && (
+                                    <span style={{ fontSize: '0.7rem', color: '#92400E', fontWeight: 700 }}>
+                                      Ad: S${adPrice} | Ch: S${chPrice}
+                                    </span>
+                                  )}
+                                  {isAdmin && (
+                                    <span
+                                      title="Admin Tariff Net Cost"
+                                      style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '1px 5px', borderRadius: '4px', fontSize: '0.66rem', fontWeight: 800, whiteSpace: 'nowrap' }}
+                                    >
+                                      Net: S$ {dayAttrTotal}
+                                    </span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeAttractionFromDay(dIdx, aIdx)}
+                                    title="Remove Attraction"
+                                    style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: '0.75rem', padding: '0 4px' }}
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })
+                        )}
+                      </div>
+
+                    </div>
                   </div>
                 ))}
               </div>
@@ -2319,58 +2335,121 @@ export default function ReadyMadePackagesPage() {
                 </div>
               )}
 
-              {/* Proposal Terms & Footer Disclaimer Preview */}
-              <div style={{ background: '#FFF', borderRadius: '10px', padding: '1rem', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#475569', display: 'block', marginBottom: '0.35rem' }}>
-                  📌 Terms & Inclusions Disclaimer:
-                </span>
-                <div style={{ background: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.74rem', color: '#475569', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
-                  {termsText}
-                </div>
+              {/* Proposal Terms & Footer Disclaimer (Collapsible Accordion to save canvas space) */}
+              <div style={{ background: '#FFF', borderRadius: '8px', border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowTerms(!showTerms)}
+                  style={{
+                    width: '100%',
+                    background: '#F8FAFC',
+                    border: 'none',
+                    padding: '0.45rem 0.85rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    color: '#475569'
+                  }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    📌 Terms & Inclusions Disclaimer
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 600 }}>
+                    {showTerms ? '▲ Hide Terms' : '▼ View / Customize Terms'}
+                  </span>
+                </button>
+                {showTerms && (
+                  <div style={{ padding: '0.65rem 0.85rem', background: '#FFF', borderTop: '1px solid #E2E8F0' }}>
+                    <textarea
+                      value={termsText}
+                      onChange={e => setTermsText(e.target.value)}
+                      rows={4}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '0.74rem',
+                        color: '#334155',
+                        lineHeight: 1.5,
+                        fontFamily: 'var(--font-inter), sans-serif'
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
             </div>
 
-            {/* Sticky Valuation & Action Footer */}
+            {/* Sticky Valuation & Action Footer (Ultra-Compact Streamlined Single-Row Bar) */}
             {calculation && (
-              <div style={{ background: '#0A2240', color: '#FFF', padding: '1rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', boxShadow: '0 -4px 20px rgba(0,0,0,0.15)' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div>
-                      <span style={{ fontSize: '0.68rem', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Net Cost</span>
-                      <div style={{ fontSize: '1rem', fontWeight: 800 }}>S$ {calculation.totalNetCostSGD.toLocaleString()}</div>
+              <div style={{
+                background: '#0A2240',
+                color: '#FFF',
+                padding: '0.45rem 1.25rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.65rem',
+                boxShadow: '0 -4px 16px rgba(0,0,0,0.15)',
+                flexShrink: 0
+              }}>
+                {/* Left: Financial Valuation Streamline */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+                  {isAdmin && (
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                      <span style={{ fontSize: '0.66rem', opacity: 0.7, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Net:</span>
+                      <strong style={{ fontSize: '0.88rem', color: '#CBD5E1' }}>S$ {calculation.totalNetCostSGD.toLocaleString()}</strong>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <span style={{ fontSize: '0.72rem', opacity: 0.8 }}>Markup (%):</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={markupPercent}
-                        onChange={e => setMarkupPercent(Math.max(0, parseFloat(e.target.value) || 0))}
-                        style={{ width: '52px', padding: '0.2rem 0.35rem', borderRadius: '4px', border: 'none', fontSize: '0.8rem', fontWeight: 800, textAlign: 'center', background: '#FFF', color: '#0A2240', fontFamily: 'var(--font-inter), sans-serif' }}
-                      />
-                    </div>
-                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1rem' }}>
-                      <span style={{ fontSize: '0.68rem', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Client Total Price</span>
-                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FCD34D' }}>
-                        S$ {calculation.totalClientPriceSGD.toLocaleString()}{' '}
-                        <span style={{ fontSize: '0.75rem', fontWeight: 400, opacity: 0.85, color: '#FFF' }}>
-                          (≈ ₹{calculation.totalClientPriceINR.toLocaleString('en-IN')})
-                        </span>
-                      </div>
-                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <span style={{ fontSize: '0.68rem', opacity: 0.8 }}>Markup:</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={markupPercent}
+                      onChange={e => setMarkupPercent(Math.max(0, parseFloat(e.target.value) || 0))}
+                      style={{
+                        width: '46px',
+                        padding: '0.15rem 0.25rem',
+                        borderRadius: '4px',
+                        border: 'none',
+                        fontSize: '0.76rem',
+                        fontWeight: 800,
+                        textAlign: 'center',
+                        background: '#FFF',
+                        color: '#0A2240',
+                        fontFamily: 'var(--font-inter), sans-serif'
+                      }}
+                    />
+                    <span style={{ fontSize: '0.68rem', opacity: 0.8 }}>%</span>
                   </div>
-                  <div style={{ fontSize: '0.72rem', opacity: 0.9, marginTop: '3px' }}>
-                    <span>👤 Guest: <strong style={{ color: '#FCD34D' }}>{guestName.trim() || 'Valued Guest'}</strong></span>
-                    <span> · Quote: <strong>S$ {calculation.adultQuoteSGD}</strong> / Adult</span>
+
+                  <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '0.75rem', display: 'flex', alignItems: 'baseline', gap: '0.45rem' }}>
+                    <span style={{ fontSize: '0.66rem', opacity: 0.75, textTransform: 'uppercase' }}>Client Total:</span>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>
+                      S$ {calculation.totalClientPriceSGD.toLocaleString()}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', opacity: 0.8, color: '#E2E8F0' }}>
+                      (≈ ₹{calculation.totalClientPriceINR.toLocaleString('en-IN')})
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', opacity: 0.9, background: 'rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: '4px' }}>
+                    <span>Quote: <strong>S$ {calculation.adultQuoteSGD}</strong>/Ad</span>
                     {calculation.childTicketCount > 0 && (
-                      <span> · <strong>S$ {calculation.childQuoteSGD}</strong> / Child</span>
+                      <span> · <strong>S$ {calculation.childQuoteSGD}</strong>/Ch</span>
                     )}
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {/* Right: Action Buttons */}
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -2383,19 +2462,20 @@ export default function ReadyMadePackagesPage() {
                       background: savedProposalNum ? '#059669' : '#0284C7',
                       color: '#FFF',
                       border: 'none',
-                      padding: '0.6rem 0.85rem',
-                      borderRadius: '8px',
-                      fontSize: '0.78rem',
+                      height: '32px',
+                      padding: '0 0.7rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
                       fontWeight: 800,
                       cursor: savingProposal ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                       transition: 'all 0.2s ease',
-                      boxShadow: savedProposalNum ? '0 0 12px rgba(5, 150, 105, 0.5)' : 'none'
+                      boxShadow: savedProposalNum ? '0 0 10px rgba(5, 150, 105, 0.5)' : 'none'
                     }}
                   >
-                    <span>{savingProposal ? 'Saving... ⏳' : savedProposalNum ? `Saved (${savedProposalNum}) ✓` : '💾 Save Proposal'}</span>
+                    <span>{savingProposal ? 'Saving... ⏳' : savedProposalNum ? `Saved (${savedProposalNum}) ✓` : '💾 Save'}</span>
                   </button>
 
                   <button
@@ -2404,23 +2484,24 @@ export default function ReadyMadePackagesPage() {
                       e.stopPropagation()
                       handleCopyWhatsApp()
                     }}
+                    title="Copy WhatsApp Itinerary"
                     style={{
                       background: copiedWA ? '#059669' : '#F59E0B',
                       color: '#FFF',
                       border: 'none',
-                      padding: '0.6rem 0.85rem',
-                      borderRadius: '8px',
-                      fontSize: '0.78rem',
+                      height: '32px',
+                      padding: '0 0.7rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
                       fontWeight: 800,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
-                      transition: 'all 0.2s ease',
-                      boxShadow: copiedWA ? '0 0 12px rgba(5, 150, 105, 0.6)' : 'none'
+                      gap: '0.3rem',
+                      transition: 'all 0.2s ease'
                     }}
                   >
-                    {copiedWA ? <Check size={14} color="#FFF" /> : <CopyCheck size={14} color="#FFF" />}
+                    {copiedWA ? <Check size={13} color="#FFF" /> : <CopyCheck size={13} color="#FFF" />}
                     <span>{copiedWA ? 'Copied! ✓' : 'Copy WA'}</span>
                   </button>
 
@@ -2430,22 +2511,24 @@ export default function ReadyMadePackagesPage() {
                       e.stopPropagation()
                       handleSendWhatsApp()
                     }}
+                    title="Direct WhatsApp to Guest"
                     style={{
                       background: sendingWA ? '#047857' : '#10B981',
                       color: '#FFF',
                       border: 'none',
-                      padding: '0.6rem 0.85rem',
-                      borderRadius: '8px',
-                      fontSize: '0.78rem',
+                      height: '32px',
+                      padding: '0 0.7rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
                       fontWeight: 800,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <MessageCircle size={14} color="#FFF" />
+                    <MessageCircle size={13} color="#FFF" />
                     <span>{sendingWA ? 'Opening... 💬' : 'WhatsApp'}</span>
                   </button>
 
@@ -2455,9 +2538,23 @@ export default function ReadyMadePackagesPage() {
                       e.stopPropagation()
                       handleDownloadPDF()
                     }}
-                    style={{ background: '#2563EB', color: '#FFF', border: 'none', padding: '0.6rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                    title="Download Professional PDF"
+                    style={{
+                      background: '#2563EB',
+                      color: '#FFF',
+                      border: 'none',
+                      height: '32px',
+                      padding: '0 0.7rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
+                    }}
                   >
-                    <FileDown size={14} color="#FFF" />
+                    <FileDown size={13} color="#FFF" />
                     <span>PDF</span>
                   </button>
 
@@ -2468,7 +2565,17 @@ export default function ReadyMadePackagesPage() {
                       handleOpenInBuilder(selectedTemplate)
                     }}
                     title="Add hotel rooms and customize further in full builder"
-                    style={{ background: 'rgba(255,255,255,0.15)', color: '#FFF', border: '1px solid rgba(255,255,255,0.3)', padding: '0.6rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                    style={{
+                      background: 'rgba(255,255,255,0.12)',
+                      color: '#FFF',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      height: '32px',
+                      padding: '0 0.7rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
                   >
                     ⚙️ With Hotel
                   </button>
