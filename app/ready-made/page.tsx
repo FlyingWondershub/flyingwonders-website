@@ -545,8 +545,29 @@ export default function ReadyMadePackagesPage() {
     const rate13Disposal = v13Disposal?.pricePerTransfer || 45
 
     const isSic = (v: any) => {
-      const s = `${v?.type || ''} ${v?.serviceName || ''}`.toLowerCase()
-      return s.includes('sic') || s.includes('coach') || s.includes('seat')
+      const vType = (v?.vehicleType || '').toLowerCase()
+      const tType = (v?.transferType || '').toLowerCase()
+      const rType = (v?.rateType || '').toLowerCase()
+      const sName = (v?.serviceName || '').toLowerCase()
+      const full = `${v?.type || ''} ${v?.compositeKey || ''} ${sName}`.toLowerCase()
+      if (
+        full.includes('13-seater') ||
+        full.includes('24-seater') ||
+        full.includes('45-seater') ||
+        full.includes('55-seater') ||
+        full.includes('sedan') ||
+        tType === 'private'
+      ) {
+        return false
+      }
+      return (
+        vType === 'sic' ||
+        tType === 'sic' ||
+        rType.includes('per person') ||
+        full.includes('sic') ||
+        full.includes('seat-in-coach') ||
+        full.includes('seat in coach')
+      )
     }
     const sicCity = vehiclesList.find(v => isSic(v) && (v.serviceName?.toLowerCase().includes('city') || v.type?.toLowerCase().includes('city')))
     const sicXfer = vehiclesList.find(v => isSic(v) && (v.serviceName?.toLowerCase().includes('transfer') || v.type?.toLowerCase().includes('transfer') || v.serviceName?.toLowerCase().includes('round')))
