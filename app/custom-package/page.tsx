@@ -981,6 +981,7 @@ export default function PrototypeBuilder() {
   const [landPackageSavedProposalNum, setLandPackageSavedProposalNum] = useState<string | null>(null)
   const [landPackageSavingProposal, setLandPackageSavingProposal] = useState(false)
   const [landPackageNewTransferHours, setLandPackageNewTransferHours] = useState(4)
+  const [showLandPackageTerms, setShowLandPackageTerms] = useState(false)
 
   // Admin Check for Net Pricing Visibility
   const [isAdminOverride, setIsAdminOverride] = useState(false)
@@ -12747,139 +12748,177 @@ ${proposal}
           <div 
             style={{ 
               background: '#FFF', 
-              borderRadius: '16px', 
-              maxWidth: '860px', 
-              width: '100%', 
-              maxHeight: '92vh', 
+              borderRadius: '14px', 
+              maxWidth: '1360px', 
+              width: '96vw', 
+              height: '92vh', 
+              maxHeight: '94vh', 
               display: 'flex', 
               flexDirection: 'column', 
               overflow: 'hidden', 
-              boxShadow: '0 24px 60px rgba(0,0,0,0.35)', 
+              boxShadow: '0 25px 60px rgba(0,0,0,0.35)', 
               position: 'relative' 
             }} 
             onClick={e => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div style={{ padding: '1.25rem 1.75rem', background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
-                  <span style={{ background: 'rgba(212,175,55,0.25)', color: '#FCD34D', border: '1px solid rgba(212,175,55,0.5)', padding: '0.15rem 0.6rem', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    ⚡ B2B Land Package Quoter
-                  </span>
-                  <span style={{ background: 'rgba(255,255,255,0.15)', color: '#E2E8F0', padding: '0.15rem 0.55rem', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 700 }}>
-                    🏨 Hotel Accommodation Not Included
-                  </span>
-                  {isUserAdmin && (
-                    <span style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '0.15rem 0.6rem', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 800 }}>
-                      👑 Admin Mode (Tariffs Visible)
-                    </span>
-                  )}
-                </div>
-                <h3 style={{ margin: '0.2rem 0 0.2rem', fontSize: '1.35rem', fontWeight: 800, fontFamily: 'var(--font-playfair), serif', lineHeight: 1.2 }}>
+            {/* Modal Header (Ultra-Compact Streamlined Bar) */}
+            <div style={{
+              padding: '0.65rem 1.25rem',
+              background: 'linear-gradient(135deg, #0F4C3A 0%, #0A2240 100%)',
+              color: '#FFF',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+              flexShrink: 0
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, fontFamily: 'var(--font-playfair), serif' }}>
                   {landPackageModalItem.title}
                 </h3>
-                <div style={{ fontSize: '0.82rem', opacity: 0.9, display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span>👤 Guest: <strong>{landPackageGuestName || 'Valued Guest'}</strong></span>
-                  {landPackageSavedProposalNum && (
-                    <span style={{ background: 'rgba(5, 150, 105, 0.3)', border: '1px solid rgba(5, 150, 105, 0.6)', padding: '0.1rem 0.5rem', borderRadius: '6px', color: '#A7F3D0', fontWeight: 800 }}>
-                      Saved Ref: {landPackageSavedProposalNum}
-                    </span>
-                  )}
-                  <span>🌙 {landPackageModalItem.nightsCount} Nights / {landPackageModalItem.nightsCount + 1} Days</span>
-                  <span>🚐 Airport Transfers: Private 13-Seater Minibus</span>
-                </div>
+                <span style={{ background: 'rgba(255,255,255,0.15)', color: '#FFF', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' }}>
+                  🌙 {landPackageModalItem.nightsCount}N / {landPackageModalItem.nightsCount + 1}D (Max 12 Pax)
+                </span>
+                <span style={{ background: '#D4AF37', color: '#111', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Land Package Only
+                </span>
+                {landPackageSavedProposalNum && (
+                  <span style={{ background: '#059669', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px' }}>
+                    Ref: {landPackageSavedProposalNum}
+                  </span>
+                )}
+                {isUserAdmin && (
+                  <span style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', fontSize: '0.68rem', fontWeight: 800, padding: '2px 8px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    👑 Admin Mode
+                  </span>
+                )}
               </div>
-              <button 
-                type="button" 
-                onClick={() => setLandPackageModalItem(null)} 
-                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#FFF', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-              >
-                <X size={18} color="#FFF" />
-              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#E2E8F0', background: 'rgba(255,255,255,0.08)', padding: '3px 10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span>👤 <strong style={{ color: '#FCD34D' }}>{landPackageGuestName.trim() || 'Valued Guest'}</strong></span>
+                  {landPackageGuestPhone.trim() && <span>· 📞 {landPackageGuestPhone.trim()}</span>}
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setLandPackageModalItem(null)} 
+                  title="Close Quoter"
+                  style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFF', width: '28px', height: '28px', borderRadius: '50%', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s', flexShrink: 0 }}
+                >
+                  <X size={16} color="#FFF" />
+                </button>
+              </div>
             </div>
 
-            {/* Scrollable Body */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem 1.75rem', background: '#F8FAFC', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* Modal Body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', background: '#F8FAFC', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               
-              {/* Controls Card: Date, Pax, Transfer Mode */}
-              <div style={{ background: '#FFF', borderRadius: '12px', padding: '1.25rem', border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.85rem', alignItems: 'flex-end' }}>
+              {/* Capacity Warning Banner (If Pax > 12) */}
+              {landPackageCalculation?.isOverCapacity && (
+                <div style={{ background: '#FEF2F2', border: '1.5px solid #F87171', borderRadius: '10px', padding: '0.75rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <AlertTriangle size={22} color="#DC2626" style={{ flexShrink: 0 }} />
+                    <div>
+                      <strong style={{ color: '#991B1B', fontSize: '0.88rem', display: 'block' }}>
+                        Group Size ({landPackageCalculation.totalPax} Pax) Exceeds 13-Seater Minibus Capacity
+                      </strong>
+                      <span style={{ color: '#7F1D1D', fontSize: '0.75rem' }}>
+                        Ready-made packages use 13-seater minibuses (max 12 pax). For larger groups, 24/45-seater coaches are required.
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLoadLandPackageIntoBuilder}
+                    style={{ background: '#991B1B', color: '#FFF', border: 'none', padding: '0.45rem 0.85rem', borderRadius: '6px', fontWeight: 800, fontSize: '0.78rem', cursor: 'pointer' }}
+                  >
+                    Open in Custom Builder →
+                  </button>
+                </div>
+              )}
+
+              {/* Luggage Advisory (If 10 <= Pax <= 12) */}
+              {!landPackageCalculation?.isOverCapacity && landPackageCalculation && landPackageCalculation.totalPax >= 10 && (
+                <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '0.5rem 0.85rem', fontSize: '0.74rem', color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <span>ℹ️</span>
+                  <span>
+                    <strong>Luggage Advisory:</strong> 13-Seater Minibus accommodates up to 12 Pax with cabin bags. Over 10 large suitcases may need a luggage van.
+                  </span>
+                </div>
+              )}
+
+              {/* Top Controls Toolbar: Traveler Details + Transport Policy */}
+              <div style={{ background: '#FFF', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.65rem', alignItems: 'flex-end' }}>
                   
                   {/* Guest Name */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1E293B', marginBottom: '0.35rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-                      👤 Guest Name
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+                      Guest Name
                     </label>
                     <input 
                       type="text"
                       placeholder="e.g. Ramesh Kumar"
                       value={landPackageGuestName}
                       onChange={e => setLandPackageGuestName(e.target.value)}
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.85rem', background: '#F8FAFC', color: '#1E293B', fontWeight: 600, fontFamily: 'var(--font-inter), sans-serif' }}
+                      style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
                     />
                   </div>
 
                   {/* Guest Phone */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1E293B', marginBottom: '0.35rem', fontFamily: 'var(--font-inter), sans-serif' }}>
-                      📞 Guest Phone
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+                      Guest Phone
                     </label>
                     <input 
                       type="tel"
                       placeholder="+91 98765 43210"
                       value={landPackageGuestPhone}
                       onChange={e => setLandPackageGuestPhone(e.target.value)}
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.85rem', background: '#F8FAFC', color: '#1E293B', fontWeight: 600, fontFamily: 'var(--font-inter), sans-serif' }}
+                      style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
                     />
                   </div>
 
                   {/* Travel Date */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1E293B', marginBottom: '0.35rem' }}>
-                      Check-in Date *
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem' }}>
+                      Check-in Date
                     </label>
                     <input 
                       type="date"
                       min={minCheckinDate}
                       value={landPackageDate}
                       onChange={e => setLandPackageDate(e.target.value)}
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', outline: 'none', fontSize: '0.85rem', background: '#F8FAFC', color: '#1E293B', fontWeight: 600, fontFamily: 'var(--font-inter), sans-serif' }}
+                      style={{ width: '100%', padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.8rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
                     />
                   </div>
 
                   {/* Adults Counter */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1E293B', marginBottom: '0.35rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
                       Adults (1–12)
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #CBD5E1', borderRadius: '6px', overflow: 'hidden', background: '#F8FAFC' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px', height: '32px' }}>
                       <button 
                         type="button" 
                         onClick={() => setLandPackageAdults(prev => Math.max(1, prev - 1))}
-                        style={{ border: 'none', background: 'transparent', padding: '0.5rem 0.6rem', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', color: '#475569' }}
+                        style={{ padding: '0 0.55rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569', height: '100%' }}
                       >−</button>
-                      <input 
-                        type="number" 
-                        min="1" 
-                        max="20"
-                        value={landPackageAdults}
-                        onChange={e => setLandPackageAdults(Math.max(1, parseInt(e.target.value) || 1))}
-                        style={{ flex: 1, border: 'none', background: 'transparent', textAlign: 'center', padding: '0.5rem 0', fontWeight: 700, fontSize: '0.88rem', outline: 'none', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                      />
+                      <span style={{ flex: 1, textAlign: 'center', fontWeight: 800, fontSize: '0.82rem' }}>{landPackageAdults}</span>
                       <button 
                         type="button" 
-                        onClick={() => setLandPackageAdults(prev => prev + 1)}
-                        style={{ border: 'none', background: 'transparent', padding: '0.5rem 0.6rem', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', color: '#475569' }}
+                        onClick={() => setLandPackageAdults(prev => Math.min(12, prev + 1))}
+                        style={{ padding: '0 0.55rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569', height: '100%' }}
                       >+</button>
                     </div>
                   </div>
 
                   {/* Children Counter */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1E293B', marginBottom: '0.35rem' }}>
-                      Children (0–12)
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem' }}>
+                      Children (0–11)
                     </label>
-                    <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #CBD5E1', borderRadius: '6px', overflow: 'hidden', background: '#F8FAFC' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px', height: '32px' }}>
                       <button 
                         type="button" 
                         onClick={() => {
@@ -12887,244 +12926,184 @@ ${proposal}
                           setLandPackageKids(next)
                           setLandPackageChildAges(prev => prev.slice(0, next))
                         }}
-                        style={{ border: 'none', background: 'transparent', padding: '0.5rem 0.6rem', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', color: '#475569' }}
+                        style={{ padding: '0 0.55rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569', height: '100%' }}
                       >−</button>
-                      <input 
-                        type="number" 
-                        min="0" 
-                        max="20"
-                        value={landPackageKids}
-                        onChange={e => {
-                          const next = Math.max(0, parseInt(e.target.value) || 0)
-                          setLandPackageKids(next)
-                          setLandPackageChildAges(prev => {
-                            const updated = [...prev]
-                            if (next > updated.length) {
-                              for (let i = updated.length; i < next; i++) updated.push(5)
-                            } else {
-                              updated.length = next
-                            }
-                            return updated
-                          })
-                        }}
-                        style={{ flex: 1, border: 'none', background: 'transparent', textAlign: 'center', padding: '0.5rem 0', fontWeight: 700, fontSize: '0.88rem', outline: 'none', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                      />
+                      <span style={{ flex: 1, textAlign: 'center', fontWeight: 800, fontSize: '0.82rem' }}>{landPackageKids}</span>
                       <button 
                         type="button" 
                         onClick={() => {
-                          const next = landPackageKids + 1
+                          const next = Math.min(11, landPackageKids + 1)
                           setLandPackageKids(next)
                           setLandPackageChildAges(prev => {
                             const updated = [...prev]
-                            if (next > updated.length) {
-                              for (let i = updated.length; i < next; i++) updated.push(5)
-                            }
+                            while (updated.length < next) updated.push(5)
                             return updated
                           })
                         }}
-                        style={{ border: 'none', background: 'transparent', padding: '0.5rem 0.6rem', fontSize: '0.9rem', fontWeight: 'bold', cursor: 'pointer', color: '#475569' }}
+                        style={{ padding: '0 0.55rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, color: '#475569', height: '100%' }}
                       >+</button>
                     </div>
                   </div>
 
                   {/* Sightseeing Transport Mode Toggle */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#1E293B', marginBottom: '0.35rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#475569', marginBottom: '0.25rem', fontFamily: 'var(--font-inter), sans-serif' }}>
                       Sightseeing Transport
                     </label>
-                    <div style={{ display: 'flex', background: '#EDF2F7', padding: '2px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
-                      <button
-                        type="button"
-                        onClick={() => setLandPackageTransferMode('sic')}
-                        style={{
-                          flex: 1,
-                          padding: '0.45rem 0.5rem',
-                          borderRadius: '6px',
-                          border: 'none',
-                          background: landPackageTransferMode === 'sic' ? '#0F4C3A' : 'transparent',
-                          color: landPackageTransferMode === 'sic' ? '#FFF' : '#475569',
-                          fontWeight: 700,
-                          fontSize: '0.78rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                          fontFamily: 'var(--font-inter), sans-serif'
-                        }}
-                      >
-                        🚌 SIC (Shared)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setLandPackageTransferMode('private13')}
-                        style={{
-                          flex: 1,
-                          padding: '0.45rem 0.5rem',
-                          borderRadius: '6px',
-                          border: 'none',
-                          background: landPackageTransferMode === 'private13' ? '#0F4C3A' : 'transparent',
-                          color: landPackageTransferMode === 'private13' ? '#FFF' : '#475569',
-                          fontWeight: 700,
-                          fontSize: '0.78rem',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                          fontFamily: 'var(--font-inter), sans-serif'
-                        }}
-                      >
-                        🚐 Private 13-Seater
-                      </button>
+                    <div style={{ display: 'flex', height: '32px', alignItems: 'center' }}>
+                      {landPackageModalItem?.transferPricingOption === 'private_only' ? (
+                        <span style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, background: '#0F4C3A', color: '#FFF', whiteSpace: 'nowrap' }}>
+                          🚐 Fixed Private 13-Seater
+                        </span>
+                      ) : landPackageModalItem?.transferPricingOption === 'sic_only' ? (
+                        <span style={{ padding: '0.35rem 0.65rem', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, background: '#0F4C3A', color: '#FFF', whiteSpace: 'nowrap' }}>
+                          🚌 Fixed SIC Sightseeing
+                        </span>
+                      ) : (
+                        <div style={{ display: 'inline-flex', background: '#E2E8F0', padding: '2px', borderRadius: '6px', width: '100%' }}>
+                          <button
+                            type="button"
+                            onClick={() => setLandPackageTransferMode('private13')}
+                            style={{
+                              flex: 1,
+                              padding: '0.25rem 0.45rem',
+                              borderRadius: '5px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              border: 'none',
+                              cursor: 'pointer',
+                              background: landPackageTransferMode === 'private13' ? '#0F4C3A' : 'transparent',
+                              color: landPackageTransferMode === 'private13' ? '#FFF' : '#475569',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            🚐 13-Seater
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setLandPackageTransferMode('sic')}
+                            style={{
+                              flex: 1,
+                              padding: '0.25rem 0.45rem',
+                              borderRadius: '5px',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                              border: 'none',
+                              cursor: 'pointer',
+                              background: landPackageTransferMode === 'sic' ? '#0F4C3A' : 'transparent',
+                              color: landPackageTransferMode === 'sic' ? '#FFF' : '#475569',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            🚌 SIC
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                 </div>
 
-                {/* Child Ages Dropdowns */}
+                {/* Child Ages row (conditional) */}
                 {landPackageKids > 0 && (
-                  <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '1px dashed #E2E8F0', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#C53030', fontFamily: 'var(--font-inter), sans-serif' }}>
-                      👶 Child Age{landPackageKids > 1 ? 's' : ''}:
-                    </span>
-                    {Array.from({ length: landPackageKids }).map((_, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.78rem' }}>
-                        <span style={{ color: '#64748B', fontWeight: 600, fontFamily: 'var(--font-inter), sans-serif' }}>Child {idx + 1}:</span>
-                        <select
-                          value={landPackageChildAges[idx] ?? 5}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', paddingTop: '0.35rem', borderTop: '1px dashed #CBD5E1' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#92400E' }}>👶 Child Ages:</span>
+                    {Array.from({ length: landPackageKids }).map((_, i) => (
+                      <div key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#FFFDF5', border: '1px solid #FDE68A', padding: '1px 5px', borderRadius: '4px' }}>
+                        <span style={{ fontSize: '0.7rem', color: '#78350F' }}>C{i + 1}:</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max="17"
+                          value={landPackageChildAges[i] ?? 5}
                           onChange={e => {
-                            const age = parseInt(e.target.value)
+                            const val = Math.max(0, parseInt(e.target.value) || 0)
                             setLandPackageChildAges(prev => {
-                              const updated = [...prev]
-                              updated[idx] = age
-                              return updated
+                              const copy = [...prev]
+                              copy[i] = val
+                              return copy
                             })
                           }}
-                          style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.78rem', background: '#FFF', fontWeight: 700, color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                        >
-                          <option value={1}>1 yr (Infant · Free)</option>
-                          <option value={2}>2 yrs (Infant · Free)</option>
-                          {Array.from({ length: 10 }, (_, a) => a + 3).map(age => (
-                            <option key={age} value={age}>{age} yrs (Child Ticket)</option>
-                          ))}
-                          {Array.from({ length: 5 }, (_, a) => a + 13).map(age => (
-                            <option key={age} value={age}>{age} yrs (Adult Ticket)</option>
-                          ))}
-                        </select>
+                          style={{ width: '38px', padding: '1px 2px', borderRadius: '3px', border: '1px solid #CBD5E1', fontSize: '0.72rem', textAlign: 'center', fontWeight: 800, background: '#FFF', color: '#1E293B' }}
+                        />
+                        <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>yr</span>
                       </div>
                     ))}
+                    <span style={{ fontSize: '0.68rem', color: '#A16207', marginLeft: 'auto' }}>
+                      * 0-2 yrs: Free · 3-12 yrs: Child · 13+ yrs: Adult
+                    </span>
                   </div>
                 )}
               </div>
 
-              {/* Capacity Warning Banner (If Pax > 12) */}
-              {landPackageCalculation?.isOverCapacity && (
-                <div style={{ background: '#FEF2F2', border: '1.5px solid #F87171', borderRadius: '12px', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                    <AlertTriangle size={24} color="#DC2626" style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <div>
-                      <h4 style={{ margin: '0 0 0.25rem', color: '#991B1B', fontSize: '0.95rem', fontWeight: 800 }}>
-                        Group Size ({landPackageCalculation.totalPax} Pax) Exceeds 13-Seater Minibus Capacity
-                      </h4>
-                      <p style={{ margin: 0, color: '#7F1D1D', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                        A standard Singapore 13-seater minibus legally seats a maximum of 12 passengers plus luggage. For groups exceeding 12 passengers, 24-seater or 45-seater coaches are required.
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <button
-                      type="button"
-                      onClick={handleLoadLandPackageIntoBuilder}
-                      style={{
-                        background: '#991B1B',
-                        color: '#FFF',
-                        border: 'none',
-                        padding: '0.6rem 1.25rem',
-                        borderRadius: '8px',
-                        fontWeight: 800,
-                        fontSize: '0.82rem',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        boxShadow: '0 2px 6px rgba(153,27,27,0.3)'
-                      }}
-                    >
-                      <span>🚀</span> Open in Custom Builder for 24/45-Seater Coach
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Luggage Advisory (If 10 <= Pax <= 12) */}
-              {!landPackageCalculation?.isOverCapacity && landPackageCalculation && landPackageCalculation.totalPax >= 10 && (
-                <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '0.65rem 1rem', fontSize: '0.78rem', color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span>ℹ️</span>
-                  <span>
-                    <strong>Luggage Advisory:</strong> 13-Seater Minibus accommodates up to 12 Pax with standard cabin luggage. Groups carrying more than 10 large check-in suitcases may require a separate luggage van.
-                  </span>
-                </div>
-              )}
-
-              {/* Day-by-Day Itinerary List */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#1E293B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    🗓️ Daywise Itinerary & Inclusions ({landPackageDays.length} Days)
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
-                    Click "+ Attraction" or "+ Transfer" to customize any day
-                  </span>
-                </div>
+              {/* Day-by-Day Ground Schedule: 2-Column Responsive Layout */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0A2240', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Day-by-Day Ground Schedule:
+                </span>
 
                 {landPackageDays.map((day: any, dIdx: number) => (
-                  <div key={dIdx} style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', padding: '1rem 1.25rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+                  <div key={dIdx} style={{ background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.75rem 1rem', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
                     
-                    {/* Day Title */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.5rem' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                        <span style={{ background: '#0F4C3A', color: '#FFF', fontWeight: 800, fontSize: '0.75rem', padding: '0.2rem 0.55rem', borderRadius: '6px' }}>
+                    {/* Day Title Row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem', paddingBottom: '0.35rem', borderBottom: '1px solid #F1F5F9' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                        <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '5px' }}>
                           Day {day.dayNumber || dIdx + 1}
                         </span>
-                        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#1A365D' }}>
-                          {day.dayTitle}
-                        </h4>
+                        <strong style={{ fontSize: '0.9rem', color: '#0F172A', fontWeight: 800 }}>
+                          {day.dayTitle || 'Tour Day'}
+                        </strong>
+                        {day.dayDescription && (
+                          <span style={{ fontSize: '0.74rem', color: '#64748B', fontStyle: 'italic' }}>
+                            — {day.dayDescription}
+                          </span>
+                        )}
                       </div>
-                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+
+                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => setLandPackageNewTransferDay(landPackageNewTransferDay === dIdx ? null : dIdx)}
+                          style={{ background: '#F0F7FF', color: '#1E40AF', border: '1px solid #BFDBFE', padding: '0.2rem 0.55rem', borderRadius: '5px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                        >
+                          {landPackageNewTransferDay === dIdx ? '✕ Close' : '+ Transfer'}
+                        </button>
                         <button
                           type="button"
                           onClick={() => setLandPackageAttractionModalDay(dIdx)}
-                          style={{ background: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                          style={{ background: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', padding: '0.2rem 0.55rem', borderRadius: '5px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
                         >
                           + Attraction
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setLandPackageNewTransferDay(dIdx)}
-                          style={{ background: '#F0F7FF', color: '#1E40AF', border: '1px solid #BFDBFE', padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
-                        >
-                          + Transfer
                         </button>
                       </div>
                     </div>
 
-                    {day.dayDescription && (
-                      <p style={{ margin: '0 0 0.75rem', fontSize: '0.78rem', color: '#64748B', fontStyle: 'italic', lineHeight: 1.4 }}>
-                        {day.dayDescription}
-                      </p>
-                    )}
+                    {/* 2-Column Responsive Grid: Column 1 = Transfers, Column 2 = Sightseeing Admissions */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '0.75rem' }}>
+                      
+                      {/* Left: Transfers Column */}
+                      <div style={{ background: '#F8FAFC', borderRadius: '8px', padding: '0.55rem 0.75rem', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            🚐 Scheduled Transfers ({(day.transfers || []).length})
+                          </span>
+                        </div>
 
-                    {/* Transfers on this day */}
-                    {(day.transfers || []).length > 0 && (
-                      <div style={{ marginBottom: '0.65rem' }}>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748B', display: 'block', marginBottom: '0.25rem' }}>
-                          🚗 Scheduled Transfers:
-                        </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                          {(day.transfers || []).map((tr: any, tIdx: number) => {
+                        {(day.transfers || []).length === 0 ? (
+                          <div style={{ padding: '0.5rem', textAlign: 'center', color: '#94A3B8', fontSize: '0.72rem', fontStyle: 'italic', background: '#FFF', borderRadius: '6px', border: '1px dashed #CBD5E1' }}>
+                            No transfers scheduled.
+                          </div>
+                        ) : (
+                          (day.transfers || []).map((tr: any, tIdx: number) => {
                             const isAirport = tr.serviceType === 'arrival' || tr.serviceType === 'departure'
                             const isDisposal = tr.serviceType === 'disposal'
-                            const privateTransLabel = '13-Seater - Private - group - Transfers'
-                            const sicTransLabel = 'SIC - SIC - per person - Transfers ( Round Trip )'
+                            const privateTransLabel = '13-Seater - Private'
+                            const sicTransLabel = 'SIC (Round Trip)'
                             const modeBadge = isAirport
-                              ? privateTransLabel
+                              ? '13-Seater Minibus'
                               : isDisposal
-                              ? `${tr.hours || 4}h Disposal (${privateTransLabel})`
+                              ? `${tr.hours || 4}h Minibus`
                               : (landPackageTransferMode === 'sic' ? sicTransLabel : privateTransLabel)
 
                             const trNet = tr.serviceType === 'arrival'
@@ -13138,54 +13117,141 @@ ${proposal}
                               : (landPackageTransferMode === 'sic' ? (landPackageCalculation?.rateSicTransfer || 12) * Math.max(1, landPackageCalculation?.totalPax || 1) : landPackageCalculation?.rate13Transfer || 45)
 
                             return (
-                              <div key={tIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC', padding: '0.35rem 0.65rem', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '0.78rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                  <span style={{ color: '#0F4C3A', fontWeight: 700 }}>{tr.time || '10:00'}</span>
-                                  <span style={{ color: '#1E293B', fontWeight: 600 }}>{tr.routeDescription || tr.serviceType}</span>
-                                  <span style={{ background: isAirport ? '#EFF6FF' : isDisposal ? '#FEF3C7' : '#F0FDF4', color: isAirport ? '#1D4ED8' : isDisposal ? '#92400E' : '#15803D', padding: '1px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 700 }}>
+                              <div key={tIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', padding: '0.35rem 0.55rem', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '0.74rem', flexWrap: 'wrap', gap: '0.35rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                                  <span style={{ color: '#0F4C3A', fontWeight: 800 }}>{tr.time || '10:00'}</span>
+                                  <span style={{ color: '#1E293B', fontWeight: 700 }}>{tr.routeDescription || tr.serviceType}</span>
+                                  <span style={{ background: isAirport ? '#EFF6FF' : isDisposal ? '#FEF3C7' : '#F0FDF4', color: isAirport ? '#1D4ED8' : isDisposal ? '#92400E' : '#15803D', padding: '1px 5px', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 800 }}>
                                     {modeBadge}
                                   </span>
                                   {isDisposal && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '4px', padding: '1px 5px', fontSize: '0.68rem', fontWeight: 800, color: '#92400E' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.15rem', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '3px', padding: '0 3px', fontSize: '0.66rem', fontWeight: 800, color: '#92400E' }}>
                                       <button type="button" onClick={() => updateLandPackageTransferHours(dIdx, tIdx, (tr.hours || 4) - 1)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 900, color: '#92400E', padding: '0 2px' }}>−</button>
-                                      <span>{tr.hours || 4} hrs</span>
+                                      <span>{tr.hours || 4}h</span>
                                       <button type="button" onClick={() => updateLandPackageTransferHours(dIdx, tIdx, (tr.hours || 4) + 1)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 900, color: '#92400E', padding: '0 2px' }}>+</button>
                                     </div>
                                   )}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                                   {isUserAdmin && (
                                     <span
                                       title="Admin Tariff Net Cost"
-                                      style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '1px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 800, whiteSpace: 'nowrap' }}
+                                      style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '1px 5px', borderRadius: '4px', fontSize: '0.66rem', fontWeight: 800, whiteSpace: 'nowrap' }}
                                     >
-                                      Admin Net: S$ {trNet}
+                                      Net: S$ {trNet}
                                     </span>
                                   )}
+                                  {!isAirport && (
+                                    <button
+                                      type="button"
+                                      onClick={() => removeLandPackageTransfer(dIdx, tIdx)}
+                                      title="Remove Transfer"
+                                      style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: '0.75rem', padding: '0 4px' }}
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
                                 </div>
-                                {!isAirport && (
-                                  <button
-                                    type="button"
-                                    onClick={() => removeLandPackageTransfer(dIdx, tIdx)}
-                                    title="Remove Transfer"
-                                    style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: '0.75rem', padding: '2px 4px' }}
-                                  >
-                                    ✕
-                                  </button>
-                                )}
                               </div>
                             )
-                          })}
-                        </div>
-                      </div>
-                    )}
+                          })
+                        )}
 
-                    {/* Attractions on this day */}
-                    {(day.attractions || []).length > 0 && (
-                      <div>
-                        <span style={{ fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', color: '#64748B', display: 'block', marginBottom: '0.25rem' }}>
-                          🎟️ Sightseeing Admissions:
-                        </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                          {(day.attractions || []).map((attr: any, aIdx: number) => {
+                        {/* Inline New Transfer Box (within Left Column) */}
+                        {landPackageNewTransferDay === dIdx && (
+                          <div style={{ marginTop: '0.35rem', background: '#F0F7FF', border: '1px solid #BFDBFE', borderRadius: '6px', padding: '0.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', flexWrap: 'wrap', gap: '0.35rem' }}>
+                              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1E40AF' }}>
+                                Add Transfer (Day {dIdx + 1})
+                              </span>
+                              {isUserAdmin && (() => {
+                                let liveNet = 0
+                                if (newTransferServiceType === 'disposal') {
+                                  liveNet = (landPackageCalculation?.rate13Disposal || 45) * (landPackageNewTransferHours || 4)
+                                } else if (newTransferServiceType === 'cityTour') {
+                                  liveNet = landPackageTransferMode === 'sic' ? (landPackageCalculation?.rateSicCityTour || 15) * Math.max(1, landPackageCalculation?.totalPax || 1) : landPackageCalculation?.rate13CityTour || 120
+                                } else {
+                                  liveNet = landPackageTransferMode === 'sic' ? (landPackageCalculation?.rateSicTransfer || 12) * Math.max(1, landPackageCalculation?.totalPax || 1) : landPackageCalculation?.rate13Transfer || 45
+                                }
+                                return (
+                                  <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#92400E', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '1px 5px', borderRadius: '3px' }}>
+                                    Net: S$ {liveNet}
+                                  </span>
+                                )
+                              })()}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.35rem', alignItems: 'center' }}>
+                              <select
+                                value={newTransferServiceType}
+                                onChange={e => setNewTransferServiceType(e.target.value)}
+                                style={{ padding: '0.25rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.72rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
+                              >
+                                <option value="interAttraction">Inter-Attraction</option>
+                                <option value="cityTour">City Tour</option>
+                                <option value="disposal">Disposal</option>
+                              </select>
+                              <input
+                                type="text"
+                                placeholder="e.g. Hotel to Marina Bay"
+                                value={newTransferRoute}
+                                onChange={e => setNewTransferRoute(e.target.value)}
+                                style={{ padding: '0.25rem 0.45rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.72rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
+                              />
+                              <input
+                                type="text"
+                                placeholder="14:00"
+                                value={newTransferTime}
+                                onChange={e => setNewTransferTime(e.target.value)}
+                                style={{ padding: '0.25rem 0.45rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.72rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
+                              />
+                              {newTransferServiceType === 'disposal' && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={24}
+                                    value={landPackageNewTransferHours}
+                                    onChange={e => setLandPackageNewTransferHours(Math.max(1, parseInt(e.target.value) || 4))}
+                                    style={{ width: '48px', padding: '0.25rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.72rem', fontWeight: 700, background: '#FFF', color: '#1E293B', textAlign: 'center' }}
+                                  />
+                                  <span style={{ fontSize: '0.68rem', color: '#475569' }}>hrs</span>
+                                </div>
+                              )}
+                              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => addLandPackageTransfer(dIdx)}
+                                  style={{ background: '#1D4ED8', color: '#FFF', border: 'none', padding: '0.25rem 0.55rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
+                                >
+                                  Add
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setLandPackageNewTransferDay(null)}
+                                  style={{ background: '#E2E8F0', color: '#475569', border: 'none', padding: '0.25rem 0.45rem', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer' }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: Attractions Column */}
+                      <div style={{ background: '#FFFDF7', borderRadius: '8px', padding: '0.55rem 0.75rem', border: '1px solid #FEF3C7', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.15rem' }}>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#92400E', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            🎟️ Sightseeing Admissions ({(day.attractions || []).length})
+                          </span>
+                        </div>
+
+                        {(day.attractions || []).length === 0 ? (
+                          <div style={{ padding: '0.5rem', textAlign: 'center', color: '#B45309', opacity: 0.7, fontSize: '0.72rem', fontStyle: 'italic', background: '#FFF', borderRadius: '6px', border: '1px dashed #FDE68A' }}>
+                            No admission tickets scheduled (Leisure / Transit day).
+                          </div>
+                        ) : (
+                          (day.attractions || []).map((attr: any, aIdx: number) => {
                             const matched = attractionsList.find(a => a.name.toLowerCase().trim() === (attr.attractionName || '').toLowerCase().trim())
                             const adPrice = attr.adultPrice || matched?.adultPrice || 0
                             const chPrice = attr.childPrice || matched?.childPrice || 0
@@ -13193,138 +13259,53 @@ ${proposal}
                             const chPax = landPackageCalculation?.childTicketCount ?? landPackageKids
                             const dayAttrTotal = (adPrice * adPax) + (chPrice * chPax)
                             return (
-                              <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFDF5', padding: '0.4rem 0.65rem', borderRadius: '6px', border: '1px solid #FEF3C7', fontSize: '0.78rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                              <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', padding: '0.35rem 0.55rem', borderRadius: '6px', border: '1px solid #FDE68A', fontSize: '0.74rem', flexWrap: 'wrap', gap: '0.35rem' }}>
                                 <div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                    <span style={{ color: '#B45309', fontWeight: 700 }}>{attr.time || '10:00'}</span>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                                    <span style={{ color: '#B45309', fontWeight: 800 }}>{attr.time || '10:00'}</span>
                                     <span style={{ color: '#1E293B', fontWeight: 700 }}>{attr.attractionName}</span>
                                     {attr.isOptional && (
-                                      <span style={{ background: '#F59E0B', color: '#FFF', padding: '1px 5px', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 800 }}>
+                                      <span style={{ background: '#F59E0B', color: '#FFF', padding: '1px 4px', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 800 }}>
                                         OPTIONAL
                                       </span>
                                     )}
                                   </div>
                                   {attr.inclusionsNotes && (
-                                    <span style={{ fontSize: '0.7rem', color: '#78716C', display: 'block', marginTop: '1px' }}>
+                                    <span style={{ fontSize: '0.68rem', color: '#78716C', display: 'block' }}>
                                       {attr.inclusionsNotes}
                                     </span>
                                   )}
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                                   {matched && (
-                                    <span style={{ fontSize: '0.72rem', color: '#92400E', fontWeight: 700 }}>
+                                    <span style={{ fontSize: '0.7rem', color: '#92400E', fontWeight: 700 }}>
                                       Ad: S${adPrice} | Ch: S${chPrice}
                                     </span>
                                   )}
                                   {isUserAdmin && (
                                     <span
                                       title="Admin Tariff Net Cost"
-                                      style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '1px 6px', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 800, whiteSpace: 'nowrap' }}
+                                      style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '1px 5px', borderRadius: '4px', fontSize: '0.66rem', fontWeight: 800, whiteSpace: 'nowrap' }}
                                     >
-                                      Admin Net: S$ {adPrice}/Ad, S$ {chPrice}/Ch (Total: S$ {dayAttrTotal})
+                                      Net: S$ {dayAttrTotal}
                                     </span>
                                   )}
                                   <button
                                     type="button"
                                     onClick={() => removeLandPackageAttraction(dIdx, aIdx)}
                                     title="Remove Attraction"
-                                    style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: '0.75rem', padding: '2px 4px' }}
+                                    style={{ border: 'none', background: 'transparent', color: '#94A3B8', cursor: 'pointer', fontSize: '0.75rem', padding: '0 4px' }}
                                   >
                                     ✕
                                   </button>
                                 </div>
                               </div>
                             )
-                          })}
-                        </div>
+                          })
+                        )}
                       </div>
-                    )}
 
-                    {/* Inline New Transfer Box */}
-                    {landPackageNewTransferDay === dIdx && (
-                      <div style={{ marginTop: '0.65rem', background: '#F0F7FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '0.75rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#1E40AF' }}>
-                            Add Interline Transfer to Day {dIdx + 1}
-                          </span>
-                          {isUserAdmin && (() => {
-                            let liveNet = 0
-                            let liveDesc = ''
-                            if (newTransferServiceType === 'disposal') {
-                              liveNet = (landPackageCalculation?.rate13Disposal || 45) * (landPackageNewTransferHours || 4)
-                              liveDesc = `(${landPackageNewTransferHours || 4} hrs × S$${landPackageCalculation?.rate13Disposal || 45}/hr)`
-                            } else if (newTransferServiceType === 'cityTour') {
-                              liveNet = landPackageTransferMode === 'sic' ? (landPackageCalculation?.rateSicCityTour || 15) * Math.max(1, landPackageCalculation?.totalPax || 1) : landPackageCalculation?.rate13CityTour || 120
-                              liveDesc = landPackageTransferMode === 'sic' ? `(SIC ${landPackageCalculation?.totalPax || 1} Pax × S$${landPackageCalculation?.rateSicCityTour || 15})` : `(13-Seater S$${landPackageCalculation?.rate13CityTour || 120})`
-                            } else {
-                              liveNet = landPackageTransferMode === 'sic' ? (landPackageCalculation?.rateSicTransfer || 12) * Math.max(1, landPackageCalculation?.totalPax || 1) : landPackageCalculation?.rate13Transfer || 45
-                              liveDesc = landPackageTransferMode === 'sic' ? `(SIC ${landPackageCalculation?.totalPax || 1} Pax × S$${landPackageCalculation?.rateSicTransfer || 12})` : `(13-Seater S$${landPackageCalculation?.rate13Transfer || 45})`
-                            }
-                            return (
-                              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#92400E', background: '#FEF3C7', border: '1px solid #FCD34D', padding: '2px 8px', borderRadius: '4px' }}>
-                                🏷️ Admin Net Tariff: S$ {liveNet} {liveDesc}
-                              </span>
-                            )
-                          })()}
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem', alignItems: 'center' }}>
-                          <select
-                            value={newTransferServiceType}
-                            onChange={e => setNewTransferServiceType(e.target.value)}
-                            style={{ padding: '0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                          >
-                            <option value="interAttraction">Inter-Attraction</option>
-                            <option value="cityTour">City Tour</option>
-                            <option value="disposal">Disposal</option>
-                          </select>
-                          <input
-                            type="text"
-                            placeholder="e.g. Hotel to Gardens by the Bay"
-                            value={newTransferRoute}
-                            onChange={e => setNewTransferRoute(e.target.value)}
-                            style={{ padding: '0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                          />
-                          <input
-                            type="text"
-                            placeholder="14:00"
-                            value={newTransferTime}
-                            onChange={e => setNewTransferTime(e.target.value)}
-                            style={{ padding: '0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}
-                          />
-                          {newTransferServiceType === 'disposal' && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                              <input
-                                type="number"
-                                min={1}
-                                max={24}
-                                value={landPackageNewTransferHours}
-                                onChange={e => setLandPackageNewTransferHours(Math.max(1, parseInt(e.target.value) || 4))}
-                                style={{ width: '60px', padding: '0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', fontWeight: 700, background: '#FFF', color: '#1E293B', textAlign: 'center' }}
-                                title="Disposal Hours"
-                              />
-                              <span style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 600 }}>hrs</span>
-                            </div>
-                          )}
-                          <div style={{ display: 'flex', gap: '0.3rem' }}>
-                            <button
-                              type="button"
-                              onClick={() => addLandPackageTransfer(dIdx)}
-                              style={{ background: '#1D4ED8', color: '#FFF', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer' }}
-                            >
-                              Add
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setLandPackageNewTransferDay(null)}
-                              style={{ background: '#E2E8F0', color: '#475569', border: 'none', padding: '0.35rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer' }}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
+                    </div>
                   </div>
                 ))}
               </div>
@@ -13384,63 +13365,125 @@ ${proposal}
                 </div>
               )}
 
-              {/* Proposal Footer Preview */}
-              <div style={{ background: '#FFF', borderRadius: '12px', padding: '1rem 1.25rem', border: '1px solid #E2E8F0' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#475569', display: 'block', marginBottom: '0.35rem' }}>
-                  📌 Terms & Inclusions (Footer Disclaimer on Proposal):
-                </span>
-                <div style={{ background: '#F8FAFC', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.74rem', color: '#475569', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
-                  {landPackageModalItem.termsAndInclusions || defaultLandPackageTerms}
-                </div>
+              {/* Proposal Terms & Footer Disclaimer (Collapsible Accordion to save canvas space) */}
+              <div style={{ background: '#FFF', borderRadius: '8px', border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowLandPackageTerms(!showLandPackageTerms)}
+                  style={{
+                    width: '100%',
+                    background: '#F8FAFC',
+                    border: 'none',
+                    padding: '0.45rem 0.85rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    color: '#475569'
+                  }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    📌 Terms & Inclusions Disclaimer
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 600 }}>
+                    {showLandPackageTerms ? '▲ Hide Terms' : '▼ View / Customize Terms'}
+                  </span>
+                </button>
+                {showLandPackageTerms && (
+                  <div style={{ padding: '0.65rem 0.85rem', background: '#FFF', borderTop: '1px solid #E2E8F0' }}>
+                    <textarea
+                      value={landPackageModalItem.termsAndInclusions || defaultLandPackageTerms}
+                      onChange={e => {
+                        const val = e.target.value
+                        setDefaultLandPackageTerms(val)
+                        setLandPackageModalItem((prev: any) => ({ ...prev, termsAndInclusions: val }))
+                      }}
+                      rows={4}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '0.74rem',
+                        color: '#334155',
+                        lineHeight: 1.5,
+                        fontFamily: 'var(--font-inter), sans-serif'
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
             </div>
 
-            {/* Sticky Valuation & Action Footer */}
+            {/* Sticky Valuation & Action Footer (Ultra-Compact Streamlined Single-Row Bar) */}
             {landPackageCalculation && (
-              <div style={{ background: '#0F4C3A', color: '#FFF', padding: '1rem 1.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', boxShadow: '0 -4px 20px rgba(0,0,0,0.15)' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div>
-                      <span style={{ fontSize: '0.68rem', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Net Cost</span>
-                      <div style={{ fontSize: '1rem', fontWeight: 800 }}>S$ {landPackageCalculation.totalNetCostSGD.toLocaleString()}</div>
+              <div style={{
+                background: '#0F4C3A',
+                color: '#FFF',
+                padding: '0.45rem 1.25rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '0.65rem',
+                boxShadow: '0 -4px 16px rgba(0,0,0,0.15)',
+                flexShrink: 0
+              }}>
+                {/* Left: Financial Valuation Streamline */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+                  {isUserAdmin && (
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                      <span style={{ fontSize: '0.66rem', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Net:</span>
+                      <strong style={{ fontSize: '0.88rem', color: '#CBD5E1' }}>S$ {landPackageCalculation.totalNetCostSGD.toLocaleString()}</strong>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <span style={{ fontSize: '0.72rem', opacity: 0.8 }}>Markup (%):</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={landPackageMarkupPercent}
-                        onChange={e => setLandPackageMarkupPercent(Math.max(0, parseFloat(e.target.value) || 0))}
-                        style={{ width: '52px', padding: '0.2rem 0.35rem', borderRadius: '4px', border: 'none', fontSize: '0.8rem', fontWeight: 800, textAlign: 'center', background: '#FFF', color: '#0F4C3A', fontFamily: 'var(--font-inter), sans-serif' }}
-                      />
-                    </div>
-                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '1rem' }}>
-                      <span style={{ fontSize: '0.68rem', opacity: 0.75, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Client Total Price</span>
-                      <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#FCD34D' }}>
-                        S$ {landPackageCalculation.totalClientPriceSGD.toLocaleString()}{' '}
-                        <span style={{ fontSize: '0.75rem', fontWeight: 400, opacity: 0.85, color: '#FFF' }}>
-                          (≈ ₹{landPackageCalculation.totalClientPriceINR.toLocaleString('en-IN')})
-                        </span>
-                      </div>
-                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <span style={{ fontSize: '0.68rem', opacity: 0.8 }}>Markup:</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={landPackageMarkupPercent}
+                      onChange={e => setLandPackageMarkupPercent(Math.max(0, parseFloat(e.target.value) || 0))}
+                      style={{
+                        width: '46px',
+                        padding: '0.15rem 0.25rem',
+                        borderRadius: '4px',
+                        border: 'none',
+                        fontSize: '0.76rem',
+                        fontWeight: 800,
+                        textAlign: 'center',
+                        background: '#FFF',
+                        color: '#0F4C3A',
+                        fontFamily: 'var(--font-inter), sans-serif'
+                      }}
+                    />
+                    <span style={{ fontSize: '0.68rem', opacity: 0.8 }}>%</span>
                   </div>
-                  <div style={{ fontSize: '0.72rem', opacity: 0.85, marginTop: '2px' }}>
-                    👤 Guest: <strong>{landPackageGuestName || 'Valued Guest'}</strong>
-                    {landPackageSavedProposalNum && (
-                      <span style={{ marginLeft: '0.5rem', color: '#A7F3D0', fontWeight: 800 }}>• Ref: {landPackageSavedProposalNum}</span>
-                    )}
-                    <span style={{ marginLeft: '0.5rem' }}>
-                      • Quote: <strong>S$ {landPackageCalculation.adultQuoteSGD}</strong> / Adult
-                      {landPackageCalculation.childTicketCount > 0 && (
-                        <span> · <strong>S$ {landPackageCalculation.childQuoteSGD}</strong> / Child</span>
-                      )}
+
+                  <div style={{ borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '0.75rem', display: 'flex', alignItems: 'baseline', gap: '0.45rem' }}>
+                    <span style={{ fontSize: '0.66rem', opacity: 0.75, textTransform: 'uppercase' }}>Client Total:</span>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FCD34D', lineHeight: 1 }}>
+                      S$ {landPackageCalculation.totalClientPriceSGD.toLocaleString()}
                     </span>
+                    <span style={{ fontSize: '0.72rem', opacity: 0.8, color: '#E2E8F0' }}>
+                      (≈ ₹{landPackageCalculation.totalClientPriceINR.toLocaleString('en-IN')})
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', opacity: 0.9, background: 'rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: '4px' }}>
+                    <span>Quote: <strong>S$ {landPackageCalculation.adultQuoteSGD}</strong>/Ad</span>
+                    {landPackageCalculation.childTicketCount > 0 && (
+                      <span> · <strong>S$ {landPackageCalculation.childQuoteSGD}</strong>/Ch</span>
+                    )}
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                {/* Right: Action Buttons */}
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     onClick={e => {
@@ -13448,32 +13491,25 @@ ${proposal}
                       handleSaveLandPackageProposal()
                     }}
                     disabled={landPackageSavingProposal}
+                    title="Save land package proposal directly to Sanity"
                     style={{
                       background: landPackageSavedProposalNum ? '#059669' : '#0284C7',
                       color: '#FFF',
                       border: 'none',
-                      padding: '0.6rem 0.85rem',
-                      borderRadius: '8px',
-                      fontSize: '0.78rem',
+                      height: '32px',
+                      padding: '0 0.7rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
                       fontWeight: 800,
                       cursor: landPackageSavingProposal ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                       transition: 'all 0.2s ease',
-                      opacity: landPackageSavingProposal ? 0.75 : 1
+                      boxShadow: landPackageSavedProposalNum ? '0 0 10px rgba(5, 150, 105, 0.5)' : 'none'
                     }}
                   >
-                    {landPackageSavingProposal ? (
-                      <span>Saving... ⏳</span>
-                    ) : landPackageSavedProposalNum ? (
-                      <>
-                        <Check size={14} color="#FFF" />
-                        <span>Saved ({landPackageSavedProposalNum}) ✓</span>
-                      </>
-                    ) : (
-                      <span>💾 Save Proposal</span>
-                    )}
+                    <span>{landPackageSavingProposal ? 'Saving... ⏳' : landPackageSavedProposalNum ? `Saved (${landPackageSavedProposalNum}) ✓` : '💾 Save'}</span>
                   </button>
 
                   <button
@@ -13482,23 +13518,24 @@ ${proposal}
                       e.stopPropagation()
                       handleCopyLandPackageWhatsApp(e)
                     }}
+                    title="Copy WhatsApp Itinerary"
                     style={{
                       background: copiedLandPackageWA ? '#059669' : '#F59E0B',
                       color: '#FFF',
                       border: 'none',
-                      padding: '0.6rem 0.85rem',
-                      borderRadius: '8px',
-                      fontSize: '0.78rem',
+                      height: '32px',
+                      padding: '0 0.7rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
                       fontWeight: 800,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
-                      transition: 'all 0.2s ease',
-                      boxShadow: copiedLandPackageWA ? '0 0 12px rgba(5, 150, 105, 0.6)' : 'none'
+                      gap: '0.3rem',
+                      transition: 'all 0.2s ease'
                     }}
                   >
-                    {copiedLandPackageWA ? <Check size={14} color="#FFF" /> : <CopyCheck size={14} color="#FFF" />}
+                    {copiedLandPackageWA ? <Check size={13} color="#FFF" /> : <CopyCheck size={13} color="#FFF" />}
                     <span>{copiedLandPackageWA ? 'Copied! ✓' : 'Copy WA'}</span>
                   </button>
 
@@ -13508,22 +13545,24 @@ ${proposal}
                       e.stopPropagation()
                       handleSendLandPackageWhatsApp(e)
                     }}
+                    title="Direct WhatsApp to Guest"
                     style={{
                       background: sendingLandPackageWA ? '#047857' : '#10B981',
                       color: '#FFF',
                       border: 'none',
-                      padding: '0.6rem 0.85rem',
-                      borderRadius: '8px',
-                      fontSize: '0.78rem',
+                      height: '32px',
+                      padding: '0 0.7rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
                       fontWeight: 800,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.35rem',
+                      gap: '0.3rem',
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <MessageCircle size={14} color="#FFF" />
+                    <MessageCircle size={13} color="#FFF" />
                     <span>{sendingLandPackageWA ? 'Opening... 💬' : 'WhatsApp'}</span>
                   </button>
 
@@ -13533,9 +13572,23 @@ ${proposal}
                       e.stopPropagation()
                       handleDownloadLandPackagePDF()
                     }}
-                    style={{ background: '#2563EB', color: '#FFF', border: 'none', padding: '0.6rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                    title="Download Professional PDF"
+                    style={{
+                      background: '#2563EB',
+                      color: '#FFF',
+                      border: 'none',
+                      height: '32px',
+                      padding: '0 0.7rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
+                    }}
                   >
-                    <FileDown size={14} color="#FFF" />
+                    <FileDown size={13} color="#FFF" />
                     <span>PDF</span>
                   </button>
 
@@ -13546,7 +13599,17 @@ ${proposal}
                       handleLoadLandPackageIntoBuilder()
                     }}
                     title="Add hotel rooms and customize further in full builder"
-                    style={{ background: 'rgba(255,255,255,0.15)', color: '#FFF', border: '1px solid rgba(255,255,255,0.3)', padding: '0.6rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                    style={{
+                      background: 'rgba(255,255,255,0.15)',
+                      color: '#FFF',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      height: '32px',
+                      padding: '0 0.7rem',
+                      borderRadius: '6px',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
                   >
                     ⚙️ With Hotel
                   </button>

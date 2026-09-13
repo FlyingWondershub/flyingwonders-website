@@ -75,6 +75,15 @@ export default function AgentPortalPage() {
   const [statusRequestTarget, setStatusRequestTarget] = useState<'confirmed' | 'ignore'>('confirmed')
   const [statusRequestNoteText, setStatusRequestNoteText] = useState('')
   const [statusRequestSubmitting, setStatusRequestSubmitting] = useState(false)
+  const [copiedRef, setCopiedRef] = useState<string | null>(null)
+
+  const handleCopyRef = (e: React.MouseEvent, refNum: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    navigator.clipboard.writeText(refNum)
+    setCopiedRef(refNum)
+    setTimeout(() => setCopiedRef(null), 2000)
+  }
 
   useEffect(() => {
     async function initSession() {
@@ -827,7 +836,7 @@ export default function AgentPortalPage() {
             </Link>
 
             <Link
-              href="/"
+              href="/ready-made"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1188,7 +1197,7 @@ export default function AgentPortalPage() {
             </Link>
 
             <Link
-              href="/"
+              href="/ready-made"
               onClick={() => setMobileNavOpen(false)}
               style={{
                 display: 'flex',
@@ -1727,13 +1736,70 @@ export default function AgentPortalPage() {
                         const isCompleted = pStatus === 'completed'
 
                         return (
-                          <tr key={p._id || idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                            <td style={{ padding: '0.75rem 0.85rem', fontWeight: 800, color: '#B83A4B' }}>
-                              {p.proposalNumber}
+                          <tr key={p._id || idx} style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.15s' }}>
+                            <td style={{ padding: '0.75rem 0.85rem' }}>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <Link
+                                  href={`/custom-package?ref=${p.proposalNumber}`}
+                                  title={`Open ${p.proposalNumber} in Custom Builder Workspace`}
+                                  style={{
+                                    fontWeight: 800,
+                                    color: '#B83A4B',
+                                    textDecoration: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.3rem',
+                                    fontSize: '0.88rem',
+                                    letterSpacing: '0.02em',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                  className="hover:underline"
+                                >
+                                  <span>{p.proposalNumber}</span>
+                                  <ExternalLink size={12} style={{ opacity: 0.65 }} />
+                                </Link>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleCopyRef(e, p.proposalNumber)}
+                                  title={copiedRef === p.proposalNumber ? "Copied!" : "Copy Proposal Ref"}
+                                  style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    padding: '2px',
+                                    color: copiedRef === p.proposalNumber ? '#059669' : '#94A3B8',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    transition: 'color 0.15s'
+                                  }}
+                                >
+                                  {copiedRef === p.proposalNumber ? <CheckCircle2 size={12} color="#059669" /> : <Copy size={12} />}
+                                </button>
+                              </div>
                             </td>
                             <td style={{ padding: '0.75rem 0.85rem' }}>
                               <strong style={{ color: '#0F172A', display: 'block' }}>{p.guestName || 'Valued Guest'}</strong>
-                              <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{p.guestPhone || 'No phone'}</span>
+                              {p.guestPhone ? (
+                                <a
+                                  href={`https://wa.me/${p.guestPhone.replace(/[^0-9]/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Chat on WhatsApp"
+                                  style={{
+                                    fontSize: '0.75rem',
+                                    color: '#059669',
+                                    textDecoration: 'none',
+                                    fontWeight: 600,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}
+                                >
+                                  📞 {p.guestPhone}
+                                </a>
+                              ) : (
+                                <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>No phone</span>
+                              )}
                             </td>
                             <td style={{ padding: '0.75rem 0.85rem', color: '#334155' }}>
                               {p.adults || 2} Adult{p.adults > 1 ? 's' : ''}{p.kids > 0 ? ` + ${p.kids} Child` : ''} · {p.nights || 3}N
@@ -1774,26 +1840,8 @@ export default function AgentPortalPage() {
                                 </div>
                               )}
                             </td>
-                            <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right', display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
-                              <Link
-                                href={`/custom-package?ref=${p.proposalNumber}`}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.3rem',
-                                  padding: '0.35rem 0.75rem',
-                                  borderRadius: '6px',
-                                  background: '#F1F5F9',
-                                  color: '#0F172A',
-                                  border: '1px solid #CBD5E1',
-                                  textDecoration: 'none',
-                                  fontWeight: 700,
-                                  fontSize: '0.78rem'
-                                }}
-                              >
-                                <ExternalLink size={13} /> Open
-                              </Link>
-                              {!p.statusChangeRequested && (pStatus === 'pending' || pStatus === 'followup') && (
+                            <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right' }}>
+                              {!p.statusChangeRequested && (pStatus === 'pending' || pStatus === 'followup') ? (
                                 <button
                                   onClick={() => {
                                     setStatusRequestProposal(p)
@@ -1803,7 +1851,7 @@ export default function AgentPortalPage() {
                                   style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
-                                    gap: '0.2rem',
+                                    gap: '0.25rem',
                                     padding: '0.35rem 0.75rem',
                                     borderRadius: '6px',
                                     background: '#0F4C3A',
@@ -1811,11 +1859,14 @@ export default function AgentPortalPage() {
                                     border: 'none',
                                     fontWeight: 700,
                                     fontSize: '0.78rem',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    transition: 'background 0.15s'
                                   }}
                                 >
                                   ⏳ Change Status
                                 </button>
+                              ) : (
+                                <span style={{ fontSize: '0.74rem', color: '#94A3B8' }}>—</span>
                               )}
                             </td>
                           </tr>
@@ -1836,9 +1887,45 @@ export default function AgentPortalPage() {
                       <div key={p._id || idx} className="ap-booking-card">
                         {/* Top Row: Ref & Status Pill */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
-                          <span style={{ fontWeight: 900, color: '#B83A4B', fontSize: '1rem', letterSpacing: '0.02em' }}>
-                            {p.proposalNumber}
-                          </span>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <Link
+                              href={`/custom-package?ref=${p.proposalNumber}`}
+                              title={`Open ${p.proposalNumber} in Custom Builder`}
+                              style={{
+                                fontWeight: 900,
+                                color: '#B83A4B',
+                                fontSize: '0.98rem',
+                                letterSpacing: '0.02em',
+                                textDecoration: 'none',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.25rem'
+                              }}
+                            >
+                              <span>{p.proposalNumber}</span>
+                              <ExternalLink size={13} style={{ opacity: 0.65 }} />
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={(e) => handleCopyRef(e, p.proposalNumber)}
+                              title={copiedRef === p.proposalNumber ? "Copied!" : "Copy Proposal Ref"}
+                              style={{
+                                background: copiedRef === p.proposalNumber ? '#DCFCE7' : '#F1F5F9',
+                                border: '1px solid',
+                                borderColor: copiedRef === p.proposalNumber ? '#86EFAC' : '#CBD5E1',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                padding: '0.2rem 0.35rem',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.2rem',
+                                fontSize: '0.68rem',
+                                color: copiedRef === p.proposalNumber ? '#166534' : '#475569',
+                              }}
+                            >
+                              {copiedRef === p.proposalNumber ? <CheckCircle2 size={11} color="#059669" /> : <Copy size={11} />}
+                            </button>
+                          </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                             <span style={{
                               padding: '0.25rem 0.65rem',
@@ -1873,9 +1960,33 @@ export default function AgentPortalPage() {
                             👤 {p.guestName || 'Valued Guest'}
                           </strong>
                           {p.guestPhone ? (
-                            <a href={`tel:${p.guestPhone}`} style={{ fontSize: '0.82rem', color: '#0284C7', textDecoration: 'none', fontWeight: 700 }}>
-                              📞 {p.guestPhone}
-                            </a>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <a href={`tel:${p.guestPhone}`} style={{ fontSize: '0.82rem', color: '#0284C7', textDecoration: 'none', fontWeight: 700 }}>
+                                📞 {p.guestPhone}
+                              </a>
+                              <a
+                                href={`https://wa.me/${p.guestPhone.replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Chat on WhatsApp"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  padding: '0.1rem 0.35rem',
+                                  borderRadius: '4px',
+                                  background: '#DCFCE7',
+                                  border: '1px solid #86EFAC',
+                                  color: '#166534',
+                                  fontSize: '0.68rem',
+                                  fontWeight: 700,
+                                  textDecoration: 'none',
+                                  gap: '0.2rem'
+                                }}
+                              >
+                                💬 WhatsApp
+                              </a>
+                            </div>
                           ) : (
                             <span style={{ fontSize: '0.78rem', color: '#94A3B8' }}>No phone</span>
                           )}
@@ -1898,28 +2009,8 @@ export default function AgentPortalPage() {
                         </div>
 
                         {/* Actions */}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
-                          <Link
-                            href={`/custom-package?ref=${p.proposalNumber}`}
-                            style={{
-                              flex: 1,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '0.4rem',
-                              padding: '0.65rem',
-                              borderRadius: '8px',
-                              background: '#0F172A',
-                              color: '#FFF',
-                              textDecoration: 'none',
-                              fontWeight: 800,
-                              fontSize: '0.82rem',
-                              minHeight: '44px'
-                            }}
-                          >
-                            <ExternalLink size={15} /> Open Proposal
-                          </Link>
-                          {!p.statusChangeRequested && (pStatus === 'pending' || pStatus === 'followup') && (
+                        {!p.statusChangeRequested && (pStatus === 'pending' || pStatus === 'followup') && (
+                          <div style={{ marginTop: '0.2rem' }}>
                             <button
                               onClick={() => {
                                 setStatusRequestProposal(p)
@@ -1927,11 +2018,12 @@ export default function AgentPortalPage() {
                                 setStatusRequestNoteText('')
                               }}
                               style={{
+                                width: '100%',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '0.3rem',
-                                padding: '0.65rem 0.85rem',
+                                padding: '0.6rem 0.85rem',
                                 borderRadius: '8px',
                                 background: '#0F4C3A',
                                 color: '#FFF',
@@ -1939,14 +2031,13 @@ export default function AgentPortalPage() {
                                 fontWeight: 800,
                                 fontSize: '0.82rem',
                                 cursor: 'pointer',
-                                minHeight: '44px',
-                                whiteSpace: 'nowrap'
+                                minHeight: '40px'
                               }}
                             >
                               ⏳ Change Status
                             </button>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     )
                   })}
