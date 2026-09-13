@@ -220,6 +220,8 @@ export async function GET() {
         category,
         badgeText,
         coverImage,
+        "videoFileUrl": videoFile.asset->url,
+        videoUrl,
         summary,
         startingPriceSGD,
         termsAndInclusions,
@@ -232,7 +234,8 @@ export async function GET() {
       ...tmpl,
       coverImage: tmpl?.coverImage
         ? imageBuilder.image(tmpl.coverImage).auto('format').width(1000).fit('max').url()
-        : (tmpl?.coverImage || null)
+        : (tmpl?.coverImage || null),
+      videoUrl: tmpl?.videoFileUrl || tmpl?.videoUrl || null
     })
 
     if (Array.isArray(sanityTemplates) && sanityTemplates.length > 0) {

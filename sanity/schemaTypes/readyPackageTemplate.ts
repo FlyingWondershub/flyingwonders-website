@@ -57,6 +57,20 @@ export const readyPackageTemplateSchema = defineType({
       options: { hotspot: true },
     }),
     defineField({
+      name: 'videoFile',
+      title: 'Package Video File (Direct Upload)',
+      type: 'file',
+      options: { accept: 'video/*' },
+      description: 'Upload an MP4 or WebM video file directly from your device.',
+    }),
+    defineField({
+      name: 'videoUrl',
+      title: 'Package Video URL (YouTube, Vimeo, or MP4/WebM Link)',
+      type: 'url',
+      placeholder: 'https://www.youtube.com/watch?v=... or https://cdn.../tour.mp4',
+      description: 'Alternative: paste an external video link (YouTube, Vimeo, or direct MP4/WebM URL).',
+    }),
+    defineField({
       name: 'summary',
       title: 'Highlights Summary',
       type: 'text',

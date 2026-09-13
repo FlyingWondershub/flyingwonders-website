@@ -78,6 +78,35 @@ function cleanPdfText(text: string): string {
     .trim()
 }
 
+function getEmbedVideoInfo(rawUrl?: string | null): { type: 'youtube' | 'vimeo' | 'mp4' | null; embedUrl: string | null } {
+  if (!rawUrl) return { type: null, embedUrl: null }
+  const trimmed = rawUrl.trim()
+
+  // YouTube match (watch?v=, youtu.be/, shorts/, embed/)
+  const ytMatch = trimmed.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)
+  if (ytMatch && ytMatch[1]) {
+    return {
+      type: 'youtube',
+      embedUrl: `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?autoplay=1&mute=1&rel=0&modestbranding=1`
+    }
+  }
+
+  // Vimeo match
+  const vmMatch = trimmed.match(/(?:vimeo\.com\/(?:video\/)?|player\.vimeo\.com\/video\/)(\d+)/)
+  if (vmMatch && vmMatch[1]) {
+    return {
+      type: 'vimeo',
+      embedUrl: `https://player.vimeo.com/video/${vmMatch[1]}?autoplay=1&muted=1`
+    }
+  }
+
+  // Direct video file (mp4, webm, ogg, Sanity cdn asset)
+  return {
+    type: 'mp4',
+    embedUrl: trimmed
+  }
+}
+
 const LOCAL_ATTRACTION_FALLBACKS: Record<string, string> = {
   universal: '/images/attractions/universal-studios-singapore/cover.jpg',
   gardens: '/images/attractions/gardens-by-the-bay/cover.jpg',
@@ -258,6 +287,7 @@ export default function ReadyMadePackagesPage() {
   const [filterDuration, setFilterDuration] = useState<'all' | '3' | '4' | '5'>('all')
   const [filterCategory, setFilterCategory] = useState<'all' | 'popular' | 'family' | 'luxury' | 'budget' | 'mice'>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeMediaTabs, setActiveMediaTabs] = useState<Record<string, 'photo' | 'video'>>({})
 
   // Toast Notification
   const [toast, setToast] = useState<{ message: string; type?: 'success' | 'info' | 'error' } | null>(null)
@@ -593,7 +623,15 @@ export default function ReadyMadePackagesPage() {
         badge: '13-Seater Minibus (Private Arrival)',
         icon: '🛬',
         isAirport: true,
-        isDisposal: false
+        isDisposal: false,
+        photoUrl: '/images/hero/singapore-hero-4.jpg',
+        shortDescription: 'Professional airport arrival reception and swift transit to your hotel. Meet your dedicated chauffeur at the arrival hall for direct, relaxing highway transit to your accommodation.',
+        features: [
+          'Changi Airport Arrival Reception',
+          'Luggage Loading & Chauffeur Assistance',
+          'Direct Express Highway Transit to Hotel',
+          'Air-Conditioned 13-Seater Minibus'
+        ]
       }
     }
     if (isDep) {
@@ -604,7 +642,15 @@ export default function ReadyMadePackagesPage() {
         badge: '13-Seater Minibus (Private Departure)',
         icon: '🛫',
         isAirport: true,
-        isDisposal: false
+        isDisposal: false,
+        photoUrl: '/images/hero/singapore-hero-4.jpg',
+        shortDescription: 'Punctual hotel pickup and direct express transit to Singapore Changi Airport. Your chauffeur assists with baggage loading at hotel lobby, ensuring timely arrival at your departure terminal for check-in and GST tax refund.',
+        features: [
+          'Punctual Hotel Lobby Pickup',
+          'Luggage Loading & Chauffeur Assistance',
+          'Direct Drop-off at Changi Departure Terminal',
+          'Ample Time for Check-in & Tax Refunds'
+        ]
       }
     }
     if (isDisp) {
@@ -616,7 +662,15 @@ export default function ReadyMadePackagesPage() {
         badge: `${hrs}h Disposal (13-Seater Minibus)`,
         icon: '⏱️',
         isAirport: false,
-        isDisposal: true
+        isDisposal: true,
+        photoUrl: '/images/transfers/13-seater-minibus.jpg',
+        shortDescription: `Enjoy total itinerary flexibility with a dedicated 13-Seater minibus and chauffeur on standby for ${hrs} consecutive hours. Ideal for custom shopping sprees, dining excursions, and bespoke sightseeing.`,
+        features: [
+          `${hrs} Hours Dedicated Chauffeur Standby`,
+          'Unlimited Stops Within Singapore',
+          'Flexible Route Customized to Your Schedule',
+          'Electronic Road Pricing (ERP) Included'
+        ]
       }
     }
     if (isCity) {
@@ -627,7 +681,15 @@ export default function ReadyMadePackagesPage() {
         badge: mode === 'sic' ? 'SIC - Shared City Tour' : '13-Seater Minibus (Private)',
         icon: '🏙️',
         isAirport: false,
-        isDisposal: false
+        isDisposal: false,
+        photoUrl: '/images/transfers/city-tour.jpg',
+        shortDescription: 'Explore Singapore\'s premier landmarks with a 3-hour guided city orientation tour covering Civic District, Merlion Park, Marina Bay waterfront, and cultural heritage precincts.',
+        features: [
+          '3-Hour Guided City Orientation',
+          'Merlion Park & Marina Bay Lookout',
+          'Historic Civic District & Chinatown',
+          mode === 'sic' ? 'Shared Coach (Seat-In-Coach)' : '13-Seater Private Minibus'
+        ]
       }
     }
     // Default: Point-to-Point Inter-attraction sightseeing transfer
@@ -648,7 +710,15 @@ export default function ReadyMadePackagesPage() {
       badge: mode === 'sic' ? 'SIC - Shared Sightseeing Transfer' : '13-Seater Minibus (Private)',
       icon: '🚗',
       isAirport: false,
-      isDisposal: false
+      isDisposal: false,
+      photoUrl: '/images/transfers/13-seater-minibus.jpg',
+      shortDescription: 'Comfortable, air-conditioned point-to-point transit across Singapore with door-to-door pickup and drop-off by experienced chauffeur.',
+      features: [
+        'Direct Door-to-Door Transit',
+        'Air-Conditioned Comfort',
+        'Dedicated Luggage Space',
+        'Professional Chauffeur Navigation'
+      ]
     }
   }
 
@@ -1308,6 +1378,22 @@ export default function ReadyMadePackagesPage() {
         })
       )
 
+      // Preload transfer card photos (480x312 px cover: zero distortion, retina print quality)
+      const transferPhotosMap = new Map<string, string>()
+      const transferImageUrls = [
+        '/images/hero/singapore-hero-4.jpg',
+        '/images/transfers/13-seater-minibus.jpg',
+        '/images/transfers/city-tour.jpg'
+      ]
+      await Promise.all(
+        transferImageUrls.map(async (url) => {
+          const raster = await fetchRasterLogo(url, 480, 312, true, 0.85, 'cover')
+          if (raster?.dataUrl) {
+            transferPhotosMap.set(url, raster.dataUrl)
+          }
+        })
+      )
+
       const PW = 210
       const PH = 297
       const ML = 14
@@ -1320,6 +1406,7 @@ export default function ReadyMadePackagesPage() {
       const CRIM: [number, number, number] = [140, 30, 50]
       const TEAL: [number, number, number] = [32, 100, 96]
       const SLATE: [number, number, number] = [44, 62, 80]
+      const TEXT: [number, number, number] = [30, 41, 59]
       const LGRAY: [number, number, number] = [245, 247, 250]
       const WHITE: [number, number, number] = [255, 255, 255]
 
@@ -1513,6 +1600,7 @@ export default function ReadyMadePackagesPage() {
 
         ;(day.transfers || []).forEach((t: any) => {
           const info = getCleanTransferInfo(t, transferMode)
+          const photoData = transferPhotosMap.get(info.photoUrl) || null
           dayEvents.push({
             time: t.time || '10:00',
             type: 'transfer',
@@ -1520,7 +1608,10 @@ export default function ReadyMadePackagesPage() {
             title: cleanPdfText(info.title),
             vehicleName: info.vehicleName,
             badge: info.badge,
-            hours: t.hours
+            hours: t.hours,
+            shortDescription: info.shortDescription,
+            features: info.features,
+            photoData
           })
         })
 
@@ -1557,30 +1648,86 @@ export default function ReadyMadePackagesPage() {
         // Render each item chronologically
         dayEvents.forEach((item: any) => {
           if (item.type === 'transfer') {
-            const textW = CW - 32
-            font('bold', 7.5)
-            const titleLines = doc.splitTextToSize(item.title, textW)
-            const titleH = titleLines.length * 3.4
-            const rowH = Math.max(9, titleH + 6)
-            checkPage(rowH + 2)
+            const hasPhoto = !!item.photoData
+            const imgW = 34
+            const imgH = 22
+            const textW = hasPhoto ? CW - imgW - 14 : CW - 24
 
-            setFill(LGRAY); doc.roundedRect(ML, y, CW, rowH, 1.5, 1.5, 'F')
-            setFill(TEAL); doc.rect(ML, y, 2.5, rowH, 'F')
+            font('bold', 8.2)
+            const titleLines = doc.splitTextToSize(item.title, textW)
+            const titleH = titleLines.length * 3.6
+
+            font('bold', 6.8)
+            const badgeStr = `Service: ${item.vehicleName} · ${item.badge}`
+            const badgeLines = doc.splitTextToSize(badgeStr, textW)
+            const badgeH = badgeLines.length * 3.0
+
+            const descText = item.shortDescription || ''
+            font('italic', 6.5)
+            const descLines = descText ? doc.splitTextToSize(descText, textW) : []
+            const descH = descLines.length > 0 ? descLines.length * 2.9 + 1 : 0
+
+            const inclusions: string[] = Array.isArray(item.features) ? item.features : []
+            const incRows = Math.ceil(inclusions.length / 2)
+            const incH = inclusions.length > 0 ? (2.8 + incRows * 2.8) : 0
+
+            const contentH = 4 + titleH + badgeH + descH + incH + 3
+            const cardH = Math.max(hasPhoto ? 26 : 14, contentH)
+            checkPage(cardH + 2)
+
+            // Card container: Subtle luxury teal card
+            setFill([240, 253, 250]); doc.roundedRect(ML, y, CW, cardH, 1.5, 1.5, 'F')
+            setDraw(TEAL); doc.setLineWidth(0.3); doc.roundedRect(ML, y, CW, cardH, 1.5, 1.5, 'S')
+            setFill(TEAL); doc.rect(ML, y, 2.5, cardH, 'F')
 
             // Time pill
-            setFill(TEAL); doc.roundedRect(ML + 5, y + 2, 14, 5, 1, 1, 'F')
-            font('bold', 6.5); setTxt(WHITE)
-            doc.text(item.time, ML + 12, y + 5.5, { align: 'center' })
+            setFill(TEAL); doc.roundedRect(ML + 5, y + 2.5, 13, 4.5, 1, 1, 'F')
+            font('bold', 6.2); setTxt(WHITE)
+            doc.text(item.time, ML + 11.5, y + 5.6, { align: 'center' })
+
+            // Transfer Photo (on the right)
+            if (hasPhoto && item.photoData) {
+              const imgX = MR - imgW - 2
+              const imgY = y + (cardH - imgH) / 2
+              try {
+                doc.addImage(item.photoData, 'JPEG', imgX, imgY, imgW, imgH, undefined, 'MEDIUM')
+                setDraw([204, 251, 241]); doc.setLineWidth(0.2)
+                doc.rect(imgX, imgY, imgW, imgH, 'S')
+              } catch (e) {}
+            }
 
             // Route Title
-            font('bold', 7.5); setTxt(NAVY)
-            doc.text(titleLines, ML + 22, y + 5)
+            let ty = y + 5.5
+            font('bold', 8.2); setTxt(NAVY)
+            doc.text(titleLines, ML + 21, ty)
+            ty += titleH
 
             // Vehicle Badge
-            font('normal', 6.8); setTxt([70, 90, 110])
-            doc.text(`Vehicle: ${item.vehicleName}`, ML + 22, y + 5 + titleH)
+            font('bold', 6.8); setTxt([13, 148, 136])
+            doc.text(badgeLines, ML + 21, ty)
+            ty += badgeH
 
-            y += rowH + 2
+            // Editorial Narrative
+            if (descLines.length > 0) {
+              font('italic', 6.5); setTxt(TEXT)
+              doc.text(descLines, ML + 21, ty)
+              ty += descH
+            }
+
+            // Features Inclusions (2 columns)
+            if (inclusions.length > 0) {
+              const colW = (textW - 22) / 2
+              font('normal', 6.3); setTxt([15, 118, 110])
+              for (let i = 0; i < inclusions.length; i += 2) {
+                doc.text(`• ${inclusions[i]}`, ML + 21, ty)
+                if (inclusions[i + 1]) {
+                  doc.text(`• ${inclusions[i + 1]}`, ML + 21 + colW, ty)
+                }
+                ty += 2.8
+              }
+            }
+
+            y += cardH + 2
           } else if (item.type === 'attraction') {
             const hasPhoto = !!item.photoData
             const imgW = 34
@@ -1782,50 +1929,62 @@ export default function ReadyMadePackagesPage() {
         </div>
       )}
 
-      {/* Hero Banner */}
+      {/* Hero Banner (Compact Executive Layout on Wide Canvas) */}
       <section style={{
         background: 'linear-gradient(135deg, #0A2240 0%, #0F4C3A 100%)',
         color: '#FFF',
-        padding: '3.5rem 1.5rem 3rem',
+        padding: '1.25rem 1.5rem',
         position: 'relative',
         overflow: 'hidden'
       }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(196,156,60,0.2)', border: '1px solid rgba(196,156,60,0.5)', padding: '0.35rem 0.85rem', borderRadius: '30px', fontSize: '0.78rem', fontWeight: 800, color: '#FCD34D', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem' }}>
-            <Sparkles size={14} /> Ready-Made B2B Land Packages (No Hotels)
+        <div style={{
+          maxWidth: '1540px',
+          margin: '0 auto',
+          position: 'relative',
+          zIndex: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(196,156,60,0.2)', border: '1px solid rgba(196,156,60,0.45)', padding: '0.2rem 0.65rem', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 800, color: '#FCD34D', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.35rem' }}>
+              <Sparkles size={12} /> Ready-Made B2B Land Packages (No Hotels)
+            </div>
+
+            <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.25rem', lineHeight: 1.2 }}>
+              Instant Singapore Land Package Quotations
+            </h1>
+
+            <p style={{ fontSize: '0.86rem', color: '#CBD5E1', maxWidth: '820px', lineHeight: 1.45, margin: 0 }}>
+              Pre-configured B2B ground itineraries tailored for travel partners. Includes private 13-seater minibus airport transfers, verified sightseeing admissions, and SIC or private tour transport—<strong>without hotel accommodation</strong>.
+            </p>
           </div>
 
-          <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.5rem', fontWeight: 800, margin: '0 0 0.8rem', lineHeight: 1.2 }}>
-            Instant Singapore Land Package Quotations
-          </h1>
-
-          <p style={{ fontSize: '1.05rem', color: '#CBD5E1', maxWidth: '750px', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
-            Pre-configured B2B ground itineraries tailored for travel partners. Includes private 13-seater minibus airport transfers, verified sightseeing admissions, and SIC or private tour transport—<strong>without hotel accommodation</strong>.
-          </p>
-
-          {/* Value Highlights Pill Row */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.82rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.1)', padding: '0.4rem 0.85rem', borderRadius: '8px', backdropFilter: 'blur(4px)' }}>
-              <Bus size={15} color="#FCD34D" />
-              <span>Private 13-Seater Airport Transfers</span>
+          {/* Value Highlights Pill Row (Compact) */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', fontSize: '0.78rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', padding: '0.35rem 0.75rem', borderRadius: '6px' }}>
+              <Bus size={14} color="#FCD34D" />
+              <span>Private 13-Seater Transfers</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.1)', padding: '0.4rem 0.85rem', borderRadius: '8px', backdropFilter: 'blur(4px)' }}>
-              <Users size={15} color="#FCD34D" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', padding: '0.35rem 0.75rem', borderRadius: '6px' }}>
+              <Users size={14} color="#FCD34D" />
               <span>Optimized for FITs up to 12 Pax</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.1)', padding: '0.4rem 0.85rem', borderRadius: '8px', backdropFilter: 'blur(4px)' }}>
-              <CheckCircle2 size={15} color="#FCD34D" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', padding: '0.35rem 0.75rem', borderRadius: '6px' }}>
+              <CheckCircle2 size={14} color="#FCD34D" />
               <span>Instant WhatsApp & PDF Proposals</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Main Content Area */}
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem 4rem' }}>
+      {/* Main Content Area (Wide Canvas) */}
+      <main style={{ maxWidth: '1540px', margin: '0 auto', padding: '1.25rem 1.5rem 3.5rem' }}>
         
         {/* Controls: Filters & Search */}
-        <div style={{ background: '#FFF', padding: '1.25rem 1.5rem', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ background: '#FFF', padding: '0.85rem 1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             
@@ -1941,11 +2100,17 @@ export default function ReadyMadePackagesPage() {
           </div>
         )}
 
-        {/* Package Card Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1.75rem' }}>
-          {filteredTemplates.map(tmpl => (
+        {/* Package Card Grid (Wide Canvas: 3-4 cards across on modern desktop) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.5rem' }}>
+          {filteredTemplates.map(tmpl => {
+            const tmplId = tmpl._id || tmpl.title
+            const hasVideo = !!tmpl.videoUrl
+            const activeTab = (hasVideo && activeMediaTabs[tmplId]) ? activeMediaTabs[tmplId] : 'photo'
+            const videoInfo = hasVideo ? getEmbedVideoInfo(tmpl.videoUrl) : null
+
+            return (
             <div
-              key={tmpl._id || tmpl.title}
+              key={tmplId}
               onClick={() => openModal(tmpl)}
               style={{
                 background: '#FFF',
@@ -1969,47 +2134,179 @@ export default function ReadyMadePackagesPage() {
               }}
             >
               <div>
-                {/* Cover Image */}
-                <div style={{ height: '190px', width: '100%', position: 'relative', overflow: 'hidden', background: '#0A2240' }}>
+                {/* Cover Image / Video: 100% Uncropped with ambient backdrop */}
+                <div style={{ height: '220px', width: '100%', position: 'relative', overflow: 'hidden', background: '#091A2F' }}>
+                  {/* Blurred ambient backdrop to fill letterboxing seamlessly */}
                   <img
                     src={tmpl.coverImage || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800'}
-                    alt={tmpl.title}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    alt=""
+                    aria-hidden="true"
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(16px)', opacity: 0.45, transform: 'scale(1.15)' }}
                   />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.65) 100%)' }} />
 
+                  {/* Media Content: Video Embed or Foreground Image */}
+                  {hasVideo && activeTab === 'video' && videoInfo?.embedUrl ? (
+                    <div
+                      style={{ position: 'relative', width: '100%', height: '100%', background: '#000', zIndex: 2 }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      {videoInfo.type === 'mp4' ? (
+                        <video
+                          src={videoInfo.embedUrl}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                      ) : (
+                        <iframe
+                          src={videoInfo.embedUrl}
+                          title={`${tmpl.title} Video Preview`}
+                          style={{ width: '100%', height: '100%', border: 'none' }}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    /* Foreground Image: 100% uncropped */
+                    <img
+                      src={tmpl.coverImage || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800'}
+                      alt={tmpl.title}
+                      style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'contain', zIndex: 1 }}
+                    />
+                  )}
+
+                  {/* Badge Text */}
                   {tmpl.badgeText && (
-                    <span style={{ position: 'absolute', top: '1rem', left: '1rem', background: '#D4AF37', color: '#111', fontWeight: 800, fontSize: '0.72rem', padding: '0.25rem 0.65rem', borderRadius: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <span style={{ position: 'absolute', top: '0.75rem', left: '0.75rem', background: '#D4AF37', color: '#111', fontWeight: 800, fontSize: '0.72rem', padding: '0.22rem 0.6rem', borderRadius: '8px', textTransform: 'uppercase', letterSpacing: '0.05em', zIndex: 3, boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }}>
                       {tmpl.badgeText}
                     </span>
                   )}
 
-                  <span style={{ position: 'absolute', bottom: '1rem', right: '1rem', background: 'rgba(15,76,58,0.95)', color: '#FFF', fontWeight: 800, fontSize: '0.78rem', padding: '0.3rem 0.75rem', borderRadius: '20px', backdropFilter: 'blur(4px)' }}>
+                  {/* Option A: Interactive Media Switcher Pill [ 📷 Photo | ▶ Video ] */}
+                  {hasVideo && (
+                    <div
+                      onClick={e => e.stopPropagation()}
+                      style={{
+                        position: 'absolute',
+                        top: '0.75rem',
+                        right: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '2px',
+                        background: 'rgba(10, 34, 64, 0.85)',
+                        backdropFilter: 'blur(8px)',
+                        padding: '3px',
+                        borderRadius: '20px',
+                        border: '1px solid rgba(255, 255, 255, 0.25)',
+                        zIndex: 3,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.35)'
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setActiveMediaTabs(prev => ({ ...prev, [tmplId]: 'photo' }))
+                        }}
+                        style={{
+                          background: activeTab === 'photo' ? '#0F4C3A' : 'transparent',
+                          color: activeTab === 'photo' ? '#FFF' : '#CBD5E1',
+                          border: 'none',
+                          borderRadius: '12px',
+                          padding: '3px 8px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        📷 Photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setActiveMediaTabs(prev => ({ ...prev, [tmplId]: 'video' }))
+                        }}
+                        style={{
+                          background: activeTab === 'video' ? '#E11D48' : 'transparent',
+                          color: activeTab === 'video' ? '#FFF' : '#CBD5E1',
+                          border: 'none',
+                          borderRadius: '12px',
+                          padding: '3px 8px',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        ▶ Video
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Duration Pill */}
+                  <span style={{ position: 'absolute', bottom: '0.75rem', right: '0.75rem', background: 'rgba(15,76,58,0.92)', color: '#FFF', fontWeight: 800, fontSize: '0.75rem', padding: '0.25rem 0.7rem', borderRadius: '16px', backdropFilter: 'blur(6px)', zIndex: 3, boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>
                     🌙 {tmpl.nightsCount}N / {tmpl.nightsCount + 1}D Land
                   </span>
                 </div>
 
                 {/* Content */}
-                <div style={{ padding: '1.5rem' }}>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0A2240', margin: '0 0 0.6rem', lineHeight: 1.3 }}>
+                <div style={{ padding: '1.25rem 1.35rem 1rem' }}>
+                  <h2 style={{ fontSize: '1.18rem', fontWeight: 800, color: '#0A2240', margin: '0 0 0.5rem', lineHeight: 1.3 }}>
                     {tmpl.title}
                   </h2>
 
-                  <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.5, margin: '0 0 1.25rem' }}>
+                  <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1.15rem', textAlign: 'justify', textJustify: 'inter-word' }}>
                     {tmpl.summary}
                   </p>
 
-                  {/* Highlights overview */}
+                  {/* Highlights overview: Stacked vertically one below the other */}
                   {Array.isArray(tmpl.itinerary) && tmpl.itinerary.length > 0 && (
-                    <div style={{ background: '#F8FAFC', padding: '0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F4C3A', display: 'block', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    <div style={{ background: '#F8FAFC', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0F4C3A', display: 'block', marginBottom: '0.45rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                         Included Daywise Highlights:
                       </span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', fontSize: '0.74rem', color: '#334155' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                         {tmpl.itinerary.map((d: any, idx: number) => (
-                          <span key={idx} style={{ background: '#FFF', border: '1px solid #CBD5E1', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
-                            Day {idx + 1}: {d.dayTitle || `Day ${idx + 1}`}
-                          </span>
+                          <div
+                            key={idx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'baseline',
+                              gap: '0.5rem',
+                              background: '#FFF',
+                              border: '1px solid #E2E8F0',
+                              padding: '0.35rem 0.6rem',
+                              borderRadius: '6px',
+                              fontSize: '0.76rem'
+                            }}
+                          >
+                            <span style={{
+                              fontWeight: 800,
+                              color: '#0F4C3A',
+                              background: '#E6F4EA',
+                              border: '1px solid #A7F3D0',
+                              padding: '0.1rem 0.4rem',
+                              borderRadius: '4px',
+                              fontSize: '0.68rem',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0
+                            }}>
+                              Day {idx + 1}
+                            </span>
+                            <span style={{ color: '#1E293B', fontWeight: 600, lineHeight: 1.35, textAlign: 'justify', flex: 1 }}>
+                              {d.dayTitle || `Day ${idx + 1}`}
+                            </span>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -2017,7 +2314,7 @@ export default function ReadyMadePackagesPage() {
 
                   {/* Starting Price SGD / INR */}
                   {tmpl.startingPriceSGD > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.5rem', borderTop: '1px solid #E2E8F0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.6rem', borderTop: '1px solid #E2E8F0' }}>
                       <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Est. Starting Rate:</span>
                       <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#059669' }}>
                         S$ {tmpl.startingPriceSGD.toLocaleString()}{' '}
@@ -2140,7 +2437,8 @@ export default function ReadyMadePackagesPage() {
               </div>
 
             </div>
-          ))}
+            )
+          })}
         </div>
 
       </main>
