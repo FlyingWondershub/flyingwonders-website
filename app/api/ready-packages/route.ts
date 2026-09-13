@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import { createImageUrlBuilder } from '@sanity/image-url'
 import { apiVersion, dataset, projectId } from '../../../sanity/env'
@@ -32,7 +32,7 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'Arrival & Welcome Transfer',
         dayDescription: 'Welcome to Singapore! Meet our chauffeur at Changi Airport for a direct private transfer to your city hotel. Rest of the day is at your leisure.',
         transfers: [
-          { serviceType: 'arrival', routeDescription: 'Changi Airport to Hotel (Private 13-Seater)', time: '12:00' }
+          { serviceType: 'arrival', routeDescription: 'Changi Airport to Hotel (Private 13-Seater)', vehicleType: '13-Seater - Private - group - Arrival / Departure', time: '12:00' }
         ],
         attractions: []
       },
@@ -41,8 +41,8 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'City Tour & Gardens by the Bay',
         dayDescription: 'Explore Singapore highlights including Merlion Park, Civic District, and Chinatown, followed by the breathtaking Cloud Forest and Flower Dome at Gardens by the Bay.',
         transfers: [
-          { serviceType: 'cityTour', routeDescription: 'Half-Day Panoramic City Tour (3 Hours)', time: '09:30' },
-          { serviceType: 'interAttraction', routeDescription: 'Hotel to Gardens by the Bay Transfer', time: '14:00' }
+          { serviceType: 'cityTour', routeDescription: 'Half-Day Panoramic City Tour (3 Hours)', vehicleType: '13-Seater - Private - group - City tour', time: '09:30' },
+          { serviceType: 'interAttraction', routeDescription: 'Hotel to Gardens by the Bay Transfer', vehicleType: '13-Seater - Private - group - Transfers', time: '14:00' }
         ],
         attractions: [
           { attractionName: 'Gardens by the Bay - Flower Dome & Cloud Forest', time: '14:30', inclusionsNotes: 'Includes 2 Domes Admission' }
@@ -53,8 +53,8 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'Sentosa & Night Safari Experience',
         dayDescription: 'Visit Universal Studios Singapore for a day of thrilling rides, and end your evening with the world-famous Night Safari wildlife tram journey.',
         transfers: [
-          { serviceType: 'interAttraction', routeDescription: 'Hotel to Resorts World Sentosa Transfer', time: '09:30' },
-          { serviceType: 'interAttraction', routeDescription: 'Sentosa to Mandai Wildlife Reserve', time: '18:00' }
+          { serviceType: 'interAttraction', routeDescription: 'Hotel to Resorts World Sentosa Transfer', vehicleType: '13-Seater - Private - group - Transfers', time: '09:30' },
+          { serviceType: 'interAttraction', routeDescription: 'Sentosa to Mandai Wildlife Reserve', vehicleType: '13-Seater - Private - group - Transfers', time: '18:00' }
         ],
         attractions: [
           { attractionName: 'Universal Studios Singapore', time: '10:00', inclusionsNotes: 'Full-Day Admission Ticket' },
@@ -66,7 +66,7 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'Leisure & Departure Transfer',
         dayDescription: 'Enjoy your morning at leisure for shopping along Orchard Road or Bugis before your scheduled private transfer to Changi Airport.',
         transfers: [
-          { serviceType: 'departure', routeDescription: 'Hotel to Changi Airport Departure (Private 13-Seater)', time: '15:00' }
+          { serviceType: 'departure', routeDescription: 'Hotel to Changi Airport Departure (Private 13-Seater)', vehicleType: '13-Seater - Private - group - Arrival / Departure', time: '15:00' }
         ],
         attractions: []
       }
@@ -88,7 +88,7 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'Arrival & Hotel Check-in',
         dayDescription: 'Arrival at Changi Airport and private transfer to hotel.',
         transfers: [
-          { serviceType: 'arrival', routeDescription: 'Changi Airport to Hotel (Private 13-Seater)', time: '13:00' }
+          { serviceType: 'arrival', routeDescription: 'Changi Airport to Hotel (Private 13-Seater)', vehicleType: '13-Seater - Private - group - Arrival / Departure', time: '13:00' }
         ],
         attractions: []
       },
@@ -97,7 +97,7 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'Universal Studios Singapore Full Day',
         dayDescription: 'A full day of excitement at Southeast Asia’s only Universal Studios theme park.',
         transfers: [
-          { serviceType: 'interAttraction', routeDescription: 'Hotel to Universal Studios Sentosa', time: '09:30' }
+          { serviceType: 'interAttraction', routeDescription: 'Hotel to Universal Studios Sentosa', vehicleType: '13-Seater - Private - group - Transfers', time: '09:30' }
         ],
         attractions: [
           { attractionName: 'Universal Studios Singapore', time: '10:00', inclusionsNotes: 'One-Day Pass' }
@@ -108,7 +108,7 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'S.E.A. Aquarium & Wings of Time',
         dayDescription: 'Marvel at over 100,000 marine animals at S.E.A. Aquarium, followed by the Wings of Time open-sea laser night show.',
         transfers: [
-          { serviceType: 'interAttraction', routeDescription: 'Hotel to Sentosa Island', time: '10:00' }
+          { serviceType: 'interAttraction', routeDescription: 'Hotel to Sentosa Island', vehicleType: '13-Seater - Private - group - Transfers', time: '10:00' }
         ],
         attractions: [
           { attractionName: 'S.E.A. Aquarium', time: '10:30', inclusionsNotes: 'Admission Ticket' },
@@ -120,7 +120,7 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'MBS SkyPark & Marina Bay',
         dayDescription: 'Panoramic 360-degree views of Singapore skyline from the Marina Bay Sands SkyPark Observation Deck.',
         transfers: [
-          { serviceType: 'cityTour', routeDescription: 'Half-Day City Tour & Marina Bay Sands Transfer', time: '10:00' }
+          { serviceType: 'cityTour', routeDescription: 'Half-Day City Tour & Marina Bay Sands Transfer', vehicleType: '13-Seater - Private - group - City tour', time: '10:00' }
         ],
         attractions: [
           { attractionName: 'Marina Bay Sands SkyPark', time: '15:00', inclusionsNotes: 'Observation Deck Admission' }
@@ -131,7 +131,7 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'Departure Transfer',
         dayDescription: 'Private transfer from hotel to Changi Airport.',
         transfers: [
-          { serviceType: 'departure', routeDescription: 'Hotel to Changi Airport Departure (Private 13-Seater)', time: '12:00' }
+          { serviceType: 'departure', routeDescription: 'Hotel to Changi Airport Departure (Private 13-Seater)', vehicleType: '13-Seater - Private - group - Arrival / Departure', time: '12:00' }
         ],
         attractions: []
       }
@@ -153,7 +153,7 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'Arrival & Private Minibus Transfer',
         dayDescription: 'Arrival at Changi Airport and private transfer to city hotel.',
         transfers: [
-          { serviceType: 'arrival', routeDescription: 'Changi Airport to Hotel (Private 13-Seater)', time: '13:00' }
+          { serviceType: 'arrival', routeDescription: 'Changi Airport to Hotel (Private 13-Seater)', vehicleType: '13-Seater - Private - group - Arrival / Departure', time: '13:00' }
         ],
         attractions: []
       },
@@ -162,8 +162,8 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'Gardens by the Bay & City Tour',
         dayDescription: 'Half-day panoramic city tour plus Cloud Forest and Flower Dome.',
         transfers: [
-          { serviceType: 'cityTour', routeDescription: 'Half-Day Panoramic City Tour (3 Hours)', time: '09:30' },
-          { serviceType: 'interAttraction', routeDescription: 'Hotel to Gardens by the Bay', time: '14:00' }
+          { serviceType: 'cityTour', routeDescription: 'Half-Day Panoramic City Tour (3 Hours)', vehicleType: '13-Seater - Private - group - City tour', time: '09:30' },
+          { serviceType: 'interAttraction', routeDescription: 'Hotel to Gardens by the Bay', vehicleType: '13-Seater - Private - group - Transfers', time: '14:00' }
         ],
         attractions: [
           { attractionName: 'Gardens by the Bay - Flower Dome & Cloud Forest', time: '14:30', inclusionsNotes: '2 Domes Ticket' }
@@ -174,7 +174,7 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'Universal Studios Singapore',
         dayDescription: 'Full day adventure at Universal Studios Sentosa.',
         transfers: [
-          { serviceType: 'interAttraction', routeDescription: 'Hotel to Resorts World Sentosa', time: '09:30' }
+          { serviceType: 'interAttraction', routeDescription: 'Hotel to Resorts World Sentosa', vehicleType: '13-Seater - Private - group - Transfers', time: '09:30' }
         ],
         attractions: [
           { attractionName: 'Universal Studios Singapore', time: '10:00', inclusionsNotes: '1-Day Admission' }
@@ -185,7 +185,7 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'Cross-Border Private Transfer to Johor Bahru',
         dayDescription: 'Private cross-border transfer across the Singapore-Malaysia causeway to Johor Bahru.',
         transfers: [
-          { serviceType: 'interAttraction', routeDescription: 'Singapore Hotel to Johor Bahru Cross-Border Transfer', time: '10:00' }
+          { serviceType: 'interAttraction', routeDescription: 'Singapore Hotel to Johor Bahru Cross-Border Transfer', vehicleType: '13-Seater - Private - group - Transfers', time: '10:00' }
         ],
         attractions: []
       },
@@ -201,7 +201,7 @@ const FALLBACK_TEMPLATES = [
         dayTitle: 'Return Departure Transfer to Changi Airport',
         dayDescription: 'Cross-border private return transfer to Singapore Changi Airport for departure.',
         transfers: [
-          { serviceType: 'departure', routeDescription: 'Johor Bahru Hotel to Changi Airport Departure', time: '11:00' }
+          { serviceType: 'departure', routeDescription: 'Johor Bahru Hotel to Changi Airport Departure', vehicleType: '13-Seater - Private - group - Arrival / Departure', time: '11:00' }
         ],
         attractions: []
       }
@@ -223,6 +223,7 @@ export async function GET() {
         summary,
         startingPriceSGD,
         termsAndInclusions,
+        transferPricingOption,
         itinerary
       }`
     )

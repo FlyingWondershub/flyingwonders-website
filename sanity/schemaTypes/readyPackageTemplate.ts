@@ -1,5 +1,6 @@
 import { defineField, defineType } from 'sanity'
 import { LiveAttractionNameInput } from '../components/LiveAttractionNameInput'
+import { LiveTransferNameInput } from '../components/LiveTransferNameInput'
 import { LandPackagePriceSummary } from '../components/LandPackagePriceSummary'
 
 export const readyPackageTemplateSchema = defineType({
@@ -72,6 +73,21 @@ export const readyPackageTemplateSchema = defineType({
       description: 'Auto-calculated from daywise 13-seater transfers and attractions, or override manually.',
     }),
     defineField({
+      name: 'transferPricingOption',
+      title: 'Ground Transport Policy in Agent Portal',
+      type: 'string',
+      options: {
+        list: [
+          { title: '🚐 Both Options Allowed (Default: Private 13-Seater Minibus)', value: 'both_default_private' },
+          { title: '🚌 Both Options Allowed (Default: SIC Sightseeing Shared)', value: 'both_default_sic' },
+          { title: '🔒 Strictly Private 13-Seater Only (Hide SIC option in Quoter)', value: 'private_only' },
+          { title: '🔒 Strictly SIC Sightseeing Only (Hide Private option in Quoter)', value: 'sic_only' },
+        ],
+      },
+      initialValue: 'both_default_private',
+      description: 'Controls whether the quoter modal lets agents toggle between Private 13-Seater and SIC, or locks to one mode. (Note: Airport Arrival & Departure always remain Private 13-Seater Minibus).',
+    }),
+    defineField({
       name: 'hideTemplate',
       title: '🙈 Hide This Template from B2B Portal',
       type: 'boolean',
@@ -123,18 +139,29 @@ export const readyPackageTemplateSchema = defineType({
                   fields: [
                     defineField({
                       name: 'serviceType',
-                      title: 'Transfer Type',
+                      title: 'Transfer Category',
                       type: 'string',
                       options: {
                         list: [
-                          { title: '🛬 Airport Arrival (Always Private 13-Seater)', value: 'arrival' },
-                          { title: '🛫 Airport Departure (Always Private 13-Seater)', value: 'departure' },
+                          { title: '🛬 Airport Arrival', value: 'arrival' },
+                          { title: '🛫 Airport Departure', value: 'departure' },
                           { title: '🏙️ Half-Day City Tour (3 Hours)', value: 'cityTour' },
-                          { title: '📍 Inter-Attraction / Point-to-Point Transfer', value: 'interAttraction' },
+                          { title: '📍 Inter-Attraction / Sightseeing Transfer', value: 'interAttraction' },
+                          { title: '⏱️ Private Disposal (Hourly)', value: 'disposal' },
                         ],
                       },
                       initialValue: 'arrival',
                       validation: (Rule) => Rule.required(),
+                    }),
+                    defineField({
+                      name: 'vehicleType',
+                      title: 'Assigned Vehicle / Rate Modality (Private vs SIC)',
+                      type: 'string',
+                      components: {
+                        input: LiveTransferNameInput,
+                      },
+                      initialValue: '13-Seater - Private - group - Transfers',
+                      description: 'Choose Private 13-Seater (Group Flat Rate) or SIC (Shared Per Person Rate) from live Google Sheet tariff.',
                     }),
                     defineField({
                       name: 'routeDescription',
@@ -154,17 +181,24 @@ export const readyPackageTemplateSchema = defineType({
                       serviceType: 'serviceType',
                       route: 'routeDescription',
                       time: 'time',
+                      vehicle: 'vehicleType',
                     },
-                    prepare({ serviceType, route, time }) {
+                    prepare({ serviceType, route, time, vehicle }) {
                       const icons: Record<string, string> = {
                         arrival: '🛬',
                         departure: '🛫',
                         cityTour: '🏙️',
                         interAttraction: '📍',
+                        disposal: '⏱️',
                       }
+                      const isSic = (vehicle || '').toLowerCase().includes('sic')
+                      const vehTag = vehicle
+                        ? (isSic ? ' [🚌 SIC Per Person]' : ` [🚐 ${vehicle.split(' - ')[0] || 'Private'}]`)
+                        : ' [🚐 13-Seater Private]'
+                      const modeDesc = isSic ? 'Shared Seat-In-Coach (Per Person)' : 'Private Group Minibus (Flat Rate)'
                       return {
-                        title: route || serviceType,
-                        subtitle: `${icons[serviceType] || '🚗'} ${serviceType} @ ${time || 'TBA'}`,
+                        title: `${route || serviceType}${vehTag}`,
+                        subtitle: `${icons[serviceType] || '🚗'} ${serviceType} @ ${time || 'TBA'} • ${modeDesc}`,
                       }
                     },
                   },

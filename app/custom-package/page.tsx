@@ -28,10 +28,77 @@ const FALLBACK_HOTELS = [
   },
 ]
 
-const FALLBACK_VEHICLES: { type: string; pricePerTransfer: number; serviceName?: string }[] = [
-  { type: 'Private Sedan (Toyota Camry / Similar)', pricePerTransfer: 70 },
-  { type: 'Private Minibus (13-Seater High Roof)', pricePerTransfer: 100 },
+const FALLBACK_VEHICLES: { type: string; pricePerTransfer: number; serviceName?: string; compositeKey?: string; vehicleType?: string; transferType?: string; rateType?: string }[] = [
+  { type: '13-Seater - Private', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Transfers', compositeKey: '13-Seater - Private - group - Transfers', pricePerTransfer: 45 },
+  { type: '13-Seater - Private (Arrivals)', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Arrivals', compositeKey: '13-Seater - Private - group - Arrivals', pricePerTransfer: 45 },
+  { type: '13-Seater - Private (Departures)', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Departures', compositeKey: '13-Seater - Private - group - Departures', pricePerTransfer: 45 },
+  { type: 'Private Minibus (13-Seater High Roof)', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Transfers', compositeKey: '13-Seater - Private - group - Transfers', pricePerTransfer: 100 },
+  { type: 'Private Sedan (Toyota Camry / Similar)', vehicleType: 'Sedan', transferType: 'Private', rateType: 'group', serviceName: 'Transfers', compositeKey: 'Sedan - Private - group - Transfers', pricePerTransfer: 45 },
 ]
+
+function get13SeaterVehicleIndex(vList: any[], serviceType?: string, desc?: string): number {
+  if (!Array.isArray(vList) || vList.length === 0) return 0
+  const s = (serviceType || '').toLowerCase().trim()
+  const d = (desc || '').toLowerCase().trim()
+  const combined = `${s} ${d}`
+
+  // 1. Arrival Match (Dedicated Changi Arrival)
+  if (s === 'arrival' || combined.includes('arrival') || combined.includes('airport to hotel') || combined.includes('changi to hotel')) {
+    const idx = vList.findIndex(v => 
+      (v.vehicleType?.toLowerCase().includes('13') || v.type?.toLowerCase().includes('13')) && 
+      (v.serviceName?.toLowerCase().includes('arrival') || v.type?.toLowerCase().includes('arrival'))
+    )
+    if (idx >= 0) return idx
+  }
+
+  // 2. Departure Match (Dedicated Changi Departure)
+  if (s === 'departure' || combined.includes('departure') || combined.includes('hotel to airport') || combined.includes('hotel to changi')) {
+    const idx = vList.findIndex(v => 
+      (v.vehicleType?.toLowerCase().includes('13') || v.type?.toLowerCase().includes('13')) && 
+      (v.serviceName?.toLowerCase().includes('departure') || v.type?.toLowerCase().includes('departure'))
+    )
+    if (idx >= 0) return idx
+  }
+
+  // 3. City Tour Match
+  if (s === 'citytour' || s === 'city tour' || combined.includes('city tour') || combined.includes('citytour')) {
+    const idx = vList.findIndex(v => 
+      (v.vehicleType?.toLowerCase().includes('13') || v.type?.toLowerCase().includes('13')) && 
+      (v.serviceName?.toLowerCase().includes('city') || v.type?.toLowerCase().includes('city'))
+    )
+    if (idx >= 0) return idx
+  }
+
+  // 4. Disposal Match
+  if (s === 'disposal' || combined.includes('disposal') || combined.includes('hour')) {
+    const idx = vList.findIndex(v => 
+      (v.vehicleType?.toLowerCase().includes('13') || v.type?.toLowerCase().includes('13')) && 
+      (v.serviceName?.toLowerCase().includes('disposal') || v.type?.toLowerCase().includes('disposal'))
+    )
+    if (idx >= 0) return idx
+  }
+
+  // 5. General Point-to-Point / Sightseeing / Inter-Attraction -> 13-Seater Transfers
+  const xferIdx = vList.findIndex(v => 
+    (v.vehicleType?.toLowerCase().includes('13') || v.type?.toLowerCase().includes('13')) && 
+    (v.serviceName?.toLowerCase().includes('transfer') || v.type?.toLowerCase().includes('transfer'))
+  )
+  if (xferIdx >= 0) return xferIdx
+
+  // 6. Any 13-Seater Minibus
+  const any13 = vList.findIndex(v => 
+    v.vehicleType?.toLowerCase().includes('13') || v.type?.toLowerCase().includes('13')
+  )
+  if (any13 >= 0) return any13
+
+  // 7. Safe fallback to first non-sedan if available
+  const nonSedan = vList.findIndex(v => 
+    !v.vehicleType?.toLowerCase().includes('sedan') && !v.type?.toLowerCase().includes('sedan')
+  )
+  if (nonSedan >= 0) return nonSedan
+
+  return 0
+}
 
 const FALLBACK_ATTRACTIONS = [
   { name: 'Universal Studios Singapore', adultPrice: 78, childPrice: 66, rateType: 'person' },
@@ -111,10 +178,13 @@ function getTransferMetaInfo(
     detectedSize = '45-seater'
   } else if (allText.includes('55-seater') || allText.includes('55 seater') || allText.includes('super coach')) {
     detectedSize = '55-seater'
-  } else if (allText.includes('sedan') || allText.includes('camry') || allText.includes('car')) {
-    detectedSize = 'sedan'
   } else if (allText.includes('sic') || allText.includes('seat-in-coach') || allText.includes('shared')) {
     detectedSize = 'sic'
+  } else if (allText.includes('sedan') || allText.includes('camry') || /\b(sedan|camry|private car)\b/i.test(allText)) {
+    detectedSize = 'sedan'
+  } else {
+    // Default size for all Flying Wonders standard & ready-made packages is 13-seater minibus
+    detectedSize = '13-seater'
   }
 
   // 4. Detect Service Type / Intent
@@ -185,7 +255,13 @@ function getTransferMetaInfo(
     if (cleanVeh && (cleanVeh.includes(k) || k.includes(cleanVeh))) return meta
   }
 
-  // 7. Last resort: Return standard vehicle transfer, never additional pickup
+  // 7. Last resort: Return standard 13-seater vehicle transfer, never additional pickup or sedan
+  for (const [k, meta] of Object.entries(transfersMeta)) {
+    if (k.includes('13-seater') && k.includes('transfers') && !k.includes('additional')) return meta
+  }
+  for (const [k, meta] of Object.entries(transfersMeta)) {
+    if (k.includes('13-seater') && !k.includes('additional')) return meta
+  }
   for (const [k, meta] of Object.entries(transfersMeta)) {
     if (k.includes('transfers') && !k.includes('additional')) return meta
   }
@@ -1186,22 +1262,46 @@ export default function PrototypeBuilder() {
           // Map transfers
           const trs: TransferEntry[] = (d.transfers || []).map((t: any) => {
             const sType = t.serviceType || ''
-            let vIdx = 0
-            if (sType === 'arrival' || sType === 'departure') {
-              const f = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
-              if (f >= 0) vIdx = f
-            } else if (tMode === 'sic') {
-              const f = vehiclesList.findIndex(v => isVehicleSIC(v))
-              if (f >= 0) vIdx = f
-            } else {
-              const f = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
-              if (f >= 0) vIdx = f
+            const desc = t.routeDescription || t.serviceType || t.description || `Transfer Day ${dIdx + 1}`
+            let vIdx = -1
+
+            // 1. Explicit vehicleType from Sanity template takes first priority
+            if (t.vehicleType) {
+              const matchedV = vehiclesList.findIndex(v => 
+                v.compositeKey?.toLowerCase().trim() === t.vehicleType.toLowerCase().trim() || 
+                v.type?.toLowerCase().trim() === t.vehicleType.toLowerCase().trim()
+              )
+              if (matchedV >= 0) vIdx = matchedV
             }
+
+            // 2. Fallback to transfer mode or 13-Seater
+            if (vIdx < 0) {
+              if (tMode === 'sic' && sType !== 'arrival' && sType !== 'departure') {
+                if (sType === 'cityTour' || desc.toLowerCase().includes('city tour')) {
+                  const f = vehiclesList.findIndex(v => isVehicleSIC(v) && (v.serviceName?.toLowerCase().includes('city') || v.type?.toLowerCase().includes('city')))
+                  vIdx = f >= 0 ? f : vehiclesList.findIndex(v => isVehicleSIC(v))
+                } else {
+                  vIdx = vehiclesList.findIndex(v => isVehicleSIC(v))
+                }
+              }
+              if (vIdx < 0) {
+                vIdx = get13SeaterVehicleIndex(vehiclesList, sType, desc)
+              }
+            }
+
+            const veh = vehiclesList[vIdx]
+            const isSic = veh ? isVehicleSIC(veh) : (desc.toLowerCase().includes('sic') || (t.vehicleType && t.vehicleType.toLowerCase().includes('sic')))
+            const totalPax = (nAdults + nKids) || 1
+
             return {
-              vehicleIndex: vIdx,
+              vehicleIndex: vIdx >= 0 ? vIdx : 0,
               time: t.time || '10:00',
-              description: t.routeDescription || t.serviceType || t.description || `Transfer Day ${dIdx + 1}`,
-              qty: 1
+              description: desc,
+              qty: isSic ? totalPax : 1,
+              serviceType: t.serviceType,
+              routeDescription: t.routeDescription,
+              type: veh?.type,
+              serviceName: veh?.serviceName
             }
           })
 
@@ -1350,7 +1450,12 @@ export default function PrototypeBuilder() {
               pricePerTransfer: rate
             }
           }).filter(t => t.pricePerTransfer > 0 && t.type.trim() !== '')
-          if (parsedTransfers.length > 0) setVehiclesList(parsedTransfers)
+          // Prioritize 13-Seater Minibuses at the very top so index 0 is guaranteed to be 13-Seater, never Sedan
+          const prioritizedTransfers = [
+            ...parsedTransfers.filter(t => (t.vehicleType?.includes('13') || t.type?.includes('13'))),
+            ...parsedTransfers.filter(t => !(t.vehicleType?.includes('13') || t.type?.includes('13')))
+          ]
+          if (prioritizedTransfers.length > 0) setVehiclesList(prioritizedTransfers)
         }
 
         // 3. Parse Attractions Sheet
@@ -2440,22 +2545,47 @@ export default function PrototypeBuilder() {
     const mappedItinerary: DayPlan[] = landPackageDays.map((d: any) => ({
       dayTitle: d.dayTitle || '',
       transfers: (d.transfers || []).map((t: any) => {
-        let vIdx = 0
-        if (t.serviceType === 'arrival' || t.serviceType === 'departure') {
-          const found = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
-          if (found >= 0) vIdx = found
-        } else if (landPackageTransferMode === 'sic') {
-          const found = vehiclesList.findIndex(v => isVehicleSIC(v))
-          if (found >= 0) vIdx = found
-        } else {
-          const found = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
-          if (found >= 0) vIdx = found
+        const sType = t.serviceType || ''
+        const desc = t.routeDescription || t.serviceType || 'Transfer'
+        let vIdx = -1
+
+        // 1. Explicit vehicleType from Sanity template takes first priority
+        if (t.vehicleType) {
+          const matchedV = vehiclesList.findIndex(v => 
+            v.compositeKey?.toLowerCase().trim() === t.vehicleType.toLowerCase().trim() || 
+            v.type?.toLowerCase().trim() === t.vehicleType.toLowerCase().trim()
+          )
+          if (matchedV >= 0) vIdx = matchedV
         }
+
+        // 2. Fallback to transfer mode or 13-Seater
+        if (vIdx < 0) {
+          if (landPackageTransferMode === 'sic' && sType !== 'arrival' && sType !== 'departure') {
+            if (sType === 'cityTour' || desc.toLowerCase().includes('city tour')) {
+              const f = vehiclesList.findIndex(v => isVehicleSIC(v) && (v.serviceName?.toLowerCase().includes('city') || v.type?.toLowerCase().includes('city')))
+              vIdx = f >= 0 ? f : vehiclesList.findIndex(v => isVehicleSIC(v))
+            } else {
+              vIdx = vehiclesList.findIndex(v => isVehicleSIC(v))
+            }
+          }
+          if (vIdx < 0) {
+            vIdx = get13SeaterVehicleIndex(vehiclesList, sType, desc)
+          }
+        }
+
+        const veh = vehiclesList[vIdx]
+        const isSic = veh ? isVehicleSIC(veh) : (desc.toLowerCase().includes('sic') || (t.vehicleType && t.vehicleType.toLowerCase().includes('sic')))
+        const totalPax = (adults + kids) || 1
+
         return {
-          vehicleIndex: vIdx,
+          vehicleIndex: vIdx >= 0 ? vIdx : 0,
           time: t.time || '10:00',
-          description: t.routeDescription || t.serviceType || 'Transfer',
-          qty: 1
+          description: desc,
+          qty: isSic ? totalPax : 1,
+          serviceType: t.serviceType,
+          routeDescription: t.routeDescription,
+          type: veh?.type,
+          serviceName: veh?.serviceName
         }
       }),
       attractions: (d.attractions || []).map((a: any) => {
@@ -2503,10 +2633,11 @@ export default function PrototypeBuilder() {
   const addTransferRow = (dayIndex: number) => {
     const day = itinerary[dayIndex]
     if (!day) return
-    const firstVehicle = vehiclesList[0]
-    const isSic = firstVehicle ? (firstVehicle.type || '').toLowerCase().includes('sic') || (firstVehicle.type || '').toLowerCase().includes('seat-in-coach') || (firstVehicle.type || '').toLowerCase().includes('shared') : false
+    const default13Idx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
+    const vObj = vehiclesList[default13Idx]
+    const isSic = vObj ? isVehicleSIC(vObj) : false
     const defaultQty = isSic ? (adults + kids) || 1 : 1
-    updateDay(dayIndex, 'transfers', [...day.transfers, { vehicleIndex: 0, time: '12:00', description: '', qty: defaultQty }])
+    updateDay(dayIndex, 'transfers', [...day.transfers, { vehicleIndex: default13Idx, time: '12:00', description: '', qty: defaultQty, type: vObj?.type, serviceName: vObj?.serviceName }])
   }
 
   const removeTransferRow = (dayIndex: number, rIdx: number) => {
@@ -7019,13 +7150,19 @@ export default function PrototypeBuilder() {
           return a
         })
         const updatedTransfers = day.transfers.map(t => {
-          if (t.vehicleIndex === 0 || t.vehicleIndex === undefined) {
-            const search = (t.description || t.serviceType || '').toLowerCase()
-            if (search.includes('13') || search.includes('arrival') || search.includes('departure') || search.includes('private')) {
-              const f = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
-              if (f >= 0 && f !== t.vehicleIndex) {
-                dayChanged = true
-                return { ...t, vehicleIndex: f }
+          const curVeh = vehiclesList[t.vehicleIndex]
+          const isSedan = !curVeh || (curVeh.vehicleType || '').toLowerCase().includes('sedan') || (curVeh.type || '').toLowerCase().includes('sedan')
+          const isInvalid = t.vehicleIndex === undefined || t.vehicleIndex < 0
+          
+          if (isSedan || isInvalid) {
+            const f = get13SeaterVehicleIndex(vehiclesList, t.serviceType, t.description)
+            if (f >= 0 && f !== t.vehicleIndex) {
+              dayChanged = true
+              return { 
+                ...t, 
+                vehicleIndex: f,
+                type: vehiclesList[f]?.type,
+                serviceName: vehiclesList[f]?.serviceName
               }
             }
           }

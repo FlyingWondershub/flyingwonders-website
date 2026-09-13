@@ -399,7 +399,20 @@ export default function ReadyMadePackagesPage() {
     setPaxAdults(2)
     setPaxKids(0)
     setChildAges([])
-    setTransferMode('private13')
+    // Determine initial mode from template policy or assigned transfers in Studio
+    let initialMode: 'private13' | 'sic' = 'private13'
+    if (tmpl.transferPricingOption === 'sic_only' || tmpl.transferPricingOption === 'both_default_sic') {
+      initialMode = 'sic'
+    } else if (tmpl.transferPricingOption === 'private_only' || tmpl.transferPricingOption === 'both_default_private') {
+      initialMode = 'private13'
+    } else {
+      // Auto-detect from template transfers assigned in Studio
+      const hasAnySic = Array.isArray(tmpl.itinerary) && tmpl.itinerary.some((d: any) => 
+        (d.transfers || []).some((t: any) => (t.vehicleType || '').toLowerCase().includes('sic'))
+      )
+      initialMode = hasAnySic ? 'sic' : 'private13'
+    }
+    setTransferMode(initialMode)
     setMarkupPercent(0)
     setTravelDate('')
     setGuestName('')
@@ -421,6 +434,7 @@ export default function ReadyMadePackagesPage() {
           serviceType: t.serviceType || 'interAttraction',
           routeDescription: t.routeDescription || t.description || 'Transfer',
           time: t.time || '10:00',
+          vehicleType: t.vehicleType || (t.serviceType === 'arrival' || t.serviceType === 'departure' ? '13-Seater - Private - group - Arrival / Departure' : t.serviceType === 'cityTour' ? '13-Seater - Private - group - City tour' : '13-Seater - Private - group - Transfers'),
           hours: t.hours || (t.serviceType === 'disposal' ? 4 : undefined)
         })) : [],
         attractions: Array.isArray(d.attractions) ? d.attractions.map((a: any) => {
@@ -1928,38 +1942,70 @@ export default function ReadyMadePackagesPage() {
                   <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Airport arrival & departure always remain Private 13-Seater Minibus</span>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => setTransferMode('private13')}
-                    style={{
+                  {selectedTemplate?.transferPricingOption === 'private_only' ? (
+                    <span style={{
                       padding: '0.45rem 0.85rem',
                       borderRadius: '6px',
                       fontSize: '0.78rem',
                       fontWeight: 800,
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: transferMode === 'private13' ? '#0F4C3A' : '#E2E8F0',
-                      color: transferMode === 'private13' ? '#FFF' : '#475569'
-                    }}
-                  >
-                    🚐 All Private 13-Seater
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTransferMode('sic')}
-                    style={{
+                      background: '#0F4C3A',
+                      color: '#FFF',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      🚐 Fixed Private 13-Seater Package
+                    </span>
+                  ) : selectedTemplate?.transferPricingOption === 'sic_only' ? (
+                    <span style={{
                       padding: '0.45rem 0.85rem',
                       borderRadius: '6px',
                       fontSize: '0.78rem',
                       fontWeight: 800,
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: transferMode === 'sic' ? '#0F4C3A' : '#E2E8F0',
-                      color: transferMode === 'sic' ? '#FFF' : '#475569'
-                    }}
-                  >
-                    🚌 Sightseeing SIC (Shared)
-                  </button>
+                      background: '#0F4C3A',
+                      color: '#FFF',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      🚌 Fixed SIC Sightseeing Package
+                    </span>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setTransferMode('private13')}
+                        style={{
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: '6px',
+                          fontSize: '0.78rem',
+                          fontWeight: 800,
+                          border: 'none',
+                          cursor: 'pointer',
+                          background: transferMode === 'private13' ? '#0F4C3A' : '#E2E8F0',
+                          color: transferMode === 'private13' ? '#FFF' : '#475569'
+                        }}
+                      >
+                        🚐 All Private 13-Seater
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTransferMode('sic')}
+                        style={{
+                          padding: '0.45rem 0.85rem',
+                          borderRadius: '6px',
+                          fontSize: '0.78rem',
+                          fontWeight: 800,
+                          border: 'none',
+                          cursor: 'pointer',
+                          background: transferMode === 'sic' ? '#0F4C3A' : '#E2E8F0',
+                          color: transferMode === 'sic' ? '#FFF' : '#475569'
+                        }}
+                      >
+                        🚌 Sightseeing SIC (Shared)
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 

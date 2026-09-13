@@ -2,16 +2,12 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { StringInputProps, set, unset } from 'sanity'
 
 const FALLBACK_TRANSFERS = [
-  'Sedan - Private - group - Transfers',
   '13-Seater - Private - group - Arrival / Departure',
   '13-Seater - Private - group - Transfers',
   '13-Seater - Private - group - City tour',
-  '24-Seater - Private - group - Arrival / Departure',
-  '24-Seater - Private - group - Transfers',
-  '45-Seater - Private - group - Arrival / Departure',
-  '45-Seater - Private - group - Transfers',
-  'SIC - SIC - per person - Transfers ( Round Trip )',
-  'SIC - SIC - per person - City Tour ( 3 hours )'
+  '13-Seater - Private - group - Disposal',
+  'SIC - SIC - per person - City Tour ( 3 hours )',
+  'SIC - SIC - per person - Transfers ( Round Trip )'
 ]
 
 export function LiveTransferNameInput(props: StringInputProps) {
@@ -68,9 +64,28 @@ export function LiveTransferNameInput(props: StringInputProps) {
     }
   }, [onChange])
 
-  const filteredTransfers = transfers.filter(t =>
+  // Filter out large coaches (>12 pax) and sedans - Land Packages strictly use 13-Seater Minibus & SIC
+  const eligibleTransfers = transfers.filter(t => {
+    const low = t.toLowerCase()
+    return !low.includes('24-seater') && !low.includes('45-seater') && !low.includes('sedan') && !low.includes('camry')
+  })
+
+  const filteredTransfers = eligibleTransfers.filter(t =>
     !searchFilter || t.toLowerCase().includes(searchFilter.toLowerCase())
   )
+
+  // Categorize for clear optgroups: Strictly 13-Seater Minibus & SIC
+  const private13List = filteredTransfers.filter(t => {
+    const low = t.toLowerCase()
+    return low.includes('13-seater') || (low.includes('13') && low.includes('private'))
+  })
+  const sicList = filteredTransfers.filter(t => {
+    const low = t.toLowerCase()
+    return low.includes('sic') || low.includes('seat-in-coach') || low.includes('per person')
+  })
+
+  const isValueSic = value ? (value.toLowerCase().includes('sic') || value.toLowerCase().includes('per person')) : false
+  const isValue13 = value ? value.toLowerCase().includes('13') : false
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', width: '100%', fontFamily: 'inherit' }}>
@@ -84,7 +99,7 @@ export function LiveTransferNameInput(props: StringInputProps) {
             backgroundColor: loading ? '#EAB308' : isLive ? '#10B981' : '#64748B'
           }} />
           <span style={{ fontWeight: 600, color: isLive ? '#059669' : '#475569' }}>
-            {loading ? 'Connecting to Google Sheets...' : isLive ? `Live Connected (${transfers.length} transfers loaded)` : `Offline Fallback (${transfers.length} transfers)`}
+            {loading ? 'Connecting to Google Sheets...' : isLive ? `Live Connected (${eligibleTransfers.length} transfers)` : `Offline Fallback (${eligibleTransfers.length} transfers)`}
           </span>
         </div>
 
@@ -110,7 +125,7 @@ export function LiveTransferNameInput(props: StringInputProps) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
           <input
             type="text"
-            placeholder="🔍 Filter transfers (e.g. 13-Seater, Sedan, Arrival)..."
+            placeholder="🔍 Filter (e.g. 13-Seater, SIC, City Tour, Arrival)..."
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             disabled={readOnly}
@@ -141,11 +156,27 @@ export function LiveTransferNameInput(props: StringInputProps) {
             }}
           >
             <option value="">-- Choose Transfer from Google Sheet --</option>
-            {filteredTransfers.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
+            
+            {private13List.length > 0 && (
+              <optgroup label="🚐 13-Seater Minibus (Private Group Flat Rates)">
+                {private13List.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+
+            {sicList.length > 0 && (
+              <optgroup label="🚌 SIC Seat-In-Coach (Shared Per-Person Rates)">
+                {sicList.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+
             <option value="__CUSTOM__">✏️ Other / Custom Name (Type manually)...</option>
           </select>
         </div>
@@ -176,15 +207,58 @@ export function LiveTransferNameInput(props: StringInputProps) {
       {value && (
         <div style={{
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'center',
           gap: '8px',
           background: '#F1F5F9',
-          padding: '0.4rem 0.6rem',
-          borderRadius: '4px',
+          padding: '0.5rem 0.7rem',
+          borderRadius: '6px',
           fontSize: '0.8rem',
           color: '#334155'
         }}>
           <span>Selected: <strong>{value}</strong></span>
+          
+          {isValueSic ? (
+            <span style={{
+              background: '#E0F2FE',
+              color: '#0369A1',
+              padding: '2px 8px',
+              borderRadius: '12px',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              🚌 SIC (Shared • Per Person Rate)
+            </span>
+          ) : isValue13 ? (
+            <span style={{
+              background: '#DCFCE7',
+              color: '#166534',
+              padding: '2px 8px',
+              borderRadius: '12px',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              🚐 13-Seater Minibus (Private • Group Flat Rate)
+            </span>
+          ) : (
+            <span style={{
+              background: '#FEF3C7',
+              color: '#92400E',
+              padding: '2px 8px',
+              borderRadius: '12px',
+              fontSize: '0.72rem',
+              fontWeight: 700
+            }}>
+              🚗 Private Group Transfer
+            </span>
+          )}
+
           {currentInList && (
             <span style={{
               background: '#DCFCE7',
