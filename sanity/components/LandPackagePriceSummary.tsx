@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { NumberInputProps, set, unset, useFormValue } from 'sanity'
 
 interface AttractionPriceInfo {
@@ -58,6 +58,9 @@ export function LandPackagePriceSummary(props: NumberInputProps) {
     return () => { active = false }
   }, [])
 
+  const rawPolicy = useFormValue(['transferPricingOption']) as string | undefined
+  const isSicDefault = rawPolicy === 'sic_only' || rawPolicy === 'both_default_sic'
+
   // Calculate transfers & attractions breakdown
   const calculation = useMemo(() => {
     let transferCost = 0
@@ -68,13 +71,26 @@ export function LandPackagePriceSummary(props: NumberInputProps) {
     itinerary.forEach(day => {
       (day.transfers || []).forEach((tr: any) => {
         transferItemsCount++
-        const sType = tr.serviceType || 'interAttraction'
-        if (sType === 'arrival' || sType === 'departure') {
-          transferCost += 45 // 13-Seater Minibus standard rate
-        } else if (sType === 'cityTour') {
-          transferCost += 120 // 13-Seater City Tour
+        const sType = (tr.serviceType || '').toLowerCase()
+        const vType = (tr.vehicleType || '').toLowerCase()
+        const isArr = sType === 'arrival' || vType.includes('arrival')
+        const isDep = sType === 'departure' || vType.includes('departure')
+        const isCity = sType === 'citytour' || sType === 'city tour' || vType.includes('city tour')
+        const isDisp = sType === 'disposal' || vType.includes('disposal')
+
+        if (isArr || isDep) {
+          transferCost += 45 // 13-Seater Minibus standard rate (always Private)
+        } else if (isDisp) {
+          const hrs = Number(tr.hours) > 0 ? Number(tr.hours) : 4
+          transferCost += 45 * hrs
+        } else if (isCity) {
+          // City Tour: S$ 15/person for SIC (x2 pax) vs S$ 120 flat for Private 13-seater
+          const isSicRow = isSicDefault || vType.includes('sic')
+          transferCost += isSicRow ? (15 * 2) : 120
         } else {
-          transferCost += 45 // 13-Seater Interline
+          // Inter-attraction: S$ 12/person for SIC (x2 pax) vs S$ 45 flat for Private 13-seater
+          const isSicRow = isSicDefault || vType.includes('sic')
+          transferCost += isSicRow ? (12 * 2) : 45
         }
       })
 

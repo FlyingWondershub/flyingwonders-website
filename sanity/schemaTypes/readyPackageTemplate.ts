@@ -143,11 +143,11 @@ export const readyPackageTemplateSchema = defineType({
                       type: 'string',
                       options: {
                         list: [
-                          { title: '🛬 Airport Arrival', value: 'arrival' },
-                          { title: '🛫 Airport Departure', value: 'departure' },
+                          { title: '🛬 Airport Arrival (13-Seater Minibus - Always Private)', value: 'arrival' },
+                          { title: '🛫 Airport Departure (13-Seater Minibus - Always Private)', value: 'departure' },
                           { title: '🏙️ Half-Day City Tour (3 Hours)', value: 'cityTour' },
                           { title: '📍 Inter-Attraction / Sightseeing Transfer', value: 'interAttraction' },
-                          { title: '⏱️ Private Disposal (Hourly)', value: 'disposal' },
+                          { title: '⏱️ Private Disposal (Hourly 13-Seater Minibus)', value: 'disposal' },
                         ],
                       },
                       initialValue: 'arrival',
@@ -155,13 +155,13 @@ export const readyPackageTemplateSchema = defineType({
                     }),
                     defineField({
                       name: 'vehicleType',
-                      title: 'Assigned Vehicle / Rate Modality (Private vs SIC)',
+                      title: 'Assigned Vehicle Tariff / Template Default',
                       type: 'string',
                       components: {
                         input: LiveTransferNameInput,
                       },
                       initialValue: '13-Seater - Private - group - Transfers',
-                      description: 'Choose Private 13-Seater (Group Flat Rate) or SIC (Shared Per Person Rate) from live Google Sheet tariff.',
+                      description: 'Sets the default vehicle tariff for this transfer. In the Ready-Made quoter, if the package allows toggling, sightseeing transfers dynamically toggle between Private 13-Seater and SIC shared rates.',
                     }),
                     defineField({
                       name: 'routeDescription',

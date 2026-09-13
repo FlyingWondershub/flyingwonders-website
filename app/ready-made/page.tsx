@@ -393,6 +393,74 @@ export default function ReadyMadePackagesPage() {
     return bestItem
   }
 
+  // Resolves authentic vehicle name, human-readable route title, and icon based on modality (Private vs SIC)
+  const getCleanTransferInfo = (tr: any, mode: 'private13' | 'sic') => {
+    const sType = (tr.serviceType || '').toLowerCase()
+    const vType = (tr.vehicleType || '').toLowerCase()
+    const rDesc = (tr.routeDescription || tr.description || '').trim()
+
+    const isArr = sType === 'arrival' || vType.includes('arrival') || rDesc.toLowerCase().includes('arrival')
+    const isDep = sType === 'departure' || vType.includes('departure') || rDesc.toLowerCase().includes('departure')
+    const isCity = sType === 'citytour' || sType === 'city_tour' || sType === 'city tour' || vType.includes('city tour') || rDesc.toLowerCase().includes('city tour')
+    const isDisp = sType === 'disposal' || vType.includes('disposal') || rDesc.toLowerCase().includes('disposal')
+
+    if (isArr) {
+      return {
+        category: 'arrival',
+        title: rDesc && rDesc.toLowerCase() !== 'arrival' && rDesc.toLowerCase() !== 'transfer' ? rDesc : 'Singapore Changi Airport to Hotel (Arrival Transfer)',
+        vehicleName: '13-Seater - Private - group - Arrival / Departure',
+        badge: '13-Seater Minibus (Private Arrival)',
+        icon: '🛬',
+        isAirport: true,
+        isDisposal: false
+      }
+    }
+    if (isDep) {
+      return {
+        category: 'departure',
+        title: rDesc && rDesc.toLowerCase() !== 'departure' && rDesc.toLowerCase() !== 'transfer' ? rDesc : 'Hotel to Singapore Changi Airport (Departure Transfer)',
+        vehicleName: '13-Seater - Private - group - Arrival / Departure',
+        badge: '13-Seater Minibus (Private Departure)',
+        icon: '🛫',
+        isAirport: true,
+        isDisposal: false
+      }
+    }
+    if (isDisp) {
+      const hrs = Number(tr.hours) > 0 ? Number(tr.hours) : 4
+      return {
+        category: 'disposal',
+        title: rDesc && rDesc.toLowerCase() !== 'disposal' ? rDesc : `${hrs} Hours Private Vehicle Disposal`,
+        vehicleName: `${hrs} Hours Disposal (13-Seater - Private - group - Transfers)`,
+        badge: `${hrs}h Disposal (13-Seater Minibus)`,
+        icon: '⏱️',
+        isAirport: false,
+        isDisposal: true
+      }
+    }
+    if (isCity) {
+      return {
+        category: 'cityTour',
+        title: rDesc && rDesc.toLowerCase() !== 'citytour' && rDesc.toLowerCase() !== 'city tour' && rDesc.toLowerCase() !== 'transfer' ? rDesc : 'Singapore Half-Day City Highlights Tour (3 Hours)',
+        vehicleName: mode === 'sic' ? 'SIC - SIC - per person - City Tour ( 3 hours )' : '13-Seater - Private - group - City tour',
+        badge: mode === 'sic' ? 'SIC - Shared City Tour (Per Person)' : '13-Seater Minibus City Tour (Private Flat Rate)',
+        icon: '🏙️',
+        isAirport: false,
+        isDisposal: false
+      }
+    }
+    // Default: Point-to-Point Inter-attraction sightseeing transfer
+    return {
+      category: 'interAttraction',
+      title: rDesc && rDesc.toLowerCase() !== 'interattraction' && rDesc.toLowerCase() !== 'transfer' ? rDesc : 'Point-to-Point Sightseeing Transfer',
+      vehicleName: mode === 'sic' ? 'SIC - SIC - per person - Transfers ( Round Trip )' : '13-Seater - Private - group - Transfers',
+      badge: mode === 'sic' ? 'SIC - Shared Sightseeing Transfer (Round Trip)' : '13-Seater Minibus Sightseeing Transfer (Private Flat Rate)',
+      icon: '🚗',
+      isAirport: false,
+      isDisposal: false
+    }
+  }
+
   // Open Quoter Modal for a Template
   const openModal = (tmpl: any) => {
     if (!tmpl) return
@@ -491,15 +559,15 @@ export default function ReadyMadePackagesPage() {
 
     daywiseItinerary.forEach((d: any) => {
       (d.transfers || []).forEach((tr: any) => {
-        const sType = tr.serviceType || 'interAttraction'
-        if (sType === 'arrival') {
+        const info = getCleanTransferInfo(tr, transferMode)
+        if (info.category === 'arrival') {
           transferArrivalCost += rate13Arrival
-        } else if (sType === 'departure') {
+        } else if (info.category === 'departure') {
           transferDepartureCost += rate13Departure
-        } else if (sType === 'disposal') {
+        } else if (info.category === 'disposal') {
           const hours = Number(tr.hours) > 0 ? Number(tr.hours) : 4
           sightseeingTransfersCost += rate13Disposal * hours
-        } else if (sType === 'cityTour') {
+        } else if (info.category === 'cityTour') {
           sightseeingTransfersCost += transferMode === 'sic' ? rateSicCity * Math.max(1, totalPax) : rate13City
         } else {
           sightseeingTransfersCost += transferMode === 'sic' ? rateSicXfer * Math.max(1, totalPax) : rate13Transfer
@@ -698,7 +766,18 @@ export default function ReadyMadePackagesPage() {
           adultQuote: calculation.adultQuoteSGD,
           childQuote: calculation.childQuoteSGD
         },
-        itinerary: daywiseItinerary
+        itinerary: daywiseItinerary.map((d: any) => ({
+          ...d,
+          transfers: (d.transfers || []).map((tr: any) => {
+            const info = getCleanTransferInfo(tr, transferMode)
+            return {
+              ...tr,
+              routeDescription: info.title,
+              vehicleType: info.vehicleName,
+              serviceType: info.category
+            }
+          })
+        }))
       }
 
       const res = await fetch('/api/proposals', {
@@ -778,19 +857,9 @@ export default function ReadyMadePackagesPage() {
         t += `\n*Day ${day.dayNumber || idx + 1}: ${day.dayTitle || 'Tour Day'}*\n`
         if (day.dayDescription) t += `  _${day.dayDescription}_\n`
         ;(day.transfers || []).forEach((tr: any) => {
-          const isCityTour = tr.serviceType === 'cityTour' || (tr.routeDescription || tr.serviceType || '').toLowerCase().includes('city tour')
-          const icon = tr.serviceType === 'arrival' ? '🛬' : tr.serviceType === 'departure' ? '🛫' : isCityTour ? '🏙️' : '🚗'
+          const info = getCleanTransferInfo(tr, params.transferMode === 'sic' ? 'sic' : 'private13')
           const timeStr = tr.time ? `${tr.time} — ` : ''
-          let mStr = modeLabel
-          if (tr.serviceType === 'arrival' || tr.serviceType === 'departure') {
-            mStr = privateTransLabel
-          } else if (tr.serviceType === 'disposal') {
-            mStr = `${tr.hours || 4} Hours Disposal (${privateTransLabel})`
-          } else if (isCityTour) {
-            mStr = params.transferMode === 'sic' ? 'SIC - SIC - per person - City Tour ( 3 hours )' : '13-Seater - Private - group - City tour'
-          }
-          const transTitle = isCityTour ? mStr : `${tr.routeDescription || tr.serviceType} (${mStr})`
-          t += `  ${icon} ${timeStr}${transTitle}\n`
+          t += `  ${info.icon} ${timeStr}${info.title} (${info.vehicleName})\n`
         })
         ;(day.attractions || []).forEach((attr: any) => {
           const timeStr = attr.time ? `${attr.time} — ` : ''
@@ -1206,18 +1275,8 @@ export default function ReadyMadePackagesPage() {
           font('bold', 7); setTxt(TEAL)
           doc.text(`[${t.time || '10:00'}] Transfer:`, ML + 4, y + 4.8)
           font('normal', 7); setTxt(TEXT)
-          let modeTag = modeLabel
-          const isAirport = t.serviceType === 'arrival' || t.serviceType === 'departure'
-          const isDisposal = t.serviceType === 'disposal'
-          const isCityTour = t.serviceType === 'cityTour' || (t.routeDescription || t.serviceType || '').toLowerCase().includes('city tour')
-          if (isAirport) {
-            modeTag = privateTransLabel
-          } else if (isDisposal) {
-            modeTag = `${t.hours || 4} Hours Disposal (${privateTransLabel})`
-          } else if (isCityTour) {
-            modeTag = transferMode === 'sic' ? 'SIC - SIC - per person - City Tour ( 3 hours )' : '13-Seater - Private - group - City tour'
-          }
-          const transTitle = isCityTour ? modeTag : `${t.routeDescription || t.serviceType} (${modeTag})`
+          const info = getCleanTransferInfo(t, transferMode)
+          const transTitle = `${info.title} (${info.vehicleName})`
           doc.text(transTitle, ML + 28, y + 4.8)
           y += 8.5
         })
@@ -1304,7 +1363,18 @@ export default function ReadyMadePackagesPage() {
       arrivalDate: isModalTmpl ? (travelDate || '') : '',
       transferMode: isModalTmpl ? transferMode : 'private13',
       itinerary: (isModalTmpl && Array.isArray(daywiseItinerary) && daywiseItinerary.length > 0)
-        ? daywiseItinerary
+        ? daywiseItinerary.map((d: any) => ({
+            ...d,
+            transfers: (d.transfers || []).map((tr: any) => {
+              const info = getCleanTransferInfo(tr, transferMode)
+              return {
+                ...tr,
+                routeDescription: info.title,
+                vehicleType: info.vehicleName,
+                serviceType: info.category
+              }
+            })
+          }))
         : (tmpl.itinerary || []),
       termsAndInclusions: isModalTmpl ? termsText : (tmpl.termsAndInclusions || '')
     }
@@ -2056,32 +2126,25 @@ export default function ReadyMadePackagesPage() {
                           </div>
                         ) : (
                           (day.transfers || []).map((tr: any, tIdx: number) => {
-                            const isAirport = tr.serviceType === 'arrival' || tr.serviceType === 'departure'
-                            const isDisposal = tr.serviceType === 'disposal'
-                            const modeBadge = isAirport
-                              ? '13-Seater - Private - group - Transfers'
-                              : isDisposal
-                              ? `${tr.hours || 4} Hours Disposal (13-Seater - Private - group - Transfers)`
-                              : (transferMode === 'sic' ? 'SIC - SIC - per person - Transfers ( Round Trip )' : '13-Seater - Private - group - Transfers')
+                            const info = getCleanTransferInfo(tr, transferMode)
 
                             // Calculate admin net cost for transfer
-                            const sType = tr.serviceType || 'interAttraction'
                             let trNet = 45
-                            if (sType === 'arrival') trNet = calculation?.rate13Arrival ?? 45
-                            else if (sType === 'departure') trNet = calculation?.rate13Departure ?? 45
-                            else if (sType === 'disposal') trNet = (calculation?.rate13Disposal ?? 45) * (Number(tr.hours) || 4)
-                            else if (sType === 'cityTour') trNet = transferMode === 'sic' ? (calculation?.rateSicCity ?? 15) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13City ?? 120)
+                            if (info.category === 'arrival') trNet = calculation?.rate13Arrival ?? 45
+                            else if (info.category === 'departure') trNet = calculation?.rate13Departure ?? 45
+                            else if (info.category === 'disposal') trNet = (calculation?.rate13Disposal ?? 45) * (Number(tr.hours) || 4)
+                            else if (info.category === 'cityTour') trNet = transferMode === 'sic' ? (calculation?.rateSicCity ?? 15) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13City ?? 120)
                             else trNet = transferMode === 'sic' ? (calculation?.rateSicXfer ?? 12) * Math.max(1, calculation?.totalPax ?? 1) : (calculation?.rate13Transfer ?? 45)
 
                             return (
                               <div key={tIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', padding: '0.35rem 0.55rem', borderRadius: '6px', border: '1px solid #E2E8F0', fontSize: '0.74rem', flexWrap: 'wrap', gap: '0.35rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                                   <span style={{ color: '#0F4C3A', fontWeight: 800 }}>{tr.time || '10:00'}</span>
-                                  <span style={{ color: '#1E293B', fontWeight: 600 }}>{tr.routeDescription || tr.serviceType}</span>
-                                  <span style={{ background: isAirport ? '#EFF6FF' : '#F0FDF4', color: isAirport ? '#1D4ED8' : '#15803D', padding: '1px 5px', borderRadius: '4px', fontSize: '0.66rem', fontWeight: 700 }}>
-                                    {modeBadge}
+                                  <span style={{ color: '#1E293B', fontWeight: 600 }}>{info.title}</span>
+                                  <span style={{ background: info.isAirport ? '#EFF6FF' : info.isDisposal ? '#FEF3C7' : '#F0FDF4', color: info.isAirport ? '#1D4ED8' : info.isDisposal ? '#92400E' : '#15803D', padding: '1px 5px', borderRadius: '4px', fontSize: '0.66rem', fontWeight: 700 }}>
+                                    {info.badge}
                                   </span>
-                                  {isDisposal && (
+                                  {info.isDisposal && (
                                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: '#FEF3C7', padding: '1px 5px', borderRadius: '4px', border: '1px solid #FCD34D' }}>
                                       <span style={{ fontSize: '0.66rem', color: '#92400E', fontWeight: 700 }}>Hrs:</span>
                                       <input
@@ -2103,7 +2166,7 @@ export default function ReadyMadePackagesPage() {
                                     </span>
                                   )}
                                 </div>
-                                {!isAirport && (
+                                {!info.isAirport && (
                                   <button
                                     type="button"
                                     onClick={() => removeTransferFromDay(dIdx, tIdx)}
