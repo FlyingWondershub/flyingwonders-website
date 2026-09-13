@@ -25,7 +25,9 @@ import {
   UserCheck,
   UploadCloud,
   Image as ImageIcon,
-  Trash2
+  Trash2,
+  Menu,
+  X
 } from 'lucide-react'
 
 export default function AgentPortalPage() {
@@ -34,6 +36,7 @@ export default function AgentPortalPage() {
   const [proposals, setProposals] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   // Agency Branding Modal State
   const [showBrandingModal, setShowBrandingModal] = useState(false)
@@ -104,6 +107,26 @@ export default function AgentPortalPage() {
 
     initSession()
   }, [])
+
+  useEffect(() => {
+    if (mobileNavOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileNavOpen) {
+        setMobileNavOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [mobileNavOpen])
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -364,20 +387,323 @@ export default function AgentPortalPage() {
     .toUpperCase() || 'FW'
 
   return (
-    <div style={{ background: '#F8FAFC', minHeight: '100vh', display: 'flex', color: '#1E293B' }}>
-      
-      {/* ── 1. LEFT NAVIGATION SIDEBAR ── */}
-      <aside style={{
-        width: '280px',
-        background: '#FFF',
-        borderRight: '1px solid #E2E8F0',
-        padding: '1.75rem 1.25rem',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        flexShrink: 0,
-        boxShadow: '2px 0 10px rgba(0,0,0,0.02)'
-      }}>
+    <div className="ap-root">
+      <style>{`
+        .ap-root {
+          background: #F8FAFC;
+          min-height: 100vh;
+          display: flex;
+          color: #1E293B;
+          font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          position: relative;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* ── DESKTOP SIDEBAR ── */
+        .ap-sidebar-desktop {
+          width: 280px;
+          background: #FFFFFF;
+          border-right: 1px solid #E2E8F0;
+          padding: 1.75rem 1.25rem;
+          display: flex;
+          flex-direction: column;
+          justifyContent: space-between;
+          flex-shrink: 0;
+          box-shadow: 2px 0 10px rgba(0,0,0,0.02);
+          position: sticky;
+          top: 0;
+          height: 100vh;
+          overflow-y: auto;
+          box-sizing: border-box;
+        }
+
+        /* ── MOBILE APP HEADER BAR ── */
+        .ap-mobile-header {
+          display: none;
+          position: sticky;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 40;
+          background: #FFFFFF;
+          border-bottom: 1px solid #E2E8F0;
+          padding: 0.75rem 1rem;
+          align-items: center;
+          justify-content: space-between;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+          box-sizing: border-box;
+        }
+
+        /* ── MOBILE DRAWER OVERLAY & SHEET ── */
+        .ap-drawer-overlay {
+          display: none;
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(15, 23, 42, 0.6);
+          backdrop-filter: blur(2px);
+          z-index: 9999;
+          transition: opacity 0.25s ease;
+        }
+        .ap-drawer-overlay.open {
+          display: block;
+        }
+        .ap-drawer {
+          position: fixed;
+          top: 0;
+          left: 0;
+          bottom: 0;
+          width: 300px;
+          max-width: 86vw;
+          background: #FFFFFF;
+          z-index: 10000;
+          box-shadow: 4px 0 25px rgba(0,0,0,0.25);
+          transform: translateX(-100%);
+          transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          flex-direction: column;
+          justifyContent: space-between;
+          padding: 1.25rem;
+          overflow-y: auto;
+          box-sizing: border-box;
+        }
+        .ap-drawer.open {
+          transform: translateX(0);
+        }
+
+        /* ── MAIN WORKSPACE ── */
+        .ap-main {
+          flex: 1;
+          padding: 2rem 2.5rem;
+          overflow-y: auto;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+
+        /* ── KPI & ACTION BAR ── */
+        .ap-kpi-desktop {
+          display: flex;
+          align-items: center;
+          justifyContent: space-between;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
+          borderRadius: 14px;
+          padding: 0.65rem 0.85rem;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+          margin-bottom: 1.75rem;
+        }
+        .ap-kpi-mobile {
+          display: none;
+        }
+
+        /* ── PROPOSALS CONTAINER ── */
+        .ap-proposals-box {
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
+          border-radius: 16px;
+          padding: 1.75rem;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+          box-sizing: border-box;
+        }
+        .ap-proposals-header {
+          display: flex;
+          justifyContent: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 1rem;
+          border-bottom: 1px solid #F1F5F9;
+          padding-bottom: 1rem;
+          margin-bottom: 1.25rem;
+        }
+        .ap-filter-scroll {
+          display: flex;
+          gap: 0.4rem;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          padding-bottom: 4px;
+          scrollbar-width: none;
+        }
+        .ap-filter-scroll::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* ── DESKTOP TABLE VS MOBILE CARDS ── */
+        .ap-table-desktop {
+          display: block;
+          overflow-x: auto;
+        }
+        .ap-cards-mobile {
+          display: none;
+        }
+        .ap-booking-card {
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
+          border-radius: 12px;
+          padding: 1rem;
+          margin-bottom: 0.85rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          box-sizing: border-box;
+        }
+
+        /* ── STICKY MOBILE BOTTOM NAVIGATION ── */
+        .ap-bottom-nav {
+          display: none;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          z-index: 50;
+          background: #FFFFFF;
+          border-top: 1px solid #E2E8F0;
+          box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+          padding: 0.45rem 0.5rem calc(0.45rem + env(safe-area-inset-bottom, 0px)) 0.5rem;
+          justify-content: space-around;
+          align-items: center;
+          box-sizing: border-box;
+        }
+        .ap-bottom-nav-item {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.2rem;
+          padding: 0.35rem 0.25rem;
+          border: none;
+          background: transparent;
+          color: #64748B;
+          font-size: 0.7rem;
+          font-weight: 700;
+          cursor: pointer;
+          text-decoration: none;
+          border-radius: 8px;
+          transition: all 0.15s;
+        }
+        .ap-bottom-nav-item.active {
+          color: #B83A4B;
+        }
+
+        /* ── MODALS OVERLAYS & CARDS ── */
+        .ap-modal-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(15, 23, 42, 0.7);
+          backdrop-filter: blur(3px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 99999;
+          padding: 1rem;
+          box-sizing: border-box;
+        }
+        .ap-modal-card {
+          background: #FFFFFF;
+          border-radius: 16px;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+          max-height: 90vh;
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          box-sizing: border-box;
+          position: relative;
+        }
+
+        /* ── MOBILE BREAKPOINT (< 768px) ── */
+        @media (max-width: 768px) {
+          .ap-root {
+            flex-direction: column;
+          }
+          .ap-sidebar-desktop {
+            display: none !important;
+          }
+          .ap-mobile-header {
+            display: flex !important;
+          }
+          .ap-bottom-nav {
+            display: flex !important;
+          }
+          .ap-main {
+            padding: 0.85rem 0.75rem 5.5rem 0.75rem !important;
+          }
+          .ap-greeting-banner {
+            margin-bottom: 1.25rem !important;
+          }
+          .ap-greeting-banner h1 {
+            font-size: 1.35rem !important;
+          }
+          .ap-kpi-desktop {
+            display: none !important;
+          }
+          .ap-kpi-mobile {
+            display: flex !important;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+          }
+          .ap-proposals-box {
+            padding: 1rem 0.85rem !important;
+            border-radius: 14px !important;
+          }
+          .ap-proposals-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+          }
+          .ap-table-desktop {
+            display: none !important;
+          }
+          .ap-cards-mobile {
+            display: flex !important;
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+          .ap-modal-card {
+            padding: 1.25rem 1rem !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+        }
+
+        /* ── DARK MODE ACCORDANCE (AGENTS.md) ── */
+        @media (prefers-color-scheme: dark) {
+          .ap-root {
+            background: #0B0F19 !important;
+            color: #F8FAFC !important;
+          }
+          .ap-sidebar-desktop,
+          .ap-mobile-header,
+          .ap-drawer,
+          .ap-bottom-nav,
+          .ap-kpi-desktop,
+          .ap-proposals-box,
+          .ap-booking-card,
+          .ap-modal-card {
+            background: #1E293B !important;
+            border-color: #334155 !important;
+            color: #F8FAFC !important;
+          }
+          .ap-greeting-banner h1 {
+            color: #F8FAFC !important;
+          }
+          .ap-greeting-banner p {
+            color: #94A3B8 !important;
+          }
+          .ap-proposals-header h3 {
+            color: #F8FAFC !important;
+          }
+          .ap-booking-card {
+            background: #182234 !important;
+            border-color: #2D3E56 !important;
+          }
+        }
+      `}</style>
+
+      {/* ── 1. DESKTOP LEFT SIDEBAR ── */}
+      <aside className="ap-sidebar-desktop">
         <div>
           {/* Profile & Agency Header Card */}
           <div style={{ textAlign: 'center', marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: '1px solid #F1F5F9' }}>
@@ -541,6 +867,9 @@ export default function AgentPortalPage() {
             >
               <FileText size={18} />
               <span>My Bookings</span>
+              <span style={{ marginLeft: 'auto', fontSize: '0.72rem', background: activeTab === 'bookings' ? '#FFF' : '#E2E8F0', color: activeTab === 'bookings' ? '#B83A4B' : '#0F172A', padding: '0.1rem 0.5rem', borderRadius: '10px', fontWeight: 800 }}>
+                {proposals.length}
+              </span>
             </button>
           </nav>
         </div>
@@ -613,23 +942,361 @@ export default function AgentPortalPage() {
         </div>
       </aside>
 
-      {/* ── 2. MAIN CENTER WORKSPACE ── */}
-      <main style={{ flex: 1, padding: '2rem 2.5rem', overflowY: 'auto' }}>
+      {/* ── 2. MOBILE APP TOP HEADER ── */}
+      <header className="ap-mobile-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div style={{
+            width: '38px',
+            height: '38px',
+            borderRadius: '50%',
+            background: activeAgent?.logoUrl ? '#FFFFFF' : 'linear-gradient(135deg, #B83A4B 0%, #0F4C3A 100%)',
+            border: activeAgent?.logoUrl ? '1.5px solid #CBD5E1' : 'none',
+            color: '#FFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '0.9rem',
+            fontWeight: 800,
+            overflow: 'hidden',
+            padding: activeAgent?.logoUrl ? '3px' : 0,
+            flexShrink: 0
+          }}>
+            {activeAgent?.logoUrl ? (
+              <img src={activeAgent.logoUrl} alt={activeAgent?.companyName || 'Agency'} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            ) : companyInitials}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '170px' }}>
+              {activeAgent?.companyName || activeAgent?.agentName || 'Agent Portal'}
+            </span>
+            <span style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>
+              B2B Partner Workspace
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button
+            onClick={() => activeAgent && fetchAgentProposals(activeAgent.email)}
+            disabled={refreshing}
+            title="Refresh Bookings"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              border: '1px solid #E2E8F0',
+              background: '#FFF',
+              color: '#DC2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+          </button>
+          <button
+            onClick={() => setMobileNavOpen(prev => !prev)}
+            aria-label="Toggle Navigation Menu"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '8px',
+              border: '1px solid #0F172A',
+              background: '#0F172A',
+              color: '#FFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+      </header>
+
+      {/* ── 3. MOBILE NAVIGATION DRAWER & BACKDROP ── */}
+      <div 
+        className={`ap-drawer-overlay ${mobileNavOpen ? 'open' : ''}`}
+        onClick={() => setMobileNavOpen(false)}
+      />
+      <aside className={`ap-drawer ${mobileNavOpen ? 'open' : ''}`}>
+        <div>
+          {/* Drawer Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid #F1F5F9' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Agent Menu</span>
+            <button 
+              onClick={() => setMobileNavOpen(false)}
+              style={{ border: 'none', background: '#F1F5F9', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#475569' }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Profile Card inside Drawer */}
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem', padding: '1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
+            <div style={{ position: 'relative', display: 'inline-block', marginBottom: '0.65rem' }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: activeAgent?.logoUrl ? '#FFFFFF' : 'linear-gradient(135deg, #B83A4B 0%, #0F4C3A 100%)',
+                border: activeAgent?.logoUrl ? '2px solid #CBD5E1' : 'none',
+                color: '#FFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.35rem',
+                fontWeight: 800,
+                margin: '0 auto',
+                overflow: 'hidden',
+                padding: activeAgent?.logoUrl ? '5px' : 0,
+              }}>
+                {activeAgent?.logoUrl ? (
+                  <img src={activeAgent.logoUrl} alt={activeAgent?.companyName || 'Agency Logo'} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                ) : companyInitials}
+              </div>
+              <button
+                onClick={() => {
+                  setMobileNavOpen(false)
+                  setShowBrandingModal(true)
+                }}
+                title="Edit Agency Branding"
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  background: '#FFF',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '50%',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+              >
+                <Edit3 size={12} color="#475569" />
+              </button>
+            </div>
+
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.2rem' }}>
+              {activeAgent?.companyName || activeAgent?.agentName || 'Flying Wonders B2B Partner'}
+            </h3>
+            <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
+              Member Since {activeAgent?.createdAt ? new Date(activeAgent.createdAt).toLocaleDateString('en-SG', { month: 'short', year: 'numeric' }) : 'May 2026'}
+            </span>
+          </div>
+
+          {/* Drawer Navigation Links */}
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <button
+              onClick={() => {
+                setActiveTab('dashboard')
+                setMobileNavOpen(false)
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '10px',
+                border: 'none',
+                background: activeTab === 'dashboard' ? '#B83A4B' : 'transparent',
+                color: activeTab === 'dashboard' ? '#FFF' : '#475569',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                textAlign: 'left',
+                width: '100%',
+              }}
+            >
+              <LayoutDashboard size={18} />
+              <span>Dashboard</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('bookings')
+                setMobileNavOpen(false)
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '10px',
+                border: 'none',
+                background: activeTab === 'bookings' ? '#B83A4B' : 'transparent',
+                color: activeTab === 'bookings' ? '#FFF' : '#475569',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                textAlign: 'left',
+                width: '100%',
+              }}
+            >
+              <FileText size={18} />
+              <span>My Bookings</span>
+              <span style={{ marginLeft: 'auto', fontSize: '0.72rem', background: activeTab === 'bookings' ? '#FFF' : '#E2E8F0', color: activeTab === 'bookings' ? '#B83A4B' : '#0F172A', padding: '0.1rem 0.5rem', borderRadius: '10px', fontWeight: 800 }}>
+                {proposals.length}
+              </span>
+            </button>
+
+            <Link
+              href="/custom-package"
+              onClick={() => setMobileNavOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '10px',
+                color: '#475569',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                textDecoration: 'none'
+              }}
+            >
+              <Package size={18} />
+              <span>Build-Packages</span>
+            </Link>
+
+            <Link
+              href="/services-catalog"
+              onClick={() => setMobileNavOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '10px',
+                color: '#0F4C3A',
+                fontWeight: 800,
+                fontSize: '0.9rem',
+                textDecoration: 'none',
+                background: '#ECFDF5',
+                border: '1px solid #A7F3D0',
+              }}
+            >
+              <Compass size={18} color="#0F4C3A" />
+              <span>Services Catalog</span>
+              <span style={{ fontSize: '0.62rem', background: '#0F4C3A', color: '#FFF', padding: '0.1rem 0.4rem', borderRadius: '4px', marginLeft: 'auto', fontWeight: 800 }}>LIVE</span>
+            </Link>
+
+            <Link
+              href="/"
+              onClick={() => setMobileNavOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '10px',
+                color: '#475569',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                textDecoration: 'none'
+              }}
+            >
+              <Compass size={18} />
+              <span>Readymade</span>
+              <span style={{ fontSize: '0.62rem', background: '#FEF2F2', color: '#EF4444', border: '1px solid #FCA5A5', padding: '0.1rem 0.4rem', borderRadius: '4px', marginLeft: 'auto', fontWeight: 800 }}>NEW</span>
+            </Link>
+          </nav>
+        </div>
+
+        {/* Drawer Bottom Actions */}
+        <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <button
+            onClick={() => {
+              setMobileNavOpen(false)
+              setShowBrandingModal(true)
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              padding: '0.65rem 0.85rem',
+              borderRadius: '8px',
+              border: '1px solid #E2E8F0',
+              background: '#F8FAFC',
+              color: '#334155',
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            <Building2 size={16} color="#0F4C3A" />
+            <span>Agency Branding</span>
+          </button>
+
+          {activeAgent?.role === 'admin' && (
+            <Link
+              href="/admin-dashboard"
+              onClick={() => setMobileNavOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                padding: '0.65rem 0.85rem',
+                borderRadius: '8px',
+                background: '#FEF3C7',
+                color: '#B45309',
+                fontWeight: 700,
+                fontSize: '0.82rem',
+                textDecoration: 'none',
+                width: '100%',
+              }}
+            >
+              <span>⚙️ Admin Operations Dashboard</span>
+            </Link>
+          )}
+
+          <button
+            onClick={handleLogout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              padding: '0.65rem 0.85rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#FEF2F2',
+              color: '#EF4444',
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            <LogOut size={16} />
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* ── 4. MAIN WORKSPACE ── */}
+      <main className="ap-main">
         
         {/* Top Header Banner */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
+        <div className="ap-greeting-banner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.75rem' }}>
           <div>
-            <h1 style={{ fontFamily: 'system-ui, sans-serif', fontSize: '1.8rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+            <h1 style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '1.8rem', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.01em' }}>
               {getGreeting()}, <span style={{ color: '#B83A4B' }}>{activeAgent?.agentName?.split(' ')[0] || 'Partner'}</span>!
             </h1>
-            <p style={{ fontSize: '0.9rem', color: '#64748B', margin: '0.25rem 0 0' }}>
+            <p style={{ fontSize: '0.88rem', color: '#64748B', margin: '0.25rem 0 0' }}>
               Here&apos;s what&apos;s happening with your bookings today.
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600 }}>
-              {new Date().toLocaleDateString('en-SG', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' })}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.82rem', color: '#64748B', fontWeight: 600, background: '#F1F5F9', padding: '0.35rem 0.75rem', borderRadius: '8px' }}>
+              📅 {new Date().toLocaleDateString('en-SG', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
             </span>
             <button
               onClick={() => activeAgent && fetchAgentProposals(activeAgent.email)}
@@ -675,21 +1342,9 @@ export default function AgentPortalPage() {
           </div>
         </div>
 
-        {/* ── UNIFIED COMPACT DASHBOARD ACTION & KPI BAR (ALL IN 1 LINE) ── */}
+        {/* ── 5. KPI & ACTION BAR (DESKTOP) ── */}
         {activeTab === 'dashboard' && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.75rem',
-            flexWrap: 'wrap',
-            background: '#FFF',
-            border: '1px solid #E2E8F0',
-            borderRadius: '14px',
-            padding: '0.65rem 0.85rem',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-            marginBottom: '1.75rem'
-          }}>
+          <div className="ap-kpi-desktop">
             {/* Left Button: Operations Dashboard (if admin) */}
             {activeAgent?.role === 'admin' && (
               <Link
@@ -709,7 +1364,7 @@ export default function AgentPortalPage() {
                   whiteSpace: 'nowrap',
                   flexShrink: 0
                 }}
-                title="Admin Operations Dashboard (Audit Logs, Package Approvals, Master Settings)"
+                title="Admin Operations Dashboard"
               >
                 <span>👑</span>
                 <span>Operations Dashboard</span>
@@ -717,7 +1372,7 @@ export default function AgentPortalPage() {
               </Link>
             )}
 
-            {/* Center: 5 Compact KPI Chips / Stat Badges */}
+            {/* Center: 5 Compact KPI Chips */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -832,18 +1487,166 @@ export default function AgentPortalPage() {
           </div>
         )}
 
-        {/* ── 3. RECENT BOOKINGS / MY BOOKINGS SECTION ── */}
+        {/* ── 5B. KPI & ACTION GRID (MOBILE) ── */}
+        {activeTab === 'dashboard' && (
+          <div className="ap-kpi-mobile">
+            {/* Mobile CTAs */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <Link
+                href="/custom-package"
+                style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #B83A4B 0%, #9F1239 100%)',
+                  color: '#FFF',
+                  fontWeight: 800,
+                  fontSize: '0.9rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 3px 8px rgba(184,58,75,0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  minHeight: '44px'
+                }}
+              >
+                <Package size={18} />
+                <span>Launch Package Builder ⚙️</span>
+              </Link>
+
+              {activeAgent?.role === 'admin' && (
+                <Link
+                  href="/admin-dashboard"
+                  style={{
+                    background: 'linear-gradient(135deg, #D97706 0%, #B45309 100%)',
+                    color: '#FFF',
+                    padding: '0.65rem 1rem',
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    boxShadow: '0 2px 6px rgba(217,119,6,0.25)',
+                    minHeight: '42px'
+                  }}
+                >
+                  <span>👑 Operations Dashboard</span>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.85 }}>→</span>
+                </Link>
+              )}
+            </div>
+
+            {/* Mobile 2-Column KPI Card Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+              {/* Today's Bookings (Span 2) */}
+              <div style={{
+                gridColumn: 'span 2',
+                background: 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)',
+                color: '#FFF',
+                borderRadius: '10px',
+                padding: '0.75rem 1rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                boxShadow: '0 2px 6px rgba(220,38,38,0.25)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Calendar size={18} color="#FFF" />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>Today&apos;s Bookings</span>
+                </div>
+                <strong style={{ fontSize: '1.4rem', fontWeight: 900 }}>{todayBookings}</strong>
+              </div>
+
+              {/* This Month */}
+              <div style={{
+                background: '#F0FDF4',
+                border: '1px solid #BBF7D0',
+                color: '#166534',
+                borderRadius: '10px',
+                padding: '0.65rem 0.85rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.2rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Calendar size={14} color="#166534" />
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700 }}>This Month</span>
+                </div>
+                <strong style={{ fontSize: '1.25rem', fontWeight: 900 }}>{thisMonthBookings}</strong>
+              </div>
+
+              {/* Total Bookings */}
+              <div style={{
+                background: '#E0F2FE',
+                border: '1px solid #BAE6FD',
+                color: '#0369A1',
+                borderRadius: '10px',
+                padding: '0.65rem 0.85rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.2rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <TrendingUp size={14} color="#0369A1" />
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700 }}>Total Bookings</span>
+                </div>
+                <strong style={{ fontSize: '1.25rem', fontWeight: 900 }}>{totalCount}</strong>
+              </div>
+
+              {/* Confirmed */}
+              <div style={{
+                background: '#DCFCE7',
+                border: '1px solid #86EFAC',
+                color: '#15803D',
+                borderRadius: '10px',
+                padding: '0.65rem 0.85rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.2rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <CheckCircle2 size={14} color="#15803D" />
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700 }}>Confirmed</span>
+                </div>
+                <strong style={{ fontSize: '1.25rem', fontWeight: 900 }}>{confirmedCount}</strong>
+              </div>
+
+              {/* Pending */}
+              <div style={{
+                background: '#FEF3C7',
+                border: '1px solid #FDE68A',
+                color: '#B45309',
+                borderRadius: '10px',
+                padding: '0.65rem 0.85rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.2rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Clock size={14} color="#B45309" />
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700 }}>Pending</span>
+                </div>
+                <strong style={{ fontSize: '1.25rem', fontWeight: 900 }}>{pendingCount}</strong>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 6. RECENT BOOKINGS / MY BOOKINGS SECTION ── */}
         {(activeTab === 'dashboard' || activeTab === 'bookings') && (
-          <div style={{ background: '#FFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+          <div className="ap-proposals-box">
             
             {/* Header Controls */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="ap-proposals-header">
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <FileText size={20} color="#B83A4B" /> My Saved Bookings & Proposals ({filteredProposals.length})
               </h3>
 
-              {/* Status Filter Badges */}
-              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+              {/* Status Filter Badges (Smooth Touch Scrollable on Mobile) */}
+              <div className="ap-filter-scroll">
                 {[
                   { id: 'all', label: `All (${proposals.length})` },
                   { id: 'confirmed', label: `🟢 Confirmed (${confirmedCount})` },
@@ -854,14 +1657,16 @@ export default function AgentPortalPage() {
                     key={f.id}
                     onClick={() => setBookingFilter(f.id as any)}
                     style={{
-                      padding: '0.35rem 0.75rem',
+                      padding: '0.4rem 0.85rem',
                       borderRadius: '20px',
                       fontSize: '0.75rem',
                       fontWeight: 700,
-                      border: bookingFilter === f.id ? 'none' : '1px solid #E2E8F0',
+                      border: bookingFilter === f.id ? 'none' : '1px solid #CBD5E1',
                       background: bookingFilter === f.id ? '#0F172A' : '#F8FAFC',
                       color: bookingFilter === f.id ? '#FFF' : '#475569',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
                     }}
                   >
                     {f.label}
@@ -874,73 +1679,171 @@ export default function AgentPortalPage() {
             <div style={{ marginBottom: '1.25rem', position: 'relative' }}>
               <input
                 type="text"
-                placeholder="🔍 Search by Guest Name, Phone Number, or Proposal Ref (FW-2026-XXXX)..."
+                placeholder="🔍 Search by Guest Name, Phone Number, or Proposal Ref..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '0.65rem 1rem 0.65rem 2.5rem',
-                  borderRadius: '8px',
+                  padding: '0.75rem 1rem 0.75rem 2.5rem',
+                  borderRadius: '10px',
                   border: '1px solid #CBD5E1',
-                  fontSize: '0.85rem',
+                  fontSize: '16px',
                   outline: 'none',
-                  background: '#F8FAFC'
+                  background: '#F8FAFC',
+                  boxSizing: 'border-box'
                 }}
               />
-              <Search size={16} color="#94A3B8" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />
+              <Search size={18} color="#94A3B8" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)' }} />
             </div>
 
-            {/* Table / List */}
+            {/* Table & Mobile Cards */}
             {loading ? (
-              <p style={{ textAlign: 'center', color: '#64748B', padding: '2rem 0', fontSize: '0.9rem' }}>Loading your booking records...</p>
+              <p style={{ textAlign: 'center', color: '#64748B', padding: '2.5rem 0', fontSize: '0.9rem' }}>Loading your booking records...</p>
             ) : filteredProposals.length === 0 ? (
-              <p style={{ textAlign: 'center', color: '#64748B', padding: '2rem 0', fontSize: '0.9rem' }}>No matching bookings found.</p>
+              <div style={{ textAlign: 'center', color: '#64748B', padding: '2.5rem 1rem', background: '#F8FAFC', borderRadius: '12px', border: '1px dashed #CBD5E1' }}>
+                <p style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.5rem', color: '#334155' }}>No matching bookings found</p>
+                <p style={{ fontSize: '0.8rem', margin: 0 }}>Try clearing your search or selecting a different status filter.</p>
+              </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ background: '#F8FAFC', color: '#475569', borderBottom: '2px solid #E2E8F0' }}>
-                      <th style={{ padding: '0.65rem 0.85rem' }}>Proposal Ref</th>
-                      <th style={{ padding: '0.65rem 0.85rem' }}>Guest Name & Contact</th>
-                      <th style={{ padding: '0.65rem 0.85rem' }}>Pax & Nights</th>
-                      <th style={{ padding: '0.65rem 0.85rem' }}>Arrival Date</th>
-                      <th style={{ padding: '0.65rem 0.85rem' }}>Total Price (SGD / ₹)</th>
-                      <th style={{ padding: '0.65rem 0.85rem' }}>Status</th>
-                      <th style={{ padding: '0.65rem 0.85rem', textAlign: 'right' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProposals.map((p, idx) => {
-                      const pStatus = p.status || 'pending'
-                      const isConfirmed = pStatus === 'confirmed' || pStatus === 'scheduled'
-                      const isCompleted = pStatus === 'completed'
+              <>
+                {/* ── DESKTOP 7-COLUMN DATA TABLE ── */}
+                <div className="ap-table-desktop">
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ background: '#F8FAFC', color: '#475569', borderBottom: '2px solid #E2E8F0' }}>
+                        <th style={{ padding: '0.65rem 0.85rem' }}>Proposal Ref</th>
+                        <th style={{ padding: '0.65rem 0.85rem' }}>Guest Name & Contact</th>
+                        <th style={{ padding: '0.65rem 0.85rem' }}>Pax & Nights</th>
+                        <th style={{ padding: '0.65rem 0.85rem' }}>Arrival Date</th>
+                        <th style={{ padding: '0.65rem 0.85rem' }}>Total Price (SGD / ₹)</th>
+                        <th style={{ padding: '0.65rem 0.85rem' }}>Status</th>
+                        <th style={{ padding: '0.65rem 0.85rem', textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProposals.map((p, idx) => {
+                        const pStatus = p.status || 'pending'
+                        const isConfirmed = pStatus === 'confirmed' || pStatus === 'scheduled'
+                        const isCompleted = pStatus === 'completed'
 
-                      return (
-                        <tr key={p._id || idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                          <td style={{ padding: '0.75rem 0.85rem', fontWeight: 800, color: '#B83A4B' }}>
+                        return (
+                          <tr key={p._id || idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                            <td style={{ padding: '0.75rem 0.85rem', fontWeight: 800, color: '#B83A4B' }}>
+                              {p.proposalNumber}
+                            </td>
+                            <td style={{ padding: '0.75rem 0.85rem' }}>
+                              <strong style={{ color: '#0F172A', display: 'block' }}>{p.guestName || 'Valued Guest'}</strong>
+                              <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{p.guestPhone || 'No phone'}</span>
+                            </td>
+                            <td style={{ padding: '0.75rem 0.85rem', color: '#334155' }}>
+                              {p.adults || 2} Adult{p.adults > 1 ? 's' : ''}{p.kids > 0 ? ` + ${p.kids} Child` : ''} · {p.nights || 3}N
+                            </td>
+                            <td style={{ padding: '0.75rem 0.85rem', color: '#0284C7', fontWeight: 600 }}>
+                              📅 {p.arrivalDate || 'TBD'}
+                            </td>
+                            <td style={{ padding: '0.75rem 0.85rem' }}>
+                              <strong style={{ color: '#166534', display: 'block' }}>S$ {(p.costBreakdown?.totalClientPrice || p.totalClientPrice || 0).toLocaleString()}</strong>
+                              {(p.costBreakdown?.totalClientPriceINR || p.totalClientPriceINR) && (
+                                <span style={{ fontSize: '0.72rem', color: '#64748B' }}>≈ ₹{(p.costBreakdown?.totalClientPriceINR || p.totalClientPriceINR || 0).toLocaleString('en-IN')}</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.75rem 0.85rem' }}>
+                              <span style={{
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '12px',
+                                fontSize: '0.73rem',
+                                fontWeight: 800,
+                                background: isConfirmed ? '#DCFCE7' : (isCompleted ? '#E0E7FF' : '#FEF3C7'),
+                                color: isConfirmed ? '#166534' : (isCompleted ? '#3730A3' : '#92400E'),
+                                display: 'inline-block'
+                              }}>
+                                {isConfirmed ? '🟢 Confirmed' : (isCompleted ? '✅ Completed' : '🔵 Pending')}
+                              </span>
+                              {p.statusChangeRequested && (
+                                <div style={{
+                                  fontSize: '0.68rem',
+                                  color: '#D97706',
+                                  fontWeight: 700,
+                                  marginTop: '0.25rem',
+                                  background: '#FEF3C7',
+                                  padding: '0.1rem 0.35rem',
+                                  borderRadius: '4px',
+                                  display: 'inline-block'
+                                }}>
+                                  ⏳ Pending: {p.requestedStatus === 'ignore' ? 'Closed' : 'Confirmed'}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right', display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                              <Link
+                                href={`/custom-package?ref=${p.proposalNumber}`}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.3rem',
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '6px',
+                                  background: '#F1F5F9',
+                                  color: '#0F172A',
+                                  border: '1px solid #CBD5E1',
+                                  textDecoration: 'none',
+                                  fontWeight: 700,
+                                  fontSize: '0.78rem'
+                                }}
+                              >
+                                <ExternalLink size={13} /> Open
+                              </Link>
+                              {!p.statusChangeRequested && (pStatus === 'pending' || pStatus === 'followup') && (
+                                <button
+                                  onClick={() => {
+                                    setStatusRequestProposal(p)
+                                    setStatusRequestTarget('confirmed')
+                                    setStatusRequestNoteText('')
+                                  }}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.2rem',
+                                    padding: '0.35rem 0.75rem',
+                                    borderRadius: '6px',
+                                    background: '#0F4C3A',
+                                    color: '#FFF',
+                                    border: 'none',
+                                    fontWeight: 700,
+                                    fontSize: '0.78rem',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  ⏳ Change Status
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* ── MOBILE TOUCH-FRIENDLY BOOKING CARDS ── */}
+                <div className="ap-cards-mobile">
+                  {filteredProposals.map((p, idx) => {
+                    const pStatus = p.status || 'pending'
+                    const isConfirmed = pStatus === 'confirmed' || pStatus === 'scheduled'
+                    const isCompleted = pStatus === 'completed'
+
+                    return (
+                      <div key={p._id || idx} className="ap-booking-card">
+                        {/* Top Row: Ref & Status Pill */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
+                          <span style={{ fontWeight: 900, color: '#B83A4B', fontSize: '1rem', letterSpacing: '0.02em' }}>
                             {p.proposalNumber}
-                          </td>
-                          <td style={{ padding: '0.75rem 0.85rem' }}>
-                            <strong style={{ color: '#0F172A', display: 'block' }}>{p.guestName || 'Valued Guest'}</strong>
-                            <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{p.guestPhone || 'No phone'}</span>
-                          </td>
-                          <td style={{ padding: '0.75rem 0.85rem', color: '#334155' }}>
-                            {p.adults || 2} Adult{p.adults > 1 ? 's' : ''}{p.kids > 0 ? ` + ${p.kids} Child` : ''} · {p.nights || 3}N
-                          </td>
-                          <td style={{ padding: '0.75rem 0.85rem', color: '#0284C7', fontWeight: 600 }}>
-                            📅 {p.arrivalDate || 'TBD'}
-                          </td>
-                          <td style={{ padding: '0.75rem 0.85rem' }}>
-                            <strong style={{ color: '#166534', display: 'block' }}>S$ {(p.costBreakdown?.totalClientPrice || p.totalClientPrice || 0).toLocaleString()}</strong>
-                            {(p.costBreakdown?.totalClientPriceINR || p.totalClientPriceINR) && (
-                              <span style={{ fontSize: '0.72rem', color: '#64748B' }}>≈ ₹{(p.costBreakdown?.totalClientPriceINR || p.totalClientPriceINR || 0).toLocaleString('en-IN')}</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '0.75rem 0.85rem' }}>
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
                             <span style={{
-                              padding: '0.2rem 0.6rem',
+                              padding: '0.25rem 0.65rem',
                               borderRadius: '12px',
-                              fontSize: '0.73rem',
+                              fontSize: '0.75rem',
                               fontWeight: 800,
                               background: isConfirmed ? '#DCFCE7' : (isCompleted ? '#E0E7FF' : '#FEF3C7'),
                               color: isConfirmed ? '#166534' : (isCompleted ? '#3730A3' : '#92400E'),
@@ -949,70 +1852,106 @@ export default function AgentPortalPage() {
                               {isConfirmed ? '🟢 Confirmed' : (isCompleted ? '✅ Completed' : '🔵 Pending')}
                             </span>
                             {p.statusChangeRequested && (
-                              <div style={{
-                                fontSize: '0.68rem',
+                              <span style={{
+                                fontSize: '0.7rem',
                                 color: '#D97706',
                                 fontWeight: 700,
-                                marginTop: '0.25rem',
                                 background: '#FEF3C7',
-                                padding: '0.1rem 0.35rem',
-                                borderRadius: '4px',
-                                display: 'inline-block'
+                                border: '1px solid #FDE68A',
+                                padding: '0.15rem 0.45rem',
+                                borderRadius: '6px'
                               }}>
                                 ⏳ Pending: {p.requestedStatus === 'ignore' ? 'Closed' : 'Confirmed'}
-                              </div>
+                              </span>
                             )}
-                          </td>
-                          <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right', display: 'flex', gap: '0.35rem', justifyContent: 'flex-end', alignItems: 'center' }}>
-                            <Link
-                              href={`/custom-package?ref=${p.proposalNumber}`}
+                          </div>
+                        </div>
+
+                        {/* Guest Info */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '0.25rem' }}>
+                          <strong style={{ fontSize: '0.95rem', color: '#0F172A' }}>
+                            👤 {p.guestName || 'Valued Guest'}
+                          </strong>
+                          {p.guestPhone ? (
+                            <a href={`tel:${p.guestPhone}`} style={{ fontSize: '0.82rem', color: '#0284C7', textDecoration: 'none', fontWeight: 700 }}>
+                              📞 {p.guestPhone}
+                            </a>
+                          ) : (
+                            <span style={{ fontSize: '0.78rem', color: '#94A3B8' }}>No phone</span>
+                          )}
+                        </div>
+
+                        {/* 3-Pill Details Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem', background: '#F8FAFC', padding: '0.65rem 0.5rem', borderRadius: '8px', border: '1px solid #E2E8F0', textAlign: 'center' }}>
+                          <div>
+                            <span style={{ display: 'block', fontSize: '0.65rem', color: '#64748B', fontWeight: 700 }}>ARRIVAL</span>
+                            <strong style={{ fontSize: '0.78rem', color: '#0284C7' }}>📅 {p.arrivalDate || 'TBD'}</strong>
+                          </div>
+                          <div style={{ borderLeft: '1px solid #CBD5E1', borderRight: '1px solid #CBD5E1' }}>
+                            <span style={{ display: 'block', fontSize: '0.65rem', color: '#64748B', fontWeight: 700 }}>PAX & STAY</span>
+                            <strong style={{ fontSize: '0.78rem', color: '#334155' }}>{p.adults || 2}A{p.kids > 0 ? `+${p.kids}C` : ''} · {p.nights || 3}N</strong>
+                          </div>
+                          <div>
+                            <span style={{ display: 'block', fontSize: '0.65rem', color: '#64748B', fontWeight: 700 }}>PRICE</span>
+                            <strong style={{ fontSize: '0.85rem', color: '#166534' }}>S$ {(p.costBreakdown?.totalClientPrice || p.totalClientPrice || 0).toLocaleString()}</strong>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem' }}>
+                          <Link
+                            href={`/custom-package?ref=${p.proposalNumber}`}
+                            style={{
+                              flex: 1,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '0.4rem',
+                              padding: '0.65rem',
+                              borderRadius: '8px',
+                              background: '#0F172A',
+                              color: '#FFF',
+                              textDecoration: 'none',
+                              fontWeight: 800,
+                              fontSize: '0.82rem',
+                              minHeight: '44px'
+                            }}
+                          >
+                            <ExternalLink size={15} /> Open Proposal
+                          </Link>
+                          {!p.statusChangeRequested && (pStatus === 'pending' || pStatus === 'followup') && (
+                            <button
+                              onClick={() => {
+                                setStatusRequestProposal(p)
+                                setStatusRequestTarget('confirmed')
+                                setStatusRequestNoteText('')
+                              }}
                               style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
+                                justifyContent: 'center',
                                 gap: '0.3rem',
-                                padding: '0.35rem 0.75rem',
-                                borderRadius: '6px',
-                                background: '#F1F5F9',
-                                color: '#0F172A',
-                                border: '1px solid #CBD5E1',
-                                textDecoration: 'none',
-                                fontWeight: 700,
-                                fontSize: '0.78rem'
+                                padding: '0.65rem 0.85rem',
+                                borderRadius: '8px',
+                                background: '#0F4C3A',
+                                color: '#FFF',
+                                border: 'none',
+                                fontWeight: 800,
+                                fontSize: '0.82rem',
+                                cursor: 'pointer',
+                                minHeight: '44px',
+                                whiteSpace: 'nowrap'
                               }}
                             >
-                              <ExternalLink size={13} /> Open
-                            </Link>
-                            {!p.statusChangeRequested && (pStatus === 'pending' || pStatus === 'followup') && (
-                              <button
-                                onClick={() => {
-                                  setStatusRequestProposal(p)
-                                  setStatusRequestTarget('confirmed')
-                                  setStatusRequestNoteText('')
-                                }}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '0.2rem',
-                                  padding: '0.35rem 0.75rem',
-                                  borderRadius: '6px',
-                                  background: '#0F4C3A',
-                                  color: '#FFF',
-                                  border: 'none',
-                                  fontWeight: 700,
-                                  fontSize: '0.78rem',
-                                  cursor: 'pointer'
-                                }}
-                              >
-                                ⏳ Change Status
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                              ⏳ Change Status
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
             )}
 
           </div>
@@ -1020,30 +1959,69 @@ export default function AgentPortalPage() {
 
       </main>
 
-      {/* ── 4. AGENCY BRANDING MODAL ── */}
+      {/* ── 7. STICKY MOBILE BOTTOM NAVIGATION BAR ── */}
+      <nav className="ap-bottom-nav">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`ap-bottom-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+        >
+          <LayoutDashboard size={20} />
+          <span>Dashboard</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('bookings')}
+          className={`ap-bottom-nav-item ${activeTab === 'bookings' ? 'active' : ''}`}
+        >
+          <div style={{ position: 'relative' }}>
+            <FileText size={20} />
+            {proposals.length > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-4px',
+                right: '-8px',
+                background: '#B83A4B',
+                color: '#FFF',
+                fontSize: '0.62rem',
+                fontWeight: 800,
+                borderRadius: '10px',
+                padding: '0.05rem 0.35rem',
+                lineHeight: 1.2
+              }}>
+                {proposals.length}
+              </span>
+            )}
+          </div>
+          <span>Bookings</span>
+        </button>
+
+        <Link
+          href="/custom-package"
+          className="ap-bottom-nav-item"
+          style={{ color: '#0F4C3A' }}
+        >
+          <Package size={20} />
+          <span>Build</span>
+        </Link>
+
+        <button
+          onClick={() => setMobileNavOpen(true)}
+          className="ap-bottom-nav-item"
+        >
+          <Menu size={20} />
+          <span>Menu</span>
+        </button>
+      </nav>
+
+      {/* ── 8. AGENCY BRANDING MODAL ── */}
       {showBrandingModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999
-        }}>
-          <div style={{
-            background: '#FFF',
-            borderRadius: '16px',
-            padding: '2rem',
-            width: '500px',
-            maxWidth: '90vw',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.25)'
-          }}>
+        <div className="ap-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowBrandingModal(false) }}>
+          <div className="ap-modal-card" style={{ width: '500px', maxWidth: '94vw', padding: '1.75rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
               <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Building2 size={20} color="#B83A4B" /> White-Label Agency Branding
               </h3>
-              <button onClick={() => setShowBrandingModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#64748B' }}>✕</button>
+              <button onClick={() => setShowBrandingModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#64748B', padding: '0.25rem' }}>✕</button>
             </div>
 
             <p style={{ fontSize: '0.83rem', color: '#64748B', marginTop: 0, marginBottom: '1.25rem', lineHeight: 1.5 }}>
@@ -1055,16 +2033,16 @@ export default function AgentPortalPage() {
               <div>
                 <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem' }}>Agency Logo (PDF & Itineraries)</label>
                 {brandingLogoPreview ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', flexWrap: 'wrap' }}>
                     <div style={{ width: '80px', height: '50px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '4px' }}>
                       <img src={brandingLogoPreview} alt="Agency Logo Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: '130px' }}>
                       <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1E293B' }}>Logo Attached</span>
                       <span style={{ fontSize: '0.72rem', color: '#64748B' }}>Renders high-contrast on PDF proposals</span>
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <label style={{ cursor: 'pointer', padding: '0.4rem 0.65rem', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <label style={{ cursor: 'pointer', padding: '0.45rem 0.75rem', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#0F172A', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         <UploadCloud size={14} /> Replace
                         <input
                           type="file"
@@ -1086,7 +2064,7 @@ export default function AgentPortalPage() {
                           setBrandingLogoPreview('')
                           setCustomAgencyLogoUrl('')
                         }}
-                        style={{ padding: '0.4rem 0.65rem', background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#E11D48', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        style={{ padding: '0.45rem 0.75rem', background: '#FFF1F2', border: '1px solid #FECDD3', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, color: '#E11D48', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       >
                         <Trash2 size={14} /> Remove
                       </button>
@@ -1120,7 +2098,7 @@ export default function AgentPortalPage() {
                   placeholder="e.g. Flying Wonders Private Limited"
                   value={customAgencyName}
                   onChange={e => setCustomAgencyName(e.target.value)}
-                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.88rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '16px', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
 
@@ -1131,7 +2109,7 @@ export default function AgentPortalPage() {
                   placeholder="e.g. info.flyingwonders@gmail.com"
                   value={customAgencyEmail}
                   onChange={e => setCustomAgencyEmail(e.target.value)}
-                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.88rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '16px', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
 
@@ -1142,16 +2120,16 @@ export default function AgentPortalPage() {
                   placeholder="e.g. +91 9886171251"
                   value={customAgencyPhone}
                   onChange={e => setCustomAgencyPhone(e.target.value)}
-                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.88rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '16px', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 onClick={() => setShowBrandingModal(false)}
-                style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#FFF', color: '#475569', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}
+                style={{ padding: '0.65rem 1.25rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#FFF', color: '#475569', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem', minHeight: '42px' }}
               >
                 Cancel
               </button>
@@ -1159,7 +2137,7 @@ export default function AgentPortalPage() {
                 type="button"
                 disabled={brandingUploading}
                 onClick={handleSaveBranding}
-                style={{ padding: '0.6rem 1.5rem', borderRadius: '8px', border: 'none', background: '#B83A4B', color: '#FFF', fontWeight: 700, cursor: brandingUploading ? 'not-allowed' : 'pointer', fontSize: '0.85rem' }}
+                style={{ padding: '0.65rem 1.5rem', borderRadius: '8px', border: 'none', background: '#B83A4B', color: '#FFF', fontWeight: 700, cursor: brandingUploading ? 'not-allowed' : 'pointer', fontSize: '0.85rem', minHeight: '42px' }}
               >
                 {brandingUploading ? 'Saving Logo & Branding...' : 'Save Branding Settings'}
               </button>
@@ -1169,27 +2147,10 @@ export default function AgentPortalPage() {
         </div>
       )}
 
-      {/* ── 5. AGENT OTP LOGIN MODAL ── */}
+      {/* ── 9. AGENT OTP LOGIN MODAL ── */}
       {showLoginModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999
-        }}>
-          <div style={{
-            position: 'relative',
-            background: '#FFF',
-            borderRadius: '16px',
-            padding: '2.25rem 2rem',
-            width: '440px',
-            maxWidth: '92vw',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-            textAlign: 'center'
-          }}>
+        <div className="ap-modal-overlay">
+          <div className="ap-modal-card" style={{ width: '440px', maxWidth: '94vw', padding: '2rem 1.75rem', textAlign: 'center' }}>
             <button
               onClick={() => {
                 setShowLoginModal(false)
@@ -1197,14 +2158,14 @@ export default function AgentPortalPage() {
               }}
               style={{
                 position: 'absolute',
-                top: '1rem',
-                right: '1rem',
+                top: '0.85rem',
+                right: '0.85rem',
                 background: 'transparent',
                 border: 'none',
                 fontSize: '1.25rem',
                 cursor: 'pointer',
                 color: '#94A3B8',
-                padding: '0.25rem',
+                padding: '0.35rem',
                 lineHeight: 1
               }}
               title="Close and return to Home"
@@ -1219,13 +2180,13 @@ export default function AgentPortalPage() {
             <h3 style={{ margin: '0 0 0.35rem', fontSize: '1.25rem', fontWeight: 800, color: '#0F172A' }}>
               B2B Agent Portal Login
             </h3>
-            <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.5rem', lineHeight: 1.4 }}>
+            <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 1.25rem', lineHeight: 1.4 }}>
               Enter your registered B2B email to receive a single-use OTP verification code.
             </p>
 
             {/* Toggle Tab */}
             {otpStep === 'email' && (
-              <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #E2E8F0', marginBottom: '1.5rem', paddingBottom: '2px' }}>
+              <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #E2E8F0', marginBottom: '1.25rem', paddingBottom: '2px' }}>
                 <button 
                   type="button" 
                   onClick={() => { setAuthMode('login'); setAuthError(''); }}
@@ -1245,13 +2206,13 @@ export default function AgentPortalPage() {
 
             {/* Display Errors */}
             {authError && (
-              <div style={{ background: '#FFF5F5', color: '#C53030', padding: '0.75rem 1rem', borderRadius: '6px', fontSize: '0.82rem', marginBottom: '1.25rem', borderLeft: '4px solid #C53030', textAlign: 'left' }}>
+              <div style={{ background: '#FFF5F5', color: '#C53030', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.82rem', marginBottom: '1.25rem', borderLeft: '4px solid #C53030', textAlign: 'left' }}>
                 ⚠️ {authError}
                 {(authError.toLowerCase().includes('account not found') || authError.toLowerCase().includes('register')) && (
                   <button
                     type="button"
                     onClick={() => { setAuthMode('signup'); setAuthError(''); }}
-                    style={{ display: 'block', marginTop: '0.5rem', background: '#C53030', color: '#FFF', border: 'none', padding: '0.4rem 0.75rem', borderRadius: '4px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}
+                    style={{ display: 'block', marginTop: '0.5rem', background: '#C53030', color: '#FFF', border: 'none', padding: '0.4rem 0.75rem', borderRadius: '6px', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer' }}
                   >
                     👉 Click here to Register Agency
                   </button>
@@ -1268,7 +2229,7 @@ export default function AgentPortalPage() {
                       <input 
                         type="text" required placeholder="e.g. Travel Wonders Inc"
                         value={regCompanyName} onChange={e => setRegCompanyName(e.target.value)}
-                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '16px', boxSizing: 'border-box' }}
                       />
                     </div>
                     <div>
@@ -1276,7 +2237,7 @@ export default function AgentPortalPage() {
                       <input 
                         type="text" required placeholder="e.g. Amit Kumar"
                         value={regAgentName} onChange={e => setRegAgentName(e.target.value)}
-                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '16px', boxSizing: 'border-box' }}
                       />
                     </div>
                     <div>
@@ -1284,7 +2245,7 @@ export default function AgentPortalPage() {
                       <input 
                         type="tel" required placeholder="e.g. +91 9886171251"
                         value={regPhone} onChange={e => setRegPhone(e.target.value)}
-                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem' }}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '16px', boxSizing: 'border-box' }}
                       />
                     </div>
                     <div>
@@ -1292,7 +2253,7 @@ export default function AgentPortalPage() {
                         Agency Logo <span style={{ fontWeight: 400, color: '#94A3B8' }}>(Optional)</span>
                       </label>
                       {regLogoPreview ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
                           <div style={{ width: '50px', height: '36px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                             <img src={regLogoPreview} alt="Logo preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                           </div>
@@ -1306,7 +2267,7 @@ export default function AgentPortalPage() {
                           </button>
                         </div>
                       ) : (
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', border: '1px dashed #CBD5E1', borderRadius: '6px', background: '#F8FAFC', cursor: 'pointer', fontSize: '0.78rem', color: '#475569' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.55rem 0.75rem', border: '1px dashed #CBD5E1', borderRadius: '8px', background: '#F8FAFC', cursor: 'pointer', fontSize: '0.78rem', color: '#475569' }}>
                           <UploadCloud size={16} color="#64748B" />
                           <span>Choose Agency Logo (PNG, JPG, SVG)</span>
                           <input
@@ -1331,18 +2292,18 @@ export default function AgentPortalPage() {
                   <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.25rem', color: '#475569' }}>Work Email Address *</label>
                   <input
                     type="email"
-                    placeholder="Registered B2B Email (e.g. agent@travelagency.com)"
+                    placeholder="Registered B2B Email"
                     required
                     value={loginEmail}
                     onChange={e => setLoginEmail(e.target.value)}
-                    style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.9rem', outline: 'none' }}
+                    style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '16px', outline: 'none', boxSizing: 'border-box' }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={authSubmitting}
-                  style={{ padding: '0.75rem', borderRadius: '8px', border: 'none', background: '#B83A4B', color: '#FFF', fontWeight: 800, fontSize: '0.9rem', cursor: authSubmitting ? 'not-allowed' : 'pointer', marginTop: '0.5rem' }}
+                  style={{ padding: '0.75rem', borderRadius: '8px', border: 'none', background: '#B83A4B', color: '#FFF', fontWeight: 800, fontSize: '0.9rem', cursor: authSubmitting ? 'not-allowed' : 'pointer', marginTop: '0.5rem', minHeight: '44px' }}
                 >
                   {authSubmitting ? 'Sending OTP...' : (authMode === 'signup' ? 'Register & Send Code 📩' : 'Send Verification OTP 📩')}
                 </button>
@@ -1354,24 +2315,24 @@ export default function AgentPortalPage() {
                 </span>
                 <input
                   type="text"
-                  placeholder="Enter 6-digit OTP code"
+                  placeholder="Enter 6-digit OTP"
                   required
                   value={otpCode}
                   onChange={e => setOtpCode(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '1.1rem', textAlign: 'center', letterSpacing: '0.3em', fontWeight: 800, outline: 'none' }}
+                  style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '1.2rem', textAlign: 'center', letterSpacing: '0.25em', fontWeight: 800, outline: 'none', boxSizing: 'border-box' }}
                 />
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button
                     type="button"
                     onClick={() => setOtpStep('email')}
-                    style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#FFF', color: '#475569', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+                    style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #CBD5E1', background: '#FFF', color: '#475569', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', minHeight: '44px' }}
                   >
-                    ← Change Email
+                    ← Back
                   </button>
                   <button
                     type="submit"
                     disabled={authSubmitting}
-                    style={{ flex: 2, padding: '0.75rem', borderRadius: '8px', border: 'none', background: '#0F4C3A', color: '#FFF', fontWeight: 800, fontSize: '0.9rem', cursor: authSubmitting ? 'not-allowed' : 'pointer' }}
+                    style={{ flex: 2, padding: '0.75rem', borderRadius: '8px', border: 'none', background: '#0F4C3A', color: '#FFF', fontWeight: 800, fontSize: '0.9rem', cursor: authSubmitting ? 'not-allowed' : 'pointer', minHeight: '44px' }}
                   >
                     {authSubmitting ? 'Verifying...' : 'Verify & Log In 🔓'}
                   </button>
@@ -1383,34 +2344,19 @@ export default function AgentPortalPage() {
         </div>
       )}
 
-      {/* ── 6. STATUS CHANGE REQUEST MODAL ── */}
+      {/* ── 10. STATUS CHANGE REQUEST MODAL ── */}
       {statusRequestProposal && (
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.6)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999
-        }}>
-          <div style={{
-            background: '#FFF',
-            borderRadius: '16px',
-            padding: '2rem',
-            width: '450px',
-            maxWidth: '90vw',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.25)'
-          }}>
+        <div className="ap-modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setStatusRequestProposal(null) }}>
+          <div className="ap-modal-card" style={{ width: '450px', maxWidth: '94vw', padding: '1.75rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
               <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>
                 Request Status Change
               </h3>
-              <button onClick={() => setStatusRequestProposal(null)} style={{ border: 'none', background: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#64748B' }}>✕</button>
+              <button onClick={() => setStatusRequestProposal(null)} style={{ border: 'none', background: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#64748B', padding: '0.25rem' }}>✕</button>
             </div>
 
             <p style={{ fontSize: '0.85rem', color: '#475569', marginTop: 0, marginBottom: '1rem' }}>
-              Submit a request to the administrator to update proposal <strong>{statusRequestProposal.proposalNumber}</strong> ({statusRequestProposal.guestName || 'Valued Guest'}).
+              Submit a request to update proposal <strong>{statusRequestProposal.proposalNumber}</strong> ({statusRequestProposal.guestName || 'Valued Guest'}).
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -1419,7 +2365,7 @@ export default function AgentPortalPage() {
                 <select
                   value={statusRequestTarget}
                   onChange={e => setStatusRequestTarget(e.target.value as any)}
-                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.88rem', outline: 'none' }}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '16px', outline: 'none', boxSizing: 'border-box' }}
                 >
                   <option value="confirmed">🟢 Confirmed</option>
                   <option value="ignore">Ignore / Closed</option>
@@ -1432,22 +2378,22 @@ export default function AgentPortalPage() {
                   placeholder="e.g. Guest paid booking deposit via bank transfer. Ref #998311."
                   value={statusRequestNoteText}
                   onChange={e => setStatusRequestNoteText(e.target.value)}
-                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '0.88rem', outline: 'none', height: '80px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '16px', outline: 'none', height: '80px', resize: 'vertical', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <button
                 onClick={() => setStatusRequestProposal(null)}
-                style={{ padding: '0.55rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0', background: '#FFF', color: '#475569', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+                style={{ padding: '0.6rem 1.15rem', borderRadius: '8px', border: '1px solid #E2E8F0', background: '#FFF', color: '#475569', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', minHeight: '42px' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleRequestStatusChange}
                 disabled={statusRequestSubmitting}
-                style={{ padding: '0.55rem 1.25rem', borderRadius: '8px', border: 'none', background: '#0F4C3A', color: '#FFF', fontWeight: 800, fontSize: '0.85rem', cursor: statusRequestSubmitting ? 'not-allowed' : 'pointer' }}
+                style={{ padding: '0.6rem 1.35rem', borderRadius: '8px', border: 'none', background: '#0F4C3A', color: '#FFF', fontWeight: 800, fontSize: '0.85rem', cursor: statusRequestSubmitting ? 'not-allowed' : 'pointer', minHeight: '42px' }}
               >
                 {statusRequestSubmitting ? 'Submitting...' : 'Submit Request'}
               </button>
