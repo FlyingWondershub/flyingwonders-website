@@ -2861,8 +2861,8 @@ export default function PrototypeBuilder() {
           }
         }
 
-        const rowAdultCount = attrRow.adultTickets || 0
-        const rowChildCount = attrRow.childTickets || 0
+        const rowAdultCount = typeof attrRow.adultTickets === 'number' ? attrRow.adultTickets : adults
+        const rowChildCount = typeof attrRow.childTickets === 'number' ? attrRow.childTickets : kids
         const isGroup = attr?.rateType === 'group'
 
         // Compute transfer cost tied to this attraction
@@ -8958,25 +8958,46 @@ ${proposal}
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                               {day.attractions.map((a, aIdx) => {
-                                const attrObj = attractionsList[a.attractionIndex]
+                                let attrObj: (typeof attractionsList)[number] | undefined = attractionsList[a.attractionIndex]
+                                if (!attrObj && a.attractionName) {
+                                  attrObj = attractionsList.find(item => item.name.toLowerCase().trim() === a.attractionName?.toLowerCase().trim())
+                                }
                                 const name = attrObj?.name || a.attractionName || 'Attraction'
-                                const adultP = attrObj?.adultPrice || 0
-                                const childP = attrObj?.childPrice || 0
+                                const adultP = attrObj?.adultPrice ?? (typeof (a as any).adultPrice === 'number' ? (a as any).adultPrice : 0)
+                                const childP = attrObj?.childPrice ?? (typeof (a as any).childPrice === 'number' ? (a as any).childPrice : 0)
                                 const isGroup = attrObj?.rateType === 'group'
-                                const subTotal = isGroup ? (adultP || childP) : (adults * adultP) + (kids * childP)
+                                const isOpt = !!a.isOptional
+
+                                const rowAdults = typeof a.adultTickets === 'number' ? a.adultTickets : adults
+                                const rowKids = typeof a.childTickets === 'number' ? a.childTickets : kids
+
+                                const subTotal = isOpt ? 0 : (isGroup ? ((rowAdults + rowKids) > 0 || (adults + kids) > 0 ? (adultP || childP) : 0) : (rowAdults * adultP) + (rowKids * childP))
                                 return (
                                   <div key={aIdx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontSize: '0.8rem', borderTop: aIdx > 0 ? '1px dashed #E2E8F0' : 'none', paddingTop: aIdx > 0 ? '0.4rem' : 0 }}>
                                     <div style={{ paddingRight: '0.5rem' }}>
-                                      <div style={{ fontWeight: 600, color: '#1E293B' }}>{name}</div>
-                                      <div style={{ fontSize: '0.72rem', color: isGroup ? '#0F4C3A' : '#64748B', marginTop: '2px', fontWeight: isGroup ? 600 : 400 }}>
-                                        {isGroup ? `👥 Group Rate: S$ ${adultP || childP} (Flat rate for whole group)` : (
-                                          `${adults} Adult${adults > 1 ? 's' : ''} (S$${adultP})` +
-                                          (kids > 0 ? ` + ${kids} Child${kids > 1 ? 'ren' : ''} (S$${childP})` : '')
+                                      <div style={{ fontWeight: 600, color: '#1E293B' }}>
+                                        {name}
+                                        {isOpt && (
+                                          <span style={{ marginLeft: '0.4rem', fontSize: '0.65rem', background: '#FEF3C7', color: '#B45309', padding: '1px 5px', borderRadius: '3px', fontWeight: 700 }}>
+                                            OPTIONAL
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div style={{ fontSize: '0.72rem', color: isOpt ? '#B45309' : isGroup ? '#0F4C3A' : '#64748B', marginTop: '2px', fontWeight: (isGroup || isOpt) ? 600 : 400 }}>
+                                        {isOpt ? (
+                                          `✨ Optional Add-on (${rowAdults} Ad${rowKids > 0 ? ` + ${rowKids} Ch` : ''}) · Excluded from base quote`
+                                        ) : isGroup ? (
+                                          `👥 Group Rate: S$ ${adultP || childP} (Flat rate for whole group)`
+                                        ) : (rowAdults === 0 && rowKids === 0) ? (
+                                          <span style={{ color: '#94A3B8', fontStyle: 'italic' }}>0 Tickets (Excluded / S$ 0)</span>
+                                        ) : (
+                                          `${rowAdults} Adult${rowAdults !== 1 ? 's' : ''} (S$${adultP})` +
+                                          (rowKids > 0 ? ` + ${rowKids} Child${rowKids !== 1 ? 'ren' : ''} (S$${childP})` : '')
                                         )}
                                       </div>
                                     </div>
-                                    <div style={{ fontWeight: 700, color: '#0F4C3A', whiteSpace: 'nowrap' }}>
-                                      S$ {subTotal.toLocaleString()}
+                                    <div style={{ fontWeight: 700, color: isOpt ? '#B45309' : '#0F4C3A', whiteSpace: 'nowrap' }}>
+                                      {isOpt ? 'Optional' : `S$ ${subTotal.toLocaleString()}`}
                                     </div>
                                   </div>
                                 )
