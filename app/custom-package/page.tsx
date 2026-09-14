@@ -2544,21 +2544,7 @@ export default function PrototypeBuilder() {
 
     setItinerary(mappedItinerary)
     const customFooter = landPackageModalItem.termsAndInclusions || defaultLandPackageTerms
-    await downloadProposalPDF(false, customFooter, {
-      isLandPackage: true,
-      overrideItinerary: mappedItinerary,
-      overrideCalculation: landPackageCalculation,
-      overrideAdults: landPackageAdults,
-      overrideKids: landPackageKids,
-      overrideChildAges: landPackageChildAges,
-      overrideDate: landPackageDate,
-      overrideTitle: landPackageModalItem.title,
-      overrideTransferMode: landPackageTransferMode,
-      overrideGuestName: landPackageGuestName || undefined,
-      overrideGuestPhone: landPackageGuestPhone || undefined,
-      overrideProposalNumber: landPackageSavedProposalNum || undefined
-    })
-    showToast('Land Package PDF downloaded successfully! 📄', 'success')
+    await downloadLandPackagePDF()
   }
 
   const handleLoadLandPackageIntoBuilder = () => {
@@ -3655,38 +3641,624 @@ export default function PrototypeBuilder() {
     }
   }
 
-  // Download Itinerary PDF helper (auto-saves proposal if draft)
-  const downloadProposalPDF = async (
-    hidePricing = false,
-    customTerms?: string,
-    landPackageOptions?: {
-      isLandPackage?: boolean
-      overrideItinerary?: DayPlan[]
-      overrideCalculation?: any
-      overrideAdults?: number
-      overrideKids?: number
-      overrideChildAges?: number[]
-      overrideDate?: string
-      overrideTitle?: string
-      overrideTransferMode?: 'sic' | 'private13'
-      overrideGuestName?: string
-      overrideGuestPhone?: string
-      overrideProposalNumber?: string
-    }
-  ) => {
-    const isLandPkg = !!landPackageOptions?.isLandPackage
-    const pNum = landPackageOptions?.overrideProposalNumber || (isLandPkg ? (landPackageSavedProposalNum || await ensureProposalSaved(true)) : await ensureProposalSaved(true))
-    const { jsPDF } = await import('jspdf')
+  // Dedicated Isolated Ready-Made Land Package PDF Generator (modal in custom-package)
+    const getCleanTransferInfo = (tr: any, mode: 'private13' | 'sic') => {
+    const sType = (tr.serviceType || '').toLowerCase()
+    const vType = (tr.vehicleType || '').toLowerCase()
+    const rDesc = (tr.routeDescription || tr.description || '').trim()
 
-    const effectiveItinerary: DayPlan[] = landPackageOptions?.overrideItinerary || itinerary
-    const effectiveHotelRequired = isLandPkg ? false : hotelRequired
-    const effectiveAdults = landPackageOptions?.overrideAdults ?? adults
-    const effectiveKids = landPackageOptions?.overrideKids ?? kids
-    const effectiveChildAges = landPackageOptions?.overrideChildAges ?? childAges
-    const effectiveArrivalDate = landPackageOptions?.overrideDate || arrivalDate
-    const effectiveNightsCount = effectiveItinerary.length > 0 ? Math.max(1, effectiveItinerary.length - 1) : nightsCount
-    const effectiveCalculation = landPackageOptions?.overrideCalculation || null
-    const effectiveTransferMode = landPackageOptions?.overrideTransferMode || 'private13'
+    const isArr = sType === 'arrival' || vType.includes('arrival') || rDesc.toLowerCase().includes('arrival')
+    const isDep = sType === 'departure' || vType.includes('departure') || rDesc.toLowerCase().includes('departure')
+    const isCity = sType === 'citytour' || sType === 'city_tour' || sType === 'city tour' || vType.includes('city tour') || rDesc.toLowerCase().includes('city tour')
+    const isDisp = sType === 'disposal' || vType.includes('disposal') || rDesc.toLowerCase().includes('disposal')
+
+    if (isArr) {
+      return {
+        category: 'arrival',
+        title: rDesc && !['arrival', 'transfer'].includes(rDesc.toLowerCase()) ? rDesc : 'Singapore Changi Airport to Hotel (Arrival Transfer)',
+        vehicleName: 'Private 13-Seater Minibus',
+        badge: '13-Seater Minibus (Private Arrival)',
+        icon: '🛬',
+        isAirport: true,
+        isDisposal: false,
+        photoUrl: '/images/hero/singapore-hero-4.jpg',
+        shortDescription: 'Professional airport arrival reception and swift transit to your hotel. Meet your dedicated chauffeur at the arrival hall for direct, relaxing highway transit to your accommodation.',
+        features: [
+          'Changi Airport Arrival Reception',
+          'Luggage Loading & Chauffeur Assistance',
+          'Direct Express Highway Transit to Hotel',
+          'Air-Conditioned 13-Seater Minibus'
+        ]
+      }
+    }
+    if (isDep) {
+      return {
+        category: 'departure',
+        title: rDesc && !['departure', 'transfer'].includes(rDesc.toLowerCase()) ? rDesc : 'Hotel to Singapore Changi Airport (Departure Transfer)',
+        vehicleName: 'Private 13-Seater Minibus',
+        badge: '13-Seater Minibus (Private Departure)',
+        icon: '🛫',
+        isAirport: true,
+        isDisposal: false,
+        photoUrl: '/images/hero/singapore-hero-4.jpg',
+        shortDescription: 'Punctual hotel pickup and direct express transit to Singapore Changi Airport. Your chauffeur assists with baggage loading at hotel lobby, ensuring timely arrival at your departure terminal for check-in and GST tax refund.',
+        features: [
+          'Punctual Hotel Lobby Pickup',
+          'Luggage Loading & Chauffeur Assistance',
+          'Direct Changi Airport Terminal Drop-off',
+          'Air-Conditioned 13-Seater Minibus'
+        ]
+      }
+    }
+    if (isCity) {
+      const isSic = mode === 'sic' || rDesc.toLowerCase().includes('sic')
+      return {
+        category: 'citytour',
+        title: isSic ? 'Singapore City Tour (3 Hours) — Seat-In-Coach (SIC)' : 'Singapore City Tour (3 Hours) — 13-Seater Minibus',
+        vehicleName: isSic ? 'Seat-In-Coach (SIC)' : 'Private 13-Seater Minibus',
+        badge: isSic ? 'Seat-In-Coach (SIC Tour)' : '13-Seater Minibus (Private City Tour)',
+        icon: '🏙️',
+        isAirport: false,
+        isDisposal: false,
+        photoUrl: '/images/transfers/city-tour.jpg',
+        shortDescription: 'Comprehensive guided 3-hour orientation tour covering Singapore premier landmarks: Merlion Park, Civic District, Padang, and Chinatown heritage precinct.',
+        features: [
+          '3-Hour Guided City Orientation',
+          'Merlion Park & Marina Bay Scenic Lookout',
+          'Civic District & Historical Landmarks',
+          isSic ? 'Shared Seat-In-Coach' : 'Dedicated 13-Seater Private Minibus'
+        ]
+      }
+    }
+    if (isDisp) {
+      const hrs = tr.hours || 4
+      return {
+        category: 'disposal',
+        title: `${hrs} Hours Dedicated Disposal — 13-Seater Minibus`,
+        vehicleName: 'Private 13-Seater Minibus',
+        badge: `13-Seater Minibus (${hrs}h Private Disposal)`,
+        icon: '🚐',
+        isAirport: false,
+        isDisposal: true,
+        photoUrl: '/images/transfers/13-seater-minibus.jpg',
+        shortDescription: `Dedicated private air-conditioned minibus with professional chauffeur on standby for ${hrs} consecutive hours to cover personalized Singapore sightseeing routes.`,
+        features: [
+          `${hrs} Consecutive Hours Minibus Disposal`,
+          'Flexible Stops Across Singapore',
+          'Professional English-Speaking Chauffeur',
+          'Fuel, Tolls & Electronic Road Pricing (ERP) Included'
+        ]
+      }
+    }
+
+    const isSic = mode === 'sic' || rDesc.toLowerCase().includes('sic')
+    return {
+      category: 'transfer',
+      title: rDesc || (isSic ? 'Sightseeing Transfer — Seat-In-Coach (SIC)' : 'Interline Transfer — 13-Seater Minibus'),
+      vehicleName: isSic ? 'Seat-In-Coach (SIC)' : 'Private 13-Seater Minibus',
+      badge: isSic ? 'Seat-In-Coach (SIC)' : '13-Seater Minibus (Private Transfer)',
+      icon: '🚐',
+      isAirport: false,
+      isDisposal: false,
+      photoUrl: '/images/transfers/13-seater-minibus.jpg',
+      shortDescription: isSic
+        ? 'Scheduled shared transfer service connecting hotel and attraction venues with dedicated tourist coach dispatch.'
+        : 'Direct door-to-door private transfer across Singapore with dedicated chauffeur and high-roof air-conditioned comfort.',
+      features: isSic ? [
+        'Shared Tour Coach Transit',
+        'Convenient Hotel Pickup/Drop Points',
+        'Direct Transit to Attraction Gate'
+      ] : [
+        'Dedicated Private Group Transit',
+        'Hotel Lobby Direct Pickup & Drop',
+        'Air-Conditioned High-Roof Minibus',
+        'Luggage Space Available'
+      ]
+    }
+  }
+
+  const downloadLandPackagePDF = async () => {
+    if (!landPackageModalItem || !landPackageCalculation) return
+    try {
+      showToast('Generating high-resolution Land Package PDF... ⏳', 'info')
+      const { jsPDF } = await import('jspdf')
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true })
+
+      const effectiveRef = landPackageSavedProposalNum || savedProposalNum || `FW-LAND-${landPackageModalItem.nightsCount}N`
+
+      // Preload attraction card photos (480x312 px cover: zero distortion, retina print quality)
+      const distinctAttractionNames = Array.from(new Set(
+        itinerary.flatMap((d: any) => (d.attractions || []).map((a: any) => a.attractionName || ''))
+      )).filter(Boolean)
+
+      const attractionPhotosMap = new Map<string, string>()
+      await Promise.all(
+        distinctAttractionNames.map(async (name) => {
+          const cleanName = cleanPdfText(name)
+          const meta = attractionsMeta[cleanName.toLowerCase().trim()] || attractionsMeta[name.toLowerCase().trim()]
+          const photoUrl = meta?.photoUrl || getLocalAttractionPhoto(cleanName) || getLocalAttractionPhoto(name)
+          if (photoUrl) {
+            const raster = await fetchRasterLogo(photoUrl, 480, 312, true, 0.85, 'cover')
+            if (raster?.dataUrl) {
+              attractionPhotosMap.set(name.toLowerCase().trim(), raster.dataUrl)
+              attractionPhotosMap.set(cleanName.toLowerCase().trim(), raster.dataUrl)
+            }
+          }
+        })
+      )
+
+      // Preload transfer card photos (480x312 px cover: zero distortion, retina print quality)
+      const transferPhotosMap = new Map<string, string>()
+      const transferImageUrls = [
+        '/images/hero/singapore-hero-4.jpg',
+        '/images/transfers/13-seater-minibus.jpg',
+        '/images/transfers/city-tour.jpg'
+      ]
+      await Promise.all(
+        transferImageUrls.map(async (url) => {
+          const raster = await fetchRasterLogo(url, 480, 312, true, 0.85, 'cover')
+          if (raster?.dataUrl) {
+            transferPhotosMap.set(url, raster.dataUrl)
+          }
+        })
+      )
+
+      const PW = 210
+      const PH = 297
+      const ML = 14
+      const MR = 196
+      const CW = MR - ML
+
+      const NAVY: [number, number, number] = [10, 34, 64]
+      const GOLD: [number, number, number] = [196, 156, 60]
+      const GOLD_L: [number, number, number] = [249, 240, 210]
+      const CRIM: [number, number, number] = [140, 30, 50]
+      const TEAL: [number, number, number] = [32, 100, 96]
+      const SLATE: [number, number, number] = [44, 62, 80]
+      const TEXT: [number, number, number] = [30, 41, 59]
+      const LGRAY: [number, number, number] = [245, 247, 250]
+      const WHITE: [number, number, number] = [255, 255, 255]
+
+      let y = 0
+      let pageNum = 1
+
+      const setFill = (c: [number, number, number]) => doc.setFillColor(c[0], c[1], c[2])
+      const setDraw = (c: [number, number, number]) => doc.setDrawColor(c[0], c[1], c[2])
+      const setTxt = (c: [number, number, number]) => doc.setTextColor(c[0], c[1], c[2])
+      const font = (w: 'normal' | 'bold' | 'italic', s: number) => {
+        doc.setFont('Helvetica', w)
+        doc.setFontSize(s)
+      }
+
+      const addHeader = () => {
+        setFill(NAVY); doc.rect(0, 0, PW, 12, 'F')
+        setFill(GOLD); doc.rect(0, 12, PW, 1.2, 'F')
+        font('bold', 7.5); setTxt(WHITE)
+        doc.text('FLYING WONDERS · SINGAPORE DMC', ML, 8.5)
+        font('normal', 7); setTxt(GOLD)
+        doc.text('B2B LAND PACKAGE PROPOSAL (NO HOTELS)', PW / 2, 8.5, { align: 'center' })
+        doc.text(`Ref: ${effectiveRef}`, MR, 8.5, { align: 'right' })
+      }
+
+      const addFooter = () => {
+        const fy = PH - 12
+        setFill(NAVY); doc.rect(0, fy - 2, PW, 14, 'F')
+        setFill(GOLD); doc.rect(0, fy - 2, PW, 0.8, 'F')
+        font('normal', 7); setTxt(GOLD)
+        doc.text('Flying Wonders · Land Package DMC', ML, fy + 3)
+        setTxt(WHITE)
+        doc.text(`Page ${pageNum}`, PW / 2, fy + 3, { align: 'center' })
+        const today = new Date().toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' })
+        font('normal', 7); setTxt(WHITE)
+        doc.text(`Generated: ${today}`, MR, fy + 3, { align: 'right' })
+      }
+
+      const checkPage = (need = 14) => {
+        if (y + need > PH - 20) {
+          addFooter()
+          doc.addPage()
+          pageNum++
+          addHeader()
+          y = 20
+        }
+      }
+
+      const sectionTitle = (title: string) => {
+        checkPage(16)
+        y += 2
+        setFill(NAVY); doc.rect(ML, y, CW, 7.5, 'F')
+        setFill(GOLD); doc.rect(ML, y, 3, 7.5, 'F')
+        font('bold', 9); setTxt(WHITE)
+        doc.text(title.toUpperCase(), ML + 6, y + 5.2)
+        y += 11
+      }
+
+      // ── PAGE 1: COVER HEADER ──
+      setFill(NAVY); doc.rect(0, 0, PW, 46, 'F')
+      setFill(GOLD); doc.rect(0, 46, PW, 2, 'F')
+
+      font('bold', 15); setTxt(WHITE)
+      const agencyName = (activeAgent?.companyName || 'FLYING WONDERS').toUpperCase()
+      doc.text(agencyName, ML, 18)
+
+      font('italic', 8.5); setTxt(GOLD)
+      doc.text('Singapore Destination Management Specialist · B2B Land Packages', ML, 25)
+
+      font('normal', 7.5); setTxt([200, 215, 230])
+      const phone = activeAgent?.phone || '+65 9689 0101'
+      const email = activeAgent?.email || 'info.flyingwonders@gmail.com'
+      doc.text(`Tel: ${phone}   |   Email: ${email}   |   Web: flyingwonders.com`, ML, 37)
+
+      // Clean luxury badge in top right (Eliminates awkward rotated text!)
+      setFill(CRIM); doc.roundedRect(PW - 58, 12, 44, 9, 2, 2, 'F')
+      font('bold', 7.5); setTxt(WHITE)
+      doc.text('LAND PACKAGE ONLY', PW - 36, 17.8, { align: 'center' })
+
+      font('bold', 7.5); setTxt(GOLD)
+      doc.text(`Ref: ${effectiveRef}`, PW - 36, 26, { align: 'center' })
+
+      y = 54
+
+      // ── GUEST / ITINERARY OVERVIEW CARD ──
+      setFill(GOLD_L); doc.roundedRect(ML, y, CW, 36, 3, 3, 'F')
+      setDraw(GOLD); doc.setLineWidth(0.6); doc.roundedRect(ML, y, CW, 36, 3, 3, 'S')
+
+      font('bold', 8.5); setTxt(CRIM)
+      doc.text('QUOTATION PREPARED FOR', ML + 4, y + 6)
+      font('bold', 13); setTxt(NAVY)
+      doc.text(landPackageGuestName ? `${landPackageGuestName} ${landPackageGuestPhone ? `(${landPackageGuestPhone})` : ''}` : 'Valued Guest', ML + 4, y + 13)
+
+      const childAgeStr = landPackageKids > 0 && childAges.length > 0 ? ` (Ages: ${childAges.slice(0, landPackageKids).join(',')})` : ''
+      const chips = [
+        { label: 'PAX CAPACITY', val: `${landPackageAdults} Adult${landPackageAdults !== 1 ? 's' : ''}${landPackageKids > 0 ? ` + ${landPackageKids} Child${childAgeStr}` : ''}` },
+        { label: 'TRAVEL DATE', val: landPackageDate ? new Date(landPackageDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD' },
+        { label: 'PACKAGE DURATION', val: `${landPackageModalItem.nightsCount + 1}D / ${landPackageModalItem.nightsCount}N` },
+        { label: 'HOTEL STAY', val: 'Not Included (Land Only)' },
+      ]
+      const chipW = CW / chips.length
+      chips.forEach((c, i) => {
+        const cx = ML + i * chipW
+        setFill(WHITE); doc.roundedRect(cx + 2, y + 18, chipW - 4, 14, 2, 2, 'F')
+        font('bold', 6.5); setTxt(SLATE)
+        doc.text(c.label, cx + (chipW / 2), y + 23, { align: 'center' })
+        font('bold', 7.5); setTxt(NAVY)
+        doc.text(c.val, cx + (chipW / 2), y + 29, { align: 'center' })
+      })
+
+      y += 42
+
+      // ── LAND PACKAGE PRICE BAR ──
+      setFill(NAVY); doc.roundedRect(ML, y, CW, 20, 2.5, 2.5, 'F')
+      const priceCols = [
+        { lbl: 'PER ADULT (SGD)', val: `S$ ${landPackageCalculation.adultQuoteSGD.toLocaleString()}` },
+        { lbl: landPackageCalculation.childTicketCount > 0 ? 'PER CHILD (SGD)' : 'TOTAL PACKAGE', val: landPackageCalculation.childTicketCount > 0 ? `S$ ${landPackageCalculation.childQuoteSGD.toLocaleString()}` : `S$ ${landPackageCalculation.totalClientPriceSGD.toLocaleString()}` },
+        { lbl: 'INR EQUIVALENT', val: `Rs. ${landPackageCalculation.totalClientPriceINR.toLocaleString('en-IN')}` }
+      ]
+      const pcW = CW / priceCols.length
+      priceCols.forEach((pc, i) => {
+        const px = ML + i * pcW
+        if (i > 0) { setDraw(GOLD); doc.setLineWidth(0.3); doc.line(px, y + 3, px, y + 17) }
+        font('normal', 7); setTxt(GOLD)
+        doc.text(pc.lbl, px + pcW / 2, y + 6.5, { align: 'center' })
+        font('bold', 12); setTxt(WHITE)
+        doc.text(pc.val, px + pcW / 2, y + 15, { align: 'center' })
+      })
+
+      y += 26
+
+      // ── INCLUSIONS & EXCLUSIONS ──
+      sectionTitle('LAND PACKAGE INCLUSIONS & EXCLUSIONS')
+
+      const inclItems = [
+        'Land Package Only (Hotel Accommodation excluded)',
+        landPackageTransferMode === 'sic'
+          ? 'Airport Arrival & Departure by Private 13-Seater Minibus; Sightseeing by Shared Coach (SIC)'
+          : 'Airport Arrival & Departure + All Sightseeing by Private 13-Seater Minibus',
+        'English-speaking driver assistance for scheduled transfers',
+      ]
+      const exclItems = [
+        'Hotel Accommodation & Daily Breakfast',
+        'International / Domestic Airfare',
+        'Meals (Lunch / Dinner) & Personal Expenses',
+        'Licensed Tour Guide (Available on Request)',
+        'Midnight Transfer Surcharge (22:00 - 07:00)',
+        'Singapore Entry Visa Fees & Travel Insurance'
+      ]
+
+      const colW = (CW - 4) / 2
+      const boxH = 36
+      checkPage(boxH + 4)
+
+      // INCLUDED
+      setFill([230, 248, 237]); doc.roundedRect(ML, y, colW, boxH, 2, 2, 'F')
+      setDraw(TEAL); doc.setLineWidth(0.5); doc.roundedRect(ML, y, colW, boxH, 2, 2, 'S')
+      setFill(TEAL); doc.rect(ML, y, 2.5, boxH, 'F')
+      font('bold', 8); setTxt(TEAL)
+      doc.text('INCLUDED IN THIS LAND PACKAGE', ML + 5, y + 5.5)
+      let curY = y + 11
+      font('normal', 6.8); setTxt(SLATE)
+      inclItems.forEach(item => {
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 8)
+        doc.text(lines, ML + 5, curY)
+        curY += lines.length * 3.5
+      })
+
+      // EXCLUDED
+      const exX = ML + colW + 4
+      setFill([255, 240, 240]); doc.roundedRect(exX, y, colW, boxH, 2, 2, 'F')
+      setDraw(CRIM); doc.setLineWidth(0.5); doc.roundedRect(exX, y, colW, boxH, 2, 2, 'S')
+      setFill(CRIM); doc.rect(exX, y, 2.5, boxH, 'F')
+      font('bold', 8); setTxt(CRIM)
+      doc.text('EXCLUDED FROM THIS PACKAGE', exX + 5, y + 5.5)
+      let curExY = y + 11
+      font('normal', 6.8); setTxt(SLATE)
+      exclItems.forEach(item => {
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 8)
+        doc.text(lines, exX + 5, curExY)
+        curExY += lines.length * 3.5
+      })
+
+      y += boxH + 6
+
+      // ── DAY-BY-DAY ITINERARY ──
+      sectionTitle('DAY-BY-DAY LAND ITINERARY')
+
+      itinerary.forEach((day: any, dIdx: number) => {
+        // 1. Merge transfers and attractions into a unified chronological day timeline
+        const dayEvents: any[] = []
+
+        ;(day.transfers || []).forEach((t: any) => {
+          const info = getCleanTransferInfo(t, landPackageTransferMode)
+          const photoData = transferPhotosMap.get(info.photoUrl) || null
+          dayEvents.push({
+            time: t.time || '10:00',
+            type: 'transfer',
+            category: info.category,
+            title: cleanPdfText(info.title),
+            vehicleName: info.vehicleName,
+            badge: info.badge,
+            hours: t.hours,
+            shortDescription: info.shortDescription,
+            features: info.features,
+            photoData
+          })
+        })
+
+        ;(day.attractions || []).forEach((a: any) => {
+          const rawName = a.attractionName || 'Attraction'
+          const cleanName = cleanPdfText(rawName)
+          const meta = attractionsMeta[cleanName.toLowerCase().trim()] || attractionsMeta[rawName.toLowerCase().trim()]
+          const photoData = attractionPhotosMap.get(cleanName.toLowerCase().trim()) || attractionPhotosMap.get(rawName.toLowerCase().trim()) || null
+
+          dayEvents.push({
+            time: a.time || '14:00',
+            type: 'attraction',
+            title: cleanName,
+            adultQty: landPackageAdults,
+            childQty: landPackageKids,
+            notes: a.inclusionsNotes ? cleanPdfText(a.inclusionsNotes) : 'Admission Ticket Included',
+            isOptional: !!a.isOptional,
+            meta,
+            photoData
+          })
+        })
+
+        // 2. Sort strictly chronologically by 24h time!
+        dayEvents.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'))
+
+        checkPage(24)
+
+        // Day Header
+        setFill(GOLD); doc.roundedRect(ML, y, CW, 7, 2, 2, 'F')
+        font('bold', 8.5); setTxt(NAVY)
+        doc.text(`DAY ${day.dayNumber || dIdx + 1}: ${(cleanPdfText(day.dayTitle) || 'Tour Day').toUpperCase()}`, ML + 4, y + 4.8)
+        y += 9
+
+        // Render each item chronologically
+        dayEvents.forEach((item: any) => {
+          if (item.type === 'transfer') {
+            const hasPhoto = !!item.photoData
+            const imgW = 34
+            const imgH = 22
+            const textW = hasPhoto ? (CW - imgW - 27) : (CW - 25)
+
+            font('bold', 8.2)
+            const titleLines = doc.splitTextToSize(item.title, textW)
+            const titleH = titleLines.length * 3.6
+
+            font('bold', 6.8)
+            const badgeStr = `Service: ${item.vehicleName} · ${item.badge}`
+            const badgeLines = doc.splitTextToSize(badgeStr, textW)
+            const badgeH = badgeLines.length * 3.0
+
+            const descText = item.shortDescription || ''
+            font('italic', 6.5)
+            const descLines = descText ? doc.splitTextToSize(descText, textW) : []
+            const descH = descLines.length > 0 ? descLines.length * 2.9 + 1 : 0
+
+            const inclusions: string[] = Array.isArray(item.features) ? item.features : []
+            const incRows = Math.ceil(inclusions.length / 2)
+            const incH = inclusions.length > 0 ? (2.8 + incRows * 2.8) : 0
+
+            const contentH = 4 + titleH + badgeH + descH + incH + 3
+            const cardH = Math.max(hasPhoto ? 26 : 14, contentH)
+            checkPage(cardH + 2)
+
+            // Card container: Subtle luxury teal card
+            setFill([240, 253, 250]); doc.roundedRect(ML, y, CW, cardH, 1.5, 1.5, 'F')
+            setDraw(TEAL); doc.setLineWidth(0.3); doc.roundedRect(ML, y, CW, cardH, 1.5, 1.5, 'S')
+            setFill(TEAL); doc.rect(ML, y, 2.5, cardH, 'F')
+
+            // Time pill
+            setFill(TEAL); doc.roundedRect(ML + 5, y + 2.5, 13, 4.5, 1, 1, 'F')
+            font('bold', 6.2); setTxt(WHITE)
+            doc.text(item.time, ML + 11.5, y + 5.6, { align: 'center' })
+
+            // Transfer Photo (on the right)
+            if (hasPhoto && item.photoData) {
+              const imgX = MR - imgW - 2
+              const imgY = y + (cardH - imgH) / 2
+              try {
+                doc.addImage(item.photoData, 'JPEG', imgX, imgY, imgW, imgH, undefined, 'MEDIUM')
+                setDraw([204, 251, 241]); doc.setLineWidth(0.2)
+                doc.rect(imgX, imgY, imgW, imgH, 'S')
+              } catch (e) {}
+            }
+
+            // Route Title
+            let ty = y + 5.5
+            font('bold', 8.2); setTxt(NAVY)
+            doc.text(titleLines, ML + 21, ty)
+            ty += titleH
+
+            // Vehicle Badge
+            font('bold', 6.8); setTxt([13, 148, 136])
+            doc.text(badgeLines, ML + 21, ty)
+            ty += badgeH
+
+            // Editorial Narrative
+            if (descLines.length > 0) {
+              font('italic', 6.5); setTxt(TEXT)
+              doc.text(descLines, ML + 21, ty)
+              ty += descH
+            }
+
+            // Features Inclusions (2 columns)
+            if (inclusions.length > 0) {
+              const colW = (textW - 6) / 2
+              font('normal', 6.3); setTxt([15, 118, 110])
+              for (let i = 0; i < inclusions.length; i += 2) {
+                doc.text(`• ${inclusions[i]}`, ML + 21, ty)
+                if (inclusions[i + 1]) {
+                  doc.text(`• ${inclusions[i + 1]}`, ML + 21 + colW + 3, ty)
+                }
+                ty += 2.8
+              }
+            }
+
+            y += cardH + 2
+          } else if (item.type === 'attraction') {
+            const hasPhoto = !!item.photoData
+            const imgW = 34
+            const imgH = 22
+            const textW = hasPhoto ? (CW - imgW - 28) : (CW - 26)
+
+            font('bold', 8.5)
+            const titleLines = doc.splitTextToSize(item.title, textW)
+            const titleH = titleLines.length * 3.8
+
+            const ticketStr = `Tickets: x${item.adultQty} Adult${item.childQty > 0 ? ` + x${item.childQty} Child` : ''} · ${item.notes}`
+            font('normal', 6.8)
+            const noteLines = doc.splitTextToSize(ticketStr, textW)
+            const noteH = noteLines.length * 3.2
+
+            const descText = item.meta?.shortDescription || ''
+            font('italic', 6.5)
+            const descLines = descText ? doc.splitTextToSize(descText, textW) : []
+            const descH = descLines.length > 0 ? descLines.length * 3.0 + 1 : 0
+
+            const contentH = 4 + titleH + noteH + descH + 3
+            const cardH = Math.max(hasPhoto ? 26 : 14, contentH)
+            checkPage(cardH + 2)
+
+            // Card container
+            setFill([255, 252, 242]); doc.roundedRect(ML, y, CW, cardH, 1.5, 1.5, 'F')
+            setDraw(GOLD); doc.setLineWidth(0.3); doc.roundedRect(ML, y, CW, cardH, 1.5, 1.5, 'S')
+            setFill(GOLD); doc.rect(ML, y, 2.5, cardH, 'F')
+
+            // Optional photo
+            if (hasPhoto && item.photoData) {
+              try {
+                const imgX = MR - imgW - 2
+                const imgY = y + (cardH - imgH) / 2
+                doc.addImage(item.photoData, 'JPEG', imgX, imgY, imgW, imgH, undefined, 'MEDIUM')
+                setDraw([217, 180, 110]); doc.setLineWidth(0.2)
+                doc.rect(imgX, imgY, imgW, imgH, 'S')
+              } catch (e) {}
+            }
+
+            // Time pill
+            setFill(GOLD); doc.roundedRect(ML + 5, y + 2.5, 14, 5, 1, 1, 'F')
+            font('bold', 6.5); setTxt(NAVY)
+            doc.text(item.time, ML + 12, y + 6, { align: 'center' })
+
+            // Attraction Title
+            font('bold', 8.5); setTxt(NAVY)
+            doc.text(titleLines, ML + 22, y + 6)
+
+            // Tickets & Inclusions note
+            font('normal', 6.8); setTxt([120, 53, 15])
+            doc.text(noteLines, ML + 22, y + 6 + titleH)
+
+            // Editorial description if available
+            if (descLines.length > 0) {
+              font('italic', 6.5); setTxt(SLATE)
+              doc.text(descLines, ML + 22, y + 6 + titleH + noteH)
+            }
+
+            y += cardH + 2.5
+          }
+        })
+
+        y += 2
+      })
+
+      // ── TERMS & CONDITIONS CARD (Clean Full-Width, High Contrast, Zero Overlap) ──
+      let readyTerms = [
+        'Land Package Only: Hotel accommodation is not included.',
+        'Transfers: Airport arrival & departure transfers are provided by Private 13-Seater Minibus. Sightseeing transfers are as selected (SIC / Private 13-Seater). Surcharges applicable for flights between 22:00 - 07:00 hours.',
+        'Customizations: For hotel room bookings, meal plans, licensed English/Hindi guides, or coach upgrades for groups >12 Pax, please contact DMC.'
+      ]
+      const termsText = landPackageModalItem?.termsAndInclusions || defaultLandPackageTerms || ''
+      if (termsText && termsText.trim()) {
+        const parsed = termsText
+          .trim()
+          .split('\n')
+          .map((l: string) => cleanPdfText(l.trim().replace(/^Terms & Inclusions:?\s*/i, '').replace(/^[•\-\*\d\.\s]+\s*/, '').trim()))
+          .filter(Boolean)
+        if (parsed.length > 0) readyTerms = parsed
+      }
+
+      font('normal', 6.8)
+      let totalTermLines = 0
+      const splitTerms = readyTerms.map((t: string, i: number) => {
+        const cleanT = cleanPdfText(t)
+        const l = doc.splitTextToSize(`${i + 1}.  ${cleanT}`, CW - 12)
+        totalTermLines += l.length
+        return l
+      })
+      const termCardH = Math.max(22, 7.5 + totalTermLines * 3.4 + 3)
+      checkPage(termCardH + 3)
+
+      setFill([248, 250, 252]); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'F')
+      setDraw([226, 232, 240]); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'S')
+      setFill(NAVY); doc.rect(ML, y, 2.5, termCardH, 'F')
+
+      font('bold', 8); setTxt(NAVY)
+      doc.text('TERMS & CONDITIONS · IMPORTANT BOOKING NOTES', ML + 5, y + 5.2)
+
+      let tY = y + 9.2
+      splitTerms.forEach((lines: string[]) => {
+        font('normal', 6.8); setTxt(SLATE)
+        doc.text(lines, ML + 5, tY)
+        tY += lines.length * 3.3 + 0.8
+      })
+      y += termCardH + 3
+
+      addFooter()
+      const sanitizedGuest = (landPackageGuestName || 'Proposal').trim().replace(/[^a-zA-Z0-9_-]/g, '_')
+      doc.save(`FW-LAND-${sanitizedGuest}-${effectiveRef}.pdf`)
+      showToast('Land Package PDF downloaded successfully! 📄', 'success')
+    } catch (err) {
+      console.error('PDF generation error:', err)
+      showToast('Failed to generate PDF. Please try again.', 'error')
+    }
+  }
+
+  // Download Itinerary PDF helper (auto-saves proposal if draft)
+    const downloadProposalPDF = async (hidePricing = false) => {
+    const pNum = await ensureProposalSaved(true)
+    const { jsPDF } = await import('jspdf')
 
     // Helper to fetch raster logo & meal assets (optimized for crisp high-DPI display)
     const effectiveLogoUrl = customAgencyLogoUrl || activeAgent?.logoUrl || ''
@@ -3696,8 +4268,8 @@ export default function PrototypeBuilder() {
     }
 
     // Preload meal images for breakfast & buffet dining cards only if used in itinerary
-    const hasAnyBreakfast = isLandPkg ? false : effectiveItinerary.some(d => d.breakfast || effectiveHotelRequired)
-    const hasAnyDinner = isLandPkg ? false : effectiveItinerary.some(d => d.dinner)
+    const hasAnyBreakfast = itinerary.some(d => d.breakfast || hotelRequired)
+    const hasAnyDinner = itinerary.some(d => d.dinner)
     const [breakfastRaster, buffetRaster] = await Promise.all([
       hasAnyBreakfast ? fetchRasterLogo('/images/meals-breakfast.jpg', 480, 360, true, 0.80, 'cover') : Promise.resolve(null),
       hasAnyDinner ? fetchRasterLogo('/images/meals-buffet.jpg', 480, 360, true, 0.80, 'cover') : Promise.resolve(null)
@@ -3705,7 +4277,7 @@ export default function PrototypeBuilder() {
 
     // Preload attraction card photos (480x312 px exact 40mm x 26mm ratio: zero distortion, razor-sharp 305 DPI print)
     const attractionPhotosMap = new Map<string, string>()
-    const distinctAttractionNames = Array.from(new Set(effectiveItinerary.flatMap(d => (d.attractions || []).map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '')))).filter(Boolean)
+    const distinctAttractionNames = Array.from(new Set(itinerary.flatMap(d => (d.attractions || []).map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '')))).filter(Boolean)
     await Promise.all(
       distinctAttractionNames.map(async (name) => {
         const meta = getAttractionMetaInfo(name, attractionsMeta)
@@ -3727,13 +4299,13 @@ export default function PrototypeBuilder() {
 
     // Preload hotel photo if present and required
     const effectiveHotelForPdf = customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || 'TBD')
-    const hotelMetaInfo = effectiveHotelRequired ? getHotelMetaInfo(effectiveHotelForPdf, hotelsMeta) : null
+    const hotelMetaInfo = hotelRequired ? getHotelMetaInfo(effectiveHotelForPdf, hotelsMeta) : null
     let hotelRaster: { dataUrl: string; width: number; height: number; format: string } | null = null
     let hotelUrl = hotelMetaInfo?.photoUrl
-    if (!hotelUrl && effectiveHotelRequired) {
+    if (!hotelUrl && hotelRequired) {
       hotelUrl = '/images/hero/singapore-hero-1.jpg'
     }
-    if (hotelUrl && effectiveHotelRequired) {
+    if (hotelUrl && hotelRequired) {
       hotelRaster = await fetchRasterLogo(hotelUrl, 480, 360, true, 0.80, 'cover')
     }
 
@@ -3742,61 +4314,34 @@ export default function PrototypeBuilder() {
     const transferPhotosMap = new Map<string, string>()
 
     const usedVehicleLookups: { compKey: string; type: string; hint?: string; label: string }[] = []
-    const default13Idx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
-    effectiveItinerary.forEach(d => {
-      (d.transfers || []).forEach((t: any) => {
+    itinerary.forEach(d => {
+      (d.transfers || []).forEach(t => {
         const vObj = vehiclesList[t.vehicleIndex]
-        const desc = t.routeDescription || t.description || ''
-        const isCityTour = t.serviceType === 'cityTour' || desc.toLowerCase().includes('city tour')
-        const vehicle = vObj?.type || t.type || (isCityTour ? 'City Tour' : '13-Seater Minibus')
-        const compKey = vObj?.compositeKey || (isCityTour ? 'city-tour' : '13-Seater - Private - group - Transfers')
-        let label = `Private Transfer — ${vehicle}`
-        if (isCityTour) {
-          const isSic = (isLandPkg ? (effectiveTransferMode === 'sic' || landPackageTransferMode === 'sic') : (desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)))
-          label = isSic
-            ? 'SIC - SIC - per person - City Tour ( 3 hours )'
-            : '13-Seater - Private - group - City tour'
-        } else if (isLandPkg) {
-          label = desc || vehicle
-        }
         usedVehicleLookups.push({
-          compKey: isCityTour ? 'city-tour' : compKey,
-          type: isCityTour ? 'City Tour' : vehicle,
-          hint: desc || (isCityTour ? 'Singapore City Tour' : 'Point-to-point transfer'),
-          label
+          compKey: vObj?.compositeKey || '',
+          type: vObj?.type || t.type || '',
+          hint: t.description || 'Point-to-point transfer',
+          label: `Private Transfer — ${vObj?.type || t.type || 'Vehicle'}`
         })
       })
       ;(d.attractions || []).forEach(a => {
-        const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || a.description || ''
-        const isTransfer = isTransferAttractionName(rawName) || isTransferAttractionName(a.description || '')
-        const isCT = isCityTourName(rawName) || isCityTourName(a.description || '')
-        if (isTransfer || isCT) {
-          usedVehicleLookups.push({
-            compKey: isCT ? 'city-tour' : '13-Seater - Private - group - Transfers',
-            type: isCT ? 'City Tour' : '13-Seater Minibus',
-            hint: a.description || rawName,
-            label: isCT ? 'Singapore City Tour' : 'Airport Transfer'
-          })
-        }
         if (a.hasTransfer) {
           if (a.pickupEnabled !== false) {
-            const pvIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13Idx
-            const pvObj = vehiclesList[pvIdx]
+            const pvObj = vehiclesList[a.pickupVehicleIndex ?? 0]
             usedVehicleLookups.push({
               compKey: pvObj?.compositeKey || '',
-              type: pvObj?.type || a.pickupVehicleType || '13-Seater Minibus',
+              type: pvObj?.type || a.pickupVehicleType || '',
               hint: a.pickupNotes || `Transfer to ${a.attractionName || ''}`,
-              label: `Pickup Transfer — ${pvObj?.type || a.pickupVehicleType || '13-Seater Minibus'}`
+              label: `Pickup Transfer — ${pvObj?.type || a.pickupVehicleType || 'Vehicle'}`
             })
           }
           if (a.dropEnabled !== false) {
-            const dvIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13Idx
-            const dvObj = vehiclesList[dvIdx]
+            const dvObj = vehiclesList[a.dropVehicleIndex ?? 0]
             usedVehicleLookups.push({
               compKey: dvObj?.compositeKey || '',
-              type: dvObj?.type || a.dropVehicleType || '13-Seater Minibus',
+              type: dvObj?.type || a.dropVehicleType || '',
               hint: a.dropNotes || `Transfer from ${a.attractionName || ''}`,
-              label: `Drop Transfer — ${dvObj?.type || a.dropVehicleType || '13-Seater Minibus'}`
+              label: `Drop Transfer — ${dvObj?.type || a.dropVehicleType || 'Vehicle'}`
             })
           }
         }
@@ -3805,24 +4350,6 @@ export default function PrototypeBuilder() {
 
     const neededTransferImages = new Set<string>()
     const vehicleKeyToPhotoSrc = new Map<string, string>()
-
-    // Always ensure core transfer photos are preloaded
-    neededTransferImages.add('/images/transfers/13-seater-minibus.jpg')
-    neededTransferImages.add('/images/transfers/city-tour.jpg')
-    neededTransferImages.add('/images/transfers/sedan.jpg')
-
-    vehicleKeyToPhotoSrc.set('city-tour', '/images/transfers/city-tour.jpg')
-    vehicleKeyToPhotoSrc.set('city tour', '/images/transfers/city-tour.jpg')
-    vehicleKeyToPhotoSrc.set('sic - sic - per person - city tour ( 3 hours )', '/images/transfers/city-tour.jpg')
-    vehicleKeyToPhotoSrc.set('13-seater - private - group - city tour', '/images/transfers/city-tour.jpg')
-    vehicleKeyToPhotoSrc.set('13-seater', '/images/transfers/13-seater-minibus.jpg')
-    vehicleKeyToPhotoSrc.set('13-seater minibus', '/images/transfers/13-seater-minibus.jpg')
-    vehicleKeyToPhotoSrc.set('13-seater - private - group - transfers', '/images/transfers/13-seater-minibus.jpg')
-    vehicleKeyToPhotoSrc.set('13-seater - private - group - arrivals', '/images/transfers/13-seater-minibus.jpg')
-    vehicleKeyToPhotoSrc.set('13-seater - private - group - departures', '/images/transfers/13-seater-minibus.jpg')
-    vehicleKeyToPhotoSrc.set('13-seater - private - group - arrival / departure', '/images/transfers/13-seater-minibus.jpg')
-    vehicleKeyToPhotoSrc.set('sedan', '/images/transfers/sedan.jpg')
-    vehicleKeyToPhotoSrc.set('sedan - private - group - transfers', '/images/transfers/sedan.jpg')
 
     usedVehicleLookups.forEach(lookup => {
       const meta = getTransferMetaInfo(lookup.compKey, lookup.type, transfersMeta, lookup.hint)
@@ -4112,18 +4639,16 @@ export default function PrototypeBuilder() {
       font('bold', 9); setTxt(CRIM)
       doc.text('PREPARED FOR', ML + 4, y + 6)
       font('bold', 14); setTxt(NAVY)
-      const effGName = landPackageOptions?.overrideGuestName || guestName
-      const effGPhone = landPackageOptions?.overrideGuestPhone || guestPhone
-      const guestDisplay = `${effGName || 'Valued Guest'}${effGPhone ? ` (${effGPhone})` : ''}`
+      const guestDisplay = `${guestName || 'Valued Guest'}${guestPhone ? ` (${guestPhone})` : ''}`
       doc.text(guestDisplay, ML + 4, y + 14)
 
       // Row of info chips (ASCII labels without emoji corruption)
-      const childAgeStr = effectiveKids > 0 && effectiveChildAges.length > 0 ? ` (Ages: ${effectiveChildAges.slice(0, effectiveKids).join(',')})` : ''
+      const childAgeStr = kids > 0 && childAges.length > 0 ? ` (Ages: ${childAges.slice(0, kids).join(',')})` : ''
       const chips = [
-        { label: 'PAX', val: `${effectiveAdults} Adult${effectiveAdults>1?'s':''}${effectiveKids>0?` + ${effectiveKids} Ch${childAgeStr}`:''}` },
-        { label: 'ARRIVAL', val: effectiveArrivalDate ? new Date(effectiveArrivalDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'TBD' },
-        { label: 'DURATION', val: `${effectiveNightsCount+1}D / ${effectiveNightsCount}N` },
-        { label: 'HOTEL', val: isLandPkg ? 'Not Included (Land Only)' : (effectiveHotelRequired ? (customHotelEnabled ? (customHotelName || 'Custom') : (hotelsList[globalHotelIndex]?.name?.split(' ').slice(0,3).join(' ') || 'TBD')) : 'Not Required') },
+        { label: 'PAX', val: `${adults} Adult${adults>1?'s':''}${kids>0?` + ${kids} Ch${childAgeStr}`:''}` },
+        { label: 'ARRIVAL', val: getItineraryDate(0) },
+        { label: 'DURATION', val: `${nightsCount+1}D / ${nightsCount}N` },
+        { label: 'HOTEL', val: hotelRequired ? (customHotelEnabled ? (customHotelName || 'Custom') : (hotelsList[globalHotelIndex]?.name?.split(' ').slice(0,3).join(' ') || 'TBD')) : 'Not Required' },
       ]
       const chipW = CW / chips.length
       chips.forEach((c, i) => {
@@ -4144,8 +4669,8 @@ export default function PrototypeBuilder() {
         setFill(NAVY); doc.roundedRect(ML, y, CW, 20, 3, 3, 'F')
         const overviewItems = [
           { lbl: 'DESTINATION', val: 'Singapore' },
-          { lbl: 'TOUR STYLE', val: isLandPkg ? 'Land Package (No Hotels)' : 'Private Custom FIT' },
-          { lbl: 'INCLUSIONS', val: isLandPkg ? '13-Seater Transfers & Sightseeing' : (effectiveHotelRequired ? 'Hotel, Transfers & Tours' : 'Transfers & Tours') },
+          { lbl: 'TOUR STYLE', val: 'Private Custom FIT' },
+          { lbl: 'INCLUSIONS', val: hotelRequired ? 'Hotel, Transfers & Tours' : 'Transfers & Tours' },
         ]
         const piW = CW / overviewItems.length
         overviewItems.forEach((pi, i) => {
@@ -4157,24 +4682,6 @@ export default function PrototypeBuilder() {
           doc.text(pi.val, px + piW/2, y + 15, { align: 'center' })
         })
         y += 25
-      } else if (isLandPkg && effectiveCalculation) {
-        // Land Package Quotation Highlights Bar
-        setFill(NAVY); doc.roundedRect(ML, y, CW, 22, 3, 3, 'F')
-        const priceItems = [
-          { lbl: 'PER ADULT (SGD)', val: `S$ ${effectiveCalculation.adultQuoteSGD.toLocaleString()}` },
-          { lbl: effectiveCalculation.childTicketCount > 0 ? 'PER CHILD (SGD)' : 'TOTAL PACKAGE', val: effectiveCalculation.childTicketCount > 0 ? `S$ ${effectiveCalculation.childQuoteSGD.toLocaleString()}` : `S$ ${effectiveCalculation.totalClientPriceSGD.toLocaleString()}` },
-          { lbl: 'INR EQUIVALENT', val: `Rs. ${effectiveCalculation.totalClientPriceINR.toLocaleString('en-IN')}` },
-        ]
-        const piW = CW / priceItems.length
-        priceItems.forEach((pi, i) => {
-          const px = ML + i * piW
-          if (i > 0) { setDraw(GOLD); doc.setLineWidth(0.3); doc.line(px, y + 3, px, y + 19) }
-          font('normal', 7); setTxt(GOLD)
-          doc.text(pi.lbl, px + piW/2, y + 7.5, { align: 'center' })
-          font('bold', 13); setTxt(WHITE)
-          doc.text(pi.val, px + piW/2, y + 17, { align: 'center' })
-        })
-        y += 27
       } else {
         // Full Quotation Highlights bar (With Pricing)
         setFill(NAVY); doc.roundedRect(ML, y, CW, 22, 3, 3, 'F')
@@ -4195,318 +4702,231 @@ export default function PrototypeBuilder() {
         y += 27
       }
 
+      // ─── HOTEL SECTION ────────────────────────────────────
+      sectionTitle('ACCOMMODATION DETAILS')
       const effectiveHotelName = customHotelEnabled ? (customHotelName || 'Custom Hotel') : (hotelsList[globalHotelIndex]?.name || 'TBD')
       const effectiveRoomType  = customHotelEnabled ? (customHotelRoomType || 'Custom Room') : (hotelsList[globalHotelIndex]?.rooms[globalRoomIndex]?.type || 'TBD')
       const effectiveSuppType  = customHotelEnabled ? customHotelSuppName : (hotelsList[globalHotelIndex]?.rooms[globalSuppIndex]?.type || '')
 
-      // ─── HOTEL SECTION (Skipped for Land Packages) ────────────────────
-      if (!isLandPkg) {
-        sectionTitle('ACCOMMODATION DETAILS')
+      if (hotelRequired) {
+        if (hotelMetaInfo && (hotelRaster?.dataUrl || hotelMetaInfo.shortDescription || hotelMetaInfo.longDescription || hotelMetaInfo.amenities)) {
+          // Editorial Hotel Showcase Card
+          const hasPhoto = !!hotelRaster?.dataUrl
+          const textW = hasPhoto ? CW - 58 : CW - 12
+          const starBadge = hotelMetaInfo.starRating ? `[${hotelMetaInfo.starRating}] ` : ''
+          font('bold', 9.5)
+          const hotelTitleLines = doc.splitTextToSize(`${starBadge}${cleanPdfText(effectiveHotelName)}`, textW)
+          font('bold', 7.8)
+          const roomLines = doc.splitTextToSize(`Room: ${effectiveRoomType} x ${globalRoomCount}  |  Nights: ${nightsCount}${effectiveSuppType && globalSuppCount > 0 ? `  |  + Supp: ${effectiveSuppType} x${globalSuppCount}` : ''}`, textW)
+          font('italic', 7.0)
+          const locLines = hotelMetaInfo.addressLocation ? doc.splitTextToSize(`Location: ${cleanPdfText(hotelMetaInfo.addressLocation)}`, textW) : []
+          const descText = hotelMetaInfo.shortDescription || hotelMetaInfo.longDescription || ''
+          font('normal', 7.1)
+          const descLines = descText ? doc.splitTextToSize(cleanPdfText(descText), textW) : []
+          const amenitiesText = hotelMetaInfo.amenities && Array.isArray(hotelMetaInfo.amenities)
+            ? hotelMetaInfo.amenities.slice(0, 5).join('  •  ')
+            : ''
+          font('bold', 6.8)
+          const amenLines = amenitiesText ? doc.splitTextToSize(`Amenities: ${cleanPdfText(amenitiesText)}`, textW) : []
 
-        if (effectiveHotelRequired) {
-          if (hotelMetaInfo && (hotelRaster?.dataUrl || hotelMetaInfo.shortDescription || hotelMetaInfo.longDescription || hotelMetaInfo.amenities)) {
-            // Editorial Hotel Showcase Card
-            const hasPhoto = !!hotelRaster?.dataUrl
-            const textW = hasPhoto ? CW - 58 : CW - 12
-            const starBadge = hotelMetaInfo.starRating ? `[${hotelMetaInfo.starRating}] ` : ''
-            font('bold', 9.5)
-            const hotelTitleLines = doc.splitTextToSize(`${starBadge}${cleanPdfText(effectiveHotelName)}`, textW)
-            font('bold', 7.8)
-            const roomLines = doc.splitTextToSize(`Room: ${effectiveRoomType} x ${globalRoomCount}  |  Nights: ${nightsCount}${effectiveSuppType && globalSuppCount > 0 ? `  |  + Supp: ${effectiveSuppType} x${globalSuppCount}` : ''}`, textW)
-            font('italic', 7.0)
-            const locLines = hotelMetaInfo.addressLocation ? doc.splitTextToSize(`Location: ${cleanPdfText(hotelMetaInfo.addressLocation)}`, textW) : []
-            const descText = hotelMetaInfo.shortDescription || hotelMetaInfo.longDescription || ''
-            font('normal', 7.1)
-            const descLines = descText ? doc.splitTextToSize(cleanPdfText(descText), textW) : []
-            const amenitiesText = hotelMetaInfo.amenities && Array.isArray(hotelMetaInfo.amenities)
-              ? hotelMetaInfo.amenities.slice(0, 5).join('  •  ')
-              : ''
-            font('bold', 6.8)
-            const amenLines = amenitiesText ? doc.splitTextToSize(`Amenities: ${cleanPdfText(amenitiesText)}`, textW) : []
+          const titleH = (hotelTitleLines.length - 1) * 3.8 + 4.2
+          const roomH = (roomLines.length - 1) * 3.2 + 4.0
+          const locH = locLines.length > 0 ? ((locLines.length - 1) * 2.8 + 3.8) : 0
+          const descH = descLines.slice(0, 3).length > 0 ? ((descLines.slice(0, 3).length - 1) * 2.92 + 3.4) : 0
+          const amenH = amenLines.length > 0 ? ((amenLines.length - 1) * 2.8 + 3.8) : 0
+          const cardH = Math.max(hasPhoto ? 34 : 24, 7 + titleH + roomH + locH + descH + amenH + 3)
+          checkPage(cardH + 4)
 
-            const titleH = (hotelTitleLines.length - 1) * 3.8 + 4.2
-            const roomH = (roomLines.length - 1) * 3.2 + 4.0
-            const locH = locLines.length > 0 ? ((locLines.length - 1) * 2.8 + 3.8) : 0
-            const descH = descLines.slice(0, 3).length > 0 ? ((descLines.slice(0, 3).length - 1) * 2.92 + 3.4) : 0
-            const amenH = amenLines.length > 0 ? ((amenLines.length - 1) * 2.8 + 3.8) : 0
-            const cardH = Math.max(hasPhoto ? 34 : 24, 7 + titleH + roomH + locH + descH + amenH + 3)
-            checkPage(cardH + 4)
+          // Background card
+          setFill([248, 250, 252]); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'F')
+          setDraw(GOLD); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'S')
+          // Left Accent Strip (Navy)
+          setFill(NAVY); doc.rect(ML, y, 3, cardH, 'F')
 
-            // Background card
-            setFill([248, 250, 252]); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'F')
-            setDraw(GOLD); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, cardH, 2, 2, 'S')
-            // Left Accent Strip (Navy)
-            setFill(NAVY); doc.rect(ML, y, 3, cardH, 'F')
-
-            if (hasPhoto && hotelRaster) {
-              const imgX = MR - 42
-              const imgW = 40
-              const imgH = Math.min(cardH - 6, 30)
-              try {
-                doc.addImage(hotelRaster.dataUrl, 'JPEG', imgX, y + (cardH - imgH) / 2, imgW, imgH, undefined, 'MEDIUM')
-              } catch (e) {}
-            }
-
-            let hy = y + 4.8
-            font('bold', 9.5); setTxt(NAVY)
-            doc.text(hotelTitleLines, ML + 6, hy)
-            hy += titleH
-
-            font('bold', 7.8); setTxt([180, 83, 9])
-            doc.text(roomLines, ML + 6, hy)
-            hy += roomH
-
-            if (locLines.length > 0) {
-              font('italic', 7.0); setTxt(SLATE)
-              doc.text(locLines, ML + 6, hy)
-              hy += locH
-            }
-
-            if (descLines.length > 0) {
-              font('normal', 7.1); setTxt(TEXT)
-              const displayDesc = descLines.slice(0, 3).join(' ')
-              doc.text(displayDesc, ML + 6, hy, { align: 'justify', maxWidth: textW, lineHeightFactor: 1.15 })
-              hy += descH
-            }
-
-            if (amenLines.length > 0) {
-              font('bold', 6.8); setTxt([22, 101, 52])
-              doc.text(amenLines, ML + 6, hy + 0.5)
-            }
-
-            y += cardH + 3
-          } else {
-            setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F')
-            font('bold', 9); setTxt(NAVY)
-            doc.text('Property', ML + 2, y + 5)
-            doc.text('Room Configuration', ML + 90, y + 5)
-            doc.text('Nights', MR - 18, y + 5)
-            y += 7
-            setDraw(LGRAY); doc.setLineWidth(0.2); doc.line(ML, y, MR, y)
-
-            font('normal', 9); setTxt(TEXT)
-            doc.text(effectiveHotelName, ML + 2, y + 6)
-            doc.text(`${effectiveRoomType} x ${globalRoomCount}`, ML + 90, y + 6)
-            doc.text(`${nightsCount}`, MR - 18, y + 6)
-            y += 9
-
-            if (effectiveSuppType && globalSuppCount > 0) {
-              font('italic', 8.5); setTxt(SLATE)
-              doc.text(`+ Supplement: ${effectiveSuppType} x ${globalSuppCount}`, ML + 2, y + 4)
-              y += 8
-            }
+          if (hasPhoto && hotelRaster) {
+            const imgX = MR - 42
+            const imgW = 40
+            const imgH = Math.min(cardH - 6, 30)
+            try {
+              doc.addImage(hotelRaster.dataUrl, 'JPEG', imgX, y + (cardH - imgH) / 2, imgW, imgH, undefined, 'MEDIUM')
+            } catch (e) {}
           }
+
+          let hy = y + 4.8
+          font('bold', 9.5); setTxt(NAVY)
+          doc.text(hotelTitleLines, ML + 6, hy)
+          hy += titleH
+
+          font('bold', 7.8); setTxt([180, 83, 9])
+          doc.text(roomLines, ML + 6, hy)
+          hy += roomH
+
+          if (locLines.length > 0) {
+            font('italic', 7.0); setTxt(SLATE)
+            doc.text(locLines, ML + 6, hy)
+            hy += locH
+          }
+
+          if (descLines.length > 0) {
+            font('normal', 7.1); setTxt(TEXT)
+            const displayDesc = descLines.slice(0, 3).join(' ')
+            doc.text(displayDesc, ML + 6, hy, { align: 'justify', maxWidth: textW, lineHeightFactor: 1.15 })
+            hy += descH
+          }
+
+          if (amenLines.length > 0) {
+            font('bold', 6.8); setTxt([22, 101, 52])
+            doc.text(amenLines, ML + 6, hy + 0.5)
+          }
+
+          y += cardH + 3
         } else {
-          font('italic', 9); setTxt(MGRAY)
-          doc.text('Hotel accommodation not included in this package.', ML + 2, y + 5)
-          y += 10
+          setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F')
+          font('bold', 9); setTxt(NAVY)
+          doc.text('Property', ML + 2, y + 5)
+          doc.text('Room Configuration', ML + 90, y + 5)
+          doc.text('Nights', MR - 18, y + 5)
+          y += 7
+          setDraw(LGRAY); doc.setLineWidth(0.2); doc.line(ML, y, MR, y)
+
+          font('normal', 9); setTxt(TEXT)
+          doc.text(effectiveHotelName, ML + 2, y + 6)
+          doc.text(`${effectiveRoomType} x ${globalRoomCount}`, ML + 90, y + 6)
+          doc.text(`${nightsCount}`, MR - 18, y + 6)
+          y += 9
+
+          if (effectiveSuppType && globalSuppCount > 0) {
+            font('italic', 8.5); setTxt(SLATE)
+            doc.text(`+ Supplement: ${effectiveSuppType} x ${globalSuppCount}`, ML + 2, y + 4)
+            y += 8
+          }
         }
-        y += 3
+      } else {
+        font('italic', 9); setTxt(MGRAY)
+        doc.text('Hotel accommodation not included in this package.', ML + 2, y + 5)
+        y += 10
       }
+      y += 3
 
       // ─── COST BREAKDOWN TABLE (Rendered only when hidePricing is false) ───
       if (!hidePricing) {
         sectionTitle('PRICE BREAKDOWN')
-        if (isLandPkg && effectiveCalculation) {
-          const xferModeName = landPackageOptions?.overrideTransferMode === 'sic' ? 'Sightseeing Transfers (SIC Shared)' : 'Sightseeing Transfers (Private 13-Seater Minibus)'
-          const costRows: [string, string][] = [
-            ['Airport Arrival & Departure Transfers (Private 13-Seater)', `S$ ${(effectiveCalculation.transferArrivalCost + effectiveCalculation.transferDepartureCost).toFixed(2)}`],
-            [xferModeName, `S$ ${effectiveCalculation.sightseeingTransfersCost.toFixed(2)}`],
-            ['Sightseeing & Experience Admissions', `S$ ${effectiveCalculation.totalAttractionsNet.toFixed(2)}`],
-          ]
+        const costRows: [string, string][] = [
+          [`Rooms (${globalRoomCount})`, `S$ ${costBreakdown.roomCostTotal.toFixed(2)}`],
+          [`Supp (${globalSuppCount})`, `S$ ${costBreakdown.suppCostTotal.toFixed(2)}`],
+          [`Transfers (${costBreakdown.totalTransfers})`, `S$ ${costBreakdown.transportTotal.toFixed(2)}`],
+          [`Tickets (${costBreakdown.totalAttractionsCount})`, `S$ ${costBreakdown.attractionTotal.toFixed(2)}`],
+          [`Meals (${costBreakdown.totalLunchCount}L, ${costBreakdown.totalDinnerCount}D)`, `S$ ${costBreakdown.mealTotal.toFixed(2)}`],
+          [`Guides (${costBreakdown.totalGuidesCount})`, `S$ ${costBreakdown.guideTotal.toFixed(2)}`],
+        ]
+        
+        // Include Special Misc Cost if present
+        if (miscCostPerPerson > 0) {
+          const totalMisc = miscCostPerPerson * (adults + kids)
+          costRows.push([`Special Inclusions (${miscNotes || 'Misc / Pax'})`, `S$ ${totalMisc.toFixed(2)}`])
+        }
 
-          costRows.forEach((row, i) => {
-            checkPage(8)
-            if (i % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F') }
-            font('normal', 8.5); setTxt(TEXT)
-            doc.text(row[0], ML + 3, y + 5)
-            font('bold', 8.5); setTxt(SLATE)
-            doc.text(row[1], MR - 2, y + 5, { align: 'right' })
-            y += 7
+        // Include Additional Charges / Add-ons if present
+        if (Array.isArray(activeAdditionalCharges) && activeAdditionalCharges.length > 0) {
+          activeAdditionalCharges.forEach(chg => {
+            if (chg.amount) {
+              costRows.push([`Add-on: ${chg.itemDescription || 'Additional Service'}`, `S$ ${Number(chg.amount).toFixed(2)}`])
+            }
           })
+        }
 
-          checkPage(16)
-          setFill(NAVY); doc.rect(ML, y, CW, 8, 'F')
-          font('bold', 9.5); setTxt(GOLD)
-          doc.text(`Total Land Package Price — ${effectiveAdults} Adult${effectiveAdults>1?'s':''}${effectiveKids>0?` + ${effectiveKids} Child${effectiveKids>1?'ren':''}`: ''}`, ML + 3, y + 5.5)
-          doc.text(`S$ ${effectiveCalculation.totalClientPriceSGD.toLocaleString()}`, MR - 2, y + 5.5, { align: 'right' })
+        const activeCostRows = costRows.filter(r => parseFloat(r[1].replace('S$ ', '')) > 0)
+
+        activeCostRows.forEach((row, i) => {
+          checkPage(8)
+          if (i % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F') }
+          font('normal', 8.5); setTxt(TEXT)
+          doc.text(row[0], ML + 3, y + 5)
+          font('bold', 8.5); setTxt(SLATE)
+          doc.text(row[1], MR - 2, y + 5, { align: 'right' })
+          y += 7
+        })
+
+        // Net total
+        if (!hideNetPricing) {
+          const netAdult = (costBreakdown.adultQuote / (1 + markupPercent / 100)).toFixed(2)
+          checkPage(9)
+          setFill(TEAL); doc.rect(ML, y, CW, 8, 'F')
+          font('bold', 9); setTxt(WHITE)
+          doc.text('B2B Net Rate (per adult)', ML + 3, y + 5.5)
+          doc.text(`S$ ${netAdult}`, MR - 2, y + 5.5, { align: 'right' })
           y += 8
+        }
 
-          setFill(GOLD_L); doc.rect(ML, y, CW, 7, 'F')
-          font('normal', 8); setTxt(SLATE)
-          doc.text('Approx. INR Equivalent', ML + 3, y + 4.5)
-          font('bold', 8); setTxt(CRIM)
-          doc.text(`Rs. ${effectiveCalculation.totalClientPriceINR.toLocaleString('en-IN')}`, MR - 2, y + 4.5, { align: 'right' })
-          y += 10
-        } else {
-          const costRows: [string, string][] = [
-            [`Rooms (${globalRoomCount})`, `S$ ${costBreakdown.roomCostTotal.toFixed(2)}`],
-            [`Supp (${globalSuppCount})`, `S$ ${costBreakdown.suppCostTotal.toFixed(2)}`],
-            [`Transfers (${costBreakdown.totalTransfers})`, `S$ ${costBreakdown.transportTotal.toFixed(2)}`],
-            [`Tickets (${costBreakdown.totalAttractionsCount})`, `S$ ${costBreakdown.attractionTotal.toFixed(2)}`],
-            [`Meals (${costBreakdown.totalLunchCount}L, ${costBreakdown.totalDinnerCount}D)`, `S$ ${costBreakdown.mealTotal.toFixed(2)}`],
-            [`Guides (${costBreakdown.totalGuidesCount})`, `S$ ${costBreakdown.guideTotal.toFixed(2)}`],
-          ]
-          
-          if (miscCostPerPerson > 0) {
-            const totalMisc = miscCostPerPerson * (adults + kids)
-            costRows.push([`Special Inclusions (${miscNotes || 'Misc / Pax'})`, `S$ ${totalMisc.toFixed(2)}`])
-          }
+        // Grand totals
+        checkPage(16)
+        setFill(NAVY); doc.rect(ML, y, CW, 8, 'F')
+        font('bold', 9.5); setTxt(GOLD)
+        doc.text(`Total Package Price — ${adults} Adult${adults>1?'s':''}${kids>0?` + ${kids} Child${kids>1?'ren':''}`: ''}`, ML + 3, y + 5.5)
+        doc.text(`S$ ${costBreakdown.totalClientPrice.toLocaleString()}`, MR - 2, y + 5.5, { align: 'right' })
+        y += 8
 
-          if (Array.isArray(activeAdditionalCharges) && activeAdditionalCharges.length > 0) {
-            activeAdditionalCharges.forEach(chg => {
-              if (chg.amount) {
-                costRows.push([`Add-on: ${chg.itemDescription || 'Additional Service'}`, `S$ ${Number(chg.amount).toFixed(2)}`])
-              }
-            })
-          }
+        setFill(GOLD_L); doc.rect(ML, y, CW, 7, 'F')
+        font('normal', 8); setTxt(SLATE)
+        doc.text('Approx. INR Equivalent', ML + 3, y + 4.5)
+        font('bold', 8); setTxt(CRIM)
+        doc.text(`Rs. ${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}`, MR - 2, y + 4.5, { align: 'right' })
+        y += 10
 
-          const activeCostRows = costRows.filter(r => parseFloat(r[1].replace('S$ ', '')) > 0)
-
-          activeCostRows.forEach((row, i) => {
-            checkPage(8)
-            if (i % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, 7, 'F') }
-            font('normal', 8.5); setTxt(TEXT)
-            doc.text(row[0], ML + 3, y + 5)
-            font('bold', 8.5); setTxt(SLATE)
-            doc.text(row[1], MR - 2, y + 5, { align: 'right' })
-            y += 7
-          })
-
-          if (!hideNetPricing) {
-            const netAdult = (costBreakdown.adultQuote / (1 + markupPercent / 100)).toFixed(2)
-            checkPage(9)
-            setFill(TEAL); doc.rect(ML, y, CW, 8, 'F')
-            font('bold', 9); setTxt(WHITE)
-            doc.text('B2B Net Rate (per adult)', ML + 3, y + 5.5)
-            doc.text(`S$ ${netAdult}`, MR - 2, y + 5.5, { align: 'right' })
-            y += 8
-          }
-
-          checkPage(16)
-          setFill(NAVY); doc.rect(ML, y, CW, 8, 'F')
-          font('bold', 9.5); setTxt(GOLD)
-          doc.text(`Total Package Price — ${adults} Adult${adults>1?'s':''}${kids>0?` + ${kids} Child${kids>1?'ren':''}`: ''}`, ML + 3, y + 5.5)
-          doc.text(`S$ ${costBreakdown.totalClientPrice.toLocaleString()}`, MR - 2, y + 5.5, { align: 'right' })
+        if (discountPerPerson > 0) {
+          checkPage(8)
+          font('italic', 8); setTxt(TEAL)
+          doc.text(`* Discount of S$ ${discountPerPerson}/person has been applied.`, ML + 3, y + 4)
           y += 8
-
-          setFill(GOLD_L); doc.rect(ML, y, CW, 7, 'F')
-          font('normal', 8); setTxt(SLATE)
-          doc.text('Approx. INR Equivalent', ML + 3, y + 4.5)
-          font('bold', 8); setTxt(CRIM)
-          doc.text(`Rs. ${costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}`, MR - 2, y + 4.5, { align: 'right' })
-          y += 10
-
-          if (discountPerPerson > 0) {
-            checkPage(8)
-            font('italic', 8); setTxt(TEAL)
-            doc.text(`* Discount of S$ ${discountPerPerson}/person has been applied.`, ML + 3, y + 4)
-            y += 8
-          }
         }
       }
 
       // ─── DYNAMIC DETAILED INCLUSIONS & EXCLUSIONS ────────────────
-      const hasAttr  = effectiveItinerary.some(d => d.attractions && d.attractions.length > 0)
-      const hasXfer  = isLandPkg ? true : effectiveItinerary.some(d =>
-        (d.transfers && d.transfers.length > 0) ||
-        d.attractions?.some(a => a.hasTransfer || isTransferAttractionName(attractionsList[a.attractionIndex]?.name || a.attractionName || ''))
-      )
-      const hasMeals = isLandPkg ? false : effectiveItinerary.some(d => d.breakfast || d.lunch || d.dinner || (d.meals && d.meals.length > 0))
+      const hasAttr  = itinerary.some(d => d.attractions && d.attractions.length > 0)
+      const hasXfer  = itinerary.some(d => (d.transfers && d.transfers.length > 0) || d.attractions?.some(a => a.hasTransfer))
+      const hasMeals = itinerary.some(d => d.breakfast || d.lunch || d.dinner || (d.meals && d.meals.length > 0))
 
-      const cleanInclusionAttractionTitle = (text: string): string => {
-        if (!text) return ''
-        let s = text
-          .replace(/-\s*Fixed\s*Date\s*(\/\s*Time)?/gi, '')
-          .replace(/\(Peak\s*-\s*Fixed\s*date\s*\/Time\s*\)/gi, '')
-          .replace(/\(Peak\s*-\s*Fixed\s*Date\s*\)/gi, '')
-          .replace(/-\s*Fixed\s*Time/gi, '')
-          .replace(/-\s*Non\s*Peak/gi, '')
-          .replace(/Museum\s*Of\s*Icecram[s]?/gi, 'Museum of Ice Cream')
-          .replace(/Singapore\s*Ocenarium/gi, 'Singapore Oceanarium (S.E.A. Aquarium)')
-          .replace(/Gardens\s*\((Cloud\s*F\s*-\s*Jurassic\s*Park\s*\+\s*Flower\s*Dome|Double\s*Domes?)\)/gi, 'Gardens by the Bay (Cloud Forest & Flower Dome)')
-          .replace(/SkyLine\s*Luge\s*-\s*Peak\s*\(\s*3\s*rides\s*\)/gi, 'Skyline Luge (3 Rides)')
-          .replace(/SkyLine\s*Luge\s*\(\s*3\s*rides\s*\)/gi, 'Skyline Luge (3 Rides)')
-          .replace(/Combo\s*:\s*/gi, 'Sentosa Combo: ')
-          .replace(/River\s*Cruise\s*\(\s*from\s*Clark[e]?\s*Quay\s*Jetty\s*\)/gi, 'Singapore River Cruise (Clarke Quay)')
-          .replace(/\(\s*Upto\s*\d+\s*people\s*\)\s*From/gi, '')
-          .replace(/\(\s*Upto\s*\d+\s*people\s*\)/gi, '')
-          .replace(/\s+/g, ' ')
-          .trim()
-        return s
-      }
-
-      const distinctCleanAttractions: string[] = []
-      const seenAttrs = new Set<string>()
-      effectiveItinerary.forEach(d => {
+      // Gather all confirmed distinct attractions for the inclusions summary (omit optional)
+      const allAttractionsSet = new Set<string>()
+      itinerary.forEach(d => {
         d.attractions?.forEach(a => {
           if (!a.isOptional) {
-            const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || ''
-            if (rawName && !isTransferAttractionName(rawName) && !isCityTourName(rawName)) {
-              const cleaned = cleanInclusionAttractionTitle(rawName)
-              const norm = cleaned.toLowerCase()
-              if (cleaned && !seenAttrs.has(norm)) {
-                seenAttrs.add(norm)
-                distinctCleanAttractions.push(cleaned)
-              }
-            }
+            const name = attractionsList[a.attractionIndex]?.name || a.attractionName
+            if (name) allAttractionsSet.add(name)
           }
         })
       })
 
       // Gather all distinct vehicles (excluding transfers from optional attractions)
       const allVehiclesSet = new Set<string>()
-      effectiveItinerary.forEach(d => {
+      itinerary.forEach(d => {
         d.transfers?.forEach(t => {
           const v = vehiclesList[t.vehicleIndex]?.type || t.type
           if (v) allVehiclesSet.add(v)
         })
         d.attractions?.forEach(a => {
-          if (!a.isOptional) {
-            if (a.hasTransfer) {
-              if (a.pickupVehicleType) allVehiclesSet.add(a.pickupVehicleType)
-              else if (a.pickupVehicleIndex !== undefined && vehiclesList[a.pickupVehicleIndex]) allVehiclesSet.add(vehiclesList[a.pickupVehicleIndex].type)
-              else allVehiclesSet.add('13-Seater Minibus')
-            }
-            const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || ''
-            if (isTransferAttractionName(rawName)) {
-              allVehiclesSet.add('13-Seater Minibus')
-            }
+          if (!a.isOptional && a.hasTransfer) {
+            if (a.pickupVehicleType) allVehiclesSet.add(a.pickupVehicleType)
+            else if (a.pickupVehicleIndex !== undefined && vehiclesList[a.pickupVehicleIndex]) allVehiclesSet.add(vehiclesList[a.pickupVehicleIndex].type)
           }
         })
       })
-      if (allVehiclesSet.size === 0 && hasXfer) {
-        allVehiclesSet.add('13-Seater Minibus')
-      }
-      if (isLandPkg) {
-        allVehiclesSet.add('13-Seater Minibus')
-        if (effectiveTransferMode === 'sic') {
-          allVehiclesSet.add('Coach / SIC')
-        }
-      }
 
       sectionTitle('PACKAGE INCLUSIONS & EXCLUSIONS')
 
       const inclItems: string[] = []
-      if (effectiveHotelRequired && !isLandPkg) {
+      if (hotelRequired) {
         inclItems.push(`${nightsCount} Night${nightsCount>1?'s':''} stay at ${effectiveHotelName} (${effectiveRoomType} x${globalRoomCount})${effectiveSuppType && globalSuppCount > 0 ? ` + ${effectiveSuppType} x${globalSuppCount}` : ''}`)
-      } else if (isLandPkg) {
-        inclItems.push('Land Package Only (Hotel Accommodation excluded)')
       }
-      if (isLandPkg) {
-        const xferDesc = effectiveTransferMode === 'sic'
-          ? 'Airport Arrival & Departure by Private 13-Seater Minibus; Sightseeing by Shared Coach (SIC)'
-          : 'Airport Arrival & Departure + All Sightseeing by Private 13-Seater Minibus'
-        inclItems.push(xferDesc)
-      } else if (hasXfer) {
+      if (hasXfer) {
         const vNames = allVehiclesSet.size > 0 ? ` (${Array.from(allVehiclesSet).join(', ')})` : ''
         const xferCount = costBreakdown.totalTransfers || 0
         inclItems.push(`${xferCount > 0 ? `${xferCount} ` : ''}Point-to-Point & Airport Transfers${vNames}`)
       }
-      if (distinctCleanAttractions.length > 0) {
-        inclItems.push(`${distinctCleanAttractions.length} Sightseeing & Experience Admissions (Itemized Below)`)
+      if (allAttractionsSet.size > 0) {
+        inclItems.push(`Sightseeing Entries: ${Array.from(allAttractionsSet).join(', ')}`)
       }
-      if (hasMeals && !isLandPkg) {
+      if (hasMeals) {
         const mealParts: string[] = []
         if (nightsCount > 0) mealParts.push(`${nightsCount} Daily Breakfast`)
         const lCount = costBreakdown.totalLunchCount || 0
@@ -4516,28 +4936,21 @@ export default function PrototypeBuilder() {
         inclItems.push(`Meal Plan: ${mealParts.join(', ')}`)
       }
       const gCount = costBreakdown.totalGuidesCount || 0
-      if (!isLandPkg && gCount > 0) {
+      if (gCount > 0) {
         inclItems.push(`${gCount} Day(s) Professional English-Speaking Guide Services`)
       } else {
         inclItems.push('English-speaking driver assistance for scheduled transfers')
       }
-      if (miscNotes && miscNotes.trim() && !isLandPkg) {
+      if (miscNotes && miscNotes.trim()) {
         inclItems.push(`Special Inclusions: ${miscNotes.trim()}`)
       }
-      if (Array.isArray(activeAdditionalCharges) && activeAdditionalCharges.length > 0 && !isLandPkg) {
+      if (Array.isArray(activeAdditionalCharges) && activeAdditionalCharges.length > 0) {
         activeAdditionalCharges.forEach(c => {
           if (c.itemDescription) inclItems.push(`Add-on Service: ${c.itemDescription}`)
         })
       }
 
-      const exclItems = isLandPkg ? [
-        'Hotel Accommodation & Daily Breakfast',
-        'International / Domestic Airfare',
-        'Meals (Lunch / Dinner) & Personal Expenses',
-        'Licensed Tour Guide (Available on Request)',
-        'Midnight Transfer Surcharge (22:00 - 07:00)',
-        'Singapore Entry Visa Fees & Travel Insurance'
-      ] : [
+      const exclItems = [
         'International / Domestic Airfare',
         'Travel Insurance (unless specified)',
         'Personal Expenses, Laundry & Porterage',
@@ -4550,106 +4963,49 @@ export default function PrototypeBuilder() {
       // Measure lines for dynamic box height
       let inclTotalLines = 0
       inclItems.forEach(item => {
-        const lines = doc.splitTextToSize(`• ${item}`, colW - 8)
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
         inclTotalLines += lines.length
       })
       let exclTotalLines = 0
       exclItems.forEach(item => {
-        const lines = doc.splitTextToSize(`• ${item}`, colW - 8)
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
         exclTotalLines += lines.length
       })
 
       const maxLines = Math.max(inclTotalLines, exclTotalLines)
-      const boxH = Math.max(34, 10 + maxLines * 4.0)
+      const boxH = Math.max(34, 10 + maxLines * 4.6)
       checkPage(boxH + 6)
 
       // INCLUDED Box (Left)
       setFill([230, 248, 237] as [number,number,number]); doc.roundedRect(ML, y, colW, boxH, 2, 2, 'F')
       setDraw(TEAL); doc.setLineWidth(0.5); doc.roundedRect(ML, y, colW, boxH, 2, 2, 'S')
-      setFill(TEAL); doc.rect(ML, y, 2.5, boxH, 'F')
       font('bold', 8.5); setTxt(TEAL)
-      doc.text('INCLUDED IN THIS PACKAGE', ML + 5, y + 6)
+      doc.text('INCLUDED IN THIS PACKAGE', ML + 3, y + 6)
       
       let curY = y + 11
-      font('normal', 7.2); setTxt(SLATE)
+      font('normal', 7.5); setTxt(SLATE)
       inclItems.forEach(item => {
-        const lines = doc.splitTextToSize(`• ${item}`, colW - 8)
-        doc.text(lines, ML + 5, curY)
-        curY += lines.length * 3.8
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
+        doc.text(lines, ML + 3, curY)
+        curY += lines.length * 4.2
       })
 
       // EXCLUDED Box (Right)
       const ex2 = ML + colW + 4
       setFill([255, 240, 240] as [number,number,number]); doc.roundedRect(ex2, y, colW, boxH, 2, 2, 'F')
       setDraw(CRIM); doc.setLineWidth(0.5); doc.roundedRect(ex2, y, colW, boxH, 2, 2, 'S')
-      setFill(CRIM); doc.rect(ex2, y, 2.5, boxH, 'F')
       font('bold', 8.5); setTxt(CRIM)
-      doc.text('EXCLUDED FROM THIS PACKAGE', ex2 + 5, y + 6)
+      doc.text('EXCLUDED FROM THIS PACKAGE', ex2 + 3, y + 6)
 
       let curExY = y + 11
-      font('normal', 7.2); setTxt(SLATE)
+      font('normal', 7.5); setTxt(SLATE)
       exclItems.forEach(item => {
-        const lines = doc.splitTextToSize(`• ${item}`, colW - 8)
-        doc.text(lines, ex2 + 5, curExY)
-        curExY += lines.length * 3.8
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
+        doc.text(lines, ex2 + 3, curExY)
+        curExY += lines.length * 4.2
       })
 
       y += boxH + 4
-
-      // ─── DEDICATED SIGHTSEEING ENTRIES CARD (2 Columns) ───
-      if (distinctCleanAttractions.length > 0) {
-        const sightColW = (CW - 10) / 2
-        const half = Math.ceil(distinctCleanAttractions.length / 2)
-        const leftColAttrs = distinctCleanAttractions.slice(0, half)
-        const rightColAttrs = distinctCleanAttractions.slice(half)
-
-        font('normal', 7.0)
-        let leftH = 0
-        leftColAttrs.forEach(a => {
-          const lns = doc.splitTextToSize(a, sightColW - 8)
-          leftH += Math.max(3.8, lns.length * 3.3)
-        })
-        let rightH = 0
-        rightColAttrs.forEach(a => {
-          const lns = doc.splitTextToSize(a, sightColW - 8)
-          rightH += Math.max(3.8, lns.length * 3.3)
-        })
-        const maxColH = Math.max(leftH, rightH)
-        const sightH = Math.max(20, 8.5 + maxColH + 3)
-
-        checkPage(sightH + 4)
-        setFill([248, 250, 252] as [number,number,number])
-        doc.roundedRect(ML, y, CW, sightH, 2, 2, 'F')
-        setDraw([148, 163, 184] as [number,number,number]); doc.setLineWidth(0.4)
-        doc.roundedRect(ML, y, CW, sightH, 2, 2, 'S')
-        setFill(NAVY); doc.rect(ML, y, 2.5, sightH, 'F')
-
-        font('bold', 8); setTxt(NAVY)
-        doc.text(`ADMISSION TICKETS & SIGHTSEEING INCLUDED (${distinctCleanAttractions.length} Iconic Experiences)`, ML + 5, y + 5.5)
-
-        let col1Y = y + 10
-        leftColAttrs.forEach(a => {
-          setFill(TEAL)
-          doc.circle(ML + 6.5, col1Y - 0.8, 0.9, 'F')
-          font('normal', 7.0); setTxt(TEXT)
-          const lns = doc.splitTextToSize(a, sightColW - 8)
-          doc.text(lns, ML + 10, col1Y)
-          col1Y += Math.max(3.8, lns.length * 3.3)
-        })
-
-        let col2Y = y + 10
-        const c2X = ML + sightColW + 7
-        rightColAttrs.forEach(a => {
-          setFill(TEAL)
-          doc.circle(c2X + 1.5, col2Y - 0.8, 0.9, 'F')
-          font('normal', 7.0); setTxt(TEXT)
-          const lns = doc.splitTextToSize(a, sightColW - 8)
-          doc.text(lns, c2X + 5, col2Y)
-          col2Y += Math.max(3.8, lns.length * 3.3)
-        })
-
-        y += sightH + 4
-      }
 
       // ─── DEDICATED 3RD BOX: OPTIONAL ADD-ON EXPERIENCES (Available on request) ───
       if (costBreakdown.optionalAddonsList && costBreakdown.optionalAddonsList.length > 0) {
@@ -4692,7 +5048,7 @@ export default function PrototypeBuilder() {
 
         if (!hidePricing) {
           font('bold', 7.5); setTxt([180, 83, 9] as [number,number,number])
-          doc.text(`Total for all optional experiences: +S$ ${costBreakdown.totalOptionalPrice.toLocaleString()} (approx. Rs. ${costBreakdown.totalOptionalPriceINR.toLocaleString('en-IN')})`, ML + 6, curOptY + 1)
+          doc.text(`Total for all optional experiences: +S$ ${costBreakdown.totalOptionalPrice.toLocaleString()} (approx. ₹${costBreakdown.totalOptionalPriceINR.toLocaleString('en-IN')})`, ML + 6, curOptY + 1)
         }
 
         y += optBoxH + 5
@@ -4710,7 +5066,7 @@ export default function PrototypeBuilder() {
       }
       sectionTitle('DAY-BY-DAY ITINERARY')
 
-      effectiveItinerary.forEach((day, dIdx) => {
+      itinerary.forEach((day, dIdx) => {
         // Build unified chronological timeline items (meals, transfers, attractions, guides)
         interface DayTimelineItem {
           time: string
@@ -4731,8 +5087,8 @@ export default function PrototypeBuilder() {
 
         const timelineItems: DayTimelineItem[] = []
 
-        // 1. Hotel Breakfast (suppressed completely for Land Packages)
-        const isBreakfastIncluded = isLandPkg ? false : !!(day.breakfast || effectiveHotelRequired)
+        // 1. Hotel Breakfast (included if hotel is required OR explicitly enabled for this day)
+        const isBreakfastIncluded = !!(day.breakfast || hotelRequired)
         if (isBreakfastIncluded) {
           timelineItems.push({
             time: '07:30',
@@ -4748,216 +5104,53 @@ export default function PrototypeBuilder() {
         }
 
         // 2. Scheduled Transfers
-        ;(day.transfers || []).forEach((t: any) => {
+        day.transfers.forEach(t => {
           const vObj = vehiclesList[t.vehicleIndex]
-          const desc = t.routeDescription || t.description || ''
-          const isAirport = t.serviceType === 'arrival' || t.serviceType === 'departure' || desc.toLowerCase().includes('arrival') || desc.toLowerCase().includes('departure') || desc.toLowerCase().includes('airport')
-          const isDisposal = t.serviceType === 'disposal' || desc.toLowerCase().includes('disposal')
-          const isCityTour = t.serviceType === 'cityTour' || desc.toLowerCase().includes('city tour')
-          const vehicle = vObj?.type || (isCityTour ? 'City Tour' : (t.type || '13-Seater Minibus'))
-          const compKey = vObj?.compositeKey || (isCityTour ? 'city-tour' : '')
-
-          let label = ''
-          let detail = desc || 'Point-to-point transfer'
-          if (isAirport) {
-            const isArr = t.serviceType === 'arrival' || desc.toLowerCase().includes('arrival')
-            label = isArr ? `Airport Arrival Transfer — ${vehicle}` : `Airport Departure Transfer — ${vehicle}`
-            detail = desc || (isArr ? 'Changi Airport to Hotel Transfer' : 'Hotel to Changi Airport Departure Transfer')
-          } else if (isCityTour) {
-            const isSic = (isLandPkg ? (effectiveTransferMode === 'sic' || landPackageTransferMode === 'sic') : (desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)))
-            label = isSic
-              ? 'Singapore City Tour — Seat-In-Coach (SIC)'
-              : `Singapore City Tour — ${vehicle}`
-            detail = desc || 'Guided Singapore City Orientation Tour (3 Hours)'
-          } else if (isDisposal) {
-            label = `${t.hours || 4} Hours Private Disposal — ${vehicle}`
-            detail = desc || `${t.hours || 4} Hours Dedicated Minibus Disposal with Chauffeur`
-          } else if (isLandPkg) {
-            const isSic = landPackageTransferMode === 'sic'
-            label = isSic ? 'Sightseeing Transfer — Seat-In-Coach (SIC)' : `Private Transfer — ${vehicle}`
-            detail = desc || 'Point-to-point transfer'
-          } else {
-            const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
-            label = `Private Transfer — ${vehicle}${qtyStr}`
-            detail = desc || 'Scheduled point-to-point private transfer'
-          }
-
-          let tMeta = getTransferMetaInfo(compKey, vehicle, transfersMeta, desc || 'Point-to-point transfer')
-          if (isCityTour) {
-            const isSic = (isLandPkg ? (effectiveTransferMode === 'sic' || landPackageTransferMode === 'sic') : (desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)))
-            tMeta = {
-              ...(tMeta || {}),
-              name: label,
-              photoUrl: '/images/transfers/city-tour.jpg',
-              passengerCapacity: 'Up to 9-13 Passengers',
-              shortDescription: 'Explore Singapore\'s premier landmarks with a 3-hour guided city orientation tour covering Civic District, Merlion Park, and cultural heritage precincts.',
-              features: [
-                '3-Hour Guided City Orientation',
-                'Merlion Park & Marina Bay Lookout',
-                'Historic Civic District & Chinatown',
-                isSic ? 'Shared Seat-In-Coach' : '13-Seater Private Minibus'
-              ]
-            }
-          }
-
+          const vehicle = vObj?.type || 'Vehicle'
+          const compKey = vObj?.compositeKey || ''
+          const tMeta = getTransferMetaInfo(compKey, vehicle, transfersMeta, t.description || 'Point-to-point transfer')
+          const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
           timelineItems.push({
             time: t.time || '08:30',
             type: 'transfer',
-            label,
-            detail,
+            label: `Private Transfer — ${vehicle}${qtyStr}`,
+            detail: t.description || 'Point-to-point transfer',
             color: TEAL,
             meta: tMeta,
-            itemKey: isCityTour ? 'city-tour' : (compKey || vehicle)
+            itemKey: compKey || vehicle
           })
         })
 
         // 3. Attractions with optional pickup/drop transfers
-        ;(day.attractions || []).forEach((a: any) => {
-          const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || a.description || 'Attraction'
-          const name = cleanItemTitle(rawName)
-          const lowerName = rawName.toLowerCase()
-          const isTransferAttraction = isTransferAttractionName(rawName) || isTransferAttractionName(a.description || '')
-          const isCityTourAttraction = isCityTourName(rawName) || isCityTourName(a.description || '')
-
-          // Intercept transfer attractions & city tours entered under attractions
-          if (isTransferAttraction || isCityTourAttraction) {
-            const isArrival = lowerName.includes('arrival') || (a.description || '').toLowerCase().includes('arrival') || (a.description || '').toLowerCase().includes('pickup')
-            const isDeparture = lowerName.includes('departure') || (a.description || '').toLowerCase().includes('departure') || (a.description || '').toLowerCase().includes('drop')
-            const default13Idx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
-            const vObj = vehiclesList[default13Idx]
-            const vType = vObj?.type || '13-Seater Minibus'
-            const vCompKey = vObj?.compositeKey || '13-Seater - Private - group - Transfers'
-
-            let label = ''
-            let detail = ''
-            let itemKey = ''
-            let tMeta: any = null
-
-            if (isCityTourAttraction) {
-              label = 'Singapore City Orientation Tour'
-              detail = a.description && !a.description.includes(rawName)
-                ? a.description
-                : '3-Hour Guided Singapore City Orientation Tour covering Civic District, Merlion Park & Cultural Precincts'
-              itemKey = 'city-tour'
-              tMeta = {
-                name: label,
-                photoUrl: '/images/transfers/city-tour.jpg',
-                passengerCapacity: 'Up to 9-13 Passengers',
-                shortDescription: 'Explore Singapore\'s iconic landmarks on an engaging 3-hour orientation tour featuring Merlion Park, Civic District, and cultural heritage precincts.',
-                features: [
-                  '3-Hour Guided City Orientation',
-                  'Merlion Park & Marina Bay Lookout',
-                  'Historic Civic District & Chinatown',
-                  '13-Seater Private Air-Conditioned Minibus'
-                ]
-              }
-            } else if (isArrival) {
-              const coachOrAirport = (a.description || '').toLowerCase().includes('coach')
-                ? 'Coach Station'
-                : 'Changi Airport'
-              label = coachOrAirport === 'Coach Station'
-                ? 'Arrival Transfer — Coach Station Pickup'
-                : 'Airport Arrival Transfer — Changi Airport'
-              detail = a.description || `Arrival pickup from ${coachOrAirport} to Hotel (13-Seater Minibus)`
-              itemKey = '13-seater'
-              tMeta = getTransferMetaInfo('13-Seater - Private - group - Arrivals', '13-Seater', transfersMeta, 'Arrival pickup')
-              if (!tMeta) {
-                tMeta = {
-                  name: label,
-                  photoUrl: '/images/transfers/13-seater-minibus.jpg',
-                  passengerCapacity: 'Up to 9-13 Passengers',
-                  shortDescription: `Direct private arrival transfer from ${coachOrAirport} to your Singapore hotel with luggage assistance and professional chauffeur.`,
-                  features: [
-                    'Meet & Greet Service',
-                    'Dedicated Luggage Space (9+ Large Bags)',
-                    'Air-Conditioned High Roof Minibus',
-                    'Direct Hotel Drop-off'
-                  ]
-                }
-              }
-            } else if (isDeparture) {
-              label = 'Airport Departure Transfer — Changi Airport'
-              detail = a.description || 'Hotel to Singapore Changi Airport Departure Transfer (13-Seater Minibus)'
-              itemKey = '13-seater'
-              tMeta = getTransferMetaInfo('13-Seater - Private - group - Departures', '13-Seater', transfersMeta, 'Departure transfer')
-              if (!tMeta) {
-                tMeta = {
-                  name: label,
-                  photoUrl: '/images/transfers/13-seater-minibus.jpg',
-                  passengerCapacity: 'Up to 9-13 Passengers',
-                  shortDescription: 'Punctual private departure transfer from your Singapore hotel to Changi Airport terminal for a smooth, relaxed flight check-in.',
-                  features: [
-                    'Punctual Hotel Lobby Pickup',
-                    'Luggage Loading Assistance',
-                    'Direct Terminal Drop-off at Changi Airport',
-                    '13-Seater Private Air-Conditioned Minibus'
-                  ]
-                }
-              }
-            } else {
-              label = `Private Transfer — ${cleanItemTitle(rawName)}`
-              detail = a.description || 'Scheduled point-to-point private vehicle transfer'
-              itemKey = '13-seater'
-              tMeta = getTransferMetaInfo(vCompKey, vType, transfersMeta, rawName)
-              if (!tMeta) {
-                tMeta = {
-                  name: label,
-                  photoUrl: '/images/transfers/13-seater-minibus.jpg',
-                  passengerCapacity: 'Up to 9-13 Passengers',
-                  shortDescription: 'Comfortable air-conditioned private vehicle transfer with dedicated professional driver.',
-                  features: [
-                    'Point-to-Point Direct Transit',
-                    'Air-Conditioned Comfort',
-                    'Luggage Space Available',
-                    'Licensed Professional Chauffeur'
-                  ]
-                }
-              }
-            }
-
-            timelineItems.push({
-              time: a.time || (isArrival ? '08:30' : isDeparture ? '14:00' : '09:00'),
-              type: 'transfer',
-              label,
-              detail,
-              color: TEAL,
-              meta: tMeta,
-              itemKey
-            })
-            return // Skip pushing as attraction!
-          }
-
+        day.attractions.forEach(a => {
+          const name = attractionsList[a.attractionIndex]?.name || 'Attraction'
           const isOpt = !!a.isOptional
           if (a.hasTransfer) {
-            const default13Idx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
-            const cleanAttractionName = cleanItemTitle(rawName)
             if (a.pickupEnabled !== false) {
-              const pvIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13Idx
-              const pvObj = vehiclesList[pvIdx]
-              const pvName = pvObj?.type || a.pickupVehicleType || '13-Seater Minibus'
+              const pvObj = vehiclesList[a.pickupVehicleIndex ?? 0]
+              const pvName = pvObj?.type || a.pickupVehicleType || 'Vehicle'
               const pCompKey = pvObj?.compositeKey || ''
-              const pMeta = getTransferMetaInfo(pCompKey, pvName, transfersMeta, a.pickupNotes || `Transfer to ${cleanAttractionName}`)
+              const pMeta = getTransferMetaInfo(pCompKey, pvName, transfersMeta, a.pickupNotes || `Transfer to ${name}`)
               timelineItems.push({
                 time: a.pickupTime || '09:00',
                 type: 'transfer',
-                label: isOpt ? `[Optional] Hotel Pickup — ${cleanAttractionName}` : `Hotel Pickup Transfer — ${cleanAttractionName}`,
-                detail: a.pickupNotes || `Hotel to ${cleanAttractionName} (${pvName})`,
+                label: isOpt ? `[Optional] Pickup Transfer — ${pvName}` : `Pickup Transfer — ${pvName}`,
+                detail: a.pickupNotes || (isOpt ? `Optional transfer to ${name}` : `Transfer to ${name}`),
                 color: isOpt ? ([217, 119, 6] as [number,number,number]) : TEAL,
                 meta: pMeta,
                 itemKey: pCompKey || pvName
               })
             }
             if (a.dropEnabled !== false) {
-              const dvIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13Idx
-              const dvObj = vehiclesList[dvIdx]
-              const dvName = dvObj?.type || a.dropVehicleType || '13-Seater Minibus'
+              const dvObj = vehiclesList[a.dropVehicleIndex ?? 0]
+              const dvName = dvObj?.type || a.dropVehicleType || 'Vehicle'
               const dCompKey = dvObj?.compositeKey || ''
-              const dMeta = getTransferMetaInfo(dCompKey, dvName, transfersMeta, a.dropNotes || `Transfer from ${cleanAttractionName}`)
+              const dMeta = getTransferMetaInfo(dCompKey, dvName, transfersMeta, a.dropNotes || `Transfer from ${name}`)
               timelineItems.push({
                 time: a.dropTime || '17:00',
                 type: 'transfer',
-                label: isOpt ? `[Optional] Return Transfer — ${cleanAttractionName}` : `Return Drop-off Transfer — ${cleanAttractionName}`,
-                detail: a.dropNotes || `${cleanAttractionName} to Hotel (${dvName})`,
+                label: isOpt ? `[Optional] Drop Transfer — ${dvName}` : `Drop Transfer — ${dvName}`,
+                detail: a.dropNotes || (isOpt ? `Optional return transfer from ${name}` : `Transfer from ${name}`),
                 color: isOpt ? ([217, 119, 6] as [number,number,number]) : TEAL,
                 meta: dMeta,
                 itemKey: dCompKey || dvName
@@ -4968,13 +5161,13 @@ export default function PrototypeBuilder() {
           timelineItems.push({
             time: a.time || '10:00',
             type: 'attraction',
-            label: rawName,
+            label: name,
             attractionData: a
           })
         })
 
-        // 4. Lunch (ONLY if explicitly added to daywise itinerary and not land package)
-        if (day.lunch && !isLandPkg) {
+        // 4. Lunch (ONLY if explicitly added to daywise itinerary)
+        if (day.lunch) {
           timelineItems.push({
             time: '13:00',
             type: 'meal_card',
@@ -4988,8 +5181,8 @@ export default function PrototypeBuilder() {
           })
         }
 
-        // 5. Dinner (ONLY if explicitly added to daywise itinerary and not land package)
-        if (day.dinner && !isLandPkg) {
+        // 5. Dinner (ONLY if explicitly added to daywise itinerary)
+        if (day.dinner) {
           timelineItems.push({
             time: '19:30',
             type: 'meal_card',
@@ -5004,7 +5197,7 @@ export default function PrototypeBuilder() {
         }
 
         // 6. Custom extra meals if any
-        if (day.meals && Array.isArray(day.meals) && !isLandPkg) {
+        if (day.meals && Array.isArray(day.meals)) {
           day.meals.forEach(m => {
             const mt = mealsList[m.mealIndex]?.type || 'Meal'
             const mMeta = getMealMetaInfo(mt, mealsMeta)
@@ -5021,21 +5214,19 @@ export default function PrototypeBuilder() {
         }
 
         // 7. Tour Guides
-        if (!isLandPkg && day.guides) {
-          day.guides.forEach(g => {
-            const gt = guidesList[g.guideIndex]?.type || 'Guide'
-            const gMeta = getGuideMetaInfo(gt, guidesMeta)
-            timelineItems.push({
-              time: g.time || '09:00',
-              type: 'guide',
-              label: gt,
-              detail: g.description || 'Professional tour assistance',
-              color: SLATE,
-              meta: gMeta,
-              itemKey: gt
-            })
+        day.guides.forEach(g => {
+          const gt = guidesList[g.guideIndex]?.type || 'Guide'
+          const gMeta = getGuideMetaInfo(gt, guidesMeta)
+          timelineItems.push({
+            time: g.time || '09:00',
+            type: 'guide',
+            label: gt,
+            detail: g.description || 'Professional tour assistance',
+            color: SLATE,
+            meta: gMeta,
+            itemKey: gt
           })
-        }
+        })
 
         // Sort STRICTLY chronologically by 24-hour time (00:00 -> 23:59)
         timelineItems.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'))
@@ -5076,7 +5267,7 @@ export default function PrototypeBuilder() {
           setFill(GOLD); doc.rect(ML, y, 3, restCardH, 'F')
 
           font('bold', 9.0); setTxt(NAVY)
-          doc.text('Free & Easy Leisure & Exploration Day', ML + 6, y + 6.5)
+          doc.text('🌴 Free & Easy Leisure & Exploration Day', ML + 6, y + 6.5)
           font('italic', 7.5); setTxt([180, 83, 9] as [number,number,number])
           doc.text('Personal time to relax, shop, and explore Singapore at your own leisure pace', ML + 6, y + 11.5)
 
@@ -5098,42 +5289,21 @@ export default function PrototypeBuilder() {
         } else {
           // Render each item strictly in chronological 24-hour sequence
           timelineItems.forEach((item, itemIdx) => {
-            if (item.type === 'transfer') {
+            if (item.type === 'transfer' && item.meta && (item.meta.photoUrl || item.meta.shortDescription || item.meta.passengerCapacity || item.meta.longDescription || (Array.isArray(item.meta.features) && item.meta.features.length > 0))) {
               // ── Rich Visual Transfer Card ──
-              const isCT = item.itemKey === 'city-tour' || item.label.toLowerCase().includes('city tour')
-              let meta = item.meta
-              if (!meta || (!meta.photoUrl && !meta.shortDescription && !meta.longDescription && (!meta.features || meta.features.length === 0))) {
-                meta = {
-                  name: item.label,
-                  photoUrl: isCT ? '/images/transfers/city-tour.jpg' : '/images/transfers/13-seater-minibus.jpg',
-                  passengerCapacity: 'Up to 9-13 Passengers',
-                  shortDescription: isCT
-                    ? 'Explore Singapore\'s iconic landmarks on an engaging 3-hour orientation tour featuring Merlion Park, Civic District, and cultural heritage precincts.'
-                    : 'Comfortable air-conditioned private vehicle transfer across Singapore with dedicated professional chauffeur.',
-                  features: isCT
-                    ? ['3-Hour Guided City Orientation', 'Merlion Park & Marina Bay Lookout', 'Historic Civic District & Chinatown', '13-Seater Private Minibus']
-                    : ['Dedicated Door-to-Door Service', 'Fully Air-Conditioned Comfort', 'Spacious Luggage Capacity', 'Professional Licensed Chauffeur']
-                }
-              }
-
+              const meta = item.meta
               const cleanItemKey = (item.itemKey || '').toLowerCase().trim()
               const cleanMetaName = (meta.name || '').toLowerCase().trim()
               let photoData = transferPhotosMap.get(cleanItemKey) ||
                               transferPhotosMap.get(cleanMetaName) ||
-                              (meta.photoUrl ? transferPhotosMap.get(meta.photoUrl) : null) ||
-                              (meta.photoUrl ? transferPhotosMap.get(meta.photoUrl.toLowerCase().trim()) : null)
+                              (meta.photoUrl ? transferPhotosMap.get(meta.photoUrl) : null)
               if (!photoData) {
                 const localPhotoPath = getLocalTransferPhoto(cleanItemKey) ||
                                        getLocalTransferPhoto(cleanMetaName) ||
                                        getLocalTransferPhoto(item.label)
                 if (localPhotoPath) {
-                  photoData = transferPhotosMap.get(localPhotoPath) ||
-                              transferPhotosMap.get(localPhotoPath.toLowerCase().trim()) || null
+                  photoData = transferPhotosMap.get(localPhotoPath.toLowerCase().trim()) || null
                 }
-              }
-              if (!photoData) {
-                const fallbackImg = isCT ? '/images/transfers/city-tour.jpg' : '/images/transfers/13-seater-minibus.jpg'
-                photoData = transferPhotosMap.get(fallbackImg) || transferPhotosMap.get(fallbackImg.toLowerCase()) || null
               }
               const hasPhoto = !!photoData && typeof photoData === 'string' && photoData.startsWith('data:image')
 
@@ -5142,12 +5312,6 @@ export default function PrototypeBuilder() {
               font('bold', 8.5)
               const titleLines = doc.splitTextToSize(`${item.time}  —  ${cleanPdfText(item.label)}`, textW)
               const titleH = (titleLines.length - 1) * 3.5 + 4.2
-
-              // Route / Service Detail Subheading (Item route context)
-              const detailText = item.detail && item.detail.trim() !== item.label.trim() ? cleanPdfText(item.detail.trim()) : ''
-              font('bold', 7.2)
-              const detailLines = detailText ? doc.splitTextToSize(detailText, textW) : []
-              const detailH = detailLines.length > 0 ? (detailLines.length * 3.2 + 1.2) : 0
 
               // Full Description (sanitized, flowing narrative with zero truncation)
               const rawDesc = (meta.longDescription || meta.shortDescription || '').trim()
@@ -5166,7 +5330,7 @@ export default function PrototypeBuilder() {
               const descH = descLines.length > 0 ? ((descLines.length - 1) * 2.92 + 4.0) : 0
 
               // Dynamic content height calculation
-              const contentH = 4.5 + titleH + detailH + descH + incH + 3.5
+              const contentH = 4.5 + titleH + descH + incH + 3.5
               const minCardH = hasPhoto ? 34 : 22
               const cardH = Math.max(minCardH, contentH)
               checkPage(cardH + 3)
@@ -5199,12 +5363,6 @@ export default function PrototypeBuilder() {
               font('bold', 8.5); setTxt(NAVY)
               doc.text(titleLines, ML + 6, cy)
               cy += titleH
-
-              if (detailLines.length > 0) {
-                font('bold', 7.2); setTxt([15, 118, 110]) // Dark Teal route/service subtitle
-                doc.text(detailLines, ML + 6, cy)
-                cy += detailH
-              }
 
               if (descText) {
                 font('normal', 7.1); setTxt(TEXT)
@@ -5296,7 +5454,7 @@ export default function PrototypeBuilder() {
               }
 
               y += cardH + 2.5
-            } else if (item.type === 'guide' || item.type === 'service') {
+            } else if (item.type === 'transfer' || item.type === 'guide' || item.type === 'service') {
               font('bold', 8)
               const labelLines = doc.splitTextToSize(item.label, CW - 26)
               font('italic', 7)
@@ -5499,11 +5657,8 @@ export default function PrototypeBuilder() {
               cy += titleH
 
               // Ticket count chips inline
-              const hasExplicitTickets = (a.adultTickets && a.adultTickets > 0) || (a.childTickets && a.childTickets > 0)
-              const ticketInfo = hasExplicitTickets
-                ? `Adult x${a.adultTickets || 0}${kids > 0 ? `  |  Child x${a.childTickets || 0}` : ''}`
-                : `Admission / Entry Included`
-              font('bold', 7.2); setTxt(isOpt ? ([180, 83, 9] as [number,number,number]) : (hasExplicitTickets ? CRIM : ([15, 118, 110] as [number,number,number])))
+              const ticketInfo = `Adult x${a.adultTickets}${kids > 0 ? `  |  Child x${a.childTickets}` : ''}`
+              font('bold', 7.2); setTxt(isOpt ? ([180, 83, 9] as [number,number,number]) : CRIM)
               doc.text(ticketInfo, ML + 6, cy)
 
               if (rating) {
@@ -5585,177 +5740,89 @@ export default function PrototypeBuilder() {
         hrLine(LGRAY, 0.2)
       })
 
-      // ─── CUSTOM ITINERARY NOTES & SPECIAL INSTRUCTIONS (Compact Card) ────
+      // ─── CUSTOM ITINERARY NOTES & SPECIAL INSTRUCTIONS ────
       if (itineraryNotes && itineraryNotes.trim()) {
+        sectionTitle('SPECIAL INSTRUCTIONS & NOTES')
         const noteParagraphs = itineraryNotes.trim().split('\n').filter(Boolean)
-        font('normal', 6.8)
-        let totalNoteLines = 0
-        const splitParagraphs = noteParagraphs.map(np => {
-          const clean = cleanPdfText(np.trim().replace(/^[•\-\*]\s*/, ''))
-          const lines = doc.splitTextToSize(`•  ${clean}`, CW - 12)
-          totalNoteLines += lines.length
-          return lines
+        noteParagraphs.forEach((np) => {
+          const cleanText = cleanPdfText(np.trim().replace(/^[•\-\*]\s*/, ''))
+          const lines = doc.splitTextToSize(`•  ${cleanText}`, CW - 8)
+          const boxH = Math.max(6.5, (lines.length - 1) * 3.0 + 5.5)
+          checkPage(boxH + 2)
+          setFill(GOLD_L); doc.roundedRect(ML, y, CW, boxH, 1.5, 1.5, 'F')
+          setFill(GOLD); doc.rect(ML, y, 2.5, boxH, 'F')
+          font('normal', 7.6); setTxt(NAVY)
+          doc.text(lines, ML + 5, y + 4.2)
+          y += boxH + 2
         })
-        const specH = Math.max(16, 7.5 + totalNoteLines * 3.6 + 2)
-        checkPage(specH + 3)
-
-        setFill(GOLD_L); doc.roundedRect(ML, y, CW, specH, 1.5, 1.5, 'F')
-        setDraw(GOLD); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, specH, 1.5, 1.5, 'S')
-        setFill(GOLD); doc.rect(ML, y, 2.5, specH, 'F')
-
-        font('bold', 8); setTxt(NAVY)
-        doc.text('SPECIAL INSTRUCTIONS & OPERATIONAL NOTES', ML + 5, y + 5.2)
-
-        let sY = y + 9.2
-        font('normal', 6.8); setTxt(NAVY)
-        splitParagraphs.forEach(lines => {
-          doc.text(lines, ML + 5, sY)
-          sY += lines.length * 3.4 + 0.6
-        })
-        y += specH + 3
+        y += 3
       }
 
-      // ─── TERMS & IMPORTANT NOTES (Single Full-Width or Clean 2-Column Card) ───
-      let notes = [
-        'Quoted in SGD (indicative); confirmed upon booking.',
-        'INR exchange rate approximate; subject to change on payment date.',
-        'Rates subject to change due to peak seasons & public holidays.',
+      // ─── TERMS & IMPORTANT NOTES ──────────────────────────
+      sectionTitle('TERMS & IMPORTANT NOTES')
+
+      const notes = [
+        'Prices are quoted in Singapore Dollars (SGD) and are indicative. Final rates will be confirmed upon booking.',
+        'Exchange rates for INR are approximate and subject to change on the date of payment.',
+        'Rates are subject to change due to peak seasons, public holidays, or third-party surcharges.',
         'FIT room rates are subject to a marginal increase.',
-        'Itinerary sequence may adjust per operational requirements.',
+        'Itinerary sequence may be adjusted based on operational requirements without notice.',
         isTaggedToAgent
-          ? `Cancellation & payment apply per ${taggedAgencyName}'s terms.`
-          : "Cancellation & payment apply per Flying Wonders' terms.",
-        'Valid travel documents (passport, visa) are traveler responsibility.',
-        'International travel insurance is strongly recommended.',
+          ? `Cancellation policy and payment terms apply as per ${taggedAgencyName}'s standard terms and conditions.`
+          : "Cancellation policy and payment terms apply as per Flying Wonders' standard terms and conditions.",
+        'Valid travel documents (passport, visa) are the sole responsibility of the traveler.',
+        'Travel insurance is highly recommended for all international travel.',
       ]
+      notes.forEach((note, i) => {
+        const lines = doc.splitTextToSize(`${i + 1}. ${note}`, CW - 6)
+        const rowH = Math.max(6.5, lines.length * 3.8 + 2.5)
+        checkPage(rowH + 2)
+        if (i % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, rowH, 'F') }
+        font('normal', 7.5); setTxt(TEXT)
+        doc.text(lines, ML + 3, y + 4)
+        y += rowH
+      })
 
-      if (customTerms && customTerms.trim()) {
-        const parsed = customTerms
-          .trim()
-          .split('\n')
-          .map(l => cleanPdfText(l.trim().replace(/^Terms & Inclusions:?\s*/i, '').replace(/^[•\-\*\d\.\s]+\s*/, '').trim()))
-          .filter(Boolean)
-        if (parsed.length > 0) notes = parsed
-      }
+      // ─── AGENT / CONTACT CARD ────────────────────────────
+      y += 4
+      checkPage(34)
+      setFill(NAVY); doc.roundedRect(ML, y, CW, 30, 3, 3, 'F')
+      font('bold', 9.5); setTxt(GOLD)
+      doc.text('Your Travel Consultant', ML + 5, y + 8)
 
-      if (notes.length <= 5) {
-        // Full-width single column layout for 1-5 terms (e.g. Land Package terms) — zero horizontal collision, razor sharp!
-        font('normal', 6.8)
-        let totalLines = 0
-        const splitNotes = notes.map((t, i) => {
-          const cleanText = cleanPdfText(t)
-          const l = doc.splitTextToSize(`${i + 1}.  ${cleanText}`, CW - 12)
-          totalLines += l.length
-          return l
-        })
-        const termCardH = Math.max(22, 7.5 + totalLines * 3.4 + 3)
-        checkPage(termCardH + 3)
-
-        setFill([248, 250, 252] as [number,number,number]); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'F')
-        setDraw([226, 232, 240] as [number,number,number]); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'S')
-        setFill(NAVY); doc.rect(ML, y, 2.5, termCardH, 'F')
-
-        font('bold', 8); setTxt(NAVY)
-        doc.text('TERMS & CONDITIONS · IMPORTANT BOOKING NOTES', ML + 5, y + 5.2)
-
-        let tY = y + 9.2
-        splitNotes.forEach(lines => {
-          font('normal', 6.8); setTxt(SLATE)
-          doc.text(lines, ML + 5, tY)
-          tY += lines.length * 3.3 + 0.8
-        })
-        y += termCardH + 3
-      } else {
-        // 2-Column layout for 6+ short terms
-        const termColW = (CW - 14) / 2
-        const halfCount = Math.ceil(notes.length / 2)
-        const leftTerms = notes.slice(0, halfCount)
-        const rightTerms = notes.slice(halfCount)
-
-        font('normal', 6.6)
-        let leftLinesCount = 0
-        const splitLeft = leftTerms.map((t, i) => {
-          const cleanText = cleanPdfText(t)
-          const l = doc.splitTextToSize(`${i + 1}. ${cleanText}`, termColW - 4)
-          leftLinesCount += l.length
-          return l
-        })
-        let rightLinesCount = 0
-        const splitRight = rightTerms.map((t, i) => {
-          const cleanText = cleanPdfText(t)
-          const l = doc.splitTextToSize(`${i + halfCount + 1}. ${cleanText}`, termColW - 4)
-          rightLinesCount += l.length
-          return l
-        })
-
-        const maxTermLines = Math.max(leftLinesCount, rightLinesCount)
-        const termCardH = Math.max(22, 7.5 + maxTermLines * 3.5 + 2)
-        checkPage(termCardH + 3)
-
-        setFill([248, 250, 252] as [number,number,number]); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'F')
-        setDraw([226, 232, 240] as [number,number,number]); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'S')
-        setFill(NAVY); doc.rect(ML, y, 2.5, termCardH, 'F')
-
-        font('bold', 8); setTxt(NAVY)
-        doc.text('TERMS & CONDITIONS · IMPORTANT BOOKING NOTES', ML + 5, y + 5.2)
-
-        let t1Y = y + 9.2
-        splitLeft.forEach(lines => {
-          font('normal', 6.6); setTxt(SLATE)
-          doc.text(lines, ML + 5, t1Y)
-          t1Y += lines.length * 3.3 + 0.6
-        })
-
-        let t2Y = y + 9.2
-        const tCol2X = ML + termColW + 7
-        splitRight.forEach(lines => {
-          font('normal', 6.6); setTxt(SLATE)
-          doc.text(lines, tCol2X, t2Y)
-          t2Y += lines.length * 3.3 + 0.6
-        })
-
-        y += termCardH + 3
-      }
-
-      // ─── AGENT / CONTACT CARD (Sleek Compact 21mm) ─────────
-      y += 1
-      checkPage(24)
-      setFill(NAVY); doc.roundedRect(ML, y, CW, 21, 2, 2, 'F')
-      font('bold', 8); setTxt(GOLD)
-      doc.text('Your Travel Consultant', ML + 5, y + 5.8)
-
-      font('bold', 10.5); setTxt(WHITE)
-      doc.text(taggedConsultantName, ML + 5, y + 12.2)
-      font('normal', 7.2); setTxt(GOLD)
+      font('bold', 11.5); setTxt(WHITE)
+      doc.text(taggedConsultantName, ML + 5, y + 16.5)
+      font('normal', 8); setTxt(GOLD)
       const agentContactParts: string[] = []
       if (taggedPhone) agentContactParts.push(`Tel: ${taggedPhone}`)
       if (taggedEmail) agentContactParts.push(`Email: ${taggedEmail}`)
       if (agentContactParts.length > 0) {
-        doc.text(agentContactParts.join('   |   '), ML + 5, y + 17.5)
+        doc.text(agentContactParts.join('   |   '), ML + 5, y + 24)
       }
 
       // Company name on the right
       font('bold', 8.5); setTxt(GOLD)
       const rAgencyLines = doc.splitTextToSize(taggedAgencyName.toUpperCase(), 75)
-      doc.text(rAgencyLines[0], MR - 5, y + 12.2, { align: 'right' })
+      doc.text(rAgencyLines[0], MR - 5, y + 16.5, { align: 'right' })
 
-      font('normal', 6.8); setTxt(WHITE)
+      font('normal', 7); setTxt(WHITE)
       if (isTaggedToAgent) {
-        doc.text('Authorized Travel Partner', MR - 5, y + 17.5, { align: 'right' })
+        doc.text('Authorized Travel Partner', MR - 5, y + 24, { align: 'right' })
       } else {
-        doc.text('Singapore DMC Travel Partner', MR - 5, y + 17.5, { align: 'right' })
+        doc.text('Singapore DMC Travel Partner', MR - 5, y + 24, { align: 'right' })
       }
-      y += 24
+      y += 34
 
       // final footer
       addFooter()
 
-      const guestSlug = (landPackageOptions?.overrideGuestName || guestName || 'Guest').replace(/\s+/g, '-')
+      const guestSlug = (guestName || 'Guest').replace(/\s+/g, '-')
       const docType = hidePricing ? 'Itinerary' : 'Proposal'
       const filePrefix = isTaggedToAgent ? (taggedAgencyName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 10) || 'Travel') : 'FW'
       doc.save(`${filePrefix}-${docType}-${guestSlug}-${pNum || savedProposalNum || 'Draft'}.pdf`)
       notifyAgentActivity('pdf_download')
   }
+
 
   // S-PDF: Luxury Editorial Magazine Itinerary PDF Generator
   const downloadSimpleItineraryPDF = async () => {
@@ -7784,7 +7851,7 @@ export default function PrototypeBuilder() {
         name: agentName,
         email: agentEmail,
         phone: agentPhone,
-        travelDate: arrivalDate,
+        landPackageDate: arrivalDate,
         tier: 'b2b_builder',
         travelers: adults + kids,
         experiences: [],
