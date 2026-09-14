@@ -406,6 +406,14 @@ const LOCAL_TRANSFER_FALLBACKS: Record<string, string> = {
   'super coach': '/images/transfers/medium-coach.jpg',
   '55-seater': '/images/transfers/medium-coach.jpg',
   'sic': '/images/transfers/13-seater-minibus.jpg',
+  'arrival': '/images/transfers/13-seater-minibus.jpg',
+  'departure': '/images/transfers/13-seater-minibus.jpg',
+  'airport': '/images/transfers/13-seater-minibus.jpg',
+  'aiport': '/images/transfers/13-seater-minibus.jpg',
+  'transfer': '/images/transfers/13-seater-minibus.jpg',
+  'transfers': '/images/transfers/13-seater-minibus.jpg',
+  'coach station': '/images/transfers/13-seater-minibus.jpg',
+  'vehicle': '/images/transfers/13-seater-minibus.jpg',
 }
 
 function getLocalTransferPhoto(nameOrType: string): string | null {
@@ -436,6 +444,28 @@ function cleanItemTitle(text: string): string {
     .replace(/Combo\s*:\s*/gi, '')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function isTransferAttractionName(n: string): boolean {
+  if (!n) return false
+  const lower = n.toLowerCase().trim()
+  return (
+    lower.includes('arrival transfer') ||
+    lower.includes('departure transfer') ||
+    lower.includes('airport transfer') ||
+    lower.includes('aiport') ||
+    lower.includes('p2p transfer') ||
+    lower.includes('point to point transfer') ||
+    lower.includes('hotel transfer') ||
+    lower.includes('coach station') ||
+    (lower.includes('transfer') && (lower.includes('from') || lower.includes('to')))
+  )
+}
+
+function isCityTourName(n: string): boolean {
+  if (!n) return false
+  const lower = n.toLowerCase().trim()
+  return lower.includes('city tour') || lower.includes('city private tour') || lower.includes('city orientation')
 }
 
 const MEAL_PRICES = {
@@ -3186,7 +3216,7 @@ export default function PrototypeBuilder() {
         let transferText = `${v}${qtyStr}${desc ? ' → ' + desc : ''}`
         if (isCityTour) {
           const isSic = desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)
-          transferText = isSic ? 'SIC - SIC - per person - City Tour ( 3 hours )' : '13-Seater - Private - group - City tour'
+          transferText = isSic ? 'Singapore City Tour (3 Hours) — Seat-In-Coach (SIC)' : 'Singapore City Tour (3 Hours) — 13-Seater Private Minibus'
         }
         dayItems.push({
           time: tr.time || '00:00',
@@ -3194,12 +3224,48 @@ export default function PrototypeBuilder() {
         })
       })
       day.attractions.forEach(a => {
-        const name = attractionsList[a.attractionIndex]?.name || 'Attraction'
+        const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+        const name = cleanItemTitle(rawName)
+        const isTransferAttraction = isTransferAttractionName(rawName)
+        const isCityTourAttraction = isCityTourName(rawName)
+
+        if (isTransferAttraction || isCityTourAttraction) {
+          const lower = rawName.toLowerCase()
+          const isArrival = lower.includes('arrival') || (a.description || '').toLowerCase().includes('arrival') || (a.description || '').toLowerCase().includes('pickup')
+          const isDeparture = lower.includes('departure') || (a.description || '').toLowerCase().includes('departure') || (a.description || '').toLowerCase().includes('drop')
+          const timePrefix = currentOpts.showTimings !== false && a.time ? `${a.time} — ` : ''
+          if (isCityTourAttraction) {
+            dayItems.push({
+              time: a.time || '09:00',
+              text: `🚗 ${timePrefix}Singapore City Tour (3 Hours) — 13-Seater Private Minibus${a.description && !a.description.includes(rawName) ? ' · ' + a.description : ''}`
+            })
+          } else if (isArrival) {
+            const isCoach = (a.description || '').toLowerCase().includes('coach')
+            dayItems.push({
+              time: a.time || '08:30',
+              text: `🚗 ${timePrefix}${isCoach ? 'Arrival Pickup Transfer (Coach Station)' : 'Airport Arrival Transfer'} (13-Seater Minibus)${a.description ? ' · ' + a.description : ''}`
+            })
+          } else if (isDeparture) {
+            dayItems.push({
+              time: a.time || '14:00',
+              text: `🚗 ${timePrefix}Airport Departure Transfer (13-Seater Minibus)${a.description ? ' · ' + a.description : ''}`
+            })
+          } else {
+            dayItems.push({
+              time: a.time || '10:00',
+              text: `🚗 ${timePrefix}${name} (13-Seater Minibus)${a.description ? ' · ' + a.description : ''}`
+            })
+          }
+          return
+        }
+
         const paxStr = a.adultTickets > 0 || a.childTickets > 0 ? ` (${a.adultTickets}Ad${a.childTickets > 0 ? `/${a.childTickets}Ch` : ''})` : ''
         
         // Interline Pickup Transfer
         if (a.hasTransfer && a.pickupEnabled !== false) {
-          const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Transfer'
+          const default13Idx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
+          const pvIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13Idx
+          const pvName = vehiclesList[pvIdx]?.type || '13-Seater Minibus'
           const pickupTimePrefix = currentOpts.showTimings !== false && a.pickupTime ? `${a.pickupTime} — ` : ''
           dayItems.push({
             time: a.pickupTime || '09:00',
@@ -3228,7 +3294,9 @@ export default function PrototypeBuilder() {
 
         // Interline Drop Transfer
         if (a.hasTransfer && a.dropEnabled !== false) {
-          const dvName = vehiclesList[a.dropVehicleIndex ?? 0]?.type || 'Transfer'
+          const default13Idx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
+          const dvIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13Idx
+          const dvName = vehiclesList[dvIdx]?.type || '13-Seater Minibus'
           const dropTimePrefix = currentOpts.showTimings !== false && a.dropTime ? `${a.dropTime} — ` : ''
           dayItems.push({
             time: a.dropTime || '17:00',
@@ -3674,13 +3742,14 @@ export default function PrototypeBuilder() {
     const transferPhotosMap = new Map<string, string>()
 
     const usedVehicleLookups: { compKey: string; type: string; hint?: string; label: string }[] = []
+    const default13Idx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
     effectiveItinerary.forEach(d => {
       (d.transfers || []).forEach((t: any) => {
         const vObj = vehiclesList[t.vehicleIndex]
         const desc = t.routeDescription || t.description || ''
         const isCityTour = t.serviceType === 'cityTour' || desc.toLowerCase().includes('city tour')
-        const vehicle = vObj?.type || t.type || (isCityTour ? 'City Tour' : 'Vehicle')
-        const compKey = vObj?.compositeKey || (isCityTour ? 'city-tour' : '')
+        const vehicle = vObj?.type || t.type || (isCityTour ? 'City Tour' : '13-Seater Minibus')
+        const compKey = vObj?.compositeKey || (isCityTour ? 'city-tour' : '13-Seater - Private - group - Transfers')
         let label = `Private Transfer — ${vehicle}`
         if (isCityTour) {
           const isSic = (isLandPkg ? (effectiveTransferMode === 'sic' || landPackageTransferMode === 'sic') : (desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)))
@@ -3698,23 +3767,36 @@ export default function PrototypeBuilder() {
         })
       })
       ;(d.attractions || []).forEach(a => {
+        const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || a.description || ''
+        const isTransfer = isTransferAttractionName(rawName) || isTransferAttractionName(a.description || '')
+        const isCT = isCityTourName(rawName) || isCityTourName(a.description || '')
+        if (isTransfer || isCT) {
+          usedVehicleLookups.push({
+            compKey: isCT ? 'city-tour' : '13-Seater - Private - group - Transfers',
+            type: isCT ? 'City Tour' : '13-Seater Minibus',
+            hint: a.description || rawName,
+            label: isCT ? 'Singapore City Tour' : 'Airport Transfer'
+          })
+        }
         if (a.hasTransfer) {
           if (a.pickupEnabled !== false) {
-            const pvObj = vehiclesList[a.pickupVehicleIndex ?? 0]
+            const pvIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13Idx
+            const pvObj = vehiclesList[pvIdx]
             usedVehicleLookups.push({
               compKey: pvObj?.compositeKey || '',
-              type: pvObj?.type || a.pickupVehicleType || '',
+              type: pvObj?.type || a.pickupVehicleType || '13-Seater Minibus',
               hint: a.pickupNotes || `Transfer to ${a.attractionName || ''}`,
-              label: `Pickup Transfer — ${pvObj?.type || a.pickupVehicleType || 'Vehicle'}`
+              label: `Pickup Transfer — ${pvObj?.type || a.pickupVehicleType || '13-Seater Minibus'}`
             })
           }
           if (a.dropEnabled !== false) {
-            const dvObj = vehiclesList[a.dropVehicleIndex ?? 0]
+            const dvIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13Idx
+            const dvObj = vehiclesList[dvIdx]
             usedVehicleLookups.push({
               compKey: dvObj?.compositeKey || '',
-              type: dvObj?.type || a.dropVehicleType || '',
+              type: dvObj?.type || a.dropVehicleType || '13-Seater Minibus',
               hint: a.dropNotes || `Transfer from ${a.attractionName || ''}`,
-              label: `Drop Transfer — ${dvObj?.type || a.dropVehicleType || 'Vehicle'}`
+              label: `Drop Transfer — ${dvObj?.type || a.dropVehicleType || '13-Seater Minibus'}`
             })
           }
         }
@@ -3724,12 +3806,23 @@ export default function PrototypeBuilder() {
     const neededTransferImages = new Set<string>()
     const vehicleKeyToPhotoSrc = new Map<string, string>()
 
-    // Always ensure City Tour photo mapping is available
+    // Always ensure core transfer photos are preloaded
+    neededTransferImages.add('/images/transfers/13-seater-minibus.jpg')
     neededTransferImages.add('/images/transfers/city-tour.jpg')
+    neededTransferImages.add('/images/transfers/sedan.jpg')
+
     vehicleKeyToPhotoSrc.set('city-tour', '/images/transfers/city-tour.jpg')
     vehicleKeyToPhotoSrc.set('city tour', '/images/transfers/city-tour.jpg')
     vehicleKeyToPhotoSrc.set('sic - sic - per person - city tour ( 3 hours )', '/images/transfers/city-tour.jpg')
     vehicleKeyToPhotoSrc.set('13-seater - private - group - city tour', '/images/transfers/city-tour.jpg')
+    vehicleKeyToPhotoSrc.set('13-seater', '/images/transfers/13-seater-minibus.jpg')
+    vehicleKeyToPhotoSrc.set('13-seater minibus', '/images/transfers/13-seater-minibus.jpg')
+    vehicleKeyToPhotoSrc.set('13-seater - private - group - transfers', '/images/transfers/13-seater-minibus.jpg')
+    vehicleKeyToPhotoSrc.set('13-seater - private - group - arrivals', '/images/transfers/13-seater-minibus.jpg')
+    vehicleKeyToPhotoSrc.set('13-seater - private - group - departures', '/images/transfers/13-seater-minibus.jpg')
+    vehicleKeyToPhotoSrc.set('13-seater - private - group - arrival / departure', '/images/transfers/13-seater-minibus.jpg')
+    vehicleKeyToPhotoSrc.set('sedan', '/images/transfers/sedan.jpg')
+    vehicleKeyToPhotoSrc.set('sedan - private - group - transfers', '/images/transfers/sedan.jpg')
 
     usedVehicleLookups.forEach(lookup => {
       const meta = getTransferMetaInfo(lookup.compKey, lookup.type, transfersMeta, lookup.hint)
@@ -4315,23 +4408,11 @@ export default function PrototypeBuilder() {
 
       // ─── DYNAMIC DETAILED INCLUSIONS & EXCLUSIONS ────────────────
       const hasAttr  = effectiveItinerary.some(d => d.attractions && d.attractions.length > 0)
-      const hasXfer  = isLandPkg ? true : effectiveItinerary.some(d => (d.transfers && d.transfers.length > 0) || d.attractions?.some(a => a.hasTransfer))
+      const hasXfer  = isLandPkg ? true : effectiveItinerary.some(d =>
+        (d.transfers && d.transfers.length > 0) ||
+        d.attractions?.some(a => a.hasTransfer || isTransferAttractionName(attractionsList[a.attractionIndex]?.name || a.attractionName || ''))
+      )
       const hasMeals = isLandPkg ? false : effectiveItinerary.some(d => d.breakfast || d.lunch || d.dinner || (d.meals && d.meals.length > 0))
-
-      // Gather all confirmed distinct attractions for the inclusions summary (omit optional)
-      // Gather all distinct attractions (excluding optional ones and filtering out transfer items entered under attractions)
-      const isTransferAttractionName = (n: string): boolean => {
-        const lower = (n || '').toLowerCase()
-        return (
-          lower.includes('arrival transfer') ||
-          lower.includes('departure transfer') ||
-          lower.includes('airport transfer') ||
-          lower.includes('p2p transfer') ||
-          lower.includes('point to point transfer') ||
-          lower.includes('hotel transfer') ||
-          (lower.includes('transfer') && lower.includes('from'))
-        )
-      }
 
       const cleanInclusionAttractionTitle = (text: string): string => {
         if (!text) return ''
@@ -4361,7 +4442,7 @@ export default function PrototypeBuilder() {
         d.attractions?.forEach(a => {
           if (!a.isOptional) {
             const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || ''
-            if (rawName && !isTransferAttractionName(rawName)) {
+            if (rawName && !isTransferAttractionName(rawName) && !isCityTourName(rawName)) {
               const cleaned = cleanInclusionAttractionTitle(rawName)
               const norm = cleaned.toLowerCase()
               if (cleaned && !seenAttrs.has(norm)) {
@@ -4381,12 +4462,22 @@ export default function PrototypeBuilder() {
           if (v) allVehiclesSet.add(v)
         })
         d.attractions?.forEach(a => {
-          if (!a.isOptional && a.hasTransfer) {
-            if (a.pickupVehicleType) allVehiclesSet.add(a.pickupVehicleType)
-            else if (a.pickupVehicleIndex !== undefined && vehiclesList[a.pickupVehicleIndex]) allVehiclesSet.add(vehiclesList[a.pickupVehicleIndex].type)
+          if (!a.isOptional) {
+            if (a.hasTransfer) {
+              if (a.pickupVehicleType) allVehiclesSet.add(a.pickupVehicleType)
+              else if (a.pickupVehicleIndex !== undefined && vehiclesList[a.pickupVehicleIndex]) allVehiclesSet.add(vehiclesList[a.pickupVehicleIndex].type)
+              else allVehiclesSet.add('13-Seater Minibus')
+            }
+            const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || ''
+            if (isTransferAttractionName(rawName)) {
+              allVehiclesSet.add('13-Seater Minibus')
+            }
           }
         })
       })
+      if (allVehiclesSet.size === 0 && hasXfer) {
+        allVehiclesSet.add('13-Seater Minibus')
+      }
       if (isLandPkg) {
         allVehiclesSet.add('13-Seater Minibus')
         if (effectiveTransferMode === 'sic') {
@@ -4663,33 +4754,32 @@ export default function PrototypeBuilder() {
           const isAirport = t.serviceType === 'arrival' || t.serviceType === 'departure' || desc.toLowerCase().includes('arrival') || desc.toLowerCase().includes('departure') || desc.toLowerCase().includes('airport')
           const isDisposal = t.serviceType === 'disposal' || desc.toLowerCase().includes('disposal')
           const isCityTour = t.serviceType === 'cityTour' || desc.toLowerCase().includes('city tour')
-          const vehicle = vObj?.type || (isCityTour ? 'City Tour' : (t.type || 'Vehicle'))
+          const vehicle = vObj?.type || (isCityTour ? 'City Tour' : (t.type || '13-Seater Minibus'))
           const compKey = vObj?.compositeKey || (isCityTour ? 'city-tour' : '')
-
-          const privateTransLabel = '13-Seater - Private - group - Transfers'
-          const sicTransLabel = 'SIC - SIC - per person - Transfers ( Round Trip )'
-          const privateCityTourLabel = '13-Seater - Private - group - City tour'
-          const sicCityTourLabel = 'SIC - SIC - per person - City Tour ( 3 hours )'
 
           let label = ''
           let detail = desc || 'Point-to-point transfer'
           if (isAirport) {
-            label = privateTransLabel
-            detail = t.serviceType === 'arrival' ? 'Airport Arrival Transfer (13-Seater Minibus)' : 'Airport Departure Transfer (13-Seater Minibus)'
+            const isArr = t.serviceType === 'arrival' || desc.toLowerCase().includes('arrival')
+            label = isArr ? `Airport Arrival Transfer — ${vehicle}` : `Airport Departure Transfer — ${vehicle}`
+            detail = desc || (isArr ? 'Changi Airport to Hotel Transfer' : 'Hotel to Changi Airport Departure Transfer')
           } else if (isCityTour) {
             const isSic = (isLandPkg ? (effectiveTransferMode === 'sic' || landPackageTransferMode === 'sic') : (desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)))
             label = isSic
-              ? sicCityTourLabel
-              : privateCityTourLabel
-            detail = 'Guided Singapore City Orientation Tour (3 Hours)'
+              ? 'Singapore City Tour — Seat-In-Coach (SIC)'
+              : `Singapore City Tour — ${vehicle}`
+            detail = desc || 'Guided Singapore City Orientation Tour (3 Hours)'
           } else if (isDisposal) {
-            label = `${t.hours || 4}h Disposal (${privateTransLabel})`
-            detail = `${t.hours || 4} Hours Dedicated Minibus Disposal`
+            label = `${t.hours || 4} Hours Private Disposal — ${vehicle}`
+            detail = desc || `${t.hours || 4} Hours Dedicated Minibus Disposal with Chauffeur`
           } else if (isLandPkg) {
-            label = landPackageTransferMode === 'sic' ? sicTransLabel : privateTransLabel
+            const isSic = landPackageTransferMode === 'sic'
+            label = isSic ? 'Sightseeing Transfer — Seat-In-Coach (SIC)' : `Private Transfer — ${vehicle}`
+            detail = desc || 'Point-to-point transfer'
           } else {
             const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
             label = `Private Transfer — ${vehicle}${qtyStr}`
+            detail = desc || 'Scheduled point-to-point private transfer'
           }
 
           let tMeta = getTransferMetaInfo(compKey, vehicle, transfersMeta, desc || 'Point-to-point transfer')
@@ -4699,6 +4789,7 @@ export default function PrototypeBuilder() {
               ...(tMeta || {}),
               name: label,
               photoUrl: '/images/transfers/city-tour.jpg',
+              passengerCapacity: 'Up to 9-13 Passengers',
               shortDescription: 'Explore Singapore\'s premier landmarks with a 3-hour guided city orientation tour covering Civic District, Merlion Park, and cultural heritage precincts.',
               features: [
                 '3-Hour Guided City Orientation',
@@ -4722,34 +4813,151 @@ export default function PrototypeBuilder() {
 
         // 3. Attractions with optional pickup/drop transfers
         ;(day.attractions || []).forEach((a: any) => {
-          const name = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+          const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || a.description || 'Attraction'
+          const name = cleanItemTitle(rawName)
+          const lowerName = rawName.toLowerCase()
+          const isTransferAttraction = isTransferAttractionName(rawName) || isTransferAttractionName(a.description || '')
+          const isCityTourAttraction = isCityTourName(rawName) || isCityTourName(a.description || '')
+
+          // Intercept transfer attractions & city tours entered under attractions
+          if (isTransferAttraction || isCityTourAttraction) {
+            const isArrival = lowerName.includes('arrival') || (a.description || '').toLowerCase().includes('arrival') || (a.description || '').toLowerCase().includes('pickup')
+            const isDeparture = lowerName.includes('departure') || (a.description || '').toLowerCase().includes('departure') || (a.description || '').toLowerCase().includes('drop')
+            const default13Idx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
+            const vObj = vehiclesList[default13Idx]
+            const vType = vObj?.type || '13-Seater Minibus'
+            const vCompKey = vObj?.compositeKey || '13-Seater - Private - group - Transfers'
+
+            let label = ''
+            let detail = ''
+            let itemKey = ''
+            let tMeta: any = null
+
+            if (isCityTourAttraction) {
+              label = 'Singapore City Orientation Tour'
+              detail = a.description && !a.description.includes(rawName)
+                ? a.description
+                : '3-Hour Guided Singapore City Orientation Tour covering Civic District, Merlion Park & Cultural Precincts'
+              itemKey = 'city-tour'
+              tMeta = {
+                name: label,
+                photoUrl: '/images/transfers/city-tour.jpg',
+                passengerCapacity: 'Up to 9-13 Passengers',
+                shortDescription: 'Explore Singapore\'s iconic landmarks on an engaging 3-hour orientation tour featuring Merlion Park, Civic District, and cultural heritage precincts.',
+                features: [
+                  '3-Hour Guided City Orientation',
+                  'Merlion Park & Marina Bay Lookout',
+                  'Historic Civic District & Chinatown',
+                  '13-Seater Private Air-Conditioned Minibus'
+                ]
+              }
+            } else if (isArrival) {
+              const coachOrAirport = (a.description || '').toLowerCase().includes('coach')
+                ? 'Coach Station'
+                : 'Changi Airport'
+              label = coachOrAirport === 'Coach Station'
+                ? 'Arrival Transfer — Coach Station Pickup'
+                : 'Airport Arrival Transfer — Changi Airport'
+              detail = a.description || `Arrival pickup from ${coachOrAirport} to Hotel (13-Seater Minibus)`
+              itemKey = '13-seater'
+              tMeta = getTransferMetaInfo('13-Seater - Private - group - Arrivals', '13-Seater', transfersMeta, 'Arrival pickup')
+              if (!tMeta) {
+                tMeta = {
+                  name: label,
+                  photoUrl: '/images/transfers/13-seater-minibus.jpg',
+                  passengerCapacity: 'Up to 9-13 Passengers',
+                  shortDescription: `Direct private arrival transfer from ${coachOrAirport} to your Singapore hotel with luggage assistance and professional chauffeur.`,
+                  features: [
+                    'Meet & Greet Service',
+                    'Dedicated Luggage Space (9+ Large Bags)',
+                    'Air-Conditioned High Roof Minibus',
+                    'Direct Hotel Drop-off'
+                  ]
+                }
+              }
+            } else if (isDeparture) {
+              label = 'Airport Departure Transfer — Changi Airport'
+              detail = a.description || 'Hotel to Singapore Changi Airport Departure Transfer (13-Seater Minibus)'
+              itemKey = '13-seater'
+              tMeta = getTransferMetaInfo('13-Seater - Private - group - Departures', '13-Seater', transfersMeta, 'Departure transfer')
+              if (!tMeta) {
+                tMeta = {
+                  name: label,
+                  photoUrl: '/images/transfers/13-seater-minibus.jpg',
+                  passengerCapacity: 'Up to 9-13 Passengers',
+                  shortDescription: 'Punctual private departure transfer from your Singapore hotel to Changi Airport terminal for a smooth, relaxed flight check-in.',
+                  features: [
+                    'Punctual Hotel Lobby Pickup',
+                    'Luggage Loading Assistance',
+                    'Direct Terminal Drop-off at Changi Airport',
+                    '13-Seater Private Air-Conditioned Minibus'
+                  ]
+                }
+              }
+            } else {
+              label = `Private Transfer — ${cleanItemTitle(rawName)}`
+              detail = a.description || 'Scheduled point-to-point private vehicle transfer'
+              itemKey = '13-seater'
+              tMeta = getTransferMetaInfo(vCompKey, vType, transfersMeta, rawName)
+              if (!tMeta) {
+                tMeta = {
+                  name: label,
+                  photoUrl: '/images/transfers/13-seater-minibus.jpg',
+                  passengerCapacity: 'Up to 9-13 Passengers',
+                  shortDescription: 'Comfortable air-conditioned private vehicle transfer with dedicated professional driver.',
+                  features: [
+                    'Point-to-Point Direct Transit',
+                    'Air-Conditioned Comfort',
+                    'Luggage Space Available',
+                    'Licensed Professional Chauffeur'
+                  ]
+                }
+              }
+            }
+
+            timelineItems.push({
+              time: a.time || (isArrival ? '08:30' : isDeparture ? '14:00' : '09:00'),
+              type: 'transfer',
+              label,
+              detail,
+              color: TEAL,
+              meta: tMeta,
+              itemKey
+            })
+            return // Skip pushing as attraction!
+          }
+
           const isOpt = !!a.isOptional
           if (a.hasTransfer) {
+            const default13Idx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
+            const cleanAttractionName = cleanItemTitle(rawName)
             if (a.pickupEnabled !== false) {
-              const pvObj = vehiclesList[a.pickupVehicleIndex ?? 0]
-              const pvName = pvObj?.type || a.pickupVehicleType || 'Vehicle'
+              const pvIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13Idx
+              const pvObj = vehiclesList[pvIdx]
+              const pvName = pvObj?.type || a.pickupVehicleType || '13-Seater Minibus'
               const pCompKey = pvObj?.compositeKey || ''
-              const pMeta = getTransferMetaInfo(pCompKey, pvName, transfersMeta, a.pickupNotes || `Transfer to ${name}`)
+              const pMeta = getTransferMetaInfo(pCompKey, pvName, transfersMeta, a.pickupNotes || `Transfer to ${cleanAttractionName}`)
               timelineItems.push({
                 time: a.pickupTime || '09:00',
                 type: 'transfer',
-                label: isOpt ? `[Optional] Pickup Transfer — ${pvName}` : `Pickup Transfer — ${pvName}`,
-                detail: a.pickupNotes || (isOpt ? `Optional transfer to ${name}` : `Transfer to ${name}`),
+                label: isOpt ? `[Optional] Hotel Pickup — ${cleanAttractionName}` : `Hotel Pickup Transfer — ${cleanAttractionName}`,
+                detail: a.pickupNotes || `Hotel to ${cleanAttractionName} (${pvName})`,
                 color: isOpt ? ([217, 119, 6] as [number,number,number]) : TEAL,
                 meta: pMeta,
                 itemKey: pCompKey || pvName
               })
             }
             if (a.dropEnabled !== false) {
-              const dvObj = vehiclesList[a.dropVehicleIndex ?? 0]
-              const dvName = dvObj?.type || a.dropVehicleType || 'Vehicle'
+              const dvIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13Idx
+              const dvObj = vehiclesList[dvIdx]
+              const dvName = dvObj?.type || a.dropVehicleType || '13-Seater Minibus'
               const dCompKey = dvObj?.compositeKey || ''
-              const dMeta = getTransferMetaInfo(dCompKey, dvName, transfersMeta, a.dropNotes || `Transfer from ${name}`)
+              const dMeta = getTransferMetaInfo(dCompKey, dvName, transfersMeta, a.dropNotes || `Transfer from ${cleanAttractionName}`)
               timelineItems.push({
                 time: a.dropTime || '17:00',
                 type: 'transfer',
-                label: isOpt ? `[Optional] Drop Transfer — ${dvName}` : `Drop Transfer — ${dvName}`,
-                detail: a.dropNotes || (isOpt ? `Optional return transfer from ${name}` : `Transfer from ${name}`),
+                label: isOpt ? `[Optional] Return Transfer — ${cleanAttractionName}` : `Return Drop-off Transfer — ${cleanAttractionName}`,
+                detail: a.dropNotes || `${cleanAttractionName} to Hotel (${dvName})`,
                 color: isOpt ? ([217, 119, 6] as [number,number,number]) : TEAL,
                 meta: dMeta,
                 itemKey: dCompKey || dvName
@@ -4760,7 +4968,7 @@ export default function PrototypeBuilder() {
           timelineItems.push({
             time: a.time || '10:00',
             type: 'attraction',
-            label: name,
+            label: rawName,
             attractionData: a
           })
         })
@@ -4890,21 +5098,42 @@ export default function PrototypeBuilder() {
         } else {
           // Render each item strictly in chronological 24-hour sequence
           timelineItems.forEach((item, itemIdx) => {
-            if (item.type === 'transfer' && item.meta && (item.meta.photoUrl || item.meta.shortDescription || item.meta.passengerCapacity || item.meta.longDescription || (Array.isArray(item.meta.features) && item.meta.features.length > 0))) {
+            if (item.type === 'transfer') {
               // ── Rich Visual Transfer Card ──
-              const meta = item.meta
+              const isCT = item.itemKey === 'city-tour' || item.label.toLowerCase().includes('city tour')
+              let meta = item.meta
+              if (!meta || (!meta.photoUrl && !meta.shortDescription && !meta.longDescription && (!meta.features || meta.features.length === 0))) {
+                meta = {
+                  name: item.label,
+                  photoUrl: isCT ? '/images/transfers/city-tour.jpg' : '/images/transfers/13-seater-minibus.jpg',
+                  passengerCapacity: 'Up to 9-13 Passengers',
+                  shortDescription: isCT
+                    ? 'Explore Singapore\'s iconic landmarks on an engaging 3-hour orientation tour featuring Merlion Park, Civic District, and cultural heritage precincts.'
+                    : 'Comfortable air-conditioned private vehicle transfer across Singapore with dedicated professional chauffeur.',
+                  features: isCT
+                    ? ['3-Hour Guided City Orientation', 'Merlion Park & Marina Bay Lookout', 'Historic Civic District & Chinatown', '13-Seater Private Minibus']
+                    : ['Dedicated Door-to-Door Service', 'Fully Air-Conditioned Comfort', 'Spacious Luggage Capacity', 'Professional Licensed Chauffeur']
+                }
+              }
+
               const cleanItemKey = (item.itemKey || '').toLowerCase().trim()
               const cleanMetaName = (meta.name || '').toLowerCase().trim()
               let photoData = transferPhotosMap.get(cleanItemKey) ||
                               transferPhotosMap.get(cleanMetaName) ||
-                              (meta.photoUrl ? transferPhotosMap.get(meta.photoUrl) : null)
+                              (meta.photoUrl ? transferPhotosMap.get(meta.photoUrl) : null) ||
+                              (meta.photoUrl ? transferPhotosMap.get(meta.photoUrl.toLowerCase().trim()) : null)
               if (!photoData) {
                 const localPhotoPath = getLocalTransferPhoto(cleanItemKey) ||
                                        getLocalTransferPhoto(cleanMetaName) ||
                                        getLocalTransferPhoto(item.label)
                 if (localPhotoPath) {
-                  photoData = transferPhotosMap.get(localPhotoPath.toLowerCase().trim()) || null
+                  photoData = transferPhotosMap.get(localPhotoPath) ||
+                              transferPhotosMap.get(localPhotoPath.toLowerCase().trim()) || null
                 }
+              }
+              if (!photoData) {
+                const fallbackImg = isCT ? '/images/transfers/city-tour.jpg' : '/images/transfers/13-seater-minibus.jpg'
+                photoData = transferPhotosMap.get(fallbackImg) || transferPhotosMap.get(fallbackImg.toLowerCase()) || null
               }
               const hasPhoto = !!photoData && typeof photoData === 'string' && photoData.startsWith('data:image')
 
@@ -4913,6 +5142,12 @@ export default function PrototypeBuilder() {
               font('bold', 8.5)
               const titleLines = doc.splitTextToSize(`${item.time}  —  ${cleanPdfText(item.label)}`, textW)
               const titleH = (titleLines.length - 1) * 3.5 + 4.2
+
+              // Route / Service Detail Subheading (Item route context)
+              const detailText = item.detail && item.detail.trim() !== item.label.trim() ? cleanPdfText(item.detail.trim()) : ''
+              font('bold', 7.2)
+              const detailLines = detailText ? doc.splitTextToSize(detailText, textW) : []
+              const detailH = detailLines.length > 0 ? (detailLines.length * 3.2 + 1.2) : 0
 
               // Full Description (sanitized, flowing narrative with zero truncation)
               const rawDesc = (meta.longDescription || meta.shortDescription || '').trim()
@@ -4931,7 +5166,7 @@ export default function PrototypeBuilder() {
               const descH = descLines.length > 0 ? ((descLines.length - 1) * 2.92 + 4.0) : 0
 
               // Dynamic content height calculation
-              const contentH = 4.5 + titleH + descH + incH + 3.5
+              const contentH = 4.5 + titleH + detailH + descH + incH + 3.5
               const minCardH = hasPhoto ? 34 : 22
               const cardH = Math.max(minCardH, contentH)
               checkPage(cardH + 3)
@@ -4964,6 +5199,12 @@ export default function PrototypeBuilder() {
               font('bold', 8.5); setTxt(NAVY)
               doc.text(titleLines, ML + 6, cy)
               cy += titleH
+
+              if (detailLines.length > 0) {
+                font('bold', 7.2); setTxt([15, 118, 110]) // Dark Teal route/service subtitle
+                doc.text(detailLines, ML + 6, cy)
+                cy += detailH
+              }
 
               if (descText) {
                 font('normal', 7.1); setTxt(TEXT)
@@ -5055,7 +5296,7 @@ export default function PrototypeBuilder() {
               }
 
               y += cardH + 2.5
-            } else if (item.type === 'transfer' || item.type === 'guide' || item.type === 'service') {
+            } else if (item.type === 'guide' || item.type === 'service') {
               font('bold', 8)
               const labelLines = doc.splitTextToSize(item.label, CW - 26)
               font('italic', 7)
@@ -5258,8 +5499,11 @@ export default function PrototypeBuilder() {
               cy += titleH
 
               // Ticket count chips inline
-              const ticketInfo = `Adult x${a.adultTickets}${kids > 0 ? `  |  Child x${a.childTickets}` : ''}`
-              font('bold', 7.2); setTxt(isOpt ? ([180, 83, 9] as [number,number,number]) : CRIM)
+              const hasExplicitTickets = (a.adultTickets && a.adultTickets > 0) || (a.childTickets && a.childTickets > 0)
+              const ticketInfo = hasExplicitTickets
+                ? `Adult x${a.adultTickets || 0}${kids > 0 ? `  |  Child x${a.childTickets || 0}` : ''}`
+                : `Admission / Entry Included`
+              font('bold', 7.2); setTxt(isOpt ? ([180, 83, 9] as [number,number,number]) : (hasExplicitTickets ? CRIM : ([15, 118, 110] as [number,number,number])))
               doc.text(ticketInfo, ML + 6, cy)
 
               if (rating) {
@@ -5802,6 +6046,12 @@ export default function PrototypeBuilder() {
         // Extract attractions with robust fallback
         for (const a of day.attractions) {
           const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || ''
+          if (isTransferAttractionName(rawName) || isCityTourName(rawName)) {
+            if (isCityTourName(rawName) && !attractionUrls.includes('/images/transfers/city-tour.jpg')) {
+              attractionUrls.push('/images/transfers/city-tour.jpg')
+            }
+            continue
+          }
           const meta = getAttractionMetaInfo(rawName, attractionsMeta) || getAttractionMetaInfo(cleanItemTitle(rawName), attractionsMeta)
           let u = meta?.photoUrl
           if (!u || isPromotionalPoster(u)) {
@@ -6107,7 +6357,7 @@ export default function PrototypeBuilder() {
               highlights.push({ time: timeVal, type: 'transit', label: 'AIRPORT TRANSFER', text: `${v}${capStr} - Changi Airport Departure` })
             } else if (desc.toLowerCase().includes('city tour') || t.serviceType === 'cityTour') {
               const isSic = desc.toLowerCase().includes('sic') || isVehicleSIC(vObj)
-              const ctText = isSic ? 'SIC - SIC - per person - City Tour ( 3 hours )' : '13-Seater - Private - group - City tour'
+              const ctText = isSic ? 'Singapore City Tour (3 Hours) — Seat-In-Coach (SIC)' : 'Singapore City Tour (3 Hours) — 13-Seater Private Minibus'
               highlights.push({ time: timeVal, type: 'transit', label: 'CITY TOUR TRANSFER', text: ctText })
             } else if (desc.toLowerCase().includes('fireworks')) {
               highlights.push({ time: timeVal, type: 'transit', label: 'SPECIAL TRANSFER', text: `${v}${capStr} - Special Fireworks Transfer` })
@@ -6123,6 +6373,46 @@ export default function PrototypeBuilder() {
             const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
             const name = cleanItemTitle(rawName)
             const isOpt = !!a.isOptional
+            const isTransferAttraction = isTransferAttractionName(rawName)
+            const isCityTourAttraction = isCityTourName(rawName)
+
+            if (isTransferAttraction || isCityTourAttraction) {
+              const lower = rawName.toLowerCase()
+              const isArrival = lower.includes('arrival') || (a.description || '').toLowerCase().includes('arrival') || (a.description || '').toLowerCase().includes('pickup')
+              const isDeparture = lower.includes('departure') || (a.description || '').toLowerCase().includes('departure') || (a.description || '').toLowerCase().includes('drop')
+              if (isCityTourAttraction) {
+                highlights.push({
+                  time: a.time || '09:00',
+                  type: 'transit',
+                  label: 'CITY TOUR',
+                  text: 'Singapore City Private Tour (3 Hours) — 13-Seater Minibus'
+                })
+              } else if (isArrival) {
+                const isCoach = (a.description || '').toLowerCase().includes('coach')
+                highlights.push({
+                  time: a.time || '08:30',
+                  type: 'transit',
+                  label: isCoach ? 'ARRIVAL TRANSFER' : 'AIRPORT ARRIVAL TRANSFER',
+                  text: a.description || 'Changi Airport Arrival Transfer (13-Seater Minibus)'
+                })
+              } else if (isDeparture) {
+                highlights.push({
+                  time: a.time || '14:00',
+                  type: 'transit',
+                  label: 'AIRPORT DEPARTURE TRANSFER',
+                  text: a.description || 'Hotel to Changi Airport Departure Transfer (13-Seater Minibus)'
+                })
+              } else {
+                highlights.push({
+                  time: a.time || '10:00',
+                  type: 'transit',
+                  label: 'PRIVATE TRANSFER',
+                  text: a.description || name
+                })
+              }
+              return
+            }
+
             if (a.hasTransfer) {
               if (a.pickupEnabled !== false) {
                 highlights.push({
