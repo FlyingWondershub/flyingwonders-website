@@ -145,127 +145,124 @@ function getAttractionMetaInfo(attrName: string, attractionsMeta: Record<string,
   return null
 }
 
+function getTargetTransferCompositeKey(
+  vehicleTypeOrKey: string,
+  contextHint?: string,
+  serviceType?: string
+): string {
+  const v = (vehicleTypeOrKey || '').toLowerCase().trim()
+  const h = (contextHint || '').toLowerCase().trim()
+  const s = (serviceType || '').toLowerCase().trim()
+
+  // 1. Detect Vehicle Size / Category
+  let size = '13-Seater'
+  if (v.includes('sic') || v.includes('seat-in-coach') || v.includes('shared') || h.includes('sic')) {
+    size = 'SIC'
+  } else if (v.includes('sedan') || v.includes('camry') || v.includes('private car') || /\b(sedan|camry)\b/i.test(v)) {
+    size = 'Sedan'
+  } else if (v.includes('24-seater') || v.includes('24 seater') || v.includes('medium coach') || /\b24\b/.test(v)) {
+    size = '24-Seater'
+  } else if (v.includes('45-seater') || v.includes('45 seater') || v.includes('full coach') || /\b45\b/.test(v)) {
+    size = '45-Seater'
+  } else if (v.includes('55-seater') || v.includes('55 seater') || v.includes('super coach') || /\b55\b/.test(v)) {
+    size = '55-Seater'
+  } else {
+    size = '13-Seater'
+  }
+
+  // 2. Detect Service Type / Intent
+  // Priority 1: Disposal (hourly disposal / disposal / hour)
+  const isDisposal = s.includes('disposal') || h.includes('disposal') || h.includes('hourly') || h.includes('per hour') || h.includes('/ hour') || h.includes('/hour')
+  if (isDisposal) {
+    if (size === 'SIC') return 'SIC - SIC - per person - Transfers ( Round Trip )'
+    if (size === 'Sedan') return 'Sedan - Private - group - Transfers'
+    return `${size} - Private - group - Disposal / Hour`
+  }
+
+  // Priority 2: City Tour (Must NOT match "sightseeing transfer")
+  const isCityTour = s === 'citytour' || s === 'city tour' || s.includes('city') || h.includes('city tour') || h.includes('citytour') || h.includes('city orientation')
+  if (isCityTour) {
+    if (size === 'SIC') return 'SIC - SIC - per person - City Tour ( 3 hours )'
+    if (size === 'Sedan') return 'Sedan - Private - group - Transfers'
+    return `${size} - Private - group - City tour`
+  }
+
+  // Priority 3: Additional Hotel Pickup
+  const isAdditional = s.includes('additional') || h.includes('additional hotel pickup') || h.includes('extra pickup') || h.includes('additional pickup')
+  if (isAdditional) {
+    if (size === 'SIC') return 'SIC - SIC - per person - Transfers ( Round Trip )'
+    if (size === 'Sedan') return 'Sedan - Private - group - Transfers'
+    return `${size} - Private - group - Additional hotel pickup`
+  }
+
+  // Priority 4: Dedicated Airport / Coach Station Arrival
+  const isExplicitArrival = s === 'arrival' || h.includes('airport to hotel') || h.includes('changi to hotel') || h.includes('arrival pickup') || h.includes('airport pickup') || h.includes('coach station') || (h.includes('arrival') && !h.includes('departure'))
+  const isCompArrival = v.includes('arrivals') || v.includes('arrival')
+  const isInterAttraction = h.includes('transfer to') || h.includes('transfer from') || h.includes('drop at') || h.includes('pickup from') || h.includes('night safari') || h.includes('gardens') || h.includes('universal') || h.includes('sentosa') || h.includes('cable car') || h.includes('wings of time') || h.includes('zoo') || h.includes('bird') || h.includes('mbs') || h.includes('marina') || h.includes('attraction')
+  if ((isExplicitArrival || (isCompArrival && !isInterAttraction)) && !h.includes('departure') && !isDisposal && !isCityTour) {
+    if (size === '45-Seater') return '45-Seater - Private - group - Arrivals'
+    if (size === '13-Seater') return '13-Seater - Private - group - Arrivals'
+    if (size === '24-Seater') return '24-Seater - Private - group - Arrival / Departure'
+    if (size === '55-Seater') return '55-Seater - Private - group - Arrival / Departure'
+    if (size === 'Sedan') return 'Sedan - Private - group - Transfers'
+    if (size === 'SIC') return 'SIC - SIC - per person - Transfers ( Round Trip )'
+  }
+
+  // Priority 5: Dedicated Airport Departure
+  const isExplicitDeparture = s === 'departure' || h.includes('hotel to airport') || h.includes('hotel to changi') || h.includes('airport drop') || (h.includes('departure') && !h.includes('arrival'))
+  const isCompDeparture = v.includes('departures') || v.includes('departure')
+  if ((isExplicitDeparture || (isCompDeparture && !isInterAttraction)) && !h.includes('arrival') && !isDisposal && !isCityTour) {
+    if (size === '45-Seater') return '45-Seater - Private - group - Departures'
+    if (size === '13-Seater') return '13-Seater - Private - group - Departures'
+    if (size === '24-Seater') return '24-Seater - Private - group - Arrival / Departure'
+    if (size === '55-Seater') return '55-Seater - Private - group - Arrival / Departure'
+    if (size === 'Sedan') return 'Sedan - Private - group - Transfers'
+    if (size === 'SIC') return 'SIC - SIC - per person - Transfers ( Round Trip )'
+  }
+
+  // Priority 6: Default Inter-Attraction / Point-to-Point Transfers
+  if (size === 'SIC') return 'SIC - SIC - per person - Transfers ( Round Trip )'
+  if (size === 'Sedan') return 'Sedan - Private - group - Transfers'
+  return `${size} - Private - group - Transfers`
+}
+
 function getTransferMetaInfo(
   compositeKey: string,
   vehicleType: string,
   transfersMeta: Record<string, any>,
-  contextHint?: string
+  contextHint?: string,
+  serviceType?: string
 ) {
   if (!transfersMeta || Object.keys(transfersMeta).length === 0) return null
 
-  const cleanComp = (compositeKey || '').toLowerCase().trim()
-  const cleanVeh = (vehicleType || '').toLowerCase().trim()
-  const cleanHint = (contextHint || '').toLowerCase().trim()
-  const allText = `${cleanComp} ${cleanVeh} ${cleanHint}`.toLowerCase()
+  // 1. Direct deterministic key resolution via getTargetTransferCompositeKey
+  const targetKey = getTargetTransferCompositeKey(compositeKey || vehicleType, contextHint, serviceType)
+  const cleanTarget = targetKey.toLowerCase().trim()
+  if (transfersMeta[cleanTarget]) {
+    return transfersMeta[cleanTarget]
+  }
 
-  // 1. Exact match on compositeKey
+  // 2. Direct clean composite key match if already matches a key in transfersMeta
+  const cleanComp = (compositeKey || '').toLowerCase().trim()
   if (cleanComp && transfersMeta[cleanComp]) return transfersMeta[cleanComp]
 
-  // 2. Normalized compositeKey match (handles "arrivals" / "departures" from Google Sheet -> "arrival / departure")
+  // 3. Normalized compositeKey match
   const normalizedComp = cleanComp
     .replace(/\barrivals?\b|\bdepartures?\b/g, 'arrival / departure')
     .replace(/\s+/g, ' ')
     .trim()
   if (normalizedComp && transfersMeta[normalizedComp]) return transfersMeta[normalizedComp]
 
-  // 3. Detect Vehicle Size / Category
-  let detectedSize = ''
-  if (allText.includes('13-seater') || allText.includes('13 seater') || allText.includes('minibus') || allText.includes('hiace')) {
-    detectedSize = '13-seater'
-  } else if (allText.includes('24-seater') || allText.includes('24 seater') || allText.includes('medium coach')) {
-    detectedSize = '24-seater'
-  } else if (allText.includes('45-seater') || allText.includes('45 seater') || allText.includes('full coach')) {
-    detectedSize = '45-seater'
-  } else if (allText.includes('55-seater') || allText.includes('55 seater') || allText.includes('super coach')) {
-    detectedSize = '55-seater'
-  } else if (allText.includes('sic') || allText.includes('seat-in-coach') || allText.includes('shared')) {
-    detectedSize = 'sic'
-  } else if (allText.includes('sedan') || allText.includes('camry') || /\b(sedan|camry|private car)\b/i.test(allText)) {
-    detectedSize = 'sedan'
-  } else {
-    // Default size for all Flying Wonders standard & ready-made packages is 13-seater minibus
-    detectedSize = '13-seater'
-  }
-
-  // 4. Detect Service Type / Intent
-  let detectedService = 'transfers' // default fallback is standard point-to-point transfers
-  if (allText.includes('additional hotel pickup') || allText.includes('extra pickup') || allText.includes('additional pickup')) {
-    detectedService = 'additional hotel pickup'
-  } else if (allText.includes('arrival') || allText.includes('airport to hotel') || allText.includes('changi to hotel') || allText.includes('airport pickup')) {
-    detectedService = 'arrivals'
-  } else if (allText.includes('departure') || allText.includes('hotel to airport') || allText.includes('hotel to changi') || allText.includes('airport drop')) {
-    detectedService = 'departures'
-  } else if (allText.includes('airport') || allText.includes('changi') || allText.includes('flight')) {
-    detectedService = 'arrival / departure'
-  } else if (allText.includes('city tour') || allText.includes('citytour') || allText.includes('sightseeing')) {
-    detectedService = 'city tour'
-  } else if (allText.includes('disposal') || allText.includes('hourly') || allText.includes('disposal / hour') || allText.includes('per hour')) {
-    detectedService = 'disposal / hour'
-  }
-
-  // 5. Look for document matching both detectedSize and detectedService
-  if (detectedSize) {
-    for (const [k, meta] of Object.entries(transfersMeta)) {
-      if (k.includes(detectedSize)) {
-        if (detectedService === 'arrivals' && (k.includes('arrival') || k.includes('arrival / departure')) && !k.includes('departure')) {
-          return meta
-        }
-        if (detectedService === 'departures' && (k.includes('departure') || k.includes('arrival / departure')) && !k.includes('arrival')) {
-          return meta
-        }
-        if (detectedService === 'arrival / departure' && (k.includes('arrival') || k.includes('departure'))) {
-          return meta
-        }
-        if (detectedService === 'city tour' && k.includes('city tour')) {
-          return meta
-        }
-        if (detectedService === 'disposal / hour' && (k.includes('disposal') || k.includes('hour'))) {
-          return meta
-        }
-        if (detectedService === 'additional hotel pickup' && k.includes('additional hotel pickup')) {
-          return meta
-        }
-        if (detectedService === 'transfers' && k.includes('transfers') && !k.includes('additional')) {
-          return meta
-        }
-      }
-    }
-
-    // Secondary fallback for detectedSize: prefer " - transfers" (which holds the authentic vehicle photo)
-    for (const [k, meta] of Object.entries(transfersMeta)) {
-      if (k.includes(detectedSize) && k.includes('transfers') && !k.includes('additional')) {
-        return meta
-      }
-    }
-    // Any non-additional match for this vehicle size
-    for (const [k, meta] of Object.entries(transfersMeta)) {
-      if (k.includes(detectedSize) && !k.includes('additional hotel pickup')) {
-        return meta
-      }
-    }
-  }
-
-  // 6. Generic Fallback: Match cleanComp or cleanVeh against keys, STRICTLY EXCLUDING "additional hotel pickup" unless requested
+  // 4. Fallback search across keys
   for (const [k, meta] of Object.entries(transfersMeta)) {
-    if (k.includes('additional hotel pickup') && !allText.includes('additional')) continue
-    if (cleanComp && (cleanComp.includes(k) || k.includes(cleanComp))) return meta
-  }
-  for (const [k, meta] of Object.entries(transfersMeta)) {
-    if (k.includes('additional hotel pickup') && !allText.includes('additional')) continue
-    if (cleanVeh && (cleanVeh.includes(k) || k.includes(cleanVeh))) return meta
+    if (k.includes('additional hotel pickup') && !targetKey.toLowerCase().includes('additional')) continue
+    if (cleanTarget && (k.includes(cleanTarget) || cleanTarget.includes(k))) return meta
   }
 
-  // 7. Last resort: Return standard 13-seater vehicle transfer, never additional pickup or sedan
+  // 5. Last resort 13-seater transfer
   for (const [k, meta] of Object.entries(transfersMeta)) {
     if (k.includes('13-seater') && k.includes('transfers') && !k.includes('additional')) return meta
   }
-  for (const [k, meta] of Object.entries(transfersMeta)) {
-    if (k.includes('13-seater') && !k.includes('additional')) return meta
-  }
-  for (const [k, meta] of Object.entries(transfersMeta)) {
-    if (k.includes('transfers') && !k.includes('additional')) return meta
-  }
-
   for (const [k, meta] of Object.entries(transfersMeta)) {
     if (!k.includes('additional hotel pickup')) return meta
   }
@@ -2884,8 +2881,10 @@ export default function PrototypeBuilder() {
         // Compute transfer cost tied to this attraction
         let rowTransferCost = 0
         if (attrRow.hasTransfer) {
+          const default13TransferIdx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
           if (attrRow.pickupEnabled !== false) {
-            let pv: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[attrRow.pickupVehicleIndex ?? 0]
+            const pIdx = attrRow.pickupVehicleIndex !== undefined && attrRow.pickupVehicleIndex >= 0 ? attrRow.pickupVehicleIndex : default13TransferIdx
+            let pv: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[pIdx]
             if (!pv && attrRow.pickupVehicleType) {
               pv = vehiclesList.find(v => v.type.toLowerCase().trim() === attrRow.pickupVehicleType?.toLowerCase().trim())
             }
@@ -2895,7 +2894,8 @@ export default function PrototypeBuilder() {
             }
           }
           if (attrRow.dropEnabled !== false) {
-            let dv: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[attrRow.dropVehicleIndex ?? 0]
+            const dIdx = attrRow.dropVehicleIndex !== undefined && attrRow.dropVehicleIndex >= 0 ? attrRow.dropVehicleIndex : default13TransferIdx
+            let dv: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[dIdx]
             if (!dv && attrRow.dropVehicleType) {
               dv = vehiclesList.find(v => v.type.toLowerCase().trim() === attrRow.dropVehicleType?.toLowerCase().trim())
             }
@@ -3124,14 +3124,17 @@ export default function PrototypeBuilder() {
       day.attractions.forEach(a => {
         totalAttractionsCount++
         if (a.hasTransfer) {
+          const default13TransferIdx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
           if (a.pickupEnabled !== false) {
             totalTransfers++
-            const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type
+            const pIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13TransferIdx
+            const pvName = vehiclesList[pIdx]?.type
             if (pvName) usedVehicles.add(pvName.split(' - ')[0] || pvName)
           }
           if (a.dropEnabled !== false) {
             totalTransfers++
-            const dvName = vehiclesList[a.dropVehicleIndex ?? 0]?.type
+            const dIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13TransferIdx
+            const dvName = vehiclesList[dIdx]?.type
             if (dvName) usedVehicles.add(dvName.split(' - ')[0] || dvName)
           }
         }
@@ -4313,35 +4316,45 @@ export default function PrototypeBuilder() {
     // Only preloads the vehicles actually used in this itinerary, avoiding 45+ redundant network fetches
     const transferPhotosMap = new Map<string, string>()
 
+    const default13TransferIdx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
     const usedVehicleLookups: { compKey: string; type: string; hint?: string; label: string }[] = []
     itinerary.forEach(d => {
       (d.transfers || []).forEach(t => {
         const vObj = vehiclesList[t.vehicleIndex]
+        const vType = vObj?.type || t.type || '13-Seater - Private'
+        const targetComp = getTargetTransferCompositeKey(vObj?.compositeKey || vType, t.description || 'Point-to-point transfer', t.serviceType)
         usedVehicleLookups.push({
-          compKey: vObj?.compositeKey || '',
-          type: vObj?.type || t.type || '',
+          compKey: targetComp,
+          type: vType,
           hint: t.description || 'Point-to-point transfer',
-          label: `Private Transfer — ${vObj?.type || t.type || 'Vehicle'}`
+          label: `Private Transfer — ${vType}`
         })
       })
       ;(d.attractions || []).forEach(a => {
         if (a.hasTransfer) {
+          const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
           if (a.pickupEnabled !== false) {
-            const pvObj = vehiclesList[a.pickupVehicleIndex ?? 0]
+            const pvIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13TransferIdx
+            const pvObj = vehiclesList[pvIdx]
+            const pvName = pvObj?.type || a.pickupVehicleType || '13-Seater - Private'
+            const targetComp = getTargetTransferCompositeKey(pvObj?.compositeKey || pvName, a.pickupNotes || `Transfer to ${rawName}`)
             usedVehicleLookups.push({
-              compKey: pvObj?.compositeKey || '',
-              type: pvObj?.type || a.pickupVehicleType || '',
-              hint: a.pickupNotes || `Transfer to ${a.attractionName || ''}`,
-              label: `Pickup Transfer — ${pvObj?.type || a.pickupVehicleType || 'Vehicle'}`
+              compKey: targetComp,
+              type: pvName,
+              hint: a.pickupNotes || `Transfer to ${rawName}`,
+              label: `Pickup Transfer — ${pvName}`
             })
           }
           if (a.dropEnabled !== false) {
-            const dvObj = vehiclesList[a.dropVehicleIndex ?? 0]
+            const dvIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13TransferIdx
+            const dvObj = vehiclesList[dvIdx]
+            const dvName = dvObj?.type || a.dropVehicleType || '13-Seater - Private'
+            const targetComp = getTargetTransferCompositeKey(dvObj?.compositeKey || dvName, a.dropNotes || `Transfer from ${rawName}`)
             usedVehicleLookups.push({
-              compKey: dvObj?.compositeKey || '',
-              type: dvObj?.type || a.dropVehicleType || '',
-              hint: a.dropNotes || `Transfer from ${a.attractionName || ''}`,
-              label: `Drop Transfer — ${dvObj?.type || a.dropVehicleType || 'Vehicle'}`
+              compKey: targetComp,
+              type: dvName,
+              hint: a.dropNotes || `Transfer from ${rawName}`,
+              label: `Drop Transfer — ${dvName}`
             })
           }
         }
@@ -4906,8 +4919,10 @@ export default function PrototypeBuilder() {
         })
         d.attractions?.forEach(a => {
           if (!a.isOptional && a.hasTransfer) {
-            if (a.pickupVehicleType) allVehiclesSet.add(a.pickupVehicleType)
-            else if (a.pickupVehicleIndex !== undefined && vehiclesList[a.pickupVehicleIndex]) allVehiclesSet.add(vehiclesList[a.pickupVehicleIndex].type)
+            const default13TransferIdx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
+            const pIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13TransferIdx
+            const v = a.pickupVehicleType || vehiclesList[pIdx]?.type
+            if (v) allVehiclesSet.add(v)
           }
         })
       })
@@ -5106,9 +5121,9 @@ export default function PrototypeBuilder() {
         // 2. Scheduled Transfers
         day.transfers.forEach(t => {
           const vObj = vehiclesList[t.vehicleIndex]
-          const vehicle = vObj?.type || 'Vehicle'
-          const compKey = vObj?.compositeKey || ''
-          const tMeta = getTransferMetaInfo(compKey, vehicle, transfersMeta, t.description || 'Point-to-point transfer')
+          const vehicle = vObj?.type || t.type || '13-Seater - Private'
+          const targetComp = getTargetTransferCompositeKey(vObj?.compositeKey || vehicle, t.description || 'Point-to-point transfer', t.serviceType)
+          const tMeta = getTransferMetaInfo(targetComp, vehicle, transfersMeta, t.description || 'Point-to-point transfer', t.serviceType)
           const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
           timelineItems.push({
             time: t.time || '08:30',
@@ -5117,19 +5132,20 @@ export default function PrototypeBuilder() {
             detail: t.description || 'Point-to-point transfer',
             color: TEAL,
             meta: tMeta,
-            itemKey: compKey || vehicle
+            itemKey: targetComp || vehicle
           })
         })
 
         // 3. Attractions with optional pickup/drop transfers
         day.attractions.forEach(a => {
-          const name = attractionsList[a.attractionIndex]?.name || 'Attraction'
+          const name = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
           const isOpt = !!a.isOptional
           if (a.hasTransfer) {
             if (a.pickupEnabled !== false) {
-              const pvObj = vehiclesList[a.pickupVehicleIndex ?? 0]
-              const pvName = pvObj?.type || a.pickupVehicleType || 'Vehicle'
-              const pCompKey = pvObj?.compositeKey || ''
+              const pvIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13TransferIdx
+              const pvObj = vehiclesList[pvIdx]
+              const pvName = pvObj?.type || a.pickupVehicleType || '13-Seater - Private'
+              const pCompKey = getTargetTransferCompositeKey(pvObj?.compositeKey || pvName, a.pickupNotes || `Transfer to ${name}`)
               const pMeta = getTransferMetaInfo(pCompKey, pvName, transfersMeta, a.pickupNotes || `Transfer to ${name}`)
               timelineItems.push({
                 time: a.pickupTime || '09:00',
@@ -5142,9 +5158,10 @@ export default function PrototypeBuilder() {
               })
             }
             if (a.dropEnabled !== false) {
-              const dvObj = vehiclesList[a.dropVehicleIndex ?? 0]
-              const dvName = dvObj?.type || a.dropVehicleType || 'Vehicle'
-              const dCompKey = dvObj?.compositeKey || ''
+              const dvIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13TransferIdx
+              const dvObj = vehiclesList[dvIdx]
+              const dvName = dvObj?.type || a.dropVehicleType || '13-Seater - Private'
+              const dCompKey = getTargetTransferCompositeKey(dvObj?.compositeKey || dvName, a.dropNotes || `Transfer from ${name}`)
               const dMeta = getTransferMetaInfo(dCompKey, dvName, transfersMeta, a.dropNotes || `Transfer from ${name}`)
               timelineItems.push({
                 time: a.dropTime || '17:00',
@@ -8185,13 +8202,16 @@ ${proposal}
         }
         // Include inline attraction pickup/dropoff transfers in schedule if transfer filter is active
         if (scheduleFilters.transfers && a.hasTransfer) {
+          const default13TransferIdx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
           if (a.pickupEnabled !== false) {
-            const vehicle = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Vehicle'
+            const pIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13TransferIdx
+            const vehicle = vehiclesList[pIdx]?.type || 'Vehicle'
             const pickupNote = a.pickupNotes ? `${attrName} Pickup: ${a.pickupNotes}` : `${attrName} Pickup Transfer`
             events.push({ dayStr, dateStr, time: a.pickupTime || '09:00', type: 'Transfer', details: `Attraction Transfer (${vehicle})`, pax: `${adults + kids} Pax`, notes: pickupNote })
           }
           if (a.dropEnabled !== false) {
-            const vehicle = vehiclesList[a.dropVehicleIndex ?? 0]?.type || 'Vehicle'
+            const dIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13TransferIdx
+            const vehicle = vehiclesList[dIdx]?.type || 'Vehicle'
             const dropNote = a.dropNotes ? `${attrName} Dropoff: ${a.dropNotes}` : `${attrName} Dropoff Transfer`
             events.push({ dayStr, dateStr, time: a.dropTime || '17:00', type: 'Transfer', details: `Attraction Transfer (${vehicle})`, pax: `${adults + kids} Pax`, notes: dropNote })
           }
@@ -8793,8 +8813,10 @@ ${proposal}
                         day.attractions.forEach(a => {
                           const name = attractionsList[a.attractionIndex]?.name || 'Attraction'
                           if (a.hasTransfer) {
+                            const default13TransferIdx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
                             if (a.pickupEnabled !== false) {
-                              const pvName = vehiclesList[a.pickupVehicleIndex ?? 0]?.type || 'Vehicle'
+                              const pIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13TransferIdx
+                              const pvName = vehiclesList[pIdx]?.type || 'Vehicle'
                               items.push({
                                 time: a.pickupTime || '09:00',
                                 icon: '🚗',
@@ -8803,7 +8825,8 @@ ${proposal}
                               })
                             }
                             if (a.dropEnabled !== false) {
-                              const dvName = vehiclesList[a.dropVehicleIndex ?? 0]?.type || 'Vehicle'
+                              const dIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13TransferIdx
+                              const dvName = vehiclesList[dIdx]?.type || 'Vehicle'
                               items.push({
                                 time: a.dropTime || '17:00',
                                 icon: '🚗',
@@ -9244,11 +9267,12 @@ ${proposal}
                                 if (!a.hasTransfer) return null
                                 const attrName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
                                 
-                                const pv = vehiclesList[a.pickupVehicleIndex ?? 0] || (a.pickupVehicleType ? vehiclesList.find(v => v.type.toLowerCase().trim() === a.pickupVehicleType?.toLowerCase().trim()) : undefined)
+                                const default13TransferIdx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
+                                const pv = vehiclesList[a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13TransferIdx] || (a.pickupVehicleType ? vehiclesList.find(v => v.type.toLowerCase().trim() === a.pickupVehicleType?.toLowerCase().trim()) : undefined)
                                 const pvName = pv?.type || a.pickupVehicleType || 'Private Vehicle'
                                 const pvPrice = pv ? (isVehicleSIC(pv) ? (adults + kids) * pv.pricePerTransfer : pv.pricePerTransfer) : 0
 
-                                const dv = vehiclesList[a.dropVehicleIndex ?? 0] || (a.dropVehicleType ? vehiclesList.find(v => v.type.toLowerCase().trim() === a.dropVehicleType?.toLowerCase().trim()) : undefined)
+                                const dv = vehiclesList[a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13TransferIdx] || (a.dropVehicleType ? vehiclesList.find(v => v.type.toLowerCase().trim() === a.dropVehicleType?.toLowerCase().trim()) : undefined)
                                 const dvName = dv?.type || a.dropVehicleType || 'Private Vehicle'
                                 const dvPrice = dv ? (isVehicleSIC(dv) ? (adults + kids) * dv.pricePerTransfer : dv.pricePerTransfer) : 0
 
@@ -12371,7 +12395,7 @@ ${proposal}
                                                     ))}
                                                   </select>
                                                   <select
-                                                    value={row.pickupVehicleIndex ?? 0}
+                                                    value={row.pickupVehicleIndex !== undefined && row.pickupVehicleIndex >= 0 ? row.pickupVehicleIndex : get13SeaterVehicleIndex(vehiclesList, 'transfer')}
                                                     onChange={e => updateAttractionRow(dIdx, existingIdx, 'pickupVehicleIndex', parseInt(e.target.value))}
                                                     style={{ padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', maxWidth: '200px' }}
                                                     disabled={row.pickupEnabled === false}
@@ -12420,7 +12444,7 @@ ${proposal}
                                                     ))}
                                                   </select>
                                                   <select
-                                                    value={row.dropVehicleIndex ?? 0}
+                                                    value={row.dropVehicleIndex !== undefined && row.dropVehicleIndex >= 0 ? row.dropVehicleIndex : get13SeaterVehicleIndex(vehiclesList, 'transfer')}
                                                     onChange={e => updateAttractionRow(dIdx, existingIdx, 'dropVehicleIndex', parseInt(e.target.value))}
                                                     style={{ padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', maxWidth: '200px' }}
                                                     disabled={row.dropEnabled === false}
