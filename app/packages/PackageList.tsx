@@ -5,6 +5,7 @@ import { urlForImage } from '../../sanity/lib/image'
 import Link from 'next/link'
 import IciciQrModal from '../../components/IciciQrModal'
 import AdBanner from '../../components/AdBanner'
+import { calculateLandPackagePrices } from '../../utils/readyPackages'
 
 export default function PackageList({
   initialPackages,
@@ -19,6 +20,7 @@ export default function PackageList({
   const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null)
   const [activeModalPackage, setActiveModalPackage] = useState<any | null>(null)
   const [hideIciciPackages, setHideIciciPackages] = useState(false)
+  const [readyCardModes, setReadyCardModes] = useState<Record<string, 'sic' | 'private13'>>({})
 
   useEffect(() => {
     fetch('/api/site-settings')
@@ -357,7 +359,14 @@ export default function PackageList({
           ))}
 
           {/* ── Ready-Made B2B Land Packages (Hotel Excluded) ── */}
-          {filteredReadyPackages.map((rPkg) => (
+          {filteredReadyPackages.map((rPkg) => {
+            const pricing = calculateLandPackagePrices(rPkg)
+            const currentMode = readyCardModes[rPkg._id] || (rPkg.transferPricingOption === 'sic_only' || rPkg.transferPricingOption === 'both_default_sic' ? 'sic' : 'private13')
+            const displayedSGD = currentMode === 'sic' ? pricing.priceSic : pricing.pricePrivate
+            const displayedINR = Math.round(displayedSGD * exchangeRate)
+            const allowsToggle = rPkg.transferPricingOption !== 'sic_only' && rPkg.transferPricingOption !== 'private_only'
+
+            return (
             <div key={`ready-${rPkg._id}`} style={{ display: 'contents' }}>
               <div
                 className="glass"
@@ -375,7 +384,7 @@ export default function PackageList({
                 <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'start' }}>
                   {/* Image Section */}
                   <Link
-                    href={`/ready-made/${rPkg.slug || rPkg._id}`}
+                    href={`/ready-made/${rPkg.slug || rPkg._id}?mode=${currentMode}`}
                     style={{
                       flex: '1 0 250px',
                       maxWidth: '320px',
@@ -477,12 +486,69 @@ export default function PackageList({
                             {rPkg.category?.toUpperCase() || 'POPULAR'}
                           </span>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                          {allowsToggle && (
+                            <div
+                              style={{
+                                display: 'inline-flex',
+                                background: '#F1F5F9',
+                                borderRadius: '20px',
+                                padding: '2px',
+                                border: '1px solid #CBD5E1',
+                                marginBottom: '2px'
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  setReadyCardModes(prev => ({ ...prev, [rPkg._id]: 'sic' }))
+                                }}
+                                style={{
+                                  background: currentMode === 'sic' ? '#0F4C3A' : 'transparent',
+                                  color: currentMode === 'sic' ? '#FFF' : '#475569',
+                                  border: 'none',
+                                  borderRadius: '16px',
+                                  padding: '3px 9px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease'
+                                }}
+                                title="Switch to SIC Shared Coach rate"
+                              >
+                                🚌 SIC Shared
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  setReadyCardModes(prev => ({ ...prev, [rPkg._id]: 'private13' }))
+                                }}
+                                style={{
+                                  background: currentMode === 'private13' ? '#0F4C3A' : 'transparent',
+                                  color: currentMode === 'private13' ? '#FFF' : '#475569',
+                                  border: 'none',
+                                  borderRadius: '16px',
+                                  padding: '3px 9px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.15s ease'
+                                }}
+                                title="Switch to Private 13-Seater Minibus rate"
+                              >
+                                🚐 Private Minibus
+                              </button>
+                            </div>
+                          )}
                           <span style={{ fontWeight: 800, fontSize: '1.65rem', color: 'var(--crimson-primary)', fontFamily: 'var(--font-inter), sans-serif' }}>
-                            ₹ {Math.round((Number(rPkg.startingPriceSGD) || 485) * exchangeRate).toLocaleString('en-IN')}
+                            ₹ {displayedINR.toLocaleString('en-IN')}
                           </span>
-                          <span style={{ fontSize: '0.78rem', color: 'var(--emerald-secondary)', fontWeight: 700, opacity: 0.85 }}>
-                            (From S$ {(Number(rPkg.startingPriceSGD) || 485).toLocaleString()} Land Only)
+                          <span style={{ fontSize: '0.78rem', color: 'var(--emerald-secondary)', fontWeight: 700, opacity: 0.9 }}>
+                            (From S$ {displayedSGD.toLocaleString()} Land Only • {currentMode === 'sic' ? 'SIC Sightseeing' : 'Private Minibus'})
                           </span>
                         </div>
                       </div>
@@ -496,12 +562,19 @@ export default function PackageList({
                       </p>
 
                       {/* Land Inclusions Notice */}
-                      <div style={{ background: '#F0FDF4', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #BBF7D0', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                        <strong style={{ color: '#166534', display: 'block', marginBottom: '0.2rem' }}>
-                          🚐 Inclusions & Modality:
-                        </strong>
-                        <span style={{ color: '#14532D', opacity: 0.9 }}>
-                          Chauffeured Private 13-Seater Minibus / SIC Transfers + Top Attraction Entry (Universal Studios, Gardens by the Bay, Night Safari). Hotel excluded.
+                      <div style={{ background: currentMode === 'sic' ? '#EFF6FF' : '#F0FDF4', padding: '0.75rem 1rem', borderRadius: '8px', border: currentMode === 'sic' ? '1px solid #BFDBFE' : '1px solid #BBF7D0', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                          <strong style={{ color: currentMode === 'sic' ? '#1E40AF' : '#166534', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {currentMode === 'sic' ? '🚌 Modality: SIC Shared Sightseeing + Private Airport' : '🚐 Modality: Chauffeured Private 13-Seater Minibus'}
+                          </strong>
+                          <span style={{ fontSize: '0.72rem', fontWeight: 700, color: currentMode === 'sic' ? '#1D4ED8' : '#15803D', background: currentMode === 'sic' ? '#DBEAFE' : '#DCFCE7', padding: '2px 8px', borderRadius: '12px' }}>
+                            {currentMode === 'sic' ? 'Saver Option' : 'VIP Private Option'}
+                          </span>
+                        </div>
+                        <span style={{ color: currentMode === 'sic' ? '#1E3A8A' : '#14532D', opacity: 0.9, lineHeight: 1.45, display: 'block' }}>
+                          {currentMode === 'sic'
+                            ? 'Airport Arrival & Departure transfers are conducted by Private 13-Seater Minibus. Sightseeing transfers are via air-conditioned SIC Shared Coach. Top Attraction Entries included (Hotel excluded).'
+                            : 'All Airport & Sightseeing transfers are conducted exclusively by dedicated chauffeured Private 13-Seater Minibus for your party. Top Attraction Entries included (Hotel excluded).'}
                         </span>
                       </div>
                     </div>
@@ -509,7 +582,7 @@ export default function PackageList({
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
                       {/* Direct Page Link */}
                       <Link
-                        href={`/ready-made/${rPkg.slug || rPkg._id}`}
+                        href={`/ready-made/${rPkg.slug || rPkg._id}?mode=${currentMode}`}
                         style={{
                           background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)',
                           border: 'none',
@@ -525,7 +598,7 @@ export default function PackageList({
                           boxShadow: '0 2px 8px rgba(15, 76, 58, 0.2)'
                         }}
                       >
-                        <span>⚡</span> Instant Land Quote & Dedicated Page ➔
+                        <span>⚡</span> Instant Land Quote & Dedicated Page ({currentMode === 'sic' ? 'SIC' : 'Private'}) ➔
                       </Link>
 
                       <Link
@@ -552,7 +625,8 @@ export default function PackageList({
                 </div>
               </div>
             </div>
-          ))}
+            )
+          })}
           </>
         ) : (
           <div style={{ textAlign: 'center', padding: '3rem', opacity: 0.7 }}>

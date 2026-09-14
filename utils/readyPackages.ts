@@ -325,3 +325,49 @@ export async function getReadyPackageBySlug(slugOrId: string): Promise<ReadyPack
   const clean = slugOrId.toLowerCase().trim()
   return all.find(p => p.slug === clean || p._id === clean || normalizeReadyPackageSlug(p.title) === clean) || null
 }
+
+export function calculateLandPackagePrices(pkg: any) {
+  const baseStarting = Number(pkg?.startingPriceSGD) || 485
+  let privateTransferCost = 0
+  let sicTransferCost = 0
+
+  ;(pkg?.itinerary || []).forEach((day: any) => {
+    ;(day.transfers || []).forEach((tr: any) => {
+      const sType = (tr.serviceType || '').toLowerCase()
+      const vType = (tr.vehicleType || '').toLowerCase()
+      const isArr = sType === 'arrival' || vType.includes('arrival')
+      const isDep = sType === 'departure' || vType.includes('departure')
+      const isCity = sType === 'citytour' || sType === 'city tour' || vType.includes('city')
+      const isDisp = sType === 'disposal' || vType.includes('disposal')
+
+      if (isArr || isDep) {
+        // Airport is strictly Private 13-Seater Minibus
+        privateTransferCost += 45
+        sicTransferCost += 45
+      } else if (isDisp) {
+        const hrs = Number(tr.hours) > 0 ? Number(tr.hours) : 4
+        privateTransferCost += 45 * hrs
+        sicTransferCost += 45 * hrs
+      } else if (isCity) {
+        // City tour: S$ 120 flat vehicle vs S$ 15/person for SIC (x2 pax)
+        privateTransferCost += 120
+        sicTransferCost += 15 * 2
+      } else {
+        // Inter-attraction: S$ 45 flat vehicle vs S$ 12/person for SIC (x2 pax)
+        privateTransferCost += 45
+        sicTransferCost += 12 * 2
+      }
+    })
+  })
+
+  // Transfer difference per adult for standard 2-pax quote
+  const transferDiffPerAdult = Math.max(0, Math.round((privateTransferCost - sicTransferCost) / 2))
+  const pricePrivate = baseStarting
+  const priceSic = Math.max(150, baseStarting - transferDiffPerAdult)
+
+  return {
+    pricePrivate,
+    priceSic,
+    transferDiffPerAdult
+  }
+}

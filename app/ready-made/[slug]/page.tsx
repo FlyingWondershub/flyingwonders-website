@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getAllReadyPackages, getReadyPackageBySlug } from '../../../utils/readyPackages'
 import { getLiveExchangeRate } from '../../../utils/exchange'
+import { Suspense } from 'react'
 import ReadyMadeDetailClient from './ReadyMadeDetailClient'
 
 export const revalidate = 600
@@ -81,6 +82,8 @@ export default async function ReadyMadeDetailPage({ params }: { params: Promise<
   } catch (e) {}
 
   return (
-    <ReadyMadeDetailClient pkg={pkg} exchangeRate={exchangeRate} />
+    <Suspense fallback={<div className="container" style={{ paddingTop: '5rem', textAlign: 'center' }}>Loading Land Package...</div>}>
+      <ReadyMadeDetailClient pkg={pkg} exchangeRate={exchangeRate} />
+    </Suspense>
   )
 }

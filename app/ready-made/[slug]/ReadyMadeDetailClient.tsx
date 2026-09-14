@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Users,
   Calendar,
@@ -129,14 +129,24 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
   const [activeMediaTab, setActiveMediaTab] = useState<'video' | 'photo'>(hasVideo ? 'video' : 'photo')
 
   // Quoter state
+  const searchParams = useSearchParams()
+  const urlMode = searchParams?.get('mode')
+  const initialMode = urlMode === 'sic' ? 'sic' : (urlMode === 'private13' ? 'private13' : (pkg.transferPricingOption === 'sic_only' || pkg.transferPricingOption === 'both_default_sic' ? 'sic' : 'private13'))
+
   const [paxAdults, setPaxAdults] = useState(2)
   const [paxKids, setPaxKids] = useState(0)
   const [childAges, setChildAges] = useState<number[]>([])
-  const [transferMode, setTransferMode] = useState<'private13' | 'sic'>('private13')
+  const [transferMode, setTransferMode] = useState<'private13' | 'sic'>(initialMode)
   const [markupPercent, setMarkupPercent] = useState(0)
   const [travelDate, setTravelDate] = useState('')
   const [guestName, setGuestName] = useState('')
   const [guestPhone, setGuestPhone] = useState('')
+
+  useEffect(() => {
+    if (urlMode === 'sic' || urlMode === 'private13') {
+      setTransferMode(urlMode)
+    }
+  }, [urlMode])
 
   // Toast
   const [toast, setToast] = useState<{ message: string; type?: 'success' | 'info' | 'error' } | null>(null)
@@ -215,11 +225,11 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
           const rows: any[] = XLSX.utils.sheet_to_json(aSheet)
           const aMap: Record<string, { adult: number; child: number }> = {}
           rows.forEach(r => {
-            const name = (r['Attraction Name'] || r['Attraction'] || '').toString().trim().toLowerCase()
+            const name = (r['Attractions'] || r['Attraction Name'] || r['Attraction'] || '').toString().trim().toLowerCase()
             if (name) {
               aMap[name] = {
-                adult: Number(r['Adult Rate($)'] ?? r['Adult Rate'] ?? r['Rate($)']) || 0,
-                child: Number(r['Child Rate($)'] ?? r['Child Rate']) || 0
+                adult: Number(r['Adult'] ?? r['Adult Rate($)'] ?? r['Adult Rate'] ?? r['Rate($)']) || 0,
+                child: Number(r['Child'] ?? r['Child Rate($)'] ?? r['Child Rate']) || 0
               }
             }
           })
@@ -242,46 +252,65 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
 
   // Live Price Calculation Engine
   const calculation = useMemo(() => {
-    const totalPax = paxAdults + paxKids
-    const isSmallGroup = totalPax <= 3
     const isPrivate = transferMode === 'private13'
+    const baseStarting = Number(pkg.startingPriceSGD) || 485
 
-    // Minibus rate (~65 per transfer) or SIC (~18 per pax transfer)
-    let transferTotalNet = 0
-    let totalAttractionAdultNet = 0
-    let totalAttractionChildNet = 0
+    // 1. Baseline 2-pax transfer tariffs calculation
+    let base2PaxPrivateTransfers = 0
+    let base2PaxSicTransfers = 0
+    let sicSightseeingPerPax = 0
+    let airportTransfersTotal = 0
 
-    const distinctAttractions: string[] = []
     ;(pkg.itinerary || []).forEach(day => {
       ;(day.transfers || []).forEach(t => {
-        const isArrivalOrDep = t.serviceType === 'arrival' || t.serviceType === 'departure'
-        if (isPrivate || isArrivalOrDep) {
-          // 13-seater minibus vehicle fixed rate
-          transferTotalNet += 65
+        const sType = (t.serviceType || '').toLowerCase()
+        const vType = (t.vehicleType || '').toLowerCase()
+        const isArr = sType === 'arrival' || vType.includes('arrival')
+        const isDep = sType === 'departure' || vType.includes('departure')
+        const isCity = sType === 'citytour' || sType === 'city tour' || vType.includes('city')
+        const isDisp = sType === 'disposal' || vType.includes('disposal')
+
+        if (isArr || isDep) {
+          // Airport Arrival & Departure is always Chauffeured Private 13-Seater Minibus
+          airportTransfersTotal += 45
+          base2PaxPrivateTransfers += 45
+          base2PaxSicTransfers += 45
+        } else if (isDisp) {
+          const hrs = Number(t.hours) > 0 ? Number(t.hours) : 4
+          base2PaxPrivateTransfers += 45 * hrs
+          base2PaxSicTransfers += 45 * hrs
+        } else if (isCity) {
+          base2PaxPrivateTransfers += 120
+          base2PaxSicTransfers += 15 * 2 // 2 pax baseline
+          sicSightseeingPerPax += 15
         } else {
-          // SIC shared coach rate per paying pax
-          transferTotalNet += (isSmallGroup ? 20 : 18) * Math.max(1, totalPax)
-        }
-      })
-
-      ;(day.attractions || []).forEach(a => {
-        if (!a.isOptional && a.attractionName) {
-          distinctAttractions.push(a.attractionName)
-          const clean = a.attractionName.toLowerCase().trim()
-          const tariff = attractionsTariff[clean]
-          const adRate = tariff?.adult || 45
-          const chRate = tariff?.child || (tariff?.adult ? tariff.adult * 0.75 : 35)
-
-          totalAttractionAdultNet += adRate
-          totalAttractionChildNet += chRate
+          base2PaxPrivateTransfers += 45
+          base2PaxSicTransfers += 12 * 2 // 2 pax baseline
+          sicSightseeingPerPax += 12
         }
       })
     })
 
-    // If template has base startingPriceSGD, calibrate base
-    const baseStarting = pkg.startingPriceSGD || 485
-    const computedAdultNet = Math.max(baseStarting, Math.round((transferTotalNet / Math.max(1, paxAdults)) + totalAttractionAdultNet))
-    const computedChildNet = Math.max(baseStarting * 0.75, Math.round(totalAttractionChildNet + (isPrivate ? 0 : (transferTotalNet / Math.max(1, totalPax)))))
+    const transferDiffPerAdult2Pax = Math.max(0, Math.round((base2PaxPrivateTransfers - base2PaxSicTransfers) / 2))
+    const base2PaxTransferPerAdult = base2PaxPrivateTransfers / 2
+    const baselineAttractionsAndMargin = Math.max(100, baseStarting - base2PaxTransferPerAdult)
+
+    let currentTransferPerAdult = 0
+    let currentTransferPerChild = 0
+
+    if (isPrivate) {
+      // 13-seater minibus vehicle fixed rate shared among paying adults
+      currentTransferPerAdult = base2PaxPrivateTransfers / Math.max(1, paxAdults)
+      currentTransferPerChild = 0 // Minibus seat already paid by group
+    } else {
+      // Airport Minibus vehicle shared among adults + sightseeing coach per paying pax
+      currentTransferPerAdult = (airportTransfersTotal / Math.max(1, paxAdults)) + sicSightseeingPerPax
+      currentTransferPerChild = sicSightseeingPerPax // Seat on SIC coach
+    }
+
+    const computedAdultNet = Math.round(baselineAttractionsAndMargin + currentTransferPerAdult)
+    const childAttractionsBase = Math.round(baselineAttractionsAndMargin * 0.7)
+    const computedChildNet = Math.round(childAttractionsBase + currentTransferPerChild)
 
     const markupMultiplier = 1 + (markupPercent / 100)
     const adultQuoteSGD = Math.round(computedAdultNet * markupMultiplier)
@@ -297,9 +326,10 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
       totalClientPriceINR,
       childTicketCount: paxKids,
       netAdultSGD: computedAdultNet,
-      netChildSGD: computedChildNet
+      netChildSGD: computedChildNet,
+      transferDiffPerAdult2Pax
     }
-  }, [pkg, paxAdults, paxKids, transferMode, markupPercent, exchangeRate, attractionsTariff])
+  }, [pkg, paxAdults, paxKids, transferMode, markupPercent, exchangeRate])
 
   const showToastMsg = (msg: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToast({ message: msg, type })
@@ -935,13 +965,13 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
               minWidth: '220px'
             }}>
               <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#D4AF37', fontWeight: 800, letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>
-                Est. Starting Rate
+                Est. Rate ({transferMode === 'sic' ? 'SIC Shared' : 'Private 13-Seater'})
               </span>
               <div style={{ fontSize: '1.9rem', fontWeight: 800, lineHeight: 1.1 }}>
-                S$ {(Number(pkg?.startingPriceSGD) || 485).toLocaleString()}
+                S$ {calculation.adultQuoteSGD.toLocaleString()}
               </div>
               <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', display: 'block', marginTop: '0.25rem' }}>
-                Per Adult (Min 2 Pax)
+                Per Adult (₹{Math.round(calculation.adultQuoteSGD * exchangeRate).toLocaleString('en-IN')})
               </span>
             </div>
           </div>
@@ -1338,7 +1368,14 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
                     textAlign: 'left'
                   }}
                 >
-                  <div style={{ fontWeight: 800 }}>SIC Coach Mode</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                    <span style={{ fontWeight: 800 }}>SIC Coach Mode</span>
+                    {calculation.transferDiffPerAdult2Pax > 0 && (
+                      <span style={{ fontSize: '0.62rem', background: '#DCFCE7', color: '#15803D', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
+                        Save ~S${calculation.transferDiffPerAdult2Pax}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontSize: '0.68rem', opacity: 0.8 }}>Shared Sightseeing</div>
                 </button>
               </div>
