@@ -3,6 +3,7 @@ import { createClient } from 'next-sanity';
 import { dataset, projectId, apiVersion } from '../sanity/env';
 
 import { getAllPackages, normalizeSlug } from '../utils/packages';
+import { getAllReadyPackages } from '../utils/readyPackages';
 import { getAllHotels, slugifyHotelName } from '../utils/hotels';
 import { getAllAttractions, slugifyAttractionName } from '../utils/attractions';
 import { getAllTours, slugifyTourTitle } from '../utils/tours';
@@ -92,6 +93,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
      console.error('Failed to get packages for sitemap:', err)
    }
 
+   // Dynamic ready-made land package routes
+   let readyPackageSitemap: MetadataRoute.Sitemap = []
+   try {
+     const readyPackages = await getAllReadyPackages()
+     readyPackageSitemap = readyPackages.map((pkg) => ({
+       url: `${baseUrl}/ready-made/${pkg.slug}`,
+       lastModified: today,
+       changeFrequency: 'weekly' as MetadataRoute.Sitemap[0]['changeFrequency'],
+       priority: 0.90,
+     }))
+   } catch (err) {
+     console.error('Failed to get ready packages for sitemap:', err)
+   }
+
    // Dynamic blog routes – fetch all published slugs
    let blogRoutes: MetadataRoute.Sitemap = []
    try {
@@ -150,5 +165,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.error('Failed to get tour routes for sitemap:', err)
     }
 
-    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap, ...tourSitemap]
+    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...readyPackageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap, ...tourSitemap]
 }

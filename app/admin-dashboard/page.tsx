@@ -1476,7 +1476,7 @@ export default function AdminDashboard() {
             {/* Live Status Badges & Direct XML Inspect */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#166534', background: '#DCFCE7', border: '1px solid #BBF7D0', padding: '3px 9px', borderRadius: '12px' }}>
-                ● 47 Routes Verified
+                ● 48 Routes Verified
               </span>
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1E40AF', background: '#DBEAFE', border: '1px solid #BFDBFE', padding: '3px 9px', borderRadius: '12px' }}>
                 ● 0 Dead Links
@@ -1514,6 +1514,7 @@ export default function AdminDashboard() {
                   { name: 'B2B Agent Portal', path: '/agent-portal', desc: 'Partner agent workspace & dashboard' },
                   { name: 'Custom Package Builder & Land Quoter', path: '/custom-package', desc: 'FIT quotation engine, Ready-Made Land Packages (No Hotels), PDF & Flyer generator' },
                   { name: 'Ready-Made Land Packages (No Hotels)', path: '/ready-made', desc: 'Dedicated B2B land packages (13-seater minibus & SIC, max 12 pax)' },
+                  { name: 'Ready-Made Package Dedicated Pages', path: '/ready-made/3n-4d-singapore-highlights-city-essentials', desc: 'Direct SEO landing pages, video previews & live quoter for each ready-made template' },
                   { name: 'B2B Travel Directory', path: '/b2b-directory', desc: 'Verified agencies & DMC directory' },
                   { name: 'B2B Leads & RFQs', path: '/b2b-leads', desc: 'Live buyer inquiries & trade leads' },
                   { name: 'B2B Partnership Hub', path: '/b2b', desc: 'Trade partner registration & perks' },

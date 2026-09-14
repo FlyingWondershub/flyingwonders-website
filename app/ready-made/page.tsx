@@ -1651,7 +1651,7 @@ export default function ReadyMadePackagesPage() {
             const hasPhoto = !!item.photoData
             const imgW = 34
             const imgH = 22
-            const textW = hasPhoto ? CW - imgW - 14 : CW - 24
+            const textW = hasPhoto ? (CW - imgW - 27) : (CW - 25)
 
             font('bold', 8.2)
             const titleLines = doc.splitTextToSize(item.title, textW)
@@ -1716,12 +1716,12 @@ export default function ReadyMadePackagesPage() {
 
             // Features Inclusions (2 columns)
             if (inclusions.length > 0) {
-              const colW = (textW - 22) / 2
+              const colW = (textW - 6) / 2
               font('normal', 6.3); setTxt([15, 118, 110])
               for (let i = 0; i < inclusions.length; i += 2) {
                 doc.text(`• ${inclusions[i]}`, ML + 21, ty)
                 if (inclusions[i + 1]) {
-                  doc.text(`• ${inclusions[i + 1]}`, ML + 21 + colW, ty)
+                  doc.text(`• ${inclusions[i + 1]}`, ML + 21 + colW + 3, ty)
                 }
                 ty += 2.8
               }
@@ -1732,7 +1732,7 @@ export default function ReadyMadePackagesPage() {
             const hasPhoto = !!item.photoData
             const imgW = 34
             const imgH = 22
-            const textW = hasPhoto ? CW - imgW - 14 : CW - 28
+            const textW = hasPhoto ? (CW - imgW - 28) : (CW - 26)
 
             font('bold', 8.5)
             const titleLines = doc.splitTextToSize(item.title, textW)
@@ -2105,7 +2105,7 @@ export default function ReadyMadePackagesPage() {
           {filteredTemplates.map(tmpl => {
             const tmplId = tmpl._id || tmpl.title
             const hasVideo = !!tmpl.videoUrl
-            const activeTab = (hasVideo && activeMediaTabs[tmplId]) ? activeMediaTabs[tmplId] : 'photo'
+            const activeTab = activeMediaTabs[tmplId] || (hasVideo ? 'video' : 'photo')
             const videoInfo = hasVideo ? getEmbedVideoInfo(tmpl.videoUrl) : null
 
             return (
@@ -2434,6 +2434,29 @@ export default function ReadyMadePackagesPage() {
                 >
                   <span>⚙️</span> Customize with Hotels in Builder
                 </button>
+
+                <Link
+                  href={`/ready-made/${tmpl.slug || tmpl._id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    width: '100%',
+                    background: '#F1F5F9',
+                    color: '#0A2240',
+                    fontWeight: 700,
+                    fontSize: '0.78rem',
+                    padding: '0.45rem',
+                    borderRadius: '6px',
+                    border: '1px solid #CBD5E1',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.35rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <span>🔗</span> Dedicated Page & Direct Link ➔
+                </Link>
               </div>
 
             </div>

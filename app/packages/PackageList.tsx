@@ -6,8 +6,16 @@ import Link from 'next/link'
 import IciciQrModal from '../../components/IciciQrModal'
 import AdBanner from '../../components/AdBanner'
 
-export default function PackageList({ initialPackages, exchangeRate = 74.81 }: { initialPackages: any[], exchangeRate?: number }) {
-  const [activeTier, setActiveTier] = useState('all')
+export default function PackageList({
+  initialPackages,
+  readyPackages = [],
+  exchangeRate = 74.81
+}: {
+  initialPackages: any[]
+  readyPackages?: any[]
+  exchangeRate?: number
+}) {
+  const [activeTier, setActiveTier] = useState<string>('all')
   const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null)
   const [activeModalPackage, setActiveModalPackage] = useState<any | null>(null)
   const [hideIciciPackages, setHideIciciPackages] = useState(false)
@@ -23,9 +31,25 @@ export default function PackageList({ initialPackages, exchangeRate = 74.81 }: {
       .catch(() => {})
   }, [])
 
-  const filteredPackages = activeTier === 'all' 
-    ? initialPackages 
-    : initialPackages.filter(pkg => pkg.tier === activeTier)
+  const showTourPackages = activeTier !== 'land-only'
+  const showReadyPackages = activeTier === 'all' || activeTier === 'land-only' || activeTier === 'budget' || activeTier === 'premium' || activeTier === 'groups'
+
+  const filteredTourPackages = showTourPackages
+    ? (activeTier === 'all' || activeTier === 'with-hotels'
+        ? initialPackages
+        : initialPackages.filter(pkg => pkg.tier === activeTier))
+    : []
+
+  const filteredReadyPackages = showReadyPackages
+    ? (activeTier === 'all' || activeTier === 'land-only'
+        ? readyPackages
+        : readyPackages.filter(pkg => {
+            if (activeTier === 'budget') return pkg.category === 'budget' || pkg.startingPriceSGD < 600
+            if (activeTier === 'premium') return pkg.category === 'luxury' || pkg.startingPriceSGD >= 700
+            if (activeTier === 'groups') return pkg.category === 'family' || pkg.category === 'mice'
+            return false
+          }))
+    : []
 
   return (
     <div>
@@ -53,23 +77,33 @@ export default function PackageList({ initialPackages, exchangeRate = 74.81 }: {
       </div>
 
       {/* Dynamic Filter Tabs */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
-        {['all', 'budget', 'premium', 'solo', 'groups', 'education'].map((tier) => (
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '0.65rem', marginBottom: '3rem', flexWrap: 'wrap' }}>
+        {[
+          { id: 'all', label: 'All Packages' },
+          { id: 'with-hotels', label: '🏨 With Hotels (Full Holiday)' },
+          { id: 'land-only', label: '⭐ Land Packages (No Hotels)' },
+          { id: 'budget', label: 'Budget' },
+          { id: 'premium', label: 'Premium' },
+          { id: 'solo', label: 'Solo' },
+          { id: 'groups', label: 'Groups/Families' },
+          { id: 'education', label: '🎓 Education Tours' }
+        ].map((tab) => (
           <button
-            key={tier}
-            onClick={() => setActiveTier(tier)}
-            className={`btn ${activeTier === tier ? 'btn-primary' : 'glass hover-lift'}`}
-            style={{ textTransform: 'capitalize' }}
+            key={tab.id}
+            onClick={() => setActiveTier(tab.id)}
+            className={`btn ${activeTier === tab.id ? 'btn-primary' : 'glass hover-lift'}`}
+            style={{ fontWeight: 700, fontSize: '0.84rem', padding: '0.5rem 1rem' }}
           >
-            {tier === 'groups' ? 'Groups/Families' : tier === 'education' ? '🎓 Education Tours' : tier}
+            {tab.label}
           </button>
         ))}
       </div>
 
       {/* Package Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}>
-        {filteredPackages.length > 0 ? (
-          filteredPackages.map((pkg, pIdx) => (
+        {(filteredTourPackages.length > 0 || filteredReadyPackages.length > 0) ? (
+          <>
+          {filteredTourPackages.map((pkg, pIdx) => (
             <div key={pkg._id} style={{ display: 'contents' }}>
             <div className="glass" style={{ borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column', background: 'var(--bg-main)', border: '1px solid var(--glass-border)', padding: '1.5rem' }}>
               <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'start' }}>
@@ -320,7 +354,206 @@ export default function PackageList({ initialPackages, exchangeRate = 74.81 }: {
               />
             )}
             </div>
-          ))
+          ))}
+
+          {/* ── Ready-Made B2B Land Packages (Hotel Excluded) ── */}
+          {filteredReadyPackages.map((rPkg) => (
+            <div key={`ready-${rPkg._id}`} style={{ display: 'contents' }}>
+              <div
+                className="glass"
+                style={{
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  background: 'var(--bg-main)',
+                  border: '1px solid #FCD34D',
+                  padding: '1.5rem',
+                  boxShadow: '0 4px 20px rgba(212,175,55,0.08)'
+                }}
+              >
+                <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'start' }}>
+                  {/* Image Section */}
+                  <Link
+                    href={`/ready-made/${rPkg.slug || rPkg._id}`}
+                    style={{
+                      flex: '1 0 250px',
+                      maxWidth: '320px',
+                      minHeight: '260px',
+                      alignSelf: 'stretch',
+                      background: '#091A2F',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1px solid rgba(212,175,55,0.3)',
+                      textDecoration: 'none'
+                    }}
+                    title={`View ${rPkg.title} dedicated page`}
+                  >
+                    {rPkg.coverImage && (
+                      <>
+                        <img
+                          src={rPkg.coverImage}
+                          alt=""
+                          aria-hidden="true"
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            filter: 'blur(16px)',
+                            opacity: 0.45,
+                            transform: 'scale(1.15)'
+                          }}
+                        />
+                        <img
+                          src={rPkg.coverImage}
+                          alt={rPkg.title}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            maxHeight: '340px',
+                            objectFit: 'contain',
+                            display: 'block',
+                            position: 'relative',
+                            zIndex: 1
+                          }}
+                        />
+                      </>
+                    )}
+
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        left: '8px',
+                        zIndex: 2,
+                        background: '#D4AF37',
+                        color: '#111',
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em'
+                      }}
+                    >
+                      Land Only (No Hotels)
+                    </div>
+
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        right: '8px',
+                        zIndex: 2,
+                        background: 'rgba(15, 76, 58, 0.9)',
+                        color: '#FFF',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        padding: '3px 8px',
+                        borderRadius: '12px',
+                        backdropFilter: 'blur(4px)',
+                        pointerEvents: 'none'
+                      }}
+                    >
+                      🌙 {rPkg.nightsCount}N / {rPkg.nightsCount + 1}D
+                    </div>
+                  </Link>
+
+                  {/* Text Details Section */}
+                  <div style={{ flex: '2 0 300px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '2px 8px', borderRadius: '6px', fontWeight: 800 }}>
+                            ⭐ B2B Land Package
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
+                            {rPkg.category?.toUpperCase() || 'POPULAR'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '1.65rem', color: 'var(--crimson-primary)', fontFamily: 'var(--font-inter), sans-serif' }}>
+                            ₹ {Math.round((Number(rPkg.startingPriceSGD) || 485) * exchangeRate).toLocaleString('en-IN')}
+                          </span>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--emerald-secondary)', fontWeight: 700, opacity: 0.85 }}>
+                            (From S$ {(Number(rPkg.startingPriceSGD) || 485).toLocaleString()} Land Only)
+                          </span>
+                        </div>
+                      </div>
+
+                      <h3 style={{ margin: '0.5rem 0', color: 'var(--text-dark)', fontSize: '1.6rem', fontFamily: 'var(--font-playfair), serif' }}>
+                        {rPkg.title}
+                      </h3>
+
+                      <p style={{ fontSize: '0.92rem', opacity: 0.85, marginBottom: '1rem', lineHeight: 1.5, textAlign: 'justify' }}>
+                        {rPkg.summary}
+                      </p>
+
+                      {/* Land Inclusions Notice */}
+                      <div style={{ background: '#F0FDF4', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #BBF7D0', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                        <strong style={{ color: '#166534', display: 'block', marginBottom: '0.2rem' }}>
+                          🚐 Inclusions & Modality:
+                        </strong>
+                        <span style={{ color: '#14532D', opacity: 0.9 }}>
+                          Chauffeured Private 13-Seater Minibus / SIC Transfers + Top Attraction Entry (Universal Studios, Gardens by the Bay, Night Safari). Hotel excluded.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+                      {/* Direct Page Link */}
+                      <Link
+                        href={`/ready-made/${rPkg.slug || rPkg._id}`}
+                        style={{
+                          background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)',
+                          border: 'none',
+                          color: '#FFF',
+                          padding: '0.6rem 1.25rem',
+                          borderRadius: '6px',
+                          fontWeight: 800,
+                          fontSize: '0.88rem',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 2px 8px rgba(15, 76, 58, 0.2)'
+                        }}
+                      >
+                        <span>⚡</span> Instant Land Quote & Dedicated Page ➔
+                      </Link>
+
+                      <Link
+                        href={`/custom-package?from=packages&template=${rPkg._id}`}
+                        style={{
+                          background: 'var(--bg-main)',
+                          border: '1px solid var(--glass-border)',
+                          color: 'var(--text-dark)',
+                          padding: '0.6rem 1.25rem',
+                          borderRadius: '6px',
+                          fontWeight: 700,
+                          fontSize: '0.88rem',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <span>⚙️</span> Customize with Hotels in Builder
+                      </Link>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          </>
         ) : (
           <div style={{ textAlign: 'center', padding: '3rem', opacity: 0.7 }}>
             No packages found for this tier yet. Check back soon!

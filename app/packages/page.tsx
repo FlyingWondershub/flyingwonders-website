@@ -1,6 +1,7 @@
 import PackageList from './PackageList'
 import { getLiveExchangeRate } from '../../utils/exchange'
 import { getAllPackages } from '../../utils/packages'
+import { getAllReadyPackages } from '../../utils/readyPackages'
 
 export const metadata = {
   title: 'Singapore Tour Packages 2026 (SGD & INR Net Rates) | Flying Wonders',
@@ -41,6 +42,7 @@ export default async function PackagesPage() {
   }
 
   const packages = await getAllPackages()
+  const readyPackages = await getAllReadyPackages()
 
   return (
     <div className="container container-wide" style={{ paddingTop: '5rem', paddingBottom: '6rem' }}>
@@ -56,7 +58,7 @@ export default async function PackagesPage() {
         </p>
       </div>
 
-      <PackageList initialPackages={packages} exchangeRate={exchangeRate} />
+      <PackageList initialPackages={packages} readyPackages={readyPackages} exchangeRate={exchangeRate} />
     </div>
   )
 }

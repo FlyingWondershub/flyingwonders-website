@@ -1,21 +1,49 @@
-import { NextResponse } from 'next/server'
-import { createClient } from 'next-sanity'
-import { createImageUrlBuilder } from '@sanity/image-url'
-import { apiVersion, dataset, projectId } from '../../../sanity/env'
+import { client } from '../sanity/lib/client'
+import { urlForImage } from '../sanity/lib/image'
 
-const client = createClient({
-  apiVersion,
-  dataset,
-  projectId,
-  useCdn: false,
-})
+export interface ReadyPackageDayTransfer {
+  serviceType: string
+  routeDescription?: string
+  vehicleType?: string
+  time?: string
+  hours?: number
+  transferPriceModality?: string
+  pickupNotes?: string
+  dropNotes?: string
+}
 
-const imageBuilder = createImageUrlBuilder({ projectId: projectId || '', dataset: dataset || '' })
+export interface ReadyPackageDayAttraction {
+  attractionName: string
+  time?: string
+  inclusionsNotes?: string
+  isOptional?: boolean
+}
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 60
+export interface ReadyPackageDay {
+  dayNumber: number
+  dayTitle: string
+  dayDescription?: string
+  transfers?: ReadyPackageDayTransfer[]
+  attractions?: ReadyPackageDayAttraction[]
+}
 
-const FALLBACK_TEMPLATES = [
+export interface ReadyPackageTemplate {
+  _id: string
+  title: string
+  slug: string
+  nightsCount: number
+  category: string
+  badgeText?: string
+  coverImage?: string | any
+  videoUrl?: string | null
+  summary: string
+  startingPriceSGD: number
+  termsAndInclusions?: string
+  transferPricingOption?: string
+  itinerary: ReadyPackageDay[]
+}
+
+export const FALLBACK_READY_PACKAGES: ReadyPackageTemplate[] = [
   {
     _id: 'template-1',
     slug: '3n-4d-singapore-highlights-city-essentials',
@@ -212,16 +240,40 @@ const FALLBACK_TEMPLATES = [
   }
 ]
 
-const resolveCover = (tmpl: any) => ({
-  ...tmpl,
-  slug: tmpl?.slug || (tmpl?.title ? tmpl.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : tmpl?._id),
-  coverImage: tmpl?.coverImage
-    ? imageBuilder.image(tmpl.coverImage).auto('format').width(1000).fit('max').url()
-    : (tmpl?.coverImage || null),
-  videoUrl: tmpl?.videoFileUrl || tmpl?.videoUrl || null
-})
+export function normalizeReadyPackageSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+}
 
-export async function GET() {
+export function getEmbedVideoInfo(rawUrl?: string | null): { type: 'youtube' | 'vimeo' | 'mp4' | null; embedUrl: string | null } {
+  if (!rawUrl) return { type: null, embedUrl: null }
+  const trimmed = rawUrl.trim()
+
+  const ytMatch = trimmed.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)
+  if (ytMatch && ytMatch[1]) {
+    return {
+      type: 'youtube',
+      embedUrl: `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?autoplay=1&mute=1&rel=0&modestbranding=1`
+    }
+  }
+
+  const vmMatch = trimmed.match(/(?:vimeo\.com\/(?:video\/)?|player\.vimeo\.com\/video\/)(\d+)/)
+  if (vmMatch && vmMatch[1]) {
+    return {
+      type: 'vimeo',
+      embedUrl: `https://player.vimeo.com/video/${vmMatch[1]}?autoplay=1&muted=1`
+    }
+  }
+
+  return {
+    type: 'mp4',
+    embedUrl: trimmed
+  }
+}
+
+export async function getAllReadyPackages(): Promise<ReadyPackageTemplate[]> {
   try {
     const sanityTemplates = await client.fetch(
       `*[_type == "readyPackageTemplate" && !hideTemplate] | order(nightsCount asc) {
@@ -243,24 +295,33 @@ export async function GET() {
     )
 
     if (Array.isArray(sanityTemplates) && sanityTemplates.length > 0) {
-      return NextResponse.json({
-        success: true,
-        templates: sanityTemplates.map(resolveCover),
-        source: 'sanity'
+      return sanityTemplates.map(tmpl => {
+        let coverImg = null
+        if (tmpl?.coverImage) {
+          try {
+            coverImg = urlForImage(tmpl.coverImage).width(1200).fit('max').url()
+          } catch (e) {
+            coverImg = typeof tmpl.coverImage === 'string' ? tmpl.coverImage : null
+          }
+        }
+        return {
+          ...tmpl,
+          slug: tmpl?.slug || normalizeReadyPackageSlug(tmpl.title || tmpl._id),
+          startingPriceSGD: Number(tmpl?.startingPriceSGD) > 0 ? Number(tmpl.startingPriceSGD) : 485,
+          coverImage: coverImg || tmpl?.coverImage || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800',
+          videoUrl: tmpl?.videoFileUrl || tmpl?.videoUrl || null
+        }
       })
     }
-
-    return NextResponse.json({
-      success: true,
-      templates: FALLBACK_TEMPLATES.map(resolveCover),
-      source: 'fallback'
-    })
-  } catch (err: any) {
-    console.warn('Failed to fetch readyPackageTemplate from Sanity, using fallback:', err?.message)
-    return NextResponse.json({
-      success: true,
-      templates: FALLBACK_TEMPLATES.map(resolveCover),
-      source: 'fallback_on_error'
-    })
+  } catch (err) {
+    console.warn('Failed to fetch ready packages from Sanity, using fallbacks:', err)
   }
+
+  return FALLBACK_READY_PACKAGES
+}
+
+export async function getReadyPackageBySlug(slugOrId: string): Promise<ReadyPackageTemplate | null> {
+  const all = await getAllReadyPackages()
+  const clean = slugOrId.toLowerCase().trim()
+  return all.find(p => p.slug === clean || p._id === clean || normalizeReadyPackageSlug(p.title) === clean) || null
 }
