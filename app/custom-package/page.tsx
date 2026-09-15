@@ -235,31 +235,110 @@ function getTransferMetaInfo(
 ) {
   if (!transfersMeta || Object.keys(transfersMeta).length === 0) return null
 
-  // 1. Direct deterministic key resolution via getTargetTransferCompositeKey
-  const targetKey = getTargetTransferCompositeKey(compositeKey || vehicleType, contextHint, serviceType)
-  const cleanTarget = targetKey.toLowerCase().trim()
-  if (transfersMeta[cleanTarget]) {
-    return transfersMeta[cleanTarget]
-  }
-
-  // 2. Direct clean composite key match if already matches a key in transfersMeta
   const cleanComp = (compositeKey || '').toLowerCase().trim()
+  const cleanVeh = (vehicleType || '').toLowerCase().trim()
+  const cleanHint = (contextHint || '').toLowerCase().trim()
+  const cleanServ = (serviceType || '').toLowerCase().trim()
+  const allText = `${cleanComp} ${cleanVeh} ${cleanHint} ${cleanServ}`.toLowerCase()
+
+  // 1. Exact match on compositeKey directly against Sanity record name/key
   if (cleanComp && transfersMeta[cleanComp]) return transfersMeta[cleanComp]
 
-  // 3. Normalized compositeKey match
+  // 2. Normalized compositeKey match (handles "arrivals" / "departures" from Google Sheet -> "arrival / departure")
   const normalizedComp = cleanComp
     .replace(/\barrivals?\b|\bdepartures?\b/g, 'arrival / departure')
     .replace(/\s+/g, ' ')
     .trim()
   if (normalizedComp && transfersMeta[normalizedComp]) return transfersMeta[normalizedComp]
 
-  // 4. Fallback search across keys
-  for (const [k, meta] of Object.entries(transfersMeta)) {
-    if (k.includes('additional hotel pickup') && !targetKey.toLowerCase().includes('additional')) continue
-    if (cleanTarget && (k.includes(cleanTarget) || cleanTarget.includes(k))) return meta
+  // 3. Detect Vehicle Size / Category (1-to-1)
+  let detectedSize = ''
+  if (allText.includes('sic') || allText.includes('seat-in-coach') || allText.includes('shared')) {
+    detectedSize = 'sic'
+  } else if (allText.includes('sedan') || allText.includes('camry') || /\b(sedan|camry|private car)\b/i.test(allText)) {
+    detectedSize = 'sedan'
+  } else if (allText.includes('24-seater') || allText.includes('24 seater') || allText.includes('medium coach')) {
+    detectedSize = '24-seater'
+  } else if (allText.includes('45-seater') || allText.includes('45 seater') || allText.includes('full coach')) {
+    detectedSize = '45-seater'
+  } else if (allText.includes('55-seater') || allText.includes('55 seater') || allText.includes('super coach')) {
+    detectedSize = '55-seater'
+  } else if (allText.includes('13-seater') || allText.includes('13 seater') || allText.includes('minibus') || allText.includes('hiace')) {
+    detectedSize = '13-seater'
+  } else {
+    // Standard default for all Flying Wonders private packages
+    detectedSize = '13-seater'
   }
 
-  // 5. Last resort 13-seater transfer
+  // 4. Detect Service Type / Intent
+  let detectedService = 'transfers'
+  if (allText.includes('additional hotel pickup') || allText.includes('extra pickup') || allText.includes('additional pickup')) {
+    detectedService = 'additional hotel pickup'
+  } else if (cleanServ === 'arrival' || allText.includes('airport to hotel') || allText.includes('changi to hotel') || allText.includes('arrival pickup') || allText.includes('airport pickup')) {
+    detectedService = 'arrivals'
+  } else if (cleanServ === 'departure' || allText.includes('hotel to airport') || allText.includes('hotel to changi') || allText.includes('airport drop')) {
+    detectedService = 'departures'
+  } else if (allText.includes('city tour') || allText.includes('citytour') || allText.includes('city orientation')) {
+    detectedService = 'city tour'
+  } else if (allText.includes('disposal') || allText.includes('hourly') || allText.includes('per hour') || allText.includes('/ hour') || allText.includes('/hour')) {
+    detectedService = 'disposal / hour'
+  } else if (allText.includes('airport') || allText.includes('changi') || allText.includes('flight')) {
+    detectedService = 'arrival / departure'
+  }
+
+  // 5. 1-to-1 Match against Sanity metadata keys matching both detectedSize and detectedService
+  if (detectedSize) {
+    for (const [k, meta] of Object.entries(transfersMeta)) {
+      if (k.includes(detectedSize)) {
+        if (detectedService === 'arrivals' && (k.includes('arrival') || k.includes('arrival / departure')) && !k.includes('departure')) {
+          return meta
+        }
+        if (detectedService === 'departures' && (k.includes('departure') || k.includes('arrival / departure')) && !k.includes('arrival')) {
+          return meta
+        }
+        if (detectedService === 'arrival / departure' && (k.includes('arrival') || k.includes('departure'))) {
+          return meta
+        }
+        if (detectedService === 'city tour' && k.includes('city tour')) {
+          return meta
+        }
+        if (detectedService === 'disposal / hour' && (k.includes('disposal') || k.includes('hour'))) {
+          return meta
+        }
+        if (detectedService === 'additional hotel pickup' && k.includes('additional hotel pickup')) {
+          return meta
+        }
+        if (detectedService === 'transfers' && k.includes('transfers') && !k.includes('additional')) {
+          return meta
+        }
+      }
+    }
+
+    // Secondary fallback for detectedSize: standard point-to-point transfer document
+    for (const [k, meta] of Object.entries(transfersMeta)) {
+      if (k.includes(detectedSize) && k.includes('transfers') && !k.includes('additional')) {
+        return meta
+      }
+    }
+    // Any non-additional match for this vehicle size
+    for (const [k, meta] of Object.entries(transfersMeta)) {
+      if (k.includes(detectedSize) && !k.includes('additional hotel pickup')) {
+        return meta
+      }
+    }
+  }
+
+  // 6. Generic Fallback: Match cleanComp or cleanVeh against keys, avoiding "additional hotel pickup" unless requested
+  for (const [k, meta] of Object.entries(transfersMeta)) {
+    if (k.includes('additional hotel pickup') && !allText.includes('additional')) continue
+    if (cleanComp && (cleanComp.includes(k) || k.includes(cleanComp))) return meta
+  }
+  for (const [k, meta] of Object.entries(transfersMeta)) {
+    if (k.includes('additional hotel pickup') && !allText.includes('additional')) continue
+    if (cleanVeh && (cleanVeh.includes(k) || k.includes(cleanVeh))) return meta
+  }
+
+  // 7. Last resort: Standard 13-seater minibus transfer
   for (const [k, meta] of Object.entries(transfersMeta)) {
     if (k.includes('13-seater') && k.includes('transfers') && !k.includes('additional')) return meta
   }
@@ -4322,9 +4401,9 @@ export default function PrototypeBuilder() {
       (d.transfers || []).forEach(t => {
         const vObj = vehiclesList[t.vehicleIndex]
         const vType = vObj?.type || t.type || '13-Seater - Private'
-        const targetComp = getTargetTransferCompositeKey(vObj?.compositeKey || vType, t.description || 'Point-to-point transfer', t.serviceType)
+        const compKey = vObj?.compositeKey || ''
         usedVehicleLookups.push({
-          compKey: targetComp,
+          compKey: compKey,
           type: vType,
           hint: t.description || 'Point-to-point transfer',
           label: `Private Transfer — ${vType}`
@@ -4337,9 +4416,9 @@ export default function PrototypeBuilder() {
             const pvIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13TransferIdx
             const pvObj = vehiclesList[pvIdx]
             const pvName = pvObj?.type || a.pickupVehicleType || '13-Seater - Private'
-            const targetComp = getTargetTransferCompositeKey(pvObj?.compositeKey || pvName, a.pickupNotes || `Transfer to ${rawName}`)
+            const pCompKey = pvObj?.compositeKey || ''
             usedVehicleLookups.push({
-              compKey: targetComp,
+              compKey: pCompKey,
               type: pvName,
               hint: a.pickupNotes || `Transfer to ${rawName}`,
               label: `Pickup Transfer — ${pvName}`
@@ -4349,9 +4428,9 @@ export default function PrototypeBuilder() {
             const dvIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13TransferIdx
             const dvObj = vehiclesList[dvIdx]
             const dvName = dvObj?.type || a.dropVehicleType || '13-Seater - Private'
-            const targetComp = getTargetTransferCompositeKey(dvObj?.compositeKey || dvName, a.dropNotes || `Transfer from ${rawName}`)
+            const dCompKey = dvObj?.compositeKey || ''
             usedVehicleLookups.push({
-              compKey: targetComp,
+              compKey: dCompKey,
               type: dvName,
               hint: a.dropNotes || `Transfer from ${rawName}`,
               label: `Drop Transfer — ${dvName}`
@@ -4900,12 +4979,55 @@ export default function PrototypeBuilder() {
       const hasMeals = itinerary.some(d => d.breakfast || d.lunch || d.dinner || (d.meals && d.meals.length > 0))
 
       // Gather all confirmed distinct attractions for the inclusions summary (omit optional)
-      const allAttractionsSet = new Set<string>()
+      const isTransferAttractionName = (n: string): boolean => {
+        const lower = (n || '').toLowerCase()
+        return (
+          lower.includes('arrival transfer') ||
+          lower.includes('departure transfer') ||
+          lower.includes('airport transfer') ||
+          lower.includes('p2p transfer') ||
+          lower.includes('point to point transfer') ||
+          lower.includes('hotel transfer') ||
+          (lower.includes('transfer') && lower.includes('from'))
+        )
+      }
+
+      const cleanInclusionAttractionTitle = (text: string): string => {
+        if (!text) return ''
+        let s = text
+          .replace(/-\s*Fixed\s*Date\s*(\/\s*Time)?/gi, '')
+          .replace(/\(Peak\s*-\s*Fixed\s*date\s*\/Time\s*\)/gi, '')
+          .replace(/\(Peak\s*-\s*Fixed\s*Date\s*\)/gi, '')
+          .replace(/-\s*Fixed\s*Time/gi, '')
+          .replace(/-\s*Non\s*Peak/gi, '')
+          .replace(/Museum\s*Of\s*Icecram[s]?/gi, 'Museum of Ice Cream')
+          .replace(/Singapore\s*Ocenarium/gi, 'Singapore Oceanarium (S.E.A. Aquarium)')
+          .replace(/Gardens\s*\((Cloud\s*F\s*-\s*Jurassic\s*Park\s*\+\s*Flower\s*Dome|Double\s*Domes?)\)/gi, 'Gardens by the Bay (Cloud Forest & Flower Dome)')
+          .replace(/SkyLine\s*Luge\s*-\s*Peak\s*\(\s*3\s*rides\s*\)/gi, 'Skyline Luge (3 Rides)')
+          .replace(/SkyLine\s*Luge\s*\(\s*3\s*rides\s*\)/gi, 'Skyline Luge (3 Rides)')
+          .replace(/Combo\s*:\s*/gi, 'Sentosa Combo: ')
+          .replace(/River\s*Cruise\s*\(\s*from\s*Clark[e]?\s*Quay\s*Jetty\s*\)/gi, 'Singapore River Cruise (Clarke Quay)')
+          .replace(/\(\s*Upto\s*\d+\s*people\s*\)\s*From/gi, '')
+          .replace(/\(\s*Upto\s*\d+\s*people\s*\)/gi, '')
+          .replace(/\s+/g, ' ')
+          .trim()
+        return s
+      }
+
+      const distinctCleanAttractions: string[] = []
+      const seenAttrs = new Set<string>()
       itinerary.forEach(d => {
         d.attractions?.forEach(a => {
           if (!a.isOptional) {
-            const name = attractionsList[a.attractionIndex]?.name || a.attractionName
-            if (name) allAttractionsSet.add(name)
+            const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || ''
+            if (rawName && !isTransferAttractionName(rawName)) {
+              const cleaned = cleanInclusionAttractionTitle(rawName)
+              const norm = cleaned.toLowerCase()
+              if (cleaned && !seenAttrs.has(norm)) {
+                seenAttrs.add(norm)
+                distinctCleanAttractions.push(cleaned)
+              }
+            }
           }
         })
       })
@@ -4938,8 +5060,8 @@ export default function PrototypeBuilder() {
         const xferCount = costBreakdown.totalTransfers || 0
         inclItems.push(`${xferCount > 0 ? `${xferCount} ` : ''}Point-to-Point & Airport Transfers${vNames}`)
       }
-      if (allAttractionsSet.size > 0) {
-        inclItems.push(`Sightseeing Entries: ${Array.from(allAttractionsSet).join(', ')}`)
+      if (distinctCleanAttractions.length > 0) {
+        inclItems.push(`${distinctCleanAttractions.length} Sightseeing & Experience Admissions (Itemized Below)`)
       }
       if (hasMeals) {
         const mealParts: string[] = []
@@ -4978,49 +5100,106 @@ export default function PrototypeBuilder() {
       // Measure lines for dynamic box height
       let inclTotalLines = 0
       inclItems.forEach(item => {
-        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 8)
         inclTotalLines += lines.length
       })
       let exclTotalLines = 0
       exclItems.forEach(item => {
-        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 8)
         exclTotalLines += lines.length
       })
 
       const maxLines = Math.max(inclTotalLines, exclTotalLines)
-      const boxH = Math.max(34, 10 + maxLines * 4.6)
+      const boxH = Math.max(34, 10 + maxLines * 4.0)
       checkPage(boxH + 6)
 
       // INCLUDED Box (Left)
       setFill([230, 248, 237] as [number,number,number]); doc.roundedRect(ML, y, colW, boxH, 2, 2, 'F')
       setDraw(TEAL); doc.setLineWidth(0.5); doc.roundedRect(ML, y, colW, boxH, 2, 2, 'S')
+      setFill(TEAL); doc.rect(ML, y, 2.5, boxH, 'F')
       font('bold', 8.5); setTxt(TEAL)
-      doc.text('INCLUDED IN THIS PACKAGE', ML + 3, y + 6)
+      doc.text('INCLUDED IN THIS PACKAGE', ML + 5, y + 6)
       
       let curY = y + 11
-      font('normal', 7.5); setTxt(SLATE)
+      font('normal', 7.2); setTxt(SLATE)
       inclItems.forEach(item => {
-        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
-        doc.text(lines, ML + 3, curY)
-        curY += lines.length * 4.2
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 8)
+        doc.text(lines, ML + 5, curY)
+        curY += lines.length * 3.8
       })
 
       // EXCLUDED Box (Right)
       const ex2 = ML + colW + 4
       setFill([255, 240, 240] as [number,number,number]); doc.roundedRect(ex2, y, colW, boxH, 2, 2, 'F')
       setDraw(CRIM); doc.setLineWidth(0.5); doc.roundedRect(ex2, y, colW, boxH, 2, 2, 'S')
+      setFill(CRIM); doc.rect(ex2, y, 2.5, boxH, 'F')
       font('bold', 8.5); setTxt(CRIM)
-      doc.text('EXCLUDED FROM THIS PACKAGE', ex2 + 3, y + 6)
+      doc.text('EXCLUDED FROM THIS PACKAGE', ex2 + 5, y + 6)
 
       let curExY = y + 11
-      font('normal', 7.5); setTxt(SLATE)
+      font('normal', 7.2); setTxt(SLATE)
       exclItems.forEach(item => {
-        const lines = doc.splitTextToSize(`• ${item}`, colW - 6)
-        doc.text(lines, ex2 + 3, curExY)
-        curExY += lines.length * 4.2
+        const lines = doc.splitTextToSize(`• ${item}`, colW - 8)
+        doc.text(lines, ex2 + 5, curExY)
+        curExY += lines.length * 3.8
       })
 
       y += boxH + 4
+
+      // ─── DEDICATED SIGHTSEEING ENTRIES CARD (2 Columns) ───
+      if (distinctCleanAttractions.length > 0) {
+        const sightColW = (CW - 10) / 2
+        const half = Math.ceil(distinctCleanAttractions.length / 2)
+        const leftColAttrs = distinctCleanAttractions.slice(0, half)
+        const rightColAttrs = distinctCleanAttractions.slice(half)
+
+        font('normal', 7.0)
+        let leftH = 0
+        leftColAttrs.forEach(a => {
+          const lns = doc.splitTextToSize(a, sightColW - 8)
+          leftH += Math.max(3.8, lns.length * 3.3)
+        })
+        let rightH = 0
+        rightColAttrs.forEach(a => {
+          const lns = doc.splitTextToSize(a, sightColW - 8)
+          rightH += Math.max(3.8, lns.length * 3.3)
+        })
+        const maxColH = Math.max(leftH, rightH)
+        const sightH = Math.max(20, 8.5 + maxColH + 3)
+
+        checkPage(sightH + 4)
+        setFill([248, 250, 252] as [number,number,number])
+        doc.roundedRect(ML, y, CW, sightH, 2, 2, 'F')
+        setDraw([148, 163, 184] as [number,number,number]); doc.setLineWidth(0.4)
+        doc.roundedRect(ML, y, CW, sightH, 2, 2, 'S')
+        setFill(NAVY); doc.rect(ML, y, 2.5, sightH, 'F')
+
+        font('bold', 8); setTxt(NAVY)
+        doc.text(`ADMISSION TICKETS & SIGHTSEEING INCLUDED (${distinctCleanAttractions.length} Iconic Experiences)`, ML + 5, y + 5.5)
+
+        let col1Y = y + 10
+        leftColAttrs.forEach(a => {
+          setFill(TEAL)
+          doc.circle(ML + 6.5, col1Y - 0.8, 0.9, 'F')
+          font('normal', 7.0); setTxt(TEXT)
+          const lns = doc.splitTextToSize(a, sightColW - 8)
+          doc.text(lns, ML + 10, col1Y)
+          col1Y += Math.max(3.8, lns.length * 3.3)
+        })
+
+        let col2Y = y + 10
+        const c2X = ML + sightColW + 7
+        rightColAttrs.forEach(a => {
+          setFill(TEAL)
+          doc.circle(c2X + 1.5, col2Y - 0.8, 0.9, 'F')
+          font('normal', 7.0); setTxt(TEXT)
+          const lns = doc.splitTextToSize(a, sightColW - 8)
+          doc.text(lns, c2X + 5, col2Y)
+          col2Y += Math.max(3.8, lns.length * 3.3)
+        })
+
+        y += sightH + 4
+      }
 
       // ─── DEDICATED 3RD BOX: OPTIONAL ADD-ON EXPERIENCES (Available on request) ───
       if (costBreakdown.optionalAddonsList && costBreakdown.optionalAddonsList.length > 0) {
@@ -5122,8 +5301,8 @@ export default function PrototypeBuilder() {
         day.transfers.forEach(t => {
           const vObj = vehiclesList[t.vehicleIndex]
           const vehicle = vObj?.type || t.type || '13-Seater - Private'
-          const targetComp = getTargetTransferCompositeKey(vObj?.compositeKey || vehicle, t.description || 'Point-to-point transfer', t.serviceType)
-          const tMeta = getTransferMetaInfo(targetComp, vehicle, transfersMeta, t.description || 'Point-to-point transfer', t.serviceType)
+          const compKey = vObj?.compositeKey || ''
+          const tMeta = getTransferMetaInfo(compKey, vehicle, transfersMeta, t.description || 'Point-to-point transfer', t.serviceType)
           const qtyStr = t.qty && t.qty > 1 ? ` (x${t.qty})` : ''
           timelineItems.push({
             time: t.time || '08:30',
@@ -5132,7 +5311,7 @@ export default function PrototypeBuilder() {
             detail: t.description || 'Point-to-point transfer',
             color: TEAL,
             meta: tMeta,
-            itemKey: targetComp || vehicle
+            itemKey: compKey || vehicle
           })
         })
 
@@ -5145,7 +5324,7 @@ export default function PrototypeBuilder() {
               const pvIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13TransferIdx
               const pvObj = vehiclesList[pvIdx]
               const pvName = pvObj?.type || a.pickupVehicleType || '13-Seater - Private'
-              const pCompKey = getTargetTransferCompositeKey(pvObj?.compositeKey || pvName, a.pickupNotes || `Transfer to ${name}`)
+              const pCompKey = pvObj?.compositeKey || ''
               const pMeta = getTransferMetaInfo(pCompKey, pvName, transfersMeta, a.pickupNotes || `Transfer to ${name}`)
               timelineItems.push({
                 time: a.pickupTime || '09:00',
@@ -5161,7 +5340,7 @@ export default function PrototypeBuilder() {
               const dvIdx = a.dropVehicleIndex !== undefined && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : default13TransferIdx
               const dvObj = vehiclesList[dvIdx]
               const dvName = dvObj?.type || a.dropVehicleType || '13-Seater - Private'
-              const dCompKey = getTargetTransferCompositeKey(dvObj?.compositeKey || dvName, a.dropNotes || `Transfer from ${name}`)
+              const dCompKey = dvObj?.compositeKey || ''
               const dMeta = getTransferMetaInfo(dCompKey, dvName, transfersMeta, a.dropNotes || `Transfer from ${name}`)
               timelineItems.push({
                 time: a.dropTime || '17:00',
@@ -5776,59 +5955,127 @@ export default function PrototypeBuilder() {
       }
 
       // ─── TERMS & IMPORTANT NOTES ──────────────────────────
-      sectionTitle('TERMS & IMPORTANT NOTES')
-
       const notes = [
-        'Prices are quoted in Singapore Dollars (SGD) and are indicative. Final rates will be confirmed upon booking.',
+        'Prices are quoted in Singapore Dollars (SGD) and are indicative. Final rates confirmed upon booking.',
         'Exchange rates for INR are approximate and subject to change on the date of payment.',
         'Rates are subject to change due to peak seasons, public holidays, or third-party surcharges.',
         'FIT room rates are subject to a marginal increase.',
-        'Itinerary sequence may be adjusted based on operational requirements without notice.',
+        'Itinerary sequence may adjust per operational requirements.',
         isTaggedToAgent
-          ? `Cancellation policy and payment terms apply as per ${taggedAgencyName}'s standard terms and conditions.`
-          : "Cancellation policy and payment terms apply as per Flying Wonders' standard terms and conditions.",
-        'Valid travel documents (passport, visa) are the sole responsibility of the traveler.',
-        'Travel insurance is highly recommended for all international travel.',
+          ? `Cancellation & payment apply per ${taggedAgencyName}'s terms.`
+          : "Cancellation & payment apply per Flying Wonders' terms.",
+        'Valid travel documents (passport, visa) are traveler responsibility.',
+        'International travel insurance is strongly recommended.',
       ]
-      notes.forEach((note, i) => {
-        const lines = doc.splitTextToSize(`${i + 1}. ${note}`, CW - 6)
-        const rowH = Math.max(6.5, lines.length * 3.8 + 2.5)
-        checkPage(rowH + 2)
-        if (i % 2 === 0) { setFill(LGRAY); doc.rect(ML, y, CW, rowH, 'F') }
-        font('normal', 7.5); setTxt(TEXT)
-        doc.text(lines, ML + 3, y + 4)
-        y += rowH
-      })
 
-      // ─── AGENT / CONTACT CARD ────────────────────────────
-      y += 4
-      checkPage(34)
-      setFill(NAVY); doc.roundedRect(ML, y, CW, 30, 3, 3, 'F')
-      font('bold', 9.5); setTxt(GOLD)
-      doc.text('Your Travel Consultant', ML + 5, y + 8)
+      if (notes.length <= 5) {
+        // Full-width single column layout for 1-5 terms
+        font('normal', 6.8)
+        let totalLines = 0
+        const splitNotes = notes.map((t, i) => {
+          const cleanText = cleanPdfText(t)
+          const l = doc.splitTextToSize(`${i + 1}.  ${cleanText}`, CW - 12)
+          totalLines += l.length
+          return l
+        })
+        const termCardH = Math.max(22, 7.5 + totalLines * 3.4 + 3)
+        checkPage(termCardH + 3)
 
-      font('bold', 11.5); setTxt(WHITE)
-      doc.text(taggedConsultantName, ML + 5, y + 16.5)
-      font('normal', 8); setTxt(GOLD)
+        setFill([248, 250, 252] as [number,number,number]); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'F')
+        setDraw([226, 232, 240] as [number,number,number]); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'S')
+        setFill(NAVY); doc.rect(ML, y, 2.5, termCardH, 'F')
+
+        font('bold', 8); setTxt(NAVY)
+        doc.text('TERMS & CONDITIONS · IMPORTANT BOOKING NOTES', ML + 5, y + 5.2)
+
+        let tY = y + 9.2
+        splitNotes.forEach(lines => {
+          font('normal', 6.8); setTxt(SLATE)
+          doc.text(lines, ML + 5, tY)
+          tY += lines.length * 3.3 + 0.8
+        })
+        y += termCardH + 3
+      } else {
+        // 2-Column layout for 6+ short terms
+        const termColW = (CW - 14) / 2
+        const halfCount = Math.ceil(notes.length / 2)
+        const leftTerms = notes.slice(0, halfCount)
+        const rightTerms = notes.slice(halfCount)
+
+        font('normal', 6.6)
+        let leftLinesCount = 0
+        const splitLeft = leftTerms.map((t, i) => {
+          const cleanText = cleanPdfText(t)
+          const l = doc.splitTextToSize(`${i + 1}. ${cleanText}`, termColW - 4)
+          leftLinesCount += l.length
+          return l
+        })
+        let rightLinesCount = 0
+        const splitRight = rightTerms.map((t, i) => {
+          const cleanText = cleanPdfText(t)
+          const l = doc.splitTextToSize(`${i + halfCount + 1}. ${cleanText}`, termColW - 4)
+          rightLinesCount += l.length
+          return l
+        })
+
+        const maxTermLines = Math.max(leftLinesCount, rightLinesCount)
+        const termCardH = Math.max(22, 7.5 + maxTermLines * 3.5 + 2)
+        checkPage(termCardH + 3)
+
+        setFill([248, 250, 252] as [number,number,number]); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'F')
+        setDraw([226, 232, 240] as [number,number,number]); doc.setLineWidth(0.4); doc.roundedRect(ML, y, CW, termCardH, 2, 2, 'S')
+        setFill(NAVY); doc.rect(ML, y, 2.5, termCardH, 'F')
+
+        font('bold', 8); setTxt(NAVY)
+        doc.text('TERMS & CONDITIONS · IMPORTANT BOOKING NOTES', ML + 5, y + 5.2)
+
+        let t1Y = y + 9.2
+        splitLeft.forEach(lines => {
+          font('normal', 6.6); setTxt(SLATE)
+          doc.text(lines, ML + 5, t1Y)
+          t1Y += lines.length * 3.3 + 0.6
+        })
+
+        let t2Y = y + 9.2
+        const tCol2X = ML + termColW + 7
+        splitRight.forEach(lines => {
+          font('normal', 6.6); setTxt(SLATE)
+          doc.text(lines, tCol2X, t2Y)
+          t2Y += lines.length * 3.3 + 0.6
+        })
+
+        y += termCardH + 3
+      }
+
+      // ─── AGENT / CONTACT CARD (Sleek Compact 21mm) ─────────
+      y += 1
+      checkPage(24)
+      setFill(NAVY); doc.roundedRect(ML, y, CW, 21, 2, 2, 'F')
+      font('bold', 8); setTxt(GOLD)
+      doc.text('Your Travel Consultant', ML + 5, y + 5.8)
+
+      font('bold', 10.5); setTxt(WHITE)
+      doc.text(taggedConsultantName, ML + 5, y + 12.2)
+      font('normal', 7.2); setTxt(GOLD)
       const agentContactParts: string[] = []
       if (taggedPhone) agentContactParts.push(`Tel: ${taggedPhone}`)
       if (taggedEmail) agentContactParts.push(`Email: ${taggedEmail}`)
       if (agentContactParts.length > 0) {
-        doc.text(agentContactParts.join('   |   '), ML + 5, y + 24)
+        doc.text(agentContactParts.join('   |   '), ML + 5, y + 17.5)
       }
 
       // Company name on the right
       font('bold', 8.5); setTxt(GOLD)
       const rAgencyLines = doc.splitTextToSize(taggedAgencyName.toUpperCase(), 75)
-      doc.text(rAgencyLines[0], MR - 5, y + 16.5, { align: 'right' })
+      doc.text(rAgencyLines[0], MR - 5, y + 12.2, { align: 'right' })
 
-      font('normal', 7); setTxt(WHITE)
+      font('normal', 6.8); setTxt(WHITE)
       if (isTaggedToAgent) {
-        doc.text('Authorized Travel Partner', MR - 5, y + 24, { align: 'right' })
+        doc.text('Authorized Travel Partner', MR - 5, y + 17.5, { align: 'right' })
       } else {
-        doc.text('Singapore DMC Travel Partner', MR - 5, y + 24, { align: 'right' })
+        doc.text('Singapore DMC Travel Partner', MR - 5, y + 17.5, { align: 'right' })
       }
-      y += 34
+      y += 24
 
       // final footer
       addFooter()
