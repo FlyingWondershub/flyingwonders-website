@@ -579,6 +579,7 @@ interface TransferEntry {
   type?: string
   serviceName?: string
   serviceType?: string
+  routeDescription?: string
   hours?: number
 }
 
@@ -1772,10 +1773,13 @@ export default function PrototypeBuilder() {
       return prevItin.map(day => ({
         ...day,
         transfers: (day.transfers || []).map(t => {
-          if (vehiclesList.length > 0 && (t.type || t.serviceName)) {
+          if (vehiclesList.length > 0) {
             const tType = (t.type || '').toLowerCase().trim()
             const tService = (t.serviceName || '').toLowerCase().trim()
+            const desc = (t.routeDescription || t.serviceType || t.description || '').toLowerCase().trim()
+            const allText = `${tType} ${tService} ${desc}`
             let vIdx = -1
+
             // 1. Exact match on both vehicle type and serviceName
             if (tType && tService) {
               vIdx = vehiclesList.findIndex(v => 
@@ -1789,13 +1793,37 @@ export default function PrototypeBuilder() {
                 (v.serviceName || '').toLowerCase().trim() === tService
               )
             }
-            // 3. Fallback to vehicle type
+            // 3. Match on vehicle type
             if (vIdx < 0 && tType) {
               vIdx = vehiclesList.findIndex(v => 
                 v.type.toLowerCase().trim() === tType
               )
             }
-            if (vIdx >= 0) return { ...t, vehicleIndex: vIdx }
+            // 4. Match by vehicle size if 45, 24, 55 seater or SIC is specified in text
+            if (vIdx < 0) {
+              if (allText.includes('45') || allText.includes('full coach')) {
+                vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('45') || v.type?.includes('45')))
+              } else if (allText.includes('24') || allText.includes('medium coach')) {
+                vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('24') || v.type?.includes('24')))
+              } else if (allText.includes('55') || allText.includes('super coach')) {
+                vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('55') || v.type?.includes('55')))
+              } else if (allText.includes('sic') || (allText.includes('coach') && !allText.includes('full') && !allText.includes('medium'))) {
+                vIdx = vehiclesList.findIndex(v => isVehicleSIC(v))
+              }
+            }
+            // 5. If existing vehicleIndex is valid, preserve it
+            if (vIdx < 0 && typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && t.vehicleIndex < vehiclesList.length) {
+              vIdx = t.vehicleIndex
+            }
+            if (vIdx >= 0) {
+              const matchedVeh = vehiclesList[vIdx]
+              return {
+                ...t,
+                vehicleIndex: vIdx,
+                type: t.type || matchedVeh?.type,
+                serviceName: t.serviceName || matchedVeh?.serviceName
+              }
+            }
           }
           return t
         }),
@@ -2748,7 +2776,13 @@ export default function PrototypeBuilder() {
       const selectedVehicle = vehiclesList[value]
       const isSic = selectedVehicle ? (selectedVehicle.type || '').toLowerCase().includes('sic') || (selectedVehicle.type || '').toLowerCase().includes('seat-in-coach') || (selectedVehicle.type || '').toLowerCase().includes('shared') : false
       const newQty = isSic ? (adults + kids) || 1 : 1
-      updated[rIdx] = { ...updated[rIdx], vehicleIndex: value, qty: newQty }
+      updated[rIdx] = {
+        ...updated[rIdx],
+        vehicleIndex: value,
+        qty: newQty,
+        type: selectedVehicle?.type,
+        serviceName: selectedVehicle?.serviceName
+      }
     } else {
       updated[rIdx] = { ...updated[rIdx], [field]: value }
     }
@@ -7682,20 +7716,57 @@ export default function PrototypeBuilder() {
             ...day,
             dayTitle: day.dayTitle || '',
             transfers: Array.isArray(day.transfers) ? day.transfers.map((t: any) => {
-              let vIdx = typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 ? t.vehicleIndex : 0
-              const search = (t.routeDescription || t.serviceType || t.description || t.type || t.serviceName || '').toLowerCase()
-              if (search.includes('13') || search.includes('arrival') || search.includes('departure') || search.includes('private')) {
-                const found = vehiclesList.findIndex(v => (v.vehicleType?.includes('13') || v.type?.includes('13')))
-                if (found >= 0) vIdx = found
-              } else if (search.includes('sic') || search.includes('coach')) {
-                const found = vehiclesList.findIndex(v => isVehicleSIC(v))
-                if (found >= 0) vIdx = found
+              const tType = (t.type || '').toLowerCase().trim()
+              const tService = (t.serviceName || '').toLowerCase().trim()
+              const desc = (t.routeDescription || t.serviceType || t.description || '').toLowerCase().trim()
+              const allText = `${tType} ${tService} ${desc}`
+
+              let vIdx = -1
+
+              // 1. Match by exact vehicle type + serviceName if available
+              if (vehiclesList.length > 0 && tType && tService) {
+                vIdx = vehiclesList.findIndex(v =>
+                  v.type.toLowerCase().trim() === tType &&
+                  (v.serviceName || '').toLowerCase().trim() === tService
+                )
               }
-              const sType = t.serviceType || (search.includes('arrival') ? 'arrival' : search.includes('departure') ? 'departure' : search.includes('disposal') ? 'disposal' : 'interAttraction')
-              const isDisposal = sType === 'disposal' || search.includes('disposal')
+
+              // 2. Match by exact vehicle type
+              if (vIdx < 0 && vehiclesList.length > 0 && tType) {
+                vIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === tType)
+              }
+
+              // 3. Match by vehicle size if 45, 24, or 55 seater was specified in text/type/desc
+              if (vIdx < 0 && vehiclesList.length > 0) {
+                if (allText.includes('45') || allText.includes('full coach')) {
+                  vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('45') || v.type?.includes('45')))
+                } else if (allText.includes('24') || allText.includes('medium coach')) {
+                  vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('24') || v.type?.includes('24')))
+                } else if (allText.includes('55') || allText.includes('super coach')) {
+                  vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('55') || v.type?.includes('55')))
+                } else if (allText.includes('sic') || (allText.includes('coach') && !allText.includes('full') && !allText.includes('medium'))) {
+                  vIdx = vehiclesList.findIndex(v => isVehicleSIC(v))
+                }
+              }
+
+              // 4. Respect existing valid vehicleIndex from saved proposal
+              if (vIdx < 0 && typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && (!vehiclesList.length || t.vehicleIndex < vehiclesList.length)) {
+                vIdx = t.vehicleIndex
+              }
+
+              // 5. Fallback: only if index is unresolved, get 13-seater default
+              if (vIdx < 0) {
+                vIdx = get13SeaterVehicleIndex(vehiclesList, t.serviceType, desc)
+              }
+
+              const resolvedVeh = vehiclesList[vIdx]
+              const sType = t.serviceType || (desc.includes('arrival') ? 'arrival' : desc.includes('departure') ? 'departure' : desc.includes('disposal') ? 'disposal' : 'interAttraction')
+              const isDisposal = sType === 'disposal' || desc.includes('disposal')
               return {
                 ...t,
-                vehicleIndex: vIdx,
+                vehicleIndex: vIdx >= 0 ? vIdx : 0,
+                type: t.type || resolvedVeh?.type,
+                serviceName: t.serviceName || resolvedVeh?.serviceName,
                 serviceType: sType,
                 time: sanitizeTime(t.time),
                 description: t.routeDescription || t.serviceType || t.description || 'Transfer',
@@ -7773,11 +7844,31 @@ export default function PrototypeBuilder() {
         })
         const updatedTransfers = day.transfers.map(t => {
           const curVeh = vehiclesList[t.vehicleIndex]
-          const isSedan = !curVeh || (curVeh.vehicleType || '').toLowerCase().includes('sedan') || (curVeh.type || '').toLowerCase().includes('sedan')
-          const isInvalid = t.vehicleIndex === undefined || t.vehicleIndex < 0
+          const isSedan = curVeh && ((curVeh.vehicleType || '').toLowerCase().includes('sedan') || (curVeh.type || '').toLowerCase().includes('sedan'))
+          const isInvalid = t.vehicleIndex === undefined || t.vehicleIndex < 0 || !curVeh
           
           if (isSedan || isInvalid) {
-            const f = get13SeaterVehicleIndex(vehiclesList, t.serviceType, t.description)
+            const tType = (t.type || '').toLowerCase().trim()
+            const desc = (t.routeDescription || t.serviceType || t.description || '').toLowerCase().trim()
+            const allText = `${tType} ${desc}`
+            let f = -1
+
+            if (allText.includes('45') || allText.includes('full coach')) {
+              f = vehiclesList.findIndex(v => (v.vehicleType?.includes('45') || v.type?.includes('45')))
+            } else if (allText.includes('24') || allText.includes('medium coach')) {
+              f = vehiclesList.findIndex(v => (v.vehicleType?.includes('24') || v.type?.includes('24')))
+            } else if (allText.includes('55') || allText.includes('super coach')) {
+              f = vehiclesList.findIndex(v => (v.vehicleType?.includes('55') || v.type?.includes('55')))
+            } else if (allText.includes('sic') || (allText.includes('coach') && !allText.includes('full') && !allText.includes('medium'))) {
+              f = vehiclesList.findIndex(v => isVehicleSIC(v))
+            } else if (tType) {
+              f = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === tType)
+            }
+
+            if (f < 0) {
+              f = get13SeaterVehicleIndex(vehiclesList, t.serviceType, t.description)
+            }
+
             if (f >= 0 && f !== t.vehicleIndex) {
               dayChanged = true
               return { 
