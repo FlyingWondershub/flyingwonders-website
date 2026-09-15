@@ -1774,32 +1774,38 @@ export default function PrototypeBuilder() {
         ...day,
         transfers: (day.transfers || []).map(t => {
           if (vehiclesList.length > 0) {
+            let vIdx = -1
+
+            // 1. If existing vehicleIndex points to a valid vehicle in vehiclesList, prioritize it!
+            if (typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && t.vehicleIndex < vehiclesList.length) {
+              vIdx = t.vehicleIndex
+            }
+
             const tType = (t.type || '').toLowerCase().trim()
             const tService = (t.serviceName || '').toLowerCase().trim()
             const desc = (t.routeDescription || t.serviceType || t.description || '').toLowerCase().trim()
             const allText = `${tType} ${tService} ${desc}`
-            let vIdx = -1
 
-            // 1. Exact match on both vehicle type and serviceName
-            if (tType && tService) {
+            // 2. If vehicleIndex is invalid or missing, match by exact vehicle type + serviceName
+            if (vIdx < 0 && tType && tService) {
               vIdx = vehiclesList.findIndex(v => 
                 v.type.toLowerCase().trim() === tType &&
                 (v.serviceName || '').toLowerCase().trim() === tService
               )
             }
-            // 2. Match on distinctive serviceName
-            if (vIdx < 0 && tService) {
+            // 3. Match on distinctive serviceName
+            if (vIdx < 0 && tService && !tService.includes('transfer')) {
               vIdx = vehiclesList.findIndex(v => 
                 (v.serviceName || '').toLowerCase().trim() === tService
               )
             }
-            // 3. Match on vehicle type
+            // 4. Match on vehicle type (unless it's a generic 13-seater when a larger coach was intended)
             if (vIdx < 0 && tType) {
               vIdx = vehiclesList.findIndex(v => 
                 v.type.toLowerCase().trim() === tType
               )
             }
-            // 4. Match by vehicle size if 45, 24, 55 seater or SIC is specified in text
+            // 5. Match by vehicle size if 45, 24, 55 seater or SIC is specified in text
             if (vIdx < 0) {
               if (allText.includes('45') || allText.includes('full coach')) {
                 vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('45') || v.type?.includes('45')))
@@ -1811,17 +1817,13 @@ export default function PrototypeBuilder() {
                 vIdx = vehiclesList.findIndex(v => isVehicleSIC(v))
               }
             }
-            // 5. If existing vehicleIndex is valid, preserve it
-            if (vIdx < 0 && typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && t.vehicleIndex < vehiclesList.length) {
-              vIdx = t.vehicleIndex
-            }
             if (vIdx >= 0) {
               const matchedVeh = vehiclesList[vIdx]
               return {
                 ...t,
                 vehicleIndex: vIdx,
-                type: t.type || matchedVeh?.type,
-                serviceName: t.serviceName || matchedVeh?.serviceName
+                type: matchedVeh?.type || t.type,
+                serviceName: matchedVeh?.serviceName || t.serviceName
               }
             }
           }
@@ -1836,15 +1838,22 @@ export default function PrototypeBuilder() {
               updated = { ...updated, attractionIndex: aIdx }
             }
             if (vehiclesList.length > 0) {
-              if (a.pickupVehicleType) {
+              let pvIdx = typeof a.pickupVehicleIndex === 'number' && a.pickupVehicleIndex >= 0 && a.pickupVehicleIndex < vehiclesList.length ? a.pickupVehicleIndex : -1
+              if (pvIdx < 0 && a.pickupVehicleType) {
                 const pvName = a.pickupVehicleType.toLowerCase().trim()
-                const pvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === pvName)
-                if (pvIdx >= 0) updated = { ...updated, pickupVehicleIndex: pvIdx }
+                pvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === pvName)
               }
-              if (a.dropVehicleType) {
+              if (pvIdx >= 0) {
+                updated = { ...updated, pickupVehicleIndex: pvIdx, pickupVehicleType: vehiclesList[pvIdx]?.type || a.pickupVehicleType }
+              }
+
+              let dvIdx = typeof a.dropVehicleIndex === 'number' && a.dropVehicleIndex >= 0 && a.dropVehicleIndex < vehiclesList.length ? a.dropVehicleIndex : -1
+              if (dvIdx < 0 && a.dropVehicleType) {
                 const dvName = a.dropVehicleType.toLowerCase().trim()
-                const dvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === dvName)
-                if (dvIdx >= 0) updated = { ...updated, dropVehicleIndex: dvIdx }
+                dvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === dvName)
+              }
+              if (dvIdx >= 0) {
+                updated = { ...updated, dropVehicleIndex: dvIdx, dropVehicleType: vehiclesList[dvIdx]?.type || a.dropVehicleType }
               }
             }
             return updated
@@ -2854,7 +2863,23 @@ export default function PrototypeBuilder() {
     const day = itinerary[dayIndex]
     if (!day) return
     const updated = [...day.attractions]
-    updated[rIdx] = { ...updated[rIdx], [field]: value }
+    if (field === 'pickupVehicleIndex') {
+      const veh = vehiclesList[value]
+      updated[rIdx] = {
+        ...updated[rIdx],
+        pickupVehicleIndex: value,
+        pickupVehicleType: veh?.type
+      }
+    } else if (field === 'dropVehicleIndex') {
+      const veh = vehiclesList[value]
+      updated[rIdx] = {
+        ...updated[rIdx],
+        dropVehicleIndex: value,
+        dropVehicleType: veh?.type
+      }
+    } else {
+      updated[rIdx] = { ...updated[rIdx], [field]: value }
+    }
     updateDay(dayIndex, 'attractions', updated)
   }
 
@@ -7723,20 +7748,25 @@ export default function PrototypeBuilder() {
 
               let vIdx = -1
 
-              // 1. Match by exact vehicle type + serviceName if available
-              if (vehiclesList.length > 0 && tType && tService) {
+              // 1. If valid vehicleIndex was saved, prioritize it!
+              if (typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && (!vehiclesList.length || t.vehicleIndex < vehiclesList.length)) {
+                vIdx = t.vehicleIndex
+              }
+
+              // 2. Match by exact vehicle type + serviceName if available
+              if (vIdx < 0 && vehiclesList.length > 0 && tType && tService) {
                 vIdx = vehiclesList.findIndex(v =>
                   v.type.toLowerCase().trim() === tType &&
                   (v.serviceName || '').toLowerCase().trim() === tService
                 )
               }
 
-              // 2. Match by exact vehicle type
+              // 3. Match by exact vehicle type
               if (vIdx < 0 && vehiclesList.length > 0 && tType) {
                 vIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === tType)
               }
 
-              // 3. Match by vehicle size if 45, 24, or 55 seater was specified in text/type/desc
+              // 4. Match by vehicle size if 45, 24, or 55 seater was specified in text/type/desc
               if (vIdx < 0 && vehiclesList.length > 0) {
                 if (allText.includes('45') || allText.includes('full coach')) {
                   vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('45') || v.type?.includes('45')))
@@ -7747,11 +7777,6 @@ export default function PrototypeBuilder() {
                 } else if (allText.includes('sic') || (allText.includes('coach') && !allText.includes('full') && !allText.includes('medium'))) {
                   vIdx = vehiclesList.findIndex(v => isVehicleSIC(v))
                 }
-              }
-
-              // 4. Respect existing valid vehicleIndex from saved proposal
-              if (vIdx < 0 && typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && (!vehiclesList.length || t.vehicleIndex < vehiclesList.length)) {
-                vIdx = t.vehicleIndex
               }
 
               // 5. Fallback: only if index is unresolved, get 13-seater default
@@ -7799,7 +7824,16 @@ export default function PrototypeBuilder() {
                 description: a.description || aName || '',
                 time: sanitizeTime(a.time),
                 pickupTime: sanitizeTime(a.pickupTime || '09:00'),
-                dropTime: sanitizeTime(a.dropTime || '17:00')
+                dropTime: sanitizeTime(a.dropTime || '17:00'),
+                hasTransfer: !!a.hasTransfer,
+                pickupEnabled: a.pickupEnabled !== undefined ? !!a.pickupEnabled : (a.hasTransfer ? true : undefined),
+                dropEnabled: a.dropEnabled !== undefined ? !!a.dropEnabled : (a.hasTransfer ? true : undefined),
+                pickupVehicleIndex: typeof a.pickupVehicleIndex === 'number' && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : undefined,
+                pickupVehicleType: a.pickupVehicleType || (typeof a.pickupVehicleIndex === 'number' && vehiclesList[a.pickupVehicleIndex]?.type ? vehiclesList[a.pickupVehicleIndex].type : undefined),
+                dropVehicleIndex: typeof a.dropVehicleIndex === 'number' && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : undefined,
+                dropVehicleType: a.dropVehicleType || (typeof a.dropVehicleIndex === 'number' && vehiclesList[a.dropVehicleIndex]?.type ? vehiclesList[a.dropVehicleIndex].type : undefined),
+                pickupNotes: a.pickupNotes || '',
+                dropNotes: a.dropNotes || ''
               }
             }) : []
           }))
@@ -7836,8 +7870,29 @@ export default function PrototypeBuilder() {
               const f = attractionsList.findIndex(item => item.name.toLowerCase().trim() === matched.name.toLowerCase().trim())
               if (f >= 0) {
                 dayChanged = true
-                return { ...a, attractionIndex: f, adultPrice: a.adultPrice || matched.adultPrice, childPrice: a.childPrice || matched.childPrice }
+                a = { ...a, attractionIndex: f, adultPrice: a.adultPrice || matched.adultPrice, childPrice: a.childPrice || matched.childPrice }
               }
+            }
+          }
+          if (vehiclesList.length > 0) {
+            let pvIdx = typeof a.pickupVehicleIndex === 'number' && a.pickupVehicleIndex >= 0 && a.pickupVehicleIndex < vehiclesList.length ? a.pickupVehicleIndex : -1
+            if (pvIdx < 0 && a.pickupVehicleType) {
+              const pvName = a.pickupVehicleType.toLowerCase().trim()
+              pvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === pvName)
+            }
+            if (pvIdx >= 0 && pvIdx !== a.pickupVehicleIndex) {
+              dayChanged = true
+              a = { ...a, pickupVehicleIndex: pvIdx, pickupVehicleType: vehiclesList[pvIdx]?.type || a.pickupVehicleType }
+            }
+
+            let dvIdx = typeof a.dropVehicleIndex === 'number' && a.dropVehicleIndex >= 0 && a.dropVehicleIndex < vehiclesList.length ? a.dropVehicleIndex : -1
+            if (dvIdx < 0 && a.dropVehicleType) {
+              const dvName = a.dropVehicleType.toLowerCase().trim()
+              dvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === dvName)
+            }
+            if (dvIdx >= 0 && dvIdx !== a.dropVehicleIndex) {
+              dayChanged = true
+              a = { ...a, dropVehicleIndex: dvIdx, dropVehicleType: vehiclesList[dvIdx]?.type || a.dropVehicleType }
             }
           }
           return a
