@@ -1905,6 +1905,52 @@ export default function ReadyMadePackagesPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC', color: '#1E293B', fontFamily: 'var(--font-inter), sans-serif' }}>
+      <style>{`
+        .rm-catalog-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+          gap: 1.5rem;
+        }
+        .rm-day-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+          gap: 0.75rem;
+        }
+        @media (max-width: 768px) {
+          .rm-catalog-hero {
+            padding: 1.25rem 0.85rem !important;
+          }
+          .rm-catalog-hero h1 {
+            font-size: 1.35rem !important;
+          }
+          .rm-catalog-main {
+            padding: 0.85rem 0.85rem 3.5rem !important;
+          }
+          .rm-catalog-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1.15rem !important;
+          }
+          .rm-filter-box {
+            padding: 0.75rem 0.85rem !important;
+          }
+          .rm-filter-search {
+            min-width: 100% !important;
+            max-width: 100% !important;
+          }
+          .rm-modal-overlay {
+            padding: 0 !important;
+          }
+          .rm-modal-dialog {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+          }
+          .rm-day-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
       
       {/* Toast Notification */}
       {toast && (
@@ -1930,7 +1976,7 @@ export default function ReadyMadePackagesPage() {
       )}
 
       {/* Hero Banner (Compact Executive Layout on Wide Canvas) */}
-      <section style={{
+      <section className="rm-catalog-hero" style={{
         background: 'linear-gradient(135deg, #0A2240 0%, #0F4C3A 100%)',
         color: '#FFF',
         padding: '1.25rem 1.5rem',
@@ -1981,10 +2027,10 @@ export default function ReadyMadePackagesPage() {
       </section>
 
       {/* Main Content Area (Wide Canvas) */}
-      <main style={{ maxWidth: '1540px', margin: '0 auto', padding: '1.25rem 1.5rem 3.5rem' }}>
+      <main className="rm-catalog-main" style={{ maxWidth: '1540px', margin: '0 auto', padding: '1.25rem 1.5rem 3.5rem' }}>
         
         {/* Controls: Filters & Search */}
-        <div style={{ background: '#FFF', padding: '0.85rem 1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="rm-filter-box" style={{ background: '#FFF', padding: '0.85rem 1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             
@@ -2014,7 +2060,7 @@ export default function ReadyMadePackagesPage() {
             </div>
 
             {/* Live Search Bar */}
-            <div style={{ position: 'relative', minWidth: '280px', flex: '1 1 300px', maxWidth: '400px' }}>
+            <div className="rm-filter-search" style={{ position: 'relative', minWidth: '280px', flex: '1 1 300px', maxWidth: '400px' }}>
               <Search size={16} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
               <input
                 type="text"
@@ -2101,7 +2147,7 @@ export default function ReadyMadePackagesPage() {
         )}
 
         {/* Package Card Grid (Wide Canvas: 3-4 cards across on modern desktop) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.5rem' }}>
+        <div className="rm-catalog-grid">
           {filteredTemplates.map(tmpl => {
             const tmplId = tmpl._id || tmpl.title
             const hasVideo = !!tmpl.videoUrl
@@ -2469,6 +2515,7 @@ export default function ReadyMadePackagesPage() {
       {/* ── LAND PACKAGE QUOTER MODAL ── */}
       {selectedTemplate && (
         <div
+          className="rm-modal-overlay"
           style={{
             position: 'fixed',
             inset: 0,
@@ -2483,6 +2530,7 @@ export default function ReadyMadePackagesPage() {
           onClick={() => setSelectedTemplate(null)}
         >
           <div
+            className="rm-modal-dialog"
             style={{
               background: '#FFF',
               borderRadius: '14px',
@@ -2779,7 +2827,7 @@ export default function ReadyMadePackagesPage() {
                     </div>
 
                     {/* 2-Column Responsive Grid: Column 1 = Transfers, Column 2 = Sightseeing Admissions */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '0.75rem' }}>
+                    <div className="rm-day-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '0.75rem' }}>
                       
                       {/* Left: Transfers Column */}
                       <div style={{ background: '#F8FAFC', borderRadius: '8px', padding: '0.55rem 0.75rem', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>

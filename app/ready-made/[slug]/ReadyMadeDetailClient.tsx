@@ -22,10 +22,11 @@ import {
   Sliders
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { ReadyPackageTemplate, getEmbedVideoInfo } from '../../../utils/readyPackages'
+import { ReadyPackageTemplate, getEmbedVideoInfo, calculateLandPackagePrices } from '../../../utils/readyPackages'
 
 interface Props {
   pkg: ReadyPackageTemplate
+  otherPackages?: ReadyPackageTemplate[]
   exchangeRate: number
 }
 
@@ -120,7 +121,7 @@ const fetchRasterLogo = async (
   }
 }
 
-export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
+export default function ReadyMadeDetailClient({ pkg, otherPackages = [], exchangeRate }: Props) {
   const router = useRouter()
   const hasVideo = !!pkg.videoUrl
   const videoInfo = hasVideo ? getEmbedVideoInfo(pkg.videoUrl) : null
@@ -835,7 +836,151 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
     : 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800'
 
   return (
-    <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: '6rem' }}>
+    <div className="rm-page-wrapper" style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: '6rem' }}>
+      <style>{`
+        .rm-detail-main {
+          max-width: 1440px;
+          margin: 2rem auto 0;
+          padding: 0 1.5rem;
+        }
+        .rm-top-card {
+          background: #FFFFFF;
+          border-radius: 16px;
+          border: 1px solid #E2E8F0;
+          padding: 1.75rem 2rem;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+          margin-bottom: 2rem;
+        }
+        .rm-title {
+          font-size: 2.1rem;
+          font-weight: 800;
+          color: #0A2240;
+          margin: 0 0 0.75rem;
+          font-family: var(--font-playfair), serif;
+          line-height: 1.25;
+        }
+        .rm-header-inner {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          flex-wrap: wrap;
+          gap: 1.25rem;
+        }
+        .rm-price-badge {
+          background: linear-gradient(135deg, #0A2240 0%, #0F4C3A 100%);
+          color: #FFF;
+          border-radius: 12px;
+          padding: 1.25rem 1.5rem;
+          text-align: right;
+          min-width: 220px;
+        }
+        .rm-detail-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
+          gap: 2rem;
+          align-items: start;
+        }
+        .rm-media-box {
+          background: #091A2F;
+          border-radius: 16px;
+          overflow: hidden;
+          position: relative;
+          height: 380px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+          margin-bottom: 2rem;
+        }
+        .rm-quoter-card {
+          position: sticky;
+          top: 2rem;
+          background: #FFFFFF;
+          border-radius: 16px;
+          border: 1px solid #E2E8F0;
+          box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+          padding: 1.75rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+        }
+        .rm-other-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+          gap: 1.5rem;
+        }
+        .rm-mobile-floating-bar {
+          display: none;
+        }
+
+        @media (max-width: 960px) {
+          .rm-detail-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1.5rem !important;
+          }
+          .rm-quoter-card {
+            position: static !important;
+            top: unset !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .rm-detail-main {
+            padding: 0 0.85rem !important;
+            margin-top: 1rem !important;
+          }
+          .rm-top-card {
+            padding: 1.15rem 1rem !important;
+            border-radius: 12px !important;
+            margin-bottom: 1.25rem !important;
+          }
+          .rm-title {
+            font-size: 1.4rem !important;
+            line-height: 1.25 !important;
+            margin-bottom: 0.5rem !important;
+          }
+          .rm-header-inner {
+            flex-direction: column !important;
+            gap: 0.85rem !important;
+          }
+          .rm-price-badge {
+            width: 100% !important;
+            text-align: left !important;
+            min-width: unset !important;
+            padding: 0.85rem 1rem !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+          }
+          .rm-media-box {
+            height: min(58vw, 280px) !important;
+            border-radius: 12px !important;
+            margin-bottom: 1.25rem !important;
+          }
+          .rm-quoter-card {
+            padding: 1.15rem 1rem !important;
+            border-radius: 12px !important;
+            gap: 1rem !important;
+          }
+          .rm-other-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+          }
+          .rm-mobile-floating-bar {
+            display: flex !important;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: rgba(10, 34, 64, 0.96) !important;
+            backdrop-filter: blur(10px) !important;
+            padding: 0.65rem 1rem !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            z-index: 8999 !important;
+            border-top: 1px solid rgba(255,255,255,0.15) !important;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.2) !important;
+          }
+        }
+      `}</style>
       
       {/* ── Toast Notification ── */}
       {toast && (
@@ -912,18 +1057,11 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
       </div>
 
       {/* ── Main Container (Wide Canvas) ── */}
-      <main style={{ maxWidth: '1440px', margin: '2rem auto 0', padding: '0 1.5rem' }}>
+      <main className="rm-detail-main">
 
         {/* Top Header Card */}
-        <div style={{
-          background: '#FFFFFF',
-          borderRadius: '16px',
-          border: '1px solid #E2E8F0',
-          padding: '1.75rem 2rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-          marginBottom: '2rem'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.25rem' }}>
+        <div className="rm-top-card">
+          <div className="rm-header-inner">
             <div style={{ flex: '1 1 650px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                 {pkg.badgeText && (
@@ -939,14 +1077,7 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
                 </span>
               </div>
 
-              <h1 style={{
-                fontSize: '2.1rem',
-                fontWeight: 800,
-                color: '#0A2240',
-                margin: '0 0 0.75rem',
-                fontFamily: 'var(--font-playfair), serif',
-                lineHeight: 1.25
-              }}>
+              <h1 className="rm-title">
                 {pkg.title}
               </h1>
 
@@ -956,43 +1087,35 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
             </div>
 
             {/* Price Badge */}
-            <div style={{
-              background: 'linear-gradient(135deg, #0A2240 0%, #0F4C3A 100%)',
-              color: '#FFF',
-              borderRadius: '12px',
-              padding: '1.25rem 1.5rem',
-              textAlign: 'right',
-              minWidth: '220px'
-            }}>
-              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#D4AF37', fontWeight: 800, letterSpacing: '0.05em', display: 'block', marginBottom: '0.25rem' }}>
-                Est. Rate ({transferMode === 'sic' ? 'SIC Shared' : 'Private 13-Seater'})
-              </span>
-              <div style={{ fontSize: '1.9rem', fontWeight: 800, lineHeight: 1.1 }}>
-                S$ {calculation.adultQuoteSGD.toLocaleString()}
+            <div className="rm-price-badge">
+              <div>
+                <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#D4AF37', fontWeight: 800, letterSpacing: '0.05em', display: 'block', marginBottom: '0.2rem' }}>
+                  Est. Rate ({transferMode === 'sic' ? 'SIC Shared' : 'Private 13-Seater'})
+                </span>
+                <div style={{ fontSize: '1.85rem', fontWeight: 800, lineHeight: 1.1 }}>
+                  S$ {calculation.adultQuoteSGD.toLocaleString()}
+                </div>
               </div>
-              <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', display: 'block', marginTop: '0.25rem' }}>
-                Per Adult (₹{Math.round(calculation.adultQuoteSGD * exchangeRate).toLocaleString('en-IN')})
-              </span>
+              <div className="rm-price-badge-right">
+                <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.75)', display: 'block' }}>
+                  Per Adult
+                </span>
+                <span style={{ fontSize: '0.85rem', color: '#FCD34D', fontWeight: 800 }}>
+                  ₹{Math.round(calculation.adultQuoteSGD * exchangeRate).toLocaleString('en-IN')}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* ── Grid: Left Column (Media + Itinerary) & Right Column (Interactive Quoter) ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.25fr) minmax(0, 0.95fr)', gap: '2rem', alignItems: 'start' }}>
+        <div className="rm-detail-grid">
           
           {/* LEFT: Media Container & Day-by-Day Timeline */}
-          <div>
+          <div className="rm-left-col">
 
             {/* Media Box (Cover photo or Video player with Tab switcher) */}
-            <div style={{
-              background: '#091A2F',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              position: 'relative',
-              height: '360px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-              marginBottom: '2rem'
-            }}>
+            <div className="rm-media-box">
               {/* Blurred backdrop */}
               <img
                 src={coverUrl}
@@ -1231,18 +1354,7 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
           </div>
 
           {/* RIGHT: Standalone Interactive Land Package Quoter */}
-          <div style={{
-            position: 'sticky',
-            top: '2rem',
-            background: '#FFFFFF',
-            borderRadius: '16px',
-            border: '1px solid #E2E8F0',
-            boxShadow: '0 10px 35px rgba(0,0,0,0.08)',
-            padding: '1.75rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.25rem'
-          }}>
+          <div id="rm-quoter-box" className="rm-quoter-card">
             <div style={{ borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem' }}>
               <span style={{ color: '#0F4C3A', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Live B2B Land Quoter Engine
@@ -1566,7 +1678,179 @@ export default function ReadyMadeDetailClient({ pkg, exchangeRate }: Props) {
 
         </div>
 
+        {/* ── Explore Other Singapore Land Packages ── */}
+        {otherPackages && otherPackages.length > 0 && (
+          <div style={{ marginTop: '4rem', paddingTop: '2.5rem', borderTop: '2px solid #E2E8F0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <span style={{ fontSize: '0.78rem', textTransform: 'uppercase', color: '#0F4C3A', fontWeight: 800, letterSpacing: '0.05em' }}>
+                  Singapore DMC Land Itineraries
+                </span>
+                <h2 style={{ margin: '0.25rem 0 0', fontSize: '1.75rem', fontWeight: 800, color: '#0A2240', fontFamily: 'var(--font-playfair), serif' }}>
+                  Explore Other Ready-Made Land Packages
+                </h2>
+              </div>
+              <Link
+                href="/ready-made"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: '#0F4C3A',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  textDecoration: 'none'
+                }}
+              >
+                View All Land Packages ➔
+              </Link>
+            </div>
+
+            <div className="rm-other-grid">
+              {otherPackages.map(oPkg => {
+                const oPricing = calculateLandPackagePrices(oPkg)
+                return (
+                  <div
+                    key={oPkg._id}
+                    style={{
+                      background: '#FFF',
+                      borderRadius: '14px',
+                      border: '1px solid #E2E8F0',
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.04)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div>
+                      <div style={{ position: 'relative', height: '190px', background: '#091A2F' }}>
+                        <img
+                          src={oPkg.coverImage || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800'}
+                          alt={oPkg.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                        <span style={{ position: 'absolute', bottom: '8px', right: '8px', background: 'rgba(15,76,58,0.92)', color: '#FFF', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px' }}>
+                          🌙 {oPkg.nightsCount}N / {oPkg.nightsCount + 1}D
+                        </span>
+                        {oPkg.badgeText && (
+                          <span style={{ position: 'absolute', top: '8px', left: '8px', background: '#D4AF37', color: '#111', fontSize: '0.68rem', fontWeight: 800, padding: '2px 7px', borderRadius: '6px' }}>
+                            {oPkg.badgeText}
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ padding: '1rem 1.15rem 0.5rem' }}>
+                        <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0A2240', margin: '0 0 0.4rem', lineHeight: 1.3 }}>
+                          {oPkg.title}
+                        </h3>
+                        <p style={{ fontSize: '0.82rem', color: '#64748B', lineHeight: 1.45, margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {oPkg.summary}
+                        </p>
+                        <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>From:</span>
+                          <span style={{ fontSize: '1.05rem', fontWeight: 800, color: '#059669' }}>
+                            S$ {oPricing.pricePrivate.toLocaleString()}{' '}
+                            <span style={{ fontSize: '0.72rem', color: '#D4AF37', fontWeight: 700 }}>
+                              (₹{Math.round(oPricing.pricePrivate * exchangeRate).toLocaleString('en-IN')})
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ padding: '0.85rem 1.15rem 1.15rem' }}>
+                      <Link
+                        href={`/ready-made/${oPkg.slug || oPkg._id}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          background: 'linear-gradient(135deg, #0F4C3A 0%, #059669 100%)',
+                          color: '#FFF',
+                          padding: '0.55rem',
+                          borderRadius: '6px',
+                          fontWeight: 700,
+                          fontSize: '0.82rem',
+                          textDecoration: 'none'
+                        }}
+                      >
+                        <span>⚡</span> View Land Quote & Itinerary ➔
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
       </main>
+
+      {/* ── Mobile Floating Action Bar ── */}
+      <div className="rm-mobile-floating-bar">
+        <div>
+          <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.7)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            {transferMode === 'sic' ? 'SIC Shared' : 'Private 13-Seater'}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+            <span style={{ fontSize: '1.18rem', fontWeight: 800, color: '#FFF' }}>
+              S$ {calculation.totalClientPriceSGD.toLocaleString()}
+            </span>
+            <span style={{ fontSize: '0.72rem', color: '#FCD34D', fontWeight: 700 }}>
+              (₹{calculation.totalClientPriceINR.toLocaleString('en-IN')})
+            </span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('rm-quoter-box')
+              el?.scrollIntoView({ behavior: 'smooth' })
+            }}
+            style={{
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              color: '#FFF',
+              border: 'none',
+              padding: '0.45rem 0.8rem',
+              borderRadius: '8px',
+              fontWeight: 800,
+              fontSize: '0.76rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontFamily: 'var(--font-inter), sans-serif'
+            }}
+          >
+            ⚡ Quote
+          </button>
+          <button
+            type="button"
+            onClick={handleDownloadPDF}
+            disabled={isGeneratingPdf}
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              color: '#FFF',
+              border: '1px solid rgba(255,255,255,0.25)',
+              padding: '0.45rem 0.75rem',
+              borderRadius: '8px',
+              fontWeight: 700,
+              fontSize: '0.76rem',
+              cursor: isGeneratingPdf ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontFamily: 'var(--font-inter), sans-serif'
+            }}
+          >
+            <FileDown size={14} />
+            <span>PDF</span>
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

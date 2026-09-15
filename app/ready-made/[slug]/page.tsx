@@ -76,6 +76,9 @@ export default async function ReadyMadeDetailPage({ params }: { params: Promise<
     notFound()
   }
 
+  const allPackages = await getAllReadyPackages()
+  const otherPackages = allPackages.filter(p => p.slug !== pkg.slug && p._id !== pkg._id)
+
   let exchangeRate = 74.81
   try {
     exchangeRate = await getLiveExchangeRate()
@@ -83,7 +86,7 @@ export default async function ReadyMadeDetailPage({ params }: { params: Promise<
 
   return (
     <Suspense fallback={<div className="container" style={{ paddingTop: '5rem', textAlign: 'center' }}>Loading Land Package...</div>}>
-      <ReadyMadeDetailClient pkg={pkg} exchangeRate={exchangeRate} />
+      <ReadyMadeDetailClient pkg={pkg} otherPackages={otherPackages} exchangeRate={exchangeRate} />
     </Suspense>
   )
 }
