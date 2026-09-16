@@ -1776,17 +1776,21 @@ export default function PrototypeBuilder() {
           if (vehiclesList.length > 0) {
             let vIdx = -1
 
-            // 1. If existing vehicleIndex points to a valid vehicle in vehiclesList, prioritize it!
+            // 1. If existing vehicleIndex points to a valid vehicle in vehiclesList that matches t.type (or t.type is empty), prioritize it!
             if (typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && t.vehicleIndex < vehiclesList.length) {
-              vIdx = t.vehicleIndex
+              const candidate = vehiclesList[t.vehicleIndex]
+              // Check if candidate vehicle matches the saved vehicle type (e.g. 45-Seater vs 13-Seater)
+              if (!t.type || (candidate && candidate.type.toLowerCase().trim() === (t.type || '').toLowerCase().trim())) {
+                vIdx = t.vehicleIndex
+              }
             }
 
             const tType = (t.type || '').toLowerCase().trim()
             const tService = (t.serviceName || '').toLowerCase().trim()
-            const desc = (t.routeDescription || t.serviceType || t.description || '').toLowerCase().trim()
+            const desc = (t.description || t.routeDescription || t.serviceType || '').toLowerCase().trim()
             const allText = `${tType} ${tService} ${desc}`
 
-            // 2. If vehicleIndex is invalid or missing, match by exact vehicle type + serviceName
+            // 2. If vehicleIndex is invalid, missing, or mismatched, match by exact vehicle type + serviceName
             if (vIdx < 0 && tType && tService) {
               vIdx = vehiclesList.findIndex(v => 
                 v.type.toLowerCase().trim() === tType &&
@@ -1817,6 +1821,11 @@ export default function PrototypeBuilder() {
                 vIdx = vehiclesList.findIndex(v => isVehicleSIC(v))
               }
             }
+            // 6. If still unresolved but valid vehicleIndex exists, keep vehicleIndex
+            if (vIdx < 0 && typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && t.vehicleIndex < vehiclesList.length) {
+              vIdx = t.vehicleIndex
+            }
+
             if (vIdx >= 0) {
               const matchedVeh = vehiclesList[vIdx]
               return {
@@ -7749,7 +7758,7 @@ export default function PrototypeBuilder() {
               let vIdx = -1
 
               // 1. If valid vehicleIndex was saved, prioritize it!
-              if (typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && (!vehiclesList.length || t.vehicleIndex < vehiclesList.length)) {
+              if (typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0) {
                 vIdx = t.vehicleIndex
               }
 
@@ -7789,12 +7798,12 @@ export default function PrototypeBuilder() {
               const isDisposal = sType === 'disposal' || desc.includes('disposal')
               return {
                 ...t,
-                vehicleIndex: vIdx >= 0 ? vIdx : 0,
+                vehicleIndex: vIdx >= 0 ? vIdx : (typeof t.vehicleIndex === 'number' ? t.vehicleIndex : 0),
                 type: t.type || resolvedVeh?.type,
                 serviceName: t.serviceName || resolvedVeh?.serviceName,
                 serviceType: sType,
                 time: sanitizeTime(t.time),
-                description: t.routeDescription || t.serviceType || t.description || 'Transfer',
+                description: t.description || t.routeDescription || t.serviceType || 'Transfer',
                 hours: typeof t.hours === 'number' && t.hours > 0 ? t.hours : (isDisposal ? 4 : undefined),
                 qty: typeof t.qty === 'number' ? t.qty : 1
               }
@@ -7901,10 +7910,11 @@ export default function PrototypeBuilder() {
           const curVeh = vehiclesList[t.vehicleIndex]
           const isSedan = curVeh && ((curVeh.vehicleType || '').toLowerCase().includes('sedan') || (curVeh.type || '').toLowerCase().includes('sedan'))
           const isInvalid = t.vehicleIndex === undefined || t.vehicleIndex < 0 || !curVeh
+          const tType = (t.type || '').toLowerCase().trim()
+          const isSizeMismatch = curVeh && tType && !curVeh.type.toLowerCase().includes(tType.slice(0, 5)) && (tType.includes('45') || tType.includes('24') || tType.includes('55') || tType.includes('sic'))
           
-          if (isSedan || isInvalid) {
-            const tType = (t.type || '').toLowerCase().trim()
-            const desc = (t.routeDescription || t.serviceType || t.description || '').toLowerCase().trim()
+          if (isSedan || isInvalid || isSizeMismatch) {
+            const desc = (t.description || t.routeDescription || t.serviceType || '').toLowerCase().trim()
             const allText = `${tType} ${desc}`
             let f = -1
 
