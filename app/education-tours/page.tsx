@@ -199,7 +199,7 @@ const INSTITUTIONS: Institution[] = [
     category: 'Tech & Design',
     cohorts: ['College', 'MBA'],
     location: 'Upper Changi, Singapore',
-    imageUrl: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://cdn.sanity.io/images/8xtd7yiv/production/6d0972ea9e7614805a1a49501fb190c33376cd18-738x270.jpg',
     videoUrl: '',
     brochureUrl: '/brochure/Singapore.pdf',
     visitDuration: 'Full-Day Tech Immersion (5 Hours)',
