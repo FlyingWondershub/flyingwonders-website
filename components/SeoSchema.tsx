@@ -5,7 +5,7 @@ export default function SeoSchema() {
     '@context': 'https://schema.org',
     '@type': 'TravelAgency',
     'name': 'Flying Wonders Pvt Ltd',
-    'image': 'https://flyingwonders.net/images/hero/singapore-hero-1.jpg',
+    'image': 'https://flyingwonders.net/og_banner.jpeg',
     '@id': 'https://flyingwonders.net/#travelagency',
     'url': 'https://flyingwonders.net',
     'telephone': '+91-9886171251',

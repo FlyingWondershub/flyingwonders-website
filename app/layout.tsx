@@ -45,10 +45,10 @@ export const metadata: Metadata = {
     siteName: 'Flying Wonders',
     images: [
       {
-        url: '/images/hero/singapore-hero-1.jpg',
+        url: '/og_banner.jpeg',
         width: 1200,
         height: 630,
-        alt: 'Flying Wonders Singapore Travel DMC'
+        alt: 'Flying Wonders - Customizing Your Travel Choices'
       }
     ],
     locale: 'en_US',
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Flying Wonders | Premier Singapore DMC',
     description: 'Specialist Destination Management Company (DMC) for Singapore travel packages and attraction tickets.',
-    images: ['/images/hero/singapore-hero-1.jpg'],
+    images: ['/og_banner.jpeg'],
   },
   robots: {
     index: true,
