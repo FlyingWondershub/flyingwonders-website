@@ -1797,11 +1797,19 @@ export default function PrototypeBuilder() {
                 (v.serviceName || '').toLowerCase().trim() === tService
               )
             }
-            // 3. Match on distinctive serviceName
+            // 3. Match on distinctive serviceName ONLY if vehicle type is compatible
             if (vIdx < 0 && tService && !tService.includes('transfer')) {
-              vIdx = vehiclesList.findIndex(v => 
-                (v.serviceName || '').toLowerCase().trim() === tService
-              )
+              vIdx = vehiclesList.findIndex(v => {
+                const sMatch = (v.serviceName || '').toLowerCase().trim() === tService
+                if (!sMatch) return false
+                if (!tType) return true
+                const vt = (v.type || '').toLowerCase()
+                if (tType.includes('45')) return vt.includes('45')
+                if (tType.includes('24')) return vt.includes('24')
+                if (tType.includes('55')) return vt.includes('55')
+                if (tType.includes('13')) return vt.includes('13')
+                return vt === tType
+              })
             }
             // 4. Match on vehicle type (unless it's a generic 13-seater when a larger coach was intended)
             if (vIdx < 0 && tType) {
@@ -1809,14 +1817,30 @@ export default function PrototypeBuilder() {
                 v.type.toLowerCase().trim() === tType
               )
             }
-            // 5. Match by vehicle size if 45, 24, 55 seater or SIC is specified in text
+            // 5. Match by vehicle size if 45, 24, 55 seater or SIC is specified in text, respecting service type (arrival/departure)
             if (vIdx < 0) {
+              const isArr = tService.includes('arrival') || desc.includes('arrival') || (t.serviceType || '').toLowerCase().includes('arrival')
+              const isDep = tService.includes('departure') || desc.includes('departure') || (t.serviceType || '').toLowerCase().includes('departure')
+
+              const findMatchingCoach = (sizeStr: string) => {
+                let idx = -1
+                if (isArr) {
+                  idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('arrival') || v.type?.toLowerCase().includes('arrival')))
+                } else if (isDep) {
+                  idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('departure') || v.type?.toLowerCase().includes('departure')))
+                }
+                if (idx < 0) {
+                  idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)))
+                }
+                return idx
+              }
+
               if (allText.includes('45') || allText.includes('full coach')) {
-                vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('45') || v.type?.includes('45')))
+                vIdx = findMatchingCoach('45')
               } else if (allText.includes('24') || allText.includes('medium coach')) {
-                vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('24') || v.type?.includes('24')))
+                vIdx = findMatchingCoach('24')
               } else if (allText.includes('55') || allText.includes('super coach')) {
-                vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('55') || v.type?.includes('55')))
+                vIdx = findMatchingCoach('55')
               } else if (allText.includes('sic') || (allText.includes('coach') && !allText.includes('full') && !allText.includes('medium'))) {
                 vIdx = vehiclesList.findIndex(v => isVehicleSIC(v))
               }
@@ -7775,14 +7799,30 @@ export default function PrototypeBuilder() {
                 vIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === tType)
               }
 
-              // 4. Match by vehicle size if 45, 24, or 55 seater was specified in text/type/desc
+              // 4. Match by vehicle size if 45, 24, or 55 seater was specified in text/type/desc, respecting service type
               if (vIdx < 0 && vehiclesList.length > 0) {
+                const isArr = (t.serviceType || '').toLowerCase().includes('arrival') || desc.includes('arrival') || (t.serviceName || '').toLowerCase().includes('arrival')
+                const isDep = (t.serviceType || '').toLowerCase().includes('departure') || desc.includes('departure') || (t.serviceName || '').toLowerCase().includes('departure')
+
+                const findCoach = (sizeStr: string) => {
+                  let idx = -1
+                  if (isArr) {
+                    idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('arrival') || v.type?.toLowerCase().includes('arrival')))
+                  } else if (isDep) {
+                    idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('departure') || v.type?.toLowerCase().includes('departure')))
+                  }
+                  if (idx < 0) {
+                    idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)))
+                  }
+                  return idx
+                }
+
                 if (allText.includes('45') || allText.includes('full coach')) {
-                  vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('45') || v.type?.includes('45')))
+                  vIdx = findCoach('45')
                 } else if (allText.includes('24') || allText.includes('medium coach')) {
-                  vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('24') || v.type?.includes('24')))
+                  vIdx = findCoach('24')
                 } else if (allText.includes('55') || allText.includes('super coach')) {
-                  vIdx = vehiclesList.findIndex(v => (v.vehicleType?.includes('55') || v.type?.includes('55')))
+                  vIdx = findCoach('55')
                 } else if (allText.includes('sic') || (allText.includes('coach') && !allText.includes('full') && !allText.includes('medium'))) {
                   vIdx = vehiclesList.findIndex(v => isVehicleSIC(v))
                 }
@@ -7918,12 +7958,28 @@ export default function PrototypeBuilder() {
             const allText = `${tType} ${desc}`
             let f = -1
 
+            const isArr = (t.serviceType || '').toLowerCase().includes('arrival') || desc.includes('arrival') || (t.serviceName || '').toLowerCase().includes('arrival')
+            const isDep = (t.serviceType || '').toLowerCase().includes('departure') || desc.includes('departure') || (t.serviceName || '').toLowerCase().includes('departure')
+
+            const findCoach = (sizeStr: string) => {
+              let idx = -1
+              if (isArr) {
+                idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('arrival') || v.type?.toLowerCase().includes('arrival')))
+              } else if (isDep) {
+                idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('departure') || v.type?.toLowerCase().includes('departure')))
+              }
+              if (idx < 0) {
+                idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)))
+              }
+              return idx
+            }
+
             if (allText.includes('45') || allText.includes('full coach')) {
-              f = vehiclesList.findIndex(v => (v.vehicleType?.includes('45') || v.type?.includes('45')))
+              f = findCoach('45')
             } else if (allText.includes('24') || allText.includes('medium coach')) {
-              f = vehiclesList.findIndex(v => (v.vehicleType?.includes('24') || v.type?.includes('24')))
+              f = findCoach('24')
             } else if (allText.includes('55') || allText.includes('super coach')) {
-              f = vehiclesList.findIndex(v => (v.vehicleType?.includes('55') || v.type?.includes('55')))
+              f = findCoach('55')
             } else if (allText.includes('sic') || (allText.includes('coach') && !allText.includes('full') && !allText.includes('medium'))) {
               f = vehiclesList.findIndex(v => isVehicleSIC(v))
             } else if (tType) {
