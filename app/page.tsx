@@ -39,7 +39,7 @@ export default async function Home() {
   }
 
   try {
-    const fetchedSettings = await client.fetch(`*[_type == "siteSettings"][0]{
+    const fetchedSettings = await client.fetch(`*[_type == "siteSettings"] | order(_updatedAt desc)[0]{
       heroTitle,
       heroSubtitle,
       itinerarySectionTitle,
