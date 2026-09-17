@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { client } from '../sanity/lib/client'
 import MetricsCounter from '../components/MetricsCounter'
 import HeroBackground from '../components/HeroBackground'
+import BentoGridSection from '../components/BentoGridSection'
 import { getLiveExchangeRate } from '../utils/exchange'
 import AdBanner from '../components/AdBanner'
 
@@ -17,14 +18,23 @@ export default async function Home() {
     card1Header: 'Taste the World in a Single Square Mile',
     card1Story: 'A collision of cross-cultural heritage and culinary artistry. Lose yourself in the generational smoke of legendary hawker street stalls, or ascend to the stars for avant-garde dining suspended high above the glittering skyline.',
     card1Image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
+    card1VideoType: 'youtube' as 'youtube' | 'file' | 'none',
+    card1VideoUrl: 'https://www.youtube.com/watch?v=PpA9iIt0kGs',
+    card1VideoFileUrl: undefined as string | undefined,
     card2Tagline: 'REGENERATIVE EXPLORATION',
     card2Header: "The World's Finest City in Nature",
     card2Story: 'Step into a living blueprint for tomorrow’s travel. Wander through an eco-futuristic wonderland where high-density vertical gardens breathe alongside bioluminescent glass domes, redefining the boundary between urban luxury and the wild.',
     card2Image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80',
+    card2VideoType: 'none' as 'youtube' | 'file' | 'none',
+    card2VideoUrl: '',
+    card2VideoFileUrl: undefined as string | undefined,
     card3Tagline: 'THE BLEISURE ESCAPE',
     card3Header: 'Where Global Ambition Meets Uncharted Play',
     card3Story: 'The ultimate playground for the modern global traveler. Effortlessly transition from high-stakes networking summits in architectural marvels to pulse-pounding nightlife, world-class Grand Prix weekends, and sun-soaked offshore island retreats.',
     card3Image: 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=800&q=80',
+    card3VideoType: 'youtube' as 'youtube' | 'file' | 'none',
+    card3VideoUrl: 'https://www.youtube.com/watch?v=kij3n1iikKc',
+    card3VideoFileUrl: undefined as string | undefined,
     hideAiPlanner: false
   }
 
@@ -37,14 +47,23 @@ export default async function Home() {
       card1Header,
       card1Story,
       card1Image,
+      card1VideoType,
+      card1VideoUrl,
+      "card1VideoFileUrl": card1VideoFile.asset->url,
       card2Tagline,
       card2Header,
       card2Story,
       card2Image,
+      card2VideoType,
+      card2VideoUrl,
+      "card2VideoFileUrl": card2VideoFile.asset->url,
       card3Tagline,
       card3Header,
       card3Story,
       card3Image,
+      card3VideoType,
+      card3VideoUrl,
+      "card3VideoFileUrl": card3VideoFile.asset->url,
       hideAiPlanner
     }`)
     if (fetchedSettings) {
@@ -184,133 +203,42 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 🏙️ Section 2: The Core Pillars (Interactive Bento-Grid) */}
-      <section style={{ padding: '8rem 0', background: 'var(--bg-main)' }}>
-        <div className="container container-wide">
-          <span style={{ 
-            color: 'var(--crimson-primary)', 
-            textTransform: 'uppercase', 
-            fontWeight: 700, 
-            letterSpacing: '0.2em',
-            fontSize: '0.8rem',
-            display: 'block',
-            textAlign: 'center',
-            marginBottom: '0.5rem'
-          }}>
-            Singapore At A Glance
-          </span>
-          <h2 style={{ textAlign: 'center', fontSize: '3rem', marginBottom: '4rem', color: 'var(--text-dark)' }}>
-            {settings.itinerarySectionTitle}
-          </h2>
-          
-          <div className="bento-grid">
-            {/* Card 1 */}
-            <div className="bento-card hover-lift" style={{ 
-              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.1)), url(${settings.card1Image})`, 
-              backgroundSize: 'cover', 
-              backgroundPosition: 'center',
-              colorScheme: 'dark'
-            }}>
-              <div style={{ position: 'relative', zIndex: 2 }}>
-                <span style={{ 
-                  color: 'var(--gold-accent)', 
-                  fontSize: '0.75rem', 
-                  fontWeight: 700, 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.1em',
-                  display: 'block',
-                  marginBottom: '0.35rem'
-                }}>{settings.card1Tagline}</span>
-                <h3 style={{ 
-                  fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)', 
-                  color: '#FFFFFF', 
-                  margin: '0 0 0.5rem 0',
-                  lineHeight: 1.25,
-                  fontFamily: 'var(--font-playfair), Georgia, serif',
-                  fontWeight: 500
-                }}>{settings.card1Header}</h3>
-                <p style={{ 
-                  color: 'rgba(255,255,255,0.88)', 
-                  fontSize: '0.92rem', 
-                  fontWeight: 300, 
-                  lineHeight: 1.65,
-                  margin: 0
-                }}>{settings.card1Story}</p>
-              </div>
-            </div>
-
-            {/* Card 2 */}
-            <div className="bento-card hover-lift" style={{ 
-              backgroundImage: `linear-gradient(to top, rgba(15,76,58,0.95) 20%, rgba(0,0,0,0.1)), url(${settings.card2Image})`, 
-              backgroundSize: 'cover', 
-              backgroundPosition: 'center',
-              colorScheme: 'dark'
-            }}>
-              <div style={{ position: 'relative', zIndex: 2 }}>
-                <span style={{ 
-                  color: 'var(--gold-accent)', 
-                  fontSize: '0.75rem', 
-                  fontWeight: 700, 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.1em',
-                  display: 'block',
-                  marginBottom: '0.35rem'
-                }}>{settings.card2Tagline}</span>
-                <h3 style={{ 
-                  fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)', 
-                  color: '#FFFFFF', 
-                  margin: '0 0 0.5rem 0',
-                  lineHeight: 1.25,
-                  fontFamily: 'var(--font-playfair), Georgia, serif',
-                  fontWeight: 500
-                }}>{settings.card2Header}</h3>
-                <p style={{ 
-                  color: 'rgba(255,255,255,0.88)', 
-                  fontSize: '0.92rem', 
-                  fontWeight: 300, 
-                  lineHeight: 1.65,
-                  margin: 0
-                }}>{settings.card2Story}</p>
-              </div>
-            </div>
-
-            {/* Card 3 */}
-            <div className="bento-card hover-lift" style={{ 
-              backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.1)), url(${settings.card3Image})`, 
-              backgroundSize: 'cover', 
-              backgroundPosition: 'center',
-              colorScheme: 'dark'
-            }}>
-              <div style={{ position: 'relative', zIndex: 2 }}>
-                <span style={{ 
-                  color: 'var(--gold-accent)', 
-                  fontSize: '0.75rem', 
-                  fontWeight: 700, 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.1em',
-                  display: 'block',
-                  marginBottom: '0.35rem'
-                }}>{settings.card3Tagline}</span>
-                <h3 style={{ 
-                  fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)', 
-                  color: '#FFFFFF', 
-                  margin: '0 0 0.5rem 0',
-                  lineHeight: 1.25,
-                  fontFamily: 'var(--font-playfair), Georgia, serif',
-                  fontWeight: 500
-                }}>{settings.card3Header}</h3>
-                <p style={{ 
-                  color: 'rgba(255,255,255,0.88)', 
-                  fontSize: '0.92rem', 
-                  fontWeight: 300, 
-                  lineHeight: 1.65,
-                  margin: 0
-                }}>{settings.card3Story}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 🏙️ Section 2: The Core Pillars (Interactive Bento-Grid with Video Playback) */}
+      <BentoGridSection
+        sectionTitle={settings.itinerarySectionTitle}
+        cards={[
+          {
+            tagline: settings.card1Tagline,
+            header: settings.card1Header,
+            story: settings.card1Story,
+            image: settings.card1Image,
+            gradient: 'linear-gradient(to top, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.1))',
+            videoType: settings.card1VideoType,
+            videoUrl: settings.card1VideoUrl,
+            videoFileUrl: settings.card1VideoFileUrl,
+          },
+          {
+            tagline: settings.card2Tagline,
+            header: settings.card2Header,
+            story: settings.card2Story,
+            image: settings.card2Image,
+            gradient: 'linear-gradient(to top, rgba(15,76,58,0.95) 20%, rgba(0,0,0,0.1))',
+            videoType: settings.card2VideoType,
+            videoUrl: settings.card2VideoUrl,
+            videoFileUrl: settings.card2VideoFileUrl,
+          },
+          {
+            tagline: settings.card3Tagline,
+            header: settings.card3Header,
+            story: settings.card3Story,
+            image: settings.card3Image,
+            gradient: 'linear-gradient(to top, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.1))',
+            videoType: settings.card3VideoType,
+            videoUrl: settings.card3VideoUrl,
+            videoFileUrl: settings.card3VideoFileUrl,
+          },
+        ]}
+      />
 
       {/* 🛍️ Section 3: The Curated Marketplace */}
       <section style={{ padding: '8rem 0', background: 'var(--bg-secondary)', overflow: 'hidden' }}>
