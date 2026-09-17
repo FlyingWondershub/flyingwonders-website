@@ -47,8 +47,8 @@ export const metadata: Metadata = {
       {
         url: '/og_banner.jpeg',
         width: 1200,
-        height: 630,
-        alt: 'Flying Wonders - Customizing Your Travel Choices'
+        height: 1200,
+        alt: 'Flying Wonders - Discover Singapore'
       }
     ],
     locale: 'en_US',
