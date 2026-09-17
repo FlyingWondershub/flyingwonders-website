@@ -39,36 +39,83 @@ export default async function Home() {
   }
 
   try {
-    // Merge primary document (id: "siteSettings") with fallback values from any previous documents
-    const fetchedSettings = await client.fetch(`*[_type == "siteSettings" && _id == "siteSettings"][0]{
-      heroTitle,
-      heroSubtitle,
-      itinerarySectionTitle,
-      card1Tagline,
-      card1Header,
-      card1Story,
-      card1Image,
-      card1VideoType,
-      card1VideoUrl,
-      "card1VideoFileUrl": card1VideoFile.asset->url,
-      card2Tagline,
-      card2Header,
-      card2Story,
-      card2Image,
-      card2VideoType,
-      card2VideoUrl,
-      "card2VideoFileUrl": card2VideoFile.asset->url,
-      card3Tagline,
-      card3Header,
-      card3Story,
-      card3Image,
-      card3VideoType,
-      card3VideoUrl,
-      "card3VideoFileUrl": card3VideoFile.asset->url,
-      hideAiPlanner
-    }`)
-    if (fetchedSettings) {
-      settings = { ...settings, ...fetchedSettings }
+    // Fetch both the singleton document (where new video fields were saved in Studio) and the original legacy document (where original images/content reside)
+    const [singletonSettings, legacySettings] = await Promise.all([
+      client.fetch(`*[_type == "siteSettings" && _id == "siteSettings"][0]{
+        heroTitle,
+        heroSubtitle,
+        itinerarySectionTitle,
+        card1Tagline,
+        card1Header,
+        card1Story,
+        card1Image,
+        card1VideoType,
+        card1VideoUrl,
+        "card1VideoFileUrl": card1VideoFile.asset->url,
+        card2Tagline,
+        card2Header,
+        card2Story,
+        card2Image,
+        card2VideoType,
+        card2VideoUrl,
+        "card2VideoFileUrl": card2VideoFile.asset->url,
+        card3Tagline,
+        card3Header,
+        card3Story,
+        card3Image,
+        card3VideoType,
+        card3VideoUrl,
+        "card3VideoFileUrl": card3VideoFile.asset->url,
+        hideAiPlanner
+      }`),
+      client.fetch(`*[_type == "siteSettings" && _id != "siteSettings" && !(_id in path("drafts.**"))][0]{
+        heroTitle,
+        heroSubtitle,
+        itinerarySectionTitle,
+        card1Tagline,
+        card1Header,
+        card1Story,
+        card1Image,
+        card2Tagline,
+        card2Header,
+        card2Story,
+        card2Image,
+        card3Tagline,
+        card3Header,
+        card3Story,
+        card3Image
+      }`)
+    ])
+
+    // Clean placeholder images that Sanity schema default values might inject
+    const isSchemaPlaceholder = (url?: string) => {
+      if (!url) return true
+      return url.includes('photo-1555939594-58d7cb561ad1') ||
+             url.includes('photo-1518684079-3c830dcef090') ||
+             url.includes('photo-1512453979798-5ea266f8880c')
+    }
+
+    // Apply legacy document first (which has the real production text and images)
+    if (legacySettings) {
+      settings = { ...settings, ...legacySettings }
+    }
+
+    // Then apply singleton settings (only taking images if they aren't schema placeholders)
+    if (singletonSettings) {
+      const {
+        card1Image,
+        card2Image,
+        card3Image,
+        ...restSingleton
+      } = singletonSettings
+
+      settings = {
+        ...settings,
+        ...restSingleton,
+        ...(card1Image && !isSchemaPlaceholder(card1Image) ? { card1Image } : {}),
+        ...(card2Image && !isSchemaPlaceholder(card2Image) ? { card2Image } : {}),
+        ...(card3Image && !isSchemaPlaceholder(card3Image) ? { card3Image } : {})
+      }
     }
 
     const fetchedContact = await client.fetch(`*[_type == "globalContact"][0]{
