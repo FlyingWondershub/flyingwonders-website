@@ -17,21 +17,21 @@ export default async function Home() {
     card1Tagline: 'SENSORY JOURNEYS',
     card1Header: 'Taste the World in a Single Square Mile',
     card1Story: 'A collision of cross-cultural heritage and culinary artistry. Lose yourself in the generational smoke of legendary hawker street stalls, or ascend to the stars for avant-garde dining suspended high above the glittering skyline.',
-    card1Image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
+    card1Image: 'https://plus.unsplash.com/premium_photo-1672363353881-68c8ff594e25?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8c2luZ2Fwb3JlJTIwZm9vZHxlbnwwfHwwfHx8MA%3D%3D',
     card1VideoType: 'youtube' as 'youtube' | 'file' | 'none',
     card1VideoUrl: 'https://www.youtube.com/watch?v=PpA9iIt0kGs',
     card1VideoFileUrl: undefined as string | undefined,
     card2Tagline: 'REGENERATIVE EXPLORATION',
     card2Header: "The World's Finest City in Nature",
     card2Story: 'Step into a living blueprint for tomorrow’s travel. Wander through an eco-futuristic wonderland where high-density vertical gardens breathe alongside bioluminescent glass domes, redefining the boundary between urban luxury and the wild.',
-    card2Image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80',
+    card2Image: 'https://images.unsplash.com/photo-1516496636080-14fb876e029d?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8Z2FyZGVucyUyMGJ5JTIwdGhlJTIwYmF5fGVufDB8fDB8fHww',
     card2VideoType: 'none' as 'youtube' | 'file' | 'none',
     card2VideoUrl: '',
     card2VideoFileUrl: undefined as string | undefined,
     card3Tagline: 'THE BLEISURE ESCAPE',
     card3Header: 'Where Global Ambition Meets Uncharted Play',
     card3Story: 'The ultimate playground for the modern global traveler. Effortlessly transition from high-stakes networking summits in architectural marvels to pulse-pounding nightlife, world-class Grand Prix weekends, and sun-soaked offshore island retreats.',
-    card3Image: 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?auto=format&fit=crop&w=800&q=80',
+    card3Image: 'https://images.unsplash.com/photo-1540086916044-196dc42d62c0?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTR8fHNlbnRvc2F8ZW58MHx8MHx8fDA%3D',
     card3VideoType: 'youtube' as 'youtube' | 'file' | 'none',
     card3VideoUrl: 'https://www.youtube.com/watch?v=kij3n1iikKc',
     card3VideoFileUrl: undefined as string | undefined,
@@ -39,7 +39,8 @@ export default async function Home() {
   }
 
   try {
-    const fetchedSettings = await client.fetch(`*[_type == "siteSettings"] | order(_updatedAt desc)[0]{
+    // Merge primary document (id: "siteSettings") with fallback values from any previous documents
+    const fetchedSettings = await client.fetch(`*[_type == "siteSettings" && _id == "siteSettings"][0]{
       heroTitle,
       heroSubtitle,
       itinerarySectionTitle,
