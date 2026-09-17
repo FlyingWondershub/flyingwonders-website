@@ -213,8 +213,8 @@ export default async function Home() {
             story: settings.card1Story,
             image: settings.card1Image,
             gradient: 'linear-gradient(to top, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.1))',
-            videoType: settings.card1VideoType,
-            videoUrl: settings.card1VideoUrl,
+            videoType: settings.card1VideoType || 'youtube',
+            videoUrl: settings.card1VideoUrl || 'https://www.youtube.com/watch?v=PpA9iIt0kGs',
             videoFileUrl: settings.card1VideoFileUrl,
           },
           {
@@ -223,8 +223,8 @@ export default async function Home() {
             story: settings.card2Story,
             image: settings.card2Image,
             gradient: 'linear-gradient(to top, rgba(15,76,58,0.95) 20%, rgba(0,0,0,0.1))',
-            videoType: settings.card2VideoType,
-            videoUrl: settings.card2VideoUrl,
+            videoType: settings.card2VideoType || 'none',
+            videoUrl: settings.card2VideoUrl || '',
             videoFileUrl: settings.card2VideoFileUrl,
           },
           {
@@ -233,8 +233,8 @@ export default async function Home() {
             story: settings.card3Story,
             image: settings.card3Image,
             gradient: 'linear-gradient(to top, rgba(0,0,0,0.95) 20%, rgba(0,0,0,0.1))',
-            videoType: settings.card3VideoType,
-            videoUrl: settings.card3VideoUrl,
+            videoType: settings.card3VideoType || 'youtube',
+            videoUrl: settings.card3VideoUrl || 'https://www.youtube.com/watch?v=kij3n1iikKc',
             videoFileUrl: settings.card3VideoFileUrl,
           },
         ]}
