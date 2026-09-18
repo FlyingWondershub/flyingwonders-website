@@ -159,8 +159,8 @@ function drawCenterWatermark(doc: any, watermarkDataUrl: string) {
   if (!watermarkDataUrl) return
   try {
     doc.saveGraphicsState()
-    doc.setGState(new (doc as any).GState({ opacity: 0.085 })) // 90%+ transparency
-    doc.addImage(watermarkDataUrl, 'PNG', 45, 90, 120, 120, undefined, 'FAST')
+    doc.setGState(new (doc as any).GState({ opacity: 0.05 })) // Ultra-subtle watermark ensuring crisp text readability
+    doc.addImage(watermarkDataUrl, 'PNG', 45, 88, 120, 120, undefined, 'FAST')
     doc.restoreGraphicsState()
   } catch (e) {
     console.warn('Watermark error:', e)
@@ -191,7 +191,7 @@ function drawAccreditationFooter(doc: any, footerAccreditationUrl: string, pageN
   doc.text('Subject to Bangalore Jurisdiction', MR, FY + 15, { align: 'right' })
 }
 
-function drawIndianEntityHeader(doc: any, logoUrl: string, docTitle: string, docSubtitle: string): number {
+function drawIndianEntityHeader(doc: any, logoUrl: string, docTitle: string, docSubtitle?: string): number {
   const ML = 14
   const MR = 196
 
@@ -221,17 +221,26 @@ function drawIndianEntityHeader(doc: any, logoUrl: string, docTitle: string, doc
   doc.text('Email: info.flyingwonders@gmail.com / contact@flyingwonders.net  |  Web: www.flyingwonders.net', textX, 27.5)
   doc.text('India: +91 9886171251  |  Singapore Support: +65 94722830', textX, 31.5)
 
+  const badgeW = docSubtitle ? 52 : 44
+  const badgeH = docSubtitle ? 16 : 13
+  const badgeX = MR - badgeW - 3
+  const badgeY = 17.5 - (badgeH / 2)
+
   doc.setFillColor(...NAVY)
-  doc.roundedRect(MR - 55, 11, 52, 16, 2, 2, 'F')
+  doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 2, 2, 'F')
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10.5)
   doc.setTextColor(...WHITE)
-  doc.text(docTitle, MR - 29, 18, { align: 'center' })
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(6.8)
-  doc.setTextColor(226, 232, 240)
-  doc.text(docSubtitle, MR - 29, 23, { align: 'center' })
+  
+  if (docSubtitle) {
+    doc.text(docTitle, badgeX + (badgeW / 2), badgeY + 6.8, { align: 'center' })
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(6.8)
+    doc.setTextColor(226, 232, 240)
+    doc.text(docSubtitle, badgeX + (badgeW / 2), badgeY + 12, { align: 'center' })
+  } else {
+    doc.text(docTitle, badgeX + (badgeW / 2), badgeY + 8.5, { align: 'center' })
+  }
 
   return 44
 }
@@ -259,19 +268,18 @@ export async function generateTaxInvoicePdf(invoice: TaxInvoiceData) {
   const MR = 196
   const CW = MR - ML
 
-  // 1. Watermark & Header
+  // 1. Watermark (drawn first as background layer, ultra-subtle so all text stays 100% on top)
   drawCenterWatermark(doc, watermarkUrl)
   let curY = drawIndianEntityHeader(
     doc,
     logoUrl,
-    'TAX INVOICE',
-    'Original for Recipient / SAC 998553'
+    'TAX INVOICE'
   )
 
   // 2. Invoice Meta & Billed To Card
   doc.setFillColor(...LIGHT_BG)
   doc.setDrawColor(...BORDER_LIGHT)
-  doc.roundedRect(ML, curY, CW, 33, 2, 2, 'FD')
+  doc.roundedRect(ML, curY, CW, 31, 2, 2, 'FD')
 
   // Left Column: Invoice Meta
   doc.setFont('helvetica', 'bold')
@@ -290,7 +298,6 @@ export async function generateTaxInvoicePdf(invoice: TaxInvoiceData) {
   doc.text(`Invoice Date   : ${invoice.invoiceDate}`, ML + 4, curY + 16)
   doc.text(`Due Date       : ${invoice.dueDate || invoice.invoiceDate}`, ML + 4, curY + 21)
   doc.text(`Proposal Ref   : ${invoice.proposalNumber}`, ML + 4, curY + 26)
-  doc.text('SAC Code       : 998553 (Tour Operator Services)', ML + 4, curY + 30.5)
 
   // Right Column: Billed To
   const col2X = ML + 95
@@ -314,11 +321,10 @@ export async function generateTaxInvoicePdf(invoice: TaxInvoiceData) {
   if (invoice.agentGstin) {
     doc.text(`Agent GSTIN    : ${invoice.agentGstin}`, col2X, curY + 26)
   } else {
-    doc.text('Place of Supply: 29 - Karnataka (Reverse Charge: No)', col2X, curY + 26)
+    doc.text(`Tour Scope     : ${invoice.destination || 'Singapore'} • ${invoice.nightsCount || 3}N/${(invoice.nightsCount || 3) + 1}D • ${invoice.paxCount || 'Family'}`, col2X, curY + 26)
   }
-  doc.text(`Tour Scope     : ${invoice.destination || 'Singapore'} • ${invoice.nightsCount || 3}N/${(invoice.nightsCount || 3) + 1}D • ${invoice.paxCount || 'Family'}`, col2X, curY + 30.5)
 
-  curY += 37
+  curY += 35
 
   // 3. Line Items Table Header
   doc.setFillColor(...NAVY)
@@ -327,7 +333,7 @@ export async function generateTaxInvoicePdf(invoice: TaxInvoiceData) {
   doc.setFontSize(7.5)
   doc.setTextColor(...WHITE)
   doc.text('#', ML + 3, curY + 4.8)
-  doc.text('PARTICULARS / TOUR SERVICES (SAC 998553)', ML + 10, curY + 4.8)
+  doc.text('PARTICULARS / TOUR SERVICES DESCRIPTION', ML + 10, curY + 4.8)
   doc.text('QTY', ML + 115, curY + 4.8)
 
   if (mode === 'dual') {
@@ -368,25 +374,22 @@ export async function generateTaxInvoicePdf(invoice: TaxInvoiceData) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(7.5)
     doc.setTextColor(...DARK_SLATE)
-    doc.text(String(item.quantity), ML + 115, curY + 5)
+    doc.text(String(item.quantity), ML + 117, curY + 4.8)
 
-    const itemTotSgd = item.totalSgd
-    const itemTotInr = item.totalInr || Math.round(itemTotSgd * rate)
-    baseTotalSgd += itemTotSgd
+    const itemTotalSgd = item.totalSgd || (item.unitPriceSgd * item.quantity)
+    baseTotalSgd += itemTotalSgd
+    const itemTotalInr = item.totalInr || Math.round(itemTotalSgd * rate)
 
     if (mode === 'dual') {
-      doc.text(`S$ ${item.unitPriceSgd.toLocaleString()}`, ML + 130, curY + 5)
-      doc.setFont('helvetica', 'bold')
-      doc.text(`S$ ${itemTotSgd.toLocaleString()}`, ML + 152, curY + 5)
-      doc.text(`Rs. ${itemTotInr.toLocaleString()}`, MR - 3, curY + 5, { align: 'right' })
+      doc.text(`S$ ${item.unitPriceSgd.toLocaleString()}`, ML + 130, curY + 4.8)
+      doc.text(`S$ ${itemTotalSgd.toLocaleString()}`, ML + 152, curY + 4.8)
+      doc.text(`Rs. ${itemTotalInr.toLocaleString()}`, MR - 3, curY + 4.8, { align: 'right' })
     } else if (mode === 'inr') {
-      doc.text(`Rs. ${Math.round(item.unitPriceSgd * rate).toLocaleString()}`, ML + 135, curY + 5)
-      doc.setFont('helvetica', 'bold')
-      doc.text(`Rs. ${itemTotInr.toLocaleString()}`, MR - 3, curY + 5, { align: 'right' })
+      doc.text(`Rs. ${Math.round(item.unitPriceSgd * rate).toLocaleString()}`, ML + 135, curY + 4.8)
+      doc.text(`Rs. ${itemTotalInr.toLocaleString()}`, MR - 3, curY + 4.8, { align: 'right' })
     } else {
-      doc.text(`S$ ${item.unitPriceSgd.toLocaleString()}`, ML + 135, curY + 5)
-      doc.setFont('helvetica', 'bold')
-      doc.text(`S$ ${itemTotSgd.toLocaleString()}`, MR - 3, curY + 5, { align: 'right' })
+      doc.text(`S$ ${item.unitPriceSgd.toLocaleString()}`, ML + 135, curY + 4.8)
+      doc.text(`S$ ${itemTotalSgd.toLocaleString()}`, MR - 3, curY + 4.8, { align: 'right' })
     }
 
     curY += rowH
@@ -438,7 +441,7 @@ export async function generateTaxInvoicePdf(invoice: TaxInvoiceData) {
   doc.setFont('helvetica', 'italic')
   doc.setFontSize(7)
   doc.setTextColor(...MUTED_GRAY)
-  doc.text('* 5% GST on Tour Operator Services (SAC 998553) included in tour tariff', sumLeftX, curY + 4)
+  doc.text('* GST on Tour Operator Services included in tour tariff', sumLeftX, curY + 4)
   curY += 5
 
   // Grand Total Bar
