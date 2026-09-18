@@ -5,8 +5,9 @@ import Link from 'next/link'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
-import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X, Sparkles, Search, ChevronDown, Check, Mail, Share2, Eye, RefreshCw, Layers, CheckCircle2, ArrowRight } from 'lucide-react'
+import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X, Sparkles, Search, ChevronDown, Check, Mail, Share2, Eye, RefreshCw, Layers, CheckCircle2, ArrowRight, Receipt, CreditCard, Printer } from 'lucide-react'
 import { generateFlyerDataUrl, generateFlyerBlob, FlyerInclusion } from '../../lib/flyer-generator'
+import { generateTaxInvoicePdf, generatePaymentReceiptPdf } from '../../utils/invoiceReceiptPdf'
 
 // Default Fallback Master Data (Configured in SGD)
 const FALLBACK_HOTELS = [
@@ -8170,7 +8171,111 @@ export default function PrototypeBuilder() {
     }
   }
 
+  // Invoice & Receipt PDF Download Handlers
+  const handleDownloadInvoicePdf = async (currencyMode: 'dual' | 'inr' | 'sgd' = 'dual') => {
+    try {
+      const invNum = activeInvoiceNumber || (savedProposalNum ? `INV-${new Date().getFullYear()}-${savedProposalNum.split('-').pop() || '0001'}` : `INV-${new Date().getFullYear()}-0001`)
+      const invDate = activeInvoiceDate || new Date().toISOString().split('T')[0]
+      
+      const currentHotel = customHotelEnabled 
+        ? { name: customHotelName || 'Custom Accommodation', roomType: customHotelRoomType || 'Standard Room' }
+        : { name: hotelsList[globalHotelIndex]?.name || 'Hotel Accommodation', roomType: hotelsList[globalHotelIndex]?.rooms[globalRoomIndex]?.type || 'Standard Room' }
+
+      const items = [
+        {
+          description: `Singapore Tour Package (${nightsCount}N/${nightsCount + 1}D) - ${currentHotel.name}`,
+          subText: `Includes ${nightsCount} nights accommodation (${currentHotel.roomType}), scheduled transfers, and confirmed sightseeing admissions for ${adults + kids} Pax.`,
+          quantity: adults + kids,
+          unitPriceSgd: Math.round((costBreakdown.totalClientPrice || 0) / Math.max(1, adults + kids)),
+          totalSgd: costBreakdown.totalClientPrice || 0,
+        },
+        ...activeAdditionalCharges.map(c => ({
+          description: `Add-On / Change Order: ${c.itemDescription}`,
+          subText: `Type: ${c.chargeType} • Recorded: ${c.date ? new Date(c.date).toLocaleDateString('en-SG') : 'Post-Confirmation'}`,
+          quantity: 1,
+          unitPriceSgd: Number(c.amount) || 0,
+          totalSgd: Number(c.amount) || 0,
+        }))
+      ]
+
+      const payments = activePaymentLedger.map(p => ({
+        paymentId: p.paymentId,
+        date: p.date ? new Date(p.date).toLocaleDateString('en-SG') : new Date().toLocaleDateString('en-SG'),
+        amountSgd: Number(p.amount) || 0,
+        method: p.method,
+        referenceNo: p.referenceNo,
+        notes: p.notes,
+      }))
+
+      await generateTaxInvoicePdf({
+        invoiceNumber: invNum,
+        invoiceDate: invDate,
+        dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+        proposalNumber: savedProposalNum || 'DRAFT',
+        currencyMode,
+        exchangeRate: sgdToInrRate || 63.5,
+        companyName: activeAgent?.companyName,
+        agentName: activeAgent?.agentName || agentName,
+        agentPhone: activeAgent?.phone || agentPhone,
+        agentEmail: activeAgent?.email || agentEmail,
+        leadGuestName: guestName || 'Valued Guest',
+        leadGuestPhone: guestPhone,
+        destination: 'Singapore',
+        travelDates: `${arrivalDate || 'TBD'} (${nightsCount}N/${nightsCount + 1}D)`,
+        nightsCount,
+        paxCount: `${adults} Adults${kids > 0 ? `, ${kids} Child` : ''}`,
+        hotelName: currentHotel.name,
+        roomType: currentHotel.roomType,
+        items,
+        discountSgd: discountPerPerson * (adults + kids),
+        payments,
+        status: activeProposalStatus as any,
+      })
+
+    } catch (e) {
+      console.error('Failed to generate invoice PDF:', e)
+      alert('Error generating Tax Invoice PDF.')
+    }
+  }
+
+  const handleDownloadReceiptPdf = async (paymentRecord: any, currencyMode: 'dual' | 'inr' | 'sgd' = 'dual') => {
+    try {
+      const invNum = activeInvoiceNumber || (savedProposalNum ? `INV-${new Date().getFullYear()}-${savedProposalNum.split('-').pop() || '0001'}` : `INV-${new Date().getFullYear()}-0001`)
+      const totalAddons = activeAdditionalCharges.reduce((sum, c) => {
+        const amt = Number(c.amount) || 0
+        return (c.chargeType === 'Discount' || c.chargeType === 'Refund') ? sum - amt : sum + amt
+      }, 0)
+      const basePrice = costBreakdown.totalClientPrice || 0
+      const adjustedPrice = basePrice + totalAddons
+      const totalPaid = activePaymentLedger.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
+      const balanceDue = Math.max(0, adjustedPrice - totalPaid)
+
+      await generatePaymentReceiptPdf({
+        receiptNumber: paymentRecord.paymentId || `RCP-${Date.now().toString().slice(-6)}`,
+        invoiceNumber: invNum,
+        proposalNumber: savedProposalNum || 'DRAFT',
+        paymentDate: paymentRecord.date ? new Date(paymentRecord.date).toLocaleString('en-SG', { dateStyle: 'medium', timeStyle: 'short' }) : new Date().toLocaleString('en-SG'),
+        currencyMode,
+        exchangeRate: sgdToInrRate || 63.5,
+        payerName: activeAgent?.companyName || activeAgent?.agentName || guestName || 'B2B Partner',
+        payerPhone: activeAgent?.phone || guestPhone,
+        leadGuestName: guestName || 'Valued Guest',
+        amountSgd: Number(paymentRecord.amount) || 0,
+        paymentMethod: paymentRecord.method || 'Bank Transfer',
+        referenceNo: paymentRecord.referenceNo || 'Direct Credit',
+        notes: paymentRecord.notes || '',
+        totalContractSgd: adjustedPrice,
+        totalPaidSgd: totalPaid,
+        balanceDueSgd: balanceDue,
+      })
+    } catch (e) {
+      console.error('Failed to generate payment receipt PDF:', e)
+      alert('Error generating Payment Receipt PDF.')
+    }
+  }
+
   // Auto-load proposal when ref/proposal parameter is present in URL
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
@@ -10086,6 +10191,33 @@ ${proposal}
                     <div style={{ fontSize: '0.72rem', color: '#B45309', marginTop: '2px' }}>Single-page promotional image with hero collage & agent branding</div>
                   </div>
                 </div>
+
+                {/* 5. Official Tax Invoice PDF (Dual SGD & INR / SAC 998553) */}
+                <div
+                  onClick={() => { setShowPdfModal(false); handleDownloadInvoicePdf('dual'); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '0.85rem 1rem',
+                    background: '#F0FDF4',
+                    border: '1.5px solid #86EFAC',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#DCFCE7'; e.currentTarget.style.borderColor = '#4ADE80' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#F0FDF4'; e.currentTarget.style.borderColor = '#86EFAC' }}
+                >
+                  <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#DCFCE7', color: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>
+                    🧾
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 800, color: '#14532D', fontSize: '0.88rem' }}>Official Tax Invoice PDF (SGD & INR)</div>
+                    <div style={{ fontSize: '0.72rem', color: '#166534', marginTop: '2px' }}>Flying Wonders Pvt Ltd • SAC 998553 • ICICI Bank & UPI QR</div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -10683,8 +10815,9 @@ ${proposal}
                 color: activeProposalStatus === 'confirmed' ? '#166534' : '#92400E', 
                 fontWeight: 800 
               }}
+              title="Open Accounts Hub (Invoice, Receipts, Ledger & Change Orders)"
             >
-              💳 Ledger {activeInvoiceNumber ? `(${activeInvoiceNumber})` : ''}
+              💳 Accounts Hub {activeInvoiceNumber ? `(${activeInvoiceNumber})` : ''}
             </button>
           )}
           {savedProposalNum && (
@@ -11248,16 +11381,42 @@ ${proposal}
             <div className="cp-modal" onClick={e => e.stopPropagation()} style={{ width: '840px', maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', background: '#FFF', borderRadius: '16px', padding: '1.25rem', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
               
               {/* Modal Title & Close Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--emerald-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    💳 Admin Financial Ledger & Invoicing
+                    💳 Accounts Hub (Invoicing & Settlement)
                   </h3>
                   <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>
                     Proposal Ref: <strong>{savedProposalNum}</strong> {activeInvoiceNumber ? `• Tax Invoice: ${activeInvoiceNumber}` : ''}
                   </span>
                 </div>
-                <button onClick={() => setShowLedgerModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#718096' }}>✕</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadInvoicePdf('dual')}
+                    style={{ background: '#0F4C3A', color: '#FFF', border: 'none', padding: '0.4rem 0.85rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                    title="Download Tax Invoice PDF (Dual SGD & INR)"
+                  >
+                    📄 Invoice (Dual S$/₹)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadInvoicePdf('inr')}
+                    style={{ background: '#EFF6FF', color: '#1E40AF', border: '1px solid #BFDBFE', padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                    title="Download Tax Invoice PDF (INR Only)"
+                  >
+                    ₹ INR Only
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadInvoicePdf('sgd')}
+                    style={{ background: '#F8FAFC', color: '#475569', border: '1px solid #CBD5E1', padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                    title="Download Tax Invoice PDF (SGD Only)"
+                  >
+                    S$ SGD Only
+                  </button>
+                  <button onClick={() => setShowLedgerModal(false)} style={{ border: 'none', background: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#718096', marginLeft: '0.5rem' }}>✕</button>
+                </div>
               </div>
 
               {(() => {
@@ -11369,8 +11528,15 @@ ${proposal}
                                   <td style={{ padding: '0.55rem 0.75rem', fontFamily: 'monospace', color: '#1E293B' }}>{p.referenceNo || '—'}</td>
                                   <td style={{ padding: '0.55rem 0.75rem', fontWeight: 800, color: '#166534' }}>+S$ {Number(p.amount).toLocaleString()}</td>
                                   <td style={{ padding: '0.55rem 0.75rem', color: '#64748B' }}>{p.notes || '—'}</td>
-                                  <td style={{ padding: '0.55rem 0.75rem', textAlign: 'right' }}>
-                                    <button onClick={() => handleDeletePayment(p.paymentId)} style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', borderRadius: '4px', padding: '0.2rem 0.5rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
+                                  <td style={{ padding: '0.55rem 0.75rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                    <button 
+                                      onClick={() => handleDownloadReceiptPdf(p, 'dual')} 
+                                      style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46', borderRadius: '4px', padding: '0.25rem 0.55rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, marginRight: '0.4rem' }}
+                                      title="Download Official Payment Receipt PDF"
+                                    >
+                                      🧾 Receipt
+                                    </button>
+                                    <button onClick={() => handleDeletePayment(p.paymentId)} style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', borderRadius: '4px', padding: '0.25rem 0.45rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
                                       🗑️ Delete
                                     </button>
                                   </td>

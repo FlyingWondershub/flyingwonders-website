@@ -1840,35 +1840,101 @@ export default function AgentPortalPage() {
                                 </div>
                               )}
                             </td>
-                            <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right' }}>
-                              {!p.statusChangeRequested && (pStatus === 'pending' || pStatus === 'followup') ? (
-                                <button
-                                  onClick={() => {
-                                    setStatusRequestProposal(p)
-                                    setStatusRequestTarget('confirmed')
-                                    setStatusRequestNoteText('')
-                                  }}
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.25rem',
-                                    padding: '0.35rem 0.75rem',
-                                    borderRadius: '6px',
-                                    background: '#0F4C3A',
-                                    color: '#FFF',
-                                    border: 'none',
-                                    fontWeight: 700,
-                                    fontSize: '0.78rem',
-                                    cursor: 'pointer',
-                                    transition: 'background 0.15s'
-                                  }}
-                                >
-                                  ⏳ Change Status
-                                </button>
-                              ) : (
-                                <span style={{ fontSize: '0.74rem', color: '#94A3B8' }}>—</span>
-                              )}
+                            <td style={{ padding: '0.75rem 0.85rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                                {isConfirmed && (
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      const { generateTaxInvoicePdf } = await import('../../utils/invoiceReceiptPdf')
+                                      const price = p.costBreakdown?.totalClientPrice || p.totalClientPrice || 0
+                                      const adults = p.adults || 2
+                                      const kids = p.kids || 0
+                                      await generateTaxInvoicePdf({
+                                        invoiceNumber: p.invoiceNumber || `INV-${new Date().getFullYear()}-${p.proposalNumber.split('-').pop() || '0001'}`,
+                                        invoiceDate: p.invoiceDate || new Date().toISOString().split('T')[0],
+                                        proposalNumber: p.proposalNumber,
+                                        currencyMode: 'dual',
+                                        exchangeRate: 63.5,
+                                        companyName: activeAgent?.companyName,
+                                        agentName: activeAgent?.agentName,
+                                        agentPhone: activeAgent?.phone,
+                                        agentEmail: activeAgent?.email,
+                                        leadGuestName: p.guestName || 'Valued Guest',
+                                        leadGuestPhone: p.guestPhone,
+                                        destination: 'Singapore',
+                                        travelDates: `${p.arrivalDate || 'TBD'} (${p.nights || 3}N/${(p.nights || 3) + 1}D)`,
+                                        nightsCount: p.nights || 3,
+                                        paxCount: `${adults} Adults${kids > 0 ? `, ${kids} Child` : ''}`,
+                                        hotelName: p.hotelName || 'Standard Hotel',
+                                        roomType: p.roomType || 'Standard Room',
+                                        items: [
+                                          {
+                                            description: `Singapore Tour Package (${p.nights || 3}N/${(p.nights || 3) + 1}D)`,
+                                            subText: `Accommodations, transfers, and sightseeing admissions for ${adults + kids} Pax.`,
+                                            quantity: adults + kids,
+                                            unitPriceSgd: Math.round(price / Math.max(1, adults + kids)),
+                                            totalSgd: price,
+                                          }
+                                        ],
+                                        payments: (p.paymentLedger || []).map((pay: any) => ({
+                                          paymentId: pay.paymentId,
+                                          date: pay.date ? new Date(pay.date).toLocaleDateString('en-SG') : new Date().toLocaleDateString('en-SG'),
+                                          amountSgd: Number(pay.amount) || 0,
+                                          method: pay.method || 'Bank Transfer',
+                                          referenceNo: pay.referenceNo,
+                                          notes: pay.notes,
+                                        })),
+                                        status: p.status,
+                                      })
+                                    }}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                      padding: '0.35rem 0.65rem',
+                                      borderRadius: '6px',
+                                      background: '#ECFDF5',
+                                      color: '#065F46',
+                                      border: '1px solid #A7F3D0',
+                                      fontWeight: 700,
+                                      fontSize: '0.76rem',
+                                      cursor: 'pointer',
+                                    }}
+                                    title="Download Official Tax Invoice PDF"
+                                  >
+                                    🧾 Invoice
+                                  </button>
+                                )}
+
+                                {!p.statusChangeRequested && (pStatus === 'pending' || pStatus === 'followup') && (
+                                  <button
+                                    onClick={() => {
+                                      setStatusRequestProposal(p)
+                                      setStatusRequestTarget('confirmed')
+                                      setStatusRequestNoteText('')
+                                    }}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                      padding: '0.35rem 0.75rem',
+                                      borderRadius: '6px',
+                                      background: '#0F4C3A',
+                                      color: '#FFF',
+                                      border: 'none',
+                                      fontWeight: 700,
+                                      fontSize: '0.78rem',
+                                      cursor: 'pointer',
+                                      transition: 'background 0.15s'
+                                    }}
+                                  >
+                                    ⏳ Confirm
+                                  </button>
+                                )}
+                              </div>
                             </td>
+
                           </tr>
                         )
                       })}

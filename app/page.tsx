@@ -92,7 +92,9 @@ export default async function Home() {
       if (!url) return true
       return url.includes('photo-1555939594-58d7cb561ad1') ||
              url.includes('photo-1518684079-3c830dcef090') ||
-             url.includes('photo-1512453979798-5ea266f8880c')
+             url.includes('photo-1512453979798-5ea266f8880c') ||
+             url.includes('photo-1534447677768-be436bb09401') ||
+             url.includes('photo-1596464716127-f2a82984de30')
     }
 
     // Apply legacy document first (which has the real production text and images)
@@ -100,20 +102,41 @@ export default async function Home() {
       settings = { ...settings, ...legacySettings }
     }
 
-    // Then apply singleton settings (only taking images if they aren't schema placeholders)
+    // Then apply singleton settings (only taking video fields and general toggles/hero settings, never overwriting original card images or card text unless explicitly customized)
     if (singletonSettings) {
       const {
         card1Image,
         card2Image,
         card3Image,
+        card1Header,
+        card2Header,
+        card3Header,
+        card1Tagline,
+        card2Tagline,
+        card3Tagline,
+        card1Story,
+        card2Story,
+        card3Story,
         ...restSingleton
       } = singletonSettings
 
       settings = {
         ...settings,
         ...restSingleton,
+        // Card content: preserve original legacy values unless singleton has a non-placeholder value
+        ...(card1Header && card1Header !== 'Taste the World in a Single Square Mile' ? { card1Header } : {}),
+        ...(card1Tagline && card1Tagline !== 'SENSORY JOURNEYS' ? { card1Tagline } : {}),
+        ...(card1Story && !card1Story.includes('A collision of cross-cultural heritage') ? { card1Story } : {}),
         ...(card1Image && !isSchemaPlaceholder(card1Image) ? { card1Image } : {}),
+
+        ...(card2Header && card2Header !== "The World's Finest City in Nature" ? { card2Header } : {}),
+        ...(card2Tagline && card2Tagline !== 'REGENERATIVE EXPLORATION' ? { card2Tagline } : {}),
+        ...(card2Story && !card2Story.includes('Step into a living blueprint') ? { card2Story } : {}),
         ...(card2Image && !isSchemaPlaceholder(card2Image) ? { card2Image } : {}),
+
+        ...(card3Header && card3Header !== 'Where Global Ambition Meets Uncharted Play' ? { card3Header } : {}),
+        ...(card3Tagline && card3Tagline !== 'THE BLEISURE ESCAPE' ? { card3Tagline } : {}),
+        ...(card3Story && !card3Story.includes('The ultimate playground for the modern') ? { card3Story } : {}),
         ...(card3Image && !isSchemaPlaceholder(card3Image) ? { card3Image } : {})
       }
     }
