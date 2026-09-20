@@ -49,6 +49,7 @@ const HANDLED_SCHEMAS = new Set([
   'manualPayment',
 
   // Marketing & Media
+  'marketingLead',
   'blogPost',
   'newsletterCampaign',
   'newsletterSubscriber',
@@ -212,6 +213,7 @@ export const structure: StructureResolver = (S) =>
           S.list()
             .title('Marketing & Content')
             .items([
+              S.documentTypeListItem('marketingLead').title('🎯 Marketing Leads'),
               S.documentTypeListItem('blogPost').title('✍️ Blog Articles'),
               S.documentTypeListItem('newsletterCampaign').title('✉️ Newsletter Campaigns'),
               S.documentTypeListItem('newsletterSubscriber').title('📬 Newsletter Subscribers'),

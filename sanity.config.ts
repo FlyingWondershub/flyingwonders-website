@@ -3,6 +3,7 @@ import {structureTool} from 'sanity/structure'
 import {schema} from './sanity/schemaTypes'
 import {structure} from './sanity/structure'
 import {SyncAttractionsTool} from './sanity/tools/SyncAttractionsTool'
+import {MarketingHubTool} from './sanity/tools/MarketingHubTool'
 import React from 'react'
 
 export default defineConfig({
@@ -16,6 +17,11 @@ export default defineConfig({
   ],
   tools: (prev) => [
     ...prev,
+    {
+      name: 'marketing-hub',
+      title: '🎯 Marketing Hub',
+      component: MarketingHubTool,
+    },
     {
       name: 'sync-sheets',
       title: '🔄 Sync Sheets & Cache',

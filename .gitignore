@@ -42,3 +42,10 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Gmail lead extractor secrets & generated output
+scripts/gmail-lead-extractor/credentials.json
+scripts/gmail-lead-extractor/token.json
+scripts/gmail-lead-extractor/*.xlsx
+scripts/gmail-lead-extractor/*.csv
+scripts/gmail-lead-extractor/node_modules/
