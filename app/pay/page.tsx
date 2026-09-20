@@ -170,6 +170,29 @@ export default function PayDirectPage() {
           </div>
         </div>
 
+        <div
+          style={{
+            background: '#0F172A',
+            padding: '0.85rem 1rem',
+            borderRadius: '12px',
+            border: '1px solid #334155',
+            marginBottom: '1.25rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontFamily: 'var(--font-inter), system-ui, sans-serif'
+          }}
+        >
+          <div style={{ textAlign: 'left' }}>
+            <span style={{ fontSize: '0.72rem', color: '#94A3B8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Standardized Rate</span>
+            <span style={{ fontSize: '0.8rem', color: '#34D399', fontWeight: 600 }}>1 SGD = ₹{sgdToInrRate}</span>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <span style={{ fontSize: '0.72rem', color: '#94A3B8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Estimated Total</span>
+            <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#10B981' }}>₹{Math.round(amountSgd * sgdToInrRate).toLocaleString('en-IN')}</span>
+          </div>
+        </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <button
             onClick={() => setIsModalOpen(true)}

@@ -70,19 +70,18 @@ export default function IciciQrModal({
         if (settings.iciciAccountName) setAccountName(settings.iciciAccountName)
         if (settings.iciciBankDetails) setBankDetails(settings.iciciBankDetails)
 
-        const baseLive = rateData.rate || 63.50
+        const baseLive = rateData.baseRate || rateData.rate || 63.50
         setLiveRate(baseLive)
 
-        let finalRate = baseLive
-        if (settings.manualRateOverride && Number(settings.manualRateOverride) > 0) {
-          finalRate = Number(settings.manualRateOverride)
-        } else {
-          const type = settings.exchangeMarkupType || 'absolute'
-          const val = Number(settings.exchangeMarkupValue) || 3.5
-          if (type === 'absolute') {
-            finalRate = baseLive + val
+        // rateData.rate is already the standardized rate from /api/exchange-rate (with markup or manual override applied)
+        let finalRate = rateData.rate
+        if (!finalRate) {
+          if (settings.manualRateOverride && Number(settings.manualRateOverride) > 0) {
+            finalRate = Number(settings.manualRateOverride)
           } else {
-            finalRate = baseLive * (1 + val / 100)
+            const type = settings.exchangeMarkupType || 'absolute'
+            const val = Number(settings.exchangeMarkupValue) || 3.5
+            finalRate = type === 'absolute' ? baseLive + val : baseLive * (1 + val / 100)
           }
         }
 

@@ -23,25 +23,22 @@ interface ExchangeRateCache {
   lastSuccessAlertSent?: string
 }
 
+export interface ExchangeRateDetails {
+  rate: number // Final standardized rate (with markup or manual override applied)
+  baseRate: number // Base market rate before markup
+  markupType: 'absolute' | 'percentage'
+  markupValue: number
+  isManualOverride: boolean
+}
+
 async function sendEmail(subject: string, htmlContent: string) {
   // Exchange rate email notifications paused per user request
   console.log('Skipped exchange rate email dispatch (paused by user request).')
   return true
 }
 
-export async function getLiveExchangeRate(): Promise<number> {
-  // 1. Check Sanity for Manual Override First
-  try {
-    const settings = await readClient.fetch(`*[_type == "siteSettings"][0]{ manualRateOverride }`)
-    if (settings?.manualRateOverride && typeof settings.manualRateOverride === 'number') {
-      console.log(`Using Sanity Manual Override Rate: ₹${settings.manualRateOverride}`)
-      return settings.manualRateOverride
-    }
-  } catch (sanityErr) {
-    console.error('Failed to fetch siteSettings from Sanity:', sanityErr)
-  }
-
-  // 2. Local Fallback Cache Setup
+async function fetchBaseMarketRate(): Promise<number> {
+  // Local Fallback Cache Setup
   let cache: ExchangeRateCache = {
     rate: DEFAULT_RATE,
     lastUpdated: new Date(0).toISOString(),
@@ -66,12 +63,12 @@ export async function getLiveExchangeRate(): Promise<number> {
   const lastUpdatedTime = new Date(cache.lastUpdated).getTime()
   const timeSinceLastUpdate = Date.now() - lastUpdatedTime
 
-  // 3. Return cached rate if it is less than 12 hours old
-  if (timeSinceLastUpdate < CACHE_DURATION_MS && lastUpdatedTime > 0) {
+  // Return cached rate if it is less than 12 hours old
+  if (timeSinceLastUpdate < CACHE_DURATION_MS && lastUpdatedTime > 0 && cache.rate > 0) {
     return cache.rate
   }
 
-  // 4. Cache expired or empty, fetch live rate from Frankfurter API
+  // Cache expired or empty, fetch live rate from Frankfurter API
   try {
     console.log('Fetching live SGD to INR exchange rate from API...')
     const res = await fetch('https://api.frankfurter.app/latest?from=SGD&to=INR', {
@@ -89,9 +86,8 @@ export async function getLiveExchangeRate(): Promise<number> {
       throw new Error('Invalid rate format in API response')
     }
 
-    // Rate successfully fetched. Let's send a success alert.
+    // Rate successfully fetched. Send success alert if needed.
     const lastSuccessAlertTime = cache.lastSuccessAlertSent ? new Date(cache.lastSuccessAlertSent).getTime() : 0
-    // Send success alert at most once every 12 hours (43200000 ms)
     if (Date.now() - lastSuccessAlertTime >= 12 * 60 * 60 * 1000) {
       const subject = `✅ Exchange Rate Successfully Refreshed`
       const html = `
@@ -105,7 +101,7 @@ export async function getLiveExchangeRate(): Promise<number> {
       cache.lastSuccessAlertSent = new Date().toISOString()
     }
 
-    // Save to cache (with try-catch for serverless read-only filesystems)
+    // Save to cache
     cache.rate = rate
     cache.lastUpdated = new Date().toISOString()
     try {
@@ -114,18 +110,65 @@ export async function getLiveExchangeRate(): Promise<number> {
     } catch (fsErr) {
       console.log(`Exchange rate fetched: ₹${rate} (in-memory serverless cache)`)
     }
-    
+
     return rate
 
   } catch (err: any) {
     console.error('Failed to update exchange rate from Frankfurter API:', err)
-    
-    // Determine the fallback rate
-    const fallbackRate = cache.rate > 0 ? cache.rate : DEFAULT_RATE
-
-    // Failure alerts are stopped entirely to avoid alert fatigue.
-    console.log(`Skipped sending failure email alert (disabled by user settings)`)
-
-    return fallbackRate
+    return cache.rate > 0 ? cache.rate : DEFAULT_RATE
   }
+}
+
+export async function getExchangeRateDetails(): Promise<ExchangeRateDetails> {
+  // 1. Fetch Sanity Settings (manual override and markup settings)
+  let settings: any = null
+  try {
+    settings = await readClient.fetch(
+      `*[_type == "siteSettings"][0]{ manualRateOverride, exchangeMarkupType, exchangeMarkupValue }`
+    )
+  } catch (sanityErr) {
+    console.error('Failed to fetch siteSettings exchange settings from Sanity:', sanityErr)
+  }
+
+  // 2. Fetch base market rate
+  const baseRate = await fetchBaseMarketRate()
+
+  // 3. Manual override takes highest priority
+  if (settings?.manualRateOverride && typeof settings.manualRateOverride === 'number' && settings.manualRateOverride > 0) {
+    const overrideVal = Math.round(settings.manualRateOverride * 100) / 100
+    console.log(`Using Sanity Manual Override Rate: ₹${overrideVal}`)
+    return {
+      rate: overrideVal,
+      baseRate: Math.round(baseRate * 100) / 100,
+      markupType: settings.exchangeMarkupType || 'absolute',
+      markupValue: typeof settings.exchangeMarkupValue === 'number' ? settings.exchangeMarkupValue : 3.5,
+      isManualOverride: true
+    }
+  }
+
+  // 4. Apply configured markup
+  const markupType: 'absolute' | 'percentage' = settings?.exchangeMarkupType === 'percentage' ? 'percentage' : 'absolute'
+  const markupValue = typeof settings?.exchangeMarkupValue === 'number' ? settings.exchangeMarkupValue : 3.5
+
+  let effectiveRate = baseRate
+  if (markupType === 'absolute') {
+    effectiveRate = baseRate + markupValue
+  } else {
+    effectiveRate = baseRate * (1 + markupValue / 100)
+  }
+
+  const finalRate = Math.round(effectiveRate * 100) / 100
+
+  return {
+    rate: finalRate,
+    baseRate: Math.round(baseRate * 100) / 100,
+    markupType,
+    markupValue,
+    isManualOverride: false
+  }
+}
+
+export async function getLiveExchangeRate(): Promise<number> {
+  const details = await getExchangeRateDetails()
+  return details.rate
 }
