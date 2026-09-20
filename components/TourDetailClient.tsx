@@ -23,14 +23,23 @@ import {
   CloudSun,
   Users,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Image as ImageIcon
 } from 'lucide-react'
 import { TourData, DEFAULT_TOURS } from '../utils/tours'
 import PackageShortsCarousel from './PackageShortsCarousel'
 import AppDownloadCard from './AppDownloadCard'
+import ImageGalleryLightbox from './ImageGalleryLightbox'
 
 export default function TourDetailClient({ tour }: { tour: TourData }) {
   const [copied, setCopied] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+
+  const allPhotos = [
+    tour.coverImageUrl,
+    ...((tour as any).galleryUploaded || []),
+    ...(tour.galleryImageUrls || [])
+  ].filter(Boolean)
   
   // Interactive Pax Calculator State
   const [adults, setAdults] = useState(2)
@@ -167,6 +176,33 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
           backgroundPosition: 'center',
           boxShadow: '0 10px 30px rgba(0,0,0,0.12)'
         }}>
+          {allPhotos.length > 0 && (
+            <button
+              onClick={() => setLightboxIndex(0)}
+              style={{
+                position: 'absolute',
+                top: '18px',
+                right: '18px',
+                background: 'rgba(15, 23, 42, 0.75)',
+                backdropFilter: 'blur(6px)',
+                color: '#FFF',
+                border: '1px solid rgba(255,255,255,0.2)',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                zIndex: 5
+              }}
+            >
+              <ImageIcon size={14} /> View Photos & Slide ({allPhotos.length})
+            </button>
+          )}
+
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '0.75rem' }}>
             <span style={{
               background: '#0F4C3A',
@@ -736,6 +772,47 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
             <AppDownloadCard appDetails={tour.appDetails} />
           )}
 
+          {/* PHOTO GALLERY */}
+          {allPhotos.length > 0 && (
+            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ImageIcon size={20} color="#0F4C3A" /> Circuit Photo Showcase & Highlights ({allPhotos.length})
+                </h2>
+                <span style={{ fontSize: '0.75rem', color: '#0F4C3A', fontWeight: 700 }}>
+                  Click any photo to open slider & swipe →
+                </span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '10px' }}>
+                {allPhotos.map((url, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setLightboxIndex(idx)}
+                    style={{
+                      height: '130px',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      border: '1px solid #E2E8F0',
+                      position: 'relative',
+                      transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.transform = 'scale(1.03)'
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = 'scale(1)'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
+                  >
+                    <img src={url} alt={`${tour.title} Photo ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.2s ease' }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* ── NEXT-DAY COMBINATION CIRCUITS ── */}
           <div className="no-print" style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
             <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -957,6 +1034,15 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
         <p>Itinerary prepared by <strong>Flying Wonders Private Limited</strong> — Singapore B2B Destination Management Company.</p>
         <p>Contact: +91 9886171251 / +65 9472 2830 | Website: https://flyingwonders.net</p>
       </div>
+
+      {/* ── INTERACTIVE IMAGE GALLERY LIGHTBOX SLIDER ── */}
+      <ImageGalleryLightbox
+        images={allPhotos}
+        initialIndex={lightboxIndex ?? 0}
+        title={tour.title}
+        isOpen={lightboxIndex !== null}
+        onClose={() => setLightboxIndex(null)}
+      />
 
       {/* Print Styles */}
       <style jsx global>{`

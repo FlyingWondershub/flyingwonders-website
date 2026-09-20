@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { client } from '../../sanity/lib/client'
 import AdBanner from '../../components/AdBanner'
+import ImageGalleryLightbox from '../../components/ImageGalleryLightbox'
 import { DEFAULT_HOTELS, cleanHotelName, slugifyHotelName } from '../../utils/hotels'
 import { DEFAULT_ATTRACTIONS, slugifyAttractionName } from '../../utils/attractions'
 
@@ -293,6 +294,20 @@ export default function ServicesCatalogPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeMediaModal, setActiveMediaModal] = useState<any | null>(null)
   const [activeAttractionModal, setActiveAttractionModal] = useState<any | null>(null)
+
+  // Interactive Image Gallery Lightbox Slider State
+  const [galleryLightboxPhotos, setGalleryLightboxPhotos] = useState<string[]>([])
+  const [galleryLightboxIndex, setGalleryLightboxIndex] = useState<number>(0)
+  const [galleryLightboxTitle, setGalleryLightboxTitle] = useState<string>('')
+  const [isGalleryLightboxOpen, setIsGalleryLightboxOpen] = useState<boolean>(false)
+
+  const openGalleryLightbox = (photos: string[], startIndex: number = 0, title?: string) => {
+    if (!photos || photos.length === 0) return
+    setGalleryLightboxPhotos(photos)
+    setGalleryLightboxIndex(startIndex)
+    setGalleryLightboxTitle(title || '')
+    setIsGalleryLightboxOpen(true)
+  }
 
   // Fetch all live data sources in parallel on mount
   useEffect(() => {
@@ -1112,9 +1127,25 @@ export default function ServicesCatalogPage() {
             </p>
 
             {/* Cover Image */}
-            {activeMediaModal.coverImageUrl && !activeMediaModal.videoUrl && (
-              <img src={activeMediaModal.coverImageUrl} alt="" style={{ width: '100%', height: '240px', objectFit: 'cover', borderRadius: '12px', marginBottom: '1rem', border: '1px solid #E2E8F0' }} />
-            )}
+            {activeMediaModal.coverImageUrl && !activeMediaModal.videoUrl && (() => {
+              const modalAllPhotos = [
+                activeMediaModal.coverImageUrl,
+                ...(activeMediaModal.galleryUploaded || []),
+                ...(activeMediaModal.galleryImageUrls || [])
+              ].filter(Boolean)
+              return (
+                <div
+                  onClick={() => openGalleryLightbox(modalAllPhotos, 0, activeMediaModal.title)}
+                  style={{ position: 'relative', cursor: 'pointer', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem', border: '1px solid #E2E8F0' }}
+                  title="Click to view full photo gallery"
+                >
+                  <img src={activeMediaModal.coverImageUrl} alt="" style={{ width: '100%', height: '240px', objectFit: 'cover', display: 'block' }} />
+                  <div style={{ position: 'absolute', bottom: '10px', right: '10px', background: 'rgba(15,23,42,0.85)', color: '#FFF', padding: '4px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px', backdropFilter: 'blur(4px)' }}>
+                    <ImageIcon size={13} /> Click to View Gallery & Slide ({modalAllPhotos.length})
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Video Showcase Player */}
             {activeMediaModal.videoUrl && (
@@ -1153,18 +1184,53 @@ export default function ServicesCatalogPage() {
             </div>
 
             {/* Photo Gallery Grid */}
-            {((activeMediaModal.galleryUploaded && activeMediaModal.galleryUploaded.length > 0) || (activeMediaModal.galleryImageUrls && activeMediaModal.galleryImageUrls.length > 0)) && (
-              <div style={{ marginBottom: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <ImageIcon size={16} color="#0F4C3A" /> Photo Gallery
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
-                  {(activeMediaModal.galleryUploaded || activeMediaModal.galleryImageUrls || []).map((imgUrl: string, idx: number) => (
-                    <img key={idx} src={imgUrl} alt="" style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #E2E8F0' }} />
-                  ))}
+            {((activeMediaModal.galleryUploaded && activeMediaModal.galleryUploaded.length > 0) || (activeMediaModal.galleryImageUrls && activeMediaModal.galleryImageUrls.length > 0)) && (() => {
+              const galleryList = (activeMediaModal.galleryUploaded || activeMediaModal.galleryImageUrls || []).filter(Boolean)
+              const modalAllPhotos = [
+                ...(activeMediaModal.coverImageUrl ? [activeMediaModal.coverImageUrl] : []),
+                ...galleryList
+              ]
+              return (
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <ImageIcon size={16} color="#0F4C3A" /> Photo Gallery ({modalAllPhotos.length})
+                    </h4>
+                    <span style={{ fontSize: '0.72rem', color: '#0F4C3A', fontWeight: 700 }}>Click any photo to slide →</span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
+                    {galleryList.map((imgUrl: string, idx: number) => {
+                      const startIndex = activeMediaModal.coverImageUrl ? idx + 1 : idx
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => openGalleryLightbox(modalAllPhotos, startIndex, activeMediaModal.title)}
+                          style={{
+                            height: '100px',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            border: '1px solid #E2E8F0',
+                            cursor: 'pointer',
+                            position: 'relative',
+                            transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.transform = 'scale(1.03)'
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.transform = 'scale(1)'
+                            e.currentTarget.style.boxShadow = 'none'
+                          }}
+                        >
+                          <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             {/* Room Categories (For Hotels) */}
             {activeMediaModal.roomCategories && activeMediaModal.roomCategories.length > 0 && (
@@ -1264,7 +1330,16 @@ export default function ServicesCatalogPage() {
 
             {/* Modal Cover Image */}
             {activeAttractionModal.imageUrl && (
-              <img src={activeAttractionModal.imageUrl} alt="" style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '12px', marginBottom: '1rem', border: '1px solid #E2E8F0' }} />
+              <div
+                onClick={() => openGalleryLightbox([activeAttractionModal.imageUrl], 0, activeAttractionModal.name)}
+                style={{ position: 'relative', cursor: 'pointer', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem', border: '1px solid #E2E8F0' }}
+                title="Click to view full photo"
+              >
+                <img src={activeAttractionModal.imageUrl} alt="" style={{ width: '100%', height: '220px', objectFit: 'cover', display: 'block' }} />
+                <div style={{ position: 'absolute', bottom: '10px', right: '10px', background: 'rgba(15,23,42,0.85)', color: '#FFF', padding: '4px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px', backdropFilter: 'blur(4px)' }}>
+                  <ImageIcon size={13} /> View Full Photo
+                </div>
+              </div>
             )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.4rem' }}>
@@ -1374,6 +1449,15 @@ export default function ServicesCatalogPage() {
           </div>
         </div>
       )}
+
+      {/* ══ INTERACTIVE FULLSCREEN IMAGE GALLERY LIGHTBOX SLIDER ══ */}
+      <ImageGalleryLightbox
+        images={galleryLightboxPhotos}
+        initialIndex={galleryLightboxIndex}
+        title={galleryLightboxTitle}
+        isOpen={isGalleryLightboxOpen}
+        onClose={() => setIsGalleryLightboxOpen(false)}
+      />
 
     </div>
   )

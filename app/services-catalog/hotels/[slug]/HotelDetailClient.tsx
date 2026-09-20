@@ -22,10 +22,11 @@ import {
 import { HotelData } from '../../../../utils/hotels'
 import PackageShortsCarousel from '../../../../components/PackageShortsCarousel'
 import AppDownloadCard from '../../../../components/AppDownloadCard'
+import ImageGalleryLightbox from '../../../../components/ImageGalleryLightbox'
 
 export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
   const [copied, setCopied] = useState(false)
-  const [activePhoto, setActivePhoto] = useState<string | null>(null)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const handleCopyLink = () => {
     if (typeof window !== 'undefined') {
@@ -55,6 +56,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
   const allPhotos = [
     hotel.coverImageUrl,
+    ...((hotel as any).galleryUploaded || []),
     ...(hotel.galleryImageUrls || [])
   ].filter(Boolean)
 
@@ -387,21 +389,35 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
           {/* Photo Gallery Grid */}
           {allPhotos.length > 0 && (
             <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-              <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ImageIcon size={20} color="#0F4C3A" /> High-Resolution Photo Gallery ({allPhotos.length})
-              </h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ImageIcon size={20} color="#0F4C3A" /> High-Resolution Photo Gallery ({allPhotos.length})
+                </h2>
+                <span style={{ fontSize: '0.75rem', color: '#0F4C3A', fontWeight: 700 }}>
+                  Click any photo to open slider & swipe →
+                </span>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '10px' }}>
                 {allPhotos.map((url, idx) => (
                   <div
                     key={idx}
-                    onClick={() => setActivePhoto(url)}
+                    onClick={() => setLightboxIndex(idx)}
                     style={{
                       height: '130px',
                       borderRadius: '10px',
                       overflow: 'hidden',
                       cursor: 'pointer',
                       border: '1px solid #E2E8F0',
-                      position: 'relative'
+                      position: 'relative',
+                      transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.transform = 'scale(1.03)'
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = 'scale(1)'
+                      e.currentTarget.style.boxShadow = 'none'
                     }}
                   >
                     <img src={url} alt={`${hotel.name} Photo ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.2s ease' }} />
@@ -495,32 +511,14 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
       </div>
 
-      {/* ── 5. LIGHTBOX MODAL FOR FULL-SIZE PHOTOS ── */}
-      {activePhoto && (
-        <div
-          onClick={() => setActivePhoto(null)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.85)',
-            zIndex: 99999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1.5rem',
-            cursor: 'pointer'
-          }}
-        >
-          <img
-            src={activePhoto}
-            alt="Full size view"
-            style={{ maxWidth: '90vw', maxHeight: '85vh', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', objectFit: 'contain' }}
-          />
-        </div>
-      )}
+      {/* ── 5. LIGHTBOX SLIDER FOR FULL-SIZE PHOTOS ── */}
+      <ImageGalleryLightbox
+        images={allPhotos}
+        initialIndex={lightboxIndex ?? 0}
+        title={hotel.name}
+        isOpen={lightboxIndex !== null}
+        onClose={() => setLightboxIndex(null)}
+      />
 
     </div>
   )
