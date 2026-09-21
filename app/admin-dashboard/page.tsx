@@ -8,10 +8,12 @@ import {
   Calendar, Eye, Filter, ChevronLeft, ChevronRight, AlertCircle, Clock,
   ChevronDown, ChevronUp, CalendarCheck, CheckCheck, LayoutDashboard, Database,
   ArrowRight, ShieldCheck, CreditCard, Menu, PanelLeftClose, PanelLeftOpen, Megaphone,
-  Wrench, Globe, ShoppingBag, FileSpreadsheet, Building2, Printer, Share2, Plus, Search
+  Wrench, Globe, ShoppingBag, FileSpreadsheet, Building2, Printer, Share2, Plus, Search, Mail
 } from 'lucide-react'
 import GroupHotelVoucherModal from '../../components/GroupHotelVoucherModal'
 import { generateMasterGroupVoucherPdf, generateAllVisaVouchersPdf, generateSingleRoomVisaPdf } from '../../utils/hotelVoucherPdf'
+import NewsletterCampaignManager from '../../components/admin/NewsletterCampaignManager'
+import MarketingLeadsManager from '../../components/admin/MarketingLeadsManager'
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
@@ -449,6 +451,8 @@ export default function AdminDashboard() {
   const navItems = [
     { id: 'section-metrics', label: 'KPI Overview', icon: LayoutDashboard },
     { id: 'section-packages', label: 'Packages & Calendar', icon: Package, badge: totalPackages },
+    { id: 'section-newsletters', label: 'Email Campaigns & Templates', icon: Mail },
+    { id: 'section-leads-directory', label: 'Leads Directory & Outreach', icon: Users },
     { id: 'section-hotel-vouchers', label: 'Hotel Vouchers (Visa)', icon: Building2, badge: hotelVouchers.length },
     { id: 'section-approvals', label: 'Pending Approvals', icon: Clock, badge: pendingApprovalsCount },
     { id: 'section-accounts', label: 'Accounts & Ledger', icon: DollarSign },
@@ -461,6 +465,7 @@ export default function AdminDashboard() {
     { id: 'section-ads', label: 'Ads & Monetization', icon: Megaphone },
     { id: 'section-audit-logs', label: 'Audit Logs', icon: ShieldCheck, badge: logs.length },
   ]
+
 
   const actualWidth = isCollapsed ? 70 : sidebarWidth
 
@@ -1465,8 +1470,19 @@ export default function AdminDashboard() {
           )}
         </div>
 
+        {/* ── SECTION: EMAIL CAMPAIGNS & TEMPLATES HUB (BREVO & SANITY) ── */}
+        <div id="section-newsletters" style={{ marginBottom: '2.5rem' }}>
+          <NewsletterCampaignManager />
+        </div>
+
+        {/* ── SECTION: MARKETING & B2B LEADS DIRECTORY (MANUAL ENTRY & SYNC) ── */}
+        <div id="section-leads-directory" style={{ marginBottom: '2.5rem' }}>
+          <MarketingLeadsManager />
+        </div>
+
         {/* ── SECTION 3: SITE MAP & QUICK LINKS MATRIX ── */}
         <div id="section-sitemap" style={{ marginBottom: '2.5rem' }}>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Map size={20} color="#4A5568" />

@@ -101,11 +101,23 @@ export default function B2BLeadsPage() {
   const [statusFilter, setStatusFilter] = useState<'open' | 'closed' | 'all'>('open')
   const [selectedDestination, setSelectedDestination] = useState<string>('all')
 
-  // Modals state: Paste Modal
+  // Modals state: Paste & Manual Entry Modal
   const [isPasteModalOpen, setIsPasteModalOpen] = useState(false)
+  const [entryTab, setEntryTab] = useState<'paste' | 'manual'>('paste')
   const [rawPasteText, setRawPasteText] = useState('')
   const [pasteGroupName, setPasteGroupName] = useState('DMC SUPPORT EACH OTHER')
   const [isSubmittingPaste, setIsSubmittingPaste] = useState(false)
+
+  // Manual Entry Form State
+  const [manualTitle, setManualTitle] = useState('')
+  const [manualDestination, setManualDestination] = useState('')
+  const [manualCategory, setManualCategory] = useState<string>('dmc_package')
+  const [manualRequester, setManualRequester] = useState('')
+  const [manualPhone, setManualPhone] = useState('')
+  const [manualCity, setManualCity] = useState('')
+  const [manualUrgency, setManualUrgency] = useState<'normal' | 'urgent'>('normal')
+  const [manualDetails, setManualDetails] = useState('')
+
 
   // Modals state: Close Modal
   const [closingInquiry, setClosingInquiry] = useState<InquiryItem | null>(null)
@@ -159,25 +171,52 @@ export default function B2BLeadsPage() {
     return parseWhatsAppMessage(rawPasteText)
   }, [rawPasteText])
 
-  // Handle Manual Paste Submit
+  // Handle Manual Paste / Form Submit
   const handlePasteSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!rawPasteText.trim()) return
+
+    if (entryTab === 'paste' && !rawPasteText.trim()) {
+      alert('Please paste message text.')
+      return
+    }
+
+    if (entryTab === 'manual' && !manualTitle.trim()) {
+      alert('Please enter a requirement title.')
+      return
+    }
 
     setIsSubmittingPaste(true)
     try {
+      const payload = entryTab === 'paste'
+        ? {
+            rawText: rawPasteText.trim(),
+            groupName: pasteGroupName,
+          }
+        : {
+            rawText: manualDetails.trim() || `${manualTitle} - ${manualDestination || 'General'} required by ${manualRequester || 'Agent'} (${manualPhone || 'No phone'})`,
+            customTitle: manualTitle.trim(),
+            customDestination: manualDestination.trim(),
+            customCategory: manualCategory,
+            customRequesterName: manualRequester.trim(),
+            customPhone: manualPhone.trim(),
+            groupName: 'Manual Entry / Web Post',
+          }
+
       const res = await fetch('/api/inquiries/manual-ingest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rawText: rawPasteText,
-          groupName: pasteGroupName,
-        }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (res.ok && data.success) {
         setIsPasteModalOpen(false)
         setRawPasteText('')
+        setManualTitle('')
+        setManualDestination('')
+        setManualRequester('')
+        setManualPhone('')
+        setManualCity('')
+        setManualDetails('')
         await fetchData()
       } else {
         alert(data.error || 'Failed to submit inquiry.')
@@ -188,6 +227,7 @@ export default function B2BLeadsPage() {
       setIsSubmittingPaste(false)
     }
   }
+
 
   // Handle Subscription Submit
   const handleSubscribeSubmit = async (e: React.FormEvent) => {
@@ -982,15 +1022,15 @@ export default function B2BLeadsPage() {
         </div>
       )}
 
-      {/* MODAL 2: Paste WhatsApp Inquiry Modal */}
+      {/* MODAL 2: Post Inquiry (Paste WhatsApp or Manual Form Entry) */}
       {isPasteModalOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(3px)' }}>
-          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '14px', maxWidth: '460px', width: '100%', padding: '18px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '14px', maxWidth: '520px', width: '100%', maxHeight: '92vh', overflowY: 'auto', padding: '18px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Sparkles size={15} color="#0F4C3A" />
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A' }}>
-                  Paste WhatsApp Inquiry
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                  Post Requirement / Lead
                 </h3>
               </div>
               <button
@@ -1001,43 +1041,186 @@ export default function B2BLeadsPage() {
               </button>
             </div>
 
-            <form onSubmit={handlePasteSubmit}>
-              <div style={{ marginBottom: '8px' }}>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
-                  Raw WhatsApp Message Text *
-                </label>
-                <textarea
-                  required
-                  rows={4}
-                  value={rawPasteText}
-                  onChange={(e) => setRawPasteText(e.target.value)}
-                  placeholder={`Paste message here, e.g.:\n\nAgent Inquiry\nAnyone have good deal for Ayodhya Ramayana Hotel ?\n+91 94299 65850\nDipika`}
-                  style={{ width: '100%', padding: '8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.74rem', fontFamily: 'monospace', outline: 'none', color: '#0F172A' }}
-                />
-              </div>
+            {/* Tab Switcher: Paste vs Manual Form */}
+            <div style={{ display: 'flex', background: '#F1F5F9', padding: '3px', borderRadius: '8px', marginBottom: '12px' }}>
+              <button
+                type="button"
+                onClick={() => setEntryTab('paste')}
+                style={{ flex: 1, padding: '5px 10px', border: 'none', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, cursor: 'pointer', background: entryTab === 'paste' ? '#FFFFFF' : 'transparent', color: entryTab === 'paste' ? '#0F4C3A' : '#64748B', boxShadow: entryTab === 'paste' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none' }}
+              >
+                📋 Paste WhatsApp Text
+              </button>
+              <button
+                type="button"
+                onClick={() => setEntryTab('manual')}
+                style={{ flex: 1, padding: '5px 10px', border: 'none', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, cursor: 'pointer', background: entryTab === 'manual' ? '#FFFFFF' : 'transparent', color: entryTab === 'manual' ? '#0F4C3A' : '#64748B', boxShadow: entryTab === 'manual' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none' }}
+              >
+                ✍️ Manual Form Entry
+              </button>
+            </div>
 
-              {/* Live Preview */}
-              {parsedPreview && (
-                <div style={{ padding: '8px', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '8px', fontSize: '0.7rem', marginBottom: '8px', color: '#065F46' }}>
-                  <strong style={{ display: 'block', marginBottom: '2px' }}>✨ Auto-Extracted:</strong>
-                  <div><strong>Title:</strong> {parsedPreview.title}</div>
-                  {parsedPreview.destination && <div><strong>Destination:</strong> {parsedPreview.destination}</div>}
-                  {parsedPreview.phoneNumber && <div><strong>Phone:</strong> {parsedPreview.phoneNumber}</div>}
-                  {parsedPreview.requesterName && <div><strong>Agent:</strong> {parsedPreview.requesterName}</div>}
+            <form onSubmit={handlePasteSubmit}>
+              {entryTab === 'paste' ? (
+                <>
+                  <div style={{ marginBottom: '8px' }}>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
+                      Raw WhatsApp Message Text *
+                    </label>
+                    <textarea
+                      required
+                      rows={4}
+                      value={rawPasteText}
+                      onChange={(e) => setRawPasteText(e.target.value)}
+                      placeholder={`Paste message here, e.g.:\n\nAgent Inquiry\nAnyone have good deal for Ayodhya Ramayana Hotel ?\n+91 94299 65850\nDipika`}
+                      style={{ width: '100%', padding: '8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.74rem', fontFamily: 'monospace', outline: 'none', color: '#0F172A' }}
+                    />
+                  </div>
+
+                  {/* Live Preview */}
+                  {parsedPreview && (
+                    <div style={{ padding: '8px', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '8px', fontSize: '0.7rem', marginBottom: '8px', color: '#065F46' }}>
+                      <strong style={{ display: 'block', marginBottom: '2px' }}>✨ Auto-Extracted:</strong>
+                      <div><strong>Title:</strong> {parsedPreview.title}</div>
+                      {parsedPreview.destination && <div><strong>Destination:</strong> {parsedPreview.destination}</div>}
+                      {parsedPreview.phoneNumber && <div><strong>Phone:</strong> {parsedPreview.phoneNumber}</div>}
+                      {parsedPreview.requesterName && <div><strong>Agent:</strong> {parsedPreview.requesterName}</div>}
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
+                      Source Group Name
+                    </label>
+                    <input
+                      type="text"
+                      value={pasteGroupName}
+                      onChange={(e) => setPasteGroupName(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A' }}
+                    />
+                  </div>
+                </>
+              ) : (
+                /* MANUAL ENTRY FORM FIELDS */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '9px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '2px' }}>
+                      Requirement Title *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 4D3N Singapore Land Package with Universal Studios"
+                      value={manualTitle}
+                      onChange={(e) => setManualTitle(e.target.value)}
+                      style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A', fontWeight: 600 }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '2px' }}>
+                        Destination *
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Singapore / Malaysia"
+                        value={manualDestination}
+                        onChange={(e) => setManualDestination(e.target.value)}
+                        style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '2px' }}>
+                        Category
+                      </label>
+                      <select
+                        value={manualCategory}
+                        onChange={(e) => setManualCategory(e.target.value)}
+                        style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.72rem', outline: 'none', color: '#0F172A', fontWeight: 600 }}
+                      >
+                        <option value="dmc_package">🏖️ DMC Ground Packages</option>
+                        <option value="hotels">🏨 Hotels & Stays</option>
+                        <option value="transport">🚗 Transport & Cabs</option>
+                        <option value="activities">🎟️ Sightseeing & Passes</option>
+                        <option value="visa_fairs">📋 Trade Fairs & Visas</option>
+                        <option value="flights">✈️ Flights</option>
+                        <option value="other">🌍 Other General</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '2px' }}>
+                        Requester / Agency Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Apex Travel"
+                        value={manualRequester}
+                        onChange={(e) => setManualRequester(e.target.value)}
+                        style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '2px' }}>
+                        WhatsApp / Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        placeholder="+91 98765 43210"
+                        value={manualPhone}
+                        onChange={(e) => setManualPhone(e.target.value)}
+                        style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '2px' }}>
+                        City / Location
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Mumbai / Delhi"
+                        value={manualCity}
+                        onChange={(e) => setManualCity(e.target.value)}
+                        style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '2px' }}>
+                        Urgency
+                      </label>
+                      <select
+                        value={manualUrgency}
+                        onChange={(e) => setManualUrgency(e.target.value as any)}
+                        style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.72rem', outline: 'none', color: '#0F172A' }}
+                      >
+                        <option value="normal">🔵 Normal Inquiry</option>
+                        <option value="urgent">⚡ Urgent Requirement (Within 48h)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#1E293B', marginBottom: '2px' }}>
+                      Requirement Specifications / Details
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={manualDetails}
+                      onChange={(e) => setManualDetails(e.target.value)}
+                      placeholder="e.g. Need 4-star hotel in Bugis area, 2 adults 1 child, breakfast included..."
+                      style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A' }}
+                    />
+                  </div>
                 </div>
               )}
-
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 800, color: '#1E293B', marginBottom: '3px' }}>
-                  Source Group Name
-                </label>
-                <input
-                  type="text"
-                  value={pasteGroupName}
-                  onChange={(e) => setPasteGroupName(e.target.value)}
-                  style={{ width: '100%', padding: '6px 8px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '7px', fontSize: '0.74rem', outline: 'none', color: '#0F172A' }}
-                />
-              </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
                 <button
@@ -1049,16 +1232,17 @@ export default function B2BLeadsPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmittingPaste || !rawPasteText.trim()}
+                  disabled={isSubmittingPaste || (entryTab === 'paste' ? !rawPasteText.trim() : !manualTitle.trim())}
                   style={{ padding: '6px 14px', fontSize: '0.72rem', fontWeight: 900, background: '#0F4C3A', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#FFFFFF' }}
                 >
-                  {isSubmittingPaste ? 'Saving...' : 'Publish to Board'}
+                  {isSubmittingPaste ? 'Publishing...' : 'Publish to Board'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
 
       {/* MODAL 3: Mark as Cleared Modal */}
       {closingInquiry && (
