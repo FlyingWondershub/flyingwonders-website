@@ -18,9 +18,12 @@ import {
   ExternalLink,
   ShieldCheck,
   Search,
-  Sparkles
+  Sparkles,
+  Camera,
+  RefreshCw
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import { scanPassportImageInBrowser } from '../utils/passportOcr'
 import {
   generateMasterGroupVoucherPdf,
   generateAllVisaVouchersPdf,
@@ -121,6 +124,8 @@ export default function GroupHotelVoucherModal({
   const [saving, setSaving] = useState(false)
   const [importingProposal, setImportingProposal] = useState(false)
   const [proposalQuery, setProposalQuery] = useState('')
+  const [passportScanning, setPassportScanning] = useState(false)
+  const [scanStatus, setScanStatus] = useState('')
 
   // Form State
   const [docId, setDocId] = useState<string | undefined>(undefined)
@@ -362,6 +367,123 @@ export default function GroupHotelVoucherModal({
           : r
       )
     )
+  }
+
+  // Handle Single Guest Passport Scan
+  const handleSingleGuestPassportScan = async (
+    roomIdx: number,
+    guestIdx: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setPassportScanning(true)
+    setScanStatus('Reading passport...')
+    try {
+      const data = await scanPassportImageInBrowser(file, (msg) => setScanStatus(msg))
+      setRooms(prev =>
+        prev.map((r, i) =>
+          i === roomIdx
+            ? {
+                ...r,
+                guests: r.guests.map((g, gi) =>
+                  gi === guestIdx
+                    ? {
+                        ...g,
+                        title: data.title,
+                        fullName: data.fullName,
+                        passportNumber: data.passportNumber,
+                        nationality: data.nationality.toUpperCase(),
+                        guestType: data.passengerType === 'Child' || data.passengerType === 'Infant' ? 'Child' : 'Adult',
+                      }
+                    : g
+                ),
+              }
+            : r
+        )
+      )
+    } catch (err: any) {
+      alert(`Passport Scan Error: ${err.message || 'Could not parse MRZ. Ensure bottom 2 lines are clear.'}`)
+    } finally {
+      setPassportScanning(false)
+      setScanStatus('')
+      e.target.value = ''
+    }
+  }
+
+  // Handle Bulk Passport Scan
+  const handleBulkPassportScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setPassportScanning(true)
+    let successCount = 0
+
+    const updatedRooms = JSON.parse(JSON.stringify(rooms))
+
+    for (let f = 0; f < files.length; f++) {
+      const file = files[f]
+      setScanStatus(`Scanning passport ${f + 1} of ${files.length}...`)
+      try {
+        const data = await scanPassportImageInBrowser(file)
+        successCount++
+
+        const guestObj: HotelGuest = {
+          title: data.title,
+          fullName: data.fullName,
+          passportNumber: data.passportNumber,
+          nationality: data.nationality.toUpperCase(),
+          guestType: data.passengerType === 'Child' || data.passengerType === 'Infant' ? 'Child' : 'Adult',
+        }
+
+        // Find a room with an empty guest slot
+        let placed = false
+        for (let r = 0; r < updatedRooms.length; r++) {
+          const emptySlotIdx = updatedRooms[r].guests.findIndex((g: any) => !g.fullName || !g.fullName.trim())
+          if (emptySlotIdx !== -1) {
+            updatedRooms[r].guests[emptySlotIdx] = guestObj
+            placed = true
+            break
+          }
+        }
+
+        // If no empty slot, find a room with < 2 guests
+        if (!placed) {
+          for (let r = 0; r < updatedRooms.length; r++) {
+            if (updatedRooms[r].guests.length < 2) {
+              updatedRooms[r].guests.push(guestObj)
+              placed = true
+              break
+            }
+          }
+        }
+
+        // If all existing rooms have 2+ guests, allocate a new room
+        if (!placed) {
+          const nextNum = (updatedRooms.length + 1).toString().padStart(2, '0')
+          updatedRooms.push({
+            roomNumber: nextNum,
+            roomType: updatedRooms[0]?.roomType || 'Deluxe Twin Room',
+            bedding: 'Twin Beds',
+            guests: [guestObj],
+          })
+        }
+      } catch (err: any) {
+        console.warn(`File ${file.name} failed passport OCR:`, err.message)
+      }
+    }
+
+    setRooms(updatedRooms)
+    setPassportScanning(false)
+    setScanStatus('')
+    e.target.value = ''
+
+    if (successCount > 0) {
+      alert(`Successfully scanned & populated ${successCount} passport(s) into rooms!`)
+    } else {
+      alert('Could not detect MRZ in uploaded file(s). Ensure bottom 2 lines of the passport are clearly visible.')
+    }
   }
 
   // Download Sample Excel Template
@@ -894,6 +1016,34 @@ _Authorized by Flying Wonders Pvt Ltd (CIN: U63090KA2016PTC095564)_`
                   <input type="file" accept=".xlsx, .xls, .csv" onChange={handleExcelUpload} style={{ display: 'none' }} />
                 </label>
 
+                <label
+                  style={{
+                    padding: '0.4rem 0.75rem',
+                    background: '#E0E7FF',
+                    color: '#3730A3',
+                    border: '1px solid #C7D2FE',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: passportScanning ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    opacity: passportScanning ? 0.7 : 1,
+                  }}
+                >
+                  <Camera size={13} />
+                  <span>{passportScanning ? (scanStatus || 'Scanning...') : 'Scan Passport(s)'}</span>
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    multiple
+                    disabled={passportScanning}
+                    onChange={handleBulkPassportScan}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+
                 <button
                   type="button"
                   onClick={addRoom}
@@ -916,6 +1066,13 @@ _Authorized by Flying Wonders Pvt Ltd (CIN: U63090KA2016PTC095564)_`
                 </button>
               </div>
             </div>
+
+            {passportScanning && (
+              <div style={{ marginBottom: '1rem', background: '#EEF2FF', border: '1px solid #C7D2FE', padding: '0.75rem 1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#3730A3', fontSize: '0.85rem', fontWeight: 600 }}>
+                <RefreshCw size={15} className="animate-spin" />
+                <span>{scanStatus || 'Processing passport images with in-browser OCR...'}</span>
+              </div>
+            )}
 
             {/* Room Cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -1043,11 +1200,35 @@ _Authorized by Flying Wonders Pvt Ltd (CIN: U63090KA2016PTC095564)_`
                                 <option value="Infant">Infant</option>
                               </select>
                             </td>
-                            <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                            <td style={{ padding: '4px 6px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                              <label
+                                title="Scan passport photo for this guest"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  background: '#EEF2FF',
+                                  color: '#4F46E5',
+                                  border: '1px solid #C7D2FE',
+                                  borderRadius: '4px',
+                                  padding: '0.25rem 0.35rem',
+                                  marginRight: '0.35rem',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <Camera size={12} />
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  capture="environment"
+                                  style={{ display: 'none' }}
+                                  onChange={(e) => handleSingleGuestPassportScan(rIdx, gIdx, e)}
+                                />
+                              </label>
                               <button
                                 type="button"
                                 onClick={() => removeGuestFromRoom(rIdx, gIdx)}
-                                style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                                style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer', verticalAlign: 'middle' }}
                                 title="Remove Occupant"
                               >
                                 <X size={15} />

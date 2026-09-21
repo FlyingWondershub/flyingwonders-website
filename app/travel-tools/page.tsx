@@ -43,7 +43,8 @@ import {
   Percent,
   Tag,
   Copy,
-  Check
+  Check,
+  ArrowRight
 } from 'lucide-react'
 
 // Helper function to format YouTube embed URLs
@@ -800,6 +801,7 @@ export default function TravelToolsPage() {
               { id: 'tool-flight-radar', label: '✈️ Flight Radar', show: !sanitySettings.hideFlightTracker },
               { id: 'tool-currency-converter', label: '🧮 Currency & Meal Estimator', show: !sanitySettings.hideCurrencyConverter },
               { id: 'tool-age-calculator', label: '🎂 Ticket Age Calculator', show: !sanitySettings.hideAgeCalculator },
+              { id: 'tool-scanner', label: '📷 Passport Scanner (Air & Hotel)', show: true },
               { id: 'tool-packing-checklist', label: '🎒 Packing List', show: !sanitySettings.hideInteractiveChecklist },
               { id: 'tool-news-radar', label: '📰 Travel News', show: !sanitySettings.hideTravelNews && !hideNewsRadar },
               { id: 'tool-time-allocator', label: '⏱️ Time Allocator', show: !sanitySettings.hideAttractionAllocator },
@@ -1936,6 +1938,74 @@ export default function TravelToolsPage() {
             )}
 
             <ToolCommunityFooter toolId="age-calculator" toolName="Travel & Ticket Age Calculator" summaryText="Calculate exact passenger age on travel date & classify ticket category for Airlines, USS & Gardens by the Bay." />
+          </div>
+        )}
+
+        {/* 📷 PASSPORT SCANNER & AIR TICKETING TOOL */}
+        {matchesSearch('passport scanner air ticket mrz capture camera photo hotel voucher ocr booking passenger manifest') && (
+          <div id="tool-scanner" style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#DCFCE7', color: '#166534', padding: '0.25rem 0.65rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.5rem' }}>
+                  <Sparkles size={13} /> 100% Free · Unlimited · In-Browser Client-Side OCR
+                </div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0A2240', margin: 0, display: 'flex', alignItems: 'center', gap: '0.6rem', fontFamily: 'var(--font-playfair), serif' }}>
+                  <Camera size={22} color="#059669" /> Passport Scanner & Air Ticketing Data Tool
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: '#64748B', margin: '0.25rem 0 0' }}>
+                  Instantly capture traveler details from passport photos or mobile cameras for air tickets and hotel bookings. Formatted for airline GDS & hotel vouchers with 6-month validity checks.
+                </p>
+              </div>
+
+              <Link
+                href="/travel-tools/scanner"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: '#0A2240',
+                  color: '#FFF',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '8px',
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 4px rgba(10,34,64,0.15)',
+                }}
+              >
+                <span>Launch Full Scanner</span>
+                <ArrowRight size={15} />
+              </Link>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+              <div style={{ background: '#F8FAFC', padding: '1rem 1.25rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <strong style={{ color: '#0A2240', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                  ✈️ Airline GDS Fast-Copy
+                </strong>
+                <p style={{ color: '#64748B', fontSize: '0.82rem', margin: 0 }}>
+                  Extracts and formats names into standard GDS strings (<code style={{ background: '#FEF3C7', color: '#92400E', padding: '1px 4px', borderRadius: '3px' }}>SURNAME/GIVENNAME MR</code>) for 1-click pasting into airline portals.
+                </p>
+              </div>
+
+              <div style={{ background: '#F8FAFC', padding: '1rem 1.25rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <strong style={{ color: '#0A2240', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                  🏨 Hotel Rooming List Ingestion
+                </strong>
+                <p style={{ color: '#64748B', fontSize: '0.82rem', margin: 0 }}>
+                  Directly populate guest names, passport numbers, and nationalities into Admin Dashboard Hotel Confirmation Vouchers.
+                </p>
+              </div>
+
+              <div style={{ background: '#F8FAFC', padding: '1rem 1.25rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                <strong style={{ color: '#0A2240', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                  🛡️ 100% Private & Unlimited
+                </strong>
+                <p style={{ color: '#64748B', fontSize: '0.82rem', margin: 0 }}>
+                  Runs completely in your browser via WebAssembly. Zero photos sent to external servers, zero API quotas, and mathematical ICAO checksum verification.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 

@@ -1492,7 +1492,7 @@ export default function AdminDashboard() {
             {/* Live Status Badges & Direct XML Inspect */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#166534', background: '#DCFCE7', border: '1px solid #BBF7D0', padding: '3px 9px', borderRadius: '12px' }}>
-                ● 48 Routes Verified
+                ● 49 Routes Verified
               </span>
               <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1E40AF', background: '#DBEAFE', border: '1px solid #BFDBFE', padding: '3px 9px', borderRadius: '12px' }}>
                 ● 0 Dead Links
@@ -1538,6 +1538,7 @@ export default function AdminDashboard() {
                   { name: 'Group Hotel Voucher Hub', path: '/admin-dashboard#section-hotel-vouchers', desc: 'Generate & manage Visa-compliant group hotel confirmation vouchers' },
                   { name: 'Live Voucher Verification Portal', path: '/verify-voucher', desc: 'Official Embassy & Border Control accommodation authentication gateway' },
                   { name: 'Card Scanner / Contact Ingest', path: '/add-contact', desc: 'Optical card reader & contact save' },
+                  { name: 'Passport Scanner & Air Ticketing Tool', path: '/travel-tools/scanner', desc: 'In-browser MRZ scanner, GDS fast-copy & 6-mo validity checker' },
                   { name: 'Competitor Price Tracker', path: '/api/admin/price-tracker', desc: 'Real-time JSON market price tracker' },
                 ].map(link => (
                   <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>
