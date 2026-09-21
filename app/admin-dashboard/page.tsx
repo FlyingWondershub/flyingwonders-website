@@ -48,6 +48,61 @@ export default function AdminDashboard() {
   // Expand / Collapse row tracking
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({})
 
+  // ── Dashboard Sections Collapse / Expand Tracking ──
+  const ALL_SECTION_IDS = [
+    'section-metrics',
+    'section-packages',
+    'section-hotel-vouchers',
+    'section-approvals',
+    'section-newsletters',
+    'section-leads-directory',
+    'section-sitemap',
+    'section-accounts',
+    'section-payments',
+    'section-consulting',
+    'section-agents',
+    'section-exports',
+    'section-competitor-pricing',
+    'section-ads',
+    'section-audit-logs',
+  ]
+  // By default: all content sections are collapsed!
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({})
+
+  const isSectionExpanded = (id: string) => {
+    return !!expandedSections[id]
+  }
+
+  const toggleSection = (id: string) => {
+    setExpandedSections(prev => {
+      const current = isSectionExpanded(id)
+      return { ...prev, [id]: !current }
+    })
+  }
+
+  const expandAllSections = () => {
+    const next: Record<string, boolean> = {}
+    ALL_SECTION_IDS.forEach(id => {
+      next[id] = true
+    })
+    setExpandedSections(next)
+  }
+
+  const collapseAllSections = () => {
+    const next: Record<string, boolean> = {}
+    ALL_SECTION_IDS.forEach(id => {
+      next[id] = false
+    })
+    setExpandedSections(next)
+  }
+
+  const areAllExpanded = ALL_SECTION_IDS.every(id => isSectionExpanded(id))
+  const areAllCollapsed = ALL_SECTION_IDS.every(id => !isSectionExpanded(id))
+
+  // ── Package Table Pagination ──
+  const [packagePageSize, setPackagePageSize] = useState<number | 'all'>(20)
+  const [packageCurrentPage, setPackageCurrentPage] = useState(1)
+
   // ── Hotel Vouchers State ──
   const [hotelVouchers, setHotelVouchers] = useState<any[]>([])
   const [loadingVouchers, setLoadingVouchers] = useState(false)
@@ -358,11 +413,16 @@ export default function AdminDashboard() {
     setActiveTab(sectionId)
     if (filter) {
       setPackageFilter(filter)
+      setPackageViewMode('list')
     }
-    const elem = document.getElementById(sectionId)
-    if (elem) {
-      elem.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    // Automatically expand the targeted section so it is visible
+    setExpandedSections(prev => ({ ...prev, [sectionId]: true }))
+    setTimeout(() => {
+      const elem = document.getElementById(sectionId)
+      if (elem) {
+        elem.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 60)
   }
 
   if (loading) {
@@ -414,6 +474,32 @@ export default function AdminDashboard() {
       (p.agent?.email && p.agent.email.toLowerCase().includes(term))
     return matchesFilter && matchesSearch
   })
+
+  // Pagination for packages list
+  const totalPackagePages = packagePageSize === 'all' 
+    ? 1 
+    : Math.max(1, Math.ceil(filteredProposals.length / (packagePageSize as number)))
+
+  const paginatedProposals = packagePageSize === 'all' 
+    ? filteredProposals 
+    : filteredProposals.slice(
+        (packageCurrentPage - 1) * (packagePageSize as number),
+        packageCurrentPage * (packagePageSize as number)
+      )
+
+  const areAllRowsExpanded = paginatedProposals.length > 0 && paginatedProposals.every(p => !!expandedIds[p._id])
+
+  const toggleAllPackageRows = () => {
+    if (areAllRowsExpanded) {
+      setExpandedIds({})
+    } else {
+      const next: Record<string, boolean> = { ...expandedIds }
+      paginatedProposals.forEach(p => {
+        next[p._id] = true
+      })
+      setExpandedIds(next)
+    }
+  }
 
   // Calendar Helpers
   const year = currentMonthDate.getFullYear()
@@ -617,12 +703,56 @@ export default function AdminDashboard() {
       <main style={{ flex: 1, padding: '2rem 2.5rem', maxWidth: '1400px', overflowX: 'hidden' }}>
         
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontFamily: 'var(--font-playfair), serif', fontSize: '2.1rem', color: '#2D3748', margin: 0 }}>Admin Operations Dashboard</h1>
             <p style={{ color: '#4A5568', fontSize: '0.92rem', margin: '0.25rem 0 0 0' }}>Manage package lifecycles, booking calendar, approvals & audit logs.</p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Global Expand All / Collapse All Buttons */}
+            <div style={{ background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '0.2rem', display: 'flex', gap: '0.2rem', boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}>
+              <button
+                onClick={expandAllSections}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.85rem',
+                  background: areAllExpanded ? '#0F4C3A' : '#F8FAFC',
+                  color: areAllExpanded ? '#FFF' : '#334155',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  transition: 'all 0.15s ease'
+                }}
+                title="Expand all sections on this dashboard"
+              >
+                <ChevronDown size={14} /> Expand All
+              </button>
+              <button
+                onClick={collapseAllSections}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.85rem',
+                  background: areAllCollapsed ? '#0F4C3A' : '#F8FAFC',
+                  color: areAllCollapsed ? '#FFF' : '#334155',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  transition: 'all 0.15s ease'
+                }}
+                title="Collapse all sections on this dashboard"
+              >
+                <ChevronUp size={14} /> Collapse All
+              </button>
+            </div>
+
             <button 
               onClick={handleSyncAttractions}
               disabled={syncingAttractions}
@@ -676,12 +806,38 @@ export default function AdminDashboard() {
         )}
 
         {/* ── SECTION 1: ULTRA-COMPACT KPI METRICS ROW ── */}
-        <div id="section-metrics" style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem' }}>
-            <LayoutDashboard size={18} color="var(--emerald-secondary)" />
-            <h2 style={{ fontSize: '1.2rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif' }}>Key Performance Indicators</h2>
+        <div id="section-metrics" style={{ marginBottom: isSectionExpanded('section-metrics') ? '2rem' : '1.25rem', background: '#FFF', border: '1px solid #EDF2F7', borderRadius: '12px', padding: isSectionExpanded('section-metrics') ? '1rem 1.25rem' : '0.75rem 1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', transition: 'all 0.2s ease' }}>
+          <div 
+            onClick={() => toggleSection('section-metrics')}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: isSectionExpanded('section-metrics') ? '0.75rem' : 0 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <LayoutDashboard size={18} color="var(--emerald-secondary)" />
+              <h2 style={{ fontSize: '1.1rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                Key Performance Indicators
+              </h2>
+            </div>
+            <button
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                padding: '0.25rem 0.6rem',
+                borderRadius: '6px',
+                background: isSectionExpanded('section-metrics') ? '#F1F5F9' : '#ECFDF5',
+                color: isSectionExpanded('section-metrics') ? '#475569' : '#047857',
+                border: `1px solid ${isSectionExpanded('section-metrics') ? '#CBD5E1' : '#A7F3D0'}`,
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              {isSectionExpanded('section-metrics') ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+              <span>{isSectionExpanded('section-metrics') ? 'Collapse' : 'Expand'}</span>
+            </button>
           </div>
 
+          {isSectionExpanded('section-metrics') && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '0.5rem' }}>
             
             {/* 1. Active Agents */}
@@ -793,16 +949,23 @@ export default function AdminDashboard() {
             </div>
 
           </div>
+          )}
         </div>
 
         {/* ── SECTION 2: SAVED PACKAGES LIFECYCLE & CALENDAR MANAGER ── */}
-        <div id="section-packages" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '2.5rem', border: '1px solid #EDF2F7' }}>
+        <div id="section-packages" style={{ background: '#FFF', borderRadius: '16px', padding: isSectionExpanded('section-packages') ? '1.75rem' : '1rem 1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '1.5rem', border: '1px solid #EDF2F7', transition: 'all 0.2s ease' }}>
           
           {/* Header Controls */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+          <div 
+            onClick={() => toggleSection('section-packages')}
+            style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', cursor: 'pointer', borderBottom: isSectionExpanded('section-packages') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-packages') ? '1rem' : 0, marginBottom: isSectionExpanded('section-packages') ? '1.25rem' : 0 }}
+          >
             <div>
-              <h2 style={{ fontSize: '1.35rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h2 style={{ fontSize: '1.35rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <Package color="var(--emerald-secondary)" size={20} /> Packages Lifecycle & Calendar
+                <span style={{ fontSize: '0.74rem', background: '#EBF4FF', color: '#2B6CB0', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 700, fontFamily: 'var(--font-inter), sans-serif' }}>
+                  {totalPackages} Packages
+                </span>
               </h2>
               <p style={{ color: '#718096', fontSize: '0.82rem', margin: '0.2rem 0 0 0' }}>
                 Lifecycle Sequence: Pending ➔ Follow-Up ➔ Confirmed (Admin) ➔ Scheduled ➔ Completed.
@@ -810,23 +973,49 @@ export default function AdminDashboard() {
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-              {/* View Switcher */}
-              <div style={{ background: '#F7FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.2rem', display: 'flex', gap: '0.2rem' }}>
-                <button
-                  onClick={() => setPackageViewMode('list')}
-                  style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', background: packageViewMode === 'list' ? 'var(--emerald-secondary)' : 'transparent', color: packageViewMode === 'list' ? '#FFF' : '#4A5568', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
-                >
-                  📋 List Manager
-                </button>
-                <button
-                  onClick={() => setPackageViewMode('calendar')}
-                  style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', background: packageViewMode === 'calendar' ? 'var(--emerald-secondary)' : 'transparent', color: packageViewMode === 'calendar' ? '#FFF' : '#4A5568', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
-                >
-                  📅 Arrival Calendar
-                </button>
-              </div>
+              {/* View Switcher (visible when expanded) */}
+              {isSectionExpanded('section-packages') && (
+                <div style={{ background: '#F7FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.2rem', display: 'flex', gap: '0.2rem' }} onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={() => setPackageViewMode('list')}
+                    style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', background: packageViewMode === 'list' ? 'var(--emerald-secondary)' : 'transparent', color: packageViewMode === 'list' ? '#FFF' : '#4A5568', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+                  >
+                    📋 List Manager
+                  </button>
+                  <button
+                    onClick={() => setPackageViewMode('calendar')}
+                    style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', border: 'none', background: packageViewMode === 'calendar' ? 'var(--emerald-secondary)' : 'transparent', color: packageViewMode === 'calendar' ? '#FFF' : '#4A5568', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+                  >
+                    📅 Arrival Calendar
+                  </button>
+                </div>
+              )}
+
+              {/* Expand / Collapse Button */}
+              <button
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '8px',
+                  background: isSectionExpanded('section-packages') ? '#F1F5F9' : '#ECFDF5',
+                  color: isSectionExpanded('section-packages') ? '#475569' : '#047857',
+                  border: `1px solid ${isSectionExpanded('section-packages') ? '#CBD5E1' : '#A7F3D0'}`,
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+                title={isSectionExpanded('section-packages') ? "Collapse section" : "Expand section"}
+              >
+                {isSectionExpanded('section-packages') ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                <span>{isSectionExpanded('section-packages') ? 'Collapse' : 'Expand'}</span>
+              </button>
             </div>
           </div>
+
+          {isSectionExpanded('section-packages') && (
+          <div>
 
           {/* Filters & Search Bar */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
@@ -859,13 +1048,64 @@ export default function AdminDashboard() {
               ))}
             </div>
 
-            <input
-              type="text"
-              placeholder="🔍 Search guest, FW number, agent..."
-              value={packageSearch}
-              onChange={e => setPackageSearch(e.target.value)}
-              style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.82rem', width: '230px', outline: 'none' }}
-            />
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={toggleAllPackageRows}
+                style={{
+                  padding: '0.35rem 0.65rem',
+                  borderRadius: '8px',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  border: '1px solid #CBD5E1',
+                  background: areAllRowsExpanded ? '#F1F5F9' : '#FFF',
+                  color: '#334155',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem'
+                }}
+                title={areAllRowsExpanded ? "Collapse all package rows" : "Expand all package rows to see breakdown"}
+              >
+                {areAllRowsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                <span>{areAllRowsExpanded ? 'Collapse Rows' : 'Expand Rows'}</span>
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>
+                <span>Show:</span>
+                {[15, 30, 50, 'all'].map(sz => (
+                  <button
+                    key={String(sz)}
+                    onClick={() => {
+                      setPackagePageSize(sz as any)
+                      setPackageCurrentPage(1)
+                    }}
+                    style={{
+                      padding: '0.2rem 0.45rem',
+                      borderRadius: '4px',
+                      border: packagePageSize === sz ? 'none' : '1px solid #E2E8F0',
+                      background: packagePageSize === sz ? 'var(--emerald-secondary)' : '#FFF',
+                      color: packagePageSize === sz ? '#FFF' : '#64748B',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {sz === 'all' ? 'All' : sz}
+                  </button>
+                ))}
+              </div>
+
+              <input
+                type="text"
+                placeholder="🔍 Search guest, FW number, agent..."
+                value={packageSearch}
+                onChange={e => {
+                  setPackageSearch(e.target.value)
+                  setPackageCurrentPage(1)
+                }}
+                style={{ padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.82rem', width: '220px', outline: 'none' }}
+              />
+            </div>
           </div>
 
           {/* VIEW MODE 1: LIST MANAGER WITH EXPAND / COLLAPSE */}
@@ -877,7 +1117,15 @@ export default function AdminDashboard() {
                 <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid #E2E8F0', color: '#718096' }}>
-                      <th style={{ padding: '0.5rem 0.3rem', width: '25px' }}></th>
+                      <th style={{ padding: '0.5rem 0.3rem', width: '25px', textAlign: 'center' }}>
+                        <button
+                          onClick={toggleAllPackageRows}
+                          title={areAllRowsExpanded ? "Collapse all rows" : "Expand all rows"}
+                          style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#718096', padding: 0 }}
+                        >
+                          {areAllRowsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                        </button>
+                      </th>
                       <th style={{ padding: '0.5rem 0.65rem' }}>Proposal Ref</th>
                       <th style={{ padding: '0.5rem 0.65rem' }}>Guest Name</th>
                       <th style={{ padding: '0.5rem 0.65rem' }}>Agent / Company</th>
@@ -890,7 +1138,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProposals.map(p => {
+                    {paginatedProposals.map(p => {
                       const badge = getStatusBadge(p.status)
                       const isExpanded = !!expandedIds[p._id]
                       const latestTimestamp = getLatestTimestamp(p)
@@ -1021,6 +1269,52 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               )}
+
+              {/* Table Pagination Controls */}
+              {packagePageSize !== 'all' && filteredProposals.length > (packagePageSize as number) && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0.5rem', borderTop: '1px solid #E2E8F0', marginTop: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>
+                    Showing {((packageCurrentPage - 1) * (packagePageSize as number)) + 1} to {Math.min(packageCurrentPage * (packagePageSize as number), filteredProposals.length)} of {filteredProposals.length} packages
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <button
+                      onClick={() => setPackageCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={packageCurrentPage <= 1}
+                      style={{
+                        padding: '0.3rem 0.7rem',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        background: packageCurrentPage <= 1 ? '#F8FAFC' : '#FFF',
+                        color: packageCurrentPage <= 1 ? '#A0AEC0' : '#334155',
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        cursor: packageCurrentPage <= 1 ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      ← Prev
+                    </button>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', padding: '0 0.4rem' }}>
+                      Page {packageCurrentPage} of {totalPackagePages}
+                    </span>
+                    <button
+                      onClick={() => setPackageCurrentPage(p => Math.min(totalPackagePages, p + 1))}
+                      disabled={packageCurrentPage >= totalPackagePages}
+                      style={{
+                        padding: '0.3rem 0.7rem',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        background: packageCurrentPage >= totalPackagePages ? '#F8FAFC' : '#FFF',
+                        color: packageCurrentPage >= totalPackagePages ? '#A0AEC0' : '#334155',
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        cursor: packageCurrentPage >= totalPackagePages ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1107,47 +1401,82 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          </div>
+          )}
+
         </div>
 
         {/* ── SECTION: GROUP HOTEL CONFIRMATION VOUCHERS (VISA-COMPLIANT) ── */}
-        <div id="section-hotel-vouchers" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '2.5rem', border: '1px solid #EDF2F7' }}>
+        <div id="section-hotel-vouchers" style={{ background: '#FFF', borderRadius: '16px', padding: isSectionExpanded('section-hotel-vouchers') ? '1.75rem' : '1rem 1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '1.5rem', border: '1px solid #EDF2F7', transition: 'all 0.2s ease' }}>
           
           {/* Section Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+          <div 
+            onClick={() => toggleSection('section-hotel-vouchers')}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', cursor: 'pointer', borderBottom: isSectionExpanded('section-hotel-vouchers') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-hotel-vouchers') ? '1rem' : 0, marginBottom: isSectionExpanded('section-hotel-vouchers') ? '1.25rem' : 0 }}
+          >
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
                 <Building2 color="#0A2240" size={22} />
-                <h2 style={{ fontSize: '1.35rem', color: '#0A2240', margin: 0, fontFamily: 'var(--font-playfair), serif', fontWeight: 800 }}>
+                <h2 style={{ fontSize: '1.35rem', color: '#0A2240', margin: 0, fontFamily: 'var(--font-playfair), serif', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   Group Hotel Confirmation Vouchers (Visa-Ready)
                 </h2>
+                <span style={{ fontSize: '0.74rem', background: '#F1F5F9', color: '#0A2240', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 700, fontFamily: 'var(--font-inter), sans-serif', border: '1px solid #CBD5E1' }}>
+                  {hotelVouchers.length} Vouchers
+                </span>
               </div>
               <p style={{ color: '#64748B', fontSize: '0.84rem', margin: 0 }}>
                 Generate official Embassy & Consulate visa vouchers with individual guest passport mapping, hotel CRS confirmation codes, and live QR verification.
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              {isSectionExpanded('section-hotel-vouchers') && (
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
+                  <button
+                    onClick={fetchHotelVouchers}
+                    disabled={loadingVouchers}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.55rem 0.9rem', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#334155', cursor: 'pointer' }}
+                  >
+                    <RefreshCw size={13} className={loadingVouchers ? 'animate-spin' : ''} />
+                    <span>Refresh</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingVoucher(null)
+                      setVoucherModalOpen(true)
+                    }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.25rem', background: '#0A2240', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    <Plus size={15} />
+                    <span>Create Group Hotel Voucher</span>
+                  </button>
+                </div>
+              )}
+
               <button
-                onClick={fetchHotelVouchers}
-                disabled={loadingVouchers}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.55rem 0.9rem', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#334155', cursor: 'pointer' }}
-              >
-                <RefreshCw size={13} className={loadingVouchers ? 'animate-spin' : ''} />
-                <span>Refresh</span>
-              </button>
-              <button
-                onClick={() => {
-                  setEditingVoucher(null)
-                  setVoucherModalOpen(true)
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '8px',
+                  background: isSectionExpanded('section-hotel-vouchers') ? '#F1F5F9' : '#ECFDF5',
+                  color: isSectionExpanded('section-hotel-vouchers') ? '#475569' : '#047857',
+                  border: `1px solid ${isSectionExpanded('section-hotel-vouchers') ? '#CBD5E1' : '#A7F3D0'}`,
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
                 }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.25rem', background: '#0A2240', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
+                title={isSectionExpanded('section-hotel-vouchers') ? "Collapse section" : "Expand section"}
               >
-                <Plus size={15} />
-                <span>Create Group Hotel Voucher</span>
+                {isSectionExpanded('section-hotel-vouchers') ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                <span>{isSectionExpanded('section-hotel-vouchers') ? 'Collapse' : 'Expand'}</span>
               </button>
             </div>
           </div>
 
+          {isSectionExpanded('section-hotel-vouchers') && (
+          <div>
           {/* Quick Metrics Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
             <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
@@ -1345,17 +1674,52 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          </div>
+          )}
+
         </div>
 
         {/* ── SECTION: PENDING STATUS REQUEST APPROVALS ── */}
-        <div id="section-approvals" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '2.5rem', border: '1px solid #EDF2F7' }}>
-          <h2 style={{ fontSize: '1.35rem', color: '#2D3748', margin: '0 0 0.5rem 0', fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Clock color="var(--emerald-secondary)" size={20} /> Pending Status Request Approvals ({pendingApprovalsCount})
-          </h2>
-          <p style={{ color: '#718096', fontSize: '0.82rem', margin: '0 0 1.25rem 0' }}>
-            B2B Agents can request package status updates. Review and click Accept or Deny to apply changes.
-          </p>
+        <div id="section-approvals" style={{ background: '#FFF', borderRadius: '16px', padding: isSectionExpanded('section-approvals') ? '1.75rem' : '1rem 1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '1.5rem', border: '1px solid #EDF2F7', transition: 'all 0.2s ease' }}>
+          <div 
+            onClick={() => toggleSection('section-approvals')}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: isSectionExpanded('section-approvals') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-approvals') ? '1rem' : 0, marginBottom: isSectionExpanded('section-approvals') ? '1.25rem' : 0 }}
+          >
+            <div>
+              <h2 style={{ fontSize: '1.35rem', color: '#2D3748', margin: '0 0 0.25rem 0', fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <Clock color="var(--emerald-secondary)" size={20} /> Pending Status Request Approvals
+                <span style={{ fontSize: '0.74rem', background: pendingApprovalsCount > 0 ? '#FEF3C7' : '#E2E8F0', color: pendingApprovalsCount > 0 ? '#B45309' : '#4A5568', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 700, fontFamily: 'var(--font-inter), sans-serif' }}>
+                  {pendingApprovalsCount} Pending
+                </span>
+              </h2>
+              <p style={{ color: '#718096', fontSize: '0.82rem', margin: 0 }}>
+                B2B Agents can request package status updates. Review and click Accept or Deny to apply changes.
+              </p>
+            </div>
 
+            <button
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.4rem 0.8rem',
+                borderRadius: '8px',
+                background: isSectionExpanded('section-approvals') ? '#F1F5F9' : '#ECFDF5',
+                color: isSectionExpanded('section-approvals') ? '#475569' : '#047857',
+                border: `1px solid ${isSectionExpanded('section-approvals') ? '#CBD5E1' : '#A7F3D0'}`,
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+              title={isSectionExpanded('section-approvals') ? "Collapse section" : "Expand section"}
+            >
+              {isSectionExpanded('section-approvals') ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+              <span>{isSectionExpanded('section-approvals') ? 'Collapse' : 'Expand'}</span>
+            </button>
+          </div>
+
+          {isSectionExpanded('section-approvals') && (
+          <div>
           {pendingApprovalsCount === 0 ? (
             <p style={{ color: '#718096', fontSize: '0.9rem', textAlign: 'center', padding: '2rem 0' }}>
               🎉 No pending status change requests. All caught up!
@@ -1468,55 +1832,177 @@ export default function AdminDashboard() {
               </table>
             </div>
           )}
+          </div>
+          )}
         </div>
 
         {/* ── SECTION: EMAIL CAMPAIGNS & TEMPLATES HUB (BREVO & SANITY) ── */}
-        <div id="section-newsletters" style={{ marginBottom: '2.5rem' }}>
-          <NewsletterCampaignManager />
+        <div id="section-newsletters" style={{ background: '#FFF', borderRadius: '16px', padding: isSectionExpanded('section-newsletters') ? '1.75rem' : '1rem 1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '1.5rem', border: '1px solid #EDF2F7', transition: 'all 0.2s ease' }}>
+          <div 
+            onClick={() => toggleSection('section-newsletters')}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: isSectionExpanded('section-newsletters') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-newsletters') ? '1rem' : 0, marginBottom: isSectionExpanded('section-newsletters') ? '1.25rem' : 0 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#FEF2F2', border: '1px solid #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#800020' }}>
+                <Mail size={18} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', color: '#1A202C', margin: 0, fontFamily: 'var(--font-playfair), serif', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  Email Campaigns & Templates Hub
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: '#718096', margin: '2px 0 0 0' }}>
+                  Compose visually, preview, and dispatch promotional newsletters via Brevo & Sanity.
+                </p>
+              </div>
+            </div>
+
+            <button
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.4rem 0.8rem',
+                borderRadius: '8px',
+                background: isSectionExpanded('section-newsletters') ? '#F1F5F9' : '#ECFDF5',
+                color: isSectionExpanded('section-newsletters') ? '#475569' : '#047857',
+                border: `1px solid ${isSectionExpanded('section-newsletters') ? '#CBD5E1' : '#A7F3D0'}`,
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+              title={isSectionExpanded('section-newsletters') ? "Collapse section" : "Expand section"}
+            >
+              {isSectionExpanded('section-newsletters') ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+              <span>{isSectionExpanded('section-newsletters') ? 'Collapse' : 'Expand'}</span>
+            </button>
+          </div>
+
+          {isSectionExpanded('section-newsletters') && (
+            <div style={{ marginTop: '0.5rem' }}>
+              <NewsletterCampaignManager />
+            </div>
+          )}
         </div>
 
         {/* ── SECTION: MARKETING & B2B LEADS DIRECTORY (MANUAL ENTRY & SYNC) ── */}
-        <div id="section-leads-directory" style={{ marginBottom: '2.5rem' }}>
-          <MarketingLeadsManager />
+        <div id="section-leads-directory" style={{ background: '#FFF', borderRadius: '16px', padding: isSectionExpanded('section-leads-directory') ? '1.75rem' : '1rem 1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '1.5rem', border: '1px solid #EDF2F7', transition: 'all 0.2s ease' }}>
+          <div 
+            onClick={() => toggleSection('section-leads-directory')}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: isSectionExpanded('section-leads-directory') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-leads-directory') ? '1rem' : 0, marginBottom: isSectionExpanded('section-leads-directory') ? '1.25rem' : 0 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ECFDF5', border: '1px solid #A7F3D0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#065F46' }}>
+                <Users size={18} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', color: '#1A202C', margin: 0, fontFamily: 'var(--font-playfair), serif', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  Marketing & B2B Leads Directory
+                </h2>
+                <p style={{ fontSize: '0.8rem', color: '#718096', margin: '2px 0 0 0' }}>
+                  Manual lead entries, agency outreach, B2B partner directories & synchronization.
+                </p>
+              </div>
+            </div>
+
+            <button
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.4rem 0.8rem',
+                borderRadius: '8px',
+                background: isSectionExpanded('section-leads-directory') ? '#F1F5F9' : '#ECFDF5',
+                color: isSectionExpanded('section-leads-directory') ? '#475569' : '#047857',
+                border: `1px solid ${isSectionExpanded('section-leads-directory') ? '#CBD5E1' : '#A7F3D0'}`,
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+              title={isSectionExpanded('section-leads-directory') ? "Collapse section" : "Expand section"}
+            >
+              {isSectionExpanded('section-leads-directory') ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+              <span>{isSectionExpanded('section-leads-directory') ? 'Collapse' : 'Expand'}</span>
+            </button>
+          </div>
+
+          {isSectionExpanded('section-leads-directory') && (
+            <div style={{ marginTop: '0.5rem' }}>
+              <MarketingLeadsManager />
+            </div>
+          )}
         </div>
 
         {/* ── SECTION 3: SITE MAP & QUICK LINKS MATRIX ── */}
-        <div id="section-sitemap" style={{ marginBottom: '2.5rem' }}>
+        <div id="section-sitemap" style={{ background: '#FFF', borderRadius: '16px', padding: isSectionExpanded('section-sitemap') ? '1.75rem' : '1rem 1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '1.5rem', border: '1px solid #EDF2F7', transition: 'all 0.2s ease' }}>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div 
+            onClick={() => toggleSection('section-sitemap')}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', cursor: 'pointer', borderBottom: isSectionExpanded('section-sitemap') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-sitemap') ? '1rem' : 0, marginBottom: isSectionExpanded('section-sitemap') ? '1.25rem' : 0 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               <Map size={20} color="#4A5568" />
-              <h2 style={{ fontSize: '1.3rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif' }}>Site Map & Comprehensive Quick Links</h2>
+              <h2 style={{ fontSize: '1.3rem', color: '#2D3748', margin: 0, fontFamily: 'var(--font-playfair), serif', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                Site Map & Comprehensive Quick Links
+              </h2>
+              <span style={{ fontSize: '0.74rem', background: '#F1F5F9', color: '#4A5568', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 700, fontFamily: 'var(--font-inter), sans-serif', border: '1px solid #E2E8F0' }}>
+                49 Routes Verified
+              </span>
             </div>
             
-            {/* Live Status Badges & Direct XML Inspect */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#166534', background: '#DCFCE7', border: '1px solid #BBF7D0', padding: '3px 9px', borderRadius: '12px' }}>
-                ● 49 Routes Verified
-              </span>
-              <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1E40AF', background: '#DBEAFE', border: '1px solid #BFDBFE', padding: '3px 9px', borderRadius: '12px' }}>
-                ● 0 Dead Links
-              </span>
-              <a 
-                href="/sitemap.xml" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                style={{ fontSize: '0.72rem', fontWeight: 700, color: '#4338CA', background: '#EEF2FF', border: '1px solid #C7D2FE', padding: '3px 9px', borderRadius: '6px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+              {/* Live Status Badges & Direct XML Inspect (visible when expanded) */}
+              {isSectionExpanded('section-sitemap') && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#166534', background: '#DCFCE7', border: '1px solid #BBF7D0', padding: '3px 9px', borderRadius: '12px' }}>
+                    ● 49 Routes Verified
+                  </span>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1E40AF', background: '#DBEAFE', border: '1px solid #BFDBFE', padding: '3px 9px', borderRadius: '12px' }}>
+                    ● 0 Dead Links
+                  </span>
+                  <a 
+                    href="/sitemap.xml" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    style={{ fontSize: '0.72rem', fontWeight: 700, color: '#4338CA', background: '#EEF2FF', border: '1px solid #C7D2FE', padding: '3px 9px', borderRadius: '6px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <span>sitemap.xml</span>
+                    <ExternalLink size={11} />
+                  </a>
+                  <a 
+                    href="/robots.txt" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', background: '#F1F5F9', border: '1px solid #CBD5E1', padding: '3px 9px', borderRadius: '6px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <span>robots.txt</span>
+                    <ExternalLink size={11} />
+                  </a>
+                </div>
+              )}
+
+              <button
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '8px',
+                  background: isSectionExpanded('section-sitemap') ? '#F1F5F9' : '#ECFDF5',
+                  color: isSectionExpanded('section-sitemap') ? '#475569' : '#047857',
+                  border: `1px solid ${isSectionExpanded('section-sitemap') ? '#CBD5E1' : '#A7F3D0'}`,
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+                title={isSectionExpanded('section-sitemap') ? "Collapse section" : "Expand section"}
               >
-                <span>sitemap.xml</span>
-                <ExternalLink size={11} />
-              </a>
-              <a 
-                href="/robots.txt" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', background: '#F1F5F9', border: '1px solid #CBD5E1', padding: '3px 9px', borderRadius: '6px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
-                <span>robots.txt</span>
-                <ExternalLink size={11} />
-              </a>
+                {isSectionExpanded('section-sitemap') ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                <span>{isSectionExpanded('section-sitemap') ? 'Collapse' : 'Expand'}</span>
+              </button>
             </div>
           </div>
+
+          {isSectionExpanded('section-sitemap') && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
             
             {/* 1. Core Operations & B2B Portals */}
@@ -1670,29 +2156,64 @@ export default function AdminDashboard() {
             </div>
 
           </div>
+          )}
         </div>
 
         {/* ── ACCOUNTS & FINANCIAL LEDGER REPORT ── */}
-        <div id="section-accounts" style={{ background: '#FFF', borderRadius: '16px', padding: '1.75rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', border: '1px solid #E2E8F0', marginBottom: '2.5rem' }}>
+        <div id="section-accounts" style={{ background: '#FFF', borderRadius: '16px', padding: isSectionExpanded('section-accounts') ? '1.75rem' : '1rem 1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', border: '1px solid #E2E8F0', marginBottom: '1.5rem', transition: 'all 0.2s ease' }}>
           
           {/* Header & Export Link */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+          <div 
+            onClick={() => toggleSection('section-accounts')}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', cursor: 'pointer', borderBottom: isSectionExpanded('section-accounts') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-accounts') ? '1rem' : 0, marginBottom: isSectionExpanded('section-accounts') ? '1.25rem' : 0 }}
+          >
             <div>
-              <h2 style={{ fontSize: '1.3rem', margin: 0, color: '#1E293B', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h2 style={{ fontSize: '1.3rem', margin: 0, color: '#1E293B', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <DollarSign size={22} color="#166534" /> Accounts & Pending Balances Report
+                <span style={{ fontSize: '0.74rem', background: '#ECFDF5', color: '#166534', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 700, fontFamily: 'var(--font-inter), sans-serif' }}>
+                  Ledger
+                </span>
               </h2>
               <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600 }}>
                 Real-time tracking of confirmed proposal contract values, payments collected, and outstanding balances due.
               </span>
             </div>
 
-            <a 
-              href="/api/admin/export-accounts" 
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#0F4C3A', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.82rem', boxShadow: '0 2px 8px rgba(15,76,58,0.2)' }}
-            >
-              <Download size={15} /> Export Accounts CSV
-            </a>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              {isSectionExpanded('section-accounts') && (
+                <a 
+                  href="/api/admin/export-accounts" 
+                  onClick={e => e.stopPropagation()}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.95rem', background: '#0F4C3A', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', boxShadow: '0 2px 8px rgba(15,76,58,0.2)' }}
+                >
+                  <Download size={14} /> Export Accounts CSV
+                </a>
+              )}
+
+              <button
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '8px',
+                  background: isSectionExpanded('section-accounts') ? '#F1F5F9' : '#ECFDF5',
+                  color: isSectionExpanded('section-accounts') ? '#475569' : '#047857',
+                  border: `1px solid ${isSectionExpanded('section-accounts') ? '#CBD5E1' : '#A7F3D0'}`,
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+                title={isSectionExpanded('section-accounts') ? "Collapse section" : "Expand section"}
+              >
+                {isSectionExpanded('section-accounts') ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                <span>{isSectionExpanded('section-accounts') ? 'Collapse' : 'Expand'}</span>
+              </button>
+            </div>
           </div>
+
+          {isSectionExpanded('section-accounts') && (
+          <div>
 
           {(() => {
             const confirmedProps = proposals.filter(p => p.status === 'confirmed' || p.status === 'scheduled' || p.status === 'completed')
@@ -2240,6 +2761,9 @@ export default function AdminDashboard() {
             )
           })()}
 
+          </div>
+          )}
+
         </div>
 
         {/* ── SECTION 4 & 5 & 6: PAYMENTS, AGENTS, EXPORTS ── */}
@@ -2248,203 +2772,234 @@ export default function AdminDashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             
             {/* PENDING PAYMENTS */}
-            <div id="section-payments" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-              <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <CreditCard size={18} color="#9B2C2C" /> Pending Manual Payments
-              </h2>
-              {pendingPayments.length === 0 ? <p style={{ color: '#718096', fontSize: '0.85rem' }}>No pending payments to verify.</p> : (
-                <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
-                      <th style={{ padding: '0.65rem 0' }}>Ref</th>
-                      <th style={{ padding: '0.65rem 0' }}>Amount</th>
-                      <th style={{ padding: '0.65rem 0' }}>UTR Number</th>
-                      <th style={{ padding: '0.65rem 0' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pendingPayments.map(p => (
-                      <tr key={p._id} style={{ borderBottom: '1px solid #EDF2F7' }}>
-                        <td style={{ padding: '0.75rem 0', fontWeight: 600 }}>{p.bookingReference || 'N/A'}</td>
-                        <td style={{ padding: '0.75rem 0', fontWeight: 700, color: '#22543D' }}>₹{p.amountInr}</td>
-                        <td style={{ padding: '0.75rem 0', fontFamily: 'monospace' }}>{p.utrNumber}</td>
-                        <td style={{ padding: '0.75rem 0', display: 'flex', gap: '0.4rem' }}>
-                          <button onClick={() => updatePaymentStatus(p._id, 'verified')} style={{ background: '#48BB78', color: '#FFF', border: 'none', borderRadius: '6px', padding: '0.35rem 0.65rem', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}><CheckCircle size={13} /> Verify</button>
-                          <button onClick={() => updatePaymentStatus(p._id, 'rejected')} style={{ background: '#F56565', color: '#FFF', border: 'none', borderRadius: '6px', padding: '0.35rem 0.65rem', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}><XCircle size={13} /> Reject</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div id="section-payments" style={{ background: '#FFF', borderRadius: '14px', padding: isSectionExpanded('section-payments') ? '1.5rem' : '0.85rem 1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', transition: 'all 0.2s ease' }}>
+              <div 
+                onClick={() => toggleSection('section-payments')}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: isSectionExpanded('section-payments') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-payments') ? '0.65rem' : 0, marginBottom: isSectionExpanded('section-payments') ? '1rem' : 0 }}
+              >
+                <h2 style={{ fontSize: '1.15rem', color: '#2D3748', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  <CreditCard size={18} color="#9B2C2C" /> Pending Manual Payments
+                  <span style={{ fontSize: '0.72rem', background: pendingPayments.length > 0 ? '#FED7D7' : '#EDF2F7', color: pendingPayments.length > 0 ? '#9B2C2C' : '#4A5568', padding: '0.1rem 0.5rem', borderRadius: '10px', fontWeight: 700 }}>
+                    {pendingPayments.length}
+                  </span>
+                </h2>
+                <button
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: '0.25rem 0.55rem',
+                    borderRadius: '6px',
+                    background: isSectionExpanded('section-payments') ? '#F1F5F9' : '#ECFDF5',
+                    color: isSectionExpanded('section-payments') ? '#475569' : '#047857',
+                    border: `1px solid ${isSectionExpanded('section-payments') ? '#CBD5E1' : '#A7F3D0'}`,
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                  title={isSectionExpanded('section-payments') ? "Collapse section" : "Expand section"}
+                >
+                  {isSectionExpanded('section-payments') ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  <span>{isSectionExpanded('section-payments') ? 'Collapse' : 'Expand'}</span>
+                </button>
+              </div>
+
+              {isSectionExpanded('section-payments') && (
+                <div>
+                  {pendingPayments.length === 0 ? <p style={{ color: '#718096', fontSize: '0.85rem' }}>No pending payments to verify.</p> : (
+                    <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
+                          <th style={{ padding: '0.65rem 0' }}>Ref</th>
+                          <th style={{ padding: '0.65rem 0' }}>Amount</th>
+                          <th style={{ padding: '0.65rem 0' }}>UTR Number</th>
+                          <th style={{ padding: '0.65rem 0' }}>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pendingPayments.map(p => (
+                          <tr key={p._id} style={{ borderBottom: '1px solid #EDF2F7' }}>
+                            <td style={{ padding: '0.75rem 0', fontWeight: 600 }}>{p.bookingReference || 'N/A'}</td>
+                            <td style={{ padding: '0.75rem 0', fontWeight: 700, color: '#22543D' }}>₹{p.amountInr}</td>
+                            <td style={{ padding: '0.75rem 0', fontFamily: 'monospace' }}>{p.utrNumber}</td>
+                            <td style={{ padding: '0.75rem 0', display: 'flex', gap: '0.4rem' }}>
+                              <button onClick={() => updatePaymentStatus(p._id, 'verified')} style={{ background: '#48BB78', color: '#FFF', border: 'none', borderRadius: '6px', padding: '0.35rem 0.65rem', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}><CheckCircle size={13} /> Verify</button>
+                              <button onClick={() => updatePaymentStatus(p._id, 'rejected')} style={{ background: '#F56565', color: '#FFF', border: 'none', borderRadius: '6px', padding: '0.35rem 0.65rem', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}><XCircle size={13} /> Reject</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               )}
             </div>
 
             {/* TRAVEL CONSULTING LEADS MANAGEMENT */}
-            <div id="section-consulting" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem' }}>
-                <h2 style={{ fontSize: '1.2rem', color: '#2D3748', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Calendar size={18} color="#059669" /> Travel Consulting Requests ({consultingBookings.length})
+            <div id="section-consulting" style={{ background: '#FFF', borderRadius: '14px', padding: isSectionExpanded('section-consulting') ? '1.5rem' : '0.85rem 1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', marginBottom: '1.5rem', transition: 'all 0.2s ease' }}>
+              <div 
+                onClick={() => toggleSection('section-consulting')}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: isSectionExpanded('section-consulting') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-consulting') ? '0.65rem' : 0, marginBottom: isSectionExpanded('section-consulting') ? '1rem' : 0 }}
+              >
+                <h2 style={{ fontSize: '1.15rem', color: '#2D3748', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  <Calendar size={18} color="#059669" /> Travel Consulting Requests
+                  <span style={{ fontSize: '0.72rem', background: '#ECFDF5', color: '#047857', padding: '0.1rem 0.5rem', borderRadius: '10px', fontWeight: 700 }}>
+                    {consultingBookings.length}
+                  </span>
                 </h2>
-                <button onClick={fetchConsultingBookings} style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <RefreshCw size={13} /> Refresh
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {isSectionExpanded('section-consulting') && (
+                    <button onClick={(e) => { e.stopPropagation(); fetchConsultingBookings(); }} style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', padding: '0.25rem 0.6rem', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <RefreshCw size={12} /> Refresh
+                    </button>
+                  )}
+                  <button
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.25rem 0.55rem',
+                      borderRadius: '6px',
+                      background: isSectionExpanded('section-consulting') ? '#F1F5F9' : '#ECFDF5',
+                      color: isSectionExpanded('section-consulting') ? '#475569' : '#047857',
+                      border: `1px solid ${isSectionExpanded('section-consulting') ? '#CBD5E1' : '#A7F3D0'}`,
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                    title={isSectionExpanded('section-consulting') ? "Collapse section" : "Expand section"}
+                  >
+                    {isSectionExpanded('section-consulting') ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    <span>{isSectionExpanded('section-consulting') ? 'Collapse' : 'Expand'}</span>
+                  </button>
+                </div>
               </div>
 
-              {consultingBookings.length === 0 ? (
-                <p style={{ fontSize: '0.85rem', color: '#718096', margin: 0 }}>No consulting requests received yet.</p>
-              ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
-                        <th style={{ padding: '0.65rem 0' }}>Ref / Client</th>
-                        <th style={{ padding: '0.65rem 0' }}>Package & Fee</th>
-                        <th style={{ padding: '0.65rem 0' }}>Requested Slot</th>
-                        <th style={{ padding: '0.65rem 0' }}>Assigned Specialist</th>
-                        <th style={{ padding: '0.65rem 0' }}>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {consultingBookings.map(b => (
-                        <tr key={b._id} style={{ borderBottom: '1px solid #EDF2F7' }}>
-                          <td style={{ padding: '0.75rem 0' }}>
-                            <strong style={{ display: 'block', color: '#0F172A' }}>{b.bookingId || b._id.slice(0, 8)}</strong>
-                            <span>{b.clientName} ({b.userRole || 'Traveler'})</span><br/>
-                            <a href={`https://wa.me/${b.clientPhone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: '#059669', textDecoration: 'none', fontWeight: 700 }}>
-                              💬 {b.clientPhone}
-                            </a>
-                          </td>
+              {isSectionExpanded('section-consulting') && (
+                <div>
+                  {consultingBookings.length === 0 ? (
+                    <p style={{ fontSize: '0.85rem', color: '#718096', margin: 0 }}>No consulting requests received yet.</p>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
+                            <th style={{ padding: '0.65rem 0' }}>Ref / Client</th>
+                            <th style={{ padding: '0.65rem 0' }}>Package & Fee</th>
+                            <th style={{ padding: '0.65rem 0' }}>Requested Slot</th>
+                            <th style={{ padding: '0.65rem 0' }}>Assigned Specialist</th>
+                            <th style={{ padding: '0.65rem 0' }}>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {consultingBookings.map(b => (
+                            <tr key={b._id} style={{ borderBottom: '1px solid #EDF2F7' }}>
+                              <td style={{ padding: '0.75rem 0' }}>
+                                <strong style={{ display: 'block', color: '#0F172A' }}>{b.bookingId || b._id.slice(0, 8)}</strong>
+                                <span>{b.clientName} ({b.userRole || 'Traveler'})</span><br/>
+                                <a href={`https://wa.me/${b.clientPhone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: '#059669', textDecoration: 'none', fontWeight: 700 }}>
+                                  💬 {b.clientPhone}
+                                </a>
+                              </td>
 
-                          <td style={{ padding: '0.75rem 0' }}>
-                            <strong style={{ display: 'block', color: '#0F4C3A' }}>{b.packageTitle}</strong>
-                            <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{b.packagePrice}</span>
-                          </td>
+                              <td style={{ padding: '0.75rem 0' }}>
+                                <strong style={{ display: 'block', color: '#0F4C3A' }}>{b.packageTitle}</strong>
+                                <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{b.packagePrice}</span>
+                              </td>
 
-                          <td style={{ padding: '0.75rem 0' }}>
-                            <span style={{ fontWeight: 700, color: '#334155' }}>{b.preferredDate || 'Date TBD'}</span><br/>
-                            <span style={{ fontSize: '0.72rem', color: '#64748B' }}>{b.preferredTimeWindow}</span><br/>
-                            <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700 }}>🌐 {b.preferredLanguage}</span>
-                          </td>
+                              <td style={{ padding: '0.75rem 0' }}>
+                                <span style={{ fontWeight: 700, color: '#334155' }}>{b.preferredDate || 'Date TBD'}</span><br/>
+                                <span style={{ fontSize: '0.72rem', color: '#64748B' }}>{b.preferredTimeWindow}</span><br/>
+                                <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700 }}>🌐 {b.preferredLanguage}</span>
+                              </td>
 
-                          <td style={{ padding: '0.75rem 0' }}>
-                            {b.assignedConsultant ? (
-                              <span style={{ fontWeight: 700, color: '#0F4C3A' }}>👤 {b.assignedConsultant.name}</span>
-                            ) : (
-                              <span style={{ color: '#D97706', fontSize: '0.75rem', fontWeight: 700 }}>⚠️ Unassigned</span>
-                            )}
-                          </td>
+                              <td style={{ padding: '0.75rem 0' }}>
+                                {b.assignedConsultant ? (
+                                  <span style={{ fontWeight: 700, color: '#0F4C3A' }}>👤 {b.assignedConsultant.name}</span>
+                                ) : (
+                                  <span style={{ color: '#D97706', fontSize: '0.75rem', fontWeight: 700 }}>⚠️ Unassigned</span>
+                                )}
+                              </td>
 
-                          <td style={{ padding: '0.75rem 0' }}>
-                            <span style={{
-                              padding: '0.2rem 0.6rem',
-                              borderRadius: '12px',
-                              fontSize: '0.72rem',
-                              fontWeight: 800,
-                              background: b.status === 'completed' || b.status === 'fee_credited' ? '#ECFDF5' : b.status === 'assigned' ? '#EFF6FF' : '#FEF3C7',
-                              color: b.status === 'completed' || b.status === 'fee_credited' ? '#047857' : b.status === 'assigned' ? '#1D4ED8' : '#B45309'
-                            }}>
-                              {b.status === 'assigned' ? '✅ Assigned' : b.status === 'completed' ? '🎉 Completed' : b.status === 'fee_credited' ? '🏷️ Fee Credited' : '⏳ Pending'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              <td style={{ padding: '0.75rem 0' }}>
+                                <span style={{
+                                  padding: '0.2rem 0.6rem',
+                                  borderRadius: '12px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 800,
+                                  background: b.status === 'completed' || b.status === 'fee_credited' ? '#ECFDF5' : b.status === 'assigned' ? '#EFF6FF' : '#FEF3C7',
+                                  color: b.status === 'completed' || b.status === 'fee_credited' ? '#047857' : b.status === 'assigned' ? '#1D4ED8' : '#B45309'
+                                }}>
+                                  {b.status === 'assigned' ? '✅ Assigned' : b.status === 'completed' ? '🎉 Completed' : b.status === 'fee_credited' ? '🏷️ Fee Credited' : '⏳ Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             {/* B2B AGENT APPROVALS */}
-            <div id="section-agents" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-              <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Users size={18} color="#319795" /> B2B Agent Approvals & Status
-              </h2>
-              <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
-                    <th style={{ padding: '0.65rem 0' }}>Company</th>
-                    <th style={{ padding: '0.65rem 0' }}>Email</th>
-                    <th style={{ padding: '0.65rem 0' }}>Status</th>
-                    <th style={{ padding: '0.65rem 0' }}>Toggle</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agents.map(a => (
-                    <tr key={a._id} style={{ borderBottom: '1px solid #EDF2F7' }}>
-                      <td style={{ padding: '0.75rem 0', fontWeight: 600 }}>{a.companyName}</td>
-                      <td style={{ padding: '0.75rem 0' }}>{a.email}</td>
-                      <td style={{ padding: '0.75rem 0' }}>
-                        <span style={{ padding: '0.15rem 0.45rem', borderRadius: '999px', fontSize: '0.72rem', fontWeight: 700, background: a.isActive ? '#C6F6D5' : '#FED7D7', color: a.isActive ? '#22543D' : '#742A2A' }}>
-                          {a.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '0.75rem 0' }}>
-                        <button onClick={() => toggleAgentStatus(a._id, a.isActive)} style={{ background: '#E2E8F0', border: 'none', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
-                          {a.isActive ? 'Deactivate' : 'Activate'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* DATA EXPORTS */}
-            <div id="section-exports" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Download size={18} color="#2B6CB0" /> Data Exports & Reports
-              </h2>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <a href="/api/admin/export-agents" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem' }}><Download size={15} /> Export Agents CSV</a>
-                <a href="/api/admin/export-contacts" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem' }}><Download size={15} /> Export Contacts CSV</a>
-                <a href="/api/admin/export-payments" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem' }}><Download size={15} /> Export Payments CSV</a>
-              </div>
-            </div>
-
-            {/* COMPETITOR TICKET PRICE TRACKER */}
-            <div id="section-competitor-pricing" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem', marginBottom: '1rem' }}>
-                <h2 style={{ fontSize: '1.2rem', color: '#2D3748', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
-                  🎡 Competitor Ticket Tracker
+            <div id="section-agents" style={{ background: '#FFF', borderRadius: '14px', padding: isSectionExpanded('section-agents') ? '1.5rem' : '0.85rem 1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', marginBottom: '1.5rem', transition: 'all 0.2s ease' }}>
+              <div 
+                onClick={() => toggleSection('section-agents')}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: isSectionExpanded('section-agents') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-agents') ? '0.65rem' : 0, marginBottom: isSectionExpanded('section-agents') ? '1rem' : 0 }}
+              >
+                <h2 style={{ fontSize: '1.15rem', color: '#2D3748', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  <Users size={18} color="#319795" /> B2B Agent Approvals & Status
+                  <span style={{ fontSize: '0.72rem', background: '#E6FFFA', color: '#234E52', padding: '0.1rem 0.5rem', borderRadius: '10px', fontWeight: 700 }}>
+                    {agents.length} Registered
+                  </span>
                 </h2>
-                <button 
-                  onClick={triggerPriceRefresh} 
-                  disabled={refreshingPrices}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.35rem 0.85rem', background: 'var(--emerald-secondary)', color: '#FFF', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.75rem' }}
+                <button
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: '0.25rem 0.55rem',
+                    borderRadius: '6px',
+                    background: isSectionExpanded('section-agents') ? '#F1F5F9' : '#ECFDF5',
+                    color: isSectionExpanded('section-agents') ? '#475569' : '#047857',
+                    border: `1px solid ${isSectionExpanded('section-agents') ? '#CBD5E1' : '#A7F3D0'}`,
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                  title={isSectionExpanded('section-agents') ? "Collapse section" : "Expand section"}
                 >
-                  <RefreshCw className={refreshingPrices ? "animate-spin" : ""} size={12} />
-                  {refreshingPrices ? 'Refreshing...' : 'Fetch Live Rates'}
+                  {isSectionExpanded('section-agents') ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  <span>{isSectionExpanded('section-agents') ? 'Collapse' : 'Expand'}</span>
                 </button>
               </div>
 
-              <div style={{ fontSize: '0.8rem', color: '#718096', marginBottom: '0.85rem' }}>
-                Showing comparative ticket rates for <strong>Universal Studios Singapore - Fixed Date</strong>:
-              </div>
-
-              {competitorPrices.length === 0 ? (
-                <div style={{ padding: '1rem', textAlign: 'center', background: '#F7FAFC', borderRadius: '8px', color: '#718096', fontSize: '0.82rem' }}>
-                  No rates loaded. Click &quot;Fetch Live Rates&quot; to load comparative pricing.
-                </div>
-              ) : (
+              {isSectionExpanded('section-agents') && (
                 <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
-                      <th style={{ padding: '0.5rem 0' }}>Platform</th>
-                      <th style={{ padding: '0.5rem 0' }}>Adult Price</th>
-                      <th style={{ padding: '0.5rem 0' }}>Child Price</th>
-                      <th style={{ padding: '0.5rem 0', textAlign: 'right' }}>Booking Link</th>
+                      <th style={{ padding: '0.65rem 0' }}>Company</th>
+                      <th style={{ padding: '0.65rem 0' }}>Email</th>
+                      <th style={{ padding: '0.65rem 0' }}>Status</th>
+                      <th style={{ padding: '0.65rem 0' }}>Toggle</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {competitorPrices.map((p, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid #EDF2F7' }}>
-                        <td style={{ padding: '0.6rem 0', fontWeight: 700, textTransform: 'uppercase', color: '#2B6CB0' }}>{p.platform}</td>
-                        <td style={{ padding: '0.6rem 0', fontWeight: 700, color: '#2D3748' }}>S$ {p.adultPrice}</td>
-                        <td style={{ padding: '0.6rem 0', color: '#4A5568' }}>S$ {p.childPrice}</td>
-                        <td style={{ padding: '0.6rem 0', textAlign: 'right' }}>
-                          <a href={p.bookingUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold-accent)', fontWeight: 700, textDecoration: 'underline' }}>
-                            View Page ↗
-                          </a>
+                    {agents.map(a => (
+                      <tr key={a._id} style={{ borderBottom: '1px solid #EDF2F7' }}>
+                        <td style={{ padding: '0.75rem 0', fontWeight: 600 }}>{a.companyName}</td>
+                        <td style={{ padding: '0.75rem 0' }}>{a.email}</td>
+                        <td style={{ padding: '0.75rem 0' }}>
+                          <span style={{ padding: '0.15rem 0.45rem', borderRadius: '999px', fontSize: '0.72rem', fontWeight: 700, background: a.isActive ? '#C6F6D5' : '#FED7D7', color: a.isActive ? '#22543D' : '#742A2A' }}>
+                            {a.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.75rem 0' }}>
+                          <button onClick={() => toggleAgentStatus(a._id, a.isActive)} style={{ background: '#E2E8F0', border: 'none', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
+                            {a.isActive ? 'Deactivate' : 'Activate'}
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -2452,140 +3007,319 @@ export default function AdminDashboard() {
                 </table>
               )}
             </div>
+
+            {/* DATA EXPORTS */}
+            <div id="section-exports" style={{ background: '#FFF', borderRadius: '14px', padding: isSectionExpanded('section-exports') ? '1.5rem' : '0.85rem 1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', marginBottom: '1.5rem', transition: 'all 0.2s ease' }}>
+              <div 
+                onClick={() => toggleSection('section-exports')}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: isSectionExpanded('section-exports') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-exports') ? '0.65rem' : 0, marginBottom: isSectionExpanded('section-exports') ? '1rem' : 0 }}
+              >
+                <h2 style={{ fontSize: '1.15rem', color: '#2D3748', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Download size={18} color="#2B6CB0" /> Data Exports & Reports
+                </h2>
+                <button
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: '0.25rem 0.55rem',
+                    borderRadius: '6px',
+                    background: isSectionExpanded('section-exports') ? '#F1F5F9' : '#ECFDF5',
+                    color: isSectionExpanded('section-exports') ? '#475569' : '#047857',
+                    border: `1px solid ${isSectionExpanded('section-exports') ? '#CBD5E1' : '#A7F3D0'}`,
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                  title={isSectionExpanded('section-exports') ? "Collapse section" : "Expand section"}
+                >
+                  {isSectionExpanded('section-exports') ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  <span>{isSectionExpanded('section-exports') ? 'Collapse' : 'Expand'}</span>
+                </button>
+              </div>
+
+              {isSectionExpanded('section-exports') && (
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <a href="/api/admin/export-agents" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem' }}><Download size={15} /> Export Agents CSV</a>
+                  <a href="/api/admin/export-contacts" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem' }}><Download size={15} /> Export Contacts CSV</a>
+                  <a href="/api/admin/export-payments" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', background: '#2B6CB0', color: '#FFF', textDecoration: 'none', borderRadius: '8px', fontWeight: 600, fontSize: '0.8rem' }}><Download size={15} /> Export Payments CSV</a>
+                </div>
+              )}
+            </div>
+
+            {/* COMPETITOR TICKET PRICE TRACKER */}
+            <div id="section-competitor-pricing" style={{ background: '#FFF', borderRadius: '14px', padding: isSectionExpanded('section-competitor-pricing') ? '1.5rem' : '0.85rem 1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', transition: 'all 0.2s ease' }}>
+              <div 
+                onClick={() => toggleSection('section-competitor-pricing')}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: isSectionExpanded('section-competitor-pricing') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-competitor-pricing') ? '0.65rem' : 0, marginBottom: isSectionExpanded('section-competitor-pricing') ? '1rem' : 0 }}
+              >
+                <h2 style={{ fontSize: '1.15rem', color: '#2D3748', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
+                  🎡 Competitor Ticket Tracker
+                </h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {isSectionExpanded('section-competitor-pricing') && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); triggerPriceRefresh(); }} 
+                      disabled={refreshingPrices}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.3rem 0.75rem', background: 'var(--emerald-secondary)', color: '#FFF', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '0.74rem' }}
+                    >
+                      <RefreshCw className={refreshingPrices ? "animate-spin" : ""} size={12} />
+                      {refreshingPrices ? 'Refreshing...' : 'Fetch Live Rates'}
+                    </button>
+                  )}
+                  <button
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.25rem 0.55rem',
+                      borderRadius: '6px',
+                      background: isSectionExpanded('section-competitor-pricing') ? '#F1F5F9' : '#ECFDF5',
+                      color: isSectionExpanded('section-competitor-pricing') ? '#475569' : '#047857',
+                      border: `1px solid ${isSectionExpanded('section-competitor-pricing') ? '#CBD5E1' : '#A7F3D0'}`,
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                    title={isSectionExpanded('section-competitor-pricing') ? "Collapse section" : "Expand section"}
+                  >
+                    {isSectionExpanded('section-competitor-pricing') ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                    <span>{isSectionExpanded('section-competitor-pricing') ? 'Collapse' : 'Expand'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {isSectionExpanded('section-competitor-pricing') && (
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: '#718096', marginBottom: '0.85rem' }}>
+                    Showing comparative ticket rates for <strong>Universal Studios Singapore - Fixed Date</strong>:
+                  </div>
+
+                  {competitorPrices.length === 0 ? (
+                    <div style={{ padding: '1rem', textAlign: 'center', background: '#F7FAFC', borderRadius: '8px', color: '#718096', fontSize: '0.82rem' }}>
+                      No rates loaded. Click &quot;Fetch Live Rates&quot; to load comparative pricing.
+                    </div>
+                  ) : (
+                    <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid #E2E8F0', color: '#718096' }}>
+                          <th style={{ padding: '0.5rem 0' }}>Platform</th>
+                          <th style={{ padding: '0.5rem 0' }}>Adult Price</th>
+                          <th style={{ padding: '0.5rem 0' }}>Child Price</th>
+                          <th style={{ padding: '0.5rem 0', textAlign: 'right' }}>Booking Link</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {competitorPrices.map((p, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #EDF2F7' }}>
+                            <td style={{ padding: '0.6rem 0', fontWeight: 700, textTransform: 'uppercase', color: '#2B6CB0' }}>{p.platform}</td>
+                            <td style={{ padding: '0.6rem 0', fontWeight: 700, color: '#2D3748' }}>S$ {p.adultPrice}</td>
+                            <td style={{ padding: '0.6rem 0', color: '#4A5568' }}>S$ {p.childPrice}</td>
+                            <td style={{ padding: '0.6rem 0', textAlign: 'right' }}>
+                              <a href={p.bookingUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--gold-accent)', fontWeight: 700, textDecoration: 'underline' }}>
+                                View Page ↗
+                              </a>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ADS & MONETIZATION MANAGEMENT */}
-          <div id="section-ads" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div id="section-ads" style={{ background: '#FFF', borderRadius: '14px', padding: isSectionExpanded('section-ads') ? '1.5rem' : '0.85rem 1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', marginBottom: '1.5rem', transition: 'all 0.2s ease' }}>
+            <div 
+              onClick={() => toggleSection('section-ads')}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isSectionExpanded('section-ads') ? '1rem' : 0, borderBottom: isSectionExpanded('section-ads') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-ads') ? '0.65rem' : 0, cursor: 'pointer', flexWrap: 'wrap', gap: '0.5rem' }}
+            >
               <div>
                 <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1A202C', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Megaphone size={20} color="#0F4C3A" /> Ad Placement & Monetization Controls
                 </h2>
-                <p style={{ fontSize: '0.8rem', color: '#718096', margin: '0.2rem 0 0' }}>
-                  Control Google AdSense & native travel affiliate banner visibility across website categories.
-                </p>
+                {isSectionExpanded('section-ads') && (
+                  <p style={{ fontSize: '0.8rem', color: '#718096', margin: '0.2rem 0 0' }}>
+                    Control Google AdSense & native travel affiliate banner visibility across website categories.
+                  </p>
+                )}
               </div>
-              <a
-                href="/ads.txt"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2563EB', textDecoration: 'none', background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '0.4rem 0.85rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
-                <span>View Live ads.txt</span>
-                <ExternalLink size={13} />
-              </a>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
-              {/* Blog Ads Toggle */}
-              <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Travel Blog Articles (/blog)</span>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adBlogEnabled ? '#DCFCE7' : '#FEE2E2', color: adBlogEnabled ? '#166534' : '#991B1B' }}>
-                    {adBlogEnabled ? 'ACTIVE 🟢' : 'DISABLED 🔴'}
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
-                  In-article native ad slots & category feed leaderboard banners.
-                </p>
-                <button
-                  onClick={() => toggleAdCategory('blog', adBlogEnabled)}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adBlogEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <a
+                  href="/ads.txt"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2563EB', textDecoration: 'none', background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '0.4rem 0.85rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
-                  {adBlogEnabled ? 'Disable Blog Ads' : 'Enable Blog Ads'}
-                </button>
-              </div>
-
-              {/* Travel Tools Ads Toggle */}
-              <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Travel Tools Page (/travel-tools)</span>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adTravelToolsEnabled ? '#DCFCE7' : '#FEE2E2', color: adTravelToolsEnabled ? '#166534' : '#991B1B' }}>
-                    {adTravelToolsEnabled ? 'ACTIVE 🟢' : 'DISABLED 🔴'}
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
-                  Sidebar & inline banners on Currency Converter & Pre-Departure checklist.
-                </p>
+                  <span>View Live ads.txt</span>
+                  <ExternalLink size={13} />
+                </a>
                 <button
-                  onClick={() => toggleAdCategory('travel-tools', adTravelToolsEnabled)}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adTravelToolsEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: '0.25rem 0.55rem',
+                    borderRadius: '6px',
+                    background: isSectionExpanded('section-ads') ? '#F1F5F9' : '#ECFDF5',
+                    color: isSectionExpanded('section-ads') ? '#475569' : '#047857',
+                    border: `1px solid ${isSectionExpanded('section-ads') ? '#CBD5E1' : '#A7F3D0'}`,
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                  title={isSectionExpanded('section-ads') ? "Collapse section" : "Expand section"}
                 >
-                  {adTravelToolsEnabled ? 'Disable Tools Ads' : 'Enable Tools Ads'}
-                </button>
-              </div>
-
-              {/* Global Travel News Radar Toggle */}
-              <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Global Travel News Radar</span>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adTravelNewsEnabled ? '#DCFCE7' : '#FEE2E2', color: adTravelNewsEnabled ? '#166534' : '#991B1B' }}>
-                    {adTravelNewsEnabled ? 'VISIBLE 🟢' : 'HIDDEN 🔴'}
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
-                  Live RSS travel news feed section on /travel-tools page.
-                </p>
-                <button
-                  onClick={toggleTravelNews}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adTravelNewsEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
-                >
-                  {adTravelNewsEnabled ? 'Hide News Radar' : 'Show News Radar'}
-                </button>
-              </div>
-
-              {/* Singapore-Malaysia Border Traffic Radar Toggle */}
-              <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Border Traffic & Cameras</span>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adBorderTrafficEnabled ? '#DCFCE7' : '#FEE2E2', color: adBorderTrafficEnabled ? '#166534' : '#991B1B' }}>
-                    {adBorderTrafficEnabled ? 'VISIBLE 🟢' : 'HIDDEN 🔴'}
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
-                  Live Woodlands & Tuas LTA camera feeds and wait-times on /travel-tools.
-                </p>
-                <button
-                  onClick={toggleBorderTraffic}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adBorderTrafficEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
-                >
-                  {adBorderTrafficEnabled ? 'Hide Border Traffic' : 'Show Border Traffic'}
-                </button>
-              </div>
-
-              {/* Live Airline Promotions Radar Toggle */}
-              <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Airline Promotions Radar</span>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adAirlinePromosEnabled ? '#DCFCE7' : '#FEE2E2', color: adAirlinePromosEnabled ? '#166534' : '#991B1B' }}>
-                    {adAirlinePromosEnabled ? 'VISIBLE 🟢' : 'HIDDEN 🔴'}
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
-                  Live SIA, IndiGo, Air India & Scoot promotional flight deal cards on /travel-tools.
-                </p>
-                <button
-                  onClick={toggleAirlinePromos}
-                  style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adAirlinePromosEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
-                >
-                  {adAirlinePromosEnabled ? 'Hide Airline Promos' : 'Show Airline Promos'}
+                  {isSectionExpanded('section-ads') ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  <span>{isSectionExpanded('section-ads') ? 'Collapse' : 'Expand'}</span>
                 </button>
               </div>
             </div>
+
+            {isSectionExpanded('section-ads') && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+                {/* Blog Ads Toggle */}
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Travel Blog Articles (/blog)</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adBlogEnabled ? '#DCFCE7' : '#FEE2E2', color: adBlogEnabled ? '#166534' : '#991B1B' }}>
+                      {adBlogEnabled ? 'ACTIVE 🟢' : 'DISABLED 🔴'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
+                    In-article native ad slots & category feed leaderboard banners.
+                  </p>
+                  <button
+                    onClick={() => toggleAdCategory('blog', adBlogEnabled)}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adBlogEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                  >
+                    {adBlogEnabled ? 'Disable Blog Ads' : 'Enable Blog Ads'}
+                  </button>
+                </div>
+
+                {/* Travel Tools Ads Toggle */}
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Travel Tools Page (/travel-tools)</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adTravelToolsEnabled ? '#DCFCE7' : '#FEE2E2', color: adTravelToolsEnabled ? '#166534' : '#991B1B' }}>
+                      {adTravelToolsEnabled ? 'ACTIVE 🟢' : 'DISABLED 🔴'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
+                    Sidebar & inline banners on Currency Converter & Pre-Departure checklist.
+                  </p>
+                  <button
+                    onClick={() => toggleAdCategory('travel-tools', adTravelToolsEnabled)}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adTravelToolsEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                  >
+                    {adTravelToolsEnabled ? 'Disable Tools Ads' : 'Enable Tools Ads'}
+                  </button>
+                </div>
+
+                {/* Global Travel News Radar Toggle */}
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Global Travel News Radar</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adTravelNewsEnabled ? '#DCFCE7' : '#FEE2E2', color: adTravelNewsEnabled ? '#166534' : '#991B1B' }}>
+                      {adTravelNewsEnabled ? 'VISIBLE 🟢' : 'HIDDEN 🔴'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
+                    Live RSS travel news feed section on /travel-tools page.
+                  </p>
+                  <button
+                    onClick={toggleTravelNews}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adTravelNewsEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                  >
+                    {adTravelNewsEnabled ? 'Hide News Radar' : 'Show News Radar'}
+                  </button>
+                </div>
+
+                {/* Singapore-Malaysia Border Traffic Radar Toggle */}
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Border Traffic & Cameras</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adBorderTrafficEnabled ? '#DCFCE7' : '#FEE2E2', color: adBorderTrafficEnabled ? '#166534' : '#991B1B' }}>
+                      {adBorderTrafficEnabled ? 'VISIBLE 🟢' : 'HIDDEN 🔴'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
+                    Live Woodlands & Tuas LTA camera feeds and wait-times on /travel-tools.
+                  </p>
+                  <button
+                    onClick={toggleBorderTraffic}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adBorderTrafficEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                  >
+                    {adBorderTrafficEnabled ? 'Hide Border Traffic' : 'Show Border Traffic'}
+                  </button>
+                </div>
+
+                {/* Live Airline Promotions Radar Toggle */}
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A' }}>Airline Promotions Radar</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '12px', background: adAirlinePromosEnabled ? '#DCFCE7' : '#FEE2E2', color: adAirlinePromosEnabled ? '#166534' : '#991B1B' }}>
+                      {adAirlinePromosEnabled ? 'VISIBLE 🟢' : 'HIDDEN 🔴'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', lineHeight: 1.4 }}>
+                    Live SIA, IndiGo, Air India & Scoot promotional flight deal cards on /travel-tools.
+                  </p>
+                  <button
+                    onClick={toggleAirlinePromos}
+                    style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: 'none', background: adAirlinePromosEnabled ? '#EF4444' : '#10B981', color: '#FFF', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+                  >
+                    {adAirlinePromosEnabled ? 'Hide Airline Promos' : 'Show Airline Promos'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* AUDIT LOGS */}
-          <div id="section-audit-logs" style={{ background: '#FFF', borderRadius: '14px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', height: 'fit-content', maxHeight: '800px', overflowY: 'auto' }}>
-            <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#2D3748', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Activity size={16} /> Audit Trail</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {logs.length === 0 ? <p style={{ color: '#718096', fontSize: '0.82rem' }}>No logs recorded yet.</p> : logs.map(log => (
-                <div key={log._id} style={{ padding: '0.75rem', background: '#F7FAFC', borderRadius: '8px', borderLeft: '4px solid #3182CE' }}>
-                  <div style={{ fontSize: '0.72rem', color: '#718096', marginBottom: '0.15rem' }}>{new Date(log.timestamp).toLocaleString()}</div>
-                  <div style={{ fontWeight: 600, color: '#2D3748', fontSize: '0.82rem', marginBottom: '0.1rem' }}>{log.action}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#4A5568' }}>{log.email}</div>
-                </div>
-              ))}
+          <div id="section-audit-logs" style={{ background: '#FFF', borderRadius: '14px', padding: isSectionExpanded('section-audit-logs') ? '1.5rem' : '0.85rem 1.25rem', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', border: '1px solid #EDF2F7', height: 'fit-content', maxHeight: isSectionExpanded('section-audit-logs') ? '800px' : 'none', overflowY: isSectionExpanded('section-audit-logs') ? 'auto' : 'visible', transition: 'all 0.2s ease' }}>
+            <div 
+              onClick={() => toggleSection('section-audit-logs')}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: isSectionExpanded('section-audit-logs') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-audit-logs') ? '0.65rem' : 0, marginBottom: isSectionExpanded('section-audit-logs') ? '1rem' : 0 }}
+            >
+              <h2 style={{ fontSize: '1.2rem', margin: 0, color: '#2D3748', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Activity size={16} /> Audit Trail
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#718096', marginLeft: '0.5rem' }}>({logs.length})</span>
+              </h2>
+              <button
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  padding: '0.25rem 0.55rem',
+                  borderRadius: '6px',
+                  background: isSectionExpanded('section-audit-logs') ? '#F1F5F9' : '#ECFDF5',
+                  color: isSectionExpanded('section-audit-logs') ? '#475569' : '#047857',
+                  border: `1px solid ${isSectionExpanded('section-audit-logs') ? '#CBD5E1' : '#A7F3D0'}`,
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+                title={isSectionExpanded('section-audit-logs') ? "Collapse section" : "Expand section"}
+              >
+                {isSectionExpanded('section-audit-logs') ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                <span>{isSectionExpanded('section-audit-logs') ? 'Collapse' : 'Expand'}</span>
+              </button>
             </div>
+            {isSectionExpanded('section-audit-logs') && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {logs.length === 0 ? <p style={{ color: '#718096', fontSize: '0.82rem' }}>No logs recorded yet.</p> : logs.map(log => (
+                  <div key={log._id} style={{ padding: '0.75rem', background: '#F7FAFC', borderRadius: '8px', borderLeft: '4px solid #3182CE' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#718096', marginBottom: '0.15rem' }}>{new Date(log.timestamp).toLocaleString()}</div>
+                    <div style={{ fontWeight: 600, color: '#2D3748', fontSize: '0.82rem', marginBottom: '0.1rem' }}>{log.action}</div>
+                    <div style={{ fontSize: '0.78rem', color: '#4A5568' }}>{log.email}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
         </div>

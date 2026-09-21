@@ -1,10 +1,10 @@
-﻿'use client'
+'use client'
 
 import React, { useState, useEffect } from 'react'
 import {
   Users, Search, Plus, Phone, Mail, MessageCircle, Building2, MapPin,
   Sparkles, RefreshCw, X, Check, Award, ExternalLink, Filter, CheckCircle2,
-  Calendar, ArrowUpDown
+  Calendar, ArrowUpDown, UserPlus, Trash2
 } from 'lucide-react'
 
 interface MarketingLead {
@@ -30,6 +30,11 @@ export default function MarketingLeadsManager() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
+  // Multi-selection & Deletion State
+  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set())
+  const [isDeletingBulk, setIsDeletingBulk] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('all')
@@ -51,6 +56,23 @@ export default function MarketingLeadsManager() {
   const [newPriority, setNewPriority] = useState<'high' | 'medium' | 'normal'>('normal')
   const [newAccreditations, setNewAccreditations] = useState('')
   const [newNotes, setNewNotes] = useState('')
+
+  // Newsletter Subscription State
+  const [subscribedEmails, setSubscribedEmails] = useState<Set<string>>(new Set())
+  const [subscribingEmail, setSubscribingEmail] = useState<string | null>(null)
+  const [actionNotice, setActionNotice] = useState<string | null>(null)
+
+  const fetchSubscribers = async () => {
+    try {
+      const res = await fetch('/api/newsletter/subscribe')
+      const data = await res.json()
+      if (data.success && Array.isArray(data.subscribers)) {
+        setSubscribedEmails(new Set(data.subscribers.map((e: string) => e.toLowerCase().trim())))
+      }
+    } catch (e) {
+      console.error('Failed to fetch subscribers:', e)
+    }
+  }
 
   const fetchLeads = async () => {
     setRefreshing(true)
@@ -76,7 +98,47 @@ export default function MarketingLeadsManager() {
 
   useEffect(() => {
     fetchLeads()
+    fetchSubscribers()
   }, [priorityFilter, statusFilter])
+
+  const handleSubscribeLead = async (lead: MarketingLead) => {
+    if (!lead.email || !lead.email.includes('@')) {
+      alert('This lead does not have a valid email address.')
+      return
+    }
+
+    const cleanEmail = lead.email.trim().toLowerCase()
+    setSubscribingEmail(cleanEmail)
+    setActionNotice(null)
+
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          name: lead.name || undefined,
+          company: lead.company || undefined,
+          audienceType: 'b2b',
+          source: 'b2b_leads_directory',
+          skipWelcomeEmail: true
+        })
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        setSubscribedEmails(prev => new Set(prev).add(cleanEmail))
+        setActionNotice(`✅ Added "${lead.name || cleanEmail}" to Newsletter Subscribers!`)
+        setTimeout(() => setActionNotice(null), 6000)
+      } else {
+        throw new Error(data.error || 'Failed to subscribe lead')
+      }
+    } catch (err: any) {
+      alert(`Subscription failed: ${err.message}`)
+    } finally {
+      setSubscribingEmail(null)
+    }
+  }
 
   const handleCreateLead = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -171,6 +233,98 @@ export default function MarketingLeadsManager() {
     )
   })
 
+  // Selection Handlers
+  const toggleSelectAll = () => {
+    if (filteredLeads.length === 0) return
+    const allFilteredSelected = filteredLeads.every(l => selectedLeadIds.has(l._id))
+    if (allFilteredSelected) {
+      setSelectedLeadIds(new Set())
+    } else {
+      setSelectedLeadIds(new Set(filteredLeads.map(l => l._id)))
+    }
+  }
+
+  const toggleSelectLead = (id: string) => {
+    setSelectedLeadIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  // Delete Individual Lead
+  const handleDeleteLead = async (lead: MarketingLead) => {
+    const leadLabel = lead.name || lead.company || lead.email || 'this lead'
+    if (!window.confirm(`Are you sure you want to delete "${leadLabel}"? This action cannot be undone.`)) {
+      return
+    }
+
+    setDeletingId(lead._id)
+    try {
+      const res = await fetch('/api/admin/leads', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: lead._id })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setLeads(prev => prev.filter(l => l._id !== lead._id))
+        setSelectedLeadIds(prev => {
+          const next = new Set(prev)
+          next.delete(lead._id)
+          return next
+        })
+        setStats(prev => ({ ...prev, total: Math.max(0, prev.total - 1) }))
+        setActionNotice(`🗑️ Lead "${leadLabel}" deleted successfully.`)
+        setTimeout(() => setActionNotice(null), 5000)
+      } else {
+        throw new Error(data.error || 'Failed to delete lead')
+      }
+    } catch (err: any) {
+      alert(`Delete failed: ${err.message}`)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  // Delete Multiple Selected Leads
+  const handleDeleteSelected = async () => {
+    if (selectedLeadIds.size === 0) return
+    const count = selectedLeadIds.size
+
+    if (!window.confirm(`Are you sure you want to permanently delete ${count} selected lead${count === 1 ? '' : 's'}? This action cannot be undone.`)) {
+      return
+    }
+
+    setIsDeletingBulk(true)
+    try {
+      const res = await fetch('/api/admin/leads', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedLeadIds) })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setLeads(prev => prev.filter(l => !selectedLeadIds.has(l._id)))
+        setSelectedLeadIds(new Set())
+        setStats(prev => ({ ...prev, total: Math.max(0, prev.total - count) }))
+        setActionNotice(`🗑️ Successfully deleted ${count} leads.`)
+        setTimeout(() => setActionNotice(null), 5000)
+      } else {
+        throw new Error(data.error || 'Failed to delete leads')
+      }
+    } catch (err: any) {
+      alert(`Bulk delete failed: ${err.message}`)
+    } finally {
+      setIsDeletingBulk(false)
+    }
+  }
+
+
   return (
     <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
       {/* Header & Stats Banner */}
@@ -208,6 +362,14 @@ export default function MarketingLeadsManager() {
           </button>
         </div>
       </div>
+
+      {/* Action Notification */}
+      {actionNotice && (
+        <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '10px', padding: '10px 16px', marginBottom: '16px', color: '#065F46', fontWeight: 700, fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Sparkles size={16} color="#059669" />
+          <span>{actionNotice}</span>
+        </div>
+      )}
 
       {/* KPI Cards Row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '20px' }}>
@@ -277,6 +439,73 @@ export default function MarketingLeadsManager() {
         </span>
       </div>
 
+      {/* Bulk Action Toolbar */}
+      {selectedLeadIds.size > 0 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+          background: '#FEF2F2',
+          border: '1px solid #FECACA',
+          borderRadius: '10px',
+          padding: '10px 16px',
+          marginBottom: '16px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontWeight: 800, color: '#991B1B', fontSize: '0.86rem' }}>
+              {selectedLeadIds.size} lead{selectedLeadIds.size === 1 ? '' : 's'} selected
+            </span>
+            <span style={{ color: '#DC2626', fontSize: '0.78rem' }}>
+              (Click delete to remove them in a single batch)
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => setSelectedLeadIds(new Set())}
+              style={{
+                padding: '5px 12px',
+                background: '#FFFFFF',
+                border: '1px solid #CBD5E1',
+                borderRadius: '6px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                color: '#475569',
+                cursor: 'pointer'
+              }}
+            >
+              Deselect All
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteSelected}
+              disabled={isDeletingBulk}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 14px',
+                background: '#DC2626',
+                border: '1px solid #B91C1C',
+                borderRadius: '6px',
+                fontSize: '0.76rem',
+                fontWeight: 800,
+                color: '#FFFFFF',
+                cursor: isDeletingBulk ? 'not-allowed' : 'pointer',
+                boxShadow: '0 2px 4px rgba(220, 38, 38, 0.2)'
+              }}
+              title="Delete all selected entries"
+            >
+              <Trash2 size={13} className={isDeletingBulk ? 'animate-spin' : ''} />
+              {isDeletingBulk ? 'Deleting...' : `Delete Selected (${selectedLeadIds.size})`}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Leads Table */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B' }}>Loading leads directory...</div>
@@ -289,11 +518,21 @@ export default function MarketingLeadsManager() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'left' }}>
             <thead>
               <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0', color: '#475569', fontWeight: 700 }}>
+                <th style={{ width: '38px', padding: '10px 8px', textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={filteredLeads.length > 0 && filteredLeads.every(l => selectedLeadIds.has(l._id))}
+                    onChange={toggleSelectAll}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#800020' }}
+                    title={filteredLeads.every(l => selectedLeadIds.has(l._id)) ? 'Deselect all' : 'Select all'}
+                  />
+                </th>
                 <th style={{ padding: '10px 12px' }}>Contact & Role</th>
                 <th style={{ padding: '10px 12px' }}>Company & Location</th>
                 <th style={{ padding: '10px 12px' }}>Priority</th>
                 <th style={{ padding: '10px 12px' }}>Quick Outreach</th>
                 <th style={{ padding: '10px 12px' }}>Pipeline Status</th>
+                <th style={{ width: '48px', padding: '10px 8px', textAlign: 'center' }}>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -305,9 +544,20 @@ export default function MarketingLeadsManager() {
 
                 const cleanPhone = l.phone ? l.phone.replace(/[^\d+]/g, '') : ''
                 const waUrl = l.whatsapp || (cleanPhone ? `https://wa.me/${cleanPhone.replace(/^\+/, '')}` : null)
+                const isSelected = selectedLeadIds.has(l._id)
 
                 return (
-                  <tr key={l._id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                  <tr key={l._id} style={{ borderBottom: '1px solid #F1F5F9', background: isSelected ? '#FEF2F2' : 'transparent', transition: 'background-color 0.15s ease' }}>
+                    <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelectLead(l._id)}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: '#800020' }}
+                        title="Select lead"
+                      />
+                    </td>
+
                     <td style={{ padding: '12px' }}>
                       <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.86rem' }}>
                         {l.name || 'Unnamed Lead'}
@@ -384,6 +634,41 @@ export default function MarketingLeadsManager() {
                             Email
                           </a>
                         )}
+
+                        {l.email && (
+                          subscribedEmails.has(l.email.trim().toLowerCase()) ? (
+                            <span
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '4px 8px', background: '#ECFDF5', color: '#065F46', borderRadius: '5px', fontWeight: 700, fontSize: '0.72rem', border: '1px solid #A7F3D0' }}
+                              title="Active subscriber in newsletter campaigns list"
+                            >
+                              <CheckCircle2 size={12} />
+                              Subscribed
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSubscribeLead(l)}
+                              disabled={subscribingEmail === l.email.trim().toLowerCase()}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '4px 8px',
+                                background: '#FEF2F2',
+                                color: '#800020',
+                                borderRadius: '5px',
+                                border: '1px solid #FECACA',
+                                cursor: subscribingEmail === l.email.trim().toLowerCase() ? 'not-allowed' : 'pointer',
+                                fontWeight: 700,
+                                fontSize: '0.72rem'
+                              }}
+                              title="Add this contact to Newsletter Subscribers list"
+                            >
+                              <UserPlus size={12} className={subscribingEmail === l.email.trim().toLowerCase() ? 'animate-spin' : ''} />
+                              {subscribingEmail === l.email.trim().toLowerCase() ? 'Adding...' : '+ Subscribe'}
+                            </button>
+                          )
+                        )}
                       </div>
                     </td>
 
@@ -399,6 +684,30 @@ export default function MarketingLeadsManager() {
                         <option value="closed">🟣 Closed / Deal</option>
                         <option value="opt_out">🔴 Opt-Out</option>
                       </select>
+                    </td>
+
+                    <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteLead(l)}
+                        disabled={deletingId === l._id}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '6px',
+                          background: '#FEE2E2',
+                          color: '#DC2626',
+                          border: '1px solid #FECACA',
+                          cursor: deletingId === l._id ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                        title="Delete this lead"
+                      >
+                        <Trash2 size={13} className={deletingId === l._id ? 'animate-spin' : ''} />
+                      </button>
                     </td>
                   </tr>
                 )

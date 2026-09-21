@@ -133,3 +133,43 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }
+
+// DELETE: Remove single or multiple leads
+export async function DELETE(req: Request) {
+  try {
+    const body = await req.json()
+    const ids: string[] = Array.isArray(body.ids)
+      ? body.ids.filter(Boolean)
+      : body.id
+      ? [body.id]
+      : []
+
+    if (ids.length === 0) {
+      return NextResponse.json({ success: false, error: 'No lead ID(s) provided' }, { status: 400 })
+    }
+
+    // Process deletions in batches of 50 for Sanity transactions
+    const batchSize = 50
+    let deletedCount = 0
+
+    for (let i = 0; i < ids.length; i += batchSize) {
+      const chunk = ids.slice(i, i + batchSize)
+      const transaction = writeClient.transaction()
+      for (const id of chunk) {
+        transaction.delete(id)
+      }
+      await transaction.commit()
+      deletedCount += chunk.length
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Successfully deleted ${deletedCount} lead${deletedCount === 1 ? '' : 's'}`,
+      deletedCount,
+    })
+  } catch (error: any) {
+    console.error('Delete Leads Error:', error)
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
+  }
+}
+
