@@ -4,7 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react'
 import {
   Mail, Plus, Edit3, Send, Trash2, Eye, RefreshCw, CheckCircle,
   AlertCircle, Sparkles, X, ChevronRight, Users, Clock, CheckCheck,
-  FileText, Smartphone, Monitor, ShieldCheck, Check, MessageSquare
+  FileText, Smartphone, Monitor, ShieldCheck, Check, MessageSquare,
+  Image as ImageIcon, Upload
 } from 'lucide-react'
 
 interface Campaign {
@@ -29,6 +30,10 @@ interface StructuredCampaignData {
   greeting: string
   headline: string
   bodyText: string
+  heroImage?: string
+  heroImageAlt?: string
+  heroImageLink?: string
+  heroImagePosition?: 'top' | 'below-intro'
   highlights: HighlightItem[]
   showCta: boolean
   ctaText: string
@@ -44,6 +49,10 @@ const DEFAULT_STRUCTURED_DATA: StructuredCampaignData = {
   greeting: 'Dear Valued Traveler,',
   headline: 'Singapore Unveiled: Exclusive DMC Rates & Seasonal Highlights',
   bodyText: `Singapore is brimming with fresh wonders this season! Whether you are seeking world-class entertainment, culinary delights, or lush tropical gardens, our destination experts have curated exclusive experiences tailored for you.\n\nFrom seamless airport transfers to bespoke city tours and VIP attraction access, we ensure every detail of your journey is effortless and memorable.`,
+  heroImage: '',
+  heroImageAlt: 'Singapore Skyline and Attractions',
+  heroImageLink: 'https://flyingwonders.net/custom-package',
+  heroImagePosition: 'top',
   highlights: [
     {
       id: '1',
@@ -80,6 +89,10 @@ const PRESETS: Array<{ name: string; title: string; subject: string; data: Struc
       greeting: 'Dear Traveler,',
       headline: 'Singapore Unveiled: Top Hidden Gems & Seasonal Itineraries',
       bodyText: `Singapore is brimming with fresh wonders this season! Whether you are seeking world-class entertainment, culinary delights, or lush tropical gardens, our destination specialists have curated the finest highlights for your upcoming holiday.\n\nEnjoy guaranteed seamless ground handling, luxury private transfers, and instant digital attraction vouchers with zero hassle.`,
+      heroImage: '',
+      heroImageAlt: 'Singapore City',
+      heroImageLink: 'https://flyingwonders.net/custom-package',
+      heroImagePosition: 'top',
       highlights: [
         {
           id: '1',
@@ -115,6 +128,10 @@ const PRESETS: Array<{ name: string; title: string; subject: string; data: Struc
       greeting: 'Dear Travel Partner,',
       headline: 'Flying Wonders Singapore DMC: 2026 Wholesale Tariffs & Ground Services',
       bodyText: `We are pleased to present our updated Singapore Destination Management Company (DMC) wholesale tariffs and ground support services for 2026.\n\nOur direct contracts with Singapore attractions, luxury coach fleets, and star hotels allow your agency to offer the most competitive packages across Southeast Asia with instant markup tools.`,
+      heroImage: '',
+      heroImageAlt: 'B2B Tariff Sheet',
+      heroImageLink: 'https://flyingwonders.net/agent-portal',
+      heroImagePosition: 'top',
       highlights: [
         {
           id: '1',
@@ -150,6 +167,10 @@ const PRESETS: Array<{ name: string; title: string; subject: string; data: Struc
       greeting: 'Dear Explorer,',
       headline: 'Exclusive Singapore Attraction Pass Drop & Combos',
       bodyText: `Planning your trip to the Lion City? Take advantage of our limited-time attraction bundle passes with instant digital vouchers and guaranteed entry slots.\n\nSkip ticket booth lines and secure wholesale rates with our instant mobile vouchers.`,
+      heroImage: '',
+      heroImageAlt: 'Attraction Deals',
+      heroImageLink: 'https://flyingwonders.net/singapore-attractions',
+      heroImagePosition: 'top',
       highlights: [
         {
           id: '1',
@@ -181,7 +202,7 @@ const PRESETS: Array<{ name: string; title: string; subject: string; data: Struc
 
 /**
  * Compiles structured block fields into responsive, email-client-friendly HTML.
- * Incorporates the official Flying Wonders Gmail signature & 6 accreditation badges.
+ * Incorporates uploaded image banners, official Flying Wonders Gmail signature, & 6 accreditation badges.
  */
 export function compileEmailHtml(data: StructuredCampaignData): string {
   // Convert multiline text into styled paragraphs
@@ -191,6 +212,19 @@ export function compileEmailHtml(data: StructuredCampaignData): string {
     .filter(Boolean)
     .map(p => `<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.65; color: #334155;">${p.replace(/\n/g, '<br />')}</p>`)
     .join('')
+
+  // Hero Image Banner
+  const heroImageHtml = data.heroImage ? `
+    <div style="margin: 20px 0 24px 0; text-align: center;">
+      ${data.heroImageLink ? `<a href="${data.heroImageLink}" target="_blank" style="text-decoration: none; display: inline-block;">` : ''}
+        <img
+          src="${data.heroImage}"
+          alt="${data.heroImageAlt || 'Campaign flyer'}"
+          style="max-width: 100%; width: 560px; height: auto; border-radius: 8px; display: block; margin: 0 auto; border: 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);"
+        />
+      ${data.heroImageLink ? `</a>` : ''}
+    </div>
+  ` : ''
 
   // Highlights list
   let highlightsHtml = ''
@@ -277,10 +311,14 @@ export function compileEmailHtml(data: StructuredCampaignData): string {
     `
   }
 
+  const isTopImage = data.heroImagePosition !== 'below-intro'
+
   return `
+    ${isTopImage ? heroImageHtml : ''}
     ${data.greeting ? `<h3 style="margin: 0 0 12px 0; font-size: 18px; color: #0F172A; font-weight: 700;">${data.greeting}</h3>` : ''}
     ${data.headline ? `<h2 style="margin: 0 0 18px 0; font-size: 20px; color: #800020; font-weight: 800; line-height: 1.35;">${data.headline}</h2>` : ''}
     ${paragraphs}
+    ${!isTopImage ? heroImageHtml : ''}
     ${highlightsHtml}
     ${ctaHtml}
     ${whatsAppHtml}
@@ -305,6 +343,10 @@ export default function NewsletterCampaignManager() {
   const [structuredData, setStructuredData] = useState<StructuredCampaignData>(DEFAULT_STRUCTURED_DATA)
   // Raw HTML Form State
   const [rawHtmlContent, setRawHtmlContent] = useState('')
+
+  // Image Upload State
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null)
 
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop')
   const [isSaving, setIsSaving] = useState(false)
@@ -371,13 +413,15 @@ export default function NewsletterCampaignManager() {
     if (c.structuredData) {
       try {
         const parsed = JSON.parse(c.structuredData)
-        setStructuredData(parsed)
+        setStructuredData({
+          ...DEFAULT_STRUCTURED_DATA,
+          ...parsed,
+        })
         setEditorMode('visual')
       } catch (e) {
         setEditorMode('raw')
       }
     } else {
-      // If old campaign has no structured JSON, default to raw HTML mode or allow visual editing
       setEditorMode('raw')
     }
 
@@ -391,6 +435,39 @@ export default function NewsletterCampaignManager() {
       setFormSubject(preset.subject)
       setStructuredData(preset.data)
       setRawHtmlContent(compileEmailHtml(preset.data))
+    }
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingImage(true)
+    setImageUploadError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/newsletter/upload-image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await res.json()
+      if (data.success && data.url) {
+        setStructuredData(prev => ({
+          ...prev,
+          heroImage: data.url,
+          heroImageAlt: file.name.replace(/\.[^/.]+$/, '')
+        }))
+      } else {
+        throw new Error(data.error || 'Failed to upload image')
+      }
+    } catch (err: any) {
+      setImageUploadError(err.message || 'Image upload failed')
+    } finally {
+      setIsUploadingImage(false)
     }
   }
 
@@ -560,7 +637,7 @@ export default function NewsletterCampaignManager() {
                 Email Campaigns & Templates
               </h2>
               <p style={{ fontSize: '0.82rem', color: '#718096', margin: '2px 0 0 0' }}>
-                Create, customize with your official signature & badges, preview, and dispatch campaigns via Brevo.
+                Upload banners, compose visually with your official signature & badges, preview, and dispatch via Brevo.
               </p>
             </div>
           </div>
@@ -816,7 +893,7 @@ export default function NewsletterCampaignManager() {
                   </div>
                 </div>
                 <p style={{ fontSize: '0.76rem', color: '#64748B', margin: '4px 0 0' }}>
-                  No HTML knowledge required. Fill simple fields and your email automatically includes the official Flying Wonders signature & accreditation badges.
+                  No HTML required. Upload flyer/banner photos, add custom highlights, and your official signature is attached automatically.
                 </p>
               </div>
 
@@ -893,6 +970,134 @@ export default function NewsletterCampaignManager() {
 
                 {editorMode === 'visual' ? (
                   <>
+                    {/* SECTION: Featured Hero Image / Promo Flyer Upload */}
+                    <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <h4 style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <ImageIcon size={16} color="#800020" /> Featured Image / Flyer Banner (Optional)
+                        </h4>
+                        {structuredData.heroImage && (
+                          <button
+                            type="button"
+                            onClick={() => setStructuredData({ ...structuredData, heroImage: '', heroImageLink: '', heroImageAlt: '' })}
+                            style={{ fontSize: '0.72rem', color: '#DC2626', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                          >
+                            Remove Image
+                          </button>
+                        )}
+                      </div>
+
+                      {imageUploadError && (
+                        <div style={{ padding: '8px 12px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '6px', color: '#991B1B', fontSize: '0.78rem', marginBottom: '10px' }}>
+                          {imageUploadError}
+                        </div>
+                      )}
+
+                      {structuredData.heroImage ? (
+                        <div>
+                          <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid #E2E8F0', marginBottom: '10px', background: '#F8FAFC', textAlign: 'center', maxHeight: '200px' }}>
+                            <img
+                              src={structuredData.heroImage}
+                              alt={structuredData.heroImageAlt || 'Campaign preview'}
+                              style={{ maxHeight: '200px', maxWidth: '100%', objectFit: 'contain', display: 'block', margin: '0 auto' }}
+                            />
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.74rem', color: '#64748B', marginBottom: '3px' }}>
+                                Click-through Link (When user taps image):
+                              </label>
+                              <input
+                                type="text"
+                                value={structuredData.heroImageLink || ''}
+                                onChange={(e) => setStructuredData({ ...structuredData, heroImageLink: e.target.value })}
+                                placeholder="https://flyingwonders.net/custom-package"
+                                style={{ width: '100%', padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.8rem', background: '#FFF' }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '0.74rem', color: '#64748B', marginBottom: '3px' }}>
+                                Image Placement:
+                              </label>
+                              <select
+                                value={structuredData.heroImagePosition || 'top'}
+                                onChange={(e) => setStructuredData({ ...structuredData, heroImagePosition: e.target.value as any })}
+                                style={{ width: '100%', padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.8rem', background: '#FFF' }}
+                              >
+                                <option value="top">Top Header Banner (Above Greeting)</option>
+                                <option value="below-intro">Featured Image (Below Intro Message)</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Quick Replace Button */}
+                          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', fontWeight: 600, color: '#800020', cursor: 'pointer' }}>
+                            <Upload size={13} /> Replace Image
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={isUploadingImage}
+                              onChange={handleImageUpload}
+                              style={{ display: 'none' }}
+                            />
+                          </label>
+                        </div>
+                      ) : (
+                        <div>
+                          <label
+                            style={{
+                              border: '2px dashed #CBD5E1',
+                              borderRadius: '8px',
+                              padding: '20px 16px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: isUploadingImage ? 'not-allowed' : 'pointer',
+                              background: '#F8FAFC',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <input
+                              type="file"
+                              accept="image/*"
+                              disabled={isUploadingImage}
+                              onChange={handleImageUpload}
+                              style={{ display: 'none' }}
+                            />
+                            {isUploadingImage ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#800020', fontWeight: 600, fontSize: '0.82rem' }}>
+                                <RefreshCw size={16} className="animate-spin" />
+                                Uploading image to Sanity CDN...
+                              </div>
+                            ) : (
+                              <>
+                                <Upload size={22} color="#800020" style={{ marginBottom: '6px' }} />
+                                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B' }}>
+                                  Click to Upload Image from Computer / Phone
+                                </span>
+                                <span style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '2px' }}>
+                                  Supports JPG, PNG, WEBP, GIF (Max 10MB) • Uploads directly to Sanity CDN
+                                </span>
+                              </>
+                            )}
+                          </label>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
+                            <span style={{ fontSize: '0.72rem', color: '#94A3B8', whiteSpace: 'nowrap' }}>Or paste image URL:</span>
+                            <input
+                              type="text"
+                              placeholder="https://...image.jpg"
+                              value={structuredData.heroImage || ''}
+                              onChange={(e) => setStructuredData({ ...structuredData, heroImage: e.target.value })}
+                              style={{ flex: 1, padding: '5px 8px', border: '1px solid #CBD5E1', borderRadius: '5px', fontSize: '0.76rem', background: '#FFF' }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* SECTION 1: Greeting & Headline */}
                     <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
                       <h4 style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0F172A', margin: '0 0 12px 0' }}>
