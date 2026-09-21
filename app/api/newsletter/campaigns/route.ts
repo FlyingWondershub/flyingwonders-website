@@ -1,4 +1,4 @@
-﻿import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 
@@ -28,6 +28,7 @@ export async function GET(req: Request) {
         title,
         subject,
         content,
+        structuredData,
         status,
         sentAt,
         sentToCount,
@@ -50,19 +51,22 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { title, subject, content } = body
+    const { title, subject, content, structuredData } = body
 
     if (!title || !subject || !content) {
       return NextResponse.json({ error: 'Title, subject, and content are required.' }, { status: 400 })
     }
 
-    const newCampaign = await writeClient.create({
+    const doc: any = {
       _type: 'newsletterCampaign',
       title: title.trim(),
       subject: subject.trim(),
       content: content.trim(),
       status: 'draft',
-    })
+    }
+    if (structuredData) doc.structuredData = typeof structuredData === 'string' ? structuredData : JSON.stringify(structuredData)
+
+    const newCampaign = await writeClient.create(doc)
 
     return NextResponse.json({ success: true, campaign: newCampaign }, { status: 201 })
   } catch (err: any) {
@@ -75,7 +79,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json()
-    const { campaignId, title, subject, content } = body
+    const { campaignId, title, subject, content, structuredData } = body
 
     if (!campaignId) {
       return NextResponse.json({ error: 'Campaign ID is required.' }, { status: 400 })
@@ -85,6 +89,9 @@ export async function PUT(req: Request) {
     if (title) patchData.title = title.trim()
     if (subject) patchData.subject = subject.trim()
     if (content) patchData.content = content.trim()
+    if (structuredData !== undefined) {
+      patchData.structuredData = typeof structuredData === 'string' ? structuredData : JSON.stringify(structuredData)
+    }
 
     const updated = await writeClient
       .patch(campaignId)

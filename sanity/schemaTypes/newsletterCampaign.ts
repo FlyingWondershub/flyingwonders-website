@@ -49,6 +49,12 @@ export const newsletterCampaignSchema = defineType({
       type: 'number',
       readOnly: true,
     }),
+    defineField({
+      name: 'structuredData',
+      title: 'Structured Builder Data (JSON)',
+      type: 'text',
+      hidden: true,
+    }),
   ],
   preview: {
     select: {
