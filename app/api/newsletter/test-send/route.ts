@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const targetEmail = recipientEmail || 'info.flyingwonders@gmail.com'
 
     const testHtml = `
-      <div style="font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a202c; max-width: 600px; margin: 0 auto; line-height: 1.6; background: #f8fafc; padding: 20px 0;">
+      <div style="font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a202c; max-width: 720px; margin: 0 auto; line-height: 1.6; background: #f8fafc; padding: 20px 0;">
         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin: 0 16px;">
           <div style="background: #FEF3C7; border-bottom: 1px solid #FDE68A; padding: 0.6rem 1rem; text-align: center; font-size: 0.75rem; color: #92400E; font-weight: 700;">
             🧪 TEST PREVIEW • Dispatched via Brevo API to ${targetEmail}

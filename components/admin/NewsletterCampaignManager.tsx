@@ -220,7 +220,7 @@ export function compileEmailHtml(data: StructuredCampaignData): string {
         <img
           src="${data.heroImage}"
           alt="${data.heroImageAlt || 'Campaign flyer'}"
-          style="max-width: 100%; width: 560px; height: auto; border-radius: 8px; display: block; margin: 0 auto; border: 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);"
+          style="width: 100%; max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto; border: 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);"
         />
       ${data.heroImageLink ? `</a>` : ''}
     </div>
@@ -1380,7 +1380,7 @@ export default function NewsletterCampaignManager() {
                         gap: '4px'
                       }}
                     >
-                      <Monitor size={13} /> Desktop (600px)
+                      <Monitor size={13} /> Desktop (720px)
                     </button>
                     <button
                       type="button"
@@ -1408,7 +1408,7 @@ export default function NewsletterCampaignManager() {
                 <div style={{ flex: 1, overflowY: 'auto', padding: '24px 16px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
                   <div
                     style={{
-                      width: previewDevice === 'desktop' ? '580px' : '360px',
+                      width: previewDevice === 'desktop' ? '680px' : '360px',
                       maxWidth: '100%',
                       background: '#FFFFFF',
                       borderRadius: '12px',
@@ -1492,7 +1492,7 @@ export default function NewsletterCampaignManager() {
       {/* ── FULL SCREEN MODAL PREVIEW (for listing preview button) ── */}
       {previewCampaign && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-          <div style={{ background: '#FFFFFF', maxWidth: '680px', width: '100%', maxHeight: '90vh', borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
+          <div style={{ background: '#FFFFFF', maxWidth: '800px', width: '100%', maxHeight: '90vh', borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
             
             <div style={{ padding: '14px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC' }}>
               <div>
@@ -1508,7 +1508,7 @@ export default function NewsletterCampaignManager() {
             </div>
 
             <div style={{ padding: '24px', overflowY: 'auto', background: '#F1F5F9' }}>
-              <div style={{ maxWidth: '580px', margin: '0 auto', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+              <div style={{ maxWidth: '720px', margin: '0 auto', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                 {/* Header */}
                 <div style={{ background: '#800020', padding: '28px 20px', textAlign: 'center' }}>
                   <h1 style={{ color: '#FFFFFF', margin: 0, fontSize: '1.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'Georgia, serif' }}>
