@@ -149,6 +149,12 @@ function parseIcaoDate(yymmdd: string, isExpiry = false): {
     fullYear = rawY > current2DigitYear ? 1900 + rawY : 2000 + rawY
   }
 
+  const isLeap = (fullYear % 4 === 0 && (fullYear % 100 !== 0 || fullYear % 400 === 0))
+  const maxDays = [31, isLeap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  if (d > maxDays[m]) {
+    return { dateObj: null, formatted: 'Unknown', iso: '' }
+  }
+
   const dateObj = new Date(fullYear, m, d)
   const monthStr = MONTH_NAMES[m] || 'Jan'
   const dayStr = d.toString().padStart(2, '0')
@@ -156,6 +162,20 @@ function parseIcaoDate(yymmdd: string, isExpiry = false): {
   const iso = `${fullYear}-${(m + 1).toString().padStart(2, '0')}-${dayStr}`
 
   return { dateObj, formatted, iso }
+}
+
+/**
+ * Strips trailing OCR hallucination tails (where <<<<< chevrons were read as CICL, CCKK, LLL, etc.)
+ */
+export function stripMrzChevronNoise(text: string): string {
+  if (!text) return ''
+  let cleaned = text.replace(/<+/g, ' ').trim()
+  // Strip trailing blocks composed of C, L, K, I, X, 1, ( (common OCR chevron misreads)
+  cleaned = cleaned.replace(/[\s_-]+[CLKIX1(]{3,}$/i, '').trim()
+  cleaned = cleaned.replace(/[CLKIX1(]{4,}$/i, '').trim()
+  cleaned = cleaned.replace(/(\s+[CLKIX1(])+\s*$/i, '').trim()
+  cleaned = cleaned.replace(/\s{2,}/g, ' ').trim()
+  return cleaned
 }
 
 /**
@@ -179,8 +199,16 @@ export function parseTd3Mrz(line1Raw: string, line2Raw: string): ParsedPassportD
   // Names (Line 1: 5..44)
   const nameSection = line1.substring(5)
   const nameParts = nameSection.split('<<')
-  const surname = (nameParts[0] || '').replace(/</g, ' ').trim()
-  const givenNames = (nameParts[1] || '').replace(/</g, ' ').trim()
+  let surname = stripMrzChevronNoise(nameParts[0] || '')
+  let givenNames = stripMrzChevronNoise(nameParts[1] || '')
+
+  // If there wasn't a clean << split but has space
+  if (!givenNames && surname.includes(' ')) {
+    const parts = surname.split(' ')
+    surname = parts[0]
+    givenNames = parts.slice(1).join(' ')
+  }
+
   const fullName = `${givenNames} ${surname}`.trim()
 
   // Passport Number & Check Digit (Line 2: 0..9 and 9)

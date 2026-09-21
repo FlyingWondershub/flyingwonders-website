@@ -23,7 +23,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { scanPassportImageInBrowser } from '../utils/passportOcr'
+import { scanPassportImageInBrowser, scanPassportWithAiVision } from '../utils/passportOcr'
 import {
   generateMasterGroupVoucherPdf,
   generateAllVisaVouchersPdf,
@@ -379,9 +379,15 @@ export default function GroupHotelVoucherModal({
     if (!file) return
 
     setPassportScanning(true)
-    setScanStatus('Reading passport...')
+    setScanStatus('Reading passport with AI Vision...')
     try {
-      const data = await scanPassportImageInBrowser(file, (msg) => setScanStatus(msg))
+      let data: any
+      try {
+        data = await scanPassportWithAiVision(file, (msg) => setScanStatus(msg))
+      } catch {
+        data = await scanPassportImageInBrowser(file, (msg) => setScanStatus(msg))
+      }
+
       setRooms(prev =>
         prev.map((r, i) =>
           i === roomIdx
@@ -404,7 +410,7 @@ export default function GroupHotelVoucherModal({
         )
       )
     } catch (err: any) {
-      alert(`Passport Scan Error: ${err.message || 'Could not parse MRZ. Ensure bottom 2 lines are clear.'}`)
+      alert(`Passport Scan Error: ${err.message || 'Could not parse passport details.'}`)
     } finally {
       setPassportScanning(false)
       setScanStatus('')
@@ -426,7 +432,12 @@ export default function GroupHotelVoucherModal({
       const file = files[f]
       setScanStatus(`Scanning passport ${f + 1} of ${files.length}...`)
       try {
-        const data = await scanPassportImageInBrowser(file)
+        let data: any
+        try {
+          data = await scanPassportWithAiVision(file)
+        } catch {
+          data = await scanPassportImageInBrowser(file)
+        }
         successCount++
 
         const guestObj: HotelGuest = {

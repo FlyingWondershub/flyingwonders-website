@@ -26,11 +26,12 @@ import {
   Edit2
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { scanPassportImageInBrowser } from '../../../utils/passportOcr'
+import { scanPassportImageInBrowser, scanPassportWithAiVision } from '../../../utils/passportOcr'
 import { ParsedPassportData, findAndParseMrzInText } from '../../../utils/mrzParser'
 
 export default function PassportScannerPage() {
   const [passengers, setPassengers] = useState<ParsedPassportData[]>([])
+  const [scanMode, setScanMode] = useState<'ai' | 'local'>('ai')
   const [scanning, setScanning] = useState(false)
   const [progressStatus, setProgressStatus] = useState('')
   const [progressPercent, setProgressPercent] = useState(0)
@@ -41,6 +42,26 @@ export default function PassportScannerPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
+
+  const updatePassengerField = (idx: number, field: keyof ParsedPassportData, val: any) => {
+    setPassengers(prev =>
+      prev.map((p, i) => {
+        if (i !== idx) return p
+        const updated = { ...p, [field]: val }
+
+        // Recalculate GDS name if name or title changes
+        if (field === 'fullName' || field === 'title') {
+          const names = (updated.fullName || '').trim().split(' ')
+          const sName = names.length > 1 ? names[names.length - 1] : names[0] || ''
+          const gName = names.length > 1 ? names[0] : ''
+          const gdsS = sName.toUpperCase().replace(/[^A-Z]/g, '')
+          const gdsG = gName.toUpperCase().replace(/[^A-Z]/g, '')
+          updated.airlineGdsFormat = `${gdsS}/${gdsG} ${updated.title || 'MR'}`.trim()
+        }
+        return updated
+      })
+    )
+  }
 
   // Listen for Clipboard Paste (Ctrl+V) anywhere on the page
   useEffect(() => {
@@ -73,20 +94,37 @@ export default function PassportScannerPage() {
   const processImageFile = async (file: File | Blob) => {
     setScanning(true)
     setErrorMessage(null)
-    setProgressStatus('Initializing passport scanner...')
-    setProgressPercent(10)
+    setProgressStatus(scanMode === 'ai' ? 'Connecting to AI Vision scanner...' : 'Initializing local passport scanner...')
+    setProgressPercent(15)
 
     try {
-      const data = await scanPassportImageInBrowser(file, (status, pct) => {
-        setProgressStatus(status)
-        setProgressPercent(pct)
-      })
+      let data: ParsedPassportData
+      if (scanMode === 'ai') {
+        try {
+          data = await scanPassportWithAiVision(file, (status, pct) => {
+            setProgressStatus(status)
+            setProgressPercent(pct)
+          })
+        } catch (aiErr: any) {
+          console.warn('AI Vision scan failed, falling back to local MRZ engine:', aiErr.message)
+          setProgressStatus('Falling back to local MRZ engine...')
+          data = await scanPassportImageInBrowser(file, (status, pct) => {
+            setProgressStatus(status)
+            setProgressPercent(pct)
+          })
+        }
+      } else {
+        data = await scanPassportImageInBrowser(file, (status, pct) => {
+          setProgressStatus(status)
+          setProgressPercent(pct)
+        })
+      }
 
       setPassengers(prev => [data, ...prev])
       setScanning(false)
     } catch (err: any) {
       setErrorMessage(
-        err.message || 'Unable to detect passport MRZ. Please make sure the bottom 2 lines are clearly visible.'
+        err.message || 'Unable to detect passport details. Please make sure the document is clearly visible and well-lit.'
       )
       setScanning(false)
     }
@@ -103,10 +141,25 @@ export default function PassportScannerPage() {
       const file = files[i]
       setProgressStatus(`Scanning document ${i + 1} of ${files.length}...`)
       try {
-        const data = await scanPassportImageInBrowser(file, (status, pct) => {
-          setProgressStatus(`Doc ${i + 1}/${files.length}: ${status}`)
-          setProgressPercent(pct)
-        })
+        let data: ParsedPassportData
+        if (scanMode === 'ai') {
+          try {
+            data = await scanPassportWithAiVision(file, (status, pct) => {
+              setProgressStatus(`Doc ${i + 1}/${files.length}: ${status}`)
+              setProgressPercent(pct)
+            })
+          } catch {
+            data = await scanPassportImageInBrowser(file, (status, pct) => {
+              setProgressStatus(`Doc ${i + 1}/${files.length}: ${status}`)
+              setProgressPercent(pct)
+            })
+          }
+        } else {
+          data = await scanPassportImageInBrowser(file, (status, pct) => {
+            setProgressStatus(`Doc ${i + 1}/${files.length}: ${status}`)
+            setProgressPercent(pct)
+          })
+        }
         setPassengers(prev => [data, ...prev])
       } catch (err: any) {
         setErrorMessage(
@@ -230,6 +283,57 @@ export default function PassportScannerPage() {
         {/* ── CAPTURE & DROPZONE CARD ── */}
         <div style={{ background: '#FFF', borderRadius: '16px', padding: '2rem', boxShadow: '0 10px 25px rgba(10,34,64,0.06)', border: '1px solid #E2E8F0', marginBottom: '2rem' }}>
           
+          {/* Scan Engine Mode Selector */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'inline-flex', background: '#F1F5F9', padding: '5px', borderRadius: '12px', border: '1px solid #E2E8F0', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setScanMode('ai')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.55rem 1.15rem',
+                  borderRadius: '9px',
+                  border: 'none',
+                  background: scanMode === 'ai' ? '#0A2240' : 'transparent',
+                  color: scanMode === 'ai' ? '#FFF' : '#475569',
+                  fontWeight: 700,
+                  fontSize: '0.86rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: scanMode === 'ai' ? '0 2px 6px rgba(10,34,64,0.2)' : 'none',
+                }}
+              >
+                <Sparkles size={15} color={scanMode === 'ai' ? '#FBD38D' : '#64748B'} />
+                <span>High-Precision AI Vision (Clean · No Extra Characters)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setScanMode('local')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  padding: '0.55rem 1.15rem',
+                  borderRadius: '9px',
+                  border: 'none',
+                  background: scanMode === 'local' ? '#0A2240' : 'transparent',
+                  color: scanMode === 'local' ? '#FFF' : '#475569',
+                  fontWeight: 700,
+                  fontSize: '0.86rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: scanMode === 'local' ? '0 2px 6px rgba(10,34,64,0.2)' : 'none',
+                }}
+              >
+                <ShieldCheck size={15} color={scanMode === 'local' ? '#48BB78' : '#64748B'} />
+                <span>Local In-Browser MRZ (Free · Offline)</span>
+              </button>
+            </div>
+          </div>
+
           <div
             onDragOver={(e) => { e.preventDefault() }}
             onDrop={(e) => {
@@ -495,14 +599,11 @@ export default function PassportScannerPage() {
               >
                 {/* Header Row */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', borderBottom: '1px solid #F1F5F9', paddingBottom: '1rem', marginBottom: '1rem' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '280px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                       <span style={{ background: '#0A2240', color: '#FFF', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.55rem', borderRadius: '6px' }}>
                         PAX #{idx + 1}
                       </span>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0A2240', margin: 0 }}>
-                        {p.title} {p.fullName}
-                      </h3>
                       <span style={{ background: '#E0E7FF', color: '#3730A3', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
                         {p.passengerType} ({p.age} yrs)
                       </span>
@@ -511,8 +612,40 @@ export default function PassportScannerPage() {
                       </span>
                     </div>
 
+                    {/* Editable Title & Full Name */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
+                      <select
+                        value={p.title}
+                        onChange={(e) => updatePassengerField(idx, 'title', e.target.value)}
+                        style={{ padding: '0.35rem 0.5rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.88rem', fontWeight: 700, color: '#0A2240', background: '#FFF' }}
+                      >
+                        <option value="Mr">Mr</option>
+                        <option value="Mrs">Mrs</option>
+                        <option value="Ms">Ms</option>
+                        <option value="Mstr">Mstr</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={p.fullName}
+                        onChange={(e) => updatePassengerField(idx, 'fullName', e.target.value.toUpperCase())}
+                        title="Click to edit name if needed"
+                        placeholder="Full Name as per Passport"
+                        style={{
+                          padding: '0.35rem 0.65rem',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          fontSize: '1.05rem',
+                          fontWeight: 800,
+                          color: '#0A2240',
+                          minWidth: '240px',
+                          flex: 1,
+                          background: '#FFF',
+                        }}
+                      />
+                    </div>
+
                     {/* Airline GDS String */}
-                    <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>Airline GDS Name:</span>
                       <code style={{ background: '#FEF3C7', color: '#92400E', padding: '2px 8px', borderRadius: '4px', fontSize: '0.88rem', fontWeight: 800, letterSpacing: '0.04em' }}>
                         {p.airlineGdsFormat}
@@ -558,8 +691,13 @@ export default function PassportScannerPage() {
                   {/* Passport No */}
                   <div style={{ background: '#F8FAFC', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
                     <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.2rem' }}>Passport Number</div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0A2240', letterSpacing: '0.05em' }}>{p.passportNumber}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        value={p.passportNumber}
+                        onChange={(e) => updatePassengerField(idx, 'passportNumber', e.target.value.toUpperCase().trim())}
+                        style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0A2240', letterSpacing: '0.05em', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '2px 6px', width: '130px' }}
+                      />
                       <button
                         type="button"
                         onClick={() => copyToClipboard(p.passportNumber, `pass-${idx}`)}
@@ -570,15 +708,21 @@ export default function PassportScannerPage() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.35rem', fontSize: '0.72rem', color: p.passportNumberCheckValid ? '#16A34A' : '#DC2626' }}>
                       <CheckCircle2 size={12} />
-                      <span>{p.passportNumberCheckValid ? 'ICAO Check Digit Verified' : 'Checksum Unverified'}</span>
+                      <span>{p.passportNumberCheckValid ? 'Verified' : 'Unverified'}</span>
                     </div>
                   </div>
 
                   {/* Nationality */}
                   <div style={{ background: '#F8FAFC', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
                     <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.2rem' }}>Nationality</div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0A2240' }}>
-                      {p.nationality} <span style={{ fontSize: '0.82rem', color: '#64748B' }}>({p.nationalityCode})</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        value={p.nationality}
+                        onChange={(e) => updatePassengerField(idx, 'nationality', e.target.value)}
+                        style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0A2240', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '2px 6px', width: '130px' }}
+                      />
+                      <span style={{ fontSize: '0.82rem', color: '#64748B' }}>({p.nationalityCode})</span>
                     </div>
                     <div style={{ fontSize: '0.72rem', color: '#64748B', marginTop: '0.35rem' }}>
                       Issuing State: {p.issuingCountry}
@@ -588,8 +732,13 @@ export default function PassportScannerPage() {
                   {/* Date of Birth */}
                   <div style={{ background: '#F8FAFC', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
                     <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.2rem' }}>Date of Birth</div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0A2240' }}>{p.dateOfBirthFormatted}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        value={p.dateOfBirthFormatted}
+                        onChange={(e) => updatePassengerField(idx, 'dateOfBirthFormatted', e.target.value)}
+                        style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0A2240', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '2px 6px', width: '130px' }}
+                      />
                       <button
                         type="button"
                         onClick={() => copyToClipboard(p.dateOfBirthFormatted, `dob-${idx}`)}
@@ -608,10 +757,13 @@ export default function PassportScannerPage() {
                     <div style={{ fontSize: '0.72rem', color: p.isValid6Months ? '#166534' : '#991B1B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.2rem' }}>
                       Date of Expiry
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '1.05rem', fontWeight: 700, color: p.isValid6Months ? '#166534' : '#991B1B' }}>
-                        {p.expirationDateFormatted}
-                      </span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        value={p.expirationDateFormatted}
+                        onChange={(e) => updatePassengerField(idx, 'expirationDateFormatted', e.target.value)}
+                        style={{ fontSize: '0.95rem', fontWeight: 700, color: p.isValid6Months ? '#166534' : '#991B1B', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '2px 6px', width: '130px' }}
+                      />
                       <button
                         type="button"
                         onClick={() => copyToClipboard(p.expirationDateFormatted, `exp-${idx}`)}

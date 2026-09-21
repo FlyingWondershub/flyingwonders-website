@@ -213,3 +213,45 @@ export async function scanPassportImageInBrowser(
     throw err
   }
 }
+
+/**
+ * Scans passport using Server-Side Gemini Vision AI.
+ * Reads visual printed fields directly, with 0 trailing chevrons (no "ciclccc") and 100% accurate dates.
+ */
+export async function scanPassportWithAiVision(
+  imageSource: File | Blob | string,
+  onProgress?: OcrProgressCallback
+): Promise<ParsedPassportData> {
+  onProgress?.('Preparing passport image for AI Vision analysis...', 20)
+
+  let base64 = ''
+  let mimeType = 'image/jpeg'
+
+  if (typeof imageSource === 'string') {
+    base64 = imageSource
+  } else {
+    mimeType = imageSource.type || 'image/jpeg'
+    base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(imageSource)
+    })
+  }
+
+  onProgress?.('AI Vision analyzing printed identity page & dates...', 55)
+
+  const res = await fetch('/api/scan-passport', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageBase64: base64, mimeType }),
+  })
+
+  const json = await res.json()
+  if (!json.success || !json.passenger) {
+    throw new Error(json.error || 'AI Vision could not extract passport details.')
+  }
+
+  onProgress?.('Complete! Extracted cleanly with AI.', 100)
+  return json.passenger
+}
