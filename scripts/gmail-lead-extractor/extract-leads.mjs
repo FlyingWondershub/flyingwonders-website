@@ -439,7 +439,8 @@ async function main() {
     else if (boxChoice === "5") baseQuery = (await ask("Enter custom search query: ")).trim() || "category:promotions";
   }
 
-  const maxThreads = isAuto ? 500 : parseInt((await ask("\nMax threads to scan per account? [Default: 300]: ")).trim(), 10) || 300;
+  const limitInput = isAuto ? "500" : (await ask("\nMax threads to scan per account? [Type 0 or ALL for entire mailbox history, or enter a number like 1000, 3000 | Default: 500]: ")).trim();
+  const maxThreads = (limitInput === "0" || limitInput.toUpperCase() === "ALL") ? Infinity : (parseInt(limitInput, 10) || 500);
   rl.close();
 
   let newlyAddedCount = 0;
@@ -460,21 +461,37 @@ async function main() {
     } else {
       console.log(`\n==================================================================`);
       console.log(`🔄 FULL SCAN: [${accountLabel}]`);
-      console.log(`   Query: "${finalQuery}" | Limit: ${maxThreads} threads`);
+      console.log(`   Query: "${finalQuery}" | Target: ${maxThreads === Infinity ? "ENTIRE MAILBOX HISTORY" : maxThreads + " threads"}`);
       console.log(`==================================================================`);
     }
 
     const auth = await authorizeAccount(accountLabel, clientKeys);
     const gmail = google.gmail({ version: "v1", auth });
 
-    const listRes = await gmail.users.threads.list({
-      userId: "me",
-      q: finalQuery,
-      maxResults: maxThreads
-    });
+    // Multi-page thread fetcher to retrieve up to entire mailbox
+    console.log(`🔍 Fetching email threads list from Google...`);
+    let threads = [];
+    let pageToken = undefined;
 
-    const threads = listRes.data.threads || [];
-    console.log(`📬 Found ${threads.length} threads in ${accountLabel}. Processing...`);
+    do {
+      const batchLimit = maxThreads === Infinity ? 500 : Math.min(500, maxThreads - threads.length);
+      const listRes = await gmail.users.threads.list({
+        userId: "me",
+        q: finalQuery,
+        maxResults: batchLimit,
+        pageToken: pageToken
+      });
+
+      if (listRes.data.threads && listRes.data.threads.length > 0) {
+        threads = threads.concat(listRes.data.threads);
+        process.stdout.write(`\r   Found ${threads.length} threads so far...`);
+      }
+
+      pageToken = listRes.data.nextPageToken;
+      if (!pageToken || threads.length >= maxThreads) break;
+    } while (pageToken);
+
+    console.log(`\n📬 Found a total of ${threads.length} threads to process in ${accountLabel}. Starting extraction...`);
 
     let count = 0;
     for (const t of threads) {

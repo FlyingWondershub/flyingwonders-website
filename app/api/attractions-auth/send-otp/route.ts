@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
-import nodemailer from 'nodemailer'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
+import { sendEmail } from '../../../../lib/brevo'
 
 const writeClient = createClient({
   apiVersion,
@@ -11,20 +11,6 @@ const writeClient = createClient({
   useCdn: false,
 })
 
-const createTransporter = () => {
-  const user = process.env.SMTP_USER
-  const pass = process.env.SMTP_PASS
-  const host = process.env.SMTP_HOST || 'smtp.gmail.com'
-  const port = parseInt(process.env.SMTP_PORT || '465')
-
-  if (!user || !pass) return null
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  })
-}
 
 export async function POST(req: Request) {
   try {
@@ -72,27 +58,26 @@ export async function POST(req: Request) {
       })
 
       // Send admin notification email
-      const transporter = createTransporter()
-      if (transporter) {
-        try {
-          await transporter.sendMail({
-            from: `"B2B Attractions Live" <${process.env.SMTP_USER}>`,
-            to: 'info.flyingwonders@gmail.com',
-            subject: `🔔 Attractions Live: New Access Request from ${name}`,
-            html: `
-              <h3>New Access Request Received</h3>
-              <p>A new agent has requested access to the B2B Live Attractions feed:</p>
-              <ul>
-                <li><strong>Name:</strong> ${name}</li>
-                <li><strong>Company:</strong> ${company}</li>
-                <li><strong>Email:</strong> ${normalizedEmail}</li>
-              </ul>
-              <p>Please log into your Sanity Studio to review and approve this user.</p>
-            `
-          })
-        } catch (emailErr) {
-          console.error('Failed to send admin sign-up notification:', emailErr)
-        }
+      try {
+        await sendEmail({
+          to: 'info.flyingwonders@gmail.com',
+          subject: `🔔 Attractions Live: New Access Request from ${name}`,
+          senderName: 'Flying Wonders Attractions Live',
+          senderEmail: 'contact@flyingwonders.net',
+          replyTo: normalizedEmail,
+          html: `
+            <h3>New Access Request Received</h3>
+            <p>A new agent has requested access to the B2B Live Attractions feed:</p>
+            <ul>
+              <li><strong>Name:</strong> ${name}</li>
+              <li><strong>Company:</strong> ${company}</li>
+              <li><strong>Email:</strong> ${normalizedEmail}</li>
+            </ul>
+            <p>Please log into your Sanity Studio to review and approve this user.</p>
+          `,
+        })
+      } catch (emailErr) {
+        console.error('Failed to send admin sign-up notification:', emailErr)
       }
 
       return NextResponse.json({
@@ -119,35 +104,40 @@ export async function POST(req: Request) {
       .commit()
 
     // 6. Send OTP to User
-    const transporter = createTransporter()
     let emailSent = false
     let smtpError = ''
 
-    if (transporter) {
-      try {
-        await transporter.sendMail({
-          from: `"B2B Attractions Live" <${process.env.SMTP_USER}>`,
-          to: normalizedEmail,
-          subject: `🔑 Attractions Live OTP: ${otp}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-              <h2 style="color: #B83A4B; text-align: center;">B2B Attractions Live Portal</h2>
-              <p>Hello,</p>
-              <p>Your login verification code is:</p>
-              <div style="background: #f7fafc; padding: 1.5rem; text-align: center; font-size: 2.2rem; font-weight: bold; letter-spacing: 0.1em; color: #1a202c; border: 1px dashed #cbd5e0; margin: 1.5rem 0;">
-                ${otp}
-              </div>
-              <p style="font-size: 0.9rem; color: #718096; text-align: center;">This code is valid for 10 minutes.</p>
+    try {
+      const sendResult = await sendEmail({
+        to: normalizedEmail,
+        subject: `🔑 Attractions Live OTP: ${otp}`,
+        senderName: 'Flying Wonders Attractions Live',
+        senderEmail: 'contact@flyingwonders.net',
+        replyTo: 'contact@flyingwonders.net',
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h2 style="color: #800020; text-align: center;">Flying Wonders Attractions Live</h2>
+            <p>Hello,</p>
+            <p>Your login verification code is:</p>
+            <div style="background: #f7fafc; padding: 1.5rem; text-align: center; font-size: 2.2rem; font-weight: bold; letter-spacing: 0.1em; color: #1a202c; border: 1px dashed #cbd5e0; margin: 1.5rem 0;">
+              ${otp}
             </div>
-          `,
-        })
+            <p style="font-size: 0.9rem; color: #718096; text-align: center;">This code is valid for 10 minutes.</p>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 1.5rem 0;" />
+            <p style="font-size: 0.8rem; color: #a0aec0; text-align: center;">Flying Wonders Private Limited | Singapore & India Specialist DMC</p>
+          </div>
+        `,
+      })
+
+      if (sendResult.success) {
         emailSent = true
-      } catch (err: any) {
-        console.error('SMTP Send Failed:', err)
-        smtpError = err.message || 'SMTP transport error'
+      } else {
+        smtpError = sendResult.error || 'Failed to dispatch email'
+        console.error('Attractions OTP Send Error:', smtpError)
       }
-    } else {
-      smtpError = 'SMTP credentials not configured in environment'
+    } catch (err: any) {
+      console.error('Attractions OTP Send Error:', err)
+      smtpError = err.message || 'SMTP transport error'
     }
 
     return NextResponse.json({

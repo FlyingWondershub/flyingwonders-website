@@ -46,6 +46,12 @@ next-env.d.ts
 # Gmail lead extractor secrets & generated output
 scripts/gmail-lead-extractor/credentials.json
 scripts/gmail-lead-extractor/token.json
+scripts/gmail-lead-extractor/tokens/
+scripts/gmail-lead-extractor/data/
+scripts/gmail-lead-extractor/output/
 scripts/gmail-lead-extractor/*.xlsx
 scripts/gmail-lead-extractor/*.csv
 scripts/gmail-lead-extractor/node_modules/
+
+
+.env*
