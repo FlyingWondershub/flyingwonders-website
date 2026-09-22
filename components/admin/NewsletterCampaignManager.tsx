@@ -11,12 +11,25 @@ import {
 } from 'lucide-react'
 
 export interface DispatchHistoryItem {
-  dispatchedAt: string
-  audience: string
-  sentCount: number
-  errorCount: number
+  _key?: string
+  dispatchedAt?: string
+  targetAudience?: string
+  audience?: string
+  sentCount?: number
+  errorCount?: number
+  dispatchedBy?: string
   adminEmail?: string
   notes?: string
+}
+
+function formatDateSafe(val?: string | null): string {
+  if (!val) return 'Never'
+  try {
+    const d = new Date(val)
+    return isNaN(d.getTime()) ? 'N/A' : d.toLocaleString()
+  } catch {
+    return 'N/A'
+  }
 }
 
 interface Campaign {
@@ -1104,7 +1117,7 @@ export default function NewsletterCampaignManager() {
                         <div style={{ background: '#F8FAFC', padding: '8px 12px', borderRadius: '6px', fontSize: '0.74rem', color: '#475569', marginBottom: '14px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span>Last Dispatched:</span>
-                            <strong>{c.lastSentAt ? new Date(c.lastSentAt).toLocaleString() : c.sentAt ? new Date(c.sentAt).toLocaleString() : 'N/A'}</strong>
+                            <strong>{formatDateSafe(c.lastSentAt || c.sentAt)}</strong>
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span>Last Recipients:</span>
@@ -2458,7 +2471,7 @@ export default function NewsletterCampaignManager() {
                 <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 14px' }}>
                   <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Last Sent Date</div>
                   <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#1E293B', marginTop: '4px' }}>
-                    {historyModalCampaign.lastSentAt ? new Date(historyModalCampaign.lastSentAt).toLocaleDateString() : historyModalCampaign.sentAt ? new Date(historyModalCampaign.sentAt).toLocaleDateString() : 'Never'}
+                    {formatDateSafe(historyModalCampaign.lastSentAt || historyModalCampaign.sentAt)}
                   </div>
                 </div>
                 <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 14px' }}>
@@ -2470,7 +2483,7 @@ export default function NewsletterCampaignManager() {
               </div>
 
               {/* History Table */}
-              {historyModalCampaign.dispatchHistory && historyModalCampaign.dispatchHistory.length > 0 ? (
+              {Array.isArray(historyModalCampaign.dispatchHistory) && historyModalCampaign.dispatchHistory.length > 0 ? (
                 <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', overflow: 'hidden' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
                     <thead>
@@ -2484,38 +2497,47 @@ export default function NewsletterCampaignManager() {
                       </tr>
                     </thead>
                     <tbody>
-                      {historyModalCampaign.dispatchHistory.map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                          <td style={{ padding: '10px 14px', color: '#1E293B', fontWeight: 600 }}>
-                            {new Date(item.dispatchedAt).toLocaleString()}
-                          </td>
-                          <td style={{ padding: '10px 14px' }}>
-                            <span style={{
-                              padding: '2px 8px',
-                              borderRadius: '4px',
-                              fontSize: '0.7rem',
-                              fontWeight: 700,
-                              background: item.audience === 'b2b' ? '#EEF2FF' : item.audience === 'b2c' ? '#ECFDF5' : item.audience === 'custom' ? '#FFFBEB' : '#F1F5F9',
-                              color: item.audience === 'b2b' ? '#4338CA' : item.audience === 'b2c' ? '#065F46' : item.audience === 'custom' ? '#92400E' : '#334155',
-                              border: '1px solid #E2E8F0'
-                            }}>
-                              {item.audience.toUpperCase()}
-                            </span>
-                          </td>
-                          <td style={{ padding: '10px 14px', color: '#059669', fontWeight: 700 }}>
-                            {item.sentCount}
-                          </td>
-                          <td style={{ padding: '10px 14px', color: item.errorCount > 0 ? '#DC2626' : '#94A3B8', fontWeight: item.errorCount > 0 ? 700 : 400 }}>
-                            {item.errorCount || 0}
-                          </td>
-                          <td style={{ padding: '10px 14px', color: '#64748B', fontSize: '0.74rem' }}>
-                            {item.adminEmail || 'info.flyingwonders@gmail.com'}
-                          </td>
-                          <td style={{ padding: '10px 14px', color: '#64748B', fontSize: '0.74rem' }}>
-                            {item.notes || '—'}
-                          </td>
-                        </tr>
-                      ))}
+                      {historyModalCampaign.dispatchHistory.map((item, idx) => {
+                        const rawAudience = (item.targetAudience || item.audience || 'ALL').toString().toUpperCase()
+                        const audienceLower = rawAudience.toLowerCase()
+                        const dateStr = formatDateSafe(item.dispatchedAt)
+                        const adminStr = item.dispatchedBy || item.adminEmail || 'info.flyingwonders@gmail.com'
+                        const delivered = typeof item.sentCount === 'number' ? item.sentCount : 0
+                        const errors = typeof item.errorCount === 'number' ? item.errorCount : 0
+
+                        return (
+                          <tr key={item._key || idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                            <td style={{ padding: '10px 14px', color: '#1E293B', fontWeight: 600 }}>
+                              {dateStr}
+                            </td>
+                            <td style={{ padding: '10px 14px' }}>
+                              <span style={{
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                background: audienceLower.includes('b2b') ? '#EEF2FF' : audienceLower.includes('b2c') ? '#ECFDF5' : audienceLower.includes('custom') ? '#FFFBEB' : '#F1F5F9',
+                                color: audienceLower.includes('b2b') ? '#4338CA' : audienceLower.includes('b2c') ? '#065F46' : audienceLower.includes('custom') ? '#92400E' : '#334155',
+                                border: '1px solid #E2E8F0'
+                              }}>
+                                {rawAudience}
+                              </span>
+                            </td>
+                            <td style={{ padding: '10px 14px', color: '#059669', fontWeight: 700 }}>
+                              {delivered}
+                            </td>
+                            <td style={{ padding: '10px 14px', color: errors > 0 ? '#DC2626' : '#94A3B8', fontWeight: errors > 0 ? 700 : 400 }}>
+                              {errors}
+                            </td>
+                            <td style={{ padding: '10px 14px', color: '#64748B', fontSize: '0.74rem' }}>
+                              {adminStr}
+                            </td>
+                            <td style={{ padding: '10px 14px', color: '#64748B', fontSize: '0.74rem' }}>
+                              {item.notes || '—'}
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -2534,7 +2556,7 @@ export default function NewsletterCampaignManager() {
                     <tbody>
                       <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
                         <td style={{ padding: '10px 14px', color: '#1E293B', fontWeight: 600 }}>
-                          {new Date(historyModalCampaign.sentAt).toLocaleString()}
+                          {formatDateSafe(historyModalCampaign.sentAt)}
                         </td>
                         <td style={{ padding: '10px 14px' }}>
                           <span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: '#F1F5F9', color: '#334155', border: '1px solid #E2E8F0' }}>
