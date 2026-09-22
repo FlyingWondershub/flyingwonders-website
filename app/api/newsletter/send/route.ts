@@ -13,7 +13,7 @@ const writeClient = createClient({
 
 export async function POST(req: Request) {
   try {
-    const { campaignId, adminEmail, targetAudience = 'all', customEmails } = await req.json()
+    const { campaignId, adminEmail, targetAudience = 'all', sourceTag, customEmails } = await req.json()
 
     // 1. Verify that the request is initiated by an authorized admin
     const allowedAdmins = ['info.flyingwonders@gmail.com', 'support.flyingwonders@gmail.com']
@@ -65,6 +65,12 @@ export async function POST(req: Request) {
       if (recipients.length === 0) {
         return NextResponse.json({ error: 'No valid email addresses provided in the custom list.' }, { status: 400 })
       }
+    } else if (targetAudience === 'tag' && sourceTag) {
+      const cleanTag = sourceTag.trim()
+      const audienceQuery = `*[_type == "newsletterSubscriber" && isActive == true && source match $tag] { email, name, company, audienceType, source }`
+      const params: Record<string, any> = { tag: `*${cleanTag}*` }
+      const fetchedSubscribers = await writeClient.fetch(audienceQuery, params)
+      recipients = fetchedSubscribers || []
     } else {
       let audienceQuery = `*[_type == "newsletterSubscriber" && isActive == true`
       if (targetAudience === 'b2b') {
@@ -191,11 +197,11 @@ export async function POST(req: Request) {
     const newHistoryEntry = {
       _key: `dispatch-${Date.now()}`,
       dispatchedAt: nowIso,
-      targetAudience: targetAudience.toUpperCase(),
+      targetAudience: targetAudience === 'tag' && sourceTag ? `TAG: ${sourceTag.toUpperCase()}` : targetAudience.toUpperCase(),
       sentCount: successCount,
       errorCount: errors.length,
       dispatchedBy: adminEmail,
-      notes: targetAudience === 'custom' ? `Custom list of ${recipients.length} addresses` : `${targetAudience} audience`,
+      notes: targetAudience === 'tag' ? `Targeted event tag "${sourceTag}" (${recipients.length} recipients)` : (targetAudience === 'custom' ? `Custom list of ${recipients.length} addresses` : `${targetAudience} audience`),
     }
 
     const prevDispatched = Array.isArray(campaign.dispatchedEmails) ? campaign.dispatchedEmails : []
@@ -218,7 +224,7 @@ export async function POST(req: Request) {
       success: true,
       sentCount: successCount,
       totalCount: recipients.length,
-      targetAudience,
+      targetAudience: targetAudience === 'tag' && sourceTag ? `TAG: ${sourceTag}` : targetAudience,
       errors: errors.length > 0 ? errors : undefined,
     })
   } catch (err: any) {

@@ -56,7 +56,9 @@ export async function GET(req: Request) {
         email match $search ||
         phone match $search ||
         city match $search ||
-        designation match $search
+        designation match $search ||
+        source match $search ||
+        relevantKeywords match $search
       )`)
     }
 

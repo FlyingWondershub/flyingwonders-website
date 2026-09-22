@@ -393,7 +393,8 @@ export default function NewsletterCampaignManager() {
 
   // Targeted Audience Dispatch Modal State
   const [dispatchModalCampaign, setDispatchModalCampaign] = useState<Campaign | null>(null)
-  const [targetAudience, setTargetAudience] = useState<'all' | 'b2b' | 'b2c' | 'new' | 'custom'>('all')
+  const [targetAudience, setTargetAudience] = useState<'all' | 'b2b' | 'b2c' | 'new' | 'tag' | 'custom'>('all')
+  const [selectedDispatchTag, setSelectedDispatchTag] = useState('')
   const [customEmailsInput, setCustomEmailsInput] = useState('')
   const [isDispatchingModal, setIsDispatchingModal] = useState(false)
   const [dispatchModalFeedback, setDispatchModalFeedback] = useState<{ success: boolean; message: string } | null>(null)
@@ -416,7 +417,23 @@ export default function NewsletterCampaignManager() {
   const [loadingSubscribers, setLoadingSubscribers] = useState(false)
   const [subscriberSearch, setSubscriberSearch] = useState('')
   const [subscriberFilterAudience, setSubscriberFilterAudience] = useState('all')
+  const [subscriberFilterSource, setSubscriberFilterSource] = useState('all')
   const [subscriberFilterStatus, setSubscriberFilterStatus] = useState('all')
+
+  // Unique Source / Event Tags found in subscribers database
+  const availableSourceTags = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const sub of subscribersList) {
+      if (!sub.source) continue
+      const tags = sub.source.split(',').map((t: string) => t.trim()).filter(Boolean)
+      for (const tag of tags) {
+        counts.set(tag, (counts.get(tag) || 0) + (sub.isActive ? 1 : 0))
+      }
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([tag, activeCount]) => ({ tag, activeCount }))
+  }, [subscribersList])
 
   // Add Subscriber Form
   const [isAddingSub, setIsAddingSub] = useState(false)
@@ -712,12 +729,18 @@ export default function NewsletterCampaignManager() {
   const handleOpenDispatchModal = (c: Campaign) => {
     setDispatchModalCampaign(c)
     setTargetAudience('all')
+    setSelectedDispatchTag('')
     setCustomEmailsInput('')
     setDispatchModalFeedback(null)
   }
 
   const handleExecuteDispatch = async () => {
     if (!dispatchModalCampaign) return
+
+    if (targetAudience === 'tag' && !selectedDispatchTag.trim()) {
+      alert('Please select an event tag to target.')
+      return
+    }
 
     if (targetAudience === 'custom') {
       const emailList = customEmailsInput
@@ -741,6 +764,7 @@ export default function NewsletterCampaignManager() {
           campaignId: dispatchModalCampaign._id,
           adminEmail: 'info.flyingwonders@gmail.com',
           targetAudience,
+          sourceTag: targetAudience === 'tag' ? selectedDispatchTag.trim() : undefined,
           customEmails: targetAudience === 'custom' ? customEmailsInput : undefined
         })
       })
@@ -898,8 +922,32 @@ export default function NewsletterCampaignManager() {
     }
   }
 
+  const filteredSubscribers = useMemo(() => {
+    return subscribersList.filter(s => {
+      if (subscriberSearch) {
+        const q = subscriberSearch.toLowerCase()
+        const match = (s.email && s.email.toLowerCase().includes(q)) ||
+                      (s.name && s.name.toLowerCase().includes(q)) ||
+                      (s.company && s.company.toLowerCase().includes(q)) ||
+                      (s.source && s.source.toLowerCase().includes(q))
+        if (!match) return false
+      }
+      if (subscriberFilterAudience !== 'all') {
+        if ((s.audienceType || 'b2b') !== subscriberFilterAudience) return false
+      }
+      if (subscriberFilterSource !== 'all') {
+        if (!s.source || !s.source.toLowerCase().includes(subscriberFilterSource.toLowerCase())) return false
+      }
+      if (subscriberFilterStatus !== 'all') {
+        if (subscriberFilterStatus === 'active' && !s.isActive) return false
+        if (subscriberFilterStatus === 'inactive' && s.isActive) return false
+      }
+      return true
+    })
+  }, [subscribersList, subscriberSearch, subscriberFilterAudience, subscriberFilterSource, subscriberFilterStatus])
+
   const handleExportSubscribers = () => {
-    const list = subscribersList.length > 0 ? subscribersList : []
+    const list = filteredSubscribers.length > 0 ? filteredSubscribers : subscribersList
     if (list.length === 0) {
       alert('No subscribers available to export.')
       return
@@ -908,8 +956,8 @@ export default function NewsletterCampaignManager() {
       'Email': s.email,
       'Name': s.name || '',
       'Company': s.company || '',
-      'Audience Type': s.audienceType === 'b2b' ? 'B2B Partner' : 'B2C Website',
-      'Source': s.source || 'website',
+      'Audience Type': s.audienceType === 'b2b' ? 'B2B Partner' : (s.audienceType === 'b2c' ? 'B2C Website' : 'Lead'),
+      'Source / Event Tag': s.source || 'website',
       'Status': s.isActive ? 'Active' : 'Inactive',
       'Date Subscribed': s.subscribedAt ? new Date(s.subscribedAt).toLocaleDateString() : (s._createdAt ? new Date(s._createdAt).toLocaleDateString() : '')
     }))
@@ -1048,23 +1096,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
     }
   }
 
-  const filteredSubscribers = subscribersList.filter(s => {
-    if (subscriberSearch) {
-      const q = subscriberSearch.toLowerCase()
-      const match = (s.email && s.email.toLowerCase().includes(q)) ||
-                    (s.name && s.name.toLowerCase().includes(q)) ||
-                    (s.company && s.company.toLowerCase().includes(q))
-      if (!match) return false
-    }
-    if (subscriberFilterAudience !== 'all') {
-      if ((s.audienceType || 'b2b') !== subscriberFilterAudience) return false
-    }
-    if (subscriberFilterStatus !== 'all') {
-      if (subscriberFilterStatus === 'active' && !s.isActive) return false
-      if (subscriberFilterStatus === 'inactive' && s.isActive) return false
-    }
-    return true
-  })
+
 
   return (
     <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
@@ -1410,6 +1442,20 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                 <option value="all">All Statuses</option>
                 <option value="active">🟢 Active</option>
                 <option value="inactive">🔴 Inactive / Unsubscribed</option>
+              </select>
+
+              <select
+                value={subscriberFilterSource}
+                onChange={(e) => setSubscriberFilterSource(e.target.value)}
+                style={{ padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', background: '#FFF', color: '#0F172A', maxWidth: '200px' }}
+                title="Filter by Event or Source Tag"
+              >
+                <option value="all">🎪 All Events &amp; Sources</option>
+                {availableSourceTags.map(({ tag, activeCount }) => (
+                  <option key={tag} value={tag}>
+                    🎪 {tag} ({activeCount})
+                  </option>
+                ))}
               </select>
 
               <button
@@ -2528,6 +2574,77 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                   </div>
                 </label>
 
+                {/* Option: Specific Event / Campaign Tag */}
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', borderRadius: '8px', border: targetAudience === 'tag' ? '2px solid #800020' : '1px solid #E2E8F0', background: targetAudience === 'tag' ? '#FFF5F5' : '#FFFFFF', cursor: 'pointer', transition: 'all 0.15s ease' }}>
+                  <input
+                    type="radio"
+                    name="targetAudience"
+                    value="tag"
+                    checked={targetAudience === 'tag'}
+                    onChange={() => {
+                      setTargetAudience('tag')
+                      if (!selectedDispatchTag && availableSourceTags.length > 0) {
+                        setSelectedDispatchTag(availableSourceTags[0].tag)
+                      }
+                    }}
+                    style={{ marginTop: '3px', accentColor: '#800020' }}
+                  />
+                  <div style={{ width: '100%' }}>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🏷️ Specific Event / Campaign Tag</span>
+                      <span style={{ fontSize: '0.7rem', background: '#DCFCE7', color: '#15803D', padding: '1px 6px', borderRadius: '10px', fontWeight: 700 }}>
+                        Event Targeting
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Target exclusively delegates from a specific expo, roadshow, or partner list (e.g. SATTE, OTM).
+                    </div>
+
+                    {targetAudience === 'tag' && (
+                      <div style={{ marginTop: '10px', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '10px 12px' }}>
+                        <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                          Select Event Tag:
+                        </label>
+                        {availableSourceTags.length > 0 ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                            <select
+                              value={selectedDispatchTag}
+                              onChange={(e) => setSelectedDispatchTag(e.target.value)}
+                              style={{
+                                padding: '6px 10px',
+                                border: '1px solid #CBD5E1',
+                                borderRadius: '6px',
+                                fontSize: '0.82rem',
+                                fontWeight: 600,
+                                background: '#FFF',
+                                color: '#0F172A',
+                                flex: 1,
+                                minWidth: '180px'
+                              }}
+                            >
+                              <option value="">-- Choose an Event Tag --</option>
+                              {availableSourceTags.map(({ tag, activeCount }) => (
+                                <option key={tag} value={tag}>
+                                  🎪 {tag} ({activeCount} active contacts)
+                                </option>
+                              ))}
+                            </select>
+                            {selectedDispatchTag && (
+                              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F4C3A', background: '#ECFDF5', padding: '4px 10px', borderRadius: '6px', border: '1px solid #A7F3D0' }}>
+                                Target: &ldquo;{selectedDispatchTag}&rdquo;
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <p style={{ margin: 0, fontSize: '0.78rem', color: '#94A3B8' }}>
+                            No event tags found in active subscribers yet. Import contacts with an event tag like &ldquo;SATTE 2026&rdquo; first.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </label>
+
                 {/* Option 5: Custom Emails List */}
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', borderRadius: '8px', border: targetAudience === 'custom' ? '2px solid #800020' : '1px solid #E2E8F0', background: targetAudience === 'custom' ? '#FFF5F5' : '#FFFFFF', cursor: 'pointer', transition: 'all 0.15s ease' }}>
                   <input
@@ -2911,23 +3028,45 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                     </select>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <label style={{ fontSize: '0.76rem', fontWeight: 600, color: '#475569' }}>Source Tag:</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600, color: '#475569' }}>Event / Tag:</label>
                     <input
                       type="text"
                       value={importSourceTag}
                       onChange={(e) => setImportSourceTag(e.target.value)}
-                      placeholder="e.g. b2b_campaign"
+                      placeholder="e.g. SATTE 2026"
                       style={{
                         padding: '4px 8px',
                         borderRadius: '6px',
                         border: '1px solid #CBD5E1',
                         fontSize: '0.76rem',
-                        width: '130px',
+                        width: '120px',
                         background: '#FFF',
-                        color: '#0F172A'
+                        color: '#0F172A',
+                        fontWeight: 600
                       }}
                     />
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      {['SATTE 2026', 'OTM', 'BLTM', 'Roadshow', 'Website'].map(chip => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => setImportSourceTag(chip)}
+                          style={{
+                            padding: '3px 7px',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            borderRadius: '4px',
+                            border: importSourceTag === chip ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                            background: importSourceTag === chip ? '#0F4C3A' : '#F1F5F9',
+                            color: importSourceTag === chip ? '#FFF' : '#334155',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {chip}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {importTab === 'text' && (
@@ -3210,6 +3349,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                           <th style={{ padding: '8px 8px', minWidth: '170px' }}>Company / Agency</th>
                           <th style={{ padding: '8px 8px', minWidth: '140px' }}>Phone (+91)</th>
                           <th style={{ padding: '8px 8px', minWidth: '100px' }}>City</th>
+                          <th style={{ padding: '8px 8px', minWidth: '120px' }}>Event / Tag</th>
                           <th style={{ padding: '8px 8px', minWidth: '130px' }}>Audience Group</th>
                           <th style={{ padding: '8px 6px', width: '36px', textAlign: 'center' }}></th>
                         </tr>
@@ -3324,6 +3464,25 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                                     borderRadius: '4px',
                                     background: '#FFFFFF',
                                     color: '#0F172A',
+                                    fontFamily: 'var(--font-inter), sans-serif'
+                                  }}
+                                />
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <input
+                                  type="text"
+                                  value={p.source || importSourceTag}
+                                  onChange={(e) => handleUpdateParsedSub(targetIdx, 'source', e.target.value)}
+                                  placeholder="e.g. SATTE 2026"
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 600,
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#0F4C3A',
                                     fontFamily: 'var(--font-inter), sans-serif'
                                   }}
                                 />

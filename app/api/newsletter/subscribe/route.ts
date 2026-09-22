@@ -75,29 +75,43 @@ export async function POST(req: Request) {
         const chunk = validSubs.slice(i, i + batchSize)
         const emails = chunk.map(c => c.email.toLowerCase().trim())
 
-        // Check existing subscribers to preserve IDs and avoid duplicates
+        // Check existing subscribers to preserve IDs, tags, and status
         const existingDocs = await writeClient.fetch(
-          `*[_type == "newsletterSubscriber" && lower(email) in $emails]{_id, "lowerEmail": lower(email)}`,
+          `*[_type == "newsletterSubscriber" && lower(email) in $emails]{_id, "lowerEmail": lower(email), isActive, source}`,
           { emails }
         )
-        const existingMap = new Map<string, string>()
+        const existingMap = new Map<string, { _id: string; isActive?: boolean; source?: string }>()
         for (const ed of (existingDocs || [])) {
-          if (ed.lowerEmail) existingMap.set(ed.lowerEmail, ed._id)
+          if (ed.lowerEmail) existingMap.set(ed.lowerEmail, { _id: ed._id, isActive: ed.isActive, source: ed.source })
         }
 
         const transaction = writeClient.transaction()
 
         for (const sub of chunk) {
           const cleanEmail = sub.email.toLowerCase().trim()
-          const existingId = existingMap.get(cleanEmail)
+          const existingInfo = existingMap.get(cleanEmail)
 
-          if (existingId) {
-            transaction.patch(existingId, (p) => {
-              const patchObj: any = { isActive: true }
+          if (existingInfo) {
+            transaction.patch(existingInfo._id, (p) => {
+              const patchObj: any = {}
+              // Protect previously unsubscribed contacts from silent reactivation
+              if (existingInfo.isActive !== false) {
+                patchObj.isActive = true
+              }
               if (sub.name) patchObj.name = sub.name
               if (sub.company) patchObj.company = sub.company
               if (sub.audienceType) patchObj.audienceType = sub.audienceType
-              if (sub.source) patchObj.source = sub.source
+
+              // Smart Tag Appending: preserve origin while appending new event tag
+              if (sub.source) {
+                const currentSource = existingInfo.source || ''
+                const existingTags = currentSource.split(',').map((t: string) => t.trim().toLowerCase())
+                const newTag = sub.source.trim()
+                if (!existingTags.includes(newTag.toLowerCase())) {
+                  patchObj.source = currentSource ? `${currentSource}, ${newTag}` : newTag
+                }
+              }
+
               return p.set(patchObj)
             })
           } else {
