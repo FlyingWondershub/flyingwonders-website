@@ -403,6 +403,34 @@ export default function NewsletterCampaignManager() {
   const [isDispatchingModal, setIsDispatchingModal] = useState(false)
   const [dispatchModalFeedback, setDispatchModalFeedback] = useState<{ success: boolean; message: string; remaining?: number } | null>(null)
 
+  // Live Brevo Account Quota State
+  const [brevoQuota, setBrevoQuota] = useState<{
+    planType: string
+    dailyLimit: number
+    sentToday: number
+    remainingCredits: number
+    safeRemaining: number
+    resetsInHours: number
+    resetsAtUtc: string
+    campaignsSentToday?: Array<{ title: string; sentCount: number; time: string }>
+  } | null>(null)
+  const [loadingQuota, setLoadingQuota] = useState(false)
+
+  const fetchQuota = async () => {
+    setLoadingQuota(true)
+    try {
+      const res = await fetch('/api/newsletter/quota?adminEmail=info.flyingwonders@gmail.com')
+      const data = await res.json()
+      if (data.success && data.quota) {
+        setBrevoQuota(data.quota)
+      }
+    } catch (e) {
+      console.error('Failed to fetch live quota:', e)
+    } finally {
+      setLoadingQuota(false)
+    }
+  }
+
   // Dispatch History Audit Modal State
   const [historyModalCampaign, setHistoryModalCampaign] = useState<Campaign | null>(null)
 
@@ -445,10 +473,21 @@ export default function NewsletterCampaignManager() {
       .sort((a, b) => b.activeCount - a.activeCount)
   }, [subscribersList])
 
-  // Live Multi-Wave & Brevo Batch Breakdown Calculation
+  // Live Multi-Wave & Brevo Batch Breakdown Calculation (Live Quota-Aware)
   const dispatchAudienceStats = useMemo(() => {
     if (!dispatchModalCampaign) {
-      return { total: 0, alreadySent: 0, eligible: 0, toSendNow: 0, remainingAfter: 0, totalWaves: 1 }
+      return {
+        total: 0,
+        alreadySent: 0,
+        eligible: 0,
+        toSendNow: 0,
+        desiredSend: 0,
+        remainingAfter: 0,
+        totalWaves: 1,
+        quotaExceeded: false,
+        maxCanSendToday: 250,
+        remainingDailyCredits: 250
+      }
     }
 
     const sentList = dispatchModalCampaign.dispatchedEmails || []
@@ -484,13 +523,21 @@ export default function NewsletterCampaignManager() {
     const alreadySent = matching.filter(s => sentSet.has((s.email || '').toLowerCase().trim())).length
     const eligible = dispatchSkipSent ? Math.max(0, total - alreadySent) : total
 
-    const effectiveLimit = dispatchBatchLimit === 'all'
+    // Account-wide live quota calculations:
+    const remainingDailyCredits = brevoQuota ? brevoQuota.remainingCredits : 250
+    const maxCanSendToday = Math.max(0, remainingDailyCredits)
+
+    const rawLimit = dispatchBatchLimit === 'all'
       ? eligible
       : dispatchBatchLimit === 'custom'
         ? (parseInt(customBatchLimitInput, 10) || 250)
         : (parseInt(dispatchBatchLimit, 10) || 250)
 
-    const toSendNow = Math.min(eligible, Math.max(0, effectiveLimit))
+    const desiredSend = Math.min(eligible, Math.max(0, rawLimit))
+    const quotaExceeded = brevoQuota ? desiredSend > remainingDailyCredits : false
+
+    // Effective number to send today is strictly capped by remaining daily Brevo credits
+    const toSendNow = brevoQuota ? Math.min(desiredSend, remainingDailyCredits) : desiredSend
     const remainingAfter = Math.max(0, eligible - toSendNow)
     const totalWaves = toSendNow > 0 ? Math.ceil(eligible / toSendNow) : 1
 
@@ -499,8 +546,12 @@ export default function NewsletterCampaignManager() {
       alreadySent,
       eligible,
       toSendNow,
+      desiredSend,
       remainingAfter,
-      totalWaves
+      totalWaves,
+      quotaExceeded,
+      maxCanSendToday,
+      remainingDailyCredits
     }
   }, [
     dispatchModalCampaign,
@@ -510,7 +561,8 @@ export default function NewsletterCampaignManager() {
     subscribersList,
     dispatchSkipSent,
     dispatchBatchLimit,
-    customBatchLimitInput
+    customBatchLimitInput,
+    brevoQuota
   ])
 
   // Add Subscriber Form
@@ -579,6 +631,9 @@ export default function NewsletterCampaignManager() {
       if (data.success) {
         setCampaigns(data.campaigns || [])
         setSubscriberCount(data.subscriberCount || 0)
+        if (data.quota) {
+          setBrevoQuota(data.quota)
+        }
       }
     } catch (err) {
       console.error('Failed to fetch campaigns:', err)
@@ -836,6 +891,7 @@ export default function NewsletterCampaignManager() {
     setCustomBatchLimitInput('250')
     setDispatchSkipSent(true)
     setDispatchModalFeedback(null)
+    fetchQuota()
     if (subscribersList.length === 0) {
       fetchSubscribersFull()
     }
@@ -895,7 +951,7 @@ export default function NewsletterCampaignManager() {
           message: waveNotice,
           remaining
         })
-        await Promise.all([fetchCampaigns(), fetchSubscribersFull()])
+        await Promise.all([fetchCampaigns(), fetchSubscribersFull(), fetchQuota()])
         setTimeout(() => {
           setDispatchModalCampaign(null)
           setDispatchModalFeedback(null)
@@ -2806,10 +2862,76 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                       Brevo Free Tier Safe Wave Dispatcher
                     </span>
                   </div>
-                  <span style={{ fontSize: '0.72rem', background: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
-                    🛡️ 300 Emails/Day Limit Protection
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '0.72rem', background: (brevoQuota && brevoQuota.remainingCredits <= 20) ? '#FEE2E2' : '#DCFCE7', color: (brevoQuota && brevoQuota.remainingCredits <= 20) ? '#991B1B' : '#15803D', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                      {brevoQuota ? `⚡ ${brevoQuota.remainingCredits} / ${brevoQuota.dailyLimit} Credits Left Today` : '🛡️ 300/Day Quota Shield'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={fetchQuota}
+                      disabled={loadingQuota}
+                      title="Refresh live Brevo credits"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', display: 'inline-flex', alignItems: 'center', padding: '2px' }}
+                    >
+                      <RefreshCw size={13} className={loadingQuota ? 'animate-spin' : ''} />
+                    </button>
+                  </div>
                 </div>
+
+                {/* Account-Wide Daily Usage Notice */}
+                {brevoQuota && (
+                  <div style={{
+                    background: brevoQuota.remainingCredits <= 20 ? '#FEF2F2' : (brevoQuota.sentToday > 0 ? '#FFFBEB' : '#F0FDF4'),
+                    border: `1px solid ${brevoQuota.remainingCredits <= 20 ? '#FECACA' : (brevoQuota.sentToday > 0 ? '#FDE68A' : '#BBF7D0')}`,
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    marginBottom: '12px',
+                    fontSize: '0.75rem',
+                    color: brevoQuota.remainingCredits <= 20 ? '#991B1B' : (brevoQuota.sentToday > 0 ? '#92400E' : '#166534'),
+                    lineHeight: 1.45
+                  }}>
+                    <div style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                      <span>📊 Account Daily Usage (All Campaigns Combined):</span>
+                      <span>{brevoQuota.sentToday} of {brevoQuota.dailyLimit} sent today</span>
+                    </div>
+                    <div>
+                      {brevoQuota.sentToday > 0 ? (
+                        <>
+                          You already sent <strong>{brevoQuota.sentToday} emails</strong> earlier today across your Brevo account
+                          {brevoQuota.campaignsSentToday && brevoQuota.campaignsSentToday.length > 0 && (
+                            <span> ({brevoQuota.campaignsSentToday.map(c => `"${c.title}": ${c.sentCount}`).join(', ')})</span>
+                          )}.
+                          {' '}Your account currently has <strong style={{ textDecoration: 'underline' }}>{brevoQuota.remainingCredits} sends remaining</strong> until quota resets at {brevoQuota.resetsAtUtc} (~{brevoQuota.resetsInHours}h).
+                        </>
+                      ) : (
+                        <>Full 300 emails/day capacity available on your Brevo Free plan for today.</>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quota Exceeded Auto-Cap Warning */}
+                {dispatchAudienceStats.quotaExceeded && (
+                  <div style={{
+                    background: '#FEF2F2',
+                    border: '1px solid #FECACA',
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    marginBottom: '12px',
+                    fontSize: '0.76rem',
+                    color: '#991B1B',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px'
+                  }}>
+                    <AlertCircle size={16} color="#DC2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <div>
+                      <strong>Account Quota Protection Active:</strong> You requested {dispatchAudienceStats.desiredSend} contacts, but your Brevo account only has <strong>{dispatchAudienceStats.remainingDailyCredits} sends remaining</strong> today because {brevoQuota?.sentToday || 0} emails were dispatched earlier.
+                      <br />
+                      We automatically capped today&apos;s batch to <strong>{dispatchAudienceStats.toSendNow} contacts</strong> to prevent daily quota errors. The remaining {dispatchAudienceStats.remainingAfter} contacts will be queued for tomorrow&apos;s wave!
+                    </div>
+                  </div>
+                )}
 
                 {/* Wave & Audience Live Breakdown Stats */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '14px' }}>
@@ -2834,11 +2956,23 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                     </div>
                   </div>
 
-                  <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '8px 12px' }}>
-                    <div style={{ fontSize: '0.7rem', color: '#1E40AF', fontWeight: 600 }}>Batch Sending Today</div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1E40AF', marginTop: '2px' }}>
+                  <div style={{
+                    background: dispatchAudienceStats.quotaExceeded ? '#FEF2F2' : '#EFF6FF',
+                    border: `1px solid ${dispatchAudienceStats.quotaExceeded ? '#FECACA' : '#BFDBFE'}`,
+                    borderRadius: '8px',
+                    padding: '8px 12px'
+                  }}>
+                    <div style={{ fontSize: '0.7rem', color: dispatchAudienceStats.quotaExceeded ? '#991B1B' : '#1E40AF', fontWeight: 600 }}>
+                      Batch Sending Today
+                    </div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: dispatchAudienceStats.quotaExceeded ? '#DC2626' : '#1E40AF', marginTop: '2px' }}>
                       {dispatchAudienceStats.toSendNow} contacts
                     </div>
+                    {dispatchAudienceStats.quotaExceeded && (
+                      <div style={{ fontSize: '0.66rem', color: '#DC2626', fontWeight: 700, marginTop: '1px' }}>
+                        Capped by daily quota
+                      </div>
+                    )}
                   </div>
 
                   {dispatchAudienceStats.remainingAfter > 0 && (
@@ -2870,6 +3004,29 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                     Select Daily Batch Cap / Wave Size:
                   </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                    {/* Dynamic Remaining Quota Button if sent earlier today */}
+                    {brevoQuota && brevoQuota.remainingCredits > 0 && brevoQuota.remainingCredits < 250 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDispatchBatchLimit('custom')
+                          setCustomBatchLimitInput(String(brevoQuota.remainingCredits))
+                        }}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: (dispatchBatchLimit === 'custom' && customBatchLimitInput === String(brevoQuota.remainingCredits)) ? '1px solid #0F4C3A' : '1px solid #16A34A',
+                          background: (dispatchBatchLimit === 'custom' && customBatchLimitInput === String(brevoQuota.remainingCredits)) ? '#0F4C3A' : '#ECFDF5',
+                          color: (dispatchBatchLimit === 'custom' && customBatchLimitInput === String(brevoQuota.remainingCredits)) ? '#FFFFFF' : '#15803D',
+                          fontWeight: 800,
+                          fontSize: '0.76rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ⚡ {brevoQuota.remainingCredits} / day (Use Remaining Daily Quota)
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => setDispatchBatchLimit('250')}
@@ -3041,7 +3198,9 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                 {isDispatchingModal
                   ? 'Dispatching In Batches...'
                   : dispatchAudienceStats.toSendNow === 0
-                    ? 'All Contacts Already Dispatched'
+                    ? (brevoQuota && brevoQuota.remainingCredits <= 0
+                        ? `Daily Brevo Limit Reached (${brevoQuota.sentToday}/${brevoQuota.dailyLimit} Sent Today)`
+                        : 'All Contacts Already Dispatched')
                     : dispatchAudienceStats.remainingAfter > 0
                       ? `🚀 Launch Wave (${dispatchAudienceStats.toSendNow} Recipients)`
                       : `🚀 Launch Campaign Broadcast (${dispatchAudienceStats.toSendNow} Recipients)`}

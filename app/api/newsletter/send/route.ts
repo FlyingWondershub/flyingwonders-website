@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 import { sendEmail } from '../../../../lib/brevo'
+import { fetchLiveBrevoQuota } from '../quota/route'
 
 const writeClient = createClient({
   apiVersion,
@@ -129,13 +130,26 @@ export async function POST(req: Request) {
       }, { status: 400 })
     }
 
-    // 5. Safe Batch Capping (Brevo Free Tier Safe Waves)
+    // 5. Safe Batch Capping (Enforced with Live Brevo Daily Account Quota)
+    const liveQuota = await fetchLiveBrevoQuota()
+    if (liveQuota.planType === 'free' && liveQuota.remainingCredits <= 0) {
+      return NextResponse.json({
+        error: `Brevo daily limit reached (${liveQuota.sentToday} of ${liveQuota.dailyLimit} emails sent across your account today). Your quota resets at ${liveQuota.resetsAtUtc} (in approx ${liveQuota.resetsInHours} hours).`
+      }, { status: 429 })
+    }
+
     const parsedLimit = typeof batchLimit === 'number' ? batchLimit : (batchLimit ? parseInt(batchLimit, 10) : undefined)
-    const effectiveBatchLimit = (parsedLimit && parsedLimit > 0) ? parsedLimit : eligibleRecipients.length
+    const requestedBatchLimit = (parsedLimit && parsedLimit > 0) ? parsedLimit : eligibleRecipients.length
+
+    // Never exceed live remaining Brevo credits on Free tier
+    const effectiveBatchLimit = liveQuota.planType === 'free'
+      ? Math.min(requestedBatchLimit, liveQuota.remainingCredits)
+      : requestedBatchLimit
+
     const batchToSend = eligibleRecipients.slice(0, effectiveBatchLimit)
     const remainingAfterBatch = Math.max(0, eligibleRecipients.length - batchToSend.length)
 
-    console.log(`Starting targeted newsletter dispatch (${targetAudience}) - Batch: ${batchToSend.length} / Eligible: ${eligibleRecipients.length} / Total Audience: ${recipients.length} for campaign: "${campaign.title}"`)
+    console.log(`Starting targeted newsletter dispatch (${targetAudience}) - Batch: ${batchToSend.length} / Eligible: ${eligibleRecipients.length} / Total Audience: ${recipients.length} / Brevo Remaining Today: ${liveQuota.remainingCredits} for campaign: "${campaign.title}"`)
 
     // 6. Send Emails via Brevo in Concurrent Chunks of 10 (Zero Vercel Timeout)
     let successCount = 0
@@ -146,8 +160,8 @@ export async function POST(req: Request) {
     const defaultWhatsAppUrl = `https://wa.me/6594722830?text=${waText}`
 
     const chunkSize = 10
-    for (let i = 0; i < recipients.length; i += chunkSize) {
-      const chunk = recipients.slice(i, i + chunkSize)
+    for (let i = 0; i < batchToSend.length; i += chunkSize) {
+      const chunk = batchToSend.slice(i, i + chunkSize)
       await Promise.all(
         chunk.map(async (recipient) => {
           const email = recipient.email.toLowerCase().trim()
