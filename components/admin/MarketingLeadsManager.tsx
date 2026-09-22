@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import * as XLSX from 'xlsx'
 import {
   Users, Search, Plus, Phone, Mail, MessageCircle, Building2, MapPin,
   Sparkles, RefreshCw, X, Check, Award, ExternalLink, Filter, CheckCircle2,
-  Calendar, ArrowUpDown, UserPlus, Trash2
+  Calendar, ArrowUpDown, UserPlus, Trash2, Upload, Download, FileText
 } from 'lucide-react'
 
 interface MarketingLead {
@@ -61,6 +62,15 @@ export default function MarketingLeadsManager() {
   const [subscribedEmails, setSubscribedEmails] = useState<Set<string>>(new Set())
   const [subscribingEmail, setSubscribingEmail] = useState<string | null>(null)
   const [actionNotice, setActionNotice] = useState<string | null>(null)
+
+  // Import Leads State
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [importTab, setImportTab] = useState<'csv' | 'chat' | 'text'>('csv')
+  const [importText, setImportText] = useState('')
+  const [parsedImportLeads, setParsedImportLeads] = useState<any[]>([])
+  const [isParsingImport, setIsParsingImport] = useState(false)
+  const [isSyncingImport, setIsSyncingImport] = useState(false)
+  const [importSyncFeedback, setImportSyncFeedback] = useState<string | null>(null)
 
   const fetchSubscribers = async () => {
     try {
@@ -324,6 +334,269 @@ export default function MarketingLeadsManager() {
     }
   }
 
+  // Phone Sanitization
+  const cleanPhone = (raw: string): string => {
+    const cleaned = raw.replace(/[^\d+]/g, '')
+    if (cleaned.length === 10 && /^[6-9]/.test(cleaned)) {
+      return `+91${cleaned}`
+    }
+    if (cleaned.length === 12 && cleaned.startsWith('91')) {
+      return `+${cleaned}`
+    }
+    return cleaned.startsWith('+') ? cleaned : `+${cleaned}`
+  }
+
+  // 1. CSV / Excel File Importer
+  const handleCsvImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsParsingImport(true)
+    setImportSyncFeedback(null)
+
+    try {
+      const data = await file.arrayBuffer()
+      const workbook = XLSX.read(data, { type: 'array' })
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+      const rows: any[] = XLSX.utils.sheet_to_json(firstSheet, { defval: '' })
+
+      const extracted: any[] = []
+      for (const row of rows) {
+        const findVal = (keys: string[]) => {
+          for (const k of Object.keys(row)) {
+            const lk = k.toLowerCase().trim()
+            if (keys.some(key => lk === key || lk.includes(key))) {
+              return String(row[k] || '').trim()
+            }
+          }
+          return ''
+        }
+
+        const name = findVal(['name', 'contact', 'full name', 'lead name'])
+        const email = findVal(['email', 'e-mail', 'mail'])
+        const phone = findVal(['phone', 'mobile', 'cell', 'whatsapp', 'tel', 'contact number'])
+        const company = findVal(['company', 'organization', 'agency', 'business', 'corp'])
+        const designation = findVal(['designation', 'role', 'title', 'position'])
+        const city = findVal(['city', 'location', 'state', 'country'])
+        const accreditations = findVal(['accreditation', 'tags', 'source', 'notes'])
+
+        if (email || phone || name || company) {
+          const cleanedP = phone ? cleanPhone(phone) : ''
+          extracted.push({
+            name: name || 'Contact',
+            email: email.toLowerCase(),
+            phone: cleanedP,
+            whatsapp: cleanedP ? `https://wa.me/${cleanedP.replace('+', '')}` : '',
+            company: company,
+            designation: designation,
+            city: city,
+            accreditations: accreditations,
+            priority: cleanedP ? 'high' : 'normal',
+            leadType: 'individual',
+            status: 'new',
+            source: 'csv_import',
+          })
+        }
+      }
+
+      setParsedImportLeads(extracted)
+    } catch (err: any) {
+      alert(`Failed to parse spreadsheet: ${err.message}`)
+    } finally {
+      setIsParsingImport(false)
+    }
+  }
+
+  // 2. WhatsApp Chat .txt Parser
+  const handleChatFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsParsingImport(true)
+    setImportSyncFeedback(null)
+
+    try {
+      const text = await file.text()
+      const lines = text.split('\n')
+      const extracted: Map<string, any> = new Map()
+
+      const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,5}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,5}/g
+      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
+
+      for (const line of lines) {
+        const emails = line.match(emailRegex) || []
+        const senderMatch = line.match(/\]\s*([^:]+):/)
+        const sender = senderMatch ? senderMatch[1].trim() : ''
+
+        let senderPhone = ''
+        if (/[\d+]{7,15}/.test(sender)) {
+          senderPhone = cleanPhone(sender)
+        }
+
+        for (const email of emails) {
+          const cleanEmail = email.toLowerCase().trim()
+          if (!extracted.has(cleanEmail)) {
+            const domain = cleanEmail.split('@')[1] || ''
+            extracted.set(cleanEmail, {
+              name: senderPhone ? '' : sender,
+              email: cleanEmail,
+              phone: senderPhone,
+              whatsapp: senderPhone ? `https://wa.me/${senderPhone.replace('+', '')}` : '',
+              company: domain.split('.')[0].toUpperCase(),
+              designation: '',
+              city: '',
+              accreditations: '',
+              priority: 'normal',
+              leadType: 'individual',
+              status: 'new',
+              source: 'whatsapp_chat',
+            })
+          }
+        }
+
+        if (senderPhone && !extracted.has(senderPhone)) {
+          extracted.set(senderPhone, {
+            name: '',
+            email: '',
+            phone: senderPhone,
+            whatsapp: `https://wa.me/${senderPhone.replace('+', '')}`,
+            company: '',
+            designation: '',
+            city: '',
+            accreditations: '',
+            priority: 'normal',
+            leadType: 'whatsapp',
+            status: 'new',
+            source: 'whatsapp_chat',
+          })
+        }
+      }
+
+      setParsedImportLeads(Array.from(extracted.values()))
+    } catch (err: any) {
+      alert(`Chat parse error: ${err.message}`)
+    } finally {
+      setIsParsingImport(false)
+    }
+  }
+
+  // 3. Raw Text Paste Parser
+  const handleRawTextParse = () => {
+    if (!importText.trim()) return
+    setIsParsingImport(true)
+    setImportSyncFeedback(null)
+
+    const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,5}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,5}/g
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
+
+    const emails = importText.match(emailRegex) || []
+    const phones = importText.match(phoneRegex) || []
+
+    const extracted: any[] = []
+    const seen = new Set<string>()
+
+    for (const em of emails) {
+      const c = em.toLowerCase().trim()
+      if (!seen.has(c)) {
+        seen.add(c)
+        extracted.push({
+          name: '',
+          email: c,
+          phone: '',
+          whatsapp: '',
+          company: (c.split('@')[1] || '').split('.')[0].toUpperCase(),
+          designation: '',
+          city: '',
+          accreditations: '',
+          priority: 'normal',
+          leadType: 'individual',
+          status: 'new',
+          source: 'manual_text_paste',
+        })
+      }
+    }
+
+    for (const ph of phones) {
+      const p = cleanPhone(ph)
+      if (p.length >= 10 && !seen.has(p)) {
+        seen.add(p)
+        extracted.push({
+          name: '',
+          email: '',
+          phone: p,
+          whatsapp: `https://wa.me/${p.replace('+', '')}`,
+          company: '',
+          designation: '',
+          city: '',
+          accreditations: '',
+          priority: 'high',
+          leadType: 'whatsapp',
+          status: 'new',
+          source: 'manual_text_paste',
+        })
+      }
+    }
+
+    setParsedImportLeads(extracted)
+    setIsParsingImport(false)
+  }
+
+  // Sync Parsed Leads to Sanity
+  const handleSyncImportToSanity = async () => {
+    if (parsedImportLeads.length === 0) return
+    setIsSyncingImport(true)
+    setImportSyncFeedback(null)
+
+    try {
+      const res = await fetch('/api/admin/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leads: parsedImportLeads }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setImportSyncFeedback(`✅ ${data.message}`)
+        await fetchLeads()
+        setTimeout(() => {
+          setIsImportModalOpen(false)
+          setParsedImportLeads([])
+          setImportSyncFeedback(null)
+          setImportText('')
+        }, 1200)
+      } else {
+        throw new Error(data.error || 'Failed to sync leads')
+      }
+    } catch (err: any) {
+      setImportSyncFeedback(`❌ Error: ${err.message}`)
+    } finally {
+      setIsSyncingImport(false)
+    }
+  }
+
+  // Export Leads to Excel
+  const handleExportExcel = () => {
+    const listToExport = filteredLeads.length > 0 ? filteredLeads : leads
+    if (listToExport.length === 0) {
+      alert('No leads available to export.')
+      return
+    }
+    const exportRows = listToExport.map(l => ({
+      'Name': l.name || '',
+      'Email': l.email || '',
+      'Phone': l.phone || '',
+      'WhatsApp': l.whatsapp || '',
+      'Company': l.company || '',
+      'Designation': l.designation || '',
+      'City': l.city || '',
+      'Priority': l.priority || 'normal',
+      'Status': l.status || 'new',
+      'Accreditations': l.accreditations || '',
+      'Notes': l.internalNotes || '',
+      'Created Date': l._createdAt ? new Date(l._createdAt).toLocaleDateString() : ''
+    }))
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(exportRows)
+    XLSX.utils.book_append_sheet(wb, ws, 'Leads Directory')
+    XLSX.writeFile(wb, `FlyingWonders_Leads_${new Date().toISOString().slice(0, 10)}.xlsx`)
+  }
 
   return (
     <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
@@ -343,7 +616,7 @@ export default function MarketingLeadsManager() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <button
             onClick={fetchLeads}
             disabled={refreshing}
@@ -351,6 +624,24 @@ export default function MarketingLeadsManager() {
           >
             <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
             Refresh
+          </button>
+
+          <button
+            onClick={handleExportExcel}
+            style={{ padding: '8px 12px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: '#334155' }}
+            title="Download leads spreadsheet (.xlsx)"
+          >
+            <Download size={14} color="#0F4C3A" />
+            Export (.xlsx)
+          </button>
+
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            style={{ padding: '8px 14px', background: '#EFF6FF', color: '#1E40AF', border: '1px solid #BFDBFE', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 700 }}
+            title="Import leads from CSV, WhatsApp chat or raw text"
+          >
+            <Upload size={14} />
+            📥 Import Leads
           </button>
 
           <button
@@ -890,6 +1181,230 @@ export default function MarketingLeadsManager() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── IMPORT LEADS MODAL ── */}
+      {isImportModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: '#FFFFFF', maxWidth: '750px', width: '100%', maxHeight: '92vh', borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
+            
+            {/* Modal Header */}
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                  📥 Import Leads to Directory
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '2px 0 0' }}>
+                  Auto-extract contacts from CSV/Excel sheets, exported WhatsApp chats, or pasted text.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsImportModalOpen(false)
+                  setParsedImportLeads([])
+                  setImportSyncFeedback(null)
+                }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
+              
+              {/* Tab Selector */}
+              <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px', marginBottom: '20px' }}>
+                <button
+                  type="button"
+                  onClick={() => setImportTab('csv')}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: importTab === 'csv' ? '#0F4C3A' : '#F1F5F9',
+                    color: importTab === 'csv' ? '#FFF' : '#475569',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📁 CSV / Excel Sheet
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImportTab('chat')}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: importTab === 'chat' ? '#0F4C3A' : '#F1F5F9',
+                    color: importTab === 'chat' ? '#FFF' : '#475569',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  💬 WhatsApp Chat (.txt)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImportTab('text')}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: importTab === 'text' ? '#0F4C3A' : '#F1F5F9',
+                    color: importTab === 'text' ? '#FFF' : '#475569',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📋 Paste Text / Numbers
+                </button>
+              </div>
+
+              {/* Tab 1: CSV / Excel */}
+              {importTab === 'csv' && (
+                <div style={{ background: '#F8FAFC', border: '2px dashed #CBD5E1', borderRadius: '12px', padding: '24px', textAlign: 'center' }}>
+                  <FileText size={36} color="#0F4C3A" style={{ margin: '0 auto 10px' }} />
+                  <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', color: '#1E293B', fontWeight: 700 }}>
+                    Upload CSV or Excel Spreadsheet (.xlsx, .xls, .csv)
+                  </h4>
+                  <p style={{ margin: '0 0 16px', fontSize: '0.78rem', color: '#64748B' }}>
+                    Auto-maps columns: Name, Email, Phone, Company, Designation, City, and Accreditations.
+                  </p>
+                  <input
+                    type="file"
+                    accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                    onChange={handleCsvImport}
+                    style={{ fontSize: '0.82rem', cursor: 'pointer' }}
+                  />
+                </div>
+              )}
+
+              {/* Tab 2: WhatsApp Chat */}
+              {importTab === 'chat' && (
+                <div style={{ background: '#F8FAFC', border: '2px dashed #CBD5E1', borderRadius: '12px', padding: '24px', textAlign: 'center' }}>
+                  <MessageCircle size={36} color="#15803D" style={{ margin: '0 auto 10px' }} />
+                  <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', color: '#1E293B', fontWeight: 700 }}>
+                    Upload Exported WhatsApp Chat (.txt)
+                  </h4>
+                  <p style={{ margin: '0 0 16px', fontSize: '0.78rem', color: '#64748B' }}>
+                    Export a chat or group without media from WhatsApp, and upload the .txt file to automatically extract participant numbers and emails.
+                  </p>
+                  <input
+                    type="file"
+                    accept=".txt"
+                    onChange={handleChatFile}
+                    style={{ fontSize: '0.82rem', cursor: 'pointer' }}
+                  />
+                </div>
+              )}
+
+              {/* Tab 3: Raw Text Paste */}
+              {importTab === 'text' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', marginBottom: '6px' }}>
+                    Paste Raw Text, Phone Numbers, or Email Dumps:
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={importText}
+                    onChange={(e) => setImportText(e.target.value)}
+                    placeholder="Paste email signatures, raw numbers like +91 9876543210, +65 91234567, contact@agency.com..."
+                    style={{ width: '100%', padding: '10px', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', marginBottom: '10px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRawTextParse}
+                    disabled={!importText.trim() || isParsingImport}
+                    style={{ padding: '8px 16px', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    Extract Contacts
+                  </button>
+                </div>
+              )}
+
+              {/* Feedback Message */}
+              {importSyncFeedback && (
+                <div style={{ marginTop: '16px', padding: '10px 14px', borderRadius: '8px', background: importSyncFeedback.startsWith('✅') ? '#ECFDF5' : '#FEF2F2', border: `1px solid ${importSyncFeedback.startsWith('✅') ? '#A7F3D0' : '#FECACA'}`, color: importSyncFeedback.startsWith('✅') ? '#065F46' : '#991B1B', fontWeight: 700, fontSize: '0.82rem' }}>
+                  {importSyncFeedback}
+                </div>
+              )}
+
+              {/* Extracted Preview */}
+              {parsedImportLeads.length > 0 && (
+                <div style={{ marginTop: '20px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.88rem' }}>
+                      Ready to Ingest: <span style={{ color: '#059669' }}>{parsedImportLeads.length} leads extracted</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setParsedImportLeads([])}
+                      style={{ fontSize: '0.74rem', color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Clear Parsed
+                    </button>
+                  </div>
+
+                  <div style={{ maxHeight: '180px', overflowY: 'auto', border: '1px solid #E2E8F0', borderRadius: '8px', marginBottom: '16px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
+                          <th style={{ padding: '6px 10px' }}>Contact</th>
+                          <th style={{ padding: '6px 10px' }}>Company</th>
+                          <th style={{ padding: '6px 10px' }}>Email</th>
+                          <th style={{ padding: '6px 10px' }}>Phone</th>
+                          <th style={{ padding: '6px 10px' }}>Source</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {parsedImportLeads.slice(0, 8).map((p, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                            <td style={{ padding: '6px 10px', fontWeight: 700 }}>{p.name || '—'}</td>
+                            <td style={{ padding: '6px 10px' }}>{p.company || '—'}</td>
+                            <td style={{ padding: '6px 10px', color: '#800020' }}>{p.email || '—'}</td>
+                            <td style={{ padding: '6px 10px' }}>{p.phone || '—'}</td>
+                            <td style={{ padding: '6px 10px', color: '#64748B' }}>{p.source}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSyncImportToSanity}
+                    disabled={isSyncingImport}
+                    style={{ width: '100%', padding: '10px 16px', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, fontSize: '0.88rem', cursor: isSyncingImport ? 'not-allowed' : 'pointer' }}
+                  >
+                    {isSyncingImport ? 'Syncing to Sanity...' : `🚀 Sync ${parsedImportLeads.length} Leads to Sanity Directory`}
+                  </button>
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '12px 24px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', background: '#F8FAFC' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsImportModalOpen(false)
+                  setParsedImportLeads([])
+                  setImportSyncFeedback(null)
+                }}
+                style={{ padding: '7px 16px', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Close
+              </button>
+            </div>
+
           </div>
         </div>
       )}

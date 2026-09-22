@@ -2013,7 +2013,8 @@ export default function AdminDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
                 {[
                   { name: 'Sanity Studio CMS', path: '/studio', desc: 'Manage database schemas & live content' },
-                  { name: 'Marketing Hub & Lead Ingestion', path: '/studio/tool/marketing-hub', desc: 'WhatsApp & Gmail lead extraction, outreach templates & CRM' },
+                  { name: 'Marketing & B2B Leads Directory', path: '/admin-dashboard#section-leads-directory', desc: 'WhatsApp, CSV & Text lead ingestion, CRM pipeline & newsletter sync' },
+                  { name: 'Email Campaigns & Subscribers Audience', path: '/admin-dashboard#section-newsletters', desc: 'Visual block builder, subscriber audience manager & Brevo dispatch' },
                   { name: 'B2B Agent Portal', path: '/agent-portal', desc: 'Partner agent workspace & dashboard' },
                   { name: 'Custom Package Builder & Land Quoter', path: '/custom-package', desc: 'FIT quotation engine, Ready-Made Land Packages (No Hotels), PDF & Flyer generator' },
                   { name: 'Ready-Made Land Packages (No Hotels)', path: '/ready-made', desc: 'Dedicated B2B land packages (13-seater minibus & SIC, max 12 pax)' },

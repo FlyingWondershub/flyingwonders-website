@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
+import * as XLSX from 'xlsx'
 import {
   Mail, Plus, Edit3, Send, Trash2, Eye, RefreshCw, CheckCircle,
   AlertCircle, Sparkles, X, ChevronRight, Users, Clock, CheckCheck,
   FileText, Smartphone, Monitor, ShieldCheck, Check, MessageSquare,
-  Image as ImageIcon, Upload
+  Image as ImageIcon, Upload, Download, UserPlus, Search, Filter, CheckCircle2
 } from 'lucide-react'
 
 interface Campaign {
@@ -364,6 +365,24 @@ export default function NewsletterCampaignManager() {
   const [dispatchingId, setDispatchingId] = useState<string | null>(null)
   const [dispatchResult, setDispatchResult] = useState<string | null>(null)
 
+  // Section Mode: 'campaigns' | 'subscribers'
+  const [managerTab, setManagerTab] = useState<'campaigns' | 'subscribers'>('campaigns')
+
+  // Subscribers Management State
+  const [subscribersList, setSubscribersList] = useState<any[]>([])
+  const [loadingSubscribers, setLoadingSubscribers] = useState(false)
+  const [subscriberSearch, setSubscriberSearch] = useState('')
+  const [subscriberFilterAudience, setSubscriberFilterAudience] = useState('all')
+  const [subscriberFilterStatus, setSubscriberFilterStatus] = useState('all')
+
+  // Add Subscriber Form
+  const [isAddingSub, setIsAddingSub] = useState(false)
+  const [newSubEmail, setNewSubEmail] = useState('')
+  const [newSubName, setNewSubName] = useState('')
+  const [newSubCompany, setNewSubCompany] = useState('')
+  const [newSubAudience, setNewSubAudience] = useState<'b2b' | 'b2c' | 'lead'>('b2b')
+  const [subActionFeedback, setSubActionFeedback] = useState<string | null>(null)
+
   // Real-time compiled HTML for editor preview
   const liveCompiledHtml = useMemo(() => {
     if (editorMode === 'visual') {
@@ -623,6 +642,136 @@ export default function NewsletterCampaignManager() {
     }
   }
 
+  const fetchSubscribersFull = async () => {
+    setLoadingSubscribers(true)
+    try {
+      const res = await fetch('/api/newsletter/subscribe?full=true')
+      const data = await res.json()
+      if (data.success) {
+        setSubscribersList(data.subscribers || [])
+        setSubscriberCount((data.subscribers || []).filter((s: any) => s.isActive).length)
+      }
+    } catch (err) {
+      console.error('Failed to fetch full subscribers:', err)
+    } finally {
+      setLoadingSubscribers(false)
+    }
+  }
+
+  const handleToggleSubscriberStatus = async (id: string, currentActive: boolean) => {
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, isActive: !currentActive }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSubscribersList(prev => prev.map(s => s._id === id ? { ...s, isActive: !currentActive } : s))
+        setSubActionFeedback(`Subscriber status updated to ${!currentActive ? 'Active' : 'Inactive'}.`)
+        setSubscriberCount(prev => (!currentActive ? prev + 1 : Math.max(0, prev - 1)))
+        setTimeout(() => setSubActionFeedback(null), 3000)
+      }
+    } catch (err: any) {
+      alert(`Failed to update subscriber: ${err.message}`)
+    }
+  }
+
+  const handleDeleteSubscriber = async (id: string, email: string) => {
+    if (!confirm(`Are you sure you want to delete subscriber "${email}"? This cannot be undone.`)) return
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSubscribersList(prev => prev.filter(s => s._id !== id))
+        setSubscriberCount(prev => Math.max(0, prev - 1))
+        setSubActionFeedback(`Subscriber "${email}" removed.`)
+        setTimeout(() => setSubActionFeedback(null), 3000)
+      }
+    } catch (err: any) {
+      alert(`Delete failed: ${err.message}`)
+    }
+  }
+
+  const handleAddSubscriberSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newSubEmail || !newSubEmail.includes('@')) {
+      alert('Please enter a valid email address.')
+      return
+    }
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newSubEmail.trim().toLowerCase(),
+          name: newSubName.trim() || undefined,
+          company: newSubCompany.trim() || undefined,
+          audienceType: newSubAudience,
+          source: 'admin_dashboard',
+          skipWelcomeEmail: true,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSubActionFeedback(`✅ ${data.message || 'Subscriber added successfully!'}`)
+        setNewSubEmail('')
+        setNewSubName('')
+        setNewSubCompany('')
+        setIsAddingSub(false)
+        await fetchSubscribersFull()
+        setTimeout(() => setSubActionFeedback(null), 4000)
+      } else {
+        alert(data.error || 'Failed to add subscriber')
+      }
+    } catch (err: any) {
+      alert(`Error: ${err.message}`)
+    }
+  }
+
+  const handleExportSubscribers = () => {
+    const list = subscribersList.length > 0 ? subscribersList : []
+    if (list.length === 0) {
+      alert('No subscribers available to export.')
+      return
+    }
+    const exportRows = list.map(s => ({
+      'Email': s.email,
+      'Name': s.name || '',
+      'Company': s.company || '',
+      'Audience Type': s.audienceType === 'b2b' ? 'B2B Partner' : 'B2C Website',
+      'Source': s.source || 'website',
+      'Status': s.isActive ? 'Active' : 'Inactive',
+      'Date Subscribed': s.subscribedAt ? new Date(s.subscribedAt).toLocaleDateString() : (s._createdAt ? new Date(s._createdAt).toLocaleDateString() : '')
+    }))
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(exportRows)
+    XLSX.utils.book_append_sheet(wb, ws, 'Subscribers')
+    XLSX.writeFile(wb, `FlyingWonders_Subscribers_${new Date().toISOString().slice(0, 10)}.xlsx`)
+  }
+
+  const filteredSubscribers = subscribersList.filter(s => {
+    if (subscriberSearch) {
+      const q = subscriberSearch.toLowerCase()
+      const match = (s.email && s.email.toLowerCase().includes(q)) ||
+                    (s.name && s.name.toLowerCase().includes(q)) ||
+                    (s.company && s.company.toLowerCase().includes(q))
+      if (!match) return false
+    }
+    if (subscriberFilterAudience !== 'all') {
+      if ((s.audienceType || 'b2b') !== subscriberFilterAudience) return false
+    }
+    if (subscriberFilterStatus !== 'all') {
+      if (subscriberFilterStatus === 'active' && !s.isActive) return false
+      if (subscriberFilterStatus === 'inactive' && s.isActive) return false
+    }
+    return true
+  })
+
   return (
     <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
       {/* Top Banner & Action Controls */}
@@ -669,168 +818,467 @@ export default function NewsletterCampaignManager() {
         </div>
       </div>
 
-      {/* Global Alerts / Dispatch Status */}
-      {dispatchResult && (
-        <div style={{ background: dispatchResult.startsWith('🎉') ? '#ECFDF5' : '#FEF2F2', border: `1px solid ${dispatchResult.startsWith('🎉') ? '#A7F3D0' : '#FECACA'}`, borderRadius: '10px', padding: '12px 16px', marginBottom: '20px', color: dispatchResult.startsWith('🎉') ? '#065F46' : '#991B1B', fontWeight: 600, fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {dispatchResult.startsWith('🎉') ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
-          <span>{dispatchResult}</span>
-        </div>
-      )}
+      {/* View Switcher: Campaigns vs Subscribers Audience */}
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px', marginBottom: '20px' }}>
+        <button
+          type="button"
+          onClick={() => setManagerTab('campaigns')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            background: managerTab === 'campaigns' ? '#800020' : '#F1F5F9',
+            color: managerTab === 'campaigns' ? '#FFF' : '#475569',
+            fontWeight: 700,
+            fontSize: '0.84rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <Mail size={15} />
+          <span>Email Campaigns & Templates ({campaigns.length})</span>
+        </button>
 
-      {testSendResult && (
-        <div style={{ background: testSendResult.startsWith('Error') ? '#FEF2F2' : '#EFF6FF', border: `1px solid ${testSendResult.startsWith('Error') ? '#FECACA' : '#BFDBFE'}`, borderRadius: '10px', padding: '12px 16px', marginBottom: '20px', color: testSendResult.startsWith('Error') ? '#991B1B' : '#1E40AF', fontWeight: 600, fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Sparkles size={18} />
-          <span>{testSendResult}</span>
-        </div>
-      )}
-
-      {/* Test Recipient Email Bar */}
-      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '10px 16px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#475569' }}>
-          <Sparkles size={16} color="#D97706" />
-          <span>Quick test email destination:</span>
-          <input
-            type="email"
-            value={testEmail}
-            onChange={(e) => setTestEmail(e.target.value)}
-            placeholder="admin@example.com"
-            style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', width: '240px', background: '#FFF', color: '#0F172A' }}
-          />
-        </div>
-        <div style={{ fontSize: '0.74rem', color: '#64748B' }}>
-          Emails are dispatched instantly through Brevo's verified DKIM domain (<strong style={{ color: '#800020' }}>contact@flyingwonders.net</strong>).
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setManagerTab('subscribers')
+            fetchSubscribersFull()
+          }}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            background: managerTab === 'subscribers' ? '#800020' : '#F1F5F9',
+            color: managerTab === 'subscribers' ? '#FFF' : '#475569',
+            fontWeight: 700,
+            fontSize: '0.84rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <Users size={15} />
+          <span>Subscribers Audience ({subscriberCount})</span>
+        </button>
       </div>
 
-      {/* Campaigns & Templates List */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B', fontSize: '0.88rem' }}>
-          Loading email templates...
-        </div>
-      ) : campaigns.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 24px', background: '#F8FAFC', border: '2px dashed #E2E8F0', borderRadius: '12px' }}>
-          <FileText size={36} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1E293B', margin: '0 0 6px' }}>No Email Templates Created Yet</h3>
-          <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 16px' }}>Use our visual block builder with your official signature to create your first campaign.</p>
-          <button
-            onClick={handleOpenNew}
-            style={{ padding: '9px 18px', background: '#800020', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}
-          >
-            + Create First Template
-          </button>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {campaigns.map((c) => {
-            const isSent = c.status === 'sent'
-            return (
-              <div
-                key={c._id}
-                style={{
-                  border: '1px solid #E2E8F0',
-                  borderRadius: '12px',
-                  padding: '16px 20px',
-                  background: isSent ? '#F8FAFC' : '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '16px',
-                  transition: 'box-shadow 0.15s ease'
-                }}
+      {/* ── VIEW 1: EMAIL CAMPAIGNS & TEMPLATES ── */}
+      {managerTab === 'campaigns' && (
+        <div>
+          {/* Global Alerts / Dispatch Status */}
+          {dispatchResult && (
+            <div style={{ background: dispatchResult.startsWith('🎉') ? '#ECFDF5' : '#FEF2F2', border: `1px solid ${dispatchResult.startsWith('🎉') ? '#A7F3D0' : '#FECACA'}`, borderRadius: '10px', padding: '12px 16px', marginBottom: '20px', color: dispatchResult.startsWith('🎉') ? '#065F46' : '#991B1B', fontWeight: 600, fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {dispatchResult.startsWith('🎉') ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+              <span>{dispatchResult}</span>
+            </div>
+          )}
+
+          {testSendResult && (
+            <div style={{ background: testSendResult.startsWith('Error') ? '#FEF2F2' : '#EFF6FF', border: `1px solid ${testSendResult.startsWith('Error') ? '#FECACA' : '#BFDBFE'}`, borderRadius: '10px', padding: '12px 16px', marginBottom: '20px', color: testSendResult.startsWith('Error') ? '#991B1B' : '#1E40AF', fontWeight: 600, fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Sparkles size={18} />
+              <span>{testSendResult}</span>
+            </div>
+          )}
+
+          {/* Test Recipient Email Bar */}
+          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '10px 16px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#475569' }}>
+              <Sparkles size={16} color="#D97706" />
+              <span>Quick test email destination:</span>
+              <input
+                type="email"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                placeholder="admin@example.com"
+                style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.82rem', width: '240px', background: '#FFF', color: '#0F172A' }}
+              />
+            </div>
+            <div style={{ fontSize: '0.74rem', color: '#64748B' }}>
+              Emails are dispatched instantly through Brevo's verified DKIM domain (<strong style={{ color: '#800020' }}>contact@flyingwonders.net</strong>).
+            </div>
+          </div>
+
+          {/* Campaigns & Templates List */}
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B', fontSize: '0.88rem' }}>
+              Loading email templates...
+            </div>
+          ) : campaigns.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 24px', background: '#F8FAFC', border: '2px dashed #E2E8F0', borderRadius: '12px' }}>
+              <FileText size={36} color="#94A3B8" style={{ margin: '0 auto 12px' }} />
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1E293B', margin: '0 0 6px' }}>No Email Templates Created Yet</h3>
+              <p style={{ fontSize: '0.85rem', color: '#64748B', margin: '0 0 16px' }}>Use our visual block builder with your official signature to create your first campaign.</p>
+              <button
+                onClick={handleOpenNew}
+                style={{ padding: '9px 18px', background: '#800020', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}
               >
-                <div style={{ flex: '1 1 350px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '3px 8px',
-                      borderRadius: '6px',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      background: isSent ? '#ECFDF5' : '#FEF3C7',
-                      color: isSent ? '#065F46' : '#92400E',
-                      border: `1px solid ${isSent ? '#A7F3D0' : '#FDE68A'}`
-                    }}>
-                      {isSent ? <CheckCheck size={12} /> : <Clock size={12} />}
-                      {isSent ? 'SENT' : 'DRAFT'}
-                    </span>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                      {c.title}
-                    </h3>
-                  </div>
+                + Create First Template
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
+              {campaigns.map((c) => {
+                const isSent = c.status === 'sent'
+                return (
+                  <div
+                    key={c._id}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '12px',
+                      padding: '18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                      position: 'relative'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1E293B' }}>
+                          {c.title}
+                        </h4>
+                        <span
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            background: isSent ? '#ECFDF5' : '#F1F5F9',
+                            color: isSent ? '#065F46' : '#475569',
+                            border: `1px solid ${isSent ? '#A7F3D0' : '#E2E8F0'}`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          {isSent ? <CheckCheck size={12} /> : <Clock size={12} />}
+                          {isSent ? 'Sent' : 'Draft'}
+                        </span>
+                      </div>
 
-                  <div style={{ fontSize: '0.84rem', color: '#475569', marginBottom: '4px' }}>
-                    <strong>Subject:</strong> {c.subject}
-                  </div>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Mail size={12} />
+                        <span style={{ fontWeight: 600, color: '#334155' }}>Subject:</span> {c.subject}
+                      </p>
 
-                  <div style={{ fontSize: '0.75rem', color: '#64748B', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                    {isSent ? (
-                      <>
-                        <span>Sent on: <strong>{c.sentAt ? new Date(c.sentAt).toLocaleDateString() : 'N/A'}</strong></span>
-                        <span>Delivered to: <strong>{c.sentToCount || 0} recipients</strong></span>
-                      </>
-                    ) : (
-                      <span>Created: <strong>{c._createdAt ? new Date(c._createdAt).toLocaleDateString() : 'Recent'}</strong></span>
-                    )}
+                      {isSent && (
+                        <div style={{ background: '#F8FAFC', padding: '8px 12px', borderRadius: '6px', fontSize: '0.74rem', color: '#475569', marginBottom: '14px', border: '1px solid #E2E8F0' }}>
+                          <div>Dispatched: <strong>{c.sentAt ? new Date(c.sentAt).toLocaleString() : 'N/A'}</strong></div>
+                          <div>Total Recipients: <strong>{c.sentToCount || 0}</strong> subscribers</div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', borderTop: '1px solid #F1F5F9', paddingTop: '12px', marginTop: '8px' }}>
+                      <button
+                        onClick={() => setPreviewCampaign(c)}
+                        style={{ padding: '6px 12px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}
+                      >
+                        <Eye size={13} />
+                        Preview
+                      </button>
+
+                      <button
+                        onClick={() => handleSendTestEmail(c.subject, c.content, c._id)}
+                        disabled={sendingTestId === c._id}
+                        style={{ padding: '6px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '5px' }}
+                        title={`Send test to ${testEmail}`}
+                      >
+                        <Send size={13} className={sendingTestId === c._id ? 'animate-spin' : ''} />
+                        {sendingTestId === c._id ? 'Sending...' : 'Test Send'}
+                      </button>
+
+                      {!isSent && (
+                        <>
+                          <button
+                            onClick={() => handleOpenEdit(c)}
+                            style={{ padding: '6px 12px', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, color: '#92400E', display: 'flex', alignItems: 'center', gap: '5px' }}
+                          >
+                            <Edit3 size={13} />
+                            Edit
+                          </button>
+
+                          <button
+                            onClick={() => handleDispatchCampaign(c._id, c.title)}
+                            disabled={dispatchingId === c._id || subscriberCount === 0}
+                            style={{ padding: '6px 14px', background: '#800020', border: 'none', borderRadius: '6px', cursor: dispatchingId === c._id ? 'not-allowed' : 'pointer', fontSize: '0.78rem', fontWeight: 700, color: '#FFF', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            title={`Blast to ${subscriberCount} subscribers`}
+                          >
+                            <Send size={13} className={dispatchingId === c._id ? 'animate-spin' : ''} />
+                            {dispatchingId === c._id ? 'Dispatching...' : 'Dispatch'}
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteCampaign(c._id, c.title)}
+                            style={{ padding: '6px 8px', background: '#FFF', border: '1px solid #FECACA', borderRadius: '6px', cursor: 'pointer', color: '#DC2626' }}
+                            title="Delete draft template"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── VIEW 2: SUBSCRIBERS AUDIENCE LIST ── */}
+      {managerTab === 'subscribers' && (
+        <div>
+          {/* Action Feedback */}
+          {subActionFeedback && (
+            <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '10px', padding: '10px 16px', marginBottom: '16px', color: '#065F46', fontWeight: 700, fontSize: '0.84rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle2 size={16} color="#059669" />
+              <span>{subActionFeedback}</span>
+            </div>
+          )}
+
+          {/* Controls Bar: Search, Filters, Add, Export */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '12px 16px', borderRadius: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '220px' }}>
+              <Search size={15} color="#64748B" />
+              <input
+                type="text"
+                value={subscriberSearch}
+                onChange={(e) => setSubscriberSearch(e.target.value)}
+                placeholder="Search by email, name, or company..."
+                style={{ width: '100%', padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <select
+                value={subscriberFilterAudience}
+                onChange={(e) => setSubscriberFilterAudience(e.target.value)}
+                style={{ padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', background: '#FFF', color: '#0F172A' }}
+              >
+                <option value="all">All Audiences</option>
+                <option value="b2b">🏢 B2B Travel Partners</option>
+                <option value="b2c">🌐 B2C Website Subscribers</option>
+                <option value="lead">🎯 Leads / Inquiries</option>
+              </select>
+
+              <select
+                value={subscriberFilterStatus}
+                onChange={(e) => setSubscriberFilterStatus(e.target.value)}
+                style={{ padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', background: '#FFF', color: '#0F172A' }}
+              >
+                <option value="all">All Statuses</option>
+                <option value="active">🟢 Active</option>
+                <option value="inactive">🔴 Inactive / Unsubscribed</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={handleExportSubscribers}
+                style={{ padding: '6px 12px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, color: '#334155', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                title="Download subscribers list (.xlsx)"
+              >
+                <Download size={13} color="#0F4C3A" />
+                Export (.xlsx)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsAddingSub(!isAddingSub)}
+                style={{ padding: '6px 14px', background: '#800020', color: '#FFF', border: 'none', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <UserPlus size={13} />
+                {isAddingSub ? 'Cancel' : '+ Add Subscriber'}
+              </button>
+            </div>
+          </div>
+
+          {/* Add Subscriber Inline Form */}
+          {isAddingSub && (
+            <form onSubmit={handleAddSubscriberSubmit} style={{ background: '#FFF', border: '1px solid #FECACA', borderRadius: '10px', padding: '16px', marginBottom: '20px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '0.92rem', fontWeight: 800, color: '#800020' }}>
+                Add Contact to Newsletter Subscribers List
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                    Email Address <span style={{ color: '#DC2626' }}>*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={newSubEmail}
+                    onChange={(e) => setNewSubEmail(e.target.value)}
+                    placeholder="contact@agency.com"
+                    style={{ width: '100%', padding: '6px 8px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem' }}
+                  />
                 </div>
-
-                {/* Actions Right */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <button
-                    onClick={() => setPreviewCampaign(c)}
-                    style={{ padding: '6px 12px', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}
-                    title="Preview rendered email"
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                    Contact Name:
+                  </label>
+                  <input
+                    type="text"
+                    value={newSubName}
+                    onChange={(e) => setNewSubName(e.target.value)}
+                    placeholder="e.g. Rahul Sharma"
+                    style={{ width: '100%', padding: '6px 8px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                    Company / Agency:
+                  </label>
+                  <input
+                    type="text"
+                    value={newSubCompany}
+                    onChange={(e) => setNewSubCompany(e.target.value)}
+                    placeholder="e.g. Royal Tours"
+                    style={{ width: '100%', padding: '6px 8px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#334155', marginBottom: '3px' }}>
+                    Audience Group:
+                  </label>
+                  <select
+                    value={newSubAudience}
+                    onChange={(e) => setNewSubAudience(e.target.value as any)}
+                    style={{ width: '100%', padding: '6px 8px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', background: '#FFF' }}
                   >
-                    <Eye size={13} />
-                    Preview
-                  </button>
-
-                  <button
-                    onClick={() => handleSendTestEmail(c.subject, c.content, c._id)}
-                    disabled={sendingTestId === c._id}
-                    style={{ padding: '6px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#1D4ED8', display: 'flex', alignItems: 'center', gap: '5px' }}
-                    title={`Send preview email to ${testEmail}`}
-                  >
-                    <Sparkles size={13} className={sendingTestId === c._id ? 'animate-spin' : ''} />
-                    {sendingTestId === c._id ? 'Sending...' : 'Test Send'}
-                  </button>
-
-                  {!isSent && (
-                    <>
-                      <button
-                        onClick={() => handleOpenEdit(c)}
-                        style={{ padding: '6px 12px', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, color: '#92400E', display: 'flex', alignItems: 'center', gap: '5px' }}
-                      >
-                        <Edit3 size={13} />
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => handleDispatchCampaign(c._id, c.title)}
-                        disabled={dispatchingId === c._id || subscriberCount === 0}
-                        style={{ padding: '6px 14px', background: '#800020', border: 'none', borderRadius: '6px', cursor: dispatchingId === c._id ? 'not-allowed' : 'pointer', fontSize: '0.78rem', fontWeight: 700, color: '#FFF', display: 'flex', alignItems: 'center', gap: '6px' }}
-                        title={`Blast to ${subscriberCount} subscribers`}
-                      >
-                        <Send size={13} className={dispatchingId === c._id ? 'animate-spin' : ''} />
-                        {dispatchingId === c._id ? 'Dispatching...' : 'Dispatch'}
-                      </button>
-
-                      <button
-                        onClick={() => handleDeleteCampaign(c._id, c.title)}
-                        style={{ padding: '6px 8px', background: '#FFF', border: '1px solid #FECACA', borderRadius: '6px', cursor: 'pointer', color: '#DC2626' }}
-                        title="Delete draft template"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </>
-                  )}
+                    <option value="b2b">🏢 B2B Travel Partner</option>
+                    <option value="b2c">🌐 B2C Website Subscriber</option>
+                    <option value="lead">🎯 Lead / Inquiry</option>
+                  </select>
                 </div>
               </div>
-            )
-          })}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsAddingSub(false)}
+                  style={{ padding: '6px 12px', background: '#F1F5F9', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '6px 16px', background: '#800020', color: '#FFF', border: 'none', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Save Subscriber
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Subscribers Table */}
+          {loadingSubscribers ? (
+            <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B', fontSize: '0.88rem' }}>
+              Loading subscribers list...
+            </div>
+          ) : filteredSubscribers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', background: '#F8FAFC', borderRadius: '10px', border: '1px dashed #CBD5E1' }}>
+              <p style={{ color: '#64748B', margin: 0, fontSize: '0.9rem' }}>No subscribers match your search or filter criteria.</p>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto', border: '1px solid #E2E8F0', borderRadius: '10px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ background: '#F8FAFC', borderBottom: '2px solid #E2E8F0', color: '#475569', fontWeight: 700 }}>
+                    <th style={{ padding: '10px 14px' }}>Subscriber Email</th>
+                    <th style={{ padding: '10px 14px' }}>Contact & Company</th>
+                    <th style={{ padding: '10px 14px' }}>Audience Group</th>
+                    <th style={{ padding: '10px 14px' }}>Source</th>
+                    <th style={{ padding: '10px 14px' }}>Date Subscribed</th>
+                    <th style={{ padding: '10px 14px' }}>Status</th>
+                    <th style={{ width: '48px', padding: '10px 10px', textAlign: 'center' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSubscribers.map((s) => {
+                    const isB2B = s.audienceType === 'b2b' || !s.audienceType
+                    const dateStr = s.subscribedAt ? new Date(s.subscribedAt).toLocaleDateString() : (s._createdAt ? new Date(s._createdAt).toLocaleDateString() : '—')
+
+                    return (
+                      <tr key={s._id} style={{ borderBottom: '1px solid #F1F5F9', background: s.isActive ? 'transparent' : '#F8FAFC' }}>
+                        <td style={{ padding: '12px 14px', fontWeight: 700, color: s.isActive ? '#0F172A' : '#94A3B8' }}>
+                          {s.email}
+                        </td>
+                        <td style={{ padding: '12px 14px' }}>
+                          <div style={{ fontWeight: 600, color: '#1E293B' }}>{s.name || '—'}</div>
+                          {s.company && <div style={{ fontSize: '0.74rem', color: '#64748B' }}>{s.company}</div>}
+                        </td>
+                        <td style={{ padding: '12px 14px' }}>
+                          <span style={{
+                            display: 'inline-block',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            background: isB2B ? '#EEF2FF' : '#ECFDF5',
+                            color: isB2B ? '#4338CA' : '#065F46',
+                            border: `1px solid ${isB2B ? '#C7D2FE' : '#A7F3D0'}`
+                          }}>
+                            {isB2B ? '🏢 B2B Partner' : '🌐 B2C Consumer'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 14px', fontSize: '0.74rem', color: '#64748B' }}>
+                          {s.source || 'website'}
+                        </td>
+                        <td style={{ padding: '12px 14px', fontSize: '0.76rem', color: '#64748B' }}>
+                          {dateStr}
+                        </td>
+                        <td style={{ padding: '12px 14px' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSubscriberStatus(s._id, !!s.isActive)}
+                            style={{
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              border: `1px solid ${s.isActive ? '#BBF7D0' : '#FECACA'}`,
+                              background: s.isActive ? '#DCFCE7' : '#FEE2E2',
+                              color: s.isActive ? '#15803D' : '#991B1B'
+                            }}
+                            title={s.isActive ? 'Click to unsubscribe / deactivate' : 'Click to reactivate'}
+                          >
+                            {s.isActive ? '🟢 Active' : '🔴 Inactive'}
+                          </button>
+                        </td>
+                        <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSubscriber(s._id, s.email)}
+                            style={{
+                              padding: '5px 7px',
+                              background: '#FFF',
+                              border: '1px solid #FECACA',
+                              borderRadius: '6px',
+                              color: '#DC2626',
+                              cursor: 'pointer'
+                            }}
+                            title="Delete subscriber record"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <div style={{ padding: '10px 14px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', fontSize: '0.76rem', color: '#64748B' }}>
+                Showing <strong>{filteredSubscribers.length}</strong> of <strong>{subscribersList.length}</strong> subscribers
+              </div>
+            </div>
+          )}
         </div>
       )}
 

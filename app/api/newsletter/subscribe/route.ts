@@ -13,13 +13,33 @@ const writeClient = createClient({
   useCdn: false,
 })
 
-// GET: Fetch list of active subscriber emails (for instant status checking in directories)
-export async function GET() {
+// GET: Fetch list of active subscriber emails or full subscriber records
+export async function GET(req: Request) {
   try {
-    const subscribers = await writeClient.fetch(
+    const { searchParams } = new URL(req.url)
+    const full = searchParams.get('full') === 'true'
+
+    if (full) {
+      const subscribers = await writeClient.fetch(
+        `*[_type == "newsletterSubscriber"] | order(_createdAt desc) [0...1000] {
+          _id,
+          email,
+          name,
+          company,
+          audienceType,
+          source,
+          isActive,
+          subscribedAt,
+          _createdAt
+        }`
+      )
+      return NextResponse.json({ success: true, subscribers: subscribers || [] })
+    }
+
+    const activeSubscribers = await writeClient.fetch(
       `*[_type == "newsletterSubscriber" && isActive == true].email`
     )
-    const emails = (subscribers || []).map((e: string) => e.toLowerCase().trim())
+    const emails = (activeSubscribers || []).map((e: string) => e.toLowerCase().trim())
     return NextResponse.json({ success: true, subscribers: emails })
   } catch (err: any) {
     console.error('Fetch Subscribers Error:', err)
@@ -152,3 +172,42 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })
   }
 }
+
+// PATCH: Toggle active status or update subscriber
+export async function PATCH(req: Request) {
+  try {
+    const { id, isActive, audienceType, name, company } = await req.json()
+    if (!id) {
+      return NextResponse.json({ error: 'Subscriber ID is required.' }, { status: 400 })
+    }
+
+    const patch = writeClient.patch(id)
+    if (typeof isActive === 'boolean') patch.set({ isActive })
+    if (audienceType) patch.set({ audienceType })
+    if (name !== undefined) patch.set({ name })
+    if (company !== undefined) patch.set({ company })
+
+    await patch.commit()
+    return NextResponse.json({ success: true, message: 'Subscriber updated successfully.' })
+  } catch (err: any) {
+    console.error('Update Subscriber Error:', err)
+    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })
+  }
+}
+
+// DELETE: Remove a subscriber
+export async function DELETE(req: Request) {
+  try {
+    const { id } = await req.json()
+    if (!id) {
+      return NextResponse.json({ error: 'Subscriber ID is required.' }, { status: 400 })
+    }
+
+    await writeClient.delete(id)
+    return NextResponse.json({ success: true, message: 'Subscriber removed successfully.' })
+  } catch (err: any) {
+    console.error('Delete Subscriber Error:', err)
+    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })
+  }
+}
+
