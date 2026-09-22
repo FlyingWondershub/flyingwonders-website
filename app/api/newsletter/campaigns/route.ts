@@ -27,11 +27,16 @@ export async function GET(req: Request) {
         _id,
         title,
         subject,
+        preheader,
         content,
         structuredData,
         status,
         sentAt,
         sentToCount,
+        dispatchCount,
+        lastSentAt,
+        lastSentToCount,
+        dispatchHistory,
         _createdAt
       }`
     )
@@ -51,7 +56,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { title, subject, content, structuredData } = body
+    const { title, subject, preheader, content, structuredData } = body
 
     if (!title || !subject || !content) {
       return NextResponse.json({ error: 'Title, subject, and content are required.' }, { status: 400 })
@@ -61,8 +66,10 @@ export async function POST(req: Request) {
       _type: 'newsletterCampaign',
       title: title.trim(),
       subject: subject.trim(),
+      preheader: preheader ? preheader.trim() : undefined,
       content: content.trim(),
       status: 'draft',
+      dispatchCount: 0,
     }
     if (structuredData) doc.structuredData = typeof structuredData === 'string' ? structuredData : JSON.stringify(structuredData)
 
@@ -79,7 +86,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json()
-    const { campaignId, title, subject, content, structuredData } = body
+    const { campaignId, title, subject, preheader, content, structuredData } = body
 
     if (!campaignId) {
       return NextResponse.json({ error: 'Campaign ID is required.' }, { status: 400 })
@@ -88,6 +95,7 @@ export async function PUT(req: Request) {
     const patchData: any = {}
     if (title) patchData.title = title.trim()
     if (subject) patchData.subject = subject.trim()
+    if (preheader !== undefined) patchData.preheader = preheader ? preheader.trim() : ''
     if (content) patchData.content = content.trim()
     if (structuredData !== undefined) {
       patchData.structuredData = typeof structuredData === 'string' ? structuredData : JSON.stringify(structuredData)
@@ -105,7 +113,7 @@ export async function PUT(req: Request) {
   }
 }
 
-// DELETE: Delete a draft campaign template
+// DELETE: Delete a campaign template
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
@@ -115,7 +123,6 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'Campaign ID is required.' }, { status: 400 })
     }
 
-    // Verify it is draft
     const campaign = await writeClient.fetch(
       `*[_type == "newsletterCampaign" && _id == $campaignId][0]`,
       { campaignId }
@@ -125,12 +132,8 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
     }
 
-    if (campaign.status === 'sent') {
-      return NextResponse.json({ error: 'Cannot delete already dispatched campaigns for audit record preservation.' }, { status: 400 })
-    }
-
     await writeClient.delete(campaignId)
-    return NextResponse.json({ success: true, message: 'Campaign deleted successfully.' })
+    return NextResponse.json({ success: true, message: 'Campaign template deleted successfully.' })
   } catch (err: any) {
     console.error('Delete Campaign Error:', err)
     return NextResponse.json({ error: err.message || 'Failed to delete campaign' }, { status: 500 })

@@ -6,18 +6,33 @@ import {
   Mail, Plus, Edit3, Send, Trash2, Eye, RefreshCw, CheckCircle,
   AlertCircle, Sparkles, X, ChevronRight, Users, Clock, CheckCheck,
   FileText, Smartphone, Monitor, ShieldCheck, Check, MessageSquare,
-  Image as ImageIcon, Upload, Download, UserPlus, Search, Filter, CheckCircle2
+  Image as ImageIcon, Upload, Download, UserPlus, Search, Filter, CheckCircle2,
+  History, Copy
 } from 'lucide-react'
+
+export interface DispatchHistoryItem {
+  dispatchedAt: string
+  audience: string
+  sentCount: number
+  errorCount: number
+  adminEmail?: string
+  notes?: string
+}
 
 interface Campaign {
   _id: string
   title: string
   subject: string
+  preheader?: string
   content: string
   structuredData?: string
   status: 'draft' | 'sent'
   sentAt?: string
   sentToCount?: number
+  dispatchCount?: number
+  lastSentAt?: string
+  lastSentToCount?: number
+  dispatchHistory?: DispatchHistoryItem[]
   _createdAt?: string
 }
 
@@ -339,6 +354,7 @@ export default function NewsletterCampaignManager() {
   const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null)
   const [formTitle, setFormTitle] = useState('')
   const [formSubject, setFormSubject] = useState('')
+  const [formPreheader, setFormPreheader] = useState('')
   
   // Visual Builder Form State
   const [structuredData, setStructuredData] = useState<StructuredCampaignData>(DEFAULT_STRUCTURED_DATA)
@@ -361,7 +377,20 @@ export default function NewsletterCampaignManager() {
   const [sendingTestId, setSendingTestId] = useState<string | null>(null)
   const [testSendResult, setTestSendResult] = useState<string | null>(null)
 
-  // Dispatch Campaign State
+  // Targeted Audience Dispatch Modal State
+  const [dispatchModalCampaign, setDispatchModalCampaign] = useState<Campaign | null>(null)
+  const [targetAudience, setTargetAudience] = useState<'all' | 'b2b' | 'b2c' | 'new' | 'custom'>('all')
+  const [customEmailsInput, setCustomEmailsInput] = useState('')
+  const [isDispatchingModal, setIsDispatchingModal] = useState(false)
+  const [dispatchModalFeedback, setDispatchModalFeedback] = useState<{ success: boolean; message: string } | null>(null)
+
+  // Dispatch History Audit Modal State
+  const [historyModalCampaign, setHistoryModalCampaign] = useState<Campaign | null>(null)
+
+  // WhatsApp Copy Feedback State
+  const [copiedWhatsAppId, setCopiedWhatsAppId] = useState<string | null>(null)
+
+  // Dispatch Campaign State (Legacy / Global notice)
   const [dispatchingId, setDispatchingId] = useState<string | null>(null)
   const [dispatchResult, setDispatchResult] = useState<string | null>(null)
 
@@ -416,6 +445,7 @@ export default function NewsletterCampaignManager() {
     setEditingCampaignId(null)
     setFormTitle('Singapore Seasonal Escapes')
     setFormSubject('🌟 Exclusive: Singapore Hidden Gems & DMC Rates for Your Trip')
+    setFormPreheader('DMC nett rates & seasonal packages for your Singapore journey')
     setStructuredData(DEFAULT_STRUCTURED_DATA)
     setRawHtmlContent(compileEmailHtml(DEFAULT_STRUCTURED_DATA))
     setEditorMode('visual')
@@ -427,6 +457,33 @@ export default function NewsletterCampaignManager() {
     setEditingCampaignId(c._id)
     setFormTitle(c.title)
     setFormSubject(c.subject)
+    setFormPreheader(c.preheader || '')
+    setRawHtmlContent(c.content)
+
+    if (c.structuredData) {
+      try {
+        const parsed = JSON.parse(c.structuredData)
+        setStructuredData({
+          ...DEFAULT_STRUCTURED_DATA,
+          ...parsed,
+        })
+        setEditorMode('visual')
+      } catch (e) {
+        setEditorMode('raw')
+      }
+    } else {
+      setEditorMode('raw')
+    }
+
+    setSaveMessage(null)
+    setIsEditorOpen(true)
+  }
+
+  const handleDuplicateCampaign = (c: Campaign) => {
+    setEditingCampaignId(null)
+    setFormTitle(`${c.title} (Copy)`)
+    setFormSubject(c.subject)
+    setFormPreheader(c.preheader || '')
     setRawHtmlContent(c.content)
 
     if (c.structuredData) {
@@ -452,6 +509,7 @@ export default function NewsletterCampaignManager() {
     if (confirm(`Apply the "${preset.name}" preset? This will populate the editor with this template's fields.`)) {
       setFormTitle(preset.title)
       setFormSubject(preset.subject)
+      setFormPreheader(preset.data.headline || '')
       setStructuredData(preset.data)
       setRawHtmlContent(compileEmailHtml(preset.data))
     }
@@ -535,6 +593,7 @@ export default function NewsletterCampaignManager() {
       const body: any = {
         title: formTitle,
         subject: formSubject,
+        preheader: formPreheader,
         content: finalHtml,
       }
 
@@ -568,7 +627,7 @@ export default function NewsletterCampaignManager() {
   }
 
   const handleDeleteCampaign = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete the draft template "${title}"?`)) return
+    if (!confirm(`Are you sure you want to delete the template "${title}"?`)) return
     try {
       const res = await fetch(`/api/newsletter/campaigns?id=${id}`, { method: 'DELETE' })
       const data = await res.json()
@@ -610,35 +669,101 @@ export default function NewsletterCampaignManager() {
     }
   }
 
-  const handleDispatchCampaign = async (campaignId: string, title: string) => {
-    if (!confirm(`🚀 Launch Campaign: Are you sure you want to dispatch "${title}" to all ${subscriberCount} active subscribers via Brevo?`)) {
-      return
+  const handleOpenDispatchModal = (c: Campaign) => {
+    setDispatchModalCampaign(c)
+    setTargetAudience('all')
+    setCustomEmailsInput('')
+    setDispatchModalFeedback(null)
+  }
+
+  const handleExecuteDispatch = async () => {
+    if (!dispatchModalCampaign) return
+
+    if (targetAudience === 'custom') {
+      const emailList = customEmailsInput
+        .split(/[\n,;]+/)
+        .map(e => e.trim())
+        .filter(e => e.length > 0 && e.includes('@'))
+      if (emailList.length === 0) {
+        alert('Please enter at least one valid recipient email address.')
+        return
+      }
     }
 
-    setDispatchingId(campaignId)
-    setDispatchResult(null)
+    setIsDispatchingModal(true)
+    setDispatchModalFeedback(null)
 
     try {
       const res = await fetch('/api/newsletter/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          campaignId,
-          adminEmail: 'info.flyingwonders@gmail.com'
+          campaignId: dispatchModalCampaign._id,
+          adminEmail: 'info.flyingwonders@gmail.com',
+          targetAudience,
+          customEmails: targetAudience === 'custom' ? customEmailsInput : undefined
         })
       })
       const data = await res.json()
       if (data.success) {
-        setDispatchResult(`🎉 Dispatched successfully to ${data.sentCount} of ${data.totalCount} subscribers!`)
+        setDispatchModalFeedback({
+          success: true,
+          message: `🎉 Successfully dispatched to ${data.sentCount} recipient(s)!${data.errorCount ? ` (${data.errorCount} skipped/failed)` : ''}`
+        })
         await fetchCampaigns()
+        setTimeout(() => {
+          setDispatchModalCampaign(null)
+          setDispatchModalFeedback(null)
+        }, 2200)
       } else {
         throw new Error(data.error || 'Failed to dispatch campaign')
       }
     } catch (err: any) {
-      setDispatchResult(`Error: ${err.message}`)
+      setDispatchModalFeedback({
+        success: false,
+        message: `Dispatch Error: ${err.message}`
+      })
     } finally {
-      setDispatchingId(null)
-      setTimeout(() => setDispatchResult(null), 10000)
+      setIsDispatchingModal(false)
+    }
+  }
+
+  const handleCopyWhatsAppText = async (c: Campaign) => {
+    let headline = c.subject || c.title
+    let text = `*🌟 ${headline}*\n\n`
+
+    if (c.structuredData) {
+      try {
+        const data: StructuredCampaignData = JSON.parse(c.structuredData)
+        if (data.bodyText) {
+          text += `${data.bodyText}\n\n`
+        }
+        if (data.highlights && data.highlights.length > 0) {
+          text += `*Key Highlights & Inclusions:*\n`
+          data.highlights.forEach(h => {
+            text += `• *${h.title}*: ${h.desc}\n`
+          })
+          text += `\n`
+        }
+        if (data.ctaUrl) {
+          text += `👉 *${data.ctaText || 'Learn More / Book Now'}:* ${data.ctaUrl}\n\n`
+        }
+      } catch {
+        text += `${c.content.replace(/<[^>]+>/g, '').trim()}\n\n`
+      }
+    } else {
+      text += `${c.content.replace(/<[^>]+>/g, '').trim()}\n\n`
+    }
+
+    text += `_Flying Wonders - Singapore & India Specialist DMC_\n📲 Chat directly on WhatsApp: https://wa.me/6594722830?text=${encodeURIComponent(`Hi Flying Wonders, I received your update regarding: ${c.subject}`)}`
+
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedWhatsAppId(c._id)
+      setTimeout(() => setCopiedWhatsAppId(null), 3000)
+    } catch (err) {
+      console.error('Copy failed:', err)
+      alert('Could not copy automatically. Please copy manually.')
     }
   }
 
@@ -922,7 +1047,8 @@ export default function NewsletterCampaignManager() {
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
               {campaigns.map((c) => {
-                const isSent = c.status === 'sent'
+                const isDispatched = (c.dispatchCount && c.dispatchCount > 0) || c.status === 'sent'
+                const dispatchTimes = c.dispatchCount || (c.status === 'sent' ? 1 : 0)
                 return (
                   <div
                     key={c._id}
@@ -949,28 +1075,45 @@ export default function NewsletterCampaignManager() {
                             borderRadius: '6px',
                             fontSize: '0.7rem',
                             fontWeight: 700,
-                            background: isSent ? '#ECFDF5' : '#F1F5F9',
-                            color: isSent ? '#065F46' : '#475569',
-                            border: `1px solid ${isSent ? '#A7F3D0' : '#E2E8F0'}`,
+                            background: isDispatched ? '#ECFDF5' : '#F1F5F9',
+                            color: isDispatched ? '#065F46' : '#475569',
+                            border: `1px solid ${isDispatched ? '#A7F3D0' : '#CBD5E1'}`,
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '4px'
+                            gap: '4px',
+                            whiteSpace: 'nowrap'
                           }}
                         >
-                          {isSent ? <CheckCheck size={12} /> : <Clock size={12} />}
-                          {isSent ? 'Sent' : 'Draft'}
+                          {isDispatched ? <CheckCheck size={12} /> : <FileText size={12} />}
+                          {isDispatched ? `Dispatched (${dispatchTimes}x)` : 'Reusable Template'}
                         </span>
                       </div>
 
-                      <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Mail size={12} />
-                        <span style={{ fontWeight: 600, color: '#334155' }}>Subject:</span> {c.subject}
+                      <p style={{ margin: '0 0 6px 0', fontSize: '0.82rem', color: '#64748B', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                        <Mail size={14} style={{ marginTop: '2px', flexShrink: 0 }} />
+                        <span><strong style={{ color: '#334155' }}>Subject:</strong> {c.subject}</span>
                       </p>
 
-                      {isSent && (
-                        <div style={{ background: '#F8FAFC', padding: '8px 12px', borderRadius: '6px', fontSize: '0.74rem', color: '#475569', marginBottom: '14px', border: '1px solid #E2E8F0' }}>
-                          <div>Dispatched: <strong>{c.sentAt ? new Date(c.sentAt).toLocaleString() : 'N/A'}</strong></div>
-                          <div>Total Recipients: <strong>{c.sentToCount || 0}</strong> subscribers</div>
+                      {c.preheader && (
+                        <p style={{ margin: '0 0 10px 0', fontSize: '0.75rem', color: '#64748B', fontStyle: 'italic', paddingLeft: '20px' }}>
+                          Snippet: {c.preheader}
+                        </p>
+                      )}
+
+                      {isDispatched && (
+                        <div style={{ background: '#F8FAFC', padding: '8px 12px', borderRadius: '6px', fontSize: '0.74rem', color: '#475569', marginBottom: '14px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Last Dispatched:</span>
+                            <strong>{c.lastSentAt ? new Date(c.lastSentAt).toLocaleString() : c.sentAt ? new Date(c.sentAt).toLocaleString() : 'N/A'}</strong>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Last Recipients:</span>
+                            <strong>{c.lastSentToCount ?? c.sentToCount ?? 0} delivered</strong>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Total Launches:</span>
+                            <span style={{ color: '#800020', fontWeight: 700 }}>{dispatchTimes} broadcast{dispatchTimes > 1 ? 's' : ''}</span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -978,51 +1121,73 @@ export default function NewsletterCampaignManager() {
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', borderTop: '1px solid #F1F5F9', paddingTop: '12px', marginTop: '8px' }}>
                       <button
                         onClick={() => setPreviewCampaign(c)}
-                        style={{ padding: '6px 12px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}
+                        style={{ padding: '6px 11px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}
                       >
                         <Eye size={13} />
                         Preview
                       </button>
 
                       <button
+                        onClick={() => handleOpenEdit(c)}
+                        style={{ padding: '6px 11px', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, color: '#92400E', display: 'flex', alignItems: 'center', gap: '5px' }}
+                        title="Edit template fields, layout, and copy"
+                      >
+                        <Edit3 size={13} />
+                        Edit
+                      </button>
+
+                      <button
                         onClick={() => handleSendTestEmail(c.subject, c.content, c._id)}
                         disabled={sendingTestId === c._id}
-                        style={{ padding: '6px 12px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '5px' }}
+                        style={{ padding: '6px 11px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#1E40AF', display: 'flex', alignItems: 'center', gap: '5px' }}
                         title={`Send test to ${testEmail}`}
                       >
                         <Send size={13} className={sendingTestId === c._id ? 'animate-spin' : ''} />
                         {sendingTestId === c._id ? 'Sending...' : 'Test Send'}
                       </button>
 
-                      {!isSent && (
-                        <>
-                          <button
-                            onClick={() => handleOpenEdit(c)}
-                            style={{ padding: '6px 12px', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, color: '#92400E', display: 'flex', alignItems: 'center', gap: '5px' }}
-                          >
-                            <Edit3 size={13} />
-                            Edit
-                          </button>
+                      <button
+                        onClick={() => handleOpenDispatchModal(c)}
+                        style={{ padding: '6px 13px', background: '#800020', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700, color: '#FFF', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        title="Launch targeted email broadcast"
+                      >
+                        <Send size={13} />
+                        Dispatch 🚀
+                      </button>
 
-                          <button
-                            onClick={() => handleDispatchCampaign(c._id, c.title)}
-                            disabled={dispatchingId === c._id || subscriberCount === 0}
-                            style={{ padding: '6px 14px', background: '#800020', border: 'none', borderRadius: '6px', cursor: dispatchingId === c._id ? 'not-allowed' : 'pointer', fontSize: '0.78rem', fontWeight: 700, color: '#FFF', display: 'flex', alignItems: 'center', gap: '6px' }}
-                            title={`Blast to ${subscriberCount} subscribers`}
-                          >
-                            <Send size={13} className={dispatchingId === c._id ? 'animate-spin' : ''} />
-                            {dispatchingId === c._id ? 'Dispatching...' : 'Dispatch'}
-                          </button>
+                      <button
+                        onClick={() => setHistoryModalCampaign(c)}
+                        style={{ padding: '6px 10px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#475569', display: 'flex', alignItems: 'center', gap: '5px' }}
+                        title="View dispatch history and audit logs"
+                      >
+                        <History size={13} />
+                        History ({dispatchTimes})
+                      </button>
 
-                          <button
-                            onClick={() => handleDeleteCampaign(c._id, c.title)}
-                            style={{ padding: '6px 8px', background: '#FFF', border: '1px solid #FECACA', borderRadius: '6px', cursor: 'pointer', color: '#DC2626' }}
-                            title="Delete draft template"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </>
-                      )}
+                      <button
+                        onClick={() => handleCopyWhatsAppText(c)}
+                        style={{ padding: '6px 10px', background: copiedWhatsAppId === c._id ? '#DCFCE7' : '#F0FDF4', border: `1px solid ${copiedWhatsAppId === c._id ? '#86EFAC' : '#BBF7D0'}`, borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: copiedWhatsAppId === c._id ? '#15803D' : '#166534', display: 'flex', alignItems: 'center', gap: '5px' }}
+                        title="Copy WhatsApp-formatted text with direct chat links"
+                      >
+                        {copiedWhatsAppId === c._id ? <Check size={13} color="#15803D" /> : <Copy size={13} color="#166534" />}
+                        {copiedWhatsAppId === c._id ? 'Copied!' : 'WhatsApp'}
+                      </button>
+
+                      <button
+                        onClick={() => handleDuplicateCampaign(c)}
+                        style={{ padding: '6px 9px', background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#475569' }}
+                        title="Duplicate into a new template draft"
+                      >
+                        Duplicate
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteCampaign(c._id, c.title)}
+                        style={{ padding: '6px 8px', background: '#FFF', border: '1px solid #FECACA', borderRadius: '6px', cursor: 'pointer', color: '#DC2626', marginLeft: 'auto' }}
+                        title="Delete template"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
                 )
@@ -1402,7 +1567,7 @@ export default function NewsletterCampaignManager() {
                     />
                   </div>
 
-                  <div>
+                  <div style={{ marginBottom: '12px' }}>
                     <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
                       Email Subject Line (Recipients see this in their inbox):
                     </label>
@@ -1413,6 +1578,22 @@ export default function NewsletterCampaignManager() {
                       placeholder="e.g. 🌟 Exclusive: Singapore Hidden Gems & DMC Rates for Your Trip"
                       style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.85rem', color: '#0F172A', background: '#FFF' }}
                     />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                      Inbox Preheader / Snippet Preview (Optional):
+                    </label>
+                    <input
+                      type="text"
+                      value={formPreheader}
+                      onChange={(e) => setFormPreheader(e.target.value)}
+                      placeholder="e.g. DMC nett rates & exclusive Singapore attractions pass guide inside..."
+                      style={{ width: '100%', padding: '8px 12px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.85rem', color: '#0F172A', background: '#FFF' }}
+                    />
+                    <span style={{ display: 'block', fontSize: '0.72rem', color: '#64748B', marginTop: '3px' }}>
+                      Summary text shown next to or below your subject line in Gmail, Apple Mail &amp; Outlook before opening. Supports <code style={{ color: '#800020' }}>{`{{name}}`}</code> and <code style={{ color: '#800020' }}>{`{{company}}`}</code> tags.
+                    </span>
                   </div>
                 </div>
 
@@ -1866,6 +2047,17 @@ export default function NewsletterCampaignManager() {
                       transition: 'width 0.2s ease'
                     }}
                   >
+                    {/* Inbox Preview Header Snippet */}
+                    <div style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '8px 14px', fontSize: '0.72rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Mail size={13} color="#800020" style={{ flexShrink: 0 }} />
+                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontWeight: 700, color: '#1E293B' }}>{formSubject || 'No Subject Line'}</span>
+                        {formPreheader && (
+                          <span style={{ color: '#64748B', marginLeft: '6px' }}>— {formPreheader}</span>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Header */}
                     <div style={{ background: '#800020', padding: '24px 20px', textAlign: 'center' }}>
                       <h1 style={{ color: '#FFFFFF', margin: 0, fontSize: '1.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'Georgia, serif' }}>
@@ -1992,6 +2184,394 @@ export default function NewsletterCampaignManager() {
                 style={{ padding: '7px 16px', background: '#800020', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
               >
                 Close Preview
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ── TARGETED AUDIENCE DISPATCH MODAL ── */}
+      {dispatchModalCampaign && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: '#FFFFFF', maxWidth: '640px', width: '100%', maxHeight: '92vh', borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
+            
+            {/* Modal Header */}
+            <div style={{ padding: '16px 22px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Send size={18} color="#800020" />
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                    Targeted Campaign Dispatch
+                  </h3>
+                </div>
+                <p style={{ fontSize: '0.76rem', color: '#64748B', margin: '3px 0 0 0' }}>
+                  Broadcast &ldquo;{dispatchModalCampaign.title}&rdquo; to selected audience segments
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isDispatchingModal) {
+                    setDispatchModalCampaign(null)
+                    setDispatchModalFeedback(null)
+                  }
+                }}
+                disabled={isDispatchingModal}
+                style={{ border: 'none', background: 'transparent', cursor: isDispatchingModal ? 'not-allowed' : 'pointer', color: '#64748B', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '20px 22px', overflowY: 'auto', flex: 1 }}>
+              
+              {/* Campaign summary card */}
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '12px 16px', marginBottom: '18px' }}>
+                <div style={{ fontSize: '0.74rem', color: '#64748B', marginBottom: '2px' }}>Email Subject:</div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#1E293B', marginBottom: '6px' }}>{dispatchModalCampaign.subject}</div>
+                {dispatchModalCampaign.preheader && (
+                  <div style={{ fontSize: '0.74rem', color: '#64748B' }}>
+                    <span style={{ fontWeight: 600 }}>Preheader:</span> {dispatchModalCampaign.preheader}
+                  </div>
+                )}
+              </div>
+
+              {/* Feedback banner */}
+              {dispatchModalFeedback && (
+                <div style={{ padding: '12px 16px', borderRadius: '8px', marginBottom: '18px', background: dispatchModalFeedback.success ? '#ECFDF5' : '#FEF2F2', border: `1px solid ${dispatchModalFeedback.success ? '#A7F3D0' : '#FECACA'}`, color: dispatchModalFeedback.success ? '#065F46' : '#991B1B', fontSize: '0.84rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {dispatchModalFeedback.success ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                  <span>{dispatchModalFeedback.message}</span>
+                </div>
+              )}
+
+              {/* Step: Select Audience */}
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#0F172A', marginBottom: '10px' }}>
+                Select Target Audience Segment:
+              </label>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px' }}>
+                
+                {/* Option 1: All Active */}
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', borderRadius: '8px', border: targetAudience === 'all' ? '2px solid #800020' : '1px solid #E2E8F0', background: targetAudience === 'all' ? '#FFF5F5' : '#FFFFFF', cursor: 'pointer', transition: 'all 0.15s ease' }}>
+                  <input
+                    type="radio"
+                    name="targetAudience"
+                    value="all"
+                    checked={targetAudience === 'all'}
+                    onChange={() => setTargetAudience('all')}
+                    style={{ marginTop: '3px', accentColor: '#800020' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#0F172A' }}>
+                      🌐 All Active Subscribers ({subscriberCount} contacts)
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Full blast across both verified B2B travel partners and direct retail consumer leads.
+                    </div>
+                  </div>
+                </label>
+
+                {/* Option 2: B2B Only */}
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', borderRadius: '8px', border: targetAudience === 'b2b' ? '2px solid #800020' : '1px solid #E2E8F0', background: targetAudience === 'b2b' ? '#FFF5F5' : '#FFFFFF', cursor: 'pointer', transition: 'all 0.15s ease' }}>
+                  <input
+                    type="radio"
+                    name="targetAudience"
+                    value="b2b"
+                    checked={targetAudience === 'b2b'}
+                    onChange={() => setTargetAudience('b2b')}
+                    style={{ marginTop: '3px', accentColor: '#800020' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#0F172A' }}>
+                      🏢 B2B Travel Partners &amp; Corporate Agencies Only
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Send exclusively to registered travel agents, tour operators, and corporate accounts with DMC nett rates.
+                    </div>
+                  </div>
+                </label>
+
+                {/* Option 3: B2C Only */}
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', borderRadius: '8px', border: targetAudience === 'b2c' ? '2px solid #800020' : '1px solid #E2E8F0', background: targetAudience === 'b2c' ? '#FFF5F5' : '#FFFFFF', cursor: 'pointer', transition: 'all 0.15s ease' }}>
+                  <input
+                    type="radio"
+                    name="targetAudience"
+                    value="b2c"
+                    checked={targetAudience === 'b2c'}
+                    onChange={() => setTargetAudience('b2c')}
+                    style={{ marginTop: '3px', accentColor: '#800020' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#0F172A' }}>
+                      🧳 B2C Travelers &amp; Website Inquiries Only
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Send exclusively to retail travelers who signed up for seasonal vacation guides and packages.
+                    </div>
+                  </div>
+                </label>
+
+                {/* Option 4: New Subscribers */}
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', borderRadius: '8px', border: targetAudience === 'new' ? '2px solid #800020' : '1px solid #E2E8F0', background: targetAudience === 'new' ? '#FFF5F5' : '#FFFFFF', cursor: 'pointer', transition: 'all 0.15s ease' }}>
+                  <input
+                    type="radio"
+                    name="targetAudience"
+                    value="new"
+                    checked={targetAudience === 'new'}
+                    onChange={() => setTargetAudience('new')}
+                    style={{ marginTop: '3px', accentColor: '#800020' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#0F172A' }}>
+                      ✨ Recent / New Subscribers (Past 30 Days)
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Target only newly acquired contacts who joined recently &mdash; ideal for onboarding and welcome nurture.
+                    </div>
+                  </div>
+                </label>
+
+                {/* Option 5: Custom Emails List */}
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 14px', borderRadius: '8px', border: targetAudience === 'custom' ? '2px solid #800020' : '1px solid #E2E8F0', background: targetAudience === 'custom' ? '#FFF5F5' : '#FFFFFF', cursor: 'pointer', transition: 'all 0.15s ease' }}>
+                  <input
+                    type="radio"
+                    name="targetAudience"
+                    value="custom"
+                    checked={targetAudience === 'custom'}
+                    onChange={() => setTargetAudience('custom')}
+                    style={{ marginTop: '3px', accentColor: '#800020' }}
+                  />
+                  <div style={{ width: '100%' }}>
+                    <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#0F172A' }}>
+                      📋 Custom Specific Email List
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
+                      Paste specific agency or partner email addresses separated by commas or line breaks.
+                    </div>
+
+                    {targetAudience === 'custom' && (
+                      <div style={{ marginTop: '10px' }}>
+                        <textarea
+                          rows={4}
+                          value={customEmailsInput}
+                          onChange={(e) => setCustomEmailsInput(e.target.value)}
+                          placeholder={'partner@travelagency.com, booking@voyages.sg\nmanager@corporate.com'}
+                          style={{ width: '100%', padding: '8px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.8rem', fontFamily: 'monospace', color: '#0F172A', background: '#FFF' }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', fontSize: '0.72rem', color: '#64748B' }}>
+                          <span>Separate multiple addresses with commas or line breaks</span>
+                          <span style={{ fontWeight: 700, color: '#800020' }}>
+                            {customEmailsInput.split(/[\n,;]+/).map(e => e.trim()).filter(e => e.includes('@')).length} email(s) detected
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </label>
+
+              </div>
+
+              {/* Personalization & High-Speed Batch Shield info */}
+              <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '10px 14px', fontSize: '0.75rem', color: '#1E40AF', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={14} color="#2563EB" /> Dynamic Personalization &amp; Timeout Protection Active
+                </div>
+                <div>
+                  • Merge tags <code style={{ background: '#DBEAFE', padding: '1px 4px', borderRadius: '3px' }}>{`{{name}}`}</code> and <code style={{ background: '#DBEAFE', padding: '1px 4px', borderRadius: '3px' }}>{`{{company}}`}</code> will automatically personalize for each recipient.
+                </div>
+                <div>
+                  • Dispatches in concurrent batches of 10 through Brevo&apos;s verified DKIM server (<strong style={{ color: '#1E40AF' }}>contact@flyingwonders.net</strong>) with zero timeout risk.
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '14px 22px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setDispatchModalCampaign(null)
+                  setDispatchModalFeedback(null)
+                }}
+                disabled={isDispatchingModal}
+                style={{ padding: '8px 16px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#334155', cursor: isDispatchingModal ? 'not-allowed' : 'pointer' }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExecuteDispatch}
+                disabled={isDispatchingModal}
+                style={{ padding: '9px 22px', background: '#800020', border: 'none', borderRadius: '8px', fontSize: '0.84rem', fontWeight: 700, color: '#FFF', cursor: isDispatchingModal ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(128,0,32,0.25)' }}
+              >
+                <Send size={15} className={isDispatchingModal ? 'animate-spin' : ''} />
+                {isDispatchingModal ? 'Dispatching In Batches...' : '🚀 Launch Campaign Broadcast'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ── DISPATCH HISTORY AUDIT MODAL ── */}
+      {historyModalCampaign && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: '#FFFFFF', maxWidth: '780px', width: '100%', maxHeight: '88vh', borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
+            
+            {/* Modal Header */}
+            <div style={{ padding: '16px 22px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <History size={18} color="#800020" />
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                    Dispatch History &amp; Audit Trail
+                  </h3>
+                </div>
+                <p style={{ fontSize: '0.76rem', color: '#64748B', margin: '3px 0 0 0' }}>
+                  Template: <strong>{historyModalCampaign.title}</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHistoryModalCampaign(null)}
+                style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748B', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '20px 22px', overflowY: 'auto', flex: 1 }}>
+              
+              {/* KPIs Summary */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 14px' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Total Broadcasts</div>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#800020', marginTop: '2px' }}>
+                    {historyModalCampaign.dispatchCount || (historyModalCampaign.status === 'sent' ? 1 : 0)}x
+                  </div>
+                </div>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 14px' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Last Sent Date</div>
+                  <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#1E293B', marginTop: '4px' }}>
+                    {historyModalCampaign.lastSentAt ? new Date(historyModalCampaign.lastSentAt).toLocaleDateString() : historyModalCampaign.sentAt ? new Date(historyModalCampaign.sentAt).toLocaleDateString() : 'Never'}
+                  </div>
+                </div>
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '12px 14px' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Last Batch Delivered</div>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#059669', marginTop: '2px' }}>
+                    {historyModalCampaign.lastSentToCount ?? historyModalCampaign.sentToCount ?? 0}
+                  </div>
+                </div>
+              </div>
+
+              {/* History Table */}
+              {historyModalCampaign.dispatchHistory && historyModalCampaign.dispatchHistory.length > 0 ? (
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', overflow: 'hidden' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#475569', fontWeight: 700, fontSize: '0.74rem' }}>
+                        <th style={{ padding: '10px 14px' }}>Date &amp; Time</th>
+                        <th style={{ padding: '10px 14px' }}>Target Audience</th>
+                        <th style={{ padding: '10px 14px' }}>Delivered</th>
+                        <th style={{ padding: '10px 14px' }}>Errors</th>
+                        <th style={{ padding: '10px 14px' }}>Admin</th>
+                        <th style={{ padding: '10px 14px' }}>Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {historyModalCampaign.dispatchHistory.map((item, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                          <td style={{ padding: '10px 14px', color: '#1E293B', fontWeight: 600 }}>
+                            {new Date(item.dispatchedAt).toLocaleString()}
+                          </td>
+                          <td style={{ padding: '10px 14px' }}>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              background: item.audience === 'b2b' ? '#EEF2FF' : item.audience === 'b2c' ? '#ECFDF5' : item.audience === 'custom' ? '#FFFBEB' : '#F1F5F9',
+                              color: item.audience === 'b2b' ? '#4338CA' : item.audience === 'b2c' ? '#065F46' : item.audience === 'custom' ? '#92400E' : '#334155',
+                              border: '1px solid #E2E8F0'
+                            }}>
+                              {item.audience.toUpperCase()}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px 14px', color: '#059669', fontWeight: 700 }}>
+                            {item.sentCount}
+                          </td>
+                          <td style={{ padding: '10px 14px', color: item.errorCount > 0 ? '#DC2626' : '#94A3B8', fontWeight: item.errorCount > 0 ? 700 : 400 }}>
+                            {item.errorCount || 0}
+                          </td>
+                          <td style={{ padding: '10px 14px', color: '#64748B', fontSize: '0.74rem' }}>
+                            {item.adminEmail || 'info.flyingwonders@gmail.com'}
+                          </td>
+                          <td style={{ padding: '10px 14px', color: '#64748B', fontSize: '0.74rem' }}>
+                            {item.notes || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : historyModalCampaign.sentAt ? (
+                <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', overflow: 'hidden' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#475569', fontWeight: 700, fontSize: '0.74rem' }}>
+                        <th style={{ padding: '10px 14px' }}>Date &amp; Time</th>
+                        <th style={{ padding: '10px 14px' }}>Target Audience</th>
+                        <th style={{ padding: '10px 14px' }}>Delivered</th>
+                        <th style={{ padding: '10px 14px' }}>Admin</th>
+                        <th style={{ padding: '10px 14px' }}>Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td style={{ padding: '10px 14px', color: '#1E293B', fontWeight: 600 }}>
+                          {new Date(historyModalCampaign.sentAt).toLocaleString()}
+                        </td>
+                        <td style={{ padding: '10px 14px' }}>
+                          <span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 700, background: '#F1F5F9', color: '#334155', border: '1px solid #E2E8F0' }}>
+                            ALL SUBSCRIBERS
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 14px', color: '#059669', fontWeight: 700 }}>
+                          {historyModalCampaign.sentToCount || 0}
+                        </td>
+                        <td style={{ padding: '10px 14px', color: '#64748B', fontSize: '0.74rem' }}>
+                          info.flyingwonders@gmail.com
+                        </td>
+                        <td style={{ padding: '10px 14px', color: '#64748B', fontSize: '0.74rem' }}>
+                          Initial broadcast record
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '36px 16px', background: '#F8FAFC', border: '2px dashed #E2E8F0', borderRadius: '10px', color: '#64748B', fontSize: '0.84rem' }}>
+                  <History size={32} color="#CBD5E1" style={{ margin: '0 auto 8px' }} />
+                  <p style={{ margin: '0 0 4px', fontWeight: 700, color: '#334155' }}>No Previous Dispatches</p>
+                  <p style={{ margin: 0, fontSize: '0.78rem' }}>This template has not been dispatched yet. Click &ldquo;Dispatch 🚀&rdquo; to launch it to your audience.</p>
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '12px 22px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setHistoryModalCampaign(null)}
+                style={{ padding: '7px 18px', background: '#800020', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
+              >
+                Close History
               </button>
             </div>
 

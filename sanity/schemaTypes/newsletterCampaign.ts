@@ -18,6 +18,12 @@ export const newsletterCampaignSchema = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'preheader',
+      title: 'Inbox Preview Snippet (Preheader)',
+      type: 'string',
+      description: 'The preview text shown next to the subject in Gmail/iPhone Mail before opening the email.',
+    }),
+    defineField({
       name: 'content',
       title: 'Email Content (HTML or Plain Text)',
       type: 'text',
@@ -30,16 +36,15 @@ export const newsletterCampaignSchema = defineType({
       type: 'string',
       options: {
         list: [
-          { title: 'Draft', value: 'draft' },
-          { title: 'Sent', value: 'sent' },
+          { title: 'Draft / Template', value: 'draft' },
+          { title: 'Active (Sent)', value: 'sent' },
         ],
-        layout: 'radio',
       },
       initialValue: 'draft',
     }),
     defineField({
       name: 'sentAt',
-      title: 'Sent At',
+      title: 'First Sent At',
       type: 'datetime',
       readOnly: true,
     }),
@@ -47,6 +52,44 @@ export const newsletterCampaignSchema = defineType({
       name: 'sentToCount',
       title: 'Total Emails Sent To',
       type: 'number',
+      readOnly: true,
+    }),
+    defineField({
+      name: 'dispatchCount',
+      title: 'Total Times Dispatched',
+      type: 'number',
+      initialValue: 0,
+      readOnly: true,
+    }),
+    defineField({
+      name: 'lastSentAt',
+      title: 'Last Dispatched At',
+      type: 'datetime',
+      readOnly: true,
+    }),
+    defineField({
+      name: 'lastSentToCount',
+      title: 'Last Sent Count',
+      type: 'number',
+      readOnly: true,
+    }),
+    defineField({
+      name: 'dispatchHistory',
+      title: 'Dispatch Audit History',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            { name: 'dispatchedAt', type: 'datetime', title: 'Date & Time' },
+            { name: 'targetAudience', type: 'string', title: 'Target Audience' },
+            { name: 'sentCount', type: 'number', title: 'Successfully Delivered' },
+            { name: 'errorCount', type: 'number', title: 'Errors / Bounces' },
+            { name: 'dispatchedBy', type: 'string', title: 'Admin' },
+            { name: 'notes', type: 'string', title: 'Notes / Recipient Details' },
+          ],
+        },
+      ],
       readOnly: true,
     }),
     defineField({
