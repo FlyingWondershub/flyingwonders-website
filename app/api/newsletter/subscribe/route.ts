@@ -22,7 +22,7 @@ export async function GET(req: Request) {
 
     if (full) {
       const subscribers = await writeClient.fetch(
-        `*[_type == "newsletterSubscriber"] | order(_createdAt desc) [0...1000] {
+        `*[_type == "newsletterSubscriber"] | order(_createdAt desc) [0...10000] {
           _id,
           email,
           name,

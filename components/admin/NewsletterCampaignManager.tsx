@@ -47,6 +47,7 @@ interface Campaign {
   lastSentAt?: string
   lastSentToCount?: number
   dispatchHistory?: DispatchHistoryItem[]
+  dispatchedEmails?: string[]
   _createdAt?: string
 }
 
@@ -396,8 +397,11 @@ export default function NewsletterCampaignManager() {
   const [targetAudience, setTargetAudience] = useState<'all' | 'b2b' | 'b2c' | 'new' | 'tag' | 'custom'>('all')
   const [selectedDispatchTag, setSelectedDispatchTag] = useState('')
   const [customEmailsInput, setCustomEmailsInput] = useState('')
+  const [dispatchBatchLimit, setDispatchBatchLimit] = useState<'250' | '100' | '50' | 'all' | 'custom'>('250')
+  const [customBatchLimitInput, setCustomBatchLimitInput] = useState('250')
+  const [dispatchSkipSent, setDispatchSkipSent] = useState(true)
   const [isDispatchingModal, setIsDispatchingModal] = useState(false)
-  const [dispatchModalFeedback, setDispatchModalFeedback] = useState<{ success: boolean; message: string } | null>(null)
+  const [dispatchModalFeedback, setDispatchModalFeedback] = useState<{ success: boolean; message: string; remaining?: number } | null>(null)
 
   // Dispatch History Audit Modal State
   const [historyModalCampaign, setHistoryModalCampaign] = useState<Campaign | null>(null)
@@ -420,20 +424,94 @@ export default function NewsletterCampaignManager() {
   const [subscriberFilterSource, setSubscriberFilterSource] = useState('all')
   const [subscriberFilterStatus, setSubscriberFilterStatus] = useState('all')
 
-  // Unique Source / Event Tags found in subscribers database
+  // Unique Source / Event Tags found in subscribers database (aggregated & deduplicated)
   const availableSourceTags = useMemo(() => {
-    const counts = new Map<string, number>()
+    const tagMap = new Map<string, { tag: string; activeCount: number }>()
     for (const sub of subscribersList) {
       if (!sub.source) continue
-      const tags = sub.source.split(',').map((t: string) => t.trim()).filter(Boolean)
-      for (const tag of tags) {
-        counts.set(tag, (counts.get(tag) || 0) + (sub.isActive ? 1 : 0))
+      const rawTags = sub.source.split(',').map((t: string) => t.trim()).filter(Boolean)
+      for (const rawTag of rawTags) {
+        const key = rawTag.toLowerCase()
+        const existing = tagMap.get(key)
+        const isAct = sub.isActive ? 1 : 0
+        if (existing) {
+          existing.activeCount += isAct
+        } else {
+          tagMap.set(key, { tag: rawTag, activeCount: isAct })
+        }
       }
     }
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([tag, activeCount]) => ({ tag, activeCount }))
+    return Array.from(tagMap.values())
+      .sort((a, b) => b.activeCount - a.activeCount)
   }, [subscribersList])
+
+  // Live Multi-Wave & Brevo Batch Breakdown Calculation
+  const dispatchAudienceStats = useMemo(() => {
+    if (!dispatchModalCampaign) {
+      return { total: 0, alreadySent: 0, eligible: 0, toSendNow: 0, remainingAfter: 0, totalWaves: 1 }
+    }
+
+    const sentList = dispatchModalCampaign.dispatchedEmails || []
+    const sentSet = new Set(sentList.map((e: string) => e.toLowerCase().trim()))
+
+    let matching: any[] = []
+    if (targetAudience === 'custom') {
+      const list = customEmailsInput
+        .split(/[\n,;]+/)
+        .map(e => e.trim().toLowerCase())
+        .filter(e => e.includes('@'))
+      const unique = Array.from(new Set(list))
+      matching = unique.map(e => ({ email: e }))
+    } else if (targetAudience === 'tag') {
+      const t = (selectedDispatchTag || '').trim().toLowerCase()
+      matching = subscribersList.filter(s => {
+        if (!s.isActive || !s.source) return false
+        const tags = s.source.split(',').map((x: string) => x.trim().toLowerCase())
+        return t ? (tags.includes(t) || s.source.toLowerCase().includes(t)) : true
+      })
+    } else if (targetAudience === 'b2b') {
+      matching = subscribersList.filter(s => s.isActive && (s.audienceType === 'b2b' || !s.audienceType))
+    } else if (targetAudience === 'b2c') {
+      matching = subscribersList.filter(s => s.isActive && s.audienceType === 'b2c')
+    } else if (targetAudience === 'new') {
+      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+      matching = subscribersList.filter(s => s.isActive && (new Date(s.subscribedAt || s._createdAt || 0).getTime() >= thirtyDaysAgo))
+    } else {
+      matching = subscribersList.filter(s => s.isActive)
+    }
+
+    const total = matching.length
+    const alreadySent = matching.filter(s => sentSet.has((s.email || '').toLowerCase().trim())).length
+    const eligible = dispatchSkipSent ? Math.max(0, total - alreadySent) : total
+
+    const effectiveLimit = dispatchBatchLimit === 'all'
+      ? eligible
+      : dispatchBatchLimit === 'custom'
+        ? (parseInt(customBatchLimitInput, 10) || 250)
+        : (parseInt(dispatchBatchLimit, 10) || 250)
+
+    const toSendNow = Math.min(eligible, Math.max(0, effectiveLimit))
+    const remainingAfter = Math.max(0, eligible - toSendNow)
+    const totalWaves = toSendNow > 0 ? Math.ceil(eligible / toSendNow) : 1
+
+    return {
+      total,
+      alreadySent,
+      eligible,
+      toSendNow,
+      remainingAfter,
+      totalWaves
+    }
+  }, [
+    dispatchModalCampaign,
+    targetAudience,
+    selectedDispatchTag,
+    customEmailsInput,
+    subscribersList,
+    dispatchSkipSent,
+    dispatchBatchLimit,
+    customBatchLimitInput
+  ])
 
   // Add Subscriber Form
   const [isAddingSub, setIsAddingSub] = useState(false)
@@ -477,6 +555,22 @@ export default function NewsletterCampaignManager() {
     return rawHtmlContent
   }, [editorMode, structuredData, rawHtmlContent])
 
+  const fetchSubscribersFull = async () => {
+    setLoadingSubscribers(true)
+    try {
+      const res = await fetch('/api/newsletter/subscribe?full=true')
+      const data = await res.json()
+      if (data.success) {
+        setSubscribersList(data.subscribers || [])
+        setSubscriberCount((data.subscribers || []).filter((s: any) => s.isActive).length)
+      }
+    } catch (err) {
+      console.error('Failed to fetch full subscribers:', err)
+    } finally {
+      setLoadingSubscribers(false)
+    }
+  }
+
   const fetchCampaigns = async () => {
     setRefreshing(true)
     try {
@@ -496,7 +590,14 @@ export default function NewsletterCampaignManager() {
 
   useEffect(() => {
     fetchCampaigns()
+    fetchSubscribersFull()
   }, [])
+
+  useEffect(() => {
+    if (targetAudience === 'tag' && !selectedDispatchTag && availableSourceTags.length > 0) {
+      setSelectedDispatchTag(availableSourceTags[0].tag)
+    }
+  }, [targetAudience, selectedDispatchTag, availableSourceTags])
 
   const handleOpenNew = () => {
     setEditingCampaignId(null)
@@ -731,7 +832,13 @@ export default function NewsletterCampaignManager() {
     setTargetAudience('all')
     setSelectedDispatchTag('')
     setCustomEmailsInput('')
+    setDispatchBatchLimit('250')
+    setCustomBatchLimitInput('250')
+    setDispatchSkipSent(true)
     setDispatchModalFeedback(null)
+    if (subscribersList.length === 0) {
+      fetchSubscribersFull()
+    }
   }
 
   const handleExecuteDispatch = async () => {
@@ -753,6 +860,12 @@ export default function NewsletterCampaignManager() {
       }
     }
 
+    const effectiveLimit = dispatchBatchLimit === 'all'
+      ? undefined
+      : dispatchBatchLimit === 'custom'
+        ? (parseInt(customBatchLimitInput, 10) || 250)
+        : parseInt(dispatchBatchLimit, 10)
+
     setIsDispatchingModal(true)
     setDispatchModalFeedback(null)
 
@@ -765,20 +878,28 @@ export default function NewsletterCampaignManager() {
           adminEmail: 'info.flyingwonders@gmail.com',
           targetAudience,
           sourceTag: targetAudience === 'tag' ? selectedDispatchTag.trim() : undefined,
-          customEmails: targetAudience === 'custom' ? customEmailsInput : undefined
+          customEmails: targetAudience === 'custom' ? customEmailsInput : undefined,
+          batchLimit: effectiveLimit,
+          skipPreviouslySent: dispatchSkipSent
         })
       })
       const data = await res.json()
       if (data.success) {
+        const remaining = typeof data.remainingAfterBatch === 'number' ? data.remainingAfterBatch : 0
+        const waveNotice = remaining > 0
+          ? `🎉 Wave dispatched! Successfully sent to ${data.sentCount} recipient(s). ${remaining} contact(s) remaining for tomorrow's wave.`
+          : `🎉 Successfully dispatched to ${data.sentCount} recipient(s)! All eligible contacts have received this campaign.`
+
         setDispatchModalFeedback({
           success: true,
-          message: `🎉 Successfully dispatched to ${data.sentCount} recipient(s)!${data.errorCount ? ` (${data.errorCount} skipped/failed)` : ''}`
+          message: waveNotice,
+          remaining
         })
-        await fetchCampaigns()
+        await Promise.all([fetchCampaigns(), fetchSubscribersFull()])
         setTimeout(() => {
           setDispatchModalCampaign(null)
           setDispatchModalFeedback(null)
-        }, 2200)
+        }, 3200)
       } else {
         throw new Error(data.error || 'Failed to dispatch campaign')
       }
@@ -828,22 +949,6 @@ export default function NewsletterCampaignManager() {
     } catch (err) {
       console.error('Copy failed:', err)
       alert('Could not copy automatically. Please copy manually.')
-    }
-  }
-
-  const fetchSubscribersFull = async () => {
-    setLoadingSubscribers(true)
-    try {
-      const res = await fetch('/api/newsletter/subscribe?full=true')
-      const data = await res.json()
-      if (data.success) {
-        setSubscribersList(data.subscribers || [])
-        setSubscriberCount((data.subscribers || []).filter((s: any) => s.isActive).length)
-      }
-    } catch (err) {
-      console.error('Failed to fetch full subscribers:', err)
-    } finally {
-      setLoadingSubscribers(false)
     }
   }
 
@@ -2605,10 +2710,15 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                         <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                           Select Event Tag:
                         </label>
-                        {availableSourceTags.length > 0 ? (
+                        {loadingSubscribers ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', fontSize: '0.78rem', color: '#64748B' }}>
+                            <RefreshCw size={14} className="animate-spin" />
+                            <span>Loading event tags from subscriber database...</span>
+                          </div>
+                        ) : availableSourceTags.length > 0 ? (
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                             <select
-                              value={selectedDispatchTag}
+                              value={selectedDispatchTag || (availableSourceTags[0]?.tag || '')}
                               onChange={(e) => setSelectedDispatchTag(e.target.value)}
                               style={{
                                 padding: '6px 10px',
@@ -2619,7 +2729,9 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                                 background: '#FFF',
                                 color: '#0F172A',
                                 flex: 1,
-                                minWidth: '180px'
+                                minWidth: '180px',
+                                fontFamily: 'var(--font-inter), sans-serif',
+                                cursor: 'pointer'
                               }}
                             >
                               <option value="">-- Choose an Event Tag --</option>
@@ -2629,9 +2741,9 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                                 </option>
                               ))}
                             </select>
-                            {selectedDispatchTag && (
+                            {(selectedDispatchTag || availableSourceTags[0]?.tag) && (
                               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F4C3A', background: '#ECFDF5', padding: '4px 10px', borderRadius: '6px', border: '1px solid #A7F3D0' }}>
-                                Target: &ldquo;{selectedDispatchTag}&rdquo;
+                                Target: &ldquo;{selectedDispatchTag || availableSourceTags[0]?.tag}&rdquo;
                               </span>
                             )}
                           </div>
@@ -2685,6 +2797,198 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
 
               </div>
 
+              {/* ── BREVO FREE TIER SAFE WAVE DISPATCH CONTROLS ── */}
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <ShieldCheck size={18} color="#0F4C3A" />
+                    <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0F172A' }}>
+                      Brevo Free Tier Safe Wave Dispatcher
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.72rem', background: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                    🛡️ 300 Emails/Day Limit Protection
+                  </span>
+                </div>
+
+                {/* Wave & Audience Live Breakdown Stats */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '14px' }}>
+                  <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px 12px' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>Total Audience</div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>
+                      {dispatchAudienceStats.total} contacts
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px 12px' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>Already Sent</div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#64748B', marginTop: '2px' }}>
+                      {dispatchAudienceStats.alreadySent} contacts
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#FFFFFF', border: '1px solid #A7F3D0', borderRadius: '8px', padding: '8px 12px' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#065F46', fontWeight: 600 }}>Eligible To Send</div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#065F46', marginTop: '2px' }}>
+                      {dispatchAudienceStats.eligible} contacts
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '8px 12px' }}>
+                    <div style={{ fontSize: '0.7rem', color: '#1E40AF', fontWeight: 600 }}>Batch Sending Today</div>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1E40AF', marginTop: '2px' }}>
+                      {dispatchAudienceStats.toSendNow} contacts
+                    </div>
+                  </div>
+
+                  {dispatchAudienceStats.remainingAfter > 0 && (
+                    <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', padding: '8px 12px' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#92400E', fontWeight: 600 }}>Remaining (Wave 2)</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#92400E', marginTop: '2px' }}>
+                        {dispatchAudienceStats.remainingAfter} contacts
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Multi-Wave Deduplication Checkbox */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer', marginBottom: '14px', background: '#FFFFFF', border: '1px solid #CBD5E1', padding: '8px 12px', borderRadius: '6px' }}>
+                  <input
+                    type="checkbox"
+                    checked={dispatchSkipSent}
+                    onChange={(e) => setDispatchSkipSent(e.target.checked)}
+                    style={{ cursor: 'pointer', accentColor: '#800020' }}
+                  />
+                  <span>
+                    ☑️ Exclude contacts who already received this campaign (Multi-wave dispatch progression)
+                  </span>
+                </label>
+
+                {/* Batch Cap Presets */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Select Daily Batch Cap / Wave Size:
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => setDispatchBatchLimit('250')}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: dispatchBatchLimit === '250' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                        background: dispatchBatchLimit === '250' ? '#0F4C3A' : '#FFFFFF',
+                        color: dispatchBatchLimit === '250' ? '#FFFFFF' : '#334155',
+                        fontWeight: 700,
+                        fontSize: '0.76rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ⚡ 250 / day (Brevo Free Safe Cap)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDispatchBatchLimit('100')}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: dispatchBatchLimit === '100' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                        background: dispatchBatchLimit === '100' ? '#0F4C3A' : '#FFFFFF',
+                        color: dispatchBatchLimit === '100' ? '#FFFFFF' : '#334155',
+                        fontWeight: 700,
+                        fontSize: '0.76rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ⚡ 100 / wave (Test Wave)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDispatchBatchLimit('50')}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: dispatchBatchLimit === '50' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                        background: dispatchBatchLimit === '50' ? '#0F4C3A' : '#FFFFFF',
+                        color: dispatchBatchLimit === '50' ? '#FFFFFF' : '#334155',
+                        fontWeight: 700,
+                        fontSize: '0.76rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ⚡ 50 / wave (Sample)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDispatchBatchLimit('all')}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: dispatchBatchLimit === 'all' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                        background: dispatchBatchLimit === 'all' ? '#0F4C3A' : '#FFFFFF',
+                        color: dispatchBatchLimit === 'all' ? '#FFFFFF' : '#334155',
+                        fontWeight: 700,
+                        fontSize: '0.76rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      🚀 Send All ({dispatchAudienceStats.eligible})
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setDispatchBatchLimit('custom')}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: dispatchBatchLimit === 'custom' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                        background: dispatchBatchLimit === 'custom' ? '#0F4C3A' : '#FFFFFF',
+                        color: dispatchBatchLimit === 'custom' ? '#FFFFFF' : '#334155',
+                        fontWeight: 700,
+                        fontSize: '0.76rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✏️ Custom
+                    </button>
+
+                    {dispatchBatchLimit === 'custom' && (
+                      <input
+                        type="number"
+                        min={1}
+                        max={10000}
+                        value={customBatchLimitInput}
+                        onChange={(e) => setCustomBatchLimitInput(e.target.value)}
+                        placeholder="e.g. 150"
+                        style={{
+                          width: '80px',
+                          padding: '5px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          fontSize: '0.76rem',
+                          fontWeight: 600,
+                          background: '#FFF',
+                          color: '#0F172A'
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Wave progress explanation text */}
+                <div style={{ marginTop: '10px', fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>💡</span>
+                  <span>
+                    {dispatchAudienceStats.remainingAfter > 0
+                      ? `Dispatching Wave 1 today (${dispatchAudienceStats.toSendNow} contacts). The remaining ${dispatchAudienceStats.remainingAfter} contacts will be queued for tomorrow's wave without duplicates.`
+                      : `This batch delivers to all ${dispatchAudienceStats.eligible} remaining contacts in one dispatch.`}
+                  </span>
+                </div>
+              </div>
+
               {/* Personalization & High-Speed Batch Shield info */}
               <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '10px 14px', fontSize: '0.75rem', color: '#1E40AF', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2717,11 +3021,30 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
               <button
                 type="button"
                 onClick={handleExecuteDispatch}
-                disabled={isDispatchingModal}
-                style={{ padding: '9px 22px', background: '#800020', border: 'none', borderRadius: '8px', fontSize: '0.84rem', fontWeight: 700, color: '#FFF', cursor: isDispatchingModal ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 2px 4px rgba(128,0,32,0.25)' }}
+                disabled={isDispatchingModal || dispatchAudienceStats.toSendNow === 0}
+                style={{
+                  padding: '9px 22px',
+                  background: dispatchAudienceStats.toSendNow === 0 ? '#94A3B8' : '#800020',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  color: '#FFF',
+                  cursor: (isDispatchingModal || dispatchAudienceStats.toSendNow === 0) ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 2px 4px rgba(128,0,32,0.25)'
+                }}
               >
                 <Send size={15} className={isDispatchingModal ? 'animate-spin' : ''} />
-                {isDispatchingModal ? 'Dispatching In Batches...' : '🚀 Launch Campaign Broadcast'}
+                {isDispatchingModal
+                  ? 'Dispatching In Batches...'
+                  : dispatchAudienceStats.toSendNow === 0
+                    ? 'All Contacts Already Dispatched'
+                    : dispatchAudienceStats.remainingAfter > 0
+                      ? `🚀 Launch Wave (${dispatchAudienceStats.toSendNow} Recipients)`
+                      : `🚀 Launch Campaign Broadcast (${dispatchAudienceStats.toSendNow} Recipients)`}
               </button>
             </div>
 

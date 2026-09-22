@@ -13,7 +13,15 @@ const writeClient = createClient({
 
 export async function POST(req: Request) {
   try {
-    const { campaignId, adminEmail, targetAudience = 'all', sourceTag, customEmails } = await req.json()
+    const {
+      campaignId,
+      adminEmail,
+      targetAudience = 'all',
+      sourceTag,
+      customEmails,
+      batchLimit,
+      skipPreviouslySent = true
+    } = await req.json()
 
     // 1. Verify that the request is initiated by an authorized admin
     const allowedAdmins = ['info.flyingwonders@gmail.com', 'support.flyingwonders@gmail.com']
@@ -41,6 +49,7 @@ export async function POST(req: Request) {
       name?: string
       company?: string
       audienceType?: string
+      source?: string
     }
 
     let recipients: Recipient[] = []
@@ -66,41 +75,69 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'No valid email addresses provided in the custom list.' }, { status: 400 })
       }
     } else if (targetAudience === 'tag' && sourceTag) {
-      const cleanTag = sourceTag.trim()
-      const audienceQuery = `*[_type == "newsletterSubscriber" && isActive == true && source match $tag] { email, name, company, audienceType, source }`
-      const params: Record<string, any> = { tag: `*${cleanTag}*` }
-      const fetchedSubscribers = await writeClient.fetch(audienceQuery, params)
+      const cleanTag = sourceTag.trim().toLowerCase()
+      const allActiveSubscribers: Recipient[] = await writeClient.fetch(
+        `*[_type == "newsletterSubscriber" && isActive == true] { email, name, company, audienceType, source }`
+      )
+      recipients = (allActiveSubscribers || []).filter((s: Recipient) => {
+        if (!s.source) return false
+        const tags = s.source.split(',').map((t: string) => t.trim().toLowerCase())
+        return tags.includes(cleanTag) || s.source.toLowerCase().includes(cleanTag)
+      })
+    } else if (targetAudience === 'b2b') {
+      const fetchedSubscribers = await writeClient.fetch(
+        `*[_type == "newsletterSubscriber" && isActive == true && (audienceType == "b2b" || !defined(audienceType))] { email, name, company, audienceType, source }`
+      )
+      recipients = fetchedSubscribers || []
+    } else if (targetAudience === 'b2c') {
+      const fetchedSubscribers = await writeClient.fetch(
+        `*[_type == "newsletterSubscriber" && isActive == true && audienceType == "b2c"] { email, name, company, audienceType, source }`
+      )
+      recipients = fetchedSubscribers || []
+    } else if (targetAudience === 'new') {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      const fetchedSubscribers = await writeClient.fetch(
+        `*[_type == "newsletterSubscriber" && isActive == true && (_createdAt >= $thirtyDaysAgo || subscribedAt >= $thirtyDaysAgo)] { email, name, company, audienceType, source }`,
+        { thirtyDaysAgo }
+      )
       recipients = fetchedSubscribers || []
     } else {
-      let audienceQuery = `*[_type == "newsletterSubscriber" && isActive == true`
-      if (targetAudience === 'b2b') {
-        audienceQuery += ` && (audienceType == "b2b" || !defined(audienceType))`
-      } else if (targetAudience === 'b2c') {
-        audienceQuery += ` && audienceType == "b2c"`
-      }
-      audienceQuery += `] { email, name, company, audienceType }`
-
-      const fetchedSubscribers = await writeClient.fetch(audienceQuery)
-
-      if (targetAudience === 'new' && Array.isArray(campaign.dispatchedEmails) && campaign.dispatchedEmails.length > 0) {
-        const sentSet = new Set(campaign.dispatchedEmails.map((e: string) => e.toLowerCase()))
-        recipients = (fetchedSubscribers || []).filter((s: Recipient) => !sentSet.has(s.email.toLowerCase()))
-      } else {
-        recipients = fetchedSubscribers || []
-      }
+      const fetchedSubscribers = await writeClient.fetch(
+        `*[_type == "newsletterSubscriber" && isActive == true] { email, name, company, audienceType, source }`
+      )
+      recipients = fetchedSubscribers || []
     }
 
     if (!recipients || recipients.length === 0) {
       return NextResponse.json({
-        error: targetAudience === 'new'
-          ? 'All active subscribers have already received this campaign previously.'
-          : 'No active subscribers found matching the selected audience criteria.'
+        error: 'No active subscribers found matching the selected audience criteria.'
       }, { status: 400 })
     }
 
-    console.log(`Starting targeted newsletter dispatch (${targetAudience}) to ${recipients.length} recipients for campaign: "${campaign.title}"`)
+    // 4. Multi-Wave Deduplication (Skip Previously Sent Contacts)
+    const prevDispatched = Array.isArray(campaign.dispatchedEmails) ? campaign.dispatchedEmails : []
+    const sentSet = new Set(prevDispatched.map((e: string) => e.toLowerCase().trim()))
 
-    // 4. Send Emails via Brevo in Concurrent Chunks of 10 (Zero Vercel Timeout)
+    let eligibleRecipients = recipients
+    if (skipPreviouslySent) {
+      eligibleRecipients = recipients.filter((r: Recipient) => !sentSet.has(r.email.toLowerCase().trim()))
+    }
+
+    if (eligibleRecipients.length === 0) {
+      return NextResponse.json({
+        error: `All ${recipients.length} contacts in this audience have already received this campaign in earlier waves. Uncheck "Exclude contacts who already received this campaign" if you wish to re-blast.`
+      }, { status: 400 })
+    }
+
+    // 5. Safe Batch Capping (Brevo Free Tier Safe Waves)
+    const parsedLimit = typeof batchLimit === 'number' ? batchLimit : (batchLimit ? parseInt(batchLimit, 10) : undefined)
+    const effectiveBatchLimit = (parsedLimit && parsedLimit > 0) ? parsedLimit : eligibleRecipients.length
+    const batchToSend = eligibleRecipients.slice(0, effectiveBatchLimit)
+    const remainingAfterBatch = Math.max(0, eligibleRecipients.length - batchToSend.length)
+
+    console.log(`Starting targeted newsletter dispatch (${targetAudience}) - Batch: ${batchToSend.length} / Eligible: ${eligibleRecipients.length} / Total Audience: ${recipients.length} for campaign: "${campaign.title}"`)
+
+    // 6. Send Emails via Brevo in Concurrent Chunks of 10 (Zero Vercel Timeout)
     let successCount = 0
     const errors: Array<{ email: string; error: string }> = []
     const successfullySentEmails: string[] = []
@@ -192,8 +229,19 @@ export async function POST(req: Request) {
       )
     }
 
-    // 5. Update Sanity Campaign Document with Audit History (No lock!)
+    // 7. Update Sanity Campaign Document with Audit History (No lock!)
     const nowIso = new Date().toISOString()
+    const isMultiWave = remainingAfterBatch > 0 || prevDispatched.length > 0
+    const waveNote = targetAudience === 'tag'
+      ? (isMultiWave
+          ? `Wave Dispatch: Sent ${successCount} of ${eligibleRecipients.length} eligible tag "${sourceTag}" contacts (${remainingAfterBatch} remaining)`
+          : `Targeted event tag "${sourceTag}" (${recipients.length} recipients)`)
+      : (targetAudience === 'custom'
+          ? `Custom list: Sent ${successCount} of ${eligibleRecipients.length} addresses`
+          : (isMultiWave
+              ? `Wave Dispatch: Sent ${successCount} of ${eligibleRecipients.length} eligible ${targetAudience.toUpperCase()} contacts (${remainingAfterBatch} remaining)`
+              : `${targetAudience.toUpperCase()} audience (${recipients.length} recipients)`))
+
     const newHistoryEntry = {
       _key: `dispatch-${Date.now()}`,
       dispatchedAt: nowIso,
@@ -201,10 +249,9 @@ export async function POST(req: Request) {
       sentCount: successCount,
       errorCount: errors.length,
       dispatchedBy: adminEmail,
-      notes: targetAudience === 'tag' ? `Targeted event tag "${sourceTag}" (${recipients.length} recipients)` : (targetAudience === 'custom' ? `Custom list of ${recipients.length} addresses` : `${targetAudience} audience`),
+      notes: waveNote,
     }
 
-    const prevDispatched = Array.isArray(campaign.dispatchedEmails) ? campaign.dispatchedEmails : []
     const updatedDispatchedEmails = Array.from(new Set([...prevDispatched, ...successfullySentEmails]))
 
     await writeClient
@@ -223,7 +270,11 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       sentCount: successCount,
-      totalCount: recipients.length,
+      batchSize: batchToSend.length,
+      totalEligible: eligibleRecipients.length,
+      totalAudience: recipients.length,
+      remainingAfterBatch,
+      nextWaveRecommended: remainingAfterBatch > 0,
       targetAudience: targetAudience === 'tag' && sourceTag ? `TAG: ${sourceTag}` : targetAudience,
       errors: errors.length > 0 ? errors : undefined,
     })

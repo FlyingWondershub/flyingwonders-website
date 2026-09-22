@@ -37,6 +37,7 @@ export async function GET(req: Request) {
         lastSentAt,
         lastSentToCount,
         dispatchHistory,
+        dispatchedEmails,
         _createdAt
       }`
     )

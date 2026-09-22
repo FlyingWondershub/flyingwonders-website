@@ -93,6 +93,14 @@ export const newsletterCampaignSchema = defineType({
       readOnly: true,
     }),
     defineField({
+      name: 'dispatchedEmails',
+      title: 'Dispatched Recipient Emails (Multi-Wave Deduplication)',
+      type: 'array',
+      of: [{ type: 'string' }],
+      readOnly: true,
+      hidden: true,
+    }),
+    defineField({
       name: 'structuredData',
       title: 'Structured Builder Data (JSON)',
       type: 'text',
