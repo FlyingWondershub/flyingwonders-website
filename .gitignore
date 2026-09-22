@@ -52,6 +52,7 @@ scripts/gmail-lead-extractor/output/
 scripts/gmail-lead-extractor/*.xlsx
 scripts/gmail-lead-extractor/*.csv
 scripts/gmail-lead-extractor/node_modules/
+/backups/
 
 
 .env*

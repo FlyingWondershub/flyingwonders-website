@@ -17,28 +17,62 @@ function generateLeadId(email?: string, phone?: string): string {
   return `marketingLead-${hash}`
 }
 
-// GET: Fetch leads with optional filtering
+// GET: Fetch leads with optional filtering & full database search
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
-    const limit = parseInt(searchParams.get('limit') || '500', 10)
+    const limitParam = searchParams.get('limit') || '1000'
+    const limit = limitParam === 'all' ? 5000 : Math.min(parseInt(limitParam, 10) || 1000, 5000)
     const priority = searchParams.get('priority')
     const status = searchParams.get('status')
+    const search = (searchParams.get('search') || '').trim()
+    const filterType = searchParams.get('filterType')
 
-    let query = `*[_type == "marketingLead"]`
-    if (priority) query += ` && priority == "${priority}"`
-    if (status) query += ` && status == "${status}"`
-    query += ` | order(_createdAt desc)[0...${limit}]`
+    const params: Record<string, any> = {}
+    const filters = [`_type == "marketingLead"`]
 
-    const leads = await writeClient.fetch(query)
+    if (priority && priority !== 'all') {
+      filters.push(`priority == $priority`)
+      params.priority = priority
+    }
+    if (status && status !== 'all') {
+      filters.push(`status == $status`)
+      params.status = status
+    }
 
-    // Calculate quick statistics
+    if (filterType === 'missing_phone') {
+      filters.push(`(!defined(phone) || phone == "")`)
+    } else if (filterType === 'missing_email') {
+      filters.push(`(!defined(email) || email == "")`)
+    } else if (filterType === 'complete') {
+      filters.push(`(defined(phone) && phone != "" && defined(email) && email != "")`)
+    }
+
+    if (search) {
+      params.search = `*${search}*`
+      filters.push(`(
+        name match $search ||
+        company match $search ||
+        email match $search ||
+        phone match $search ||
+        city match $search ||
+        designation match $search
+      )`)
+    }
+
+    const query = `*[${filters.join(' && ')}] | order(_createdAt desc)[0...${limit}]`
+    const leads = await writeClient.fetch(query, params)
+
+    // Calculate quick statistics across entire database
     const statsQuery = `{
       "total": count(*[_type == "marketingLead"]),
       "highPriority": count(*[_type == "marketingLead" && priority == "high"]),
       "withWhatsApp": count(*[_type == "marketingLead" && defined(whatsapp) && whatsapp != ""]),
       "contacted": count(*[_type == "marketingLead" && status == "contacted"]),
-      "inDiscussion": count(*[_type == "marketingLead" && status == "in_discussion"])
+      "inDiscussion": count(*[_type == "marketingLead" && status == "in_discussion"]),
+      "missingPhone": count(*[_type == "marketingLead" && (!defined(phone) || phone == "")]),
+      "missingEmail": count(*[_type == "marketingLead" && (!defined(email) || email == "")]),
+      "complete": count(*[_type == "marketingLead" && defined(phone) && phone != "" && defined(email) && email != ""])
     }`
     const stats = await writeClient.fetch(statsQuery)
 

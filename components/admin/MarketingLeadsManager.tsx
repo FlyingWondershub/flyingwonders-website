@@ -57,19 +57,31 @@ const COMPANY_KEYWORDS = [
 
 export default function MarketingLeadsManager() {
   const [leads, setLeads] = useState<MarketingLead[]>([])
-  const [stats, setStats] = useState({ total: 0, highPriority: 0, withWhatsApp: 0, contacted: 0, inDiscussion: 0 })
+  const [stats, setStats] = useState({
+    total: 0,
+    highPriority: 0,
+    withWhatsApp: 0,
+    contacted: 0,
+    inDiscussion: 0,
+    missingPhone: 0,
+    missingEmail: 0,
+    complete: 0
+  })
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [isSearchingServer, setIsSearchingServer] = useState(false)
 
   // Multi-selection & Deletion State
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set())
   const [isDeletingBulk, setIsDeletingBulk] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  // Filters & Search
+  // Filters, Search & Display Limit
   const [searchQuery, setSearchQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [cleanlinessFilter, setCleanlinessFilter] = useState<'all' | 'complete' | 'missing_phone' | 'missing_email'>('all')
+  const [displayLimit, setDisplayLimit] = useState<string>('all')
 
   // Add Lead Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -117,13 +129,20 @@ export default function MarketingLeadsManager() {
     }
   }
 
-  const fetchLeads = async () => {
+  const fetchLeads = async (searchOverride?: string) => {
     setRefreshing(true)
+    setIsSearchingServer(true)
     try {
       const params = new URLSearchParams()
-      params.set('limit', '500')
+      params.set('limit', displayLimit)
       if (priorityFilter !== 'all') params.set('priority', priorityFilter)
       if (statusFilter !== 'all') params.set('status', statusFilter)
+      if (cleanlinessFilter !== 'all') params.set('filterType', cleanlinessFilter)
+
+      const term = searchOverride !== undefined ? searchOverride : searchQuery
+      if (term.trim()) {
+        params.set('search', term.trim())
+      }
 
       const res = await fetch(`/api/admin/leads?${params.toString()}`)
       const data = await res.json()
@@ -136,13 +155,23 @@ export default function MarketingLeadsManager() {
     } finally {
       setLoading(false)
       setRefreshing(false)
+      setIsSearchingServer(false)
     }
   }
 
+  // Reload when filters or limit change
   useEffect(() => {
-    fetchLeads()
+    fetchLeads(searchQuery)
     fetchSubscribers()
-  }, [priorityFilter, statusFilter])
+  }, [priorityFilter, statusFilter, displayLimit, cleanlinessFilter])
+
+  // Debounced server search when typing in search box
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchLeads(searchQuery)
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   const handleSubscribeLead = async (lead: MarketingLead) => {
     if (!lead.email || !lead.email.includes('@')) {
@@ -833,7 +862,7 @@ Rajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <button
-            onClick={fetchLeads}
+            onClick={() => fetchLeads()}
             disabled={refreshing}
             style={{ padding: '8px 12px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, color: '#334155' }}
           >
@@ -883,30 +912,30 @@ Rajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`
           <div style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Total Database Leads</div>
           <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0F172A', marginTop: '2px' }}>{stats.total || leads.length}</div>
         </div>
+        <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '10px', padding: '12px 16px' }}>
+          <div style={{ fontSize: '0.74rem', color: '#065F46', fontWeight: 700, textTransform: 'uppercase' }}>✅ Complete (Email + Phone)</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#065F46', marginTop: '2px' }}>{stats.complete || 0}</div>
+        </div>
         <div style={{ background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: '10px', padding: '12px 16px' }}>
           <div style={{ fontSize: '0.74rem', color: '#92400E', fontWeight: 700, textTransform: 'uppercase' }}>🌟 High Priority Leads</div>
           <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#92400E', marginTop: '2px' }}>{stats.highPriority}</div>
         </div>
-        <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '10px', padding: '12px 16px' }}>
-          <div style={{ fontSize: '0.74rem', color: '#065F46', fontWeight: 700, textTransform: 'uppercase' }}>💬 Direct WhatsApp Ready</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#065F46', marginTop: '2px' }}>{stats.withWhatsApp}</div>
-        </div>
         <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '10px', padding: '12px 16px' }}>
-          <div style={{ fontSize: '0.74rem', color: '#1E40AF', fontWeight: 700, textTransform: 'uppercase' }}>🤝 In Discussion Pipeline</div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1E40AF', marginTop: '2px' }}>{stats.inDiscussion}</div>
+          <div style={{ fontSize: '0.74rem', color: '#1E40AF', fontWeight: 700, textTransform: 'uppercase' }}>💬 Direct WhatsApp Ready</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1E40AF', marginTop: '2px' }}>{stats.withWhatsApp}</div>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '16px', background: '#F8FAFC', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 240px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '6px 12px' }}>
-          <Search size={15} color="#94A3B8" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 260px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '6px 12px' }}>
+          <Search size={15} color={isSearchingServer ? '#0F4C3A' : '#94A3B8'} className={isSearchingServer ? 'animate-spin' : ''} />
           <input
             type="text"
-            placeholder="Search by name, company, email, city, designation..."
+            placeholder="Global search across all 1,366+ database leads..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.84rem', color: '#0F172A', background: 'transparent' }}
+            style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.84rem', color: '#0F172A', background: 'transparent', fontFamily: 'var(--font-inter), sans-serif' }}
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery('')} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#94A3B8' }}>
@@ -915,11 +944,23 @@ Rajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`
           )}
         </div>
 
+        {/* Cleanliness / Quality Filter */}
+        <select
+          value={cleanlinessFilter}
+          onChange={(e) => setCleanlinessFilter(e.target.value as any)}
+          style={{ padding: '7px 10px', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', background: '#FFF', color: '#334155', fontWeight: 600, fontFamily: 'var(--font-inter), sans-serif' }}
+        >
+          <option value="all">All Records ({stats.total || leads.length})</option>
+          <option value="complete">✅ Complete (Email + Phone) ({stats.complete || 0})</option>
+          <option value="missing_phone">⚠️ Missing Phone ({stats.missingPhone || 0})</option>
+          <option value="missing_email">⚠️ Missing Email ({stats.missingEmail || 0})</option>
+        </select>
+
         {/* Priority Filter */}
         <select
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
-          style={{ padding: '7px 10px', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', background: '#FFF', color: '#334155', fontWeight: 600 }}
+          style={{ padding: '7px 10px', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', background: '#FFF', color: '#334155', fontWeight: 600, fontFamily: 'var(--font-inter), sans-serif' }}
         >
           <option value="all">All Priorities</option>
           <option value="high">🌟 High Priority</option>
@@ -931,7 +972,7 @@ Rajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          style={{ padding: '7px 10px', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', background: '#FFF', color: '#334155', fontWeight: 600 }}
+          style={{ padding: '7px 10px', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', background: '#FFF', color: '#334155', fontWeight: 600, fontFamily: 'var(--font-inter), sans-serif' }}
         >
           <option value="all">All Pipeline Stages</option>
           <option value="new">🔵 New / Uncontacted</option>
@@ -940,8 +981,24 @@ Rajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`
           <option value="closed">🟣 Closed / Booked</option>
         </select>
 
-        <span style={{ fontSize: '0.78rem', color: '#64748B', marginLeft: 'auto' }}>
-          Showing <strong>{filteredLeads.length}</strong> leads
+        {/* Display Limit Selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <label style={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 600 }}>Show:</label>
+          <select
+            value={displayLimit}
+            onChange={(e) => setDisplayLimit(e.target.value)}
+            style={{ padding: '6px 8px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.78rem', background: '#FFF', color: '#0F172A', fontWeight: 700, fontFamily: 'var(--font-inter), sans-serif' }}
+          >
+            <option value="all">All ({stats.total || '1,366'})</option>
+            <option value="1000">1,000</option>
+            <option value="500">500</option>
+            <option value="250">250</option>
+          </select>
+        </div>
+
+        <span style={{ fontSize: '0.78rem', color: '#64748B', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {isSearchingServer && <RefreshCw size={12} className="animate-spin" color="#0F4C3A" />}
+          Showing <strong>{filteredLeads.length}</strong> of <strong>{stats.total || leads.length}</strong> leads
         </span>
       </div>
 
