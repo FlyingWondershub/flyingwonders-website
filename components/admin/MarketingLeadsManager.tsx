@@ -21,9 +21,39 @@ interface MarketingLead {
   priority?: 'high' | 'medium' | 'normal'
   status?: 'new' | 'contacted' | 'in_discussion' | 'closed' | 'opt_out'
   accreditations?: string
+  leadType?: string
   internalNotes?: string
   _createdAt?: string
 }
+
+// B2B Contact Parsing Constants
+const GENERIC_EMAIL_DOMAINS = new Set([
+  'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.in', 'yahoo.in', 'yahoo.co.uk',
+  'hotmail.com', 'outlook.com', 'live.com', 'msn.com', 'icloud.com', 'me.com',
+  'rediffmail.com', 'rediff.com', 'zoho.com', 'zohomail.com', 'protonmail.com',
+  'proton.me', 'aol.com', 'ymail.com', 'mail.com', 'gmx.com'
+])
+
+const KNOWN_CITIES = [
+  'Bangalore', 'Bengaluru', 'Mumbai', 'Bombay', 'Delhi', 'New Delhi', 'Chennai', 'Madras',
+  'Kolkata', 'Calcutta', 'Hyderabad', 'Pune', 'Ahmedabad', 'Jaipur', 'Goa', 'Panaji',
+  'Kochi', 'Cochin', 'Trivandrum', 'Thiruvananthapuram', 'Coimbatore', 'Madurai', 'Mysore',
+  'Mysuru', 'Mangalore', 'Mangaluru', 'Hubli', 'Dharwad', 'Chandigarh', 'Lucknow', 'Kanpur',
+  'Surat', 'Indore', 'Bhopal', 'Nagpur', 'Patna', 'Vadodara', 'Visakhapatnam', 'Vizag',
+  'Agra', 'Varanasi', 'Amritsar', 'Guwahati', 'Nashik', 'Rajkot', 'Srinagar', 'Noida',
+  'Gurgaon', 'Gurugram', 'Faridabad', 'Ghaziabad', 'Singapore', 'Dubai', 'Abu Dhabi',
+  'Bangkok', 'Kuala Lumpur', 'Doha', 'Muscat', 'Colombo'
+]
+
+const ACCREDITATIONS_LIST = ['IATA', 'TAAI', 'TAFI', 'ADTOI', 'OTOAI', 'IAAPI', 'ATOAI', 'ISO', 'MOT']
+
+const COMPANY_KEYWORDS = [
+  'tours', 'travels', 'travel', 'holidays', 'vacations', 'voyages', 'destinations',
+  'tourism', 'adventures', 'trip', 'trips', 'journeys', 'expeditions', 'getaways',
+  'resorts', 'hospitality', 'ticketing', 'express', 'air', 'logistics', 'routes',
+  'innovations', 'pvt ltd', 'private limited', 'llp', 'ltd', 'inc', 'corp', 'agency',
+  'services', 'enterprises', 'solutions', 'consultants', 'm/s', 'messrs'
+]
 
 export default function MarketingLeadsManager() {
   const [leads, setLeads] = useState<MarketingLead[]>([])
@@ -71,6 +101,9 @@ export default function MarketingLeadsManager() {
   const [isParsingImport, setIsParsingImport] = useState(false)
   const [isSyncingImport, setIsSyncingImport] = useState(false)
   const [importSyncFeedback, setImportSyncFeedback] = useState<string | null>(null)
+  const [importLeadType, setImportLeadType] = useState<string>('agent')
+  const [importPriority, setImportPriority] = useState<'high' | 'medium' | 'normal'>('normal')
+  const [importFilterQuery, setImportFilterQuery] = useState('')
 
   const fetchSubscribers = async () => {
     try {
@@ -374,24 +407,36 @@ export default function MarketingLeadsManager() {
         const name = findVal(['name', 'contact', 'full name', 'lead name'])
         const email = findVal(['email', 'e-mail', 'mail'])
         const phone = findVal(['phone', 'mobile', 'cell', 'whatsapp', 'tel', 'contact number'])
-        const company = findVal(['company', 'organization', 'agency', 'business', 'corp'])
+        let company = findVal(['company', 'organization', 'agency', 'business', 'corp'])
         const designation = findVal(['designation', 'role', 'title', 'position'])
         const city = findVal(['city', 'location', 'state', 'country'])
         const accreditations = findVal(['accreditation', 'tags', 'source', 'notes'])
 
         if (email || phone || name || company) {
           const cleanedP = phone ? cleanPhone(phone) : ''
+          
+          // Fallback company from corporate domain if empty and non-generic
+          if (!company && email) {
+            const domain = email.split('@')[1] || ''
+            if (!GENERIC_EMAIL_DOMAINS.has(domain.toLowerCase())) {
+              const domainName = domain.split('.')[0]
+              if (domainName && domainName.length > 2) {
+                company = domainName.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+              }
+            }
+          }
+
           extracted.push({
-            name: name || 'Contact',
+            name: name || '',
             email: email.toLowerCase(),
             phone: cleanedP,
-            whatsapp: cleanedP ? `https://wa.me/${cleanedP.replace('+', '')}` : '',
+            whatsapp: cleanedP ? `https://wa.me/${cleanedP.replace(/[^\d]/g, '')}` : '',
             company: company,
             designation: designation,
             city: city,
             accreditations: accreditations,
-            priority: cleanedP ? 'high' : 'normal',
-            leadType: 'individual',
+            priority: cleanedP ? 'high' : importPriority,
+            leadType: importLeadType || 'agent',
             status: 'new',
             source: 'csv_import',
           })
@@ -418,11 +463,11 @@ export default function MarketingLeadsManager() {
       const lines = text.split('\n')
       const extracted: Map<string, any> = new Map()
 
-      const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,5}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,5}/g
-      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
+      const phoneRegex = /(?:(?:\+?91[\s.-]?)?[6-9]\d{9})|(?:\+?\d{1,3}[\s.-]?)?\(?\d{2,5}\)?[\s.-]?\d{3,4}[\s.-]?\d{4,5}/
+      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/i
 
       for (const line of lines) {
-        const emails = line.match(emailRegex) || []
+        const emailMatch = line.match(emailRegex)
         const senderMatch = line.match(/\]\s*([^:]+):/)
         const sender = senderMatch ? senderMatch[1].trim() : ''
 
@@ -431,42 +476,47 @@ export default function MarketingLeadsManager() {
           senderPhone = cleanPhone(sender)
         }
 
-        for (const email of emails) {
-          const cleanEmail = email.toLowerCase().trim()
-          if (!extracted.has(cleanEmail)) {
-            const domain = cleanEmail.split('@')[1] || ''
-            extracted.set(cleanEmail, {
-              name: senderPhone ? '' : sender,
-              email: cleanEmail,
-              phone: senderPhone,
-              whatsapp: senderPhone ? `https://wa.me/${senderPhone.replace('+', '')}` : '',
-              company: domain.split('.')[0].toUpperCase(),
+        const email = emailMatch ? emailMatch[0].toLowerCase().trim() : ''
+
+        let messagePhone = ''
+        const contentPhoneMatch = line.match(phoneRegex)
+        if (contentPhoneMatch) {
+          const cp = cleanPhone(contentPhoneMatch[0])
+          if (cp.replace(/[^\d]/g, '').length >= 10) messagePhone = cp
+        }
+
+        const effectivePhone = senderPhone || messagePhone
+        const contactName = senderPhone ? '' : sender
+
+        if (email || effectivePhone) {
+          const key = (email || effectivePhone).toLowerCase()
+          if (!extracted.has(key)) {
+            let company = ''
+            if (email) {
+              const domain = email.split('@')[1] || ''
+              if (!GENERIC_EMAIL_DOMAINS.has(domain.toLowerCase())) {
+                const domainName = domain.split('.')[0]
+                if (domainName && domainName.length > 2) {
+                  company = domainName.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                }
+              }
+            }
+
+            extracted.set(key, {
+              name: contactName,
+              email: email,
+              phone: effectivePhone,
+              whatsapp: effectivePhone ? `https://wa.me/${effectivePhone.replace(/[^\d]/g, '')}` : '',
+              company: company,
               designation: '',
               city: '',
               accreditations: '',
-              priority: 'normal',
-              leadType: 'individual',
+              priority: effectivePhone ? 'high' : importPriority,
+              leadType: importLeadType || 'whatsapp',
               status: 'new',
               source: 'whatsapp_chat',
             })
           }
-        }
-
-        if (senderPhone && !extracted.has(senderPhone)) {
-          extracted.set(senderPhone, {
-            name: '',
-            email: '',
-            phone: senderPhone,
-            whatsapp: `https://wa.me/${senderPhone.replace('+', '')}`,
-            company: '',
-            designation: '',
-            city: '',
-            accreditations: '',
-            priority: 'normal',
-            leadType: 'whatsapp',
-            status: 'new',
-            source: 'whatsapp_chat',
-          })
         }
       }
 
@@ -478,66 +528,231 @@ export default function MarketingLeadsManager() {
     }
   }
 
-  // 3. Raw Text Paste Parser
+  // 3. Raw Text Paste Parser (Intelligent Line & Multi-Line Block Ingestion)
   const handleRawTextParse = () => {
     if (!importText.trim()) return
     setIsParsingImport(true)
     setImportSyncFeedback(null)
 
-    const phoneRegex = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,5}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,5}/g
-    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
+    try {
+      const rawBlocks = importText.split(/\r?\n\s*\r?\n/).map(b => b.trim()).filter(Boolean)
+      const useBlocks = rawBlocks.length > 1 && rawBlocks.some(b => b.includes('\n'))
+      const units = useBlocks ? rawBlocks : importText.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
 
-    const emails = importText.match(emailRegex) || []
-    const phones = importText.match(phoneRegex) || []
+      const results: any[] = []
+      const seenKeys = new Set<string>()
 
-    const extracted: any[] = []
-    const seen = new Set<string>()
+      const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/i
+      const phoneRegex = /(?:(?:\+?91[\s.-]?)?[6-9]\d{9})|(?:\+?\d{1,3}[\s.-]?)?\(?\d{2,5}\)?[\s.-]?\d{3,4}[\s.-]?\d{4,5}/
 
-    for (const em of emails) {
-      const c = em.toLowerCase().trim()
-      if (!seen.has(c)) {
-        seen.add(c)
-        extracted.push({
-          name: '',
-          email: c,
-          phone: '',
-          whatsapp: '',
-          company: (c.split('@')[1] || '').split('.')[0].toUpperCase(),
+      for (const unit of units) {
+        let currentText = unit
+        let email = ''
+        let phone = ''
+
+        // 1. Extract Email
+        const emailMatch = currentText.match(emailRegex)
+        if (emailMatch) {
+          email = emailMatch[0].toLowerCase().trim()
+          currentText = currentText.replace(emailMatch[0], ' ')
+        }
+
+        // 2. Extract Phone
+        const phoneMatch = currentText.match(phoneRegex)
+        if (phoneMatch) {
+          const rawP = phoneMatch[0].trim()
+          const cleanedP = cleanPhone(rawP)
+          if (cleanedP.replace(/[^\d]/g, '').length >= 10) {
+            phone = cleanedP
+            currentText = currentText.replace(phoneMatch[0], ' ')
+          }
+        }
+
+        if (!email && !phone) continue
+
+        let company = ''
+        let name = ''
+        let city = ''
+        let accreditations = ''
+
+        // Check for explicit field labels if present
+        const labeledCompany = unit.match(/(?:company|agency|firm|business|organization)\s*[:=\-–]\s*([^\n\r,;|]+)/i)
+        if (labeledCompany) company = labeledCompany[1].trim()
+
+        const labeledName = unit.match(/(?:contact|name|attn|rep|person)\s*[:=\-–]\s*([^\n\r,;|]+)/i)
+        if (labeledName) name = labeledName[1].trim()
+
+        const labeledCity = unit.match(/(?:city|location|branch|place)\s*[:=\-–]\s*([^\n\r,;|]+)/i)
+        if (labeledCity) city = labeledCity[1].trim()
+
+        // Clean delimiters and tokenize remainder
+        let remainder = currentText
+          .replace(/(?:company|agency|firm|business|name|contact|email|phone|mobile|tel|whatsapp|city|location)\s*[:=\-–]/gi, ' ')
+          .replace(/[\r\n\t]+/g, ' | ')
+          .replace(/\s{2,}/g, ' | ')
+          .replace(/\s*[,|–—]\s*/g, ' | ')
+          .replace(/\s+-\s+/g, ' | ')
+          .trim()
+
+        remainder = remainder.replace(/^[|\s-]+|[|\s-]+$/g, '').trim()
+        const tokens = remainder.split('|').map(t => t.trim()).filter(Boolean)
+
+        for (const token of tokens) {
+          const lower = token.toLowerCase()
+
+          // Check City
+          const matchedCity = KNOWN_CITIES.find(c => new RegExp(`\\b${c}\\b`, 'i').test(token))
+          if (matchedCity && !city) {
+            city = matchedCity
+            if (token.length <= matchedCity.length + 3) continue
+          }
+
+          // Check Accreditations
+          const matchedAcc = ACCREDITATIONS_LIST.find(a => new RegExp(`\\b${a}\\b`, 'i').test(token))
+          if (matchedAcc && !accreditations) {
+            accreditations = matchedAcc
+            if (token.length <= matchedAcc.length + 2) continue
+          }
+
+          // Check Company indicators or M/S
+          const isCompanyLike = COMPANY_KEYWORDS.some(kw => lower.includes(kw)) ||
+            /^m\/s/i.test(token) || /^messrs/i.test(token)
+
+          if (isCompanyLike && !company) {
+            company = token
+          } else if (!name && !isCompanyLike && /^[a-zA-Z\s.'’-]{2,35}$/.test(token)) {
+            name = token
+          } else if (!company) {
+            company = token
+          }
+        }
+
+        if (!company && tokens.length > 0) {
+          company = tokens[0]
+        }
+
+        // Company fallback from corporate domain
+        if (!company && email) {
+          const domain = email.split('@')[1] || ''
+          if (!GENERIC_EMAIL_DOMAINS.has(domain.toLowerCase())) {
+            const domainName = domain.split('.')[0]
+            if (domainName && domainName.length > 2) {
+              company = domainName.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+            }
+          }
+        }
+
+        // Contact name fallback from email handle if human-like
+        if (!name && email) {
+          const username = email.split('@')[0] || ''
+          const cleanUser = username.replace(/[0-9_.]+/g, ' ').trim()
+          const isGenericHandle = ['info', 'contact', 'admin', 'sales', 'packages', 'support', 'booking', 'bookings', 'help'].some(w => cleanUser.toLowerCase().includes(w))
+          const hasCompanyKeyword = COMPANY_KEYWORDS.some(kw => cleanUser.toLowerCase().includes(kw))
+
+          if (cleanUser.length >= 3 && !isGenericHandle && !hasCompanyKeyword) {
+            name = cleanUser.replace(/\b\w/g, c => c.toUpperCase())
+          }
+        }
+
+        if (company) {
+          if (city && company.toLowerCase().endsWith(city.toLowerCase())) {
+            company = company.slice(0, -city.length).replace(/[-–,\s]+$/, '').trim()
+          }
+          company = company.replace(/\s+/g, ' ').trim()
+        }
+
+        const uniqueKey = (email || phone).toLowerCase()
+        if (seenKeys.has(uniqueKey)) continue
+        seenKeys.add(uniqueKey)
+
+        results.push({
+          name: name || '',
+          email: email,
+          phone: phone,
+          whatsapp: phone ? `https://wa.me/${phone.replace(/[^\d]/g, '')}` : '',
+          company: company,
           designation: '',
-          city: '',
-          accreditations: '',
-          priority: 'normal',
-          leadType: 'individual',
+          city: city,
+          accreditations: accreditations,
+          priority: phone ? 'high' : importPriority,
+          leadType: importLeadType || 'agent',
           status: 'new',
           source: 'manual_text_paste',
         })
       }
-    }
 
-    for (const ph of phones) {
-      const p = cleanPhone(ph)
-      if (p.length >= 10 && !seen.has(p)) {
-        seen.add(p)
-        extracted.push({
-          name: '',
-          email: '',
-          phone: p,
-          whatsapp: `https://wa.me/${p.replace('+', '')}`,
-          company: '',
-          designation: '',
-          city: '',
-          accreditations: '',
-          priority: 'high',
-          leadType: 'whatsapp',
-          status: 'new',
-          source: 'manual_text_paste',
-        })
-      }
+      setParsedImportLeads(results)
+    } catch (err: any) {
+      alert(`Text parse error: ${err.message}`)
+    } finally {
+      setIsParsingImport(false)
     }
-
-    setParsedImportLeads(extracted)
-    setIsParsingImport(false)
   }
+
+  // Staging Grid Handlers
+  const handleUpdateParsedLead = (index: number, field: string, value: string) => {
+    setParsedImportLeads(prev => {
+      const updated = [...prev]
+      const item = { ...updated[index], [field]: value }
+      if (field === 'phone') {
+        const cleanP = cleanPhone(value)
+        item.whatsapp = cleanP ? `https://wa.me/${cleanP.replace(/[^\d]/g, '')}` : ''
+      }
+      updated[index] = item
+      return updated
+    })
+  }
+
+  const handleDeleteParsedLead = (index: number) => {
+    setParsedImportLeads(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleExportParsedLeads = () => {
+    if (parsedImportLeads.length === 0) return
+    const exportRows = parsedImportLeads.map((lead, idx) => ({
+      'S.No': idx + 1,
+      'Company Name': lead.company || '',
+      'Contact Name': lead.name || '',
+      'Email Address': lead.email || '',
+      'Phone Number': lead.phone || '',
+      'WhatsApp Link': lead.whatsapp || '',
+      'City / Location': lead.city || '',
+      'Accreditations': lead.accreditations || '',
+      'Lead Type': lead.leadType || 'agent',
+      'Priority': lead.priority || 'normal',
+      'Source': lead.source || 'parsed_import'
+    }))
+
+    const worksheet = XLSX.utils.json_to_sheet(exportRows)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Staging_Leads')
+    XLSX.writeFile(workbook, `Import_Staging_Leads_${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
+
+  const handleLoadSamplePaste = () => {
+    const sample = `M/S Marshall Tours N Travels   packages@marshalltravel.in   9538683939
+M/S Bhalaji Tours & Travels    sribhalajitravels1@gmail.com 9845857147
+M/S Travel Innovations   info@bestbus.in 8121115444
+M/S Blended Routes LLP   blendedroutes@gmail.com 7892749935
+M/S Abishek Travels      venkatesh4465@gmail.com 9844264501
+M/S Pooja Travels        poojatravels@gmail.com  9845049916
+Rajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`
+    setImportText(sample)
+  }
+
+  // Filtered preview leads for staging review
+  const filteredParsedLeads = parsedImportLeads.filter(p => {
+    if (!importFilterQuery.trim()) return true
+    const q = importFilterQuery.toLowerCase()
+    return (
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.company && p.company.toLowerCase().includes(q)) ||
+      (p.email && p.email.toLowerCase().includes(q)) ||
+      (p.phone && p.phone.includes(q)) ||
+      (p.city && p.city.toLowerCase().includes(q)) ||
+      (p.accreditations && p.accreditations.toLowerCase().includes(q))
+    )
+  })
 
   // Sync Parsed Leads to Sanity
   const handleSyncImportToSanity = async () => {
@@ -1188,22 +1403,26 @@ export default function MarketingLeadsManager() {
       {/* ── IMPORT LEADS MODAL ── */}
       {isImportModalOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-          <div style={{ background: '#FFFFFF', maxWidth: '750px', width: '100%', maxHeight: '92vh', borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
+          <div style={{ background: '#FFFFFF', maxWidth: '1020px', width: '100%', maxHeight: '92vh', borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
             
             {/* Modal Header */}
             <div style={{ padding: '16px 24px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC' }}>
               <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
-                  📥 Import Leads to Directory
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>📥 Import Leads to Directory</span>
+                  <span style={{ fontSize: '0.72rem', background: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                    AI-Enhanced Parser
+                  </span>
                 </h3>
                 <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '2px 0 0' }}>
-                  Auto-extract contacts from CSV/Excel sheets, exported WhatsApp chats, or pasted text.
+                  Intelligently captures company names, contact names, emails, phones (+91), cities, and accreditations into single unified records.
                 </p>
               </div>
               <button
                 onClick={() => {
                   setIsImportModalOpen(false)
                   setParsedImportLeads([])
+                  setImportFilterQuery('')
                   setImportSyncFeedback(null)
                 }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
@@ -1216,7 +1435,7 @@ export default function MarketingLeadsManager() {
             <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
               
               {/* Tab Selector */}
-              <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px', marginBottom: '16px' }}>
                 <button
                   type="button"
                   onClick={() => setImportTab('csv')}
@@ -1267,6 +1486,75 @@ export default function MarketingLeadsManager() {
                 </button>
               </div>
 
+              {/* Batch Ingestion Presets */}
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                padding: '10px 14px',
+                background: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: '10px',
+                marginBottom: '16px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', fontWeight: 700, color: '#1E293B' }}>
+                  <span>⚙️ Ingestion Defaults:</span>
+                  <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 400 }}>
+                    (Applied to newly parsed leads)
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600, color: '#475569' }}>Default Lead Type:</label>
+                    <select
+                      value={importLeadType}
+                      onChange={(e) => setImportLeadType(e.target.value)}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        background: '#FFFFFF',
+                        color: '#0F172A',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        fontFamily: 'var(--font-inter), sans-serif',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="agent">Travel Agent / B2B Partner</option>
+                      <option value="company">Company Account</option>
+                      <option value="individual">Direct Individual</option>
+                      <option value="department">Department Inbox</option>
+                      <option value="whatsapp">WhatsApp Contact</option>
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600, color: '#475569' }}>Default Priority:</label>
+                    <select
+                      value={importPriority}
+                      onChange={(e) => setImportPriority(e.target.value as any)}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        background: '#FFFFFF',
+                        color: '#0F172A',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        fontFamily: 'var(--font-inter), sans-serif',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="normal">🔵 Normal Priority</option>
+                      <option value="high">🌟 High Priority</option>
+                      <option value="medium">⚡ Medium Priority</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               {/* Tab 1: CSV / Excel */}
               {importTab === 'csv' && (
                 <div style={{ background: '#F8FAFC', border: '2px dashed #CBD5E1', borderRadius: '12px', padding: '24px', textAlign: 'center' }}>
@@ -1308,24 +1596,93 @@ export default function MarketingLeadsManager() {
               {/* Tab 3: Raw Text Paste */}
               {importTab === 'text' && (
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#1E293B', marginBottom: '6px' }}>
-                    Paste Raw Text, Phone Numbers, or Email Dumps:
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '8px' }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B' }}>
+                      Paste Raw Text, Phone Numbers, or Directory Contacts:
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleLoadSamplePaste}
+                      style={{
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        color: '#0F4C3A',
+                        background: '#ECFDF5',
+                        border: '1px solid #A7F3D0',
+                        borderRadius: '6px',
+                        padding: '4px 10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                      title="Load real-world sample B2B contacts"
+                    >
+                      <Sparkles size={13} /> Load Sample B2B Data
+                    </button>
+                  </div>
+                  <p style={{ margin: '0 0 8px', fontSize: '0.76rem', color: '#64748B', lineHeight: 1.4 }}>
+                    Paste line-by-line directory contacts (e.g. <code>M/S Agency packages@agency.in 9538683939</code>), tab-separated spreadsheet rows, or multi-line email signatures. Auto-extracts emails, phones (+91), companies, cities, and accreditations into single unified leads.
+                  </p>
                   <textarea
-                    rows={5}
+                    rows={6}
                     value={importText}
                     onChange={(e) => setImportText(e.target.value)}
-                    placeholder="Paste email signatures, raw numbers like +91 9876543210, +65 91234567, contact@agency.com..."
-                    style={{ width: '100%', padding: '10px', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', marginBottom: '10px' }}
+                    placeholder={`M/S Marshall Tours N Travels   packages@marshalltravel.in   9538683939\nM/S Bhalaji Tours & Travels    sribhalajitravels1@gmail.com 9845857147\nM/S Travel Innovations   info@bestbus.in 8121115444\nRajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontFamily: 'monospace',
+                      color: '#0F172A',
+                      background: '#FFFFFF',
+                      marginBottom: '12px'
+                    }}
                   />
-                  <button
-                    type="button"
-                    onClick={handleRawTextParse}
-                    disabled={!importText.trim() || isParsingImport}
-                    style={{ padding: '8px 16px', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    Extract Contacts
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={handleRawTextParse}
+                      disabled={!importText.trim() || isParsingImport}
+                      style={{
+                        padding: '9px 18px',
+                        background: '#0F4C3A',
+                        color: '#FFF',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        cursor: !importText.trim() || isParsingImport ? 'not-allowed' : 'pointer',
+                        opacity: !importText.trim() || isParsingImport ? 0.6 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Sparkles size={15} />
+                      {isParsingImport ? 'Parsing Text...' : 'Extract & Unify Contacts'}
+                    </button>
+                    {importText.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => setImportText('')}
+                        style={{
+                          padding: '9px 14px',
+                          background: '#F1F5F9',
+                          color: '#475569',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: '6px',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -1336,43 +1693,322 @@ export default function MarketingLeadsManager() {
                 </div>
               )}
 
-              {/* Extracted Preview */}
+              {/* Extracted Preview / Staging Grid */}
               {parsedImportLeads.length > 0 && (
-                <div style={{ marginTop: '20px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.88rem' }}>
-                      Ready to Ingest: <span style={{ color: '#059669' }}>{parsedImportLeads.length} leads extracted</span>
+                <div style={{ marginTop: '22px', borderTop: '1px solid #E2E8F0', paddingTop: '18px' }}>
+                  {/* Staging Toolbar */}
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginBottom: '12px'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.92rem' }}>
+                        📋 Staging Review:{' '}
+                        <span style={{ color: '#059669' }}>
+                          {parsedImportLeads.length} leads ready to ingest
+                        </span>
+                        {importFilterQuery && (
+                          <span style={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 500, marginLeft: '6px' }}>
+                            ({filteredParsedLeads.length} matching filter)
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.74rem', color: '#64748B' }}>
+                        You can edit fields inline or remove rows before syncing to directory.
+                      </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setParsedImportLeads([])}
-                      style={{ fontSize: '0.74rem', color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-                    >
-                      Clear Parsed
-                    </button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ position: 'relative' }}>
+                        <Search size={13} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                        <input
+                          type="text"
+                          value={importFilterQuery}
+                          onChange={(e) => setImportFilterQuery(e.target.value)}
+                          placeholder="Filter parsed leads..."
+                          style={{
+                            padding: '5px 8px 5px 26px',
+                            fontSize: '0.76rem',
+                            border: '1px solid #CBD5E1',
+                            borderRadius: '6px',
+                            width: '160px',
+                            background: '#FFFFFF',
+                            color: '#0F172A',
+                            fontFamily: 'var(--font-inter), sans-serif'
+                          }}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleExportParsedLeads}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '5px 10px',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          color: '#0F4C3A',
+                          background: '#ECFDF5',
+                          border: '1px solid #A7F3D0',
+                          borderRadius: '6px',
+                          cursor: 'pointer'
+                        }}
+                        title="Download parsed staging leads as an Excel file"
+                      >
+                        <Download size={13} /> Export (.xlsx)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setParsedImportLeads([])
+                          setImportFilterQuery('')
+                        }}
+                        style={{
+                          fontSize: '0.74rem',
+                          color: '#EF4444',
+                          background: '#FEF2F2',
+                          border: '1px solid #FECACA',
+                          borderRadius: '6px',
+                          padding: '5px 10px',
+                          cursor: 'pointer',
+                          fontWeight: 600
+                        }}
+                      >
+                        Clear All
+                      </button>
+                    </div>
                   </div>
 
-                  <div style={{ maxHeight: '180px', overflowY: 'auto', border: '1px solid #E2E8F0', borderRadius: '8px', marginBottom: '16px' }}>
+                  {/* Scrollable Editable Grid */}
+                  <div style={{
+                    maxHeight: '360px',
+                    overflowY: 'auto',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '8px',
+                    marginBottom: '16px',
+                    background: '#FFFFFF'
+                  }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem', textAlign: 'left' }}>
-                      <thead>
-                        <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
-                          <th style={{ padding: '6px 10px' }}>Contact</th>
-                          <th style={{ padding: '6px 10px' }}>Company</th>
-                          <th style={{ padding: '6px 10px' }}>Email</th>
-                          <th style={{ padding: '6px 10px' }}>Phone</th>
-                          <th style={{ padding: '6px 10px' }}>Source</th>
+                      <thead style={{ position: 'sticky', top: 0, background: '#F1F5F9', zIndex: 2 }}>
+                        <tr style={{ borderBottom: '1px solid #CBD5E1', color: '#475569' }}>
+                          <th style={{ padding: '8px 6px', width: '32px', textAlign: 'center' }}>#</th>
+                          <th style={{ padding: '8px 8px', minWidth: '170px' }}>Company / Agency</th>
+                          <th style={{ padding: '8px 8px', minWidth: '130px' }}>Contact Name</th>
+                          <th style={{ padding: '8px 8px', minWidth: '170px' }}>Email Address</th>
+                          <th style={{ padding: '8px 8px', minWidth: '140px' }}>Phone (+91)</th>
+                          <th style={{ padding: '8px 8px', minWidth: '100px' }}>City</th>
+                          <th style={{ padding: '8px 8px', minWidth: '85px' }}>Accreditation</th>
+                          <th style={{ padding: '8px 8px', minWidth: '110px' }}>Type</th>
+                          <th style={{ padding: '8px 8px', minWidth: '95px' }}>Priority</th>
+                          <th style={{ padding: '8px 6px', width: '36px', textAlign: 'center' }}></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {parsedImportLeads.slice(0, 8).map((p, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                            <td style={{ padding: '6px 10px', fontWeight: 700 }}>{p.name || '—'}</td>
-                            <td style={{ padding: '6px 10px' }}>{p.company || '—'}</td>
-                            <td style={{ padding: '6px 10px', color: '#800020' }}>{p.email || '—'}</td>
-                            <td style={{ padding: '6px 10px' }}>{p.phone || '—'}</td>
-                            <td style={{ padding: '6px 10px', color: '#64748B' }}>{p.source}</td>
-                          </tr>
-                        ))}
+                        {filteredParsedLeads.map((p, idx) => {
+                          const originalIdx = parsedImportLeads.indexOf(p)
+                          const targetIdx = originalIdx >= 0 ? originalIdx : idx
+                          return (
+                            <tr key={idx} style={{ borderBottom: '1px solid #E2E8F0', background: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}>
+                              <td style={{ padding: '6px 4px', textAlign: 'center', color: '#94A3B8', fontSize: '0.72rem', fontWeight: 600 }}>
+                                {targetIdx + 1}
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <input
+                                  type="text"
+                                  value={p.company || ''}
+                                  onChange={(e) => handleUpdateParsedLead(targetIdx, 'company', e.target.value)}
+                                  placeholder="Company name"
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#0F172A',
+                                    fontFamily: 'var(--font-inter), sans-serif'
+                                  }}
+                                />
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <input
+                                  type="text"
+                                  value={p.name || ''}
+                                  onChange={(e) => handleUpdateParsedLead(targetIdx, 'name', e.target.value)}
+                                  placeholder="Contact person"
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '0.76rem',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#0F172A',
+                                    fontFamily: 'var(--font-inter), sans-serif'
+                                  }}
+                                />
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <input
+                                  type="text"
+                                  value={p.email || ''}
+                                  onChange={(e) => handleUpdateParsedLead(targetIdx, 'email', e.target.value)}
+                                  placeholder="Email"
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '0.76rem',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#800020',
+                                    fontFamily: 'var(--font-inter), sans-serif'
+                                  }}
+                                />
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <input
+                                    type="text"
+                                    value={p.phone || ''}
+                                    onChange={(e) => handleUpdateParsedLead(targetIdx, 'phone', e.target.value)}
+                                    placeholder="+91..."
+                                    style={{
+                                      flex: 1,
+                                      padding: '4px 6px',
+                                      fontSize: '0.76rem',
+                                      border: '1px solid #CBD5E1',
+                                      borderRadius: '4px',
+                                      background: '#FFFFFF',
+                                      color: '#0F172A',
+                                      fontFamily: 'var(--font-inter), sans-serif'
+                                    }}
+                                  />
+                                  {p.whatsapp && (
+                                    <a
+                                      href={p.whatsapp}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      title="Open WhatsApp chat"
+                                      style={{ color: '#15803D', display: 'flex', alignItems: 'center' }}
+                                    >
+                                      <MessageCircle size={14} />
+                                    </a>
+                                  )}
+                                </div>
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <input
+                                  type="text"
+                                  value={p.city || ''}
+                                  onChange={(e) => handleUpdateParsedLead(targetIdx, 'city', e.target.value)}
+                                  placeholder="City"
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '0.76rem',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#0F172A',
+                                    fontFamily: 'var(--font-inter), sans-serif'
+                                  }}
+                                />
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <input
+                                  type="text"
+                                  value={p.accreditations || ''}
+                                  onChange={(e) => handleUpdateParsedLead(targetIdx, 'accreditations', e.target.value)}
+                                  placeholder="IATA, TAAI"
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '0.76rem',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#0F172A',
+                                    fontFamily: 'var(--font-inter), sans-serif'
+                                  }}
+                                />
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <select
+                                  value={p.leadType || 'agent'}
+                                  onChange={(e) => handleUpdateParsedLead(targetIdx, 'leadType', e.target.value)}
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 4px',
+                                    fontSize: '0.74rem',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#0F172A',
+                                    fontFamily: 'var(--font-inter), sans-serif',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <option value="agent">Agent</option>
+                                  <option value="company">Company</option>
+                                  <option value="individual">Individual</option>
+                                  <option value="department">Dept</option>
+                                  <option value="whatsapp">WhatsApp</option>
+                                </select>
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <select
+                                  value={p.priority || 'normal'}
+                                  onChange={(e) => handleUpdateParsedLead(targetIdx, 'priority', e.target.value)}
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 4px',
+                                    fontSize: '0.74rem',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: p.priority === 'high' ? '#D97706' : '#0F172A',
+                                    fontWeight: p.priority === 'high' ? 700 : 500,
+                                    fontFamily: 'var(--font-inter), sans-serif',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <option value="normal">Normal</option>
+                                  <option value="high">High</option>
+                                  <option value="medium">Medium</option>
+                                </select>
+                              </td>
+                              <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteParsedLead(targetIdx)}
+                                  title="Remove this row"
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: '#94A3B8',
+                                    padding: '2px',
+                                    borderRadius: '4px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = '#EF4444')}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = '#94A3B8')}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -1381,9 +2017,33 @@ export default function MarketingLeadsManager() {
                     type="button"
                     onClick={handleSyncImportToSanity}
                     disabled={isSyncingImport}
-                    style={{ width: '100%', padding: '10px 16px', background: '#0F4C3A', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 800, fontSize: '0.88rem', cursor: isSyncingImport ? 'not-allowed' : 'pointer' }}
+                    style={{
+                      width: '100%',
+                      padding: '11px 16px',
+                      background: '#0F4C3A',
+                      color: '#FFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: 800,
+                      fontSize: '0.88rem',
+                      cursor: isSyncingImport ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(15, 76, 58, 0.2)'
+                    }}
                   >
-                    {isSyncingImport ? 'Syncing to Sanity...' : `🚀 Sync ${parsedImportLeads.length} Leads to Sanity Directory`}
+                    {isSyncingImport ? (
+                      <>
+                        <RefreshCw size={16} className="animate-spin" />
+                        Syncing {parsedImportLeads.length} Leads to Sanity...
+                      </>
+                    ) : (
+                      <>
+                        🚀 Sync {parsedImportLeads.length} Leads to Sanity Directory
+                      </>
+                    )}
                   </button>
                 </div>
               )}
@@ -1397,6 +2057,7 @@ export default function MarketingLeadsManager() {
                 onClick={() => {
                   setIsImportModalOpen(false)
                   setParsedImportLeads([])
+                  setImportFilterQuery('')
                   setImportSyncFeedback(null)
                 }}
                 style={{ padding: '7px 16px', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
