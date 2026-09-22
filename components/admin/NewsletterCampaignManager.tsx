@@ -7,8 +7,9 @@ import {
   AlertCircle, Sparkles, X, ChevronRight, Users, Clock, CheckCheck,
   FileText, Smartphone, Monitor, ShieldCheck, Check, MessageSquare,
   Image as ImageIcon, Upload, Download, UserPlus, Search, Filter, CheckCircle2,
-  History, Copy
+  History, Copy, MessageCircle
 } from 'lucide-react'
+import { ParsedContact, parseSpreadsheetBuffer, parseWhatsAppChatText, parseRawContactText } from '../../lib/contact-parser'
 
 export interface DispatchHistoryItem {
   _key?: string
@@ -424,6 +425,32 @@ export default function NewsletterCampaignManager() {
   const [newSubCompany, setNewSubCompany] = useState('')
   const [newSubAudience, setNewSubAudience] = useState<'b2b' | 'b2c' | 'lead'>('b2b')
   const [subActionFeedback, setSubActionFeedback] = useState<string | null>(null)
+
+  // Bulk Import Modal State
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [importTab, setImportTab] = useState<'csv' | 'chat' | 'text'>('csv')
+  const [importAudience, setImportAudience] = useState<'b2b' | 'b2c' | 'lead'>('b2b')
+  const [importDualSyncLeads, setImportDualSyncLeads] = useState(true)
+  const [importSourceTag, setImportSourceTag] = useState('b2b_audience_import')
+  const [importCity, setImportCity] = useState('')
+  const [importText, setImportText] = useState('')
+  const [parsedImportSubscribers, setParsedImportSubscribers] = useState<ParsedContact[]>([])
+  const [importFilterQuery, setImportFilterQuery] = useState('')
+  const [isParsingImport, setIsParsingImport] = useState(false)
+  const [isSyncingImport, setIsSyncingImport] = useState(false)
+  const [importSyncFeedback, setImportSyncFeedback] = useState<string | null>(null)
+
+  const filteredParsedSubscribers = useMemo(() => {
+    if (!importFilterQuery.trim()) return parsedImportSubscribers
+    const q = importFilterQuery.toLowerCase()
+    return parsedImportSubscribers.filter(s =>
+      (s.email && s.email.toLowerCase().includes(q)) ||
+      (s.name && s.name.toLowerCase().includes(q)) ||
+      (s.company && s.company.toLowerCase().includes(q)) ||
+      (s.phone && s.phone.toLowerCase().includes(q)) ||
+      (s.city && s.city.toLowerCase().includes(q))
+    )
+  }, [parsedImportSubscribers, importFilterQuery])
 
   // Real-time compiled HTML for editor preview
   const liveCompiledHtml = useMemo(() => {
@@ -892,6 +919,135 @@ export default function NewsletterCampaignManager() {
     XLSX.writeFile(wb, `FlyingWonders_Subscribers_${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
+  // ── BULK IMPORT HANDLERS ──
+  const handleCsvImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsParsingImport(true)
+    setImportSyncFeedback(null)
+    try {
+      const buffer = await file.arrayBuffer()
+      const results = parseSpreadsheetBuffer(buffer, {
+        defaultAudience: importAudience,
+        sourceTag: importSourceTag || 'csv_import'
+      })
+      setParsedImportSubscribers(results)
+    } catch (err: any) {
+      alert(`Failed to parse spreadsheet: ${err.message}`)
+    } finally {
+      setIsParsingImport(false)
+    }
+  }
+
+  const handleChatFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsParsingImport(true)
+    setImportSyncFeedback(null)
+    try {
+      const text = await file.text()
+      const results = parseWhatsAppChatText(text, {
+        defaultAudience: importAudience,
+        sourceTag: importSourceTag || 'whatsapp_chat'
+      })
+      setParsedImportSubscribers(results)
+    } catch (err: any) {
+      alert(`Chat parse error: ${err.message}`)
+    } finally {
+      setIsParsingImport(false)
+    }
+  }
+
+  const handleRawTextParse = () => {
+    if (!importText.trim()) return
+    setIsParsingImport(true)
+    setImportSyncFeedback(null)
+    try {
+      const results = parseRawContactText(importText, {
+        defaultAudience: importAudience,
+        defaultCity: importCity,
+        sourceTag: importSourceTag || 'manual_text_paste'
+      })
+      setParsedImportSubscribers(results)
+    } catch (err: any) {
+      alert(`Text parse error: ${err.message}`)
+    } finally {
+      setIsParsingImport(false)
+    }
+  }
+
+  const handleLoadSamplePaste = () => {
+    setImportText(`M/S Marshall Tours N Travels   packages@marshalltravel.in   9538683939   Bangalore
+M/S Bhalaji Tours & Travels    sribhalajitravels1@gmail.com 9845857147   Chennai
+M/S Travel Innovations   info@bestbus.in 8121115444   Hyderabad
+Rajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA
+Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 | Mumbai`)
+  }
+
+  const handleUpdateParsedSub = (idx: number, field: keyof ParsedContact, val: string) => {
+    setParsedImportSubscribers(prev => {
+      const next = [...prev]
+      next[idx] = { ...next[idx], [field]: val }
+      return next
+    })
+  }
+
+  const handleDeleteParsedSub = (idx: number) => {
+    setParsedImportSubscribers(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  const handleExportParsedSubscribers = () => {
+    if (parsedImportSubscribers.length === 0) return
+    const exportRows = parsedImportSubscribers.map(s => ({
+      'Email': s.email || '',
+      'Name': s.name || '',
+      'Company': s.company || '',
+      'Phone': s.phone || '',
+      'City': s.city || '',
+      'Audience Group': s.audienceType || 'b2b',
+      'Source': s.source || '',
+    }))
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(exportRows)
+    XLSX.utils.book_append_sheet(wb, ws, 'Staging Subscribers')
+    XLSX.writeFile(wb, `Parsed_Subscribers_${new Date().toISOString().slice(0, 10)}.xlsx`)
+  }
+
+  const handleSyncImportToSubscribers = async () => {
+    if (parsedImportSubscribers.length === 0) return
+    setIsSyncingImport(true)
+    setImportSyncFeedback(null)
+
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscribers: parsedImportSubscribers,
+          dualSyncLeads: importDualSyncLeads,
+          skipWelcomeEmail: true,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setImportSyncFeedback(`✅ ${data.message}`)
+        await fetchSubscribersFull()
+        setTimeout(() => {
+          setIsImportModalOpen(false)
+          setParsedImportSubscribers([])
+          setImportSyncFeedback(null)
+          setImportText('')
+        }, 1400)
+      } else {
+        throw new Error(data.error || 'Failed to sync subscribers')
+      }
+    } catch (err: any) {
+      setImportSyncFeedback(`❌ Error: ${err.message}`)
+    } finally {
+      setIsSyncingImport(false)
+    }
+  }
+
   const filteredSubscribers = subscribersList.filter(s => {
     if (subscriberSearch) {
       const q = subscriberSearch.toLowerCase()
@@ -1255,6 +1411,32 @@ export default function NewsletterCampaignManager() {
                 <option value="active">🟢 Active</option>
                 <option value="inactive">🔴 Inactive / Unsubscribed</option>
               </select>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsImportModalOpen(true)
+                  setImportSyncFeedback(null)
+                }}
+                style={{
+                  padding: '6px 14px',
+                  background: '#0F4C3A',
+                  color: '#FFF',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 4px rgba(15, 76, 58, 0.15)'
+                }}
+                title="Bulk import from Excel, WhatsApp, or pasted contacts"
+              >
+                <Sparkles size={13} />
+                📥 Bulk Import Audience
+              </button>
 
               <button
                 type="button"
@@ -2594,6 +2776,658 @@ export default function NewsletterCampaignManager() {
                 style={{ padding: '7px 18px', background: '#800020', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}
               >
                 Close History
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ── BULK IMPORT SUBSCRIBERS MODAL ── */}
+      {isImportModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: '#FFFFFF', maxWidth: '1040px', width: '100%', maxHeight: '92vh', borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
+            
+            {/* Modal Header */}
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>📥 Bulk Import Subscribers Audience</span>
+                  <span style={{ fontSize: '0.72rem', background: '#DCFCE7', color: '#15803D', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                    AI-Enhanced Parser
+                  </span>
+                </h3>
+                <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '2px 0 0' }}>
+                  Multi-source bulk ingestion with automatic email cleansing, phone standardization (+91), staging review, and deduplication.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsImportModalOpen(false)
+                  setParsedImportSubscribers([])
+                  setImportFilterQuery('')
+                  setImportSyncFeedback(null)
+                }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
+              
+              {/* Tab Selector */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px', marginBottom: '16px' }}>
+                <button
+                  type="button"
+                  onClick={() => setImportTab('csv')}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: importTab === 'csv' ? '#0F4C3A' : '#F1F5F9',
+                    color: importTab === 'csv' ? '#FFF' : '#475569',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📁 CSV / Excel Sheet
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImportTab('chat')}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: importTab === 'chat' ? '#0F4C3A' : '#F1F5F9',
+                    color: importTab === 'chat' ? '#FFF' : '#475569',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  💬 WhatsApp Chat (.txt)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImportTab('text')}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: importTab === 'text' ? '#0F4C3A' : '#F1F5F9',
+                    color: importTab === 'text' ? '#FFF' : '#475569',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📋 Paste Text / Numbers
+                </button>
+              </div>
+
+              {/* Ingestion Presets & Dual-Sync */}
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                padding: '10px 14px',
+                background: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: '10px',
+                marginBottom: '16px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', fontWeight: 700, color: '#1E293B' }}>
+                  <span>⚙️ Ingestion Defaults:</span>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600, color: '#475569' }}>Target Audience:</label>
+                    <select
+                      value={importAudience}
+                      onChange={(e) => setImportAudience(e.target.value as any)}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        background: '#FFFFFF',
+                        color: '#0F172A',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        fontFamily: 'var(--font-inter), sans-serif',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="b2b">🏢 B2B Travel Partner</option>
+                      <option value="b2c">🌐 B2C Website Subscriber</option>
+                      <option value="lead">🎯 Lead / Inquiry</option>
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <label style={{ fontSize: '0.76rem', fontWeight: 600, color: '#475569' }}>Source Tag:</label>
+                    <input
+                      type="text"
+                      value={importSourceTag}
+                      onChange={(e) => setImportSourceTag(e.target.value)}
+                      placeholder="e.g. b2b_campaign"
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        fontSize: '0.76rem',
+                        width: '130px',
+                        background: '#FFF',
+                        color: '#0F172A'
+                      }}
+                    />
+                  </div>
+
+                  {importTab === 'text' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <label style={{ fontSize: '0.76rem', fontWeight: 600, color: '#475569' }}>City:</label>
+                      <input
+                        type="text"
+                        value={importCity}
+                        onChange={(e) => setImportCity(e.target.value)}
+                        placeholder="e.g. Bangalore"
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          fontSize: '0.76rem',
+                          width: '100px',
+                          background: '#FFF',
+                          color: '#0F172A'
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: 700, color: '#0F4C3A', cursor: 'pointer', background: '#ECFDF5', padding: '4px 8px', borderRadius: '6px', border: '1px solid #A7F3D0' }}>
+                    <input
+                      type="checkbox"
+                      checked={importDualSyncLeads}
+                      onChange={(e) => setImportDualSyncLeads(e.target.checked)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span>☑️ Also sync to Marketing Leads Directory</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Tab 1: CSV / Excel */}
+              {importTab === 'csv' && (
+                <div style={{ background: '#F8FAFC', border: '2px dashed #CBD5E1', borderRadius: '12px', padding: '24px', textAlign: 'center' }}>
+                  <FileText size={36} color="#0F4C3A" style={{ margin: '0 auto 10px' }} />
+                  <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', color: '#1E293B', fontWeight: 700 }}>
+                    Upload CSV or Excel Spreadsheet (.xlsx, .xls, .csv)
+                  </h4>
+                  <p style={{ margin: '0 0 16px', fontSize: '0.78rem', color: '#64748B' }}>
+                    Auto-maps columns: Email, Contact Name, Company, Phone (+91), City, and Audience.
+                  </p>
+                  <input
+                    type="file"
+                    accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                    onChange={handleCsvImport}
+                    style={{ fontSize: '0.82rem', cursor: 'pointer' }}
+                  />
+                </div>
+              )}
+
+              {/* Tab 2: WhatsApp Chat */}
+              {importTab === 'chat' && (
+                <div style={{ background: '#F8FAFC', border: '2px dashed #CBD5E1', borderRadius: '12px', padding: '24px', textAlign: 'center' }}>
+                  <MessageCircle size={36} color="#15803D" style={{ margin: '0 auto 10px' }} />
+                  <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', color: '#1E293B', fontWeight: 700 }}>
+                    Upload Exported WhatsApp Chat (.txt)
+                  </h4>
+                  <p style={{ margin: '0 0 16px', fontSize: '0.78rem', color: '#64748B' }}>
+                    Export a chat or group without media from WhatsApp, and upload the .txt file to automatically extract participant numbers and emails.
+                  </p>
+                  <input
+                    type="file"
+                    accept=".txt"
+                    onChange={handleChatFile}
+                    style={{ fontSize: '0.82rem', cursor: 'pointer' }}
+                  />
+                </div>
+              )}
+
+              {/* Tab 3: Raw Text Paste */}
+              {importTab === 'text' && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '8px' }}>
+                    <label style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1E293B' }}>
+                      Paste Raw Text, Phone Numbers, or Directory Contacts:
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleLoadSamplePaste}
+                      style={{
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        color: '#0F4C3A',
+                        background: '#ECFDF5',
+                        border: '1px solid #A7F3D0',
+                        borderRadius: '6px',
+                        padding: '4px 10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                      title="Load real-world sample B2B contacts"
+                    >
+                      <Sparkles size={13} /> Load Sample B2B Data
+                    </button>
+                  </div>
+                  <p style={{ margin: '0 0 8px', fontSize: '0.76rem', color: '#64748B', lineHeight: 1.4 }}>
+                    Paste line-by-line directory contacts (e.g. <code>M/S Agency packages@agency.in 9538683939</code>), tab-separated spreadsheet rows, or multi-line email blocks. Auto-extracts emails, phone numbers, companies, and cities.
+                  </p>
+                  <textarea
+                    rows={6}
+                    value={importText}
+                    onChange={(e) => setImportText(e.target.value)}
+                    placeholder={`M/S Marshall Tours N Travels   packages@marshalltravel.in   9538683939\nM/S Bhalaji Tours & Travels    sribhalajitravels1@gmail.com 9845857147\nM/S Travel Innovations   info@bestbus.in 8121115444\nRajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #CBD5E1',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontFamily: 'monospace',
+                      color: '#0F172A',
+                      background: '#FFFFFF',
+                      marginBottom: '12px'
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={handleRawTextParse}
+                      disabled={!importText.trim() || isParsingImport}
+                      style={{
+                        padding: '9px 18px',
+                        background: '#0F4C3A',
+                        color: '#FFF',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        cursor: !importText.trim() || isParsingImport ? 'not-allowed' : 'pointer',
+                        opacity: !importText.trim() || isParsingImport ? 0.6 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Sparkles size={15} />
+                      {isParsingImport ? 'Parsing Text...' : 'Extract & Preview Contacts'}
+                    </button>
+                    {importText.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => setImportText('')}
+                        style={{
+                          padding: '9px 14px',
+                          background: '#F1F5F9',
+                          color: '#475569',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: '6px',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Feedback Message */}
+              {importSyncFeedback && (
+                <div style={{ marginTop: '16px', padding: '10px 14px', borderRadius: '8px', background: importSyncFeedback.startsWith('✅') ? '#ECFDF5' : '#FEF2F2', border: `1px solid ${importSyncFeedback.startsWith('✅') ? '#A7F3D0' : '#FECACA'}`, color: importSyncFeedback.startsWith('✅') ? '#065F46' : '#991B1B', fontWeight: 700, fontSize: '0.82rem' }}>
+                  {importSyncFeedback}
+                </div>
+              )}
+
+              {/* Extracted Preview / Staging Grid */}
+              {parsedImportSubscribers.length > 0 && (
+                <div style={{ marginTop: '22px', borderTop: '1px solid #E2E8F0', paddingTop: '18px' }}>
+                  {/* Staging Toolbar */}
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '10px',
+                    marginBottom: '12px'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.92rem' }}>
+                        📋 Staging Review:{' '}
+                        <span style={{ color: '#059669' }}>
+                          {parsedImportSubscribers.length} contacts ready to ingest
+                        </span>
+                        {importFilterQuery && (
+                          <span style={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 500, marginLeft: '6px' }}>
+                            ({filteredParsedSubscribers.length} matching filter)
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.74rem', color: '#64748B' }}>
+                        You can edit fields inline or remove rows before syncing into subscribers audience.
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ position: 'relative' }}>
+                        <Search size={13} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                        <input
+                          type="text"
+                          value={importFilterQuery}
+                          onChange={(e) => setImportFilterQuery(e.target.value)}
+                          placeholder="Filter contacts..."
+                          style={{
+                            padding: '5px 8px 5px 26px',
+                            fontSize: '0.76rem',
+                            border: '1px solid #CBD5E1',
+                            borderRadius: '6px',
+                            width: '160px',
+                            background: '#FFFFFF',
+                            color: '#0F172A',
+                            fontFamily: 'var(--font-inter), sans-serif'
+                          }}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleExportParsedSubscribers}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '5px 10px',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          color: '#0F4C3A',
+                          background: '#ECFDF5',
+                          border: '1px solid #A7F3D0',
+                          borderRadius: '6px',
+                          cursor: 'pointer'
+                        }}
+                        title="Download parsed staging contacts as an Excel file"
+                      >
+                        <Download size={13} /> Export (.xlsx)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setParsedImportSubscribers([])
+                          setImportFilterQuery('')
+                        }}
+                        style={{
+                          fontSize: '0.74rem',
+                          color: '#EF4444',
+                          background: '#FEF2F2',
+                          border: '1px solid #FECACA',
+                          borderRadius: '6px',
+                          padding: '5px 10px',
+                          cursor: 'pointer',
+                          fontWeight: 600
+                        }}
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Scrollable Editable Grid */}
+                  <div style={{
+                    maxHeight: '360px',
+                    overflowY: 'auto',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '8px',
+                    marginBottom: '16px',
+                    background: '#FFFFFF'
+                  }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem', textAlign: 'left' }}>
+                      <thead style={{ position: 'sticky', top: 0, background: '#F1F5F9', zIndex: 2 }}>
+                        <tr style={{ borderBottom: '1px solid #CBD5E1', color: '#475569' }}>
+                          <th style={{ padding: '8px 6px', width: '32px', textAlign: 'center' }}>#</th>
+                          <th style={{ padding: '8px 8px', minWidth: '180px' }}>Email Address (Required)</th>
+                          <th style={{ padding: '8px 8px', minWidth: '140px' }}>Contact Name</th>
+                          <th style={{ padding: '8px 8px', minWidth: '170px' }}>Company / Agency</th>
+                          <th style={{ padding: '8px 8px', minWidth: '140px' }}>Phone (+91)</th>
+                          <th style={{ padding: '8px 8px', minWidth: '100px' }}>City</th>
+                          <th style={{ padding: '8px 8px', minWidth: '130px' }}>Audience Group</th>
+                          <th style={{ padding: '8px 6px', width: '36px', textAlign: 'center' }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredParsedSubscribers.map((p, idx) => {
+                          const originalIdx = parsedImportSubscribers.indexOf(p)
+                          const targetIdx = originalIdx >= 0 ? originalIdx : idx
+                          return (
+                            <tr key={idx} style={{ borderBottom: '1px solid #E2E8F0', background: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}>
+                              <td style={{ padding: '6px 4px', textAlign: 'center', color: '#94A3B8', fontSize: '0.72rem', fontWeight: 600 }}>
+                                {targetIdx + 1}
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <input
+                                  type="text"
+                                  value={p.email || ''}
+                                  onChange={(e) => handleUpdateParsedSub(targetIdx, 'email', e.target.value)}
+                                  placeholder="user@domain.com"
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 700,
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#800020',
+                                    fontFamily: 'var(--font-inter), sans-serif'
+                                  }}
+                                />
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <input
+                                  type="text"
+                                  value={p.name || ''}
+                                  onChange={(e) => handleUpdateParsedSub(targetIdx, 'name', e.target.value)}
+                                  placeholder="Contact name"
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '0.76rem',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#0F172A',
+                                    fontFamily: 'var(--font-inter), sans-serif'
+                                  }}
+                                />
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <input
+                                  type="text"
+                                  value={p.company || ''}
+                                  onChange={(e) => handleUpdateParsedSub(targetIdx, 'company', e.target.value)}
+                                  placeholder="Company name"
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '0.76rem',
+                                    fontWeight: 600,
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#0F172A',
+                                    fontFamily: 'var(--font-inter), sans-serif'
+                                  }}
+                                />
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <input
+                                    type="text"
+                                    value={p.phone || ''}
+                                    onChange={(e) => handleUpdateParsedSub(targetIdx, 'phone', e.target.value)}
+                                    placeholder="+91..."
+                                    style={{
+                                      flex: 1,
+                                      padding: '4px 6px',
+                                      fontSize: '0.76rem',
+                                      border: '1px solid #CBD5E1',
+                                      borderRadius: '4px',
+                                      background: '#FFFFFF',
+                                      color: '#0F172A',
+                                      fontFamily: 'var(--font-inter), sans-serif'
+                                    }}
+                                  />
+                                  {p.whatsapp && (
+                                    <a
+                                      href={p.whatsapp}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      title="Open WhatsApp chat"
+                                      style={{ color: '#15803D', display: 'flex', alignItems: 'center' }}
+                                    >
+                                      <MessageCircle size={14} />
+                                    </a>
+                                  )}
+                                </div>
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <input
+                                  type="text"
+                                  value={p.city || ''}
+                                  onChange={(e) => handleUpdateParsedSub(targetIdx, 'city', e.target.value)}
+                                  placeholder="City"
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 6px',
+                                    fontSize: '0.76rem',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#0F172A',
+                                    fontFamily: 'var(--font-inter), sans-serif'
+                                  }}
+                                />
+                              </td>
+                              <td style={{ padding: '4px 6px' }}>
+                                <select
+                                  value={p.audienceType || 'b2b'}
+                                  onChange={(e) => handleUpdateParsedSub(targetIdx, 'audienceType', e.target.value as any)}
+                                  style={{
+                                    width: '100%',
+                                    padding: '4px 4px',
+                                    fontSize: '0.74rem',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    background: '#FFFFFF',
+                                    color: '#0F172A',
+                                    fontFamily: 'var(--font-inter), sans-serif',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <option value="b2b">🏢 B2B Partner</option>
+                                  <option value="b2c">🌐 B2C Subscriber</option>
+                                  <option value="lead">🎯 Lead / Inquiry</option>
+                                </select>
+                              </td>
+                              <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteParsedSub(targetIdx)}
+                                  title="Remove this row"
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: '#94A3B8',
+                                    padding: '2px',
+                                    borderRadius: '4px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.color = '#EF4444')}
+                                  onMouseLeave={(e) => (e.currentTarget.style.color = '#94A3B8')}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleSyncImportToSubscribers}
+                    disabled={isSyncingImport}
+                    style={{
+                      width: '100%',
+                      padding: '11px 16px',
+                      background: '#0F4C3A',
+                      color: '#FFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: 800,
+                      fontSize: '0.88rem',
+                      cursor: isSyncingImport ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(15, 76, 58, 0.2)'
+                    }}
+                  >
+                    {isSyncingImport ? (
+                      <>
+                        <RefreshCw size={16} className="animate-spin" />
+                        Syncing {parsedImportSubscribers.length} Contacts to Sanity...
+                      </>
+                    ) : (
+                      <>
+                        🚀 Sync {parsedImportSubscribers.length} Contacts to Subscribers Audience {importDualSyncLeads ? '(& Leads Directory)' : ''}
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '12px 24px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', background: '#F8FAFC' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsImportModalOpen(false)
+                  setParsedImportSubscribers([])
+                  setImportFilterQuery('')
+                  setImportSyncFeedback(null)
+                }}
+                style={{ padding: '7px 16px', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Close
               </button>
             </div>
 
