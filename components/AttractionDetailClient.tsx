@@ -41,22 +41,25 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
   const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return ''
     try {
-      if (url.includes('/embed/')) return url
+      if (url.includes('/embed/')) {
+        const separator = url.includes('?') ? '&' : '?'
+        return `${url}${separator}rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3`
+      }
       if (url.includes('youtu.be/')) {
         const id = url.split('youtu.be/')[1]?.split('?')[0]?.split('&')[0]
-        return `https://www.youtube.com/embed/${id}?rel=0&enablejsapi=1`
+        return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3`
       }
       if (url.includes('youtube.com/shorts/')) {
         const id = url.split('shorts/')[1]?.split('?')[0]?.split('&')[0]
-        return `https://www.youtube.com/embed/${id}?rel=0&enablejsapi=1`
+        return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3`
       }
       if (url.includes('youtube.com/watch')) {
         const v = new URL(url).searchParams.get('v')
-        if (v) return `https://www.youtube.com/embed/${v}?rel=0&enablejsapi=1`
+        if (v) return `https://www.youtube.com/embed/${v}?rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3`
       }
       const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/)
       if (match && match[2]?.length === 11) {
-        return `https://www.youtube.com/embed/${match[2]}?rel=0&enablejsapi=1`
+        return `https://www.youtube.com/embed/${match[2]}?rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3`
       }
     } catch (e) {}
     return url
@@ -496,29 +499,10 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
             {/* VIDEO SHOWCASE TOUR */}
             {attraction.videoUrl && (
               <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ marginBottom: '1.25rem' }}>
                   <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Play size={20} color="#EF4444" fill="#EF4444" /> 4K Video Walkthrough & Tour
                   </h2>
-                  <a
-                    href={attraction.videoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      background: '#FEE2E2',
-                      color: '#DC2626',
-                      fontSize: '0.75rem',
-                      fontWeight: 800,
-                      textDecoration: 'none'
-                    }}
-                  >
-                    <span>Watch on YouTube</span> ↗
-                  </a>
                 </div>
 
                 {attraction.videoUrl.includes('youtube.com') || attraction.videoUrl.includes('youtu.be') ? (

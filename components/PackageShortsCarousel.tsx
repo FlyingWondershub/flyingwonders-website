@@ -205,89 +205,26 @@ export default function PackageShortsCarousel({
               }}
             />
 
-            {/* Dark Gradient Overlay for Readability */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.85) 100%)',
-                pointerEvents: 'none'
-              }}
-            />
-
-            {/* Top Right Floating Play Indicator */}
+            {/* Floating Play Indicator */}
             <div
               style={{
                 position: 'absolute',
                 top: '12px',
                 right: '12px',
-                width: '32px',
-                height: '32px',
+                width: '34px',
+                height: '34px',
                 borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.9)',
+                background: 'rgba(255, 255, 255, 0.92)',
                 color: '#0F172A',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '13px',
-                boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                 paddingLeft: '2px'
               }}
             >
               ▶
-            </div>
-
-            {/* Bottom Details (Title, Creator, Views) */}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: '1rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px',
-                color: '#FFFFFF'
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: 'var(--font-inter), system-ui, sans-serif',
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  lineHeight: 1.3,
-                  margin: 0,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  textShadow: '0 1px 3px rgba(0,0,0,0.8)'
-                }}
-              >
-                {item.title}
-              </p>
-
-              <div
-                style={{
-                  fontFamily: 'var(--font-inter), system-ui, sans-serif',
-                  fontSize: '0.75rem',
-                  color: 'rgba(255, 255, 255, 0.8)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginTop: '2px'
-                }}
-              >
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
-                  {item.creator}
-                </span>
-                {item.views && (
-                  <span style={{ fontSize: '0.7rem', opacity: 0.9 }}>
-                    {item.views}
-                  </span>
-                )}
-              </div>
             </div>
           </div>
         ))}

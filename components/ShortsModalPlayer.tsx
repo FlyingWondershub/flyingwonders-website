@@ -136,10 +136,10 @@ export default function ShortsModalPlayer({
         </div>
 
         {/* YouTube Vertical Iframe */}
-        <div style={{ position: 'relative', width: '100%', flex: 1, background: '#000' }}>
+        <div style={{ position: 'relative', width: '100%', flex: 1, height: '100%', background: '#000' }}>
           <iframe
             key={videoId}
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&cc_load_policy=0&iv_load_policy=3`}
             title={currentShort.title}
             style={{
               width: '100%',
@@ -149,59 +149,6 @@ export default function ShortsModalPlayer({
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
           />
-        </div>
-
-        {/* Video Info Bottom Banner */}
-        <div
-          style={{
-            padding: '0.85rem 1.15rem',
-            background: 'linear-gradient(180deg, #111827 0%, #030712 100%)',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '6px'
-          }}
-        >
-          <div
-            style={{
-              fontSize: '0.88rem',
-              fontWeight: 700,
-              color: '#FFFFFF',
-              lineHeight: 1.35,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden'
-            }}
-          >
-            {currentShort.title}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#9CA3AF' }}>
-            <span>👤 {currentShort.creator}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {currentShort.views && <span>👁️ {currentShort.views}</span>}
-              <a
-                href={`https://www.youtube.com/watch?v=${videoId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  color: '#FF0000',
-                  background: 'rgba(255, 0, 0, 0.12)',
-                  border: '1px solid rgba(255, 0, 0, 0.3)',
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  textDecoration: 'none',
-                  fontWeight: 600,
-                  fontSize: '0.72rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                Watch on YouTube ↗
-              </a>
-            </div>
-          </div>
         </div>
 
         {/* Previous Navigation Floating Button */}
