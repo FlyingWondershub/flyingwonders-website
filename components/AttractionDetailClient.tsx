@@ -76,7 +76,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
       
       {/* ── 1. BREADCRUMBS & TOP BAR ── */}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0.85rem 1.5rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#64748B', flexWrap: 'wrap' }}>
             <Link href="/" style={{ color: '#64748B', textDecoration: 'none' }}>Home</Link>
             <span>/</span>
@@ -132,7 +132,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
       </div>
 
       {/* ── 2. HERO SHOWCASE BANNER ── */}
-      <section style={{ maxWidth: '1200px', margin: '1.5rem auto', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '1.5rem auto', padding: '0 0.5rem' }}>
         <div style={{
           position: 'relative',
           minHeight: '340px',
@@ -170,7 +170,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
       </section>
 
       {/* ── 3. QUICK SECTION NAVIGATION LINKS ── */}
-      <section style={{ maxWidth: '1200px', margin: '0 auto 2rem', padding: '0 1.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 2rem', padding: '0 0.5rem' }}>
         <div style={{
           background: '#FFFFFF',
           borderRadius: '16px',
@@ -367,11 +367,11 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
         </div>
       </section>
 
-      {/* ── 4. MAIN CONTENT: 2-COLUMN LAYOUT ── */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+      {/* ── 4. MAIN CONTENT: 2-COLUMN LAYOUT (WIDE-SCREEN 1600PX) ── */}
+      <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '2rem', alignItems: 'start' }}>
         
         {/* LEFT COLUMN: Overview, Must-Dos, Timings, Pro-Tips, Video, App & Gallery */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', gridColumn: 'span 2' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           
           {/* Overview Section */}
           <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>

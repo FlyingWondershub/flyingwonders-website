@@ -113,7 +113,7 @@ export default async function TourDetailPage({ params }: { params: Promise<{ slu
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <TourDetailClient tour={tour} />
-      <div className="no-print" style={{ maxWidth: '1200px', margin: '2rem auto 4rem', padding: '0 1.5rem' }}>
+      <div className="no-print" style={{ maxWidth: '1600px', width: '96%', margin: '2rem auto 4rem', padding: '0 0.5rem' }}>
         <AdBanner slotId="tour_detail_bottom_slot" category="b2b" />
       </div>
     </>

@@ -44,7 +44,8 @@ import {
   Tag,
   Copy,
   Check,
-  ArrowRight
+  ArrowRight,
+  ShoppingBag
 } from 'lucide-react'
 
 // Helper function to format YouTube embed URLs
@@ -793,6 +794,7 @@ export default function TravelToolsPage() {
             </span>
 
             {[
+              { id: 'tool-shopping-malls', label: '🛍️ Shopping Malls & Outlets', show: true },
               { id: 'tool-official-portals', label: '🇸🇬 SGAC, MDAC & Air Suvidha', show: !sanitySettings.hideOfficialPortals },
               { id: 'tool-border-traffic', label: '🚗 Border Traffic Cameras', show: !sanitySettings.hideBorderTraffic && !hideBorderTraffic },
               { id: 'tool-airline-promos', label: '🎟️ Airline Deals', show: !sanitySettings.hideAirlinePromotions && !hideAirlinePromos },
@@ -848,6 +850,68 @@ export default function TravelToolsPage() {
 
       <div style={{ maxWidth: '1600px', width: '96%', margin: '2rem auto 0', padding: '0 1.5rem', position: 'relative', zIndex: 10 }}>
         
+        {/* 🛍️ SINGAPORE SHOPPING MALLS & 9% GST REFUND SPOTLIGHT SECTION */}
+        {matchesSearch('shopping mall imm mustafa bugis marina bay sands orchard chinatown outlet gst refund') && (
+          <div id="tool-shopping-malls" style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', borderRadius: '20px', padding: '2rem', border: '1px solid #34D399', boxShadow: '0 8px 30px rgba(15,76,58,0.2)', marginBottom: '2.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
+              <div style={{ maxWidth: '880px' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', padding: '4px 12px', borderRadius: '14px', fontSize: '0.78rem', fontWeight: 800, marginBottom: '0.65rem' }}>
+                  <ShoppingBag size={14} color="#FDE68A" /> NEW TRAVEL TOOL & DIRECTORY
+                </div>
+                <h3 style={{ fontSize: '1.45rem', fontWeight: 900, color: '#FFF', margin: '0 0 0.5rem', fontFamily: 'var(--font-playfair), serif' }}>
+                  Singapore Shopping Malls Directory & 9% GST Refund Guide
+                </h3>
+                <p style={{ fontSize: '0.9rem', color: '#E2E8F0', margin: 0, lineHeight: 1.55 }}>
+                  Explore in-depth visitor guides for Singapore’s top retail destinations: IMM Outlet Mall (80% off designer brands), Mustafa Centre (24/7 mega mart), Bugis Street Market ($5 bargains), The Shoppes at Marina Bay Sands, Orchard Road, and Chinatown. Includes interactive 9% eTRS GST refund calculator and 4-day shopping itineraries.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <Link
+                  href="/travel-tools/shopping-malls"
+                  style={{
+                    background: '#22C55E',
+                    color: '#FFF',
+                    padding: '0.75rem 1.4rem',
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 14px rgba(34,197,94,0.35)'
+                  }}
+                >
+                  <ShoppingBag size={16} />
+                  <span>Browse Malls Directory (6)</span>
+                </Link>
+
+                <Link
+                  href="/travel-tools/shopping-guide"
+                  style={{
+                    background: 'rgba(255,255,255,0.15)',
+                    color: '#FFF',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    padding: '0.75rem 1.4rem',
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backdropFilter: 'blur(8px)'
+                  }}
+                >
+                  <Percent size={16} color="#FDE68A" />
+                  <span>GST Refund Calculator</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 1. 🇸🇬 OFFICIAL SGAC, MDAC & AIR SUVIDHA ARRIVAL CARDS SECTION */}
         {/* 1. 🇸🇬 OFFICIAL SGAC, MDAC & AIR SUVIDHA ARRIVAL CARDS (3 SEPARATE DISPLAY CARDS) */}
         {!sanitySettings.hideOfficialPortals && matchesSearch('sgac mdac arrival card air suvidha singapore malaysia india') && (

@@ -1945,7 +1945,7 @@ export default function AdminDashboard() {
                 Site Map & Comprehensive Quick Links
               </h2>
               <span style={{ fontSize: '0.74rem', background: '#F1F5F9', color: '#4A5568', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 700, fontFamily: 'var(--font-inter), sans-serif', border: '1px solid #E2E8F0' }}>
-                49 Routes Verified
+                51 Routes Verified
               </span>
             </div>
             
@@ -1954,7 +1954,7 @@ export default function AdminDashboard() {
               {isSectionExpanded('section-sitemap') && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
                   <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#166534', background: '#DCFCE7', border: '1px solid #BBF7D0', padding: '3px 9px', borderRadius: '12px' }}>
-                    ● 49 Routes Verified
+                    ● 51 Routes Verified
                   </span>
                   <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1E40AF', background: '#DBEAFE', border: '1px solid #BFDBFE', padding: '3px 9px', borderRadius: '12px' }}>
                     ● 0 Dead Links
@@ -2057,6 +2057,8 @@ export default function AdminDashboard() {
                   { name: 'Traveler Age Calculator', path: '/age-calculator', desc: 'Infant, child & adult fare categorization' },
                   { name: 'AI Trip & Itinerary Planner', path: '/ai-planner', desc: 'Intelligent AI-generated itineraries' },
                   { name: 'Instant Package Estimator', path: '/instant-quote', desc: 'Rapid pricing & budget calculator' },
+                  { name: 'Shopping Malls & Retail Hubs', path: '/travel-tools/shopping-malls', desc: 'IMM, Mustafa, Bugis, MBS, Orchard & Chinatown retail guides' },
+                  { name: 'Singapore Shopping & 9% GST Guide', path: '/travel-tools/shopping-guide', desc: '4-day shopping itinerary, eTRS refund calculator & brand directory' },
                   { name: 'GST Refund & Customs Calculator', path: '/gst-customs-guide', desc: 'Tax refund claims & India customs duty guide' },
                 ].map(link => (
                   <a key={link.path} href={link.path} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.55rem 0.75rem', background: '#F7FAFC', borderRadius: '8px', textDecoration: 'none', color: '#2D3748', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#EDF2F7'} onMouseLeave={e => e.currentTarget.style.background = '#F7FAFC'}>

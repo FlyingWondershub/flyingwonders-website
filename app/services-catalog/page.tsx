@@ -520,7 +520,7 @@ export default function ServicesCatalogPage() {
       
       {/* ══ 1. HERO HEADER STRIP ══ */}
       <header style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1E1B4B 100%)', color: '#FFF', padding: '2rem 1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', padding: '4px 12px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 800, marginBottom: '0.65rem', backdropFilter: 'blur(6px)' }}>
               <Compass size={14} color="#10B981" /> Official Destination Inventory
@@ -551,7 +551,7 @@ export default function ServicesCatalogPage() {
       </header>
 
       {/* ══ 2. UNIFIED SEARCH & CATEGORY TAB BAR ══ */}
-      <div style={{ maxWidth: '1280px', margin: '1.5rem auto', padding: '0 1.5rem' }}>
+      <div style={{ maxWidth: '1600px', width: '96%', margin: '1.5rem auto', padding: '0 0.5rem' }}>
         <div style={{ background: '#FFF', borderRadius: '14px', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.04)', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
           {/* Real-time Search Input */}
@@ -636,7 +636,7 @@ export default function ServicesCatalogPage() {
       </div>
 
       {/* ══ 3. SHOWCASE INVENTORY CONTENT GRID ══ */}
-      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem' }}>
+      <main style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>
             <Sparkles className="animate-spin" size={32} color="#0F4C3A" style={{ margin: '0 auto 1rem' }} />

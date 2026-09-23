@@ -108,7 +108,7 @@ export default async function HotelDetailPage({ params }: { params: Promise<{ sl
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <HotelDetailClient hotel={hotel} />
-      <div style={{ maxWidth: '1200px', margin: '2rem auto 4rem', padding: '0 1.5rem' }}>
+      <div style={{ maxWidth: '1600px', width: '96%', margin: '2rem auto 4rem', padding: '0 0.5rem' }}>
         <AdBanner slotId="hotel_detail_bottom_slot" category="b2b" />
       </div>
     </>

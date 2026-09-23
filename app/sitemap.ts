@@ -8,6 +8,7 @@ import { getAllHotels, slugifyHotelName } from '../utils/hotels';
 import { getAllAttractions, slugifyAttractionName } from '../utils/attractions';
 import { getAllTours, slugifyTourTitle } from '../utils/tours';
 import { getAllBlogSlugs } from '../utils/blog';
+import { getAllShoppingMalls } from '../utils/shoppingMalls';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://flyingwonders.net'
@@ -60,6 +61,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/flight-tracker', priority: 0.9, freq: 'hourly' },
     { path: '/age-calculator', priority: 0.95, freq: 'daily' },
     { path: '/travel-tools/scanner', priority: 0.95, freq: 'daily' },
+    { path: '/travel-tools/shopping-malls', priority: 0.95, freq: 'daily' },
+    { path: '/travel-tools/shopping-guide', priority: 0.95, freq: 'daily' },
     { path: '/gst-customs-guide', priority: 0.9, freq: 'weekly' },
     { path: '/verify-voucher', priority: 0.85, freq: 'daily' },
   ]
@@ -166,5 +169,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.error('Failed to get tour routes for sitemap:', err)
     }
 
-    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...readyPackageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap, ...tourSitemap]
+    // Dynamic individual shopping mall routes
+    let shoppingMallSitemap: MetadataRoute.Sitemap = []
+    try {
+      const malls = await getAllShoppingMalls()
+      shoppingMallSitemap = malls.map((m) => ({
+        url: `${baseUrl}/travel-tools/shopping-malls/${m.slug}`,
+        lastModified: today,
+        changeFrequency: 'weekly' as MetadataRoute.Sitemap[0]['changeFrequency'],
+        priority: 0.88,
+      }))
+    } catch (err) {
+      console.error('Failed to get shopping mall routes for sitemap:', err)
+    }
+
+    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...readyPackageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap, ...tourSitemap, ...shoppingMallSitemap]
 }

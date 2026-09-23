@@ -56,6 +56,7 @@ import { b2bLeadSubscriberSchema } from './b2bLeadSubscriber'
 import { b2bLeadAuditLogSchema } from './b2bLeadAuditLog'
 import { hotelVoucherSchema } from './hotelVoucher'
 import { marketingLeadSchema } from './marketingLead'
+import { shoppingMallSchema } from './shoppingMall'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -112,6 +113,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     b2bLeadsSettingsSchema,
     b2bLeadSubscriberSchema,
     b2bLeadAuditLogSchema,
-    hotelVoucherSchema
+    hotelVoucherSchema,
+    shoppingMallSchema
   ],
 }

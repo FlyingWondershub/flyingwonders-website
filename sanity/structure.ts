@@ -59,6 +59,7 @@ const HANDLED_SCHEMAS = new Set([
   'faqItem',
   'attractionsUser',
   'travelTools',
+  'shoppingMall',
 
   // Global Settings & Administration
   'siteSettings',
@@ -223,8 +224,16 @@ export const structure: StructureResolver = (S) =>
               S.documentTypeListItem('faqItem').title('❓ Frequently Asked Questions'),
               S.documentTypeListItem('attractionsUser').title('👥 Registered Guest Accounts'),
               S.documentTypeListItem('travelTools').title('🧰 Travel Utility Tools'),
+              S.documentTypeListItem('shoppingMall').title('🛍️ Shopping Malls & Retail Hubs'),
             ])
         ),
+
+      S.divider(),
+
+      // ─────────────────────────────────────────────────────────────
+      // SHOPPING MALLS & RETAIL HUBS (TOP LEVEL QUICK ACCESS)
+      // ─────────────────────────────────────────────────────────────
+      S.documentTypeListItem('shoppingMall').title('🛍️ Shopping Malls & Retail Hubs'),
 
       S.divider(),
 
