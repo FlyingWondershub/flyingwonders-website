@@ -555,36 +555,47 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
                   <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Play size={22} color="#EF4444" fill="#EF4444" /> 4K Video Walkthrough & Tour
                   </h2>
-                  <a
-                    href={mall.videoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '5px 12px',
-                      borderRadius: '8px',
-                      background: '#FEE2E2',
-                      color: '#DC2626',
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      textDecoration: 'none'
-                    }}
-                  >
-                    <span>Watch on YouTube</span> ↗
-                  </a>
+                  {mall.videoUrl.includes('youtube.com') || mall.videoUrl.includes('youtu.be') ? (
+                    <a
+                      href={mall.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '5px 12px',
+                        borderRadius: '8px',
+                        background: '#FEE2E2',
+                        color: '#DC2626',
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      <span>Watch on YouTube</span> ↗
+                    </a>
+                  ) : null}
                 </div>
 
-                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '14px', boxShadow: '0 6px 20px rgba(0,0,0,0.08)', background: '#000' }}>
-                  <iframe
-                    src={getYouTubeEmbedUrl(mall.videoUrl)}
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    referrerPolicy="strict-origin-when-cross-origin"
+                {mall.videoUrl.includes('youtube.com') || mall.videoUrl.includes('youtu.be') ? (
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '14px', boxShadow: '0 6px 20px rgba(0,0,0,0.08)', background: '#000' }}>
+                    <iframe
+                      src={getYouTubeEmbedUrl(mall.videoUrl)}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      referrerPolicy="strict-origin-when-cross-origin"
+                    />
+                  </div>
+                ) : (
+                  <video
+                    controls
+                    playsInline
+                    src={mall.videoUrl}
+                    style={{ width: '100%', maxHeight: '520px', borderRadius: '14px', background: '#000', border: '1px solid #E2E8F0', objectFit: 'contain' }}
                   />
-                </div>
+                )}
               </div>
             )}
 

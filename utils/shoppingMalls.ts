@@ -51,7 +51,9 @@ export interface ShoppingMallData {
   starRating: string
   reviewCount?: string
   coverImageUrl: string
+  coverImageFile?: string
   galleryImageUrls: string[]
+  galleryUploaded?: string[]
   locationAddress: string
   district: string
   nearestMrt: MallTransit
@@ -68,6 +70,7 @@ export interface ShoppingMallData {
   tipsAndTricks: string[]
   appDetails: AppDetails
   videoUrl?: string
+  videoFileUrl?: string
   shorts?: TravelShort[]
   diningHighlights: MallDining
   facilities: string[]
@@ -1096,7 +1099,9 @@ export async function getAllShoppingMalls(): Promise<ShoppingMallData[]> {
       budgetTier,
       starRating,
       reviewCount,
+      "coverImageFile": coverImage.asset->url,
       coverImageUrl,
+      "galleryUploaded": galleryUploaded[].asset->url,
       galleryImages,
       locationAddress,
       district,
@@ -1113,6 +1118,7 @@ export async function getAllShoppingMalls(): Promise<ShoppingMallData[]> {
       topStoresAndBrands,
       tipsAndTricks,
       appDetails,
+      "videoFileUrl": videoFile.asset->url,
       videoUrl,
       shorts,
       diningHighlights,
@@ -1127,21 +1133,31 @@ export async function getAllShoppingMalls(): Promise<ShoppingMallData[]> {
     const sanityMalls = await client.fetch(sanityQuery, {}, { next: { revalidate: 60 } })
 
     if (Array.isArray(sanityMalls) && sanityMalls.length > 0) {
-      const normalizedSanity: ShoppingMallData[] = sanityMalls.map(m => ({
-        ...m,
-        slug: normalizeMallSlug(m.slug || slugifyMallName(m.name)),
-        galleryImageUrls: m.galleryImages || [],
-        budgetTier: m.budgetTier || '$$',
-        starRating: m.starRating || '4.8',
-        facilities: m.facilities || [],
-        mustDoThings: m.mustDoThings || [],
-        tipsAndTricks: m.tipsAndTricks || [],
-        keyHighlights: m.keyHighlights || [],
-        topStoresAndBrands: m.topStoresAndBrands || [],
-        faqs: m.faqs || [],
-        nearbyAttractions: m.nearbyAttractions || [],
-        isDisplayed: m.isDisplayed !== false
-      }))
+      const normalizedSanity: ShoppingMallData[] = sanityMalls.map(m => {
+        const uploadedGallery = Array.isArray(m.galleryUploaded) ? m.galleryUploaded.filter(Boolean) : []
+        const urlGallery = Array.isArray(m.galleryImages) ? m.galleryImages.filter(Boolean) : []
+        const combinedGallery = [...uploadedGallery, ...urlGallery]
+        const cover = m.coverImageFile || m.coverImageUrl || (combinedGallery[0] || 'https://images.unsplash.com/photo-1567449303078-57ad995bd301?w=1200')
+        const video = m.videoFileUrl || m.videoUrl || ''
+
+        return {
+          ...m,
+          slug: normalizeMallSlug(m.slug || slugifyMallName(m.name)),
+          coverImageUrl: cover,
+          videoUrl: video,
+          galleryImageUrls: combinedGallery.length > 0 ? combinedGallery : (m.galleryImages || []),
+          budgetTier: m.budgetTier || '$$',
+          starRating: m.starRating || '4.8',
+          facilities: m.facilities || [],
+          mustDoThings: m.mustDoThings || [],
+          tipsAndTricks: m.tipsAndTricks || [],
+          keyHighlights: m.keyHighlights || [],
+          topStoresAndBrands: m.topStoresAndBrands || [],
+          faqs: m.faqs || [],
+          nearbyAttractions: m.nearbyAttractions || [],
+          isDisplayed: m.isDisplayed !== false
+        }
+      })
 
       const sanitySlugs = new Set(normalizedSanity.map(m => normalizeMallSlug(m.slug)))
       const missingDefaults = DEFAULT_SHOPPING_MALLS.filter(d => !sanitySlugs.has(normalizeMallSlug(d.slug)))

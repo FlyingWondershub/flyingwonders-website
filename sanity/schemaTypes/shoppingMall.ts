@@ -101,19 +101,35 @@ export const shoppingMallSchema = defineType({
       initialValue: '12,500+ Reviews'
     }),
     defineField({
+      name: 'coverImage',
+      title: 'Cover Image Upload (Direct File Upload)',
+      group: 'identity',
+      type: 'image',
+      options: { hotspot: true },
+      description: 'Upload high-resolution landscape cover photo directly from your computer or phone.'
+    }),
+    defineField({
       name: 'coverImageUrl',
-      title: 'Cover Image URL',
+      title: 'Cover Image URL (Alternative Text Link)',
       group: 'identity',
       type: 'url',
-      description: 'High-resolution landscape hero cover image URL'
+      description: 'Or paste an image URL e.g. https://images.unsplash.com/...'
+    }),
+    defineField({
+      name: 'galleryUploaded',
+      title: 'Photo Gallery Uploads (Direct Multiple Photo Upload)',
+      group: 'identity',
+      type: 'array',
+      of: [{ type: 'image', options: { hotspot: true } }],
+      description: 'Upload multiple photos of the mall, stores, exhibits, food, or interiors directly from your device.'
     }),
     defineField({
       name: 'galleryImages',
-      title: 'Photo Gallery',
+      title: 'Photo Gallery URLs (Alternative Text Links)',
       group: 'identity',
       type: 'array',
       of: [{ type: 'url' }],
-      description: 'Image URLs for the interactive photo lightbox slider'
+      description: 'Or paste direct image URLs for the interactive photo lightbox slider'
     }),
 
     // ── 2. CONTENT & MUST-DO ──
@@ -230,11 +246,19 @@ export const shoppingMallSchema = defineType({
 
     // ── 7. VIDEO & MEDIA ──
     defineField({
+      name: 'videoFile',
+      title: 'Video Showcase Upload (Direct MP4/WebM Video Upload)',
+      group: 'media',
+      type: 'file',
+      options: { accept: 'video/*' },
+      description: 'Upload video file directly from your computer (MP4, WebM, MOV).'
+    }),
+    defineField({
       name: 'videoUrl',
-      title: '4K Video Walkthrough URL (YouTube)',
+      title: '4K Video Walkthrough URL (YouTube / Vimeo / MP4 Link)',
       group: 'media',
       type: 'url',
-      description: 'YouTube video URL for full embedded walking tour'
+      description: 'Or paste a YouTube video URL for full embedded walking tour'
     }),
     defineField({
       name: 'shorts',
@@ -251,7 +275,9 @@ export const shoppingMallSchema = defineType({
             { name: 'title', title: 'Short Title', type: 'string' },
             { name: 'duration', title: 'Duration (e.g. 0:45)', type: 'string' },
             { name: 'creator', title: 'Creator / Channel', type: 'string' },
-            { name: 'thumbnailUrl', title: 'Thumbnail URL', type: 'url' },
+            { name: 'videoFile', title: 'Short Video File Upload (Direct MP4)', type: 'file', options: { accept: 'video/*' } },
+            { name: 'thumbnailImage', title: 'Thumbnail Image Upload', type: 'image', options: { hotspot: true } },
+            { name: 'thumbnailUrl', title: 'Thumbnail URL (Alternative Link)', type: 'url' },
             { name: 'youtubeVideoId', title: 'YouTube Video ID', type: 'string' }
           ]
         })
@@ -361,11 +387,13 @@ export const shoppingMallSchema = defineType({
       subtitle: 'category',
       budget: 'budgetTier',
       rating: 'starRating',
+      media: 'coverImage',
     },
-    prepare({ title, subtitle, budget, rating }: any) {
+    prepare({ title, subtitle, budget, rating, media }: any) {
       return {
         title: title || 'Untitled Shopping Destination',
         subtitle: `${subtitle || 'Mall'} · ${budget || '$$'} · ⭐ ${rating || '4.8'}`,
+        media: media,
       }
     }
   }
