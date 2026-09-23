@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import ChatBot from './ChatBot'
 import PwaInstallPrompt from './PwaInstallPrompt'
+import ScrollToTopButton from './ScrollToTopButton'
 
 interface LayoutSettings {
   contactEmail: string
@@ -147,10 +148,6 @@ export default function LayoutWrapper({
       setSubStatus('error')
       setSubMessage(err.message || 'Something went wrong. Try again.')
     }
-  }
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   // If we are in Sanity Studio, brochure, or standalone B2B Directory (/b2b-directory, /dmc, /catalog, /directory), render children without main website header/footer/floaters
@@ -498,9 +495,7 @@ export default function LayoutWrapper({
         </div>
       </footer>
 
-      <button onClick={scrollToTop} className="scroll-top-float" aria-label="Scroll to Top">
-        ▲
-      </button>
+      <ScrollToTopButton />
 
       <a href={`https://wa.me/${(initialSettings?.whatsappNumber || '919886171251').replace(/[^0-9]/g, '')}`} className="whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp">
         <svg viewBox="0 0 32 32" width="24" height="24" fill="currentColor">

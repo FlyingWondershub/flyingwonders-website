@@ -122,6 +122,33 @@ html, body {
     color: #94A3B8 !important;
   }
 
+  .scroll-progress-btn {
+    background: #18181B !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .scroll-progress-btn:hover {
+    border-color: #34D399 !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.8), 0 0 12px rgba(52, 211, 153, 0.3) !important;
+  }
+
+  .scroll-progress-track {
+    stroke: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .scroll-progress-indicator {
+    stroke: url(#scrollProgressGradientDark) !important;
+  }
+
+  .scroll-progress-icon {
+    color: #F8FAFC !important;
+  }
+
+  .scroll-progress-btn:hover .scroll-progress-icon {
+    color: #34D399 !important;
+  }
+
   /* Callout themes in Dark Mode */
   div[style*="background: #FAF5FF"] {
     background-color: #2D1B4E !important;
@@ -471,6 +498,83 @@ a {
 
 .scroll-top-float:hover {
   transform: scale(1.08);
+}
+
+/* ─── Scroll-to-Top with Circular Progress Ring ─── */
+.scroll-progress-btn {
+  position: fixed;
+  width: 48px;
+  height: 48px;
+  bottom: 92px;
+  right: 30px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(15, 76, 58, 0.15), 0 1px 3px rgba(0, 0, 0, 0.08);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid rgba(15, 76, 58, 0.12);
+  outline: none;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px) scale(0.85);
+  transition: opacity 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.scroll-progress-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.scroll-progress-btn:hover {
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 8px 22px rgba(15, 76, 58, 0.24);
+  border-color: #0F4C3A;
+}
+
+.scroll-progress-btn:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.scroll-progress-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.scroll-progress-track {
+  fill: transparent;
+  stroke: rgba(15, 76, 58, 0.1);
+}
+
+.scroll-progress-indicator {
+  fill: transparent;
+  stroke: url(#scrollProgressGradient);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.12s linear;
+}
+
+.scroll-progress-icon {
+  position: relative;
+  z-index: 2;
+  color: #0F4C3A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.scroll-progress-btn:hover .scroll-progress-icon {
+  transform: translateY(-1px);
+  color: #059669;
 }
 
 /* Responsive Navbar & Layout Helpers */
@@ -845,6 +949,25 @@ a {
     padding: 2rem 1.25rem !important;
     grid-template-columns: 1fr !important;
     gap: 2rem !important;
+  }
+
+  .whatsapp-float {
+    width: 44px !important;
+    height: 44px !important;
+    bottom: 22px !important;
+    right: 20px !important;
+  }
+
+  .whatsapp-float svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .scroll-progress-btn {
+    width: 44px !important;
+    height: 44px !important;
+    bottom: 76px !important;
+    right: 20px !important;
   }
 }
 
