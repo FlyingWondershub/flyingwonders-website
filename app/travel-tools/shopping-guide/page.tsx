@@ -350,80 +350,180 @@ export default function SingaporeShoppingGuidePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '1.5rem' }}>
           
           {/* Day 1 */}
-          <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
-            <span style={{ background: '#FEF3C7', color: '#B45309', fontWeight: 900, fontSize: '0.76rem', padding: '3px 10px', borderRadius: '6px' }}>
+          <Link
+            href="/travel-tools/shopping-malls/orchard-road-malls"
+            style={{
+              background: '#FFF',
+              borderRadius: '18px',
+              border: '1px solid #E2E8F0',
+              padding: '1.5rem',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+              textDecoration: 'none',
+              color: 'inherit',
+              display: 'flex',
+              flexDirection: 'column',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-3px)'
+              e.currentTarget.style.borderColor = '#0F4C3A'
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.08)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.borderColor = '#E2E8F0'
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.03)'
+            }}
+          >
+            <span style={{ background: '#FEF3C7', color: '#B45309', fontWeight: 900, fontSize: '0.76rem', padding: '3px 10px', borderRadius: '6px', alignSelf: 'flex-start' }}>
               DAY 1 · HIGH STREET & LOCAL DESIGNERS
             </span>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0F172A', margin: '0.65rem 0 0.4rem', fontFamily: 'var(--font-playfair), serif' }}>
               Orchard Road & Emerald Hill Heritage
             </h3>
-            <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem' }}>
+            <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem', flex: 1 }}>
               Begin at ION Orchard for luxury flagship duplexes and the ION Sky observatory deck. Head to Ngee Ann City’s Takashimaya for Japanese food halls and luxury department stores, then browse 100+ local Singapore designers at Design Orchard before dining among 1920s Peranakan shophouse bars on Emerald Hill.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '0.75rem', marginTop: 'auto' }}>
               <span style={{ fontSize: '0.78rem', color: '#64748B' }}>MRT: Orchard (NS22/TE14)</span>
-              <Link href="/travel-tools/shopping-malls/orchard-road-malls" style={{ color: '#0F4C3A', fontWeight: 800, fontSize: '0.82rem', textDecoration: 'none' }}>
+              <span style={{ color: '#0F4C3A', fontWeight: 800, fontSize: '0.82rem' }}>
                 View Orchard Guide →
-              </Link>
+              </span>
             </div>
-          </div>
+          </Link>
 
           {/* Day 2 */}
-          <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
-            <span style={{ background: '#DBEAFE', color: '#1E40AF', fontWeight: 900, fontSize: '0.76rem', padding: '3px 10px', borderRadius: '6px' }}>
+          <Link
+            href="/travel-tools/shopping-malls/the-shoppes-marina-bay-sands"
+            style={{
+              background: '#FFF',
+              borderRadius: '18px',
+              border: '1px solid #E2E8F0',
+              padding: '1.5rem',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+              textDecoration: 'none',
+              color: 'inherit',
+              display: 'flex',
+              flexDirection: 'column',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-3px)'
+              e.currentTarget.style.borderColor = '#0F4C3A'
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.08)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.borderColor = '#E2E8F0'
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.03)'
+            }}
+          >
+            <span style={{ background: '#DBEAFE', color: '#1E40AF', fontWeight: 900, fontSize: '0.76rem', padding: '3px 10px', borderRadius: '6px', alignSelf: 'flex-start' }}>
               DAY 2 · ULTRA LUXURY VS STREET BAZAAR
             </span>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0F172A', margin: '0.65rem 0 0.4rem', fontFamily: 'var(--font-playfair), serif' }}>
               Marina Bay Sands & Bugis Street Market
             </h3>
-            <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem' }}>
+            <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem', flex: 1 }}>
               Start with morning bargain hunting at Bugis Street Market (600+ stalls for Korean fashion, phone cases, and $5 souvenirs) and trendy indie boutiques along Haji Lane. In the afternoon, take Downtown Line to The Shoppes at Marina Bay Sands for floating luxury pavilions, Sampan canal boat rides, and the 8:00 PM Spectra laser show.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '0.75rem', marginTop: 'auto' }}>
               <span style={{ fontSize: '0.78rem', color: '#64748B' }}>MRT: Bugis (DT14) → Bayfront (DT16)</span>
-              <Link href="/travel-tools/shopping-malls/the-shoppes-marina-bay-sands" style={{ color: '#0F4C3A', fontWeight: 800, fontSize: '0.82rem', textDecoration: 'none' }}>
+              <span style={{ color: '#0F4C3A', fontWeight: 800, fontSize: '0.82rem' }}>
                 View MBS Guide →
-              </Link>
+              </span>
             </div>
-          </div>
+          </Link>
 
           {/* Day 3 */}
-          <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
-            <span style={{ background: '#DCFCE7', color: '#15803D', fontWeight: 900, fontSize: '0.76rem', padding: '3px 10px', borderRadius: '6px' }}>
+          <Link
+            href="/travel-tools/shopping-malls/imm"
+            style={{
+              background: '#FFF',
+              borderRadius: '18px',
+              border: '1px solid #E2E8F0',
+              padding: '1.5rem',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+              textDecoration: 'none',
+              color: 'inherit',
+              display: 'flex',
+              flexDirection: 'column',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-3px)'
+              e.currentTarget.style.borderColor = '#0F4C3A'
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.08)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.borderColor = '#E2E8F0'
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.03)'
+            }}
+          >
+            <span style={{ background: '#DCFCE7', color: '#15803D', fontWeight: 900, fontSize: '0.76rem', padding: '3px 10px', borderRadius: '6px', alignSelf: 'flex-start' }}>
               DAY 3 · BRANDED FACTORY OUTLETS
             </span>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0F172A', margin: '0.65rem 0 0.4rem', fontFamily: 'var(--font-playfair), serif' }}>
               Jurong East IMM Outlet Safari
             </h3>
-            <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem' }}>
+            <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem', flex: 1 }}>
               Dedicate a relaxed day to Singapore’s largest factory outlet mall. Score 30%–80% discounts across 90+ outlet stores including Coach, Nike Unite, Adidas, Michael Kors, Furla, and Samsonite. Walk sheltered via J-Walk bridge from Jurong East MRT and claim your free Tourist Privilege Booklet at Customer Service Level 1.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '0.75rem', marginTop: 'auto' }}>
               <span style={{ fontSize: '0.78rem', color: '#64748B' }}>MRT: Jurong East (NS1/EW24)</span>
-              <Link href="/travel-tools/shopping-malls/imm" style={{ color: '#0F4C3A', fontWeight: 800, fontSize: '0.82rem', textDecoration: 'none' }}>
+              <span style={{ color: '#0F4C3A', fontWeight: 800, fontSize: '0.82rem' }}>
                 View IMM Guide →
-              </Link>
+              </span>
             </div>
-          </div>
+          </Link>
 
           {/* Day 4 */}
-          <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
-            <span style={{ background: '#F3E8FF', color: '#7E22CE', fontWeight: 900, fontSize: '0.76rem', padding: '3px 10px', borderRadius: '6px' }}>
+          <Link
+            href="/travel-tools/shopping-malls/mustafa-centre"
+            style={{
+              background: '#FFF',
+              borderRadius: '18px',
+              border: '1px solid #E2E8F0',
+              padding: '1.5rem',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+              textDecoration: 'none',
+              color: 'inherit',
+              display: 'flex',
+              flexDirection: 'column',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-3px)'
+              e.currentTarget.style.borderColor = '#0F4C3A'
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.08)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.borderColor = '#E2E8F0'
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.03)'
+            }}
+          >
+            <span style={{ background: '#F3E8FF', color: '#7E22CE', fontWeight: 900, fontSize: '0.76rem', padding: '3px 10px', borderRadius: '6px', alignSelf: 'flex-start' }}>
               DAY 4 · CULTURAL SOUVENIRS & 24/7 MART
             </span>
             <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0F172A', margin: '0.65rem 0 0.4rem', fontFamily: 'var(--font-playfair), serif' }}>
               Chinatown, Little India & Jewel Changi
             </h3>
-            <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem' }}>
+            <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem', flex: 1 }}>
               Morning cultural souvenir hunting on Pagoda Street in Chinatown (artisan teas, silk robes, and Lim Chee Guan Bak Kwa). Evening excursion into the legendary 24-hour maze of Mustafa Centre in Little India for perfumes, spices, and Tiger Balm, followed by a departure transit shopping finale at Jewel Changi Airport.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #F1F5F9', paddingTop: '0.75rem', marginTop: 'auto' }}>
               <span style={{ fontSize: '0.78rem', color: '#64748B' }}>MRT: Chinatown (NE4) → Farrer Park (NE8)</span>
-              <Link href="/travel-tools/shopping-malls/mustafa-centre" style={{ color: '#0F4C3A', fontWeight: 800, fontSize: '0.82rem', textDecoration: 'none' }}>
+              <span style={{ color: '#0F4C3A', fontWeight: 800, fontSize: '0.82rem' }}>
                 View Mustafa Guide →
-              </Link>
+              </span>
             </div>
-          </div>
+          </Link>
 
         </div>
       </section>
