@@ -64,7 +64,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
     <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', paddingBottom: '3rem' }}>
       
       {/* ── 1. BREADCRUMBS & TOP BAR ── */}
-      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0.85rem 1.5rem' }}>
+      <div className="no-print detail-topbar-container">
         <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#64748B', flexWrap: 'wrap' }}>
             <Link href="/" style={{ color: '#64748B', textDecoration: 'none' }}>Home</Link>
@@ -76,7 +76,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
             <span style={{ color: '#0F172A', fontWeight: 800 }}>{hotel.name}</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="detail-topbar-actions">
             <button
               onClick={handleCopyLink}
               style={{
@@ -94,7 +94,8 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
               }}
             >
               {copied ? <Check size={14} color="#15803D" /> : <Share2 size={14} />}
-              <span>{copied ? 'Link Copied!' : 'Share Hotel Page'}</span>
+              <span className="detail-topbar-label-full">{copied ? 'Link Copied!' : 'Share Hotel Page'}</span>
+              <span className="detail-topbar-label-short">{copied ? 'Copied!' : 'Share'}</span>
             </button>
 
             <Link
@@ -133,7 +134,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
-          padding: '2.5rem',
+          padding: '2.5rem 1.5rem',
           boxShadow: '0 10px 30px rgba(0,0,0,0.12)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
@@ -148,11 +149,11 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
             </span>
           </div>
 
-          <h1 style={{ fontSize: '2.4rem', fontWeight: 900, color: '#FFFFFF', margin: '0 0 0.5rem', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+          <h1 style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)', fontWeight: 900, color: '#FFFFFF', margin: '0 0 0.5rem', letterSpacing: '-0.02em', lineHeight: 1.15, wordBreak: 'break-word', overflowWrap: 'break-word' }}>
             {hotel.name}
           </h1>
 
-          <p style={{ fontSize: '0.95rem', color: '#E2E8F0', margin: 0, fontWeight: 500, maxWidth: '750px' }}>
+          <p style={{ fontSize: '0.95rem', color: '#E2E8F0', margin: 0, fontWeight: 500, maxWidth: '750px', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
             📍 {hotel.hotelAddress || hotel.subtitle || hotel.location}
           </p>
         </div>
@@ -160,15 +161,10 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
       {/* ── 3. QUICK STATS STRIP ── */}
       <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 2rem', padding: '0 0.5rem' }}>
-        <div style={{
-          background: '#FFFFFF',
-          borderRadius: '16px',
-          border: '1px solid #E2E8F0',
-          padding: '1.25rem 1.5rem',
+        <div className="detail-content-card" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '1.25rem',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+          gap: '1.25rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -219,7 +215,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           
           {/* Property Overview & Description */}
-          <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div className="detail-content-card">
             <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Building2 size={20} color="#0F4C3A" /> Property Overview
             </h2>
@@ -230,7 +226,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
           {/* MUST-EXPERIENCE HOTEL HIGHLIGHTS & AMENITIES */}
           {hotel.mustDoThings && hotel.mustDoThings.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
                 <span style={{ fontSize: '1.35rem' }}>✨</span>
                 <div>
@@ -271,7 +267,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
           {/* HOTEL TIMINGS & HOUSE GUIDELINES */}
           {hotel.timings && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Clock size={20} color="#0F4C3A" /> Hotel Timings & House Guidelines
               </h2>
@@ -286,7 +282,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
           {/* PRO-TIPS & NEIGHBORHOOD GUIDE */}
           {hotel.tipsAndTricks && hotel.tipsAndTricks.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
                 <Lightbulb size={22} color="#D97706" />
                 <div>
@@ -299,7 +295,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '0.85rem' }}>
                 {hotel.tipsAndTricks.map((tip, idx) => (
                   <div
                     key={idx}
@@ -325,7 +321,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
           {/* Video Showcase Tour Player */}
           {hotel.videoUrl && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Play size={20} color="#EF4444" fill="#EF4444" /> Hotel & Room Video Walkthrough Tour
               </h2>
@@ -356,11 +352,11 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
           {/* Available Room Categories & Suites */}
           {hotel.roomCategories && hotel.roomCategories.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <BedDouble size={20} color="#0F4C3A" /> Available Room Categories & Suites
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '1rem' }}>
                 {hotel.roomCategories.map((rc, idx) => (
                   <div key={idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -378,7 +374,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
           {/* YouTube Shorts Carousel for Hotel Video Walkthroughs */}
           {hotel.shorts && hotel.shorts.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <PackageShortsCarousel
                 destination={hotel.location || 'Singapore'}
                 curatedShorts={hotel.shorts}
@@ -388,7 +384,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
           {/* Photo Gallery Grid */}
           {allPhotos.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
                 <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ImageIcon size={20} color="#0F4C3A" /> High-Resolution Photo Gallery ({allPhotos.length})
@@ -397,7 +393,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
                   Click any photo to open slider & swipe →
                 </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '10px' }}>
+              <div className="detail-photo-grid">
                 {allPhotos.map((url, idx) => (
                   <div
                     key={idx}
@@ -433,7 +429,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
         <div className="catalog-detail-sidebar">
           
           {/* Action Card: Custom Package Builder & WhatsApp Booking */}
-          <div style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 8px 25px rgba(15,76,58,0.2)' }}>
+          <div className="detail-content-card" style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', boxShadow: '0 8px 25px rgba(15,76,58,0.2)' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.85rem' }}>
               <Sparkles size={13} color="#10B981" /> Wholesale B2B Rates
             </div>

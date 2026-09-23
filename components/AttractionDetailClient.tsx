@@ -78,7 +78,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
     <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', paddingBottom: '3rem' }}>
       
       {/* ── 1. BREADCRUMBS & TOP BAR ── */}
-      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0.85rem 1.5rem' }}>
+      <div className="detail-topbar-container">
         <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#64748B', flexWrap: 'wrap' }}>
             <Link href="/" style={{ color: '#64748B', textDecoration: 'none' }}>Home</Link>
@@ -90,7 +90,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
             <span style={{ color: '#0F172A', fontWeight: 800 }}>{attraction.name}</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="detail-topbar-actions">
             <button
               onClick={handleCopyLink}
               style={{
@@ -108,7 +108,8 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
               }}
             >
               {copied ? <Check size={14} color="#15803D" /> : <Share2 size={14} />}
-              <span>{copied ? 'Link Copied!' : 'Share Attraction'}</span>
+              <span className="detail-topbar-label-full">{copied ? 'Link Copied!' : 'Share Attraction'}</span>
+              <span className="detail-topbar-label-short">{copied ? 'Copied!' : 'Share'}</span>
             </button>
 
             <Link
@@ -135,10 +136,10 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
       </div>
 
       {/* ── 2. HERO SHOWCASE BANNER ── */}
-      <section style={{ maxWidth: '1600px', width: '96%', margin: '1.5rem auto', padding: '0 0.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '1.25rem auto', padding: '0 0.5rem' }}>
         <div style={{
           position: 'relative',
-          minHeight: '340px',
+          minHeight: '320px',
           borderRadius: '20px',
           overflow: 'hidden',
           backgroundImage: `linear-gradient(to top, rgba(15,23,42,0.94) 0%, rgba(15,23,42,0.45) 50%, rgba(15,23,42,0.2) 100%), url(${attraction.coverImageUrl})`,
@@ -147,7 +148,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
-          padding: '2.5rem',
+          padding: 'clamp(1.25rem, 3.5vw, 2.5rem)',
           boxShadow: '0 10px 30px rgba(0,0,0,0.12)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
@@ -162,18 +163,18 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
             </span>
           </div>
 
-          <h1 style={{ fontSize: '2.4rem', fontWeight: 900, color: '#FFFFFF', margin: '0 0 0.5rem', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+          <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 900, color: '#FFFFFF', margin: '0 0 0.5rem', letterSpacing: '-0.02em', lineHeight: 1.15, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
             {attraction.name}
           </h1>
 
-          <p style={{ fontSize: '0.95rem', color: '#E2E8F0', margin: 0, fontWeight: 500, maxWidth: '800px' }}>
+          <p style={{ fontSize: '0.95rem', color: '#E2E8F0', margin: 0, fontWeight: 500, maxWidth: '800px', overflowWrap: 'break-word' }}>
             📍 {attraction.locationAddress || attraction.subtitle || attraction.destination}
           </p>
         </div>
       </section>
 
       {/* ── 3. QUICK SECTION NAVIGATION LINKS ── */}
-      <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 2rem', padding: '0 0.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 1.5rem', padding: '0 0.5rem' }}>
         <div className="quick-jump-grid" style={{
           background: '#FFFFFF',
           borderRadius: '16px',
@@ -188,43 +189,18 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
               e.preventDefault()
               document.getElementById('must-do')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              padding: '0.85rem 1.15rem',
-              borderRadius: '12px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              transition: 'all 0.2s ease',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#ECFDF5'
-              e.currentTarget.style.borderColor = '#A7F3D0'
-              e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(15,76,58,0.15)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#F8FAFC'
-              e.currentTarget.style.borderColor = '#E2E8F0'
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = 'none'
-            }}
+            className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <div className="quick-jump-icon" style={{ background: '#DCFCE7' }}>
                 <Sparkles size={19} color="#15803D" />
               </div>
-              <div>
-                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>Must Do</strong>
-                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>Top Rides & Highlights</span>
+              <div style={{ minWidth: 0 }}>
+                <strong className="quick-jump-title">Must Do</strong>
+                <span className="quick-jump-sub">Top Rides & Highlights</span>
               </div>
             </div>
-            <span style={{ fontSize: '1rem', color: '#059669', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#059669' }}>↓</span>
           </a>
 
           {/* 2. Mobile App download */}
@@ -234,43 +210,18 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
               e.preventDefault()
               document.getElementById('app-download')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              padding: '0.85rem 1.15rem',
-              borderRadius: '12px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              transition: 'all 0.2s ease',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#EFF6FF'
-              e.currentTarget.style.borderColor = '#BFDBFE'
-              e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(37,99,235,0.15)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#F8FAFC'
-              e.currentTarget.style.borderColor = '#E2E8F0'
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = 'none'
-            }}
+            className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <div className="quick-jump-icon" style={{ background: '#DBEAFE' }}>
                 <Smartphone size={19} color="#2563EB" />
               </div>
-              <div>
-                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>Mobile App download</strong>
-                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>Official Guides & Maps</span>
+              <div style={{ minWidth: 0 }}>
+                <strong className="quick-jump-title">Mobile App</strong>
+                <span className="quick-jump-sub">Official Guides & Maps</span>
               </div>
             </div>
-            <span style={{ fontSize: '1rem', color: '#2563EB', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#2563EB' }}>↓</span>
           </a>
 
           {/* 3. Location & get there */}
@@ -280,43 +231,18 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
               e.preventDefault()
               document.getElementById('location-directions')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              padding: '0.85rem 1.15rem',
-              borderRadius: '12px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              transition: 'all 0.2s ease',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#FEF3C7'
-              e.currentTarget.style.borderColor = '#FDE68A'
-              e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(217,119,6,0.15)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#F8FAFC'
-              e.currentTarget.style.borderColor = '#E2E8F0'
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = 'none'
-            }}
+            className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <div className="quick-jump-icon" style={{ background: '#FEF3C7' }}>
                 <MapPin size={19} color="#D97706" />
               </div>
-              <div>
-                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>Location & get there</strong>
-                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>Map & Transit Directions</span>
+              <div style={{ minWidth: 0 }}>
+                <strong className="quick-jump-title">Location & MRT</strong>
+                <span className="quick-jump-sub">Map & Transit Directions</span>
               </div>
             </div>
-            <span style={{ fontSize: '1rem', color: '#D97706', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#D97706' }}>↓</span>
           </a>
 
           {/* 4. In-dept experience */}
@@ -326,43 +252,18 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
               e.preventDefault()
               document.getElementById('in-depth-experience')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              padding: '0.85rem 1.15rem',
-              borderRadius: '12px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              transition: 'all 0.2s ease',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#F3E8FF'
-              e.currentTarget.style.borderColor = '#E9D5FF'
-              e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(147,51,234,0.15)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#F8FAFC'
-              e.currentTarget.style.borderColor = '#E2E8F0'
-              e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = 'none'
-            }}
+            className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#F3E8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <div className="quick-jump-icon" style={{ background: '#F3E8FF' }}>
                 <Play size={19} color="#9333EA" fill="#9333EA" />
               </div>
-              <div>
-                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>In-depth experience</strong>
-                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>4K Tour & Shorts</span>
+              <div style={{ minWidth: 0 }}>
+                <strong className="quick-jump-title">Video Tour</strong>
+                <span className="quick-jump-sub">4K Tour & Shorts</span>
               </div>
             </div>
-            <span style={{ fontSize: '1rem', color: '#9333EA', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#9333EA' }}>↓</span>
           </a>
         </div>
       </section>
@@ -374,18 +275,18 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           
           {/* Overview Section */}
-          <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div className="detail-content-card">
             <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Compass size={20} color="#0F4C3A" /> Attraction Overview
             </h2>
-            <p style={{ fontSize: '0.92rem', color: '#334155', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
+            <p style={{ fontSize: '0.92rem', color: '#334155', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
               {attraction.description}
             </p>
           </div>
 
           {/* MUST-DO THINGS & SIGNATURE EXPERIENCES */}
           {attraction.mustDoThings && attraction.mustDoThings.length > 0 && (
-            <div id="must-do" style={{ scrollMarginTop: '100px', background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div id="must-do" className="detail-content-card" style={{ scrollMarginTop: '100px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
                 <span style={{ fontSize: '1.35rem' }}>✨</span>
                 <div>
@@ -426,7 +327,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
 
           {/* TIMINGS TO VISIT & SUGGESTED DURATION */}
           {attraction.timings && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Clock size={20} color="#0F4C3A" /> Operating Hours & Best Timings to Visit
               </h2>
@@ -441,7 +342,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
                   </strong>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid #DCFCE7' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid #DCFCE7' }}>
                   <div>
                     <span style={{ fontSize: '0.72rem', color: '#15803D', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Suggested Time Needed</span>
                     <strong style={{ fontSize: '0.85rem', color: '#0F172A' }}>{attraction.duration || 'Full Day (6–8 Hours)'}</strong>
@@ -457,7 +358,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
 
           {/* TIPS & TRIPS / PRO-TIPS & PRACTICAL GUIDE */}
           {attraction.tipsAndTricks && attraction.tipsAndTricks.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
                 <Lightbulb size={22} color="#D97706" />
                 <div>
@@ -470,7 +371,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '0.85rem' }}>
                 {attraction.tipsAndTricks.map((tip, idx) => (
                   <div
                     key={idx}
@@ -498,7 +399,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
           <div id="in-depth-experience" style={{ scrollMarginTop: '100px', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
             {/* VIDEO SHOWCASE TOUR */}
             {attraction.videoUrl && (
-              <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+              <div className="detail-content-card">
                 <div style={{ marginBottom: '1.25rem' }}>
                   <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Play size={20} color="#EF4444" fill="#EF4444" /> 4K Video Walkthrough & Tour
@@ -528,7 +429,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
 
             {/* YOUTUBE SHORTS CAROUSEL */}
             {attraction.shorts && attraction.shorts.length > 0 && (
-              <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+              <div className="detail-content-card">
                 <PackageShortsCarousel
                   destination={attraction.destination || 'Singapore'}
                   curatedShorts={attraction.shorts}
@@ -556,7 +457,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
           </div>
 
           {/* ── INTERACTIVE GOOGLE MAP & HOW TO GET THERE ── */}
-          <div id="location-directions" style={{ scrollMarginTop: '100px', background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div id="location-directions" className="detail-content-card" style={{ scrollMarginTop: '100px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div>
                 <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -592,7 +493,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
             </p>
 
             {/* Responsive Google Maps Iframe */}
-            <div style={{ position: 'relative', width: '100%', height: '340px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #E2E8F0', marginBottom: '1.25rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            <div style={{ position: 'relative', width: '100%', height: 'clamp(250px, 45vw, 340px)', borderRadius: '12px', overflow: 'hidden', border: '1px solid #E2E8F0', marginBottom: '1.25rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
               <iframe
                 src={attraction.mapEmbedUrl || `https://maps.google.com/maps?q=${encodeURIComponent(attraction.name + ' ' + (attraction.locationAddress || attraction.destination))}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
                 style={{ width: '100%', height: '100%', border: 0 }}
@@ -603,7 +504,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
             </div>
 
             {/* Transit Connection Badges */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '0.85rem' }}>
               <div style={{ background: '#F8FAFC', padding: '0.9rem 1.1rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
                 <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>
                   🚆 Nearest MRT Station
@@ -626,7 +527,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
 
           {/* AVAILABLE TICKET VARIANTS & SUB-TICKETS */}
           {attraction.subTickets && attraction.subTickets.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Ticket size={20} color="#0F4C3A" /> Available Ticket Options & Variants
               </h2>
@@ -648,7 +549,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
 
           {/* PHOTO GALLERY */}
           {allPhotos.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
                 <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ImageIcon size={20} color="#0F4C3A" /> High-Resolution Photo Gallery ({allPhotos.length})
@@ -657,7 +558,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
                   Click any photo to open slider & swipe →
                 </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '10px' }}>
+              <div className="detail-photo-grid">
                 {allPhotos.map((url, idx) => (
                   <div
                     key={idx}
@@ -692,7 +593,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
         {/* RIGHT COLUMN: Action Card & WhatsApp Inquiry */}
         <div className="catalog-detail-sidebar">
           
-          <div style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 8px 25px rgba(15,76,58,0.2)' }}>
+          <div className="detail-content-card" style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', boxShadow: '0 8px 25px rgba(15,76,58,0.2)' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.85rem' }}>
               <Sparkles size={13} color="#10B981" /> Wholesale DMC Inquiries
             </div>

@@ -51,9 +51,9 @@ export default function SingaporeShoppingGuidePage() {
     <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', paddingBottom: '4rem' }}>
       
       {/* ── 1. BREADCRUMBS & TOP BAR ── */}
-      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0.85rem 1.5rem' }}>
+      <div className="detail-topbar-container">
         <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.84rem', color: '#64748B' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.84rem', color: '#64748B', flexWrap: 'wrap' }}>
             <Link href="/" style={{ color: '#64748B', textDecoration: 'none' }}>Home</Link>
             <span>/</span>
             <Link href="/travel-tools" style={{ color: '#64748B', textDecoration: 'none' }}>Travel Tools</Link>
@@ -80,7 +80,8 @@ export default function SingaporeShoppingGuidePage() {
             }}
           >
             <Compass size={14} />
-            <span>Explore Individual Mall Guides (IMM, Mustafa, MBS...)</span>
+            <span className="detail-topbar-label-full">Explore Individual Mall Guides (IMM, Mustafa, MBS...)</span>
+            <span className="detail-topbar-label-short">Mall Guides (IMM, Mustafa...)</span>
           </Link>
         </div>
       </div>
@@ -154,13 +155,7 @@ export default function SingaporeShoppingGuidePage() {
 
       {/* ── 3. INTERACTIVE 9% ETRS GST REFUND CALCULATOR (WIDE-SCREEN 1600PX) ── */}
       <section id="gst-calculator" style={{ maxWidth: '1600px', width: '96%', margin: '-1.5rem auto 3rem', padding: '0 0.5rem', position: 'relative', zIndex: 3 }}>
-        <div style={{
-          background: '#FFFFFF',
-          borderRadius: '24px',
-          border: '1px solid #E2E8F0',
-          padding: '2rem',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.06)'
-        }}>
+        <div className="detail-content-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

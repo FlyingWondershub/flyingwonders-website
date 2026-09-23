@@ -85,7 +85,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
     <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', paddingBottom: '3.5rem' }}>
       
       {/* ── 1. BREADCRUMBS & TOP BAR (WIDE-SCREEN) ── */}
-      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0.85rem 1.5rem' }}>
+      <div className="detail-topbar-container">
         <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.84rem', color: '#64748B', flexWrap: 'wrap' }}>
             <Link href="/" style={{ color: '#64748B', textDecoration: 'none' }}>Home</Link>
@@ -97,14 +97,14 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
             <span style={{ color: '#0F172A', fontWeight: 800 }}>{mall.name}</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div className="detail-topbar-actions">
             <button
               onClick={handleCopyLink}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
-                padding: '0.45rem 0.9rem',
+                padding: '0.45rem 0.85rem',
                 borderRadius: '8px',
                 border: '1px solid #CBD5E1',
                 background: '#FFF',
@@ -116,7 +116,8 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
               }}
             >
               {copied ? <Check size={14} color="#15803D" /> : <Share2 size={14} />}
-              <span>{copied ? 'Link Copied!' : 'Share Mall Guide'}</span>
+              <span className="detail-topbar-label-full">{copied ? 'Link Copied!' : 'Share Mall Guide'}</span>
+              <span className="detail-topbar-label-short">{copied ? 'Copied!' : 'Share'}</span>
             </button>
 
             <Link
@@ -125,7 +126,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
-                padding: '0.45rem 0.9rem',
+                padding: '0.45rem 0.85rem',
                 borderRadius: '8px',
                 border: '1px solid #0F4C3A',
                 background: '#0F4C3A',
@@ -136,7 +137,8 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
               }}
             >
               <ShoppingBag size={14} />
-              <span>Singapore Shopping Guide</span>
+              <span className="detail-topbar-label-full">Singapore Shopping Guide</span>
+              <span className="detail-topbar-label-short">Shopping Guide</span>
             </Link>
 
             <Link
@@ -163,10 +165,10 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
       </div>
 
       {/* ── 2. HERO SHOWCASE BANNER (WIDE-SCREEN 1600PX) ── */}
-      <section style={{ maxWidth: '1600px', width: '96%', margin: '1.5rem auto', padding: '0 0.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '1.25rem auto', padding: '0 0.5rem' }}>
         <div style={{
           position: 'relative',
-          minHeight: '380px',
+          minHeight: '340px',
           borderRadius: '24px',
           overflow: 'hidden',
           backgroundImage: `linear-gradient(to top, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.55) 50%, rgba(15,23,42,0.25) 100%), url(${mall.coverImageUrl})`,
@@ -175,7 +177,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-end',
-          padding: 'clamp(1.5rem, 4vw, 3rem)',
+          padding: 'clamp(1.25rem, 3.5vw, 2.75rem)',
           boxShadow: '0 12px 35px rgba(0,0,0,0.15)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
@@ -193,27 +195,27 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
             </span>
           </div>
 
-          <h1 style={{ fontSize: 'clamp(2rem, 4vw, 3.2rem)', fontWeight: 900, color: '#FFFFFF', margin: '0 0 0.5rem', letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: 'var(--font-playfair), serif' }}>
+          <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 3.2rem)', fontWeight: 900, color: '#FFFFFF', margin: '0 0 0.5rem', letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: 'var(--font-playfair), serif', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
             {mall.name} {mall.alternateName && <span style={{ fontSize: '0.55em', fontWeight: 400, opacity: 0.9, fontFamily: 'var(--font-inter), sans-serif', marginLeft: '8px' }}>({mall.alternateName})</span>}
           </h1>
 
-          <p style={{ fontSize: '1rem', color: '#E2E8F0', margin: '0 0 0.75rem', fontWeight: 500, maxWidth: '950px', lineHeight: 1.5 }}>
+          <p style={{ fontSize: '0.95rem', color: '#E2E8F0', margin: '0 0 0.75rem', fontWeight: 500, maxWidth: '950px', lineHeight: 1.5, overflowWrap: 'break-word' }}>
             {mall.tagline}
           </p>
 
-          <p style={{ fontSize: '0.88rem', color: '#94A3B8', margin: 0, fontWeight: 500 }}>
+          <p style={{ fontSize: '0.88rem', color: '#94A3B8', margin: 0, fontWeight: 500, overflowWrap: 'break-word' }}>
             📍 {mall.locationAddress} · {mall.district}
           </p>
         </div>
       </section>
 
       {/* ── 3. QUICK SECTION NAVIGATION JUMP LINKS (WIDE-SCREEN) ── */}
-      <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 2rem', padding: '0 0.5rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 1.5rem', padding: '0 0.5rem' }}>
         <div className="quick-jump-grid" style={{
           background: '#FFFFFF',
           borderRadius: '18px',
           border: '1px solid #E2E8F0',
-          padding: '0.9rem 1.15rem',
+          padding: '0.85rem 1rem',
           boxShadow: '0 4px 16px -2px rgba(0,0,0,0.05)'
         }}>
           {/* 1. Must Do */}
@@ -223,31 +225,18 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
               e.preventDefault()
               document.getElementById('must-do')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              padding: '0.85rem 1.15rem',
-              borderRadius: '12px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              transition: 'all 0.2s ease',
-              cursor: 'pointer'
-            }}
+            className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <div className="quick-jump-icon" style={{ background: '#DCFCE7' }}>
                 <Sparkles size={19} color="#15803D" />
               </div>
-              <div>
-                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>Must Do</strong>
-                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>Top Stores & Highlights</span>
+              <div style={{ minWidth: 0 }}>
+                <strong className="quick-jump-title">Must Do</strong>
+                <span className="quick-jump-sub">Top Stores & Highlights</span>
               </div>
             </div>
-            <span style={{ fontSize: '1rem', color: '#059669', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#059669' }}>↓</span>
           </a>
 
           {/* 2. Mobile App Download */}
@@ -257,31 +246,18 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
               e.preventDefault()
               document.getElementById('app-download')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              padding: '0.85rem 1.15rem',
-              borderRadius: '12px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              transition: 'all 0.2s ease',
-              cursor: 'pointer'
-            }}
+            className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <div className="quick-jump-icon" style={{ background: '#DBEAFE' }}>
                 <Smartphone size={19} color="#2563EB" />
               </div>
-              <div>
-                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>Mobile App download</strong>
-                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>Official Guides & Maps</span>
+              <div style={{ minWidth: 0 }}>
+                <strong className="quick-jump-title">Mobile App</strong>
+                <span className="quick-jump-sub">Official Guides & Maps</span>
               </div>
             </div>
-            <span style={{ fontSize: '1rem', color: '#2563EB', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#2563EB' }}>↓</span>
           </a>
 
           {/* 3. Location & Get There */}
@@ -291,31 +267,18 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
               e.preventDefault()
               document.getElementById('location-directions')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              padding: '0.85rem 1.15rem',
-              borderRadius: '12px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              transition: 'all 0.2s ease',
-              cursor: 'pointer'
-            }}
+            className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <div className="quick-jump-icon" style={{ background: '#FEF3C7' }}>
                 <MapPin size={19} color="#D97706" />
               </div>
-              <div>
-                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>Location & get there</strong>
-                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>Map & Transit Directions</span>
+              <div style={{ minWidth: 0 }}>
+                <strong className="quick-jump-title">Location & MRT</strong>
+                <span className="quick-jump-sub">Transit & Walking Route</span>
               </div>
             </div>
-            <span style={{ fontSize: '1rem', color: '#D97706', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#D97706' }}>↓</span>
           </a>
 
           {/* 4. In-Depth Experience */}
@@ -325,31 +288,18 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
               e.preventDefault()
               document.getElementById('in-depth-experience')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '10px',
-              padding: '0.85rem 1.15rem',
-              borderRadius: '12px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              transition: 'all 0.2s ease',
-              cursor: 'pointer'
-            }}
+            className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#F3E8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <div className="quick-jump-icon" style={{ background: '#F3E8FF' }}>
                 <Play size={19} color="#9333EA" fill="#9333EA" />
               </div>
-              <div>
-                <strong style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0F172A', display: 'block', lineHeight: 1.2 }}>In-depth experience</strong>
-                <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>4K Tour & Shorts</span>
+              <div style={{ minWidth: 0 }}>
+                <strong className="quick-jump-title">Video Tour</strong>
+                <span className="quick-jump-sub">4K Tour & Shorts</span>
               </div>
             </div>
-            <span style={{ fontSize: '1rem', color: '#9333EA', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#9333EA' }}>↓</span>
           </a>
         </div>
       </section>
@@ -361,17 +311,17 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           {/* Overview Section */}
-          <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div className="detail-content-card">
             <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Compass size={22} color="#0F4C3A" /> Mall & Destination Overview
             </h2>
-            <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.75, margin: 0, whiteSpace: 'pre-wrap' }}>
+            <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.75, margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'break-word' }}>
               {mall.overview}
             </p>
 
             {/* Key Value Proposition Highlights */}
             {mall.keyHighlights && mall.keyHighlights.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #F1F5F9' }}>
                 {mall.keyHighlights.map((hl, i) => (
                   <div key={i} style={{ background: '#F8FAFC', padding: '1rem 1.15rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
@@ -391,7 +341,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
 
           {/* MUST-DO THINGS & SIGNATURE EXPERIENCES */}
           {mall.mustDoThings && mall.mustDoThings.length > 0 && (
-            <div id="must-do" style={{ scrollMarginTop: '100px', background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div id="must-do" className="detail-content-card" style={{ scrollMarginTop: '100px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.25rem' }}>
                 <span style={{ fontSize: '1.5rem' }}>✨</span>
                 <div>
@@ -432,7 +382,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
 
           {/* STORE DIRECTORY & TOP BRAND CATEGORIES */}
           {mall.topStoresAndBrands && mall.topStoresAndBrands.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
                   <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -448,7 +398,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
                 {mall.topStoresAndBrands.map((cat, i) => (
                   <div key={i} style={{ background: '#F8FAFC', borderRadius: '14px', border: '1px solid #E2E8F0', padding: '1.25rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '6px' }}>
-                      <strong style={{ fontSize: '0.98rem', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <strong style={{ fontSize: '0.98rem', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '6px', overflowWrap: 'break-word' }}>
                         🏷️ {cat.categoryName}
                       </strong>
                       {cat.discountBadge && (
@@ -464,7 +414,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
                     )}
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                       {cat.brands.map((b, bIdx) => (
-                        <span key={bIdx} style={{ background: '#FFF', color: '#1E293B', padding: '5px 12px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 600, border: '1px solid #CBD5E1', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                        <span key={bIdx} style={{ background: '#FFF', color: '#1E293B', padding: '5px 12px', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 600, border: '1px solid #CBD5E1', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', wordBreak: 'break-word' }}>
                           ✓ {b}
                         </span>
                       ))}
@@ -476,7 +426,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
           )}
 
           {/* TIMINGS TO VISIT & OPERATING HOURS */}
-          <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div className="detail-content-card">
             <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Clock size={22} color="#0F4C3A" /> Operating Hours & Best Timings to Visit
             </h2>
@@ -491,7 +441,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
                 </strong>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginTop: '0.5rem', paddingTop: '0.85rem', borderTop: '1px solid #DCFCE7' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1rem', marginTop: '0.5rem', paddingTop: '0.85rem', borderTop: '1px solid #DCFCE7' }}>
                 <div>
                   <span style={{ fontSize: '0.74rem', color: '#15803D', fontWeight: 700, textTransform: 'uppercase', display: 'block' }}>Suggested Time Needed</span>
                   <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>{mall.recommendedDuration}</strong>
@@ -512,7 +462,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
 
           {/* TIPS & TRICKS / INSIDER SHOPPING ADVICE */}
           {mall.tipsAndTricks && mall.tipsAndTricks.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.25rem' }}>
                 <Lightbulb size={24} color="#D97706" />
                 <div>
@@ -525,7 +475,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1rem' }}>
                 {mall.tipsAndTricks.map((tip, idx) => (
                   <div
                     key={idx}
@@ -553,7 +503,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
           <div id="in-depth-experience" style={{ scrollMarginTop: '100px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {/* 4K VIDEO TOUR */}
             {mall.videoUrl && (
-              <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+              <div className="detail-content-card">
                 <div style={{ marginBottom: '1.25rem' }}>
                   <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Play size={22} color="#EF4444" fill="#EF4444" /> 4K Video Walkthrough & Tour
@@ -583,7 +533,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
 
             {/* CURATED SHORTS CAROUSEL */}
             {mall.shorts && mall.shorts.length > 0 && (
-              <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+              <div className="detail-content-card">
                 <PackageShortsCarousel
                   destination={mall.name}
                   curatedShorts={mall.shorts}
@@ -611,7 +561,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
           </div>
 
           {/* ── INTERACTIVE GOOGLE MAP & TRANSIT INSTRUCTIONS ── */}
-          <div id="location-directions" style={{ scrollMarginTop: '100px', background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div id="location-directions" className="detail-content-card" style={{ scrollMarginTop: '100px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.15rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -647,7 +597,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
             </p>
 
             {/* Responsive Google Maps Iframe */}
-            <div style={{ position: 'relative', width: '100%', height: '360px', borderRadius: '14px', overflow: 'hidden', border: '1px solid #E2E8F0', marginBottom: '1.35rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            <div style={{ position: 'relative', width: '100%', height: 'clamp(250px, 45vw, 360px)', borderRadius: '14px', overflow: 'hidden', border: '1px solid #E2E8F0', marginBottom: '1.35rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
               <iframe
                 src={mall.mapEmbedUrl || `https://maps.google.com/maps?q=${encodeURIComponent(mall.name + ' Singapore')}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
                 style={{ width: '100%', height: '100%', border: 0 }}
@@ -658,7 +608,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
             </div>
 
             {/* Transit Badges */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '1rem' }}>
               <div style={{ background: '#F8FAFC', padding: '1.1rem 1.25rem', borderRadius: '12px', border: '1px solid #E2E8F0' }}>
                 <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
                   🚆 Nearest MRT Station
@@ -689,7 +639,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
 
           {/* DINING & FOOD COURT HIGHLIGHTS */}
           {mall.diningHighlights && (
-            <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: '0 0 0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Utensils size={22} color="#0F4C3A" /> Dining & Food Court Recommendations
               </h2>
@@ -709,7 +659,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
 
           {/* PHOTO GALLERY */}
           {allPhotos.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '8px' }}>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ImageIcon size={22} color="#0F4C3A" /> High-Resolution Photo Gallery ({allPhotos.length})
@@ -718,7 +668,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
                   Click any photo to open full-screen slider →
                 </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+              <div className="detail-photo-grid">
                 {allPhotos.map((url, idx) => (
                   <div
                     key={idx}
@@ -750,7 +700,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
 
           {/* FREQUENTLY ASKED QUESTIONS (FAQ ACCORDION) */}
           {mall.faqs && mall.faqs.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <HelpCircle size={22} color="#0F4C3A" /> Frequently Asked Questions
               </h2>
@@ -799,7 +749,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
         <div className="catalog-detail-sidebar">
           
           {/* 1. Quick Facts Card */}
-          <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }}>
+          <div className="detail-content-card">
             <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
               📋 Destination Quick Facts
             </h3>
@@ -831,7 +781,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
           </div>
 
           {/* 2. Action Card: Plan Your Visit & DMC Concierge */}
-          <div style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 8px 25px rgba(15,76,58,0.2)' }}>
+          <div className="detail-content-card" style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', boxShadow: '0 8px 25px rgba(15,76,58,0.2)' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.85rem' }}>
               <Sparkles size={13} color="#10B981" /> Wholesale DMC Inquiries
             </div>
@@ -934,7 +884,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
 
           {/* 3. Nearby Itinerary Pairings */}
           {mall.nearbyAttractions && mall.nearbyAttractions.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }}>
+            <div className="detail-content-card">
               <h4 style={{ fontSize: '0.92rem', fontWeight: 900, color: '#0F172A', margin: '0 0 0.85rem' }}>
                 🔗 Same-Day Itinerary Pairings
               </h4>

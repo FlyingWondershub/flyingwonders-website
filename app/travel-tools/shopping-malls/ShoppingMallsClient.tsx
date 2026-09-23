@@ -67,9 +67,9 @@ export default function ShoppingMallsClient({ initialMalls }: ShoppingMallsClien
     <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', paddingBottom: '4rem' }}>
       
       {/* ── 1. BREADCRUMBS & TOP BAR ── */}
-      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0.85rem 1.5rem' }}>
+      <div className="detail-topbar-container">
         <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.84rem', color: '#64748B' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.84rem', color: '#64748B', flexWrap: 'wrap' }}>
             <Link href="/" style={{ color: '#64748B', textDecoration: 'none' }}>Home</Link>
             <span>/</span>
             <Link href="/travel-tools" style={{ color: '#64748B', textDecoration: 'none' }}>Travel Tools</Link>
@@ -94,7 +94,8 @@ export default function ShoppingMallsClient({ initialMalls }: ShoppingMallsClien
             }}
           >
             <Sparkles size={14} color="#FDE68A" />
-            <span>Master Singapore Shopping Guide & 9% GST Refund →</span>
+            <span className="detail-topbar-label-full">Master Singapore Shopping Guide & 9% GST Refund →</span>
+            <span className="detail-topbar-label-short">Shopping Guide & GST Refund →</span>
           </Link>
         </div>
       </div>
@@ -186,11 +187,9 @@ export default function ShoppingMallsClient({ initialMalls }: ShoppingMallsClien
 
       {/* ── 4. FEATURED PROMO: MASTER SHOPPING GUIDE & 9% GST REFUND ── */}
       <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 2.5rem', padding: '0 0.5rem' }}>
-        <div style={{
+        <div className="detail-content-card" style={{
           background: 'linear-gradient(135deg, #ECFDF5 0%, #EFF6FF 100%)',
-          borderRadius: '20px',
           border: '1px solid #A7F3D0',
-          padding: '1.75rem 2rem',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',

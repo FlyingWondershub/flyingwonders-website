@@ -105,7 +105,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
     <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', paddingBottom: '3rem' }}>
       
       {/* ── 1. BREADCRUMBS & TOP ACTION BAR ── */}
-      <div className="no-print" style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0.85rem 1.5rem' }}>
+      <div className="no-print detail-topbar-container">
         <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#64748B', flexWrap: 'wrap' }}>
             <Link href="/" style={{ color: '#64748B', textDecoration: 'none' }}>Home</Link>
@@ -117,7 +117,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
             <strong style={{ color: '#0F4C3A' }}>{tour.title}</strong>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="detail-topbar-actions">
             <button
               onClick={handlePrintPdf}
               style={{
@@ -136,7 +136,8 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
               }}
             >
               <Printer size={15} />
-              <span>Print / Client PDF</span>
+              <span className="detail-topbar-label-full">Print / Client PDF</span>
+              <span className="detail-topbar-label-short">PDF</span>
             </button>
 
             <button
@@ -157,7 +158,8 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
               }}
             >
               <Share2 size={15} />
-              <span>{copied ? 'Link Copied! ✓' : 'Share Tour'}</span>
+              <span className="detail-topbar-label-full">{copied ? 'Link Copied! ✓' : 'Share Tour'}</span>
+              <span className="detail-topbar-label-short">{copied ? 'Copied!' : 'Share'}</span>
             </button>
           </div>
         </div>
@@ -258,13 +260,15 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
             margin: '0 0 0.5rem',
             lineHeight: 1.2,
             fontFamily: 'var(--font-playfair), serif',
-            textShadow: '0 2px 8px rgba(0,0,0,0.4)'
+            textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word'
           }}>
             {tour.title}
           </h1>
 
           {tour.subtitle && (
-            <p style={{ fontSize: '1rem', color: '#E2E8F0', margin: 0, fontWeight: 500, maxWidth: '750px', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+            <p style={{ fontSize: '1rem', color: '#E2E8F0', margin: 0, fontWeight: 500, maxWidth: '750px', textShadow: '0 1px 4px rgba(0,0,0,0.5)', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
               {tour.subtitle}
             </p>
           )}
@@ -273,13 +277,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
 
       {/* ── 3. QUICK SECTION NAVIGATION LINKS ── */}
       <section className="no-print" style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 2rem', padding: '0 0.5rem' }}>
-        <div className="quick-jump-grid" style={{
-          background: '#FFFFFF',
-          borderRadius: '16px',
-          border: '1px solid #E2E8F0',
-          padding: '0.85rem 1rem',
-          boxShadow: '0 4px 16px -2px rgba(0,0,0,0.05)'
-        }}>
+        <div className="quick-jump-grid">
           {/* 1. Must Do */}
           <a
             href="#must-do"
@@ -287,27 +285,18 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
               e.preventDefault()
               document.getElementById('must-do')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0.75rem 1rem',
-              borderRadius: '10px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              cursor: 'pointer'
-            }}
+            className="quick-jump-card"
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Sparkles size={18} color="#15803D" />
+              <div className="quick-jump-icon" style={{ background: '#DCFCE7' }}>
+                <Sparkles size={18} color="#15803D" />
+              </div>
               <div>
-                <strong style={{ fontSize: '0.86rem', display: 'block' }}>Key Highlights</strong>
-                <span style={{ fontSize: '0.7rem', color: '#64748B' }}>Must-Do Inclusions</span>
+                <strong className="quick-jump-title">Highlights</strong>
+                <span className="quick-jump-sub">Must-Do Inclusions</span>
               </div>
             </div>
-            <span style={{ fontSize: '0.9rem', color: '#059669', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#059669' }}>↓</span>
           </a>
 
           {/* 2. Hourly Circuit Timeline */}
@@ -317,27 +306,18 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
               e.preventDefault()
               document.getElementById('timeline-route')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0.75rem 1rem',
-              borderRadius: '10px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              cursor: 'pointer'
-            }}
+            className="quick-jump-card"
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Clock size={18} color="#2563EB" />
+              <div className="quick-jump-icon" style={{ background: '#DBEAFE' }}>
+                <Clock size={18} color="#2563EB" />
+              </div>
               <div>
-                <strong style={{ fontSize: '0.86rem', display: 'block' }}>Hourly Timeline</strong>
-                <span style={{ fontSize: '0.7rem', color: '#64748B' }}>Full-Day Circuit</span>
+                <strong className="quick-jump-title">Timeline</strong>
+                <span className="quick-jump-sub">Full-Day Circuit</span>
               </div>
             </div>
-            <span style={{ fontSize: '0.9rem', color: '#2563EB', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#2563EB' }}>↓</span>
           </a>
 
           {/* 3. Route & Wayfinding */}
@@ -347,27 +327,18 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
               e.preventDefault()
               document.getElementById('route-directions')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0.75rem 1rem',
-              borderRadius: '10px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              cursor: 'pointer'
-            }}
+            className="quick-jump-card"
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Navigation size={18} color="#D97706" />
+              <div className="quick-jump-icon" style={{ background: '#FEF3C7' }}>
+                <Navigation size={18} color="#D97706" />
+              </div>
               <div>
-                <strong style={{ fontSize: '0.86rem', display: 'block' }}>Route & Transit</strong>
-                <span style={{ fontSize: '0.7rem', color: '#64748B' }}>Google Maps GPS</span>
+                <strong className="quick-jump-title">Route & Transit</strong>
+                <span className="quick-jump-sub">Google Maps GPS</span>
               </div>
             </div>
-            <span style={{ fontSize: '0.9rem', color: '#D97706', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#D97706' }}>↓</span>
           </a>
 
           {/* 4. 4K Video & Shorts */}
@@ -377,27 +348,18 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
               e.preventDefault()
               document.getElementById('in-depth-experience')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0.75rem 1rem',
-              borderRadius: '10px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              cursor: 'pointer'
-            }}
+            className="quick-jump-card"
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Play size={18} color="#9333EA" fill="#9333EA" />
+              <div className="quick-jump-icon" style={{ background: '#F3E8FF' }}>
+                <Play size={18} color="#9333EA" fill="#9333EA" />
+              </div>
               <div>
-                <strong style={{ fontSize: '0.86rem', display: 'block' }}>4K Video & Shorts</strong>
-                <span style={{ fontSize: '0.7rem', color: '#64748B' }}>Walkthrough Reels</span>
+                <strong className="quick-jump-title">Videos</strong>
+                <span className="quick-jump-sub">Walkthrough Reels</span>
               </div>
             </div>
-            <span style={{ fontSize: '0.9rem', color: '#9333EA', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#9333EA' }}>↓</span>
           </a>
 
           {/* 5. Dining Guide */}
@@ -407,27 +369,18 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
               e.preventDefault()
               document.getElementById('dining-guide')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0.75rem 1rem',
-              borderRadius: '10px',
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              textDecoration: 'none',
-              color: '#0F172A',
-              cursor: 'pointer'
-            }}
+            className="quick-jump-card"
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Utensils size={18} color="#EA580C" />
+              <div className="quick-jump-icon" style={{ background: '#FFEDD5' }}>
+                <Utensils size={18} color="#EA580C" />
+              </div>
               <div>
-                <strong style={{ fontSize: '0.86rem', display: 'block' }}>Halal & Dining</strong>
-                <span style={{ fontSize: '0.7rem', color: '#64748B' }}>Route Pitstops</span>
+                <strong className="quick-jump-title">Dining</strong>
+                <span className="quick-jump-sub">Route Pitstops</span>
               </div>
             </div>
-            <span style={{ fontSize: '0.9rem', color: '#EA580C', fontWeight: 800 }}>↓</span>
+            <span className="quick-jump-arrow" style={{ color: '#EA580C' }}>↓</span>
           </a>
         </div>
       </section>
@@ -439,7 +392,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
           
           {/* Overview Section */}
-          <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div className="detail-content-card">
             <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Compass size={20} color="#0F4C3A" /> Circuit Overview & Strategy
             </h2>
@@ -449,7 +402,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
           </div>
 
           {/* MUST-DO EXPERIENCES & INCLUSIONS */}
-          <div id="must-do" style={{ scrollMarginTop: '100px', background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div id="must-do" className="detail-content-card" style={{ scrollMarginTop: '100px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
               <span style={{ fontSize: '1.35rem' }}>✨</span>
               <div>
@@ -489,7 +442,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
 
           {/* ── HOURLY CIRCUIT TIMELINE ── */}
           {tour.itineraryTimeline && tour.itineraryTimeline.length > 0 && (
-            <div id="timeline-route" style={{ scrollMarginTop: '100px', background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div id="timeline-route" className="detail-content-card" style={{ scrollMarginTop: '100px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
                   <h2 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -588,7 +541,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
           )}
 
           {/* ── MULTI-STOP ROUTE NAVIGATOR & GOOGLE MAPS ── */}
-          <div id="route-directions" style={{ scrollMarginTop: '100px', background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div id="route-directions" className="detail-content-card" style={{ scrollMarginTop: '100px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
                 <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -626,7 +579,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
 
             {/* Waypoint Steps */}
             {tour.routeWaypoints && tour.routeWaypoints.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '0.75rem', marginBottom: '1.25rem' }}>
                 {tour.routeWaypoints.map((wp, idx) => (
                   <div key={idx} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#D97706', color: '#FFF', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -656,7 +609,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
           {/* ── 4K VIDEO TOUR & SHORTS REELS ── */}
           <div id="in-depth-experience" style={{ scrollMarginTop: '100px', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
             {tour.videoUrl && (
-              <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+              <div className="detail-content-card">
                 <div style={{ marginBottom: '1.25rem' }}>
                   <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Play size={20} color="#EF4444" fill="#EF4444" /> 4K Cinematic Tour Walkthrough
@@ -676,7 +629,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
 
             {/* YOUTUBE SHORTS CAROUSEL */}
             {tour.shorts && tour.shorts.length > 0 && (
-              <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+              <div className="detail-content-card">
                 <PackageShortsCarousel
                   destination={tour.destination}
                   curatedShorts={tour.shorts}
@@ -687,7 +640,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
 
           {/* ── RECOMMENDED DINING & DIETARY GUIDE ── */}
           {tour.diningOptions && tour.diningOptions.length > 0 && (
-            <div id="dining-guide" style={{ scrollMarginTop: '100px', background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div id="dining-guide" className="detail-content-card" style={{ scrollMarginTop: '100px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
                 <Utensils size={22} color="#EA580C" />
                 <div>
@@ -700,7 +653,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1rem' }}>
                 {tour.diningOptions.map((d, idx) => (
                   <div key={idx} style={{ background: '#FFF7ED', border: '1px solid #FFEDD5', borderRadius: '12px', padding: '1.15rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginBottom: '0.35rem' }}>
@@ -722,7 +675,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
 
           {/* ── PRO-TIPS & WEATHER READINESS ── */}
           {tour.tipsAndTricks && tour.tipsAndTricks.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
                 <Lightbulb size={22} color="#D97706" />
                 <div>
@@ -735,7 +688,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '0.85rem' }}>
                 {tour.tipsAndTricks.map((tip, idx) => (
                   <div key={idx} style={{ background: '#FEFCE8', border: '1px solid #FEF08A', borderRadius: '12px', padding: '1rem', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>💡</span>
@@ -755,7 +708,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
 
           {/* PHOTO GALLERY */}
           {allPhotos.length > 0 && (
-            <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+            <div className="detail-content-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
                 <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <ImageIcon size={20} color="#0F4C3A" /> Circuit Photo Showcase & Highlights ({allPhotos.length})
@@ -764,7 +717,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
                   Click any photo to open slider & swipe →
                 </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '10px' }}>
+              <div className="detail-photo-grid">
                 {allPhotos.map((url, idx) => (
                   <div
                     key={idx}
@@ -795,12 +748,12 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
           )}
 
           {/* ── NEXT-DAY COMBINATION CIRCUITS ── */}
-          <div className="no-print" style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div className="no-print detail-content-card">
             <h2 style={{ fontSize: '1.15rem', fontWeight: 900, color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Sparkles size={20} color="#0F4C3A" /> Combine with Next-Day Tour Circuits
             </h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '1rem' }}>
               {relatedTours.map((rt) => (
                 <Link
                   key={rt._id}
@@ -843,11 +796,9 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
         {/* ── RIGHT COLUMN: STICKY B2B POWER CARD ── */}
         <div className="no-print catalog-detail-sidebar">
           
-          <div style={{
+          <div className="detail-content-card" style={{
             background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)',
             color: '#FFF',
-            borderRadius: '18px',
-            padding: '1.75rem',
             boxShadow: '0 8px 25px rgba(15,76,58,0.2)'
           }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.85rem' }}>
