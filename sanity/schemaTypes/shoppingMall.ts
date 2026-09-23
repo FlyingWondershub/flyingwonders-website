@@ -249,7 +249,10 @@ export const shoppingMallSchema = defineType({
           fields: [
             { name: 'id', title: 'YouTube Short ID', type: 'string' },
             { name: 'title', title: 'Short Title', type: 'string' },
-            { name: 'duration', title: 'Duration (e.g. 0:45)', type: 'string' }
+            { name: 'duration', title: 'Duration (e.g. 0:45)', type: 'string' },
+            { name: 'creator', title: 'Creator / Channel', type: 'string' },
+            { name: 'thumbnailUrl', title: 'Thumbnail URL', type: 'url' },
+            { name: 'youtubeVideoId', title: 'YouTube Video ID', type: 'string' }
           ]
         })
       ]
@@ -351,5 +354,19 @@ export const shoppingMallSchema = defineType({
       type: 'boolean',
       initialValue: true
     })
-  ]
+  ],
+  preview: {
+    select: {
+      title: 'name',
+      subtitle: 'category',
+      budget: 'budgetTier',
+      rating: 'starRating',
+    },
+    prepare({ title, subtitle, budget, rating }: any) {
+      return {
+        title: title || 'Untitled Shopping Destination',
+        subtitle: `${subtitle || 'Mall'} · ${budget || '$$'} · ⭐ ${rating || '4.8'}`,
+      }
+    }
+  }
 })

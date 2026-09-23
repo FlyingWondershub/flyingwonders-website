@@ -942,7 +942,7 @@ export default function TravelToolsPage() {
             {/* ═══ 3 SEPARATE ARRIVAL CARDS GRID ═══ */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
               gap: '1.5rem',
               alignItems: 'stretch'
             }}>
@@ -1560,7 +1560,7 @@ export default function TravelToolsPage() {
                 <span>Fetching live checkpoint camera feeds...</span>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '1.5rem' }}>
                 
                 {/* Woodlands Causeway */}
                 <div style={{ background: '#F8FAFC', borderRadius: '12px', padding: '1.25rem', border: '1px solid #E2E8F0' }}>

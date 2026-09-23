@@ -16,7 +16,8 @@ async function main() {
     "transfers": count(*[_type == "transferMeta"]),
     "guides": count(*[_type == "guideMeta"]),
     "hotels": count(*[_type == "hotelMeta"]),
-    "meals": count(*[_type == "mealMeta"])
+    "meals": count(*[_type == "mealMeta"]),
+    "shoppingMalls": count(*[_type == "shoppingMall"])
   }`);
   console.log('SANITY_DOCUMENT_COUNTS:', JSON.stringify(counts));
 

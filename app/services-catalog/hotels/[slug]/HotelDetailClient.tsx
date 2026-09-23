@@ -213,7 +213,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
       </section>
 
       {/* ── 4. MAIN CONTENT: 2-COLUMN LAYOUT (WIDE-SCREEN 1600PX) ── */}
-      <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '2rem', alignItems: 'start' }}>
+      <div className="catalog-detail-grid" style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem' }}>
         
         {/* LEFT COLUMN: Overview, Highlights, Timings, Pro-Tips, Video, Rooms & Gallery */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
@@ -430,10 +430,10 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
         </div>
 
         {/* RIGHT COLUMN: Quick B2B Action Card & Amenities */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="catalog-detail-sidebar">
           
           {/* Action Card: Custom Package Builder & WhatsApp Booking */}
-          <div style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 8px 25px rgba(15,76,58,0.2)', position: 'sticky', top: '2rem' }}>
+          <div style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 8px 25px rgba(15,76,58,0.2)' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.85rem' }}>
               <Sparkles size={13} color="#10B981" /> Wholesale B2B Rates
             </div>

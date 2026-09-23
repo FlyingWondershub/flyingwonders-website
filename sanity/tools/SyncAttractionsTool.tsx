@@ -2,7 +2,35 @@ import React, { useState } from 'react'
 
 export function SyncAttractionsTool() {
   const [syncing, setSyncing] = useState(false)
+  const [syncingMalls, setSyncingMalls] = useState(false)
   const [result, setResult] = useState<{ success: boolean; message: string; count?: number } | null>(null)
+
+  const handleSyncShoppingMalls = async () => {
+    setSyncingMalls(true)
+    setResult(null)
+    try {
+      const res = await fetch('/api/admin/sync-shopping-malls', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setResult({
+          success: true,
+          message: data.message || `Successfully synced ${data.syncedMalls?.length || 6} shopping malls into Sanity CMS!`,
+        })
+      } else {
+        setResult({
+          success: false,
+          message: data.error || 'Failed to sync shopping malls.'
+        })
+      }
+    } catch (e: any) {
+      setResult({
+        success: false,
+        message: e.message || 'Network error while syncing shopping malls.'
+      })
+    } finally {
+      setSyncingMalls(false)
+    }
+  }
 
   const handleSync = async () => {
     setSyncing(true)
@@ -76,28 +104,55 @@ export function SyncAttractionsTool() {
           Whenever you add, rename, or change prices in your master Google Sheet, click below to immediately refresh the website quotation pages and Sanity schemas.
         </p>
 
-        <button
-          type="button"
-          onClick={handleSync}
-          disabled={syncing}
-          style={{
-            background: syncing ? '#94A3B8' : '#059669',
-            color: '#FFFFFF',
-            border: 'none',
-            borderRadius: '10px',
-            padding: '1rem 2rem',
-            fontSize: '1.05rem',
-            fontWeight: 700,
-            cursor: syncing ? 'not-allowed' : 'pointer',
-            boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
-            transition: 'all 0.2s ease',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}
-        >
-          {syncing ? '⏳ Syncing Google Sheets...' : '🔄 Sync Sheets & Purge Cache'}
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+          <button
+            type="button"
+            onClick={handleSync}
+            disabled={syncing || syncingMalls}
+            style={{
+              background: syncing ? '#94A3B8' : '#059669',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '0.9rem 1.75rem',
+              fontSize: '1rem',
+              fontWeight: 700,
+              cursor: (syncing || syncingMalls) ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+              transition: 'all 0.2s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px'
+            }}
+          >
+            {syncing ? '⏳ Syncing Google Sheets...' : '🔄 Sync Sheets & Purge Cache'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSyncShoppingMalls}
+            disabled={syncing || syncingMalls}
+            style={{
+              background: syncingMalls ? '#94A3B8' : '#0F4C3A',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '0.9rem 1.75rem',
+              fontSize: '1rem',
+              fontWeight: 700,
+              cursor: (syncing || syncingMalls) ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 12px rgba(15, 76, 58, 0.25)',
+              transition: 'all 0.2s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px'
+            }}
+          >
+            {syncingMalls ? '⏳ Syncing Shopping Malls...' : '🛍️ Sync & Re-seed Shopping Malls to Sanity'}
+          </button>
+        </div>
 
         {result && (
           <div style={{

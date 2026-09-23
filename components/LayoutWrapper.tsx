@@ -76,11 +76,9 @@ export default function LayoutWrapper({
   const [subEmail, setSubEmail] = useState('')
   const [subStatus, setSubStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [subMessage, setSubMessage] = useState('')
-  const [hideNavBar, setHideNavBar] = useState(false)
   const [loggedInCompanyName, setLoggedInCompanyName] = useState('')
   const [isServicesOpen, setIsServicesOpen] = useState(false)
   const servicesDropdownRef = useRef<HTMLDivElement>(null)
-  const lastScrollY = useRef(0)
 
   useEffect(() => {
     async function checkAuth() {
@@ -123,52 +121,6 @@ export default function LayoutWrapper({
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [])
-
-  useEffect(() => {
-    let ticking = false
-    const SCROLL_DELTA_THRESHOLD = 20
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY
-          const windowHeight = window.innerHeight
-          const documentHeight = document.documentElement.scrollHeight
-
-          // Keep visible at top
-          if (currentScrollY <= 90) {
-            setHideNavBar(false)
-            lastScrollY.current = currentScrollY
-            ticking = false
-            return
-          }
-
-          // Prevent triggering at bottom near footer
-          if (currentScrollY + windowHeight >= documentHeight - 120) {
-            lastScrollY.current = currentScrollY
-            ticking = false
-            return
-          }
-
-          // Only toggle when scroll movement exceeds threshold to prevent Android touch jitter
-          const diff = currentScrollY - lastScrollY.current
-          if (Math.abs(diff) >= SCROLL_DELTA_THRESHOLD) {
-            if (diff > 0) {
-              setHideNavBar(true)
-            } else {
-              setHideNavBar(false)
-            }
-            lastScrollY.current = currentScrollY
-          }
-          ticking = false
-        })
-        ticking = true
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   const handleSubscribe = async (e: React.FormEvent) => {
@@ -248,7 +200,7 @@ export default function LayoutWrapper({
           </Link>
 
           {/* Bottom Menu & Action Bar */}
-          <div className={`mobile-hide-nav-container ${hideNavBar ? 'mobile-hide-nav' : ''}`} style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '0.15rem', paddingBottom: '0.15rem', flexWrap: 'wrap', gap: '0.75rem', transition: 'all 0.3s ease' }}>
+          <div className="mobile-nav-bar" style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '0.25rem', paddingBottom: '0.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
             
             {/* Left Action: Agent Portal */}
             <div style={{ flex: '1 0 150px', display: 'flex', alignItems: 'center' }}>

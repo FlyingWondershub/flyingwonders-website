@@ -206,14 +206,11 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
 
       {/* ── 3. QUICK SECTION NAVIGATION JUMP LINKS (WIDE-SCREEN) ── */}
       <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 2rem', padding: '0 0.5rem' }}>
-        <div style={{
+        <div className="quick-jump-grid" style={{
           background: '#FFFFFF',
           borderRadius: '18px',
           border: '1px solid #E2E8F0',
           padding: '0.9rem 1.15rem',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '0.85rem',
           boxShadow: '0 4px 16px -2px rgba(0,0,0,0.05)'
         }}>
           {/* 1. Must Do */}
@@ -355,7 +352,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
       </section>
 
       {/* ── 4. MAIN CONTENT: 2-COLUMN WIDE GRID (1600PX) ── */}
-      <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '2rem', alignItems: 'start' }}>
+      <div className="catalog-detail-grid" style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem' }}>
         
         {/* LEFT COLUMN: Overview, Must-Dos, Top Brands, Timings, Pro-Tips, Video, App & Gallery */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -806,7 +803,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
         </div>
 
         {/* RIGHT COLUMN: Sticky Sidebar, Quick Facts, DMC Wholesale Inquiries & Itinerary Pairings */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', position: 'sticky', top: '1.5rem' }}>
+        <div className="catalog-detail-sidebar">
           
           {/* 1. Quick Facts Card */}
           <div style={{ background: '#FFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.75rem', boxShadow: '0 4px 15px rgba(0,0,0,0.04)' }}>

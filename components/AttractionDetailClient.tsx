@@ -171,14 +171,11 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
 
       {/* ── 3. QUICK SECTION NAVIGATION LINKS ── */}
       <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 2rem', padding: '0 0.5rem' }}>
-        <div style={{
+        <div className="quick-jump-grid" style={{
           background: '#FFFFFF',
           borderRadius: '16px',
           border: '1px solid #E2E8F0',
           padding: '0.85rem 1rem',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '0.85rem',
           boxShadow: '0 4px 16px -2px rgba(0,0,0,0.05)'
         }}>
           {/* 1. Must Do */}
@@ -368,7 +365,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
       </section>
 
       {/* ── 4. MAIN CONTENT: 2-COLUMN LAYOUT (WIDE-SCREEN 1600PX) ── */}
-      <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '2rem', alignItems: 'start' }}>
+      <div className="catalog-detail-grid" style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem' }}>
         
         {/* LEFT COLUMN: Overview, Must-Dos, Timings, Pro-Tips, Video, App & Gallery */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
@@ -709,9 +706,9 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
         </div>
 
         {/* RIGHT COLUMN: Action Card & WhatsApp Inquiry */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="catalog-detail-sidebar">
           
-          <div style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 8px 25px rgba(15,76,58,0.2)', position: 'sticky', top: '2rem' }}>
+          <div style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1A365D 100%)', color: '#FFF', borderRadius: '18px', padding: '1.75rem', boxShadow: '0 8px 25px rgba(15,76,58,0.2)' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, marginBottom: '0.85rem' }}>
               <Sparkles size={13} color="#10B981" /> Wholesale DMC Inquiries
             </div>

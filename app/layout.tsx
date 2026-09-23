@@ -1,8 +1,15 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import LayoutWrapper from '../components/LayoutWrapper'
 import Script from 'next/script'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#0F4C3A',
+}
 
 const inter = Inter({ 
   subsets: ['latin'], 
@@ -146,7 +153,6 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
       <head>
-        <meta name="color-scheme" content="light dark" />
         <SeoSchema />
         {/* Google Analytics 4 Setup */}
         <script

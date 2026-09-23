@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sync:attractions": "node scripts/sync-attractions.mjs"
+    "sync:attractions": "node scripts/sync-attractions.mjs",
+    "sync:shopping-malls": "npx tsx scripts/seed-shopping-malls.ts"
   },
   "dependencies": {
     "@cashfreepayments/cashfree-js": "^1.0.7",

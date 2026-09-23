@@ -667,7 +667,7 @@ export default function ServicesCatalogPage() {
                     No hotels match your query.
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1.25rem' }}>
                     {filteredHotels.map((h) => {
                       const finalSlug = h.slug || slugifyHotelName(h.title)
                       const finalTitle = h.title
