@@ -27,7 +27,9 @@ import {
   Image as ImageIcon,
   Trash2,
   Menu,
-  X
+  X,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 
 export default function AgentPortalPage() {
@@ -54,9 +56,10 @@ export default function AgentPortalPage() {
   const [regLogoAssetId, setRegLogoAssetId] = useState('')
   const [regUploading, setRegUploading] = useState(false)
 
-  // Bookings Filter & Search
+  // Bookings Filter & Search & Collapse
   const [bookingFilter, setBookingFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [isBookingsExpanded, setIsBookingsExpanded] = useState(false)
 
   // Login modal state if unauthenticated
   const [showLoginModal, setShowLoginModal] = useState(false)
@@ -526,6 +529,41 @@ export default function AgentPortalPage() {
           padding-bottom: 1rem;
           margin-bottom: 1.25rem;
         }
+        .ap-proposals-box.ap-collapsed {
+          padding: 1.15rem 1.5rem;
+        }
+        .ap-proposals-box.ap-collapsed .ap-proposals-header {
+          border-bottom: none;
+          padding-bottom: 0;
+          margin-bottom: 0;
+        }
+        .ap-expand-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          padding: 0.42rem 0.85rem;
+          border-radius: 8px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          cursor: pointer;
+          border: 1px solid #CBD5E1;
+          background: #0F172A;
+          color: #FFFFFF;
+          transition: all 0.15s ease;
+          white-space: nowrap;
+        }
+        .ap-expand-btn:hover {
+          background: #1E293B;
+          border-color: #94A3B8;
+        }
+        .ap-expand-btn.ap-btn-expanded {
+          background: #F1F5F9;
+          color: #1E293B;
+          border-color: #CBD5E1;
+        }
+        .ap-expand-btn.ap-btn-expanded:hover {
+          background: #E2E8F0;
+        }
         .ap-filter-scroll {
           display: flex;
           gap: 0.4rem;
@@ -708,6 +746,22 @@ export default function AgentPortalPage() {
             background: #182234 !important;
             border-color: #2D3E56 !important;
           }
+          .ap-expand-btn {
+            background: #0F172A !important;
+            border-color: #475569 !important;
+            color: #38BDF8 !important;
+          }
+          .ap-expand-btn:hover {
+            background: #1E293B !important;
+          }
+          .ap-expand-btn.ap-btn-expanded {
+            background: #334155 !important;
+            color: #F8FAFC !important;
+            border-color: #475569 !important;
+          }
+          .ap-expand-btn.ap-btn-expanded:hover {
+            background: #475569 !important;
+          }
         }
       `}</style>
 
@@ -856,7 +910,10 @@ export default function AgentPortalPage() {
             </Link>
 
             <button
-              onClick={() => setActiveTab('bookings')}
+              onClick={() => {
+                setActiveTab('bookings')
+                setIsBookingsExpanded(true)
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1130,6 +1187,7 @@ export default function AgentPortalPage() {
             <button
               onClick={() => {
                 setActiveTab('bookings')
+                setIsBookingsExpanded(true)
                 setMobileNavOpen(false)
               }}
               style={{
@@ -1354,41 +1412,14 @@ export default function AgentPortalPage() {
         {/* ── 5. KPI & ACTION BAR (DESKTOP) ── */}
         {activeTab === 'dashboard' && (
           <div className="ap-kpi-desktop">
-            {/* Left Button: Operations Dashboard (if admin) */}
-            {activeAgent?.role === 'admin' && (
-              <Link
-                href="/admin-dashboard"
-                style={{
-                  background: 'linear-gradient(135deg, #D97706 0%, #B45309 100%)',
-                  color: '#FFF',
-                  padding: '0.55rem 0.95rem',
-                  borderRadius: '9px',
-                  fontWeight: 800,
-                  fontSize: '0.8rem',
-                  textDecoration: 'none',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  boxShadow: '0 2px 6px rgba(217,119,6,0.25)',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0
-                }}
-                title="Admin Operations Dashboard"
-              >
-                <span>👑</span>
-                <span>Operations Dashboard</span>
-                <span style={{ fontSize: '0.75rem', opacity: 0.85 }}>→</span>
-              </Link>
-            )}
-
-            {/* Center: 5 Compact KPI Chips */}
+            {/* 5 Compact KPI Chips */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
               flexWrap: 'wrap',
               flex: '1 1 auto',
-              justifyContent: 'center'
+              justifyContent: 'flex-start'
             }}>
               {/* Today's Bookings */}
               <div style={{
@@ -1499,8 +1530,8 @@ export default function AgentPortalPage() {
         {/* ── 5B. KPI & ACTION GRID (MOBILE) ── */}
         {activeTab === 'dashboard' && (
           <div className="ap-kpi-mobile">
-            {/* Mobile CTAs */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {/* Mobile CTA */}
+            <div style={{ marginBottom: '0.65rem' }}>
               <Link
                 href="/custom-package"
                 style={{
@@ -1522,30 +1553,6 @@ export default function AgentPortalPage() {
                 <Package size={18} />
                 <span>Launch Package Builder ⚙️</span>
               </Link>
-
-              {activeAgent?.role === 'admin' && (
-                <Link
-                  href="/admin-dashboard"
-                  style={{
-                    background: 'linear-gradient(135deg, #D97706 0%, #B45309 100%)',
-                    color: '#FFF',
-                    padding: '0.65rem 1rem',
-                    borderRadius: '10px',
-                    fontWeight: 800,
-                    fontSize: '0.85rem',
-                    textDecoration: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.4rem',
-                    boxShadow: '0 2px 6px rgba(217,119,6,0.25)',
-                    minHeight: '42px'
-                  }}
-                >
-                  <span>👑 Operations Dashboard</span>
-                  <span style={{ fontSize: '0.8rem', opacity: 0.85 }}>→</span>
-                </Link>
-              )}
             </div>
 
             {/* Mobile 2-Column KPI Card Grid */}
@@ -1646,43 +1653,100 @@ export default function AgentPortalPage() {
 
         {/* ── 6. RECENT BOOKINGS / MY BOOKINGS SECTION ── */}
         {(activeTab === 'dashboard' || activeTab === 'bookings') && (
-          <div className="ap-proposals-box">
+          <div className={`ap-proposals-box ${!isBookingsExpanded ? 'ap-collapsed' : ''}`}>
             
             {/* Header Controls */}
-            <div className="ap-proposals-header">
-              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <FileText size={20} color="#B83A4B" /> My Saved Bookings & Proposals ({filteredProposals.length})
-              </h3>
+            <div 
+              className="ap-proposals-header"
+              onClick={() => setIsBookingsExpanded(prev => !prev)}
+              style={{ cursor: 'pointer', userSelect: 'none' }}
+              title={isBookingsExpanded ? 'Click to collapse bookings list' : 'Click to expand bookings list'}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <FileText size={20} color="#B83A4B" /> 
+                  <span>My Saved Bookings & Proposals</span>
+                  <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 700 }}>
+                    ({loading ? '...' : isBookingsExpanded ? filteredProposals.length : proposals.length})
+                  </span>
+                </h3>
 
-              {/* Status Filter Badges (Smooth Touch Scrollable on Mobile) */}
-              <div className="ap-filter-scroll">
-                {[
-                  { id: 'all', label: `All (${proposals.length})` },
-                  { id: 'confirmed', label: `🟢 Confirmed (${confirmedCount})` },
-                  { id: 'pending', label: `🟡 Pending (${pendingCount})` },
-                  { id: 'completed', label: `✅ Completed (${completedCount})` },
-                ].map(f => (
-                  <button
-                    key={f.id}
-                    onClick={() => setBookingFilter(f.id as any)}
-                    style={{
-                      padding: '0.4rem 0.85rem',
-                      borderRadius: '20px',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      border: bookingFilter === f.id ? 'none' : '1px solid #CBD5E1',
-                      background: bookingFilter === f.id ? '#0F172A' : '#F8FAFC',
-                      color: bookingFilter === f.id ? '#FFF' : '#475569',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0
-                    }}
-                  >
-                    {f.label}
-                  </button>
-                ))}
+                {!isBookingsExpanded && !loading && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                    {confirmedCount > 0 && (
+                      <span style={{ background: '#DCFCE7', color: '#15803D', border: '1px solid #86EFAC', padding: '0.15rem 0.5rem', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 700 }}>
+                        🟢 {confirmedCount} Confirmed
+                      </span>
+                    )}
+                    {pendingCount > 0 && (
+                      <span style={{ background: '#FEF3C7', color: '#B45309', border: '1px solid #FDE68A', padding: '0.15rem 0.5rem', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 700 }}>
+                        🟡 {pendingCount} Pending
+                      </span>
+                    )}
+                    {completedCount > 0 && (
+                      <span style={{ background: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', padding: '0.15rem 0.5rem', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 700 }}>
+                        ✅ {completedCount} Done
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Status Filter Badges & Expand/Collapse Toggle Button */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                {isBookingsExpanded && (
+                  <div className="ap-filter-scroll" onClick={e => e.stopPropagation()}>
+                    {[
+                      { id: 'all', label: `All (${proposals.length})` },
+                      { id: 'confirmed', label: `🟢 Confirmed (${confirmedCount})` },
+                      { id: 'pending', label: `🟡 Pending (${pendingCount})` },
+                      { id: 'completed', label: `✅ Completed (${completedCount})` },
+                    ].map(f => (
+                      <button
+                        key={f.id}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setBookingFilter(f.id as any)
+                        }}
+                        style={{
+                          padding: '0.4rem 0.85rem',
+                          borderRadius: '20px',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          border: bookingFilter === f.id ? 'none' : '1px solid #CBD5E1',
+                          background: bookingFilter === f.id ? '#0F172A' : '#F8FAFC',
+                          color: bookingFilter === f.id ? '#FFF' : '#475569',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className={`ap-expand-btn ${isBookingsExpanded ? 'ap-btn-expanded' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsBookingsExpanded(prev => !prev)
+                  }}
+                  aria-expanded={isBookingsExpanded}
+                  title={isBookingsExpanded ? "Collapse bookings list" : "Expand bookings list"}
+                >
+                  <span>{isBookingsExpanded ? 'Collapse' : 'Expand'}</span>
+                  {isBookingsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
               </div>
             </div>
+
+            {/* Collapsed/Expanded Content */}
+            {isBookingsExpanded && (
+              <>
 
             {/* Search Input */}
             <div style={{ marginBottom: '1.25rem', position: 'relative' }}>
@@ -2110,6 +2174,8 @@ export default function AgentPortalPage() {
                 </div>
               </>
             )}
+          </>
+        )}
 
           </div>
         )}
@@ -2127,7 +2193,10 @@ export default function AgentPortalPage() {
         </button>
 
         <button
-          onClick={() => setActiveTab('bookings')}
+          onClick={() => {
+            setActiveTab('bookings')
+            setIsBookingsExpanded(true)
+          }}
           className={`ap-bottom-nav-item ${activeTab === 'bookings' ? 'active' : ''}`}
         >
           <div style={{ position: 'relative' }}>
