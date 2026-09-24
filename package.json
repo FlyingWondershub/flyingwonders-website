@@ -11,6 +11,7 @@
     "sync:shopping-malls": "npx tsx scripts/seed-shopping-malls.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.1139.0",
     "@cashfreepayments/cashfree-js": "^1.0.7",
     "@google/generative-ai": "^0.24.1",
     "@sanity/client": "^7.23.0",

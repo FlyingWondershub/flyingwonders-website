@@ -1,4 +1,5 @@
-﻿import nodemailer from 'nodemailer'
+import nodemailer from 'nodemailer'
+import { sendEmailSes, isSesConfigured } from './ses'
 
 interface SendEmailParams {
   to: string | string[]
@@ -13,8 +14,9 @@ interface SendEmailParams {
 
 /**
  * Universal email dispatcher for Flying Wonders:
- * 1. Prioritizes Brevo HTTPS REST API (no IP whitelist restrictions, high deliverability)
- * 2. Falls back to Nodemailer SMTP if BREVO_API_KEY is not configured
+ * 1. Prioritizes Amazon SES (High speed, unlimited scalable volume, verified domain)
+ * 2. Cascades to Brevo HTTPS REST API (Free 300/day tier)
+ * 3. Falls back to Nodemailer SMTP
  */
 export async function sendEmail({
   to,
@@ -25,10 +27,33 @@ export async function sendEmail({
   senderEmail = 'contact@flyingwonders.net',
   replyTo = 'contact@flyingwonders.net',
   bcc,
-}: SendEmailParams): Promise<{ success: boolean; messageId?: string; error?: string }> {
+}: SendEmailParams): Promise<{ success: boolean; messageId?: string; error?: string; provider?: 'ses' | 'brevo' | 'smtp' }> {
+  // 1. Prioritize Amazon SES if configured
+  if (isSesConfigured()) {
+    try {
+      const sesResult = await sendEmailSes({
+        to,
+        subject,
+        html,
+        text,
+        senderName,
+        senderEmail,
+        replyTo,
+        bcc,
+      })
+
+      if (sesResult.success) {
+        return { success: true, messageId: sesResult.messageId, provider: 'ses' }
+      }
+      console.warn(`[Dispatcher] Amazon SES failed (${sesResult.error}), cascading to Brevo API...`)
+    } catch (sesErr: any) {
+      console.warn(`[Dispatcher] Amazon SES exception (${sesErr.message}), cascading to Brevo API...`)
+    }
+  }
+
   const brevoApiKey = process.env.BREVO_API_KEY
 
-  // 1. Send via Brevo REST API if valid key is available
+  // 2. Send via Brevo REST API if valid key is available
   if (brevoApiKey && brevoApiKey !== '[SENSITIVE]' && brevoApiKey.startsWith('xkeysib-')) {
     try {
       const toList = Array.isArray(to)
