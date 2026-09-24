@@ -241,7 +241,7 @@ export function compileEmailHtml(data: StructuredCampaignData): string {
     .split(/\n\s*\n/)
     .map(p => p.trim())
     .filter(Boolean)
-    .map(p => `<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.65; color: #334155;">${p.replace(/\n/g, '<br />')}</p>`)
+    .map(p => `<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.68; color: #334155; text-align: justify; text-justify: inter-word;">${p.replace(/\n/g, '<br />')}</p>`)
     .join('')
 
   // Hero Image Banner
@@ -263,7 +263,7 @@ export function compileEmailHtml(data: StructuredCampaignData): string {
     const items = data.highlights
       .filter(h => h.title || h.desc)
       .map(h => `
-        <li style="margin-bottom: 12px; font-size: 14px; line-height: 1.6; color: #334155;">
+        <li style="margin-bottom: 12px; font-size: 14px; line-height: 1.65; color: #334155; text-align: justify; text-justify: inter-word;">
           ${h.title ? `<strong style="color: #0F172A;">${h.title}:</strong> ` : ''}${h.desc || ''}
         </li>
       `)
@@ -316,12 +316,12 @@ export function compileEmailHtml(data: StructuredCampaignData): string {
         
         <div style="margin-bottom: 8px; font-size: 12px;">
           <strong style="color: #0F172A;">Flying Wonders Pvt Ltd.</strong><br />
-          <span style="color: #475569;">#74, 4th Cross, SBM Colony, BSK 1st Stage, Bangalore, India - 560050</span>
+          <span style="color: #475569; text-decoration: none !important; border-bottom: none !important; cursor: default; pointer-events: none;">#74, 4&zwnj;th Cross, SBM Colony, BSK 1st Stage, Bangalore, India - 560&zwnj;050</span>
         </div>
         
         <div style="margin-bottom: 12px; font-size: 12px;">
           <strong style="color: #0F172A;">Flying Wonders Pte Ltd.</strong><br />
-          <span style="color: #475569;">#12-07, Suntec Tower One, Singapore - 038987</span>
+          <span style="color: #475569; text-decoration: none !important; border-bottom: none !important; cursor: default; pointer-events: none;">#12-07, Suntec Tower One, Singapore - 038&zwnj;987</span>
         </div>
         
         <div style="color: #334155; font-size: 12px; margin-bottom: 10px; line-height: 1.7;">
@@ -334,9 +334,9 @@ export function compileEmailHtml(data: StructuredCampaignData): string {
           <strong>Product Portfolio:</strong> Travel Assistance | Visas | Accommodations | Land Packages | Air Ticketing | Global Attraction Tickets &amp; Cruises
         </div>
         
-        <!-- Official Accreditations Badge Banner -->
-        <div style="margin-top: 14px; text-align: left;">
-          <img src="https://flyingwonders.net/images/voucher-footer-accreditations.png" alt="Accreditations: ISO 9001, ISO 27001, TAAI, TOA, nidhi+, D-U-N-S" style="max-width: 100%; width: 440px; height: auto; display: block; border: 0;" />
+        <!-- Official Accreditations Badge Banner (Centered) -->
+        <div style="margin-top: 18px; text-align: center;">
+          <img src="https://flyingwonders.net/images/voucher-footer-accreditations.png" alt="Accreditations: ISO 9001, ISO 27001, TAAI, TOA, nidhi+, D-U-N-S" style="max-width: 100%; width: 440px; height: auto; display: block; margin: 0 auto; border: 0;" />
         </div>
       </div>
     `
@@ -2460,19 +2460,35 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                       </div>
                     </div>
 
-                    {/* Header */}
-                    <div style={{ background: '#800020', padding: '24px 20px', textAlign: 'center' }}>
-                      <h1 style={{ color: '#FFFFFF', margin: 0, fontSize: '1.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'Georgia, serif' }}>
-                        Flying Wonders
-                      </h1>
-                      <p style={{ color: '#dfba6b', margin: '6px 0 0', fontSize: '0.72rem', letterSpacing: '0.22em', textTransform: 'uppercase', fontWeight: 700 }}>
-                        Singapore &amp; India Specialist DMC
-                      </p>
+                    {/* Header: Homepage Style & Logo */}
+                    <div style={{ background: '#FFFFFF', padding: '22px 20px 18px 20px', textAlign: 'center', borderTop: '4px solid #800020', borderBottom: '2px solid #C5A880' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
+                        <img 
+                          src="/images/logo.png" 
+                          alt="Flying Wonders Logo" 
+                          style={{ 
+                            height: '52px', 
+                            width: '52px', 
+                            borderRadius: '50%', 
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                            border: '2px solid #C5A880',
+                            display: 'block'
+                          }} 
+                        />
+                        <div style={{ textAlign: 'left' }}>
+                          <div style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '1.45rem', fontWeight: 500, color: '#1A1A1A', letterSpacing: '0.18em', textTransform: 'uppercase', lineHeight: 1.1 }}>
+                            Flying Wonders
+                          </div>
+                          <div style={{ color: '#800020', fontSize: '0.68rem', letterSpacing: '0.22em', textTransform: 'uppercase', fontWeight: 700, marginTop: '4px' }}>
+                            Singapore &amp; India Specialist DMC
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Email Body Content */}
                     <div
-                      style={{ padding: '24px 20px', color: '#1A202C', fontSize: '0.92rem', lineHeight: 1.6 }}
+                      style={{ padding: '24px 20px', color: '#1A202C', fontSize: '0.92rem', lineHeight: 1.6, textAlign: 'justify' }}
                       dangerouslySetInnerHTML={{ __html: liveCompiledHtml }}
                     />
 
@@ -2551,19 +2567,35 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
 
             <div style={{ padding: '24px', overflowY: 'auto', background: '#F1F5F9' }}>
               <div style={{ maxWidth: '720px', margin: '0 auto', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                {/* Header */}
-                <div style={{ background: '#800020', padding: '28px 20px', textAlign: 'center' }}>
-                  <h1 style={{ color: '#FFFFFF', margin: 0, fontSize: '1.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'Georgia, serif' }}>
-                    Flying Wonders
-                  </h1>
-                  <p style={{ color: '#dfba6b', margin: '6px 0 0', fontSize: '0.75rem', letterSpacing: '0.25em', textTransform: 'uppercase', fontWeight: 700 }}>
-                    Singapore &amp; India Specialist DMC
-                  </p>
+                {/* Header: Homepage Style & Logo */}
+                <div style={{ background: '#FFFFFF', padding: '24px 20px 20px 20px', textAlign: 'center', borderTop: '4px solid #800020', borderBottom: '2px solid #C5A880' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
+                    <img 
+                      src="/images/logo.png" 
+                      alt="Flying Wonders Logo" 
+                      style={{ 
+                        height: '54px', 
+                        width: '54px', 
+                        borderRadius: '50%', 
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        border: '2px solid #C5A880',
+                        display: 'block'
+                      }} 
+                    />
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: '1.5rem', fontWeight: 500, color: '#1A1A1A', letterSpacing: '0.18em', textTransform: 'uppercase', lineHeight: 1.1 }}>
+                        Flying Wonders
+                      </div>
+                      <div style={{ color: '#800020', fontSize: '0.7rem', letterSpacing: '0.22em', textTransform: 'uppercase', fontWeight: 700, marginTop: '4px' }}>
+                        Singapore &amp; India Specialist DMC
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Body */}
                 <div
-                  style={{ padding: '28px 24px', color: '#1A202C', fontSize: '0.92rem', lineHeight: 1.6 }}
+                  style={{ padding: '28px 24px', color: '#1A202C', fontSize: '0.92rem', lineHeight: 1.6, textAlign: 'justify' }}
                   dangerouslySetInnerHTML={{ __html: previewCampaign.content }}
                 />
 
