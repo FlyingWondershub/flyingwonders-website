@@ -102,10 +102,34 @@ export async function sendEmailSes({
       ReplyToAddresses: [replyTo],
     })
 
-    const response = await sesClient.send(command)
-    return { success: true, messageId: response.MessageId }
+    let attempts = 0
+    while (attempts < 3) {
+      try {
+        const response = await sesClient.send(command)
+        return { success: true, messageId: response.MessageId }
+      } catch (sendErr: any) {
+        attempts++
+        const isThrottled =
+          sendErr.name === 'ThrottlingException' ||
+          sendErr.name === 'Throttling' ||
+          sendErr.message?.toLowerCase().includes('rate exceeded') ||
+          sendErr.$metadata?.httpStatusCode === 429
+
+        if (isThrottled && attempts < 3) {
+          const backoffMs = attempts * 1000 + Math.floor(Math.random() * 400)
+          console.warn(`[Amazon SES] Rate throttled (attempt ${attempts}/3). Backing off for ${backoffMs}ms...`)
+          await new Promise(resolve => setTimeout(resolve, backoffMs))
+          continue
+        }
+
+        console.error('Amazon SES dispatch error:', sendErr.message)
+        return { success: false, error: sendErr.message || 'Failed to dispatch via Amazon SES' }
+      }
+    }
+
+    return { success: false, error: 'Amazon SES dispatch exceeded retry limit.' }
   } catch (err: any) {
-    console.error('Amazon SES dispatch error:', err.message)
+    console.error('Amazon SES dispatch preparation error:', err.message)
     return { success: false, error: err.message || 'Failed to dispatch via Amazon SES' }
   }
 }

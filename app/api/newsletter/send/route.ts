@@ -6,6 +6,8 @@ import { isSesConfigured } from '../../../../lib/ses'
 import { fetchLiveBrevoQuota } from '../quota/route'
 import { getSubscribersForSend } from '../../../../lib/audience-chunk-store'
 
+export const maxDuration = 300
+
 const writeClient = createClient({
   apiVersion,
   dataset,
@@ -119,17 +121,19 @@ export async function POST(req: Request) {
     const parsedLimit = typeof batchLimit === 'number' ? batchLimit : (batchLimit ? parseInt(batchLimit, 10) : undefined)
     const requestedBatchLimit = (parsedLimit && parsedLimit > 0) ? parsedLimit : eligibleRecipients.length
 
-    // If using Brevo free tier, never exceed live remaining Brevo credits
-    const effectiveBatchLimit = (!isUsingSes && liveQuota?.planType === 'free')
-      ? Math.min(requestedBatchLimit, liveQuota.remainingCredits)
-      : requestedBatchLimit
+    // Safe single-wave batch capping:
+    // - For Amazon SES: Cap single wave to 1,000 to complete comfortably within Vercel timeout (~85s) with 0 errors
+    // - For Brevo free tier: Never exceed live remaining Brevo credits (max 250-300/day)
+    const MAX_SES_WAVE_SIZE = 1000
+    const effectiveBatchLimit = isUsingSes
+      ? Math.min(requestedBatchLimit, MAX_SES_WAVE_SIZE)
+      : (liveQuota?.planType === 'free' ? Math.min(requestedBatchLimit, liveQuota.remainingCredits) : Math.min(requestedBatchLimit, 500))
 
     const batchToSend = eligibleRecipients.slice(0, effectiveBatchLimit)
-    const remainingAfterBatch = Math.max(0, eligibleRecipients.length - batchToSend.length)
 
     console.log(`Starting targeted newsletter dispatch (${targetAudience} via ${isUsingSes ? 'Amazon SES' : 'Brevo'}) - Batch: ${batchToSend.length} / Eligible: ${eligibleRecipients.length} / Total Audience: ${recipients.length} for campaign: "${campaign.title}"`)
 
-    // 6. Send Emails via Brevo in Concurrent Chunks of 10 (Zero Vercel Timeout)
+    // 6. Send Emails via Provider in Concurrent Chunks with Rate Pacing
     let successCount = 0
     const errors: Array<{ email: string; error: string }> = []
     const successfullySentEmails: string[] = []
@@ -137,9 +141,21 @@ export async function POST(req: Request) {
     const waText = encodeURIComponent(`Hi Flying Wonders, I received your email regarding "${campaign.subject}" and would like to inquire.`)
     const defaultWhatsAppUrl = `https://wa.me/6594722830?text=${waText}`
 
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+    let consecutiveFailureCount = 0
+
     const chunkSize = 10
     for (let i = 0; i < batchToSend.length; i += chunkSize) {
+      // Circuit breaker: If 3 consecutive chunks completely fail due to provider rejection, stop early
+      if (consecutiveFailureCount >= 3) {
+        console.warn(`[Dispatcher] Aborting remaining dispatch after ${consecutiveFailureCount} consecutive chunk failures to protect provider quota.`)
+        break
+      }
+
       const chunk = batchToSend.slice(i, i + chunkSize)
+      const chunkStartTime = Date.now()
+      let chunkSuccessCount = 0
+
       await Promise.all(
         chunk.map(async (recipient) => {
           const email = recipient.email.toLowerCase().trim()
@@ -244,6 +260,7 @@ export async function POST(req: Request) {
 
             if (result.success) {
               successCount++
+              chunkSuccessCount++
               successfullySentEmails.push(email)
             } else {
               throw new Error(result.error || 'Failed to dispatch email')
@@ -254,9 +271,25 @@ export async function POST(req: Request) {
           }
         })
       )
+
+      if (chunkSuccessCount === 0 && chunk.length > 0) {
+        consecutiveFailureCount++
+      } else {
+        consecutiveFailureCount = 0
+      }
+
+      // Safe rate-limiting pace for Amazon SES (Account max rate is 14/sec; target ~11.5/sec)
+      if (isUsingSes && (i + chunkSize < batchToSend.length)) {
+        const elapsed = Date.now() - chunkStartTime
+        const minChunkDurationMs = 850 // ensures max ~11.7 emails/sec
+        if (elapsed < minChunkDurationMs) {
+          await sleep(minChunkDurationMs - elapsed)
+        }
+      }
     }
 
     // 7. Update Sanity Campaign Document with Audit History (No lock!)
+    const remainingAfterBatch = Math.max(0, eligibleRecipients.length - successCount)
     const nowIso = new Date().toISOString()
     const dispatcherTag = isUsingSes ? 'Amazon SES' : 'Brevo'
     const isMultiWave = remainingAfterBatch > 0 || prevDispatched.length > 0

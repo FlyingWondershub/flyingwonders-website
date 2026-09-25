@@ -397,7 +397,7 @@ export default function NewsletterCampaignManager() {
   const [targetAudience, setTargetAudience] = useState<'all' | 'b2b' | 'b2c' | 'new' | 'tag' | 'custom'>('all')
   const [selectedDispatchTag, setSelectedDispatchTag] = useState('')
   const [customEmailsInput, setCustomEmailsInput] = useState('')
-  const [dispatchBatchLimit, setDispatchBatchLimit] = useState<'all' | '500' | '250' | '100' | '50' | 'custom'>('all')
+  const [dispatchBatchLimit, setDispatchBatchLimit] = useState<'all' | '1000' | '500' | '250' | '100' | '50' | 'custom'>('1000')
   const [customBatchLimitInput, setCustomBatchLimitInput] = useState('500')
   const [dispatchSkipSent, setDispatchSkipSent] = useState(true)
   const [isDispatchingModal, setIsDispatchingModal] = useState(false)
@@ -555,10 +555,10 @@ export default function NewsletterCampaignManager() {
     const maxCanSendToday = isUsingSes ? eligible : Math.max(0, remainingDailyCredits)
 
     const rawLimit = dispatchBatchLimit === 'all'
-      ? eligible
+      ? (isUsingSes ? Math.min(eligible, 1000) : eligible)
       : dispatchBatchLimit === 'custom'
-        ? (parseInt(customBatchLimitInput, 10) || (isUsingSes ? eligible : 250))
-        : (parseInt(dispatchBatchLimit, 10) || (isUsingSes ? eligible : 250))
+        ? (parseInt(customBatchLimitInput, 10) || (isUsingSes ? Math.min(eligible, 1000) : 250))
+        : (parseInt(dispatchBatchLimit, 10) || (isUsingSes ? Math.min(eligible, 1000) : 250))
 
     const desiredSend = Math.min(eligible, Math.max(0, rawLimit))
     const quotaExceeded = !isUsingSes && brevoQuota ? desiredSend > remainingDailyCredits : false
@@ -941,8 +941,8 @@ export default function NewsletterCampaignManager() {
     setDispatchModalFeedback(null)
     const preferSes = sesInfo?.configured ?? true
     setSelectedDispatcher(preferSes ? 'ses' : 'brevo')
-    setDispatchBatchLimit(preferSes ? 'all' : '250')
-    setCustomBatchLimitInput(preferSes ? '500' : '250')
+    setDispatchBatchLimit(preferSes ? '1000' : '250')
+    setCustomBatchLimitInput(preferSes ? '1000' : '250')
     fetchQuota()
     if (subscribersList.length === 0) {
       fetchSubscribersFull()
@@ -970,9 +970,9 @@ export default function NewsletterCampaignManager() {
 
     const isUsingSes = selectedDispatcher === 'ses'
     const effectiveLimit = dispatchBatchLimit === 'all'
-      ? undefined
+      ? (isUsingSes ? 1000 : undefined)
       : dispatchBatchLimit === 'custom'
-        ? (parseInt(customBatchLimitInput, 10) || (isUsingSes ? undefined : 250))
+        ? (parseInt(customBatchLimitInput, 10) || (isUsingSes ? 1000 : 250))
         : parseInt(dispatchBatchLimit, 10)
 
     setIsDispatchingModal(true)
@@ -3249,19 +3249,19 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
                       <button
                         type="button"
-                        onClick={() => setDispatchBatchLimit('all')}
+                        onClick={() => setDispatchBatchLimit('1000')}
                         style={{
                           padding: '6px 12px',
                           borderRadius: '6px',
-                          border: dispatchBatchLimit === 'all' ? '1px solid #800020' : '1px solid #CBD5E1',
-                          background: dispatchBatchLimit === 'all' ? '#800020' : '#FFFFFF',
-                          color: dispatchBatchLimit === 'all' ? '#FFFFFF' : '#334155',
-                          fontWeight: 800,
+                          border: dispatchBatchLimit === '1000' ? '1px solid #800020' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === '1000' ? '#800020' : '#FFFFFF',
+                          color: dispatchBatchLimit === '1000' ? '#FFFFFF' : '#334155',
+                          fontWeight: 700,
                           fontSize: '0.76rem',
                           cursor: 'pointer'
                         }}
                       >
-                        🚀 Send All ({dispatchAudienceStats.eligible})
+                        ⚡ 1,000 / wave
                       </button>
 
                       <button
@@ -3278,7 +3278,24 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                           cursor: 'pointer'
                         }}
                       >
-                        ⚡ 500 / batch
+                        ⚡ 500 / wave
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDispatchBatchLimit('all')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: dispatchBatchLimit === 'all' ? '1px solid #800020' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === 'all' ? '#800020' : '#FFFFFF',
+                          color: dispatchBatchLimit === 'all' ? '#FFFFFF' : '#334155',
+                          fontWeight: 800,
+                          fontSize: '0.76rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {dispatchAudienceStats.eligible > 1000 ? `🚀 Max Wave (1,000 of ${dispatchAudienceStats.eligible})` : `🚀 Send All (${dispatchAudienceStats.eligible})`}
                       </button>
 
                       <button
@@ -3353,14 +3370,23 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                         />
                       )}
                     </div>
+
+                    {dispatchAudienceStats.eligible > 1000 && (
+                      <div style={{ marginTop: '10px', fontSize: '0.74rem', color: '#92400E', background: '#FEF3C7', padding: '8px 12px', borderRadius: '8px', border: '1px solid #FDE68A', display: 'flex', alignItems: 'flex-start', gap: '8px', lineHeight: 1.45 }}>
+                        <span style={{ fontSize: '1rem', lineHeight: 1 }}>🛡️</span>
+                        <div>
+                          <strong>Large Audience Protection:</strong> High-volume lists are dispatched in safe waves of up to 1,000 contacts to guarantee zero Amazon SES throttling and prevent serverless execution timeouts. Contacts already sent in previous waves are automatically skipped.
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ marginTop: '10px', fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span>💡</span>
                     <span>
                       {dispatchAudienceStats.remainingAfter > 0
-                        ? `Delivering ${dispatchAudienceStats.toSendNow} contacts via Amazon SES. ${dispatchAudienceStats.remainingAfter} contacts will remain for future batches.`
-                        : `Delivering instantly to all ${dispatchAudienceStats.eligible} eligible contacts via Amazon SES in 1 blast.`}
+                        ? `Delivering ${dispatchAudienceStats.toSendNow} contacts via Amazon SES. ${dispatchAudienceStats.remainingAfter} contacts will remain for subsequent waves.`
+                        : `Delivering instantly to all ${dispatchAudienceStats.eligible} eligible contacts via Amazon SES.`}
                     </span>
                   </div>
                 </div>
