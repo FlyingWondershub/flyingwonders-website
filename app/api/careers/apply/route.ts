@@ -20,24 +20,106 @@ const writeClient = createClient({
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData()
+    const contentType = req.headers.get('content-type') || ''
+    let applicantName = ''
+    let email = ''
+    let phone = ''
+    let currentLocation = ''
+    let linkedinUrl = ''
+    let portfolioUrl = ''
+    let jobOpeningId = ''
+    let jobTitle = 'General / Talent Network Application'
+    let yearsOfExperience = ''
+    let currentCompany = ''
+    let currentRole = ''
+    let noticePeriod = ''
+    let expectedSalary = ''
+    let coverLetter = ''
 
-    const applicantName = (formData.get('applicantName') as string)?.trim()
-    const email = (formData.get('email') as string)?.trim().toLowerCase()
-    const phone = (formData.get('phone') as string)?.trim()
-    const currentLocation = (formData.get('currentLocation') as string)?.trim() || ''
-    const linkedinUrl = (formData.get('linkedinUrl') as string)?.trim() || ''
-    const portfolioUrl = (formData.get('portfolioUrl') as string)?.trim() || ''
-    const jobOpeningId = (formData.get('jobOpeningId') as string)?.trim() || ''
-    const jobTitle = (formData.get('jobTitle') as string)?.trim() || 'General / Talent Network Application'
-    const yearsOfExperience = (formData.get('yearsOfExperience') as string)?.trim() || ''
-    const currentCompany = (formData.get('currentCompany') as string)?.trim() || ''
-    const currentRole = (formData.get('currentRole') as string)?.trim() || ''
-    const noticePeriod = (formData.get('noticePeriod') as string)?.trim() || ''
-    const expectedSalary = (formData.get('expectedSalary') as string)?.trim() || ''
-    const coverLetter = (formData.get('coverLetter') as string)?.trim() || ''
+    let resumeBuffer: Buffer | null = null
+    let resumeOriginalName = ''
+    let resumeSize = 0
+    let resumeMimeType = 'application/octet-stream'
 
-    const resumeFile = formData.get('resume') as File | null
+    if (contentType.includes('application/json')) {
+      // ── JSON PAYLOAD (Ultra-reliable on iOS Safari & Android mobile) ──
+      const json = await req.json()
+      applicantName = (json.applicantName as string)?.trim() || ''
+      email = (json.email as string)?.trim().toLowerCase() || ''
+      phone = (json.phone as string)?.trim() || ''
+      currentLocation = (json.currentLocation as string)?.trim() || ''
+      linkedinUrl = (json.linkedinUrl as string)?.trim() || ''
+      portfolioUrl = (json.portfolioUrl as string)?.trim() || ''
+      jobOpeningId = (json.jobOpeningId as string)?.trim() || ''
+      jobTitle = (json.jobTitle as string)?.trim() || 'General / Talent Network Application'
+      yearsOfExperience = (json.yearsOfExperience as string)?.trim() || ''
+      currentCompany = (json.currentCompany as string)?.trim() || ''
+      currentRole = (json.currentRole as string)?.trim() || ''
+      noticePeriod = (json.noticePeriod as string)?.trim() || ''
+      expectedSalary = (json.expectedSalary as string)?.trim() || ''
+      coverLetter = (json.coverLetter as string)?.trim() || ''
+
+      if (json.resumeBase64) {
+        const base64Str = json.resumeBase64 as string
+        const match = base64Str.match(/^data:(.+);base64,(.+)$/)
+        if (match) {
+          resumeMimeType = match[1] || 'application/pdf'
+          resumeBuffer = Buffer.from(match[2], 'base64')
+        } else {
+          resumeBuffer = Buffer.from(base64Str, 'base64')
+        }
+        resumeOriginalName = json.resumeFileName || `resume-${Date.now()}.pdf`
+        resumeSize = resumeBuffer.length
+      }
+    } else {
+      // ── MULTIPART / FORMDATA PAYLOAD ──
+      try {
+        const formData = await req.formData()
+        applicantName = (formData.get('applicantName') as string)?.trim() || ''
+        email = (formData.get('email') as string)?.trim().toLowerCase() || ''
+        phone = (formData.get('phone') as string)?.trim() || ''
+        currentLocation = (formData.get('currentLocation') as string)?.trim() || ''
+        linkedinUrl = (formData.get('linkedinUrl') as string)?.trim() || ''
+        portfolioUrl = (formData.get('portfolioUrl') as string)?.trim() || ''
+        jobOpeningId = (formData.get('jobOpeningId') as string)?.trim() || ''
+        jobTitle = (formData.get('jobTitle') as string)?.trim() || 'General / Talent Network Application'
+        yearsOfExperience = (formData.get('yearsOfExperience') as string)?.trim() || ''
+        currentCompany = (formData.get('currentCompany') as string)?.trim() || ''
+        currentRole = (formData.get('currentRole') as string)?.trim() || ''
+        noticePeriod = (formData.get('noticePeriod') as string)?.trim() || ''
+        expectedSalary = (formData.get('expectedSalary') as string)?.trim() || ''
+        coverLetter = (formData.get('coverLetter') as string)?.trim() || ''
+
+        const resumeFile = formData.get('resume') as File | null
+        if (resumeFile && resumeFile.size > 0) {
+          resumeOriginalName = resumeFile.name || `resume-${Date.now()}`
+          resumeSize = resumeFile.size
+          resumeMimeType = resumeFile.type || 'application/octet-stream'
+          resumeBuffer = Buffer.from(await resumeFile.arrayBuffer())
+        }
+      } catch (formErr: any) {
+        // Fallback: Attempt parsing body as JSON if formData failed
+        try {
+          const json = await req.json()
+          applicantName = (json.applicantName as string)?.trim() || ''
+          email = (json.email as string)?.trim().toLowerCase() || ''
+          phone = (json.phone as string)?.trim() || ''
+          currentLocation = (json.currentLocation as string)?.trim() || ''
+          linkedinUrl = (json.linkedinUrl as string)?.trim() || ''
+          portfolioUrl = (json.portfolioUrl as string)?.trim() || ''
+          jobOpeningId = (json.jobOpeningId as string)?.trim() || ''
+          jobTitle = (json.jobTitle as string)?.trim() || 'General / Talent Network Application'
+          yearsOfExperience = (json.yearsOfExperience as string)?.trim() || ''
+          currentCompany = (json.currentCompany as string)?.trim() || ''
+          currentRole = (json.currentRole as string)?.trim() || ''
+          noticePeriod = (json.noticePeriod as string)?.trim() || ''
+          expectedSalary = (json.expectedSalary as string)?.trim() || ''
+          coverLetter = (json.coverLetter as string)?.trim() || ''
+        } catch {
+          console.warn('FormData and JSON fallback parsing both failed:', formErr.message)
+        }
+      }
+    }
 
     // Validation
     if (!applicantName || !email || !phone) {
@@ -59,30 +141,22 @@ export async function POST(req: NextRequest) {
     // Handle Resume / Profile Upload (supports PDF, DOC, DOCX, TXT, RTF, images, and any format!)
     let sanityAssetDoc: any = null
     let resumeUrl = ''
-    let resumeOriginalName = ''
-    let resumeSize = 0
-    let resumeMimeType = ''
 
-    if (resumeFile && resumeFile.size > 0) {
+    if (resumeBuffer && resumeBuffer.length > 0) {
       // Limit to 20MB
-      if (resumeFile.size > 20 * 1024 * 1024) {
+      if (resumeBuffer.length > 20 * 1024 * 1024) {
         return NextResponse.json(
           { success: false, error: 'Resume file size exceeds the 20MB limit. Please upload a smaller file.' },
           { status: 400 }
         )
       }
 
-      resumeOriginalName = resumeFile.name || `resume-${Date.now()}`
-      resumeSize = resumeFile.size
-      resumeMimeType = resumeFile.type || 'application/octet-stream'
-
       try {
-        const fileBuffer = Buffer.from(await resumeFile.arrayBuffer())
-        sanityAssetDoc = await writeClient.assets.upload('file', fileBuffer, {
+        sanityAssetDoc = await writeClient.assets.upload('file', resumeBuffer, {
           filename: resumeOriginalName,
           contentType: resumeMimeType,
         })
-        resumeUrl = sanityAssetDoc.url || ''
+        resumeUrl = sanityAssetDoc?.url || ''
       } catch (assetErr: any) {
         console.warn('Failed to upload resume to Sanity Asset Store:', assetErr.message)
       }

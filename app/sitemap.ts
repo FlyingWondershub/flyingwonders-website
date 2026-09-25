@@ -184,5 +184,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.error('Failed to get shopping mall routes for sitemap:', err)
     }
 
-    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...readyPackageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap, ...tourSitemap, ...shoppingMallSitemap]
+    // Dynamic individual job openings routes
+    let jobSitemap: MetadataRoute.Sitemap = []
+    try {
+      const client = createClient({ projectId, dataset, apiVersion, useCdn: true })
+      const jobs = await client.fetch<{ slug?: { current?: string }; _id: string; status?: string }[]>(
+        `*[_type == "jobOpening" && status == "active"]{ _id, slug, status }`
+      )
+      if (Array.isArray(jobs)) {
+        jobSitemap = jobs
+          .map((j) => ({
+            url: `${baseUrl}/job-openings/${j.slug?.current || j._id}`,
+            lastModified: today,
+            changeFrequency: 'daily' as MetadataRoute.Sitemap[0]['changeFrequency'],
+            priority: 0.85,
+          }))
+      }
+    } catch (err) {
+      console.error('Failed to get job openings for sitemap:', err)
+    }
+
+    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...readyPackageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap, ...tourSitemap, ...shoppingMallSitemap, ...jobSitemap]
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo, useRef } from 'react'
+import Link from 'next/link'
 import {
   Briefcase,
   Search,
@@ -257,7 +258,8 @@ export default function JobOpeningsClient({
 
   const handleShareJob = (job: JobOpening, e: React.MouseEvent) => {
     e.stopPropagation()
-    const url = `${window.location.origin}/job-openings?role=${job.slug?.current || job._id}`
+    const slug = job.slug?.current || job._id
+    const url = `${window.location.origin}/job-openings/${slug}`
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url)
       setCopiedJobId(job._id)
@@ -285,29 +287,40 @@ export default function JobOpeningsClient({
     setIsSubmitting(true)
 
     try {
-      const postData = new FormData()
-      postData.append('applicantName', formData.applicantName.trim())
-      postData.append('email', formData.email.trim())
-      postData.append('phone', formData.phone.trim())
-      postData.append('currentLocation', formData.currentLocation.trim())
-      postData.append('linkedinUrl', formData.linkedinUrl.trim())
-      postData.append('portfolioUrl', formData.portfolioUrl.trim())
-      postData.append('jobOpeningId', applyRole.id)
-      postData.append('jobTitle', applyRole.title)
-      postData.append('yearsOfExperience', formData.yearsOfExperience)
-      postData.append('currentCompany', formData.currentCompany.trim())
-      postData.append('currentRole', formData.currentRole.trim())
-      postData.append('noticePeriod', formData.noticePeriod)
-      postData.append('expectedSalary', formData.expectedSalary.trim())
-      postData.append('coverLetter', formData.coverLetter.trim())
-
+      let fileBase64: string | null = null
       if (selectedFile) {
-        postData.append('resume', selectedFile)
+        fileBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = reject
+          reader.readAsDataURL(selectedFile)
+        })
+      }
+
+      const payload = {
+        applicantName: formData.applicantName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        currentLocation: formData.currentLocation.trim(),
+        linkedinUrl: formData.linkedinUrl.trim(),
+        portfolioUrl: formData.portfolioUrl.trim(),
+        jobOpeningId: applyRole.id,
+        jobTitle: applyRole.title,
+        yearsOfExperience: formData.yearsOfExperience,
+        currentCompany: formData.currentCompany.trim(),
+        currentRole: formData.currentRole.trim(),
+        noticePeriod: formData.noticePeriod,
+        expectedSalary: formData.expectedSalary.trim(),
+        coverLetter: formData.coverLetter.trim(),
+        resumeBase64: fileBase64,
+        resumeFileName: selectedFile?.name || null,
+        resumeFileType: selectedFile?.type || null,
       }
 
       const res = await fetch('/api/careers/apply', {
         method: 'POST',
-        body: postData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       })
 
       const data = await res.json()
@@ -1001,24 +1014,47 @@ export default function JobOpeningsClient({
                       borderTop: '1px solid #F1F5F9',
                     }}
                   >
-                    <button
-                      onClick={() => setActiveJobDetail(job)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#800020',
-                        fontSize: '0.9rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem',
-                        padding: '0.4rem 0',
-                      }}
-                    >
-                      <span>View Full Role & Benefits</span>
-                      <ChevronRight size={16} />
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => setActiveJobDetail(job)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#800020',
+                          fontSize: '0.88rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.4rem 0',
+                        }}
+                      >
+                        <span>Quick View</span>
+                        <ChevronRight size={15} />
+                      </button>
+
+                      <Link
+                        href={`/job-openings/${job.slug?.current || job._id}`}
+                        style={{
+                          color: '#334155',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          background: '#F1F5F9',
+                          padding: '0.35rem 0.75rem',
+                          borderRadius: '6px',
+                          border: '1px solid #CBD5E1',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        <ExternalLink size={13} color="#64748B" />
+                        <span>Dedicated Page & Share</span>
+                      </Link>
+                    </div>
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button

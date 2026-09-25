@@ -32,6 +32,7 @@ import {
   List,
   Send,
   ArrowRight,
+  Share2,
 } from 'lucide-react'
 
 function LinkedinIcon({ size = 16, color = '#0A66C2' }: { size?: number; color?: string }) {
@@ -82,6 +83,7 @@ export default function JobOpeningsManager() {
   const [jobStats, setJobStats] = useState({ total: 0, active: 0, draft: 0, closed: 0 })
   const [isJobModalOpen, setIsJobModalOpen] = useState(false)
   const [editingJobId, setEditingJobId] = useState<string | null>(null)
+  const [copiedJobId, setCopiedJobId] = useState<string | null>(null)
   const [jobForm, setJobForm] = useState({
     title: '',
     department: 'Operations & Tour Logistics',
@@ -325,6 +327,17 @@ export default function JobOpeningsManager() {
   }
 
   // ── JOB ACTIONS ──
+  const handleCopyJobUrl = (job: any) => {
+    const slug = job.slug?.current || job.slug || job._id
+    const url = `https://flyingwonders.net/job-openings/${slug}`
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(url)
+      setCopiedJobId(job._id)
+      showNotification('Position direct link copied to clipboard!')
+      setTimeout(() => setCopiedJobId(null), 2500)
+    }
+  }
+
   const openNewJobModal = () => {
     setEditingJobId(null)
     setJobForm({
@@ -1906,7 +1919,52 @@ export default function JobOpeningsManager() {
                   </div>
 
                   {/* Actions */}
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyJobUrl(job)}
+                      style={{
+                        background: copiedJobId === job._id ? '#ECFDF5' : '#F8FAFC',
+                        border: `1px solid ${copiedJobId === job._id ? '#A7F3D0' : '#CBD5E1'}`,
+                        color: copiedJobId === job._id ? '#065F46' : '#334155',
+                        padding: '0.45rem 0.75rem',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                      }}
+                      title="Copy direct position URL to share on WhatsApp, LinkedIn, or email"
+                    >
+                      {copiedJobId === job._id ? <Check size={13} color="#059669" /> : <Share2 size={13} />}
+                      <span>{copiedJobId === job._id ? 'Copied Link!' : 'Share URL'}</span>
+                    </button>
+
+                    <a
+                      href={`/job-openings/${job.slug?.current || job.slug || job._id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: '#EFF6FF',
+                        border: '1px solid #BFDBFE',
+                        color: '#1D4ED8',
+                        padding: '0.45rem 0.75rem',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                      }}
+                      title="View public position landing page"
+                    >
+                      <span>View</span>
+                      <ExternalLink size={13} />
+                    </a>
+
                     <button
                       onClick={() => handleToggleJobStatus(job)}
                       style={{
