@@ -22,6 +22,7 @@ import {
   AlertCircle,
   X,
   Users,
+  Send,
 } from 'lucide-react'
 
 function LinkedinIcon({ size = 16, color = '#0A66C2' }: { size?: number; color?: string }) {
@@ -111,6 +112,22 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
       '_blank',
       'width=600,height=600'
     )
+  }
+
+  const handleNativeShare = async () => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `${job.title} | Flying Wonders Careers`,
+          text: `Explore this career opportunity at Flying Wonders: ${job.title} (${job.location})`,
+          url: shareUrl,
+        })
+        return
+      } catch (err) {
+        // Fallback to clipboard
+      }
+    }
+    handleCopyLink()
   }
 
   // Gemini AI Resume Auto-Fill
@@ -216,10 +233,10 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
   }
 
   return (
-    <div style={{ fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', background: '#F8FAFC', minHeight: '100vh', paddingBottom: '4rem' }}>
+    <div style={{ fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', background: '#F8FAFC', minHeight: '100vh', paddingBottom: '6rem' }}>
       {/* ── BREADCRUMB ── */}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0.75rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#64748B' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0.75rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#64748B', overflowX: 'auto', whiteSpace: 'nowrap' }}>
           <Link href="/" style={{ color: '#64748B', textDecoration: 'none' }}>
             Home
           </Link>
@@ -235,7 +252,7 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
       </div>
 
       {/* ── TOP HERO BANNER (COMPACT & WIDE) ── */}
-      <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #4A044E 100%)', color: '#FFFFFF', padding: '2rem 1.25rem 1.75rem 1.25rem' }}>
+      <div className="job-detail-hero-banner" style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #4A044E 100%)', color: '#FFFFFF', padding: '2rem 1.25rem 1.75rem 1.25rem' }}>
         <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto' }}>
           <Link
             href="/job-openings"
@@ -282,6 +299,7 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
               lineHeight: 1.2,
               margin: '0 0 0.65rem 0',
               color: '#FFFFFF',
+              wordBreak: 'break-word',
             }}
           >
             {job.title}
@@ -317,6 +335,7 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
       <div style={{ maxWidth: '1600px', width: '96%', margin: '-1.25rem auto 0 auto', padding: '0 0.5rem' }}>
         {/* SHARE & QUICK ACTIONS BAR */}
         <div
+          className="job-detail-share-bar"
           style={{
             background: '#FFFFFF',
             borderRadius: '12px',
@@ -336,10 +355,10 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
             <span>Share this Position:</span>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+          <div className="job-detail-share-buttons" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
             {/* Copy Link Button */}
             <button
-              onClick={handleCopyLink}
+              onClick={handleNativeShare}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -406,6 +425,7 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
             {/* Apply CTA */}
             <button
               onClick={() => setIsApplyModalOpen(true)}
+              className="job-detail-share-apply-btn"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -427,7 +447,7 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
         </div>
 
         {/* ── TWO COLUMN LAYOUT ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '2rem', alignItems: 'flex-start' }}>
+        <div className="job-detail-grid">
           {/* LEFT: JOB DETAILS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {/* Short Description */}
@@ -511,10 +531,28 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
                 </div>
               </div>
             )}
+
+            {/* Why Flying Wonders Box */}
+            <div
+              style={{
+                background: '#FAF5FF',
+                border: '1px solid #E9D5FF',
+                borderRadius: '16px',
+                padding: '1.5rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 800, color: '#6B21A8', fontSize: '1rem', marginBottom: '0.5rem' }}>
+                <Sparkles size={18} />
+                <span>Why Join Flying Wonders?</span>
+              </div>
+              <p style={{ fontSize: '0.88rem', lineHeight: 1.65, color: '#581C87', margin: 0 }}>
+                We are a modern, high-growth Singapore & global experiential travel operator. We foster meritocracy, remote flexibility, and extraordinary journeys for our travelers and team.
+              </p>
+            </div>
           </div>
 
           {/* RIGHT: STICKY APPLICATION CARD */}
-          <div style={{ position: 'sticky', top: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="job-detail-sidebar">
             <div
               style={{
                 background: '#FFFFFF',
@@ -522,6 +560,8 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
                 border: '1px solid #E2E8F0',
                 padding: '1.5rem',
                 boxShadow: '0 10px 25px rgba(0,0,0,0.06)',
+                width: '100%',
+                boxSizing: 'border-box',
               }}
             >
               <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '0 0 1rem 0' }}>
@@ -529,32 +569,32 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
               </h3>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', fontSize: '0.88rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.5rem' }}>
-                  <span style={{ color: '#64748B' }}>Department</span>
-                  <strong style={{ color: '#0F172A' }}>{job.department}</strong>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.55rem', gap: '1rem' }}>
+                  <span style={{ color: '#64748B', flexShrink: 0 }}>Department</span>
+                  <strong style={{ color: '#0F172A', textAlign: 'right', wordBreak: 'break-word' }}>{job.department}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.5rem' }}>
-                  <span style={{ color: '#64748B' }}>Location</span>
-                  <strong style={{ color: '#0F172A' }}>{job.location}</strong>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.55rem', gap: '1rem' }}>
+                  <span style={{ color: '#64748B', flexShrink: 0 }}>Location</span>
+                  <strong style={{ color: '#0F172A', textAlign: 'right', wordBreak: 'break-word' }}>{job.location}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.5rem' }}>
-                  <span style={{ color: '#64748B' }}>Workplace</span>
-                  <strong style={{ color: '#059669' }}>{job.workplaceType}</strong>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.55rem', gap: '1rem' }}>
+                  <span style={{ color: '#64748B', flexShrink: 0 }}>Workplace</span>
+                  <strong style={{ color: '#059669', textAlign: 'right', wordBreak: 'break-word' }}>{job.workplaceType}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.5rem' }}>
-                  <span style={{ color: '#64748B' }}>Employment</span>
-                  <strong style={{ color: '#0F172A' }}>{job.employmentType}</strong>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.55rem', gap: '1rem' }}>
+                  <span style={{ color: '#64748B', flexShrink: 0 }}>Employment</span>
+                  <strong style={{ color: '#0F172A', textAlign: 'right', wordBreak: 'break-word' }}>{job.employmentType}</strong>
                 </div>
                 {job.salaryRange && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.5rem' }}>
-                    <span style={{ color: '#64748B' }}>Remuneration</span>
-                    <strong style={{ color: '#059669' }}>{job.salaryRange}</strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.55rem', gap: '1rem' }}>
+                    <span style={{ color: '#64748B', flexShrink: 0 }}>Remuneration</span>
+                    <strong style={{ color: '#059669', textAlign: 'right', wordBreak: 'break-word' }}>{job.salaryRange}</strong>
                   </div>
                 )}
                 {job.experienceLevel && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.5rem' }}>
-                    <span style={{ color: '#64748B' }}>Experience</span>
-                    <strong style={{ color: '#0F172A' }}>{job.experienceLevel}</strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F5F9', paddingBottom: '0.55rem', gap: '1rem' }}>
+                    <span style={{ color: '#64748B', flexShrink: 0 }}>Experience</span>
+                    <strong style={{ color: '#0F172A', textAlign: 'right', wordBreak: 'break-word' }}>{job.experienceLevel}</strong>
                   </div>
                 )}
               </div>
@@ -574,33 +614,20 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
                     cursor: 'pointer',
                     boxShadow: '0 4px 12px rgba(128,0,32,0.25)',
                     transition: 'all 0.15s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
                   }}
                 >
-                  Apply for this Role
+                  <Send size={16} />
+                  <span>Apply for this Role</span>
                 </button>
               </div>
 
-              <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.78rem', color: '#64748B' }}>
+              <div style={{ marginTop: '0.85rem', textAlign: 'center', fontSize: '0.78rem', color: '#64748B' }}>
                 🔒 Fast application. Your privacy is guaranteed.
               </div>
-            </div>
-
-            {/* Why Flying Wonders Box */}
-            <div
-              style={{
-                background: '#FAF5FF',
-                border: '1px solid #E9D5FF',
-                borderRadius: '16px',
-                padding: '1.25rem',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 800, color: '#6B21A8', fontSize: '0.92rem', marginBottom: '0.5rem' }}>
-                <Sparkles size={16} />
-                <span>Why Join Flying Wonders?</span>
-              </div>
-              <p style={{ fontSize: '0.82rem', lineHeight: 1.55, color: '#581C87', margin: 0 }}>
-                We are a modern, high-growth Singapore & global experiential travel operator. We foster meritocracy, remote flexibility, and extraordinary journeys for our travelers and team.
-              </p>
             </div>
           </div>
         </div>
@@ -967,6 +994,40 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
           </div>
         </div>
       )}
+
+      {/* ── STICKY MOBILE APPLY BAR (VISIBLE ON MOBILE ONLY) ── */}
+      <div className="job-detail-mobile-apply-bar">
+        <div style={{ flex: 1, minWidth: 0, paddingRight: '0.5rem' }}>
+          <div style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {job.location} &bull; {job.workplaceType}
+          </div>
+          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {job.salaryRange || job.title}
+          </div>
+        </div>
+
+        <button
+          onClick={() => setIsApplyModalOpen(true)}
+          style={{
+            background: '#800020',
+            color: '#FFFFFF',
+            border: 'none',
+            padding: '0.75rem 1.4rem',
+            borderRadius: '8px',
+            fontSize: '0.9rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 3px 10px rgba(128,0,32,0.25)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            flexShrink: 0,
+          }}
+        >
+          <Send size={15} />
+          <span>Apply Now</span>
+        </button>
+      </div>
     </div>
   )
 }
