@@ -77,8 +77,11 @@ export async function getAllSubscribers(full: boolean = true): Promise<Subscribe
   try {
     const fs = await import('fs')
     const path = await import('path')
-    const filePath = path.join(process.cwd(), 'prepared_subscriber_chunks.json')
-    if (fs.existsSync(filePath)) {
+    const dataPath = path.join(process.cwd(), 'data', 'subscribers_chunked.json')
+    const rootPath = path.join(process.cwd(), 'prepared_subscriber_chunks.json')
+    const filePath = fs.existsSync(dataPath) ? dataPath : (fs.existsSync(rootPath) ? rootPath : null)
+
+    if (filePath) {
       const subChunks = JSON.parse(fs.readFileSync(filePath, 'utf8'))
       const all: SubscriberItem[] = []
       for (const c of subChunks) {
@@ -396,8 +399,11 @@ export async function fetchChunkedLeads(params: {
     try {
       const fs = await import('fs')
       const path = await import('path')
-      const filePath = path.join(process.cwd(), 'prepared_lead_chunks.json')
-      if (fs.existsSync(filePath)) {
+      const dataPath = path.join(process.cwd(), 'data', 'marketing_leads_chunked.json')
+      const rootPath = path.join(process.cwd(), 'prepared_lead_chunks.json')
+      const filePath = fs.existsSync(dataPath) ? dataPath : (fs.existsSync(rootPath) ? rootPath : null)
+
+      if (filePath) {
         const leadChunks = JSON.parse(fs.readFileSync(filePath, 'utf8'))
         for (const c of leadChunks) {
           if (Array.isArray(c.leads)) {
