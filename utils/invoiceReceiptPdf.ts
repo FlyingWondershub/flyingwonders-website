@@ -37,6 +37,7 @@ export interface TaxInvoiceData {
   proposalNumber: string
   currencyMode?: 'dual' | 'inr' | 'sgd'
   exchangeRate?: number // SGD to INR rate
+  docTitle?: string // 'TAX INVOICE' or 'PROFORMA INVOICE'
   taxMode?: 'inclusive' | 'itemized'
   isInterState?: boolean // true = 5% IGST, false = 2.5% CGST + 2.5% SGST (Karnataka)
   
@@ -273,7 +274,7 @@ export async function generateTaxInvoicePdf(invoice: TaxInvoiceData) {
   let curY = drawIndianEntityHeader(
     doc,
     logoUrl,
-    'TAX INVOICE'
+    invoice.docTitle || 'TAX INVOICE'
   )
 
   // 2. Invoice Meta & Billed To Card
@@ -553,7 +554,8 @@ export async function generateTaxInvoicePdf(invoice: TaxInvoiceData) {
   drawAccreditationFooter(doc, footerAccreditationUrl, 1, 1)
 
   // Download PDF
-  const fileName = `Tax_Invoice_${invoice.invoiceNumber}_${(invoice.leadGuestName || 'Guest').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+  const prefix = (invoice.docTitle || 'Tax_Invoice').replace(/\s+/g, '_')
+  const fileName = `${prefix}_${invoice.invoiceNumber}_${(invoice.leadGuestName || 'Guest').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
   doc.save(fileName)
 }
 

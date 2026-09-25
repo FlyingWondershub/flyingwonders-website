@@ -1,16 +1,27 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
 import { Loader2 } from 'lucide-react'
 
-export default function PayDirectPage() {
-  const [amountSgd, setAmountSgd] = useState(500)
-  const [customRef, setCustomRef] = useState('')
-  const [guestName, setGuestName] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
+function PayDirectContent() {
+  const searchParams = useSearchParams()
+  const qAmount = searchParams.get('amount')
+  const qRef = searchParams.get('ref') || ''
+  const qName = searchParams.get('name') || ''
+  const qEmail = searchParams.get('email') || ''
+  const qPhone = searchParams.get('phone') || ''
+
+  const [amountSgd, setAmountSgd] = useState(() => {
+    const parsed = qAmount ? parseInt(qAmount) : 500
+    return isNaN(parsed) || parsed < 1 ? 500 : parsed
+  })
+  const [customRef, setCustomRef] = useState(qRef)
+  const [guestName, setGuestName] = useState(qName)
+  const [email, setEmail] = useState(qEmail)
+  const [phone, setPhone] = useState(qPhone)
   const [isModalOpen, setIsModalOpen] = useState(false)
   
   const [cashfreeLoading, setCashfreeLoading] = useState(false)
@@ -65,7 +76,7 @@ export default function PayDirectPage() {
       cashfree.checkout({
         paymentSessionId: data.paymentSessionId,
         redirectTarget: "_modal"
-      }).then((result: any) => {
+      }).then((result: { error?: { message: string }; paymentDetails?: unknown }) => {
         if(result.error){
           alert("Payment failed or cancelled: " + result.error.message)
         }
@@ -73,8 +84,9 @@ export default function PayDirectPage() {
           alert("Payment Successful! Thank you.")
         }
       })
-    } catch (err: any) {
-      alert(err.message || 'Payment initiation failed')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Payment initiation failed'
+      alert(msg)
     } finally {
       setCashfreeLoading(false)
     }
@@ -168,6 +180,19 @@ export default function PayDirectPage() {
               />
             </div>
           </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '0.25rem', fontWeight: 600 }}>
+              Phone Number / WhatsApp
+            </label>
+            <input
+              type="tel"
+              placeholder="+91 98860 00000"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: '8px', border: '1px solid #475569', background: '#0F172A', color: '#F8FAFC', fontSize: '0.82rem', outline: 'none' }}
+            />
+          </div>
         </div>
 
         <div
@@ -243,11 +268,23 @@ export default function PayDirectPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         amountSgd={amountSgd}
-        bookingReference={customRef || `FW-PAY-${Math.floor(100000 + Math.random() * 900000)}`}
+        bookingReference={customRef || 'FW-PAY-DIRECT'}
         initialGuestName={guestName}
         initialEmail={email}
         initialPhone={phone}
       />
     </div>
+  )
+}
+
+export default function PayDirectPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981', background: '#0F172A' }}>
+        <Loader2 className="animate-spin" size={28} />
+      </div>
+    }>
+      <PayDirectContent />
+    </Suspense>
   )
 }

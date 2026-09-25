@@ -2170,6 +2170,7 @@ export default function AdminDashboard() {
                   { name: 'Main Landing Page', path: '/', desc: 'Public homepage & hero showcase' },
                   { name: 'Direct Booking Checkout', path: '/book', desc: 'Package reservation & traveler checkout' },
                   { name: 'Online Payments & QR', path: '/pay', desc: 'Card checkout & ICICI UPI QR portal' },
+                  { name: 'Customer Invoice & Receipt Portal', path: '/invoice', desc: 'Client tax invoice lookup, generator & receipts' },
                   { name: 'Travel Brochure', path: '/brochure', desc: 'Downloadable marketing materials' },
                   { name: 'Travel Blog & Articles', path: '/blog', desc: 'SEO travel guides & insights' },
                   { name: 'Guest Reviews & Ratings', path: '/reviews', desc: 'Verified traveler testimonials' },

@@ -281,7 +281,7 @@ export async function GET(req: NextRequest) {
     }
 
     const proposal = await writeClient.fetch(
-      `*[_type == "proposal" && proposalNumber == $number][0]{
+      `*[_type == "proposal" && (proposalNumber == $number || invoiceNumber == $number)][0]{
         ...,
         agent->{
           agentName,
