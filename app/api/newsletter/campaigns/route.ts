@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
-import { fetchLiveBrevoQuota } from '../quota/route'
+import { fetchLiveBrevoQuota, fetchSesStatus } from '../quota/route'
 
 const writeClient = createClient({
   apiVersion,
@@ -47,9 +47,12 @@ export async function GET(req: Request) {
       `count(*[_type == "newsletterSubscriber" && isActive == true])`
     )
 
-    const quota = await fetchLiveBrevoQuota()
+    const [quota, ses] = await Promise.all([
+      fetchLiveBrevoQuota(),
+      fetchSesStatus()
+    ])
 
-    return NextResponse.json({ success: true, campaigns, subscriberCount, quota })
+    return NextResponse.json({ success: true, campaigns, subscriberCount, quota, ses })
   } catch (err: any) {
     console.error('Fetch Campaigns Error:', err)
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })

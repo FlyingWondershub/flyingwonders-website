@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
+import { isSesConfigured, getSesSendQuota } from '../../../../lib/ses'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,17 @@ const writeClient = createClient({
   token: process.env.SANITY_WRITE_TOKEN,
   useCdn: false,
 })
+
+export interface SesInfo {
+  configured: boolean
+  region: string
+  fromEmail: string
+  quota: {
+    max24HourSend: number
+    maxSendRate: number
+    sentLast24Hours: number
+  } | null
+}
 
 export interface BrevoQuotaInfo {
   planType: string
@@ -125,6 +137,25 @@ export async function fetchLiveBrevoQuota(): Promise<BrevoQuotaInfo> {
   }
 }
 
+export async function fetchSesStatus(): Promise<SesInfo> {
+  const configured = isSesConfigured()
+  let quota = null
+  if (configured) {
+    try {
+      quota = await getSesSendQuota()
+    } catch (e: any) {
+      console.warn('Could not fetch SES quota:', e.message)
+    }
+  }
+
+  return {
+    configured,
+    region: process.env.AWS_REGION || 'us-east-1',
+    fromEmail: process.env.AWS_SES_FROM_EMAIL || 'Flying Wonders <contact@flyingwonders.net>',
+    quota
+  }
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
@@ -135,8 +166,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 403 })
     }
 
-    const quota = await fetchLiveBrevoQuota()
-    return NextResponse.json({ success: true, quota })
+    const [quota, ses] = await Promise.all([
+      fetchLiveBrevoQuota(),
+      fetchSesStatus()
+    ])
+
+    return NextResponse.json({ success: true, quota, ses })
   } catch (err: any) {
     console.error('Fetch Quota Error:', err)
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })

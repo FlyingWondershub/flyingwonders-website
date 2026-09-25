@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 import { sendEmail } from '../../../../lib/brevo'
+import { isSesConfigured } from '../../../../lib/ses'
 import { fetchLiveBrevoQuota } from '../quota/route'
 
 const writeClient = createClient({
@@ -21,7 +22,8 @@ export async function POST(req: Request) {
       sourceTag,
       customEmails,
       batchLimit,
-      skipPreviouslySent = true
+      skipPreviouslySent = true,
+      dispatcher = 'ses'
     } = await req.json()
 
     // 1. Verify that the request is initiated by an authorized admin
@@ -130,26 +132,31 @@ export async function POST(req: Request) {
       }, { status: 400 })
     }
 
-    // 5. Safe Batch Capping (Enforced with Live Brevo Daily Account Quota)
-    const liveQuota = await fetchLiveBrevoQuota()
-    if (liveQuota.planType === 'free' && liveQuota.remainingCredits <= 0) {
-      return NextResponse.json({
-        error: `Brevo daily limit reached (${liveQuota.sentToday} of ${liveQuota.dailyLimit} emails sent across your account today). Your quota resets at ${liveQuota.resetsAtUtc} (in approx ${liveQuota.resetsInHours} hours).`
-      }, { status: 429 })
+    // 5. Safe Batch Capping & Dispatcher Selection
+    const isUsingSes = dispatcher === 'ses' && isSesConfigured()
+    let liveQuota: any = null
+
+    if (!isUsingSes) {
+      liveQuota = await fetchLiveBrevoQuota()
+      if (liveQuota.planType === 'free' && liveQuota.remainingCredits <= 0) {
+        return NextResponse.json({
+          error: `Brevo daily limit reached (${liveQuota.sentToday} of ${liveQuota.dailyLimit} emails sent across your account today). Your quota resets at ${liveQuota.resetsAtUtc} (in approx ${liveQuota.resetsInHours} hours). Switch to Amazon SES in the modal for high-capacity instant delivery.`
+        }, { status: 429 })
+      }
     }
 
     const parsedLimit = typeof batchLimit === 'number' ? batchLimit : (batchLimit ? parseInt(batchLimit, 10) : undefined)
     const requestedBatchLimit = (parsedLimit && parsedLimit > 0) ? parsedLimit : eligibleRecipients.length
 
-    // Never exceed live remaining Brevo credits on Free tier
-    const effectiveBatchLimit = liveQuota.planType === 'free'
+    // If using Brevo free tier, never exceed live remaining Brevo credits
+    const effectiveBatchLimit = (!isUsingSes && liveQuota?.planType === 'free')
       ? Math.min(requestedBatchLimit, liveQuota.remainingCredits)
       : requestedBatchLimit
 
     const batchToSend = eligibleRecipients.slice(0, effectiveBatchLimit)
     const remainingAfterBatch = Math.max(0, eligibleRecipients.length - batchToSend.length)
 
-    console.log(`Starting targeted newsletter dispatch (${targetAudience}) - Batch: ${batchToSend.length} / Eligible: ${eligibleRecipients.length} / Total Audience: ${recipients.length} / Brevo Remaining Today: ${liveQuota.remainingCredits} for campaign: "${campaign.title}"`)
+    console.log(`Starting targeted newsletter dispatch (${targetAudience} via ${isUsingSes ? 'Amazon SES' : 'Brevo'}) - Batch: ${batchToSend.length} / Eligible: ${eligibleRecipients.length} / Total Audience: ${recipients.length} for campaign: "${campaign.title}"`)
 
     // 6. Send Emails via Brevo in Concurrent Chunks of 10 (Zero Vercel Timeout)
     let successCount = 0
@@ -261,6 +268,7 @@ export async function POST(req: Request) {
               senderName: 'Flying Wonders',
               senderEmail: 'contact@flyingwonders.net',
               replyTo: 'contact@flyingwonders.net',
+              preferredProvider: isUsingSes ? 'ses' : 'brevo',
             })
 
             if (result.success) {
@@ -279,16 +287,17 @@ export async function POST(req: Request) {
 
     // 7. Update Sanity Campaign Document with Audit History (No lock!)
     const nowIso = new Date().toISOString()
+    const dispatcherTag = isUsingSes ? 'Amazon SES' : 'Brevo'
     const isMultiWave = remainingAfterBatch > 0 || prevDispatched.length > 0
     const waveNote = targetAudience === 'tag'
       ? (isMultiWave
-          ? `Wave Dispatch: Sent ${successCount} of ${eligibleRecipients.length} eligible tag "${sourceTag}" contacts (${remainingAfterBatch} remaining)`
-          : `Targeted event tag "${sourceTag}" (${recipients.length} recipients)`)
+          ? `[${dispatcherTag}] Wave: Sent ${successCount} of ${eligibleRecipients.length} eligible tag "${sourceTag}" contacts (${remainingAfterBatch} remaining)`
+          : `[${dispatcherTag}] Event tag "${sourceTag}" (${recipients.length} recipients)`)
       : (targetAudience === 'custom'
-          ? `Custom list: Sent ${successCount} of ${eligibleRecipients.length} addresses`
+          ? `[${dispatcherTag}] Custom list: Sent ${successCount} of ${eligibleRecipients.length} addresses`
           : (isMultiWave
-              ? `Wave Dispatch: Sent ${successCount} of ${eligibleRecipients.length} eligible ${targetAudience.toUpperCase()} contacts (${remainingAfterBatch} remaining)`
-              : `${targetAudience.toUpperCase()} audience (${recipients.length} recipients)`))
+              ? `[${dispatcherTag}] Wave: Sent ${successCount} of ${eligibleRecipients.length} eligible ${targetAudience.toUpperCase()} contacts (${remainingAfterBatch} remaining)`
+              : `[${dispatcherTag}] ${targetAudience.toUpperCase()} audience (${recipients.length} recipients)`))
 
     const newHistoryEntry = {
       _key: `dispatch-${Date.now()}`,
@@ -324,6 +333,7 @@ export async function POST(req: Request) {
       remainingAfterBatch,
       nextWaveRecommended: remainingAfterBatch > 0,
       targetAudience: targetAudience === 'tag' && sourceTag ? `TAG: ${sourceTag}` : targetAudience,
+      dispatcher: isUsingSes ? 'ses' : 'brevo',
       errors: errors.length > 0 ? errors : undefined,
     })
   } catch (err: any) {

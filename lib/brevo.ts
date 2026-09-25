@@ -10,6 +10,7 @@ interface SendEmailParams {
   senderEmail?: string
   replyTo?: string
   bcc?: string | string[]
+  preferredProvider?: 'ses' | 'brevo' | 'smtp' | 'auto'
 }
 
 /**
@@ -27,9 +28,10 @@ export async function sendEmail({
   senderEmail = 'contact@flyingwonders.net',
   replyTo = 'contact@flyingwonders.net',
   bcc,
+  preferredProvider = 'auto',
 }: SendEmailParams): Promise<{ success: boolean; messageId?: string; error?: string; provider?: 'ses' | 'brevo' | 'smtp' }> {
-  // 1. Prioritize Amazon SES if configured
-  if (isSesConfigured()) {
+  // 1. Prioritize Amazon SES if configured (and not explicitly bypassed)
+  if (preferredProvider !== 'brevo' && preferredProvider !== 'smtp' && isSesConfigured()) {
     try {
       const sesResult = await sendEmailSes({
         to,
@@ -45,8 +47,14 @@ export async function sendEmail({
       if (sesResult.success) {
         return { success: true, messageId: sesResult.messageId, provider: 'ses' }
       }
+      if (preferredProvider === 'ses') {
+        return { success: false, error: sesResult.error || 'Amazon SES dispatch failed', provider: 'ses' }
+      }
       console.warn(`[Dispatcher] Amazon SES failed (${sesResult.error}), cascading to Brevo API...`)
     } catch (sesErr: any) {
+      if (preferredProvider === 'ses') {
+        return { success: false, error: sesErr.message || 'Amazon SES exception', provider: 'ses' }
+      }
       console.warn(`[Dispatcher] Amazon SES exception (${sesErr.message}), cascading to Brevo API...`)
     }
   }

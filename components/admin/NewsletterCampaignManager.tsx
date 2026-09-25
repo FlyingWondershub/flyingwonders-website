@@ -397,11 +397,26 @@ export default function NewsletterCampaignManager() {
   const [targetAudience, setTargetAudience] = useState<'all' | 'b2b' | 'b2c' | 'new' | 'tag' | 'custom'>('all')
   const [selectedDispatchTag, setSelectedDispatchTag] = useState('')
   const [customEmailsInput, setCustomEmailsInput] = useState('')
-  const [dispatchBatchLimit, setDispatchBatchLimit] = useState<'250' | '100' | '50' | 'all' | 'custom'>('250')
-  const [customBatchLimitInput, setCustomBatchLimitInput] = useState('250')
+  const [dispatchBatchLimit, setDispatchBatchLimit] = useState<'all' | '500' | '250' | '100' | '50' | 'custom'>('all')
+  const [customBatchLimitInput, setCustomBatchLimitInput] = useState('500')
   const [dispatchSkipSent, setDispatchSkipSent] = useState(true)
   const [isDispatchingModal, setIsDispatchingModal] = useState(false)
   const [dispatchModalFeedback, setDispatchModalFeedback] = useState<{ success: boolean; message: string; remaining?: number } | null>(null)
+
+  // Dispatcher Engine State: 'ses' (Amazon SES) | 'brevo' (Brevo Free Waves)
+  const [selectedDispatcher, setSelectedDispatcher] = useState<'ses' | 'brevo'>('ses')
+
+  // Live Amazon SES State
+  const [sesInfo, setSesInfo] = useState<{
+    configured: boolean
+    region: string
+    fromEmail: string
+    quota: {
+      max24HourSend: number
+      maxSendRate: number
+      sentLast24Hours: number
+    } | null
+  } | null>(null)
 
   // Live Brevo Account Quota State
   const [brevoQuota, setBrevoQuota] = useState<{
@@ -421,8 +436,16 @@ export default function NewsletterCampaignManager() {
     try {
       const res = await fetch('/api/newsletter/quota?adminEmail=info.flyingwonders@gmail.com')
       const data = await res.json()
-      if (data.success && data.quota) {
-        setBrevoQuota(data.quota)
+      if (data.success) {
+        if (data.quota) {
+          setBrevoQuota(data.quota)
+        }
+        if (data.ses) {
+          setSesInfo(data.ses)
+          if (data.ses.configured) {
+            setSelectedDispatcher(prev => prev || 'ses')
+          }
+        }
       }
     } catch (e) {
       console.error('Failed to fetch live quota:', e)
@@ -523,21 +546,23 @@ export default function NewsletterCampaignManager() {
     const alreadySent = matching.filter(s => sentSet.has((s.email || '').toLowerCase().trim())).length
     const eligible = dispatchSkipSent ? Math.max(0, total - alreadySent) : total
 
+    const isUsingSes = selectedDispatcher === 'ses' && (sesInfo?.configured ?? true)
+
     // Account-wide live quota calculations:
     const remainingDailyCredits = brevoQuota ? brevoQuota.remainingCredits : 250
-    const maxCanSendToday = Math.max(0, remainingDailyCredits)
+    const maxCanSendToday = isUsingSes ? eligible : Math.max(0, remainingDailyCredits)
 
     const rawLimit = dispatchBatchLimit === 'all'
       ? eligible
       : dispatchBatchLimit === 'custom'
-        ? (parseInt(customBatchLimitInput, 10) || 250)
-        : (parseInt(dispatchBatchLimit, 10) || 250)
+        ? (parseInt(customBatchLimitInput, 10) || (isUsingSes ? eligible : 250))
+        : (parseInt(dispatchBatchLimit, 10) || (isUsingSes ? eligible : 250))
 
     const desiredSend = Math.min(eligible, Math.max(0, rawLimit))
-    const quotaExceeded = brevoQuota ? desiredSend > remainingDailyCredits : false
+    const quotaExceeded = !isUsingSes && brevoQuota ? desiredSend > remainingDailyCredits : false
 
-    // Effective number to send today is strictly capped by remaining daily Brevo credits
-    const toSendNow = brevoQuota ? Math.min(desiredSend, remainingDailyCredits) : desiredSend
+    // Effective number to send today: capped by Brevo credits only if Brevo is active
+    const toSendNow = isUsingSes ? desiredSend : (brevoQuota ? Math.min(desiredSend, remainingDailyCredits) : desiredSend)
     const remainingAfter = Math.max(0, eligible - toSendNow)
     const totalWaves = toSendNow > 0 ? Math.ceil(eligible / toSendNow) : 1
 
@@ -551,7 +576,8 @@ export default function NewsletterCampaignManager() {
       totalWaves,
       quotaExceeded,
       maxCanSendToday,
-      remainingDailyCredits
+      remainingDailyCredits,
+      isUsingSes
     }
   }, [
     dispatchModalCampaign,
@@ -562,7 +588,9 @@ export default function NewsletterCampaignManager() {
     dispatchSkipSent,
     dispatchBatchLimit,
     customBatchLimitInput,
-    brevoQuota
+    brevoQuota,
+    selectedDispatcher,
+    sesInfo
   ])
 
   // Add Subscriber Form
@@ -633,6 +661,12 @@ export default function NewsletterCampaignManager() {
         setSubscriberCount(data.subscriberCount || 0)
         if (data.quota) {
           setBrevoQuota(data.quota)
+        }
+        if (data.ses) {
+          setSesInfo(data.ses)
+          if (data.ses.configured) {
+            setSelectedDispatcher('ses')
+          }
         }
       }
     } catch (err) {
@@ -887,10 +921,12 @@ export default function NewsletterCampaignManager() {
     setTargetAudience('all')
     setSelectedDispatchTag('')
     setCustomEmailsInput('')
-    setDispatchBatchLimit('250')
-    setCustomBatchLimitInput('250')
     setDispatchSkipSent(true)
     setDispatchModalFeedback(null)
+    const preferSes = sesInfo?.configured ?? true
+    setSelectedDispatcher(preferSes ? 'ses' : 'brevo')
+    setDispatchBatchLimit(preferSes ? 'all' : '250')
+    setCustomBatchLimitInput(preferSes ? '500' : '250')
     fetchQuota()
     if (subscribersList.length === 0) {
       fetchSubscribersFull()
@@ -916,10 +952,11 @@ export default function NewsletterCampaignManager() {
       }
     }
 
+    const isUsingSes = selectedDispatcher === 'ses'
     const effectiveLimit = dispatchBatchLimit === 'all'
       ? undefined
       : dispatchBatchLimit === 'custom'
-        ? (parseInt(customBatchLimitInput, 10) || 250)
+        ? (parseInt(customBatchLimitInput, 10) || (isUsingSes ? undefined : 250))
         : parseInt(dispatchBatchLimit, 10)
 
     setIsDispatchingModal(true)
@@ -936,15 +973,17 @@ export default function NewsletterCampaignManager() {
           sourceTag: targetAudience === 'tag' ? selectedDispatchTag.trim() : undefined,
           customEmails: targetAudience === 'custom' ? customEmailsInput : undefined,
           batchLimit: effectiveLimit,
-          skipPreviouslySent: dispatchSkipSent
+          skipPreviouslySent: dispatchSkipSent,
+          dispatcher: selectedDispatcher,
         })
       })
       const data = await res.json()
       if (data.success) {
         const remaining = typeof data.remainingAfterBatch === 'number' ? data.remainingAfterBatch : 0
+        const viaTag = selectedDispatcher === 'ses' ? ' via Amazon SES' : ' via Brevo'
         const waveNotice = remaining > 0
-          ? `🎉 Wave dispatched! Successfully sent to ${data.sentCount} recipient(s). ${remaining} contact(s) remaining for tomorrow's wave.`
-          : `🎉 Successfully dispatched to ${data.sentCount} recipient(s)! All eligible contacts have received this campaign.`
+          ? `🎉 Dispatched${viaTag}! Successfully sent to ${data.sentCount} recipient(s). ${remaining} contact(s) remaining for next wave.`
+          : `🎉 Successfully dispatched${viaTag} to all ${data.sentCount} recipient(s)! All eligible contacts have received this campaign.`
 
         setDispatchModalFeedback({
           success: true,
@@ -1273,17 +1312,35 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                 Email Campaigns & Templates
               </h2>
               <p style={{ fontSize: '0.82rem', color: '#718096', margin: '2px 0 0 0' }}>
-                Upload banners, compose visually with your official signature & badges, preview, and dispatch via Brevo.
+                Upload banners, compose visually with your official signature &amp; badges, preview, and dispatch via Amazon SES or Brevo.
               </p>
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '6px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: '#475569', fontWeight: 600 }}>
             <Users size={15} color="#800020" />
             <span>Active Subscribers: <strong style={{ color: '#0F172A' }}>{subscriberCount}</strong></span>
           </div>
+
+          {sesInfo?.configured ? (
+            <div
+              title={`Amazon SES Active (${sesInfo.region} • ${sesInfo.fromEmail})`}
+              style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '6px 12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#166534', fontWeight: 700 }}
+            >
+              <span style={{ fontSize: '0.95rem' }}>🚀</span>
+              <span>Amazon SES Active</span>
+            </div>
+          ) : (
+            <div
+              title="Brevo Free Tier Safe Waves"
+              style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', padding: '6px 12px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#1E40AF', fontWeight: 700 }}
+            >
+              <span>🛡️</span>
+              <span>Brevo Free: {brevoQuota ? `${brevoQuota.remainingCredits}/300` : '300/day'}</span>
+            </div>
+          )}
 
           <button
             onClick={fetchCampaigns}
@@ -2885,298 +2942,577 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
 
               </div>
 
-              {/* ── BREVO FREE TIER SAFE WAVE DISPATCH CONTROLS ── */}
-              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ShieldCheck size={18} color="#0F4C3A" />
-                    <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0F172A' }}>
-                      Brevo Free Tier Safe Wave Dispatcher
-                    </span>
+              {/* Multi-Wave Deduplication Checkbox */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer', marginBottom: '14px', background: '#F8FAFC', border: '1px solid #CBD5E1', padding: '9px 12px', borderRadius: '8px' }}>
+                <input
+                  type="checkbox"
+                  checked={dispatchSkipSent}
+                  onChange={(e) => setDispatchSkipSent(e.target.checked)}
+                  style={{ cursor: 'pointer', accentColor: '#800020' }}
+                />
+                <span>
+                  ☑️ Exclude contacts who already received this campaign (Multi-wave dispatch progression)
+                </span>
+              </label>
+
+              {/* ── DELIVERY ENGINE SELECTOR ── */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
+                  Select Delivery Engine:
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px' }}>
+                  {/* Card 1: Amazon SES */}
+                  <div
+                    onClick={() => {
+                      setSelectedDispatcher('ses')
+                      setDispatchBatchLimit('all')
+                    }}
+                    style={{
+                      border: selectedDispatcher === 'ses' ? '2px solid #800020' : '1px solid #CBD5E1',
+                      background: selectedDispatcher === 'ses' ? '#FFF5F6' : '#FFFFFF',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      boxShadow: selectedDispatcher === 'ses' ? '0 2px 8px rgba(128,0,32,0.12)' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '1.1rem' }}>🚀</span>
+                        <span style={{ fontSize: '0.86rem', fontWeight: 800, color: selectedDispatcher === 'ses' ? '#800020' : '#0F172A' }}>
+                          Amazon SES
+                        </span>
+                      </div>
+                      <span style={{
+                        fontSize: '0.68rem',
+                        background: sesInfo?.configured ? '#DCFCE7' : '#FEF3C7',
+                        color: sesInfo?.configured ? '#166534' : '#92400E',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: '12px'
+                      }}>
+                        {sesInfo?.configured ? '⚡ High Speed • Active' : (sesInfo ? 'Setup Needed' : 'Active & Ready')}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#475569', lineHeight: 1.4 }}>
+                      <strong>Instant Cloud Blast.</strong> Send to all contacts at once with no 300/day limit. Verified domain: <code>flyingwonders.net</code> ({sesInfo?.region || 'us-east-1'}).
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '0.72rem', background: (brevoQuota && brevoQuota.remainingCredits <= 20) ? '#FEE2E2' : '#DCFCE7', color: (brevoQuota && brevoQuota.remainingCredits <= 20) ? '#991B1B' : '#15803D', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
-                      {brevoQuota ? `⚡ ${brevoQuota.remainingCredits} / ${brevoQuota.dailyLimit} Credits Left Today` : '🛡️ 300/Day Quota Shield'}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={fetchQuota}
-                      disabled={loadingQuota}
-                      title="Refresh live Brevo credits"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', display: 'inline-flex', alignItems: 'center', padding: '2px' }}
-                    >
-                      <RefreshCw size={13} className={loadingQuota ? 'animate-spin' : ''} />
-                    </button>
+
+                  {/* Card 2: Brevo Free Tier */}
+                  <div
+                    onClick={() => {
+                      setSelectedDispatcher('brevo')
+                      setDispatchBatchLimit('250')
+                    }}
+                    style={{
+                      border: selectedDispatcher === 'brevo' ? '2px solid #0F4C3A' : '1px solid #CBD5E1',
+                      background: selectedDispatcher === 'brevo' ? '#F0FDF4' : '#FFFFFF',
+                      borderRadius: '10px',
+                      padding: '12px 14px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      boxShadow: selectedDispatcher === 'brevo' ? '0 2px 8px rgba(15,76,58,0.12)' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <ShieldCheck size={16} color="#0F4C3A" />
+                        <span style={{ fontSize: '0.86rem', fontWeight: 800, color: selectedDispatcher === 'brevo' ? '#0F4C3A' : '#0F172A' }}>
+                          Brevo Free Waves
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{
+                          fontSize: '0.68rem',
+                          background: (brevoQuota && brevoQuota.remainingCredits <= 20) ? '#FEE2E2' : '#E0E7FF',
+                          color: (brevoQuota && brevoQuota.remainingCredits <= 20) ? '#991B1B' : '#3730A3',
+                          fontWeight: 800,
+                          padding: '2px 8px',
+                          borderRadius: '12px'
+                        }}>
+                          {brevoQuota ? `${brevoQuota.remainingCredits} left today` : '300/day cap'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            fetchQuota()
+                          }}
+                          disabled={loadingQuota}
+                          title="Refresh quota"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', padding: '2px' }}
+                        >
+                          <RefreshCw size={11} className={loadingQuota ? 'animate-spin' : ''} />
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#475569', lineHeight: 1.4 }}>
+                      <strong>Phased Safe Batches.</strong> Automatically capped at 250-300 emails/day with multi-wave progression.
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Account-Wide Daily Usage Notice */}
-                {brevoQuota && (
-                  <div style={{
-                    background: brevoQuota.remainingCredits <= 20 ? '#FEF2F2' : (brevoQuota.sentToday > 0 ? '#FFFBEB' : '#F0FDF4'),
-                    border: `1px solid ${brevoQuota.remainingCredits <= 20 ? '#FECACA' : (brevoQuota.sentToday > 0 ? '#FDE68A' : '#BBF7D0')}`,
-                    borderRadius: '8px',
-                    padding: '10px 12px',
-                    marginBottom: '12px',
-                    fontSize: '0.75rem',
-                    color: brevoQuota.remainingCredits <= 20 ? '#991B1B' : (brevoQuota.sentToday > 0 ? '#92400E' : '#166534'),
-                    lineHeight: 1.45
-                  }}>
-                    <div style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                      <span>📊 Account Daily Usage (All Campaigns Combined):</span>
-                      <span>{brevoQuota.sentToday} of {brevoQuota.dailyLimit} sent today</span>
+              {/* ── DISPATCH ENGINE SPECIFIC CONTROLS ── */}
+              {selectedDispatcher === 'ses' ? (
+                /* AMAZON SES CONTROLS */
+                <div style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '10px', padding: '14px 16px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.05rem' }}>🚀</span>
+                      <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#800020' }}>
+                        Amazon SES High-Capacity Dispatcher
+                      </span>
                     </div>
-                    <div>
-                      {brevoQuota.sentToday > 0 ? (
-                        <>
-                          You already sent <strong>{brevoQuota.sentToday} emails</strong> earlier today across your Brevo account
-                          {brevoQuota.campaignsSentToday && brevoQuota.campaignsSentToday.length > 0 && (
-                            <span> ({brevoQuota.campaignsSentToday.map(c => `"${c.title}": ${c.sentCount}`).join(', ')})</span>
-                          )}.
-                          {' '}Your account currently has <strong style={{ textDecoration: 'underline' }}>{brevoQuota.remainingCredits} sends remaining</strong> until quota resets at {brevoQuota.resetsAtUtc} (~{brevoQuota.resetsInHours}h).
-                        </>
-                      ) : (
-                        <>Full 300 emails/day capacity available on your Brevo Free plan for today.</>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Quota Exceeded Auto-Cap Warning */}
-                {dispatchAudienceStats.quotaExceeded && (
-                  <div style={{
-                    background: '#FEF2F2',
-                    border: '1px solid #FECACA',
-                    borderRadius: '8px',
-                    padding: '10px 12px',
-                    marginBottom: '12px',
-                    fontSize: '0.76rem',
-                    color: '#991B1B',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '8px'
-                  }}>
-                    <AlertCircle size={16} color="#DC2626" style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <div>
-                      <strong>Account Quota Protection Active:</strong> You requested {dispatchAudienceStats.desiredSend} contacts, but your Brevo account only has <strong>{dispatchAudienceStats.remainingDailyCredits} sends remaining</strong> today because {brevoQuota?.sentToday || 0} emails were dispatched earlier.
-                      <br />
-                      We automatically capped today&apos;s batch to <strong>{dispatchAudienceStats.toSendNow} contacts</strong> to prevent daily quota errors. The remaining {dispatchAudienceStats.remainingAfter} contacts will be queued for tomorrow&apos;s wave!
-                    </div>
-                  </div>
-                )}
-
-                {/* Wave & Audience Live Breakdown Stats */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '14px' }}>
-                  <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px 12px' }}>
-                    <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>Total Audience</div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>
-                      {dispatchAudienceStats.total} contacts
+                    <div style={{ fontSize: '0.72rem', background: '#DCFCE7', color: '#166534', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                      No 300/Day Quota Lock • Sender: {sesInfo?.fromEmail || 'contact@flyingwonders.net'}
                     </div>
                   </div>
 
-                  <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px 12px' }}>
-                    <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>Already Sent</div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#64748B', marginTop: '2px' }}>
-                      {dispatchAudienceStats.alreadySent} contacts
+                  {/* Wave & Audience Live Breakdown Stats */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '14px' }}>
+                    <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px 12px' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>Total Audience</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>
+                        {dispatchAudienceStats.total} contacts
+                      </div>
                     </div>
-                  </div>
 
-                  <div style={{ background: '#FFFFFF', border: '1px solid #A7F3D0', borderRadius: '8px', padding: '8px 12px' }}>
-                    <div style={{ fontSize: '0.7rem', color: '#065F46', fontWeight: 600 }}>Eligible To Send</div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#065F46', marginTop: '2px' }}>
-                      {dispatchAudienceStats.eligible} contacts
+                    <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px 12px' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>Already Sent</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#64748B', marginTop: '2px' }}>
+                        {dispatchAudienceStats.alreadySent} contacts
+                      </div>
                     </div>
-                  </div>
 
-                  <div style={{
-                    background: dispatchAudienceStats.quotaExceeded ? '#FEF2F2' : '#EFF6FF',
-                    border: `1px solid ${dispatchAudienceStats.quotaExceeded ? '#FECACA' : '#BFDBFE'}`,
-                    borderRadius: '8px',
-                    padding: '8px 12px'
-                  }}>
-                    <div style={{ fontSize: '0.7rem', color: dispatchAudienceStats.quotaExceeded ? '#991B1B' : '#1E40AF', fontWeight: 600 }}>
-                      Batch Sending Today
+                    <div style={{ background: '#FFFFFF', border: '1px solid #A7F3D0', borderRadius: '8px', padding: '8px 12px' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#065F46', fontWeight: 600 }}>Eligible To Send</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#065F46', marginTop: '2px' }}>
+                        {dispatchAudienceStats.eligible} contacts
+                      </div>
                     </div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: dispatchAudienceStats.quotaExceeded ? '#DC2626' : '#1E40AF', marginTop: '2px' }}>
-                      {dispatchAudienceStats.toSendNow} contacts
+
+                    <div style={{ background: '#FFF5F6', border: '1px solid #FECDD3', borderRadius: '8px', padding: '8px 12px' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#9F1239', fontWeight: 600 }}>Sending In This Blast</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#800020', marginTop: '2px' }}>
+                        {dispatchAudienceStats.toSendNow} contacts
+                      </div>
                     </div>
-                    {dispatchAudienceStats.quotaExceeded && (
-                      <div style={{ fontSize: '0.66rem', color: '#DC2626', fontWeight: 700, marginTop: '1px' }}>
-                        Capped by daily quota
+
+                    {dispatchAudienceStats.remainingAfter > 0 && (
+                      <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', padding: '8px 12px' }}>
+                        <div style={{ fontSize: '0.7rem', color: '#92400E', fontWeight: 600 }}>Remaining (Next Batch)</div>
+                        <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#92400E', marginTop: '2px' }}>
+                          {dispatchAudienceStats.remainingAfter} contacts
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  {dispatchAudienceStats.remainingAfter > 0 && (
-                    <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', padding: '8px 12px' }}>
-                      <div style={{ fontSize: '0.7rem', color: '#92400E', fontWeight: 600 }}>Remaining (Wave 2)</div>
-                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#92400E', marginTop: '2px' }}>
-                        {dispatchAudienceStats.remainingAfter} contacts
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Multi-Wave Deduplication Checkbox */}
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', cursor: 'pointer', marginBottom: '14px', background: '#FFFFFF', border: '1px solid #CBD5E1', padding: '8px 12px', borderRadius: '6px' }}>
-                  <input
-                    type="checkbox"
-                    checked={dispatchSkipSent}
-                    onChange={(e) => setDispatchSkipSent(e.target.checked)}
-                    style={{ cursor: 'pointer', accentColor: '#800020' }}
-                  />
-                  <span>
-                    ☑️ Exclude contacts who already received this campaign (Multi-wave dispatch progression)
-                  </span>
-                </label>
-
-                {/* Batch Cap Presets */}
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                    Select Daily Batch Cap / Wave Size:
-                  </label>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-                    {/* Dynamic Remaining Quota Button if sent earlier today */}
-                    {brevoQuota && brevoQuota.remainingCredits > 0 && brevoQuota.remainingCredits < 250 && (
+                  {/* Batch Size Presets */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Select Batch Size / Volume:
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
                       <button
                         type="button"
-                        onClick={() => {
-                          setDispatchBatchLimit('custom')
-                          setCustomBatchLimitInput(String(brevoQuota.remainingCredits))
-                        }}
+                        onClick={() => setDispatchBatchLimit('all')}
                         style={{
                           padding: '6px 12px',
                           borderRadius: '6px',
-                          border: (dispatchBatchLimit === 'custom' && customBatchLimitInput === String(brevoQuota.remainingCredits)) ? '1px solid #0F4C3A' : '1px solid #16A34A',
-                          background: (dispatchBatchLimit === 'custom' && customBatchLimitInput === String(brevoQuota.remainingCredits)) ? '#0F4C3A' : '#ECFDF5',
-                          color: (dispatchBatchLimit === 'custom' && customBatchLimitInput === String(brevoQuota.remainingCredits)) ? '#FFFFFF' : '#15803D',
+                          border: dispatchBatchLimit === 'all' ? '1px solid #800020' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === 'all' ? '#800020' : '#FFFFFF',
+                          color: dispatchBatchLimit === 'all' ? '#FFFFFF' : '#334155',
                           fontWeight: 800,
                           fontSize: '0.76rem',
                           cursor: 'pointer'
                         }}
                       >
-                        ⚡ {brevoQuota.remainingCredits} / day (Use Remaining Daily Quota)
+                        🚀 Send All ({dispatchAudienceStats.eligible})
                       </button>
-                    )}
 
-                    <button
-                      type="button"
-                      onClick={() => setDispatchBatchLimit('250')}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        border: dispatchBatchLimit === '250' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
-                        background: dispatchBatchLimit === '250' ? '#0F4C3A' : '#FFFFFF',
-                        color: dispatchBatchLimit === '250' ? '#FFFFFF' : '#334155',
-                        fontWeight: 700,
-                        fontSize: '0.76rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ⚡ 250 / day (Brevo Free Safe Cap)
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setDispatchBatchLimit('100')}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        border: dispatchBatchLimit === '100' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
-                        background: dispatchBatchLimit === '100' ? '#0F4C3A' : '#FFFFFF',
-                        color: dispatchBatchLimit === '100' ? '#FFFFFF' : '#334155',
-                        fontWeight: 700,
-                        fontSize: '0.76rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ⚡ 100 / wave (Test Wave)
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setDispatchBatchLimit('50')}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        border: dispatchBatchLimit === '50' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
-                        background: dispatchBatchLimit === '50' ? '#0F4C3A' : '#FFFFFF',
-                        color: dispatchBatchLimit === '50' ? '#FFFFFF' : '#334155',
-                        fontWeight: 700,
-                        fontSize: '0.76rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ⚡ 50 / wave (Sample)
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setDispatchBatchLimit('all')}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        border: dispatchBatchLimit === 'all' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
-                        background: dispatchBatchLimit === 'all' ? '#0F4C3A' : '#FFFFFF',
-                        color: dispatchBatchLimit === 'all' ? '#FFFFFF' : '#334155',
-                        fontWeight: 700,
-                        fontSize: '0.76rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      🚀 Send All ({dispatchAudienceStats.eligible})
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setDispatchBatchLimit('custom')}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        border: dispatchBatchLimit === 'custom' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
-                        background: dispatchBatchLimit === 'custom' ? '#0F4C3A' : '#FFFFFF',
-                        color: dispatchBatchLimit === 'custom' ? '#FFFFFF' : '#334155',
-                        fontWeight: 700,
-                        fontSize: '0.76rem',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ✏️ Custom
-                    </button>
-
-                    {dispatchBatchLimit === 'custom' && (
-                      <input
-                        type="number"
-                        min={1}
-                        max={10000}
-                        value={customBatchLimitInput}
-                        onChange={(e) => setCustomBatchLimitInput(e.target.value)}
-                        placeholder="e.g. 150"
+                      <button
+                        type="button"
+                        onClick={() => setDispatchBatchLimit('500')}
                         style={{
-                          width: '80px',
-                          padding: '5px 8px',
+                          padding: '6px 12px',
                           borderRadius: '6px',
-                          border: '1px solid #CBD5E1',
+                          border: dispatchBatchLimit === '500' ? '1px solid #800020' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === '500' ? '#800020' : '#FFFFFF',
+                          color: dispatchBatchLimit === '500' ? '#FFFFFF' : '#334155',
+                          fontWeight: 700,
                           fontSize: '0.76rem',
-                          fontWeight: 600,
-                          background: '#FFF',
-                          color: '#0F172A'
+                          cursor: 'pointer'
                         }}
-                      />
-                    )}
+                      >
+                        ⚡ 500 / batch
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDispatchBatchLimit('250')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: dispatchBatchLimit === '250' ? '1px solid #800020' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === '250' ? '#800020' : '#FFFFFF',
+                          color: dispatchBatchLimit === '250' ? '#FFFFFF' : '#334155',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ⚡ 250 / batch
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDispatchBatchLimit('100')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: dispatchBatchLimit === '100' ? '1px solid #800020' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === '100' ? '#800020' : '#FFFFFF',
+                          color: dispatchBatchLimit === '100' ? '#FFFFFF' : '#334155',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ⚡ 100 / batch
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDispatchBatchLimit('custom')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: dispatchBatchLimit === 'custom' ? '1px solid #800020' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === 'custom' ? '#800020' : '#FFFFFF',
+                          color: dispatchBatchLimit === 'custom' ? '#FFFFFF' : '#334155',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ✏️ Custom
+                      </button>
+
+                      {dispatchBatchLimit === 'custom' && (
+                        <input
+                          type="number"
+                          min={1}
+                          max={50000}
+                          value={customBatchLimitInput}
+                          onChange={(e) => setCustomBatchLimitInput(e.target.value)}
+                          placeholder="e.g. 500"
+                          style={{
+                            width: '80px',
+                            padding: '5px 8px',
+                            borderRadius: '6px',
+                            border: '1px solid #CBD5E1',
+                            fontSize: '0.76rem',
+                            fontWeight: 600,
+                            background: '#FFF',
+                            color: '#0F172A'
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '10px', fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>💡</span>
+                    <span>
+                      {dispatchAudienceStats.remainingAfter > 0
+                        ? `Delivering ${dispatchAudienceStats.toSendNow} contacts via Amazon SES. ${dispatchAudienceStats.remainingAfter} contacts will remain for future batches.`
+                        : `Delivering instantly to all ${dispatchAudienceStats.eligible} eligible contacts via Amazon SES in 1 blast.`}
+                    </span>
                   </div>
                 </div>
+              ) : (
+                /* BREVO SAFE WAVE CONTROLS */
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <ShieldCheck size={18} color="#0F4C3A" />
+                      <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0F172A' }}>
+                        Brevo Free Tier Safe Wave Dispatcher
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.72rem', background: (brevoQuota && brevoQuota.remainingCredits <= 20) ? '#FEE2E2' : '#DCFCE7', color: (brevoQuota && brevoQuota.remainingCredits <= 20) ? '#991B1B' : '#15803D', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                        {brevoQuota ? `⚡ ${brevoQuota.remainingCredits} / ${brevoQuota.dailyLimit} Credits Left Today` : '🛡️ 300/Day Quota Shield'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={fetchQuota}
+                        disabled={loadingQuota}
+                        title="Refresh live Brevo credits"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', display: 'inline-flex', alignItems: 'center', padding: '2px' }}
+                      >
+                        <RefreshCw size={13} className={loadingQuota ? 'animate-spin' : ''} />
+                      </button>
+                    </div>
+                  </div>
 
-                {/* Wave progress explanation text */}
-                <div style={{ marginTop: '10px', fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>💡</span>
-                  <span>
-                    {dispatchAudienceStats.remainingAfter > 0
-                      ? `Dispatching Wave 1 today (${dispatchAudienceStats.toSendNow} contacts). The remaining ${dispatchAudienceStats.remainingAfter} contacts will be queued for tomorrow's wave without duplicates.`
-                      : `This batch delivers to all ${dispatchAudienceStats.eligible} remaining contacts in one dispatch.`}
-                  </span>
+                  {/* Account-Wide Daily Usage Notice */}
+                  {brevoQuota && (
+                    <div style={{
+                      background: brevoQuota.remainingCredits <= 20 ? '#FEF2F2' : (brevoQuota.sentToday > 0 ? '#FFFBEB' : '#F0FDF4'),
+                      border: `1px solid ${brevoQuota.remainingCredits <= 20 ? '#FECACA' : (brevoQuota.sentToday > 0 ? '#FDE68A' : '#BBF7D0')}`,
+                      borderRadius: '8px',
+                      padding: '10px 12px',
+                      marginBottom: '12px',
+                      fontSize: '0.75rem',
+                      color: brevoQuota.remainingCredits <= 20 ? '#991B1B' : (brevoQuota.sentToday > 0 ? '#92400E' : '#166534'),
+                      lineHeight: 1.45
+                    }}>
+                      <div style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                        <span>📊 Account Daily Usage (All Campaigns Combined):</span>
+                        <span>{brevoQuota.sentToday} of {brevoQuota.dailyLimit} sent today</span>
+                      </div>
+                      <div>
+                        {brevoQuota.sentToday > 0 ? (
+                          <>
+                            You already sent <strong>{brevoQuota.sentToday} emails</strong> earlier today across your Brevo account
+                            {brevoQuota.campaignsSentToday && brevoQuota.campaignsSentToday.length > 0 && (
+                              <span> ({brevoQuota.campaignsSentToday.map(c => `"${c.title}": ${c.sentCount}`).join(', ')})</span>
+                            )}.
+                            {' '}Your account currently has <strong style={{ textDecoration: 'underline' }}>{brevoQuota.remainingCredits} sends remaining</strong> until quota resets at {brevoQuota.resetsAtUtc} (~{brevoQuota.resetsInHours}h).
+                          </>
+                        ) : (
+                          <>Full 300 emails/day capacity available on your Brevo Free plan for today.</>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quota Exceeded Auto-Cap Warning */}
+                  {dispatchAudienceStats.quotaExceeded && (
+                    <div style={{
+                      background: '#FEF2F2',
+                      border: '1px solid #FECACA',
+                      borderRadius: '8px',
+                      padding: '10px 12px',
+                      marginBottom: '12px',
+                      fontSize: '0.76rem',
+                      color: '#991B1B',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '8px'
+                    }}>
+                      <AlertCircle size={16} color="#DC2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+                      <div>
+                        <strong>Account Quota Protection Active:</strong> You requested {dispatchAudienceStats.desiredSend} contacts, but your Brevo account only has <strong>{dispatchAudienceStats.remainingDailyCredits} sends remaining</strong> today because {brevoQuota?.sentToday || 0} emails were dispatched earlier.
+                        <br />
+                        We automatically capped today&apos;s batch to <strong>{dispatchAudienceStats.toSendNow} contacts</strong> to prevent daily quota errors. (Tip: Switch to Amazon SES above for unlimited blasts).
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Wave & Audience Live Breakdown Stats */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '14px' }}>
+                    <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px 12px' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>Total Audience</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginTop: '2px' }}>
+                        {dispatchAudienceStats.total} contacts
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '8px 12px' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 600 }}>Already Sent</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#64748B', marginTop: '2px' }}>
+                        {dispatchAudienceStats.alreadySent} contacts
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#FFFFFF', border: '1px solid #A7F3D0', borderRadius: '8px', padding: '8px 12px' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#065F46', fontWeight: 600 }}>Eligible To Send</div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#065F46', marginTop: '2px' }}>
+                        {dispatchAudienceStats.eligible} contacts
+                      </div>
+                    </div>
+
+                    <div style={{
+                      background: dispatchAudienceStats.quotaExceeded ? '#FEF2F2' : '#EFF6FF',
+                      border: `1px solid ${dispatchAudienceStats.quotaExceeded ? '#FECACA' : '#BFDBFE'}`,
+                      borderRadius: '8px',
+                      padding: '8px 12px'
+                    }}>
+                      <div style={{ fontSize: '0.7rem', color: dispatchAudienceStats.quotaExceeded ? '#991B1B' : '#1E40AF', fontWeight: 600 }}>
+                        Batch Sending Today
+                      </div>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: dispatchAudienceStats.quotaExceeded ? '#DC2626' : '#1E40AF', marginTop: '2px' }}>
+                        {dispatchAudienceStats.toSendNow} contacts
+                      </div>
+                      {dispatchAudienceStats.quotaExceeded && (
+                        <div style={{ fontSize: '0.66rem', color: '#DC2626', fontWeight: 700, marginTop: '1px' }}>
+                          Capped by daily quota
+                        </div>
+                      )}
+                    </div>
+
+                    {dispatchAudienceStats.remainingAfter > 0 && (
+                      <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', padding: '8px 12px' }}>
+                        <div style={{ fontSize: '0.7rem', color: '#92400E', fontWeight: 600 }}>Remaining (Wave 2)</div>
+                        <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#92400E', marginTop: '2px' }}>
+                          {dispatchAudienceStats.remainingAfter} contacts
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Batch Cap Presets */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                      Select Daily Batch Cap / Wave Size:
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                      {brevoQuota && brevoQuota.remainingCredits > 0 && brevoQuota.remainingCredits < 250 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDispatchBatchLimit('custom')
+                            setCustomBatchLimitInput(String(brevoQuota.remainingCredits))
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            border: (dispatchBatchLimit === 'custom' && customBatchLimitInput === String(brevoQuota.remainingCredits)) ? '1px solid #0F4C3A' : '1px solid #16A34A',
+                            background: (dispatchBatchLimit === 'custom' && customBatchLimitInput === String(brevoQuota.remainingCredits)) ? '#0F4C3A' : '#ECFDF5',
+                            color: (dispatchBatchLimit === 'custom' && customBatchLimitInput === String(brevoQuota.remainingCredits)) ? '#FFFFFF' : '#15803D',
+                            fontWeight: 800,
+                            fontSize: '0.76rem',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          ⚡ {brevoQuota.remainingCredits} / day (Use Remaining Daily Quota)
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => setDispatchBatchLimit('250')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: dispatchBatchLimit === '250' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === '250' ? '#0F4C3A' : '#FFFFFF',
+                          color: dispatchBatchLimit === '250' ? '#FFFFFF' : '#334155',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ⚡ 250 / day (Brevo Free Safe Cap)
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDispatchBatchLimit('100')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: dispatchBatchLimit === '100' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === '100' ? '#0F4C3A' : '#FFFFFF',
+                          color: dispatchBatchLimit === '100' ? '#FFFFFF' : '#334155',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ⚡ 100 / wave (Test Wave)
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDispatchBatchLimit('50')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: dispatchBatchLimit === '50' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === '50' ? '#0F4C3A' : '#FFFFFF',
+                          color: dispatchBatchLimit === '50' ? '#FFFFFF' : '#334155',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ⚡ 50 / wave (Sample)
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDispatchBatchLimit('all')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: dispatchBatchLimit === 'all' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === 'all' ? '#0F4C3A' : '#FFFFFF',
+                          color: dispatchBatchLimit === 'all' ? '#FFFFFF' : '#334155',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        🚀 Send All ({dispatchAudienceStats.eligible})
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDispatchBatchLimit('custom')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: dispatchBatchLimit === 'custom' ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                          background: dispatchBatchLimit === 'custom' ? '#0F4C3A' : '#FFFFFF',
+                          color: dispatchBatchLimit === 'custom' ? '#FFFFFF' : '#334155',
+                          fontWeight: 700,
+                          fontSize: '0.76rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ✏️ Custom
+                      </button>
+
+                      {dispatchBatchLimit === 'custom' && (
+                        <input
+                          type="number"
+                          min={1}
+                          max={10000}
+                          value={customBatchLimitInput}
+                          onChange={(e) => setCustomBatchLimitInput(e.target.value)}
+                          placeholder="e.g. 150"
+                          style={{
+                            width: '80px',
+                            padding: '5px 8px',
+                            borderRadius: '6px',
+                            border: '1px solid #CBD5E1',
+                            fontSize: '0.76rem',
+                            fontWeight: 600,
+                            background: '#FFF',
+                            color: '#0F172A'
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '10px', fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>💡</span>
+                    <span>
+                      {dispatchAudienceStats.remainingAfter > 0
+                        ? `Dispatching Wave 1 today (${dispatchAudienceStats.toSendNow} contacts). The remaining ${dispatchAudienceStats.remainingAfter} contacts will be queued for tomorrow's wave without duplicates.`
+                        : `This batch delivers to all ${dispatchAudienceStats.eligible} remaining contacts in one dispatch.`}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Personalization & High-Speed Batch Shield info */}
               <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '10px 14px', fontSize: '0.75rem', color: '#1E40AF', display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -3187,7 +3523,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                   • Merge tags <code style={{ background: '#DBEAFE', padding: '1px 4px', borderRadius: '3px' }}>{`{{name}}`}</code> and <code style={{ background: '#DBEAFE', padding: '1px 4px', borderRadius: '3px' }}>{`{{company}}`}</code> will automatically personalize for each recipient.
                 </div>
                 <div>
-                  • Dispatches in concurrent batches of 10 through Brevo&apos;s verified DKIM server (<strong style={{ color: '#1E40AF' }}>contact@flyingwonders.net</strong>) with zero timeout risk.
+                  • Dispatches in concurrent chunks via {selectedDispatcher === 'ses' ? 'Amazon SES verified AWS server' : 'Brevo REST API'} (<strong style={{ color: '#1E40AF' }}>contact@flyingwonders.net</strong>) with zero timeout risk.
                 </div>
               </div>
 
@@ -3213,7 +3549,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                 disabled={isDispatchingModal || dispatchAudienceStats.toSendNow === 0}
                 style={{
                   padding: '9px 22px',
-                  background: dispatchAudienceStats.toSendNow === 0 ? '#94A3B8' : '#800020',
+                  background: dispatchAudienceStats.toSendNow === 0 ? '#94A3B8' : (selectedDispatcher === 'ses' ? '#800020' : '#0F4C3A'),
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '0.84rem',
@@ -3223,19 +3559,23 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  boxShadow: '0 2px 4px rgba(128,0,32,0.25)'
+                  boxShadow: selectedDispatcher === 'ses' ? '0 2px 4px rgba(128,0,32,0.25)' : '0 2px 4px rgba(15,76,58,0.25)'
                 }}
               >
                 <Send size={15} className={isDispatchingModal ? 'animate-spin' : ''} />
                 {isDispatchingModal
                   ? 'Dispatching In Batches...'
                   : dispatchAudienceStats.toSendNow === 0
-                    ? (brevoQuota && brevoQuota.remainingCredits <= 0
+                    ? (selectedDispatcher === 'brevo' && brevoQuota && brevoQuota.remainingCredits <= 0
                         ? `Daily Brevo Limit Reached (${brevoQuota.sentToday}/${brevoQuota.dailyLimit} Sent Today)`
-                        : 'All Contacts Already Dispatched')
-                    : dispatchAudienceStats.remainingAfter > 0
-                      ? `🚀 Launch Wave (${dispatchAudienceStats.toSendNow} Recipients)`
-                      : `🚀 Launch Campaign Broadcast (${dispatchAudienceStats.toSendNow} Recipients)`}
+                        : 'No Eligible Contacts / Already Dispatched')
+                    : selectedDispatcher === 'ses'
+                      ? (dispatchAudienceStats.remainingAfter > 0
+                          ? `🚀 Blast Wave (${dispatchAudienceStats.toSendNow} via Amazon SES)`
+                          : `🚀 Blast All (${dispatchAudienceStats.toSendNow} via Amazon SES)`)
+                      : (dispatchAudienceStats.remainingAfter > 0
+                          ? `🛡️ Launch Wave (${dispatchAudienceStats.toSendNow} via Brevo)`
+                          : `🛡️ Launch Campaign Broadcast (${dispatchAudienceStats.toSendNow} via Brevo)`)}
               </button>
             </div>
 
