@@ -46,7 +46,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/faq', priority: 0.7, freq: 'monthly' },
     { path: '/events', priority: 0.7, freq: 'weekly' },
     { path: '/pay', priority: 0.6, freq: 'monthly' },
-    { path: '/invoice', priority: 0.8, freq: 'daily' },
     { path: '/refund', priority: 0.5, freq: 'yearly' },
     { path: '/privacy', priority: 0.4, freq: 'yearly' },
     { path: '/terms', priority: 0.4, freq: 'yearly' },

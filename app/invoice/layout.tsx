@@ -7,8 +7,8 @@ export const metadata: Metadata = {
     canonical: 'https://flyingwonders.net/invoice',
   },
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
   },
 }
 

@@ -16,6 +16,7 @@ import { generateMasterGroupVoucherPdf, generateAllVisaVouchersPdf, generateSing
 import NewsletterCampaignManager from '../../components/admin/NewsletterCampaignManager'
 import MarketingLeadsManager from '../../components/admin/MarketingLeadsManager'
 import JobOpeningsManager from '../../components/admin/JobOpeningsManager'
+import CustomerInvoiceManager from '../../components/admin/CustomerInvoiceManager'
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
@@ -60,6 +61,7 @@ export default function AdminDashboard() {
     'section-leads-directory',
     'section-job-openings',
     'section-sitemap',
+    'section-invoices',
     'section-accounts',
     'section-payments',
     'section-consulting',
@@ -545,6 +547,7 @@ export default function AdminDashboard() {
     { id: 'section-job-openings', label: 'Careers & Job Openings', icon: Briefcase },
     { id: 'section-hotel-vouchers', label: 'Hotel Vouchers (Visa)', icon: Building2, badge: hotelVouchers.length },
     { id: 'section-approvals', label: 'Pending Approvals', icon: Clock, badge: pendingApprovalsCount },
+    { id: 'section-invoices', label: 'Invoices & Receipts', icon: FileSpreadsheet },
     { id: 'section-accounts', label: 'Accounts & Ledger', icon: DollarSign },
     { id: 'section-sitemap', label: 'Site Map & Links', icon: Map },
     { id: 'section-payments', label: 'Pending Payments', icon: CreditCard, badge: pendingPayments.length },
@@ -2079,6 +2082,7 @@ export default function AdminDashboard() {
                   { name: 'B2B Leads & RFQs', path: '/b2b-leads', desc: 'Live buyer inquiries & trade leads' },
                   { name: 'B2B Partnership Hub', path: '/b2b', desc: 'Trade partner registration & perks' },
                   { name: 'Group Hotel Voucher Hub', path: '/admin-dashboard#section-hotel-vouchers', desc: 'Generate & manage Visa-compliant group hotel confirmation vouchers' },
+                  { name: 'Customer Invoices & Receipts Generator', path: '/admin-dashboard#section-invoices', desc: 'Ad-hoc & proposal-linked GST Tax / Proforma Invoices & Payment Receipts with instant UPI QR & PDF' },
                   { name: 'Live Voucher Verification Portal', path: '/verify-voucher', desc: 'Official Embassy & Border Control accommodation authentication gateway' },
                   { name: 'Card Scanner / Contact Ingest', path: '/add-contact', desc: 'Optical card reader & contact save' },
                   { name: 'Careers & Job Openings (Public)', path: '/job-openings', desc: 'Job listings, candidate applications, profile uploads & talent network' },
@@ -2218,6 +2222,59 @@ export default function AdminDashboard() {
             </div>
 
           </div>
+          )}
+        </div>
+
+        {/* ── CUSTOMER INVOICES & RECEIPTS (TAX / PROFORMA / PAYMENT RECEIPTS) ── */}
+        <div id="section-invoices" style={{ background: '#FFF', borderRadius: '16px', padding: isSectionExpanded('section-invoices') ? '1.75rem' : '1rem 1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', border: '1px solid #E2E8F0', marginBottom: '1.5rem', transition: 'all 0.2s ease' }}>
+          
+          {/* Header */}
+          <div 
+            onClick={() => toggleSection('section-invoices')}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', cursor: 'pointer', borderBottom: isSectionExpanded('section-invoices') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-invoices') ? '1rem' : 0, marginBottom: isSectionExpanded('section-invoices') ? '1.25rem' : 0 }}
+          >
+            <div>
+              <h2 style={{ fontSize: '1.3rem', margin: 0, color: '#1E293B', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <FileSpreadsheet size={22} color="#047857" /> Customer Invoices & Receipts Generator
+                <span style={{ fontSize: '0.74rem', background: '#ECFDF5', color: '#047857', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 700, fontFamily: 'var(--font-inter), sans-serif', border: '1px solid #A7F3D0' }}>
+                  GST 5% SAC 998553
+                </span>
+                <span style={{ fontSize: '0.74rem', background: '#EFF6FF', color: '#1E40AF', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 700, fontFamily: 'var(--font-inter), sans-serif', border: '1px solid #BFDBFE' }}>
+                  UPI QR / Bank Wire
+                </span>
+              </h2>
+              <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600 }}>
+                Ad-hoc and proposal-linked official Tax / Proforma Invoices & Payment Receipts with PDF export, WhatsApp dispatch, and instant UPI QR collection.
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <button
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: '8px',
+                  background: isSectionExpanded('section-invoices') ? '#F1F5F9' : '#ECFDF5',
+                  color: isSectionExpanded('section-invoices') ? '#475569' : '#047857',
+                  border: `1px solid ${isSectionExpanded('section-invoices') ? '#CBD5E1' : '#A7F3D0'}`,
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+                title={isSectionExpanded('section-invoices') ? "Collapse section" : "Expand section"}
+              >
+                {isSectionExpanded('section-invoices') ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                <span>{isSectionExpanded('section-invoices') ? 'Collapse' : 'Expand'}</span>
+              </button>
+            </div>
+          </div>
+
+          {isSectionExpanded('section-invoices') && (
+            <div style={{ marginTop: '0.5rem' }}>
+              <CustomerInvoiceManager />
+            </div>
           )}
         </div>
 
