@@ -103,8 +103,12 @@ export default function CustomerInvoiceManager({ initialReference = '' }: Custom
   // Active Mode: 'lookup' (Lookup existing proposal/invoice) or 'generator' (Create Custom Invoice)
   const [activeTab, setActiveTab] = useState<'lookup' | 'generator'>('lookup')
 
-  // Document Type: Tax Invoice vs Proforma Invoice
-  const [docType, setDocType] = useState<'TAX INVOICE' | 'PROFORMA INVOICE'>('TAX INVOICE')
+  // Document Type: Tax Invoice vs Commercial Invoice vs Proforma Invoice
+  const [docType, setDocType] = useState<'TAX INVOICE' | 'COMMERCIAL INVOICE' | 'PROFORMA INVOICE'>('TAX INVOICE')
+
+  // GST / SAC Mode: 'gst' (Tax Invoice with SAC 998553) vs 'non-gst' (Commercial / Non-GST billing)
+  const [gstMode, setGstMode] = useState<'gst' | 'non-gst'>('gst')
+  const isGst = gstMode === 'gst'
 
   // --- Lookup State ---
   const [searchRef, setSearchRef] = useState(initialReference)
@@ -285,7 +289,9 @@ export default function CustomerInvoiceManager({ initialReference = '' }: Custom
         items,
         discountSgd: 0,
         payments,
-        status: p.status || 'confirmed'
+        status: p.status || 'confirmed',
+        gstMode,
+        showSacCode: isGst
       }
     }
 
@@ -321,7 +327,9 @@ export default function CustomerInvoiceManager({ initialReference = '' }: Custom
       items: genLineItems,
       discountSgd: genDiscountSgd,
       payments: genPayments,
-      status: 'confirmed'
+      status: 'confirmed',
+      gstMode,
+      showSacCode: isGst
     }
   }, [
     activeTab,
@@ -329,6 +337,8 @@ export default function CustomerInvoiceManager({ initialReference = '' }: Custom
     exchangeRate,
     currencyMode,
     docType,
+    gstMode,
+    isGst,
     genInvoiceNum,
     genInvoiceDate,
     genDueDate,
@@ -437,6 +447,7 @@ export default function CustomerInvoiceManager({ initialReference = '' }: Custom
       `• Total Contract: S$ ${totalContractSgd.toLocaleString()} (₹${totalContractInr.toLocaleString()})\n` +
       `• Payments Credited: S$ ${totalPaidSgd.toLocaleString()} (₹${totalPaidInr.toLocaleString()})\n` +
       `• Net Balance Due: S$ ${balanceDueSgd.toLocaleString()} (₹${balanceDueInr.toLocaleString()})\n` +
+      `• Tax / Billing: ${isGst ? 'GST SAC 998553' : 'Commercial Non-GST'}\n` +
       `• Payment Due Date: ${activeInvoiceData.dueDate || activeInvoiceData.invoiceDate}\n` +
       `• View, Download & Pay Online: ${window.location.origin}/invoice?ref=${encodeURIComponent(activeInvoiceData.invoiceNumber)}`
 
@@ -1042,33 +1053,132 @@ export default function CustomerInvoiceManager({ initialReference = '' }: Custom
         marginBottom: '1.25rem',
         boxShadow: '0 4px 12px rgba(10, 34, 64, 0.15)'
       }}>
-        {/* Document Type & Currency Toggle */}
+        {/* Billing Type (GST / Non-GST), Document Type & Currency Toggle */}
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.65rem' }}>
+          {/* GST vs NON-GST (SAC Code) Toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#CBD5E1' }}>Document:</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#CBD5E1' }}>Tax Details:</span>
             <div style={{ display: 'inline-flex', background: '#1E293B', padding: '0.2rem', borderRadius: '6px', border: '1px solid #334155' }}>
-              {(['TAX INVOICE', 'PROFORMA INVOICE'] as const).map(type => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setDocType(type)}
-                  style={{
-                    padding: '0.25rem 0.55rem',
-                    borderRadius: '5px',
-                    border: 'none',
-                    background: docType === type ? '#0F766E' : 'transparent',
-                    color: '#FFF',
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {type === 'TAX INVOICE' ? 'Tax Invoice' : 'Proforma'}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setGstMode('gst')
+                  if (docType === 'COMMERCIAL INVOICE') setDocType('TAX INVOICE')
+                }}
+                style={{
+                  padding: '0.25rem 0.55rem',
+                  borderRadius: '5px',
+                  border: 'none',
+                  background: isGst ? '#0F766E' : 'transparent',
+                  color: '#FFF',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                GST (with SAC)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setGstMode('non-gst')
+                  if (docType === 'TAX INVOICE') setDocType('COMMERCIAL INVOICE')
+                }}
+                style={{
+                  padding: '0.25rem 0.55rem',
+                  borderRadius: '5px',
+                  border: 'none',
+                  background: !isGst ? '#0F766E' : 'transparent',
+                  color: '#FFF',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                NON-GST
+              </button>
             </div>
           </div>
 
+          {/* Document Type Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#CBD5E1' }}>Document:</span>
+            <div style={{ display: 'inline-flex', background: '#1E293B', padding: '0.2rem', borderRadius: '6px', border: '1px solid #334155' }}>
+              {isGst ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setDocType('TAX INVOICE')}
+                    style={{
+                      padding: '0.25rem 0.55rem',
+                      borderRadius: '5px',
+                      border: 'none',
+                      background: docType === 'TAX INVOICE' ? '#0F766E' : 'transparent',
+                      color: '#FFF',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Tax Invoice
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDocType('PROFORMA INVOICE')}
+                    style={{
+                      padding: '0.25rem 0.55rem',
+                      borderRadius: '5px',
+                      border: 'none',
+                      background: docType === 'PROFORMA INVOICE' ? '#0F766E' : 'transparent',
+                      color: '#FFF',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Proforma
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setDocType('COMMERCIAL INVOICE')}
+                    style={{
+                      padding: '0.25rem 0.55rem',
+                      borderRadius: '5px',
+                      border: 'none',
+                      background: docType === 'COMMERCIAL INVOICE' ? '#0F766E' : 'transparent',
+                      color: '#FFF',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Commercial
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDocType('PROFORMA INVOICE')}
+                    style={{
+                      padding: '0.25rem 0.55rem',
+                      borderRadius: '5px',
+                      border: 'none',
+                      background: docType === 'PROFORMA INVOICE' ? '#0F766E' : 'transparent',
+                      color: '#FFF',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Proforma
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Currency Toggle */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#CBD5E1' }}>Currency:</span>
             <div style={{ display: 'inline-flex', background: '#1E293B', padding: '0.2rem', borderRadius: '6px', border: '1px solid #334155' }}>
@@ -1246,36 +1356,46 @@ export default function CustomerInvoiceManager({ initialReference = '' }: Custom
           overflow: 'hidden'
         }}
       >
-        {/* Subtle Watermark Badge */}
+        {/* Authentic Flying Wonders Logo Watermark - Centered with high z-index & pointer-events: none so blocks never obscure it */}
         <div style={{
           position: 'absolute',
-          top: '45%',
+          top: '50%',
           left: '50%',
-          transform: 'translate(-50%, -50%) rotate(-25deg)',
-          fontSize: '5.5rem',
-          fontWeight: 900,
-          color: balanceDueSgd === 0 ? 'rgba(22, 101, 52, 0.04)' : 'rgba(10, 34, 64, 0.03)',
-          userSelect: 'none',
+          transform: 'translate(-50%, -50%)',
+          width: '380px',
+          height: '380px',
+          opacity: 0.075,
           pointerEvents: 'none',
-          whiteSpace: 'nowrap',
-          letterSpacing: '0.1em'
+          zIndex: 10,
+          userSelect: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}>
-          {balanceDueSgd === 0 ? 'PAID IN FULL' : docType}
+          <Image
+            src="/images/logo.png"
+            alt="Flying Wonders Watermark"
+            width={380}
+            height={380}
+            style={{ objectFit: 'contain' }}
+            priority
+          />
         </div>
 
         {/* 1. Header Block */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           gap: '1.25rem',
           background: '#F8FAFC',
           padding: '1.15rem 1.35rem',
           borderRadius: '10px',
           border: '1px solid #E2E8F0',
-          marginBottom: '1.5rem'
+          marginBottom: '1.5rem',
+          position: 'relative'
         }}>
-          <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', flex: '1 1 auto', minWidth: 0 }}>
             <div style={{ position: 'relative', width: '55px', height: '55px', flexShrink: 0 }}>
               <Image
                 src="/images/logo.png"
@@ -1285,15 +1405,22 @@ export default function CustomerInvoiceManager({ initialReference = '' }: Custom
                 priority
               />
             </div>
-            <div>
-              <h2 style={{ margin: '0 0 0.15rem 0', fontSize: '1.1rem', fontWeight: 800, color: '#0A2240', letterSpacing: '-0.01em' }}>
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{ margin: '0 0 0.2rem 0', fontSize: '1.05rem', fontWeight: 800, color: '#0A2240', letterSpacing: '-0.01em' }}>
                 FLYING WONDERS PRIVATE LIMITED
               </h2>
-              <div style={{ fontSize: '0.72rem', color: '#334155', lineHeight: '1.4' }}>
-                #74, 4th Cross, SBM Colony, BSK 1st Stage, Bangalore - 560050, Karnataka, India<br />
-                <strong>CIN:</strong> U63090KA2016PTC095564 | <strong>GSTIN:</strong> 29AACCF8829R1ZN (State Code: 29 - Karnataka)<br />
-                <strong>Email:</strong> info.flyingwonders@gmail.com | <strong>Web:</strong> www.flyingwonders.net<br />
-                <strong>India Desk:</strong> +91 9886171251 | <strong>Singapore Support:</strong> +65 94722830
+              <div style={{ fontSize: '0.72rem', color: '#334155', lineHeight: '1.45' }}>
+                <div>#74, 4th Cross, SBM Colony, BSK 1st Stage, Bangalore - 560050, Karnataka, India</div>
+                <div>
+                  <strong>CIN:</strong> U63090KA2016PTC095564
+                  {isGst ? (
+                    <> | <strong>GSTIN:</strong> 29AACCF8829R1ZN (State Code: 29 - Karnataka)</>
+                  ) : (
+                    <> | <span style={{ color: '#0F766E', fontWeight: 600 }}>Commercial Tour Entity (Non-GST)</span></>
+                  )}
+                </div>
+                <div><strong>Email:</strong> contact@flyingwonders.net | <strong>Web:</strong> www.flyingwonders.net</div>
+                <div><strong>India Desk:</strong> +91 9886171251 | <strong>Singapore Support:</strong> +65 94722830</div>
               </div>
             </div>
           </div>
@@ -1301,15 +1428,16 @@ export default function CustomerInvoiceManager({ initialReference = '' }: Custom
           <div style={{
             background: '#0A2240',
             color: '#FFFFFF',
-            padding: '0.55rem 1.1rem',
-            borderRadius: '7px',
+            padding: '0.65rem 1.15rem',
+            borderRadius: '8px',
             textAlign: 'center',
-            minWidth: '140px'
+            flexShrink: 0,
+            minWidth: '150px'
           }}>
-            <span style={{ fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#94A3B8', display: 'block', fontWeight: 700 }}>
-              SAC 998553 / TOUR SERVICES
+            <span style={{ fontSize: '0.62rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#94A3B8', display: 'block', fontWeight: 700, marginBottom: '0.2rem' }}>
+              {isGst ? 'SAC 998553 / TOUR SERVICES' : 'TOUR SERVICES / NON-GST'}
             </span>
-            <span style={{ fontSize: '1rem', fontWeight: 900, letterSpacing: '0.05em' }}>
+            <span style={{ fontSize: '1.05rem', fontWeight: 900, letterSpacing: '0.05em', display: 'block' }}>
               {docType}
             </span>
           </div>
@@ -1350,8 +1478,10 @@ export default function CustomerInvoiceManager({ initialReference = '' }: Custom
                   <td style={{ padding: '0.18rem 0', fontWeight: 700, color: '#0F766E' }}>{activeInvoiceData.proposalNumber}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '0.18rem 0', color: '#64748B' }}>SAC Code:</td>
-                  <td style={{ padding: '0.18rem 0', color: '#1E293B' }}>998553 (Tour Operator Services)</td>
+                  <td style={{ padding: '0.18rem 0', color: '#64748B' }}>{isGst ? 'SAC Code:' : 'Tax Status:'}</td>
+                  <td style={{ padding: '0.18rem 0', color: '#1E293B', fontWeight: isGst ? 600 : 500 }}>
+                    {isGst ? '998553 (Tour Operator Services)' : 'Non-GST / Commercial Tour Tariff'}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -1523,7 +1653,9 @@ export default function CustomerInvoiceManager({ initialReference = '' }: Custom
             )}
 
             <div style={{ fontSize: '0.7rem', fontStyle: 'italic', color: '#64748B', margin: '0.2rem 0 0.4rem 0', textAlign: 'right' }}>
-              * 5% GST on Tour Operator Services (SAC 998553) included in tour tariff
+              {isGst
+                ? '* 5% GST on Tour Operator Services (SAC 998553) included in tour tariff'
+                : '* All inclusive tour tariff (Commercial / Non-GST billing)'}
             </div>
 
             {/* Total Contract Banner */}

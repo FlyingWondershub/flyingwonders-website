@@ -37,9 +37,11 @@ export interface TaxInvoiceData {
   proposalNumber: string
   currencyMode?: 'dual' | 'inr' | 'sgd'
   exchangeRate?: number // SGD to INR rate
-  docTitle?: string // 'TAX INVOICE' or 'PROFORMA INVOICE'
+  docTitle?: string // 'TAX INVOICE', 'COMMERCIAL INVOICE', or 'PROFORMA INVOICE'
   taxMode?: 'inclusive' | 'itemized'
   isInterState?: boolean // true = 5% IGST, false = 2.5% CGST + 2.5% SGST (Karnataka)
+  gstMode?: 'gst' | 'non-gst'
+  showSacCode?: boolean
   
   // Client / Agent details
   agentName?: string
@@ -160,7 +162,7 @@ function drawCenterWatermark(doc: any, watermarkDataUrl: string) {
   if (!watermarkDataUrl) return
   try {
     doc.saveGraphicsState()
-    doc.setGState(new (doc as any).GState({ opacity: 0.05 })) // Ultra-subtle watermark ensuring crisp text readability
+    doc.setGState(new (doc as any).GState({ opacity: 0.075 })) // Authentic subtle watermark visible across all blocks without obstructing text
     doc.addImage(watermarkDataUrl, 'PNG', 45, 88, 120, 120, undefined, 'FAST')
     doc.restoreGraphicsState()
   } catch (e) {
@@ -192,58 +194,72 @@ function drawAccreditationFooter(doc: any, footerAccreditationUrl: string, pageN
   doc.text('Subject to Bangalore Jurisdiction', MR, FY + 15, { align: 'right' })
 }
 
-function drawIndianEntityHeader(doc: any, logoUrl: string, docTitle: string, docSubtitle?: string): number {
+function drawIndianEntityHeader(
+  doc: any,
+  logoUrl: string,
+  docTitle: string,
+  docSubtitle?: string,
+  isGst: boolean = true
+): number {
   const ML = 14
   const MR = 196
+  const boxH = 34
 
   doc.setFillColor(248, 250, 252)
-  doc.roundedRect(ML, 8, MR - ML, 32, 2, 2, 'F')
+  doc.roundedRect(ML, 8, MR - ML, boxH, 2, 2, 'F')
   doc.setDrawColor(...BORDER_LIGHT)
   doc.setLineWidth(0.4)
-  doc.roundedRect(ML, 8, MR - ML, 32, 2, 2, 'S')
+  doc.roundedRect(ML, 8, MR - ML, boxH, 2, 2, 'S')
 
   if (logoUrl) {
     try {
-      doc.addImage(logoUrl, 'PNG', ML + 3, 10.5, 25, 25, undefined, 'FAST')
+      doc.addImage(logoUrl, 'PNG', ML + 3, 11, 26, 26, undefined, 'FAST')
     } catch (e) {}
   }
 
   const textX = logoUrl ? (ML + 31) : (ML + 4)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(12)
+  doc.setFontSize(11)
   doc.setTextColor(...NAVY)
-  doc.text('FLYING WONDERS PRIVATE LIMITED', textX, 15)
+  doc.text('FLYING WONDERS PRIVATE LIMITED', textX, 14.5)
 
+  // Entity Details - Formatted with strict line lengths (max 82mm) so text never encroaches badgeX (145mm)
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.5)
+  doc.setFontSize(7.2)
   doc.setTextColor(...DARK_SLATE)
-  doc.text('#74, 4th Cross, SBM Colony, BSK 1st Stage, Bangalore - 560050, Karnataka, India', textX, 19.5)
-  doc.text('CIN: U63090KA2016PTC095564  |  GSTIN: 29AACCF8829R1ZN (State: 29 - Karnataka)', textX, 23.5)
-  doc.text('Email: info.flyingwonders@gmail.com / contact@flyingwonders.net  |  Web: www.flyingwonders.net', textX, 27.5)
-  doc.text('India: +91 9886171251  |  Singapore Support: +65 94722830', textX, 31.5)
+  doc.text('#74, 4th Cross, SBM Colony, BSK 1st Stage, Bangalore - 560050', textX, 19)
+  doc.text('Karnataka, India  •  CIN: U63090KA2016PTC095564', textX, 23)
+  if (isGst) {
+    doc.text('GSTIN: 29AACCF8829R1ZN (State: 29 - Karnataka)', textX, 27)
+  } else {
+    doc.text('Commercial Tour Operator  •  Non-GST Commercial Billing', textX, 27)
+  }
+  doc.text('Email: contact@flyingwonders.net  •  Web: www.flyingwonders.net', textX, 31)
+  doc.text('India: +91 9886171251  |  Singapore Support: +65 94722830', textX, 35)
 
-  const badgeW = docSubtitle ? 52 : 44
+  // Header Badge (Doc Type / SAC Subtitle)
+  const badgeW = docSubtitle ? 48 : 42
   const badgeH = docSubtitle ? 16 : 13
   const badgeX = MR - badgeW - 3
-  const badgeY = 17.5 - (badgeH / 2)
+  const badgeY = 8 + (boxH - badgeH) / 2
 
   doc.setFillColor(...NAVY)
   doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 2, 2, 'F')
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(10.5)
+  doc.setFontSize(9.5)
   doc.setTextColor(...WHITE)
   
   if (docSubtitle) {
-    doc.text(docTitle, badgeX + (badgeW / 2), badgeY + 6.8, { align: 'center' })
+    doc.text(docTitle, badgeX + (badgeW / 2), badgeY + 6.5, { align: 'center' })
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(6.8)
-    doc.setTextColor(226, 232, 240)
-    doc.text(docSubtitle, badgeX + (badgeW / 2), badgeY + 12, { align: 'center' })
+    doc.setFontSize(6.2)
+    doc.setTextColor(203, 213, 225)
+    doc.text(docSubtitle, badgeX + (badgeW / 2), badgeY + 11.5, { align: 'center' })
   } else {
-    doc.text(docTitle, badgeX + (badgeW / 2), badgeY + 8.5, { align: 'center' })
+    doc.text(docTitle, badgeX + (badgeW / 2), badgeY + 8.2, { align: 'center' })
   }
 
-  return 44
+  return 8 + boxH + 4 // 46
 }
 
 /**
@@ -269,12 +285,16 @@ export async function generateTaxInvoicePdf(invoice: TaxInvoiceData) {
   const MR = 196
   const CW = MR - ML
 
-  // 1. Watermark (drawn first as background layer, ultra-subtle so all text stays 100% on top)
-  drawCenterWatermark(doc, watermarkUrl)
+  const isGst = invoice.gstMode !== 'non-gst' && invoice.showSacCode !== false
+  const docTitle = invoice.docTitle || (isGst ? 'TAX INVOICE' : 'COMMERCIAL INVOICE')
+  const docSubtitle = isGst ? 'SAC 998553 / TOUR SERVICES' : 'TOUR SERVICES'
+
   let curY = drawIndianEntityHeader(
     doc,
     logoUrl,
-    invoice.docTitle || 'TAX INVOICE'
+    docTitle,
+    docSubtitle,
+    isGst
   )
 
   // 2. Invoice Meta & Billed To Card
@@ -442,7 +462,11 @@ export async function generateTaxInvoicePdf(invoice: TaxInvoiceData) {
   doc.setFont('helvetica', 'italic')
   doc.setFontSize(7)
   doc.setTextColor(...MUTED_GRAY)
-  doc.text('* GST on Tour Operator Services included in tour tariff', sumLeftX, curY + 4)
+  if (isGst) {
+    doc.text('* 5% GST on Tour Operator Services (SAC 998553) included in tour tariff', sumLeftX, curY + 4)
+  } else {
+    doc.text('* All inclusive tour tariff (Commercial / Non-GST billing)', sumLeftX, curY + 4)
+  }
   curY += 5
 
   // Grand Total Bar
@@ -531,6 +555,9 @@ export async function generateTaxInvoicePdf(invoice: TaxInvoiceData) {
     } catch (e) {}
   }
 
+  // 7. Watermark drawn across the page so cards/tables do NOT overwrite it
+  drawCenterWatermark(doc, watermarkUrl)
+
   // Stamp / Signatory on Right
   if (invoice.status === 'cancelled' || invoice.status === 'void') {
     doc.saveGraphicsState()
@@ -582,13 +609,13 @@ export async function generatePaymentReceiptPdf(receipt: ReceiptData) {
   const MR = 196
   const CW = MR - ML
 
-  // 1. Watermark & Header
-  drawCenterWatermark(doc, watermarkUrl)
+  // 1. Entity Header
   let curY = drawIndianEntityHeader(
     doc,
     logoUrl,
     'OFFICIAL RECEIPT',
-    'Acknowledgment of Remittance'
+    'Acknowledgment of Remittance',
+    true
   )
 
   // 2. Receipt Particulars Box
@@ -737,6 +764,9 @@ export async function generatePaymentReceiptPdf(receipt: ReceiptData) {
   doc.setTextColor(...DARK_SLATE)
   doc.text('FLYING WONDERS PVT LTD', MR - 27, curY + 14, { align: 'center' })
   doc.text('Finance & Treasury Dept', MR - 27, curY + 18, { align: 'center' })
+
+  // Watermark drawn across the page so cards/tables do NOT overwrite it
+  drawCenterWatermark(doc, watermarkUrl)
 
   // Accreditation Footer
   drawAccreditationFooter(doc, footerAccreditationUrl, 1, 1)
