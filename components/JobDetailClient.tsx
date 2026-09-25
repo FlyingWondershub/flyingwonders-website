@@ -219,7 +219,7 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
     <div style={{ fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', background: '#F8FAFC', minHeight: '100vh', paddingBottom: '4rem' }}>
       {/* ── BREADCRUMB ── */}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0.85rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#64748B' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0.75rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#64748B' }}>
           <Link href="/" style={{ color: '#64748B', textDecoration: 'none' }}>
             Home
           </Link>
@@ -234,9 +234,9 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
         </div>
       </div>
 
-      {/* ── TOP HERO BANNER ── */}
-      <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #4A044E 100%)', color: '#FFFFFF', padding: '3.5rem 1.5rem 3rem 1.5rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      {/* ── TOP HERO BANNER (COMPACT & WIDE) ── */}
+      <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #4A044E 100%)', color: '#FFFFFF', padding: '2rem 1.25rem 1.75rem 1.25rem' }}>
+        <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto' }}>
           <Link
             href="/job-openings"
             style={{
@@ -244,30 +244,30 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
               alignItems: 'center',
               gap: '0.4rem',
               color: '#CBD5E1',
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               fontWeight: 600,
               textDecoration: 'none',
-              marginBottom: '1.25rem',
+              marginBottom: '0.75rem',
               transition: 'color 0.15s',
             }}
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={15} />
             <span>Back to All Openings</span>
           </Link>
 
           {/* Badges */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
-            <span style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.25)', color: '#FFFFFF', padding: '4px 12px', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginBottom: '0.65rem', alignItems: 'center' }}>
+            <span style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.25)', color: '#FFFFFF', padding: '3px 10px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               {job.department}
             </span>
-            <span style={{ background: '#059669', color: '#FFFFFF', padding: '4px 12px', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 700 }}>
+            <span style={{ background: '#059669', color: '#FFFFFF', padding: '3px 10px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 700 }}>
               {job.workplaceType}
             </span>
-            <span style={{ background: 'rgba(255,255,255,0.12)', color: '#CBD5E1', padding: '4px 12px', borderRadius: '9999px', fontSize: '0.78rem', fontWeight: 600 }}>
+            <span style={{ background: 'rgba(255,255,255,0.12)', color: '#CBD5E1', padding: '3px 10px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600 }}>
               {job.employmentType}
             </span>
             {job.urgent && (
-              <span style={{ background: '#EF4444', color: '#FFFFFF', padding: '4px 10px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>
+              <span style={{ background: '#EF4444', color: '#FFFFFF', padding: '3px 10px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 800 }}>
                 ⚡ URGENT HIRING
               </span>
             )}
@@ -277,10 +277,10 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
           <h1
             style={{
               fontFamily: 'var(--font-playfair), serif',
-              fontSize: 'clamp(1.8rem, 3.5vw, 2.75rem)',
+              fontSize: 'clamp(1.75rem, 3.2vw, 2.4rem)',
               fontWeight: 800,
-              lineHeight: 1.25,
-              margin: '0 0 1rem 0',
+              lineHeight: 1.2,
+              margin: '0 0 0.65rem 0',
               color: '#FFFFFF',
             }}
           >
@@ -288,33 +288,33 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
           </h1>
 
           {/* Meta Info Bar */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'center', fontSize: '0.9rem', color: '#CBD5E1' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <MapPin size={16} color="#F59E0B" />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', alignItems: 'center', fontSize: '0.85rem', color: '#CBD5E1' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <MapPin size={15} color="#F59E0B" />
               <span>{job.location}</span>
             </div>
             {job.salaryRange && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <DollarSign size={16} color="#10B981" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <DollarSign size={15} color="#10B981" />
                 <span style={{ fontWeight: 700, color: '#FFFFFF' }}>{job.salaryRange}</span>
               </div>
             )}
             {job.experienceLevel && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Briefcase size={16} color="#A78BFA" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Briefcase size={15} color="#A78BFA" />
                 <span>{job.experienceLevel}</span>
               </div>
             )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Building size={16} color="#60A5FA" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <Building size={15} color="#60A5FA" />
               <span>Flying Wonders Global</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── MAIN CONTENT CONTAINER ── */}
-      <div style={{ maxWidth: '1200px', margin: '-1.5rem auto 0 auto', padding: '0 1.5rem' }}>
+      {/* ── MAIN CONTENT CONTAINER (WIDE) ── */}
+      <div style={{ maxWidth: '1600px', width: '96%', margin: '-1.25rem auto 0 auto', padding: '0 0.5rem' }}>
         {/* SHARE & QUICK ACTIONS BAR */}
         <div
           style={{
@@ -427,7 +427,7 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
         </div>
 
         {/* ── TWO COLUMN LAYOUT ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: '2rem', alignItems: 'flex-start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: '2rem', alignItems: 'flex-start' }}>
           {/* LEFT: JOB DETAILS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {/* Short Description */}

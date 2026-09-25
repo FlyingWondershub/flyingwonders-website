@@ -350,12 +350,12 @@ export default function JobOpeningsClient({
         paddingBottom: '5rem',
       }}
     >
-      {/* ── HERO BANNER ── */}
+      {/* ── HERO BANNER (COMPACT & WIDE) ── */}
       <section
         style={{
           background: 'linear-gradient(135deg, #1A1A1A 0%, #2A0812 60%, #4A0012 100%)',
           color: '#FFFFFF',
-          padding: '4.5rem 1.5rem 3.5rem 1.5rem',
+          padding: '2.5rem 1.25rem 2.25rem 1.25rem',
           position: 'relative',
           overflow: 'hidden',
           borderBottom: '1px solid rgba(197, 168, 128, 0.25)',
@@ -363,7 +363,8 @@ export default function JobOpeningsClient({
       >
         <div
           style={{
-            maxWidth: '1200px',
+            maxWidth: '1600px',
+            width: '96%',
             margin: '0 auto',
             position: 'relative',
             zIndex: 2,
@@ -374,30 +375,30 @@ export default function JobOpeningsClient({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.5rem',
+              gap: '0.4rem',
               background: 'rgba(197, 168, 128, 0.15)',
               border: '1px solid rgba(197, 168, 128, 0.4)',
               color: '#C5A880',
-              padding: '0.4rem 1rem',
+              padding: '0.25rem 0.8rem',
               borderRadius: '9999px',
-              fontSize: '0.8rem',
+              fontSize: '0.72rem',
               fontWeight: 700,
-              letterSpacing: '1.5px',
-              marginBottom: '1.25rem',
+              letterSpacing: '1.2px',
+              marginBottom: '0.75rem',
               textTransform: 'uppercase',
             }}
           >
-            <Sparkles size={14} />
+            <Sparkles size={12} />
             <span>{settings.heroBadge || 'WE ARE HIRING TALENT'}</span>
           </div>
 
           <h1
             style={{
               fontFamily: 'var(--font-playfair), Georgia, serif',
-              fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)',
+              fontSize: 'clamp(1.75rem, 3.2vw, 2.45rem)',
               fontWeight: 700,
-              lineHeight: 1.15,
-              marginBottom: '1.25rem',
+              lineHeight: 1.2,
+              marginBottom: '0.5rem',
               color: '#FFFFFF',
             }}
           >
@@ -406,87 +407,54 @@ export default function JobOpeningsClient({
 
           <p
             style={{
-              fontSize: 'clamp(1rem, 2vw, 1.2rem)',
+              fontSize: 'clamp(0.9rem, 1.3vw, 1.02rem)',
               color: '#CBD5E1',
-              maxWidth: '780px',
-              margin: '0 auto 2.5rem auto',
-              lineHeight: 1.6,
+              maxWidth: '820px',
+              margin: '0 auto 1.25rem auto',
+              lineHeight: 1.5,
             }}
           >
             {settings.heroSubtitle ||
               'Join our passionate team delivering extraordinary journeys across Singapore, Southeast Asia, and worldwide. Explore open roles or submit your profile to our talent network.'}
           </p>
 
-          {/* Quick Pillars */}
+          {/* Compact Pillars */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1rem',
-              maxWidth: '920px',
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: '0.55rem',
+              maxWidth: '1100px',
               margin: '0 auto',
             }}
           >
             {[
-              {
-                icon: Globe2,
-                title: 'Global Footprint',
-                desc: 'Singapore HQ & International Hubs',
-              },
-              {
-                icon: Compass,
-                title: 'High Innovation',
-                desc: 'Fast-moving travel technology & FIT quoter',
-              },
-              {
-                icon: Award,
-                title: 'Merit-Driven Growth',
-                desc: 'Continuous mentorship & leadership paths',
-              },
-              {
-                icon: Users,
-                title: 'Inclusive Culture',
-                desc: 'Collaborative, supportive, customer-obsessed',
-              },
+              { icon: Globe2, label: 'Singapore HQ & Global Hubs' },
+              { icon: Compass, label: 'Travel Tech & Quoter Innovation' },
+              { icon: Award, label: 'Merit-Driven Growth & Mentorship' },
+              { icon: Users, label: 'Collaborative Customer-Obsessed Culture' },
             ].map((pillar, idx) => {
               const Icon = pillar.icon
               return (
                 <div
                   key={idx}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    backdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '12px',
-                    padding: '1rem',
-                    textAlign: 'left',
-                    display: 'flex',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    backdropFilter: 'blur(6px)',
+                    border: '1px solid rgba(255, 255, 255, 0.14)',
+                    borderRadius: '9999px',
+                    padding: '0.35rem 0.85rem',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '0.85rem',
+                    gap: '0.45rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    color: '#E2E8F0',
                   }}
                 >
-                  <div
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '10px',
-                      background: 'rgba(184, 58, 75, 0.25)',
-                      border: '1px solid rgba(184, 58, 75, 0.5)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#F87171',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Icon size={20} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#FFFFFF' }}>
-                      {pillar.title}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{pillar.desc}</div>
-                  </div>
+                  <Icon size={14} color="#F87171" />
+                  <span>{pillar.label}</span>
                 </div>
               )
             })}
@@ -497,9 +465,10 @@ export default function JobOpeningsClient({
       {/* ── SEARCH & FILTER CONTROLS ── */}
       <section
         style={{
-          maxWidth: '1200px',
-          margin: '-1.5rem auto 2.5rem auto',
-          padding: '0 1.25rem',
+          maxWidth: '1600px',
+          width: '96%',
+          margin: '-1.25rem auto 2rem auto',
+          padding: '0 0.5rem',
           position: 'relative',
           zIndex: 10,
         }}
@@ -668,7 +637,7 @@ export default function JobOpeningsClient({
       </section>
 
       {/* ── JOB LISTINGS CONTAINER ── */}
-      <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.25rem' }}>
+      <section style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem' }}>
         {/* Counter & status */}
         <div
           style={{
@@ -1102,7 +1071,7 @@ export default function JobOpeningsClient({
             boxShadow: '0 12px 30px rgba(15, 76, 58, 0.2)',
           }}
         >
-          <div style={{ maxWidth: '650px' }}>
+          <div style={{ maxWidth: '750px' }}>
             <div
               style={{
                 display: 'inline-flex',
@@ -1140,9 +1109,10 @@ export default function JobOpeningsClient({
 
           <button
             onClick={() => openApplyModal()}
+            className="btn-talent-network"
             style={{
               background: '#FFFFFF',
-              color: '#0F4C3A',
+              color: '#064E3B',
               border: 'none',
               padding: '0.9rem 1.8rem',
               borderRadius: '10px',
@@ -1153,10 +1123,11 @@ export default function JobOpeningsClient({
               alignItems: 'center',
               gap: '0.5rem',
               boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+              flexShrink: 0,
             }}
           >
-            <span>Join Our Talent Network</span>
-            <ArrowRight size={17} />
+            <span style={{ color: '#064E3B', fontWeight: 800 }}>Join Our Talent Network</span>
+            <ArrowRight size={17} color="#064E3B" style={{ color: '#064E3B', stroke: '#064E3B' }} />
           </button>
         </div>
       </section>

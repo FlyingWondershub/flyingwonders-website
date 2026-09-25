@@ -176,21 +176,33 @@ html, body {
 }
 
 /* ── PRESERVE EXPLICIT BUTTON & BADGE COLORS IN ALL MODES ── */
-/* WhatsApp CTA Buttons */
-a[style*="#25D366"], button[style*="#25D366"],
+/* WhatsApp CTA Buttons (background only) */
 a[style*="background: #25D366"], button[style*="background: #25D366"],
 a[style*="background:#25D366"], button[style*="background:#25D366"],
-a[style*="rgb(37, 211, 102)"], button[style*="rgb(37, 211, 102)"] {
+a[style*="background-color: #25D366"], button[style*="background-color: #25D366"],
+a[style*="background-color:#25D366"], button[style*="background-color:#25D366"] {
   color: #FFFFFF !important;
 }
 
-/* Brand Emerald & Crimson Primary CTA Buttons */
-a[style*="#0F4C3A"], button[style*="#0F4C3A"],
+/* Brand Emerald & Crimson Primary CTA Buttons (background only) */
 a[style*="background: #0F4C3A"], button[style*="background: #0F4C3A"],
-a[style*="#B83A4B"], button[style*="#B83A4B"],
+a[style*="background:#0F4C3A"], button[style*="background:#0F4C3A"],
+a[style*="background-color: #0F4C3A"], button[style*="background-color: #0F4C3A"],
+a[style*="background-color:#0F4C3A"], button[style*="background-color:#0F4C3A"],
 a[style*="background: #B83A4B"], button[style*="background: #B83A4B"],
+a[style*="background:#B83A4B"], button[style*="background:#B83A4B"],
+a[style*="background-color: #B83A4B"], button[style*="background-color: #B83A4B"],
+a[style*="background-color:#B83A4B"], button[style*="background-color:#B83A4B"],
 .btn-primary {
   color: #FFFFFF !important;
+}
+
+/* Talent Network & High-Contrast Light Buttons */
+.btn-talent-network,
+.btn-talent-network span,
+.btn-talent-network svg {
+  color: #064E3B !important;
+  stroke: #064E3B !important;
 }
 
 /* Gold Pill Badges & Accents */
