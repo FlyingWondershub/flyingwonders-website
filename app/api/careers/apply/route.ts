@@ -5,11 +5,16 @@ import { sendJobApplicationNotifications } from '../../../../lib/careerEmails'
 
 export const dynamic = 'force-dynamic'
 
+const SANITY_WRITE_TOKEN =
+  process.env.SANITY_WRITE_TOKEN ||
+  process.env.SANITY_API_TOKEN ||
+  'skegr4avUyqv60TM1rUCm9mPbXk0m5wWcxR44bVrXecXgwdZvEXegMY4E0VpO2EzIKIRS1fnFr45uId3IFelJHHOOTVVwIwGokzEUWtbq6wn5PImpViik4tnD6zK71XSQ7piTgCjS7nj9xPjTSBvX3C7grfGPWvlqrSmTOWFK0cIEPp1okJG'
+
 const writeClient = createClient({
   apiVersion,
   dataset,
   projectId,
-  token: process.env.SANITY_WRITE_TOKEN,
+  token: SANITY_WRITE_TOKEN,
   useCdn: false,
 })
 

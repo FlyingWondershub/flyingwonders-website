@@ -421,7 +421,7 @@ export default function JobOpeningsManager() {
       return
     }
     try {
-      const res = await fetch(`/api/careers/jobs?id=${jobId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/careers/jobs?id=${encodeURIComponent(jobId)}`, { method: 'DELETE' })
       const data = await res.json()
       if (data.success) {
         showNotification('Job opening removed')
@@ -446,6 +446,8 @@ export default function JobOpeningsManager() {
       if (data.success) {
         showNotification(`Job marked as ${nextStatus.toUpperCase()}`)
         fetchJobs()
+      } else {
+        showNotification(data.error || 'Failed to update job status', true)
       }
     } catch (e: any) {
       showNotification(e.message, true)

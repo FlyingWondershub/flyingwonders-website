@@ -2,20 +2,37 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 
+const SANITY_WRITE_TOKEN =
+  process.env.SANITY_WRITE_TOKEN ||
+  process.env.SANITY_API_TOKEN ||
+  'skegr4avUyqv60TM1rUCm9mPbXk0m5wWcxR44bVrXecXgwdZvEXegMY4E0VpO2EzIKIRS1fnFr45uId3IFelJHHOOTVVwIwGokzEUWtbq6wn5PImpViik4tnD6zK71XSQ7piTgCjS7nj9xPjTSBvX3C7grfGPWvlqrSmTOWFK0cIEPp1okJG'
+
 const writeClient = createClient({
   apiVersion,
   dataset,
   projectId,
-  token: process.env.SANITY_WRITE_TOKEN,
+  token: SANITY_WRITE_TOKEN,
   useCdn: false,
 })
 
-// Sample fallback jobs if database is fresh
+export const LEGACY_ID_MAP: Record<string, string> = {
+  'sample-job-1': 'job-senior-tour-operations-executive',
+  'sample-job-2': 'job-b2b-travel-sales-account-manager',
+  'sample-job-3': 'job-full-stack-web-developer',
+  'sample-job-4': 'job-guest-experience-ticketing-specialist',
+}
+
+export function normalizeJobId(id: string): string {
+  return LEGACY_ID_MAP[id] || id
+}
+
+// Sample fallback jobs with permanent Sanity IDs
 const SAMPLE_JOBS = [
   {
-    _id: 'sample-job-1',
+    _id: 'job-senior-tour-operations-executive',
+    _type: 'jobOpening',
     title: 'Senior Tour Operations Executive (Singapore & B2B)',
-    slug: { current: 'senior-tour-operations-executive-singapore' },
+    slug: { _type: 'slug', current: 'senior-tour-operations-executive-singapore' },
     department: 'Operations & Tour Logistics',
     location: 'Singapore (HQ) / Hybrid',
     workplaceType: 'Hybrid',
@@ -47,9 +64,10 @@ const SAMPLE_JOBS = [
     publishedAt: new Date().toISOString(),
   },
   {
-    _id: 'sample-job-2',
+    _id: 'job-b2b-travel-sales-account-manager',
+    _type: 'jobOpening',
     title: 'B2B Travel Sales & Account Manager (India & SEA Market)',
-    slug: { current: 'b2b-travel-sales-account-manager' },
+    slug: { _type: 'slug', current: 'b2b-travel-sales-account-manager' },
     department: 'Sales & Business Development',
     location: 'Bangalore, India / Remote',
     workplaceType: 'Remote',
@@ -81,9 +99,10 @@ const SAMPLE_JOBS = [
     publishedAt: new Date().toISOString(),
   },
   {
-    _id: 'sample-job-3',
+    _id: 'job-full-stack-web-developer',
+    _type: 'jobOpening',
     title: 'Full Stack Web Developer (Next.js, TypeScript & React)',
-    slug: { current: 'full-stack-web-developer-nextjs' },
+    slug: { _type: 'slug', current: 'full-stack-web-developer-nextjs' },
     department: 'Software Engineering & Tech',
     location: 'Remote (Worldwide)',
     workplaceType: 'Remote',
@@ -115,9 +134,10 @@ const SAMPLE_JOBS = [
     publishedAt: new Date().toISOString(),
   },
   {
-    _id: 'sample-job-4',
+    _id: 'job-guest-experience-ticketing-specialist',
+    _type: 'jobOpening',
     title: 'Guest Experience & Ticketing Specialist',
-    slug: { current: 'guest-experience-ticketing-specialist' },
+    slug: { _type: 'slug', current: 'guest-experience-ticketing-specialist' },
     department: 'Customer Experience & Concierge',
     location: 'Singapore / Hybrid',
     workplaceType: 'Hybrid',
@@ -174,14 +194,34 @@ export async function GET(req: NextRequest) {
     groqQuery += ` | order(urgent desc, featured desc, order asc, _createdAt desc)`
 
     let jobs: any[] = []
+    let fetchSucceeded = false
     try {
       jobs = await writeClient.fetch(groqQuery, { department })
+      fetchSucceeded = true
     } catch (sanityErr: any) {
       console.warn('Sanity job fetch failed, returning sample jobs fallback:', sanityErr.message)
     }
 
-    // If no jobs exist in Sanity yet, return sample jobs so the page is immediately engaging
-    if (!jobs || jobs.length === 0) {
+    // If no jobs exist in Sanity yet, auto-seed them into Sanity so they are real permanent documents
+    if (fetchSucceeded && (!jobs || jobs.length === 0)) {
+      try {
+        await Promise.all(
+          SAMPLE_JOBS.map((job) =>
+            writeClient.createIfNotExists(job).catch((err) => console.warn('Auto-seed error:', err.message))
+          )
+        )
+        // Re-fetch from Sanity after auto-seeding
+        const reFetched = await writeClient.fetch(groqQuery, { department }).catch(() => null)
+        if (reFetched && reFetched.length > 0) {
+          jobs = reFetched
+        } else {
+          jobs = SAMPLE_JOBS
+        }
+      } catch (seedErr: any) {
+        console.warn('Failed to auto-seed to Sanity:', seedErr.message)
+        jobs = SAMPLE_JOBS
+      }
+    } else if (!fetchSucceeded && (!jobs || jobs.length === 0)) {
       if (scope === 'public') {
         jobs = SAMPLE_JOBS.filter(
           (j) => !department || department === 'All' || j.department === department
@@ -297,13 +337,48 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json()
-    const { id, ...updates } = body
+    let { id, ...updates } = body
 
     if (!id) {
       return NextResponse.json(
         { success: false, error: 'Job Opening ID is required.' },
         { status: 400 }
       )
+    }
+
+    // Normalize legacy sample-job-X IDs to real Sanity document IDs
+    id = normalizeJobId(id)
+
+    // Ensure the document exists in Sanity before patching to avoid 404
+    const existing = await writeClient.getDocument(id).catch(() => null)
+    if (!existing) {
+      const sample = SAMPLE_JOBS.find((j) => j._id === id || normalizeJobId(j._id) === id)
+      const baseDoc: any = sample
+        ? { ...sample }
+        : {
+            _id: id,
+            _type: 'jobOpening',
+            title: updates.title || 'Job Opening',
+            slug: {
+              _type: 'slug',
+              current: (updates.title || 'job-opening')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)+/g, ''),
+            },
+            department: updates.department || 'Operations & Tour Logistics',
+            location: updates.location || 'Singapore (HQ) / Hybrid',
+            workplaceType: updates.workplaceType || 'Hybrid',
+            employmentType: updates.employmentType || 'Full-time',
+            shortDescription: updates.shortDescription || 'Role description',
+            status: updates.status || 'active',
+            publishedAt: new Date().toISOString(),
+          }
+      await writeClient.createIfNotExists({
+        ...baseDoc,
+        _id: id,
+        _type: 'jobOpening',
+      })
     }
 
     // Clean payload for Sanity patch
@@ -358,16 +433,25 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const id = searchParams.get('id')
+    const rawId = searchParams.get('id')
 
-    if (!id) {
+    if (!rawId) {
       return NextResponse.json(
         { success: false, error: 'Job ID is required.' },
         { status: 400 }
       )
     }
 
-    await writeClient.delete(id)
+    const targetId = normalizeJobId(rawId)
+
+    // Delete the target Sanity document
+    await writeClient.delete(targetId)
+
+    // If rawId was a legacy ID (e.g. sample-job-1), also delete rawId if it existed
+    if (rawId !== targetId) {
+      await writeClient.delete(rawId).catch(() => null)
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Job opening removed successfully!',

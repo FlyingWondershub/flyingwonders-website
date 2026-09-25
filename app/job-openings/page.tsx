@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 // Initial fallback sample jobs if Sanity has not been seeded yet
 const DEFAULT_JOBS = [
   {
-    _id: 'sample-job-1',
+    _id: 'job-senior-tour-operations-executive',
     title: 'Senior Tour Operations Executive (Singapore & B2B)',
     slug: { current: 'senior-tour-operations-executive-singapore' },
     department: 'Operations & Tour Logistics',
@@ -70,7 +70,7 @@ const DEFAULT_JOBS = [
     publishedAt: new Date().toISOString(),
   },
   {
-    _id: 'sample-job-2',
+    _id: 'job-b2b-travel-sales-account-manager',
     title: 'B2B Travel Sales & Account Manager (India & SEA Market)',
     slug: { current: 'b2b-travel-sales-account-manager' },
     department: 'Sales & Business Development',
@@ -105,7 +105,7 @@ const DEFAULT_JOBS = [
     publishedAt: new Date().toISOString(),
   },
   {
-    _id: 'sample-job-3',
+    _id: 'job-full-stack-web-developer',
     title: 'Full Stack Web Developer (Next.js, TypeScript & React)',
     slug: { current: 'full-stack-web-developer-nextjs' },
     department: 'Software Engineering & Tech',
@@ -140,7 +140,7 @@ const DEFAULT_JOBS = [
     publishedAt: new Date().toISOString(),
   },
   {
-    _id: 'sample-job-4',
+    _id: 'job-guest-experience-ticketing-specialist',
     title: 'Guest Experience & Ticketing Specialist',
     slug: { current: 'guest-experience-ticketing-specialist' },
     department: 'Customer Experience & Concierge',
@@ -183,8 +183,9 @@ export default async function JobOpeningsPage() {
     useCdn: false,
   })
 
-  let jobs = DEFAULT_JOBS
+  let jobs: any[] = []
   let settings: any = {}
+  let fetchSucceeded = false
 
   try {
     const [fetchedJobs, fetchedSettings] = await Promise.all([
@@ -194,14 +195,17 @@ export default async function JobOpeningsPage() {
       sanityClient.fetch(`*[_type == "jobSettings"][0]`),
     ])
 
-    if (fetchedJobs && fetchedJobs.length > 0) {
-      jobs = fetchedJobs
-    }
+    fetchSucceeded = true
+    jobs = fetchedJobs || []
     if (fetchedSettings) {
       settings = fetchedSettings
     }
   } catch (err: any) {
     console.warn('Failed to pre-fetch jobs from Sanity, using default positions:', err.message)
+  }
+
+  if (!fetchSucceeded) {
+    jobs = DEFAULT_JOBS
   }
 
   return <JobOpeningsClient initialJobs={jobs} initialSettings={settings} />

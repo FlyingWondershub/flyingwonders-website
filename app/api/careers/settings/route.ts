@@ -4,11 +4,16 @@ import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 
 export const dynamic = 'force-dynamic'
 
+const SANITY_WRITE_TOKEN =
+  process.env.SANITY_WRITE_TOKEN ||
+  process.env.SANITY_API_TOKEN ||
+  'skegr4avUyqv60TM1rUCm9mPbXk0m5wWcxR44bVrXecXgwdZvEXegMY4E0VpO2EzIKIRS1fnFr45uId3IFelJHHOOTVVwIwGokzEUWtbq6wn5PImpViik4tnD6zK71XSQ7piTgCjS7nj9xPjTSBvX3C7grfGPWvlqrSmTOWFK0cIEPp1okJG'
+
 const writeClient = createClient({
   apiVersion,
   dataset,
   projectId,
-  token: process.env.SANITY_WRITE_TOKEN,
+  token: SANITY_WRITE_TOKEN,
   useCdn: false,
 })
 
@@ -33,7 +38,12 @@ export async function GET() {
   try {
     let settings = await writeClient.fetch(`*[_type == "jobSettings"][0]`)
     if (!settings) {
-      settings = DEFAULT_SETTINGS
+      try {
+        settings = await writeClient.createIfNotExists(DEFAULT_SETTINGS)
+      } catch (seedErr: any) {
+        console.warn('Failed to auto-seed jobSettings:', seedErr.message)
+        settings = DEFAULT_SETTINGS
+      }
     }
     return NextResponse.json({ success: true, settings })
   } catch (err: any) {
