@@ -8,12 +8,14 @@ import {
   Calendar, Eye, Filter, ChevronLeft, ChevronRight, AlertCircle, Clock,
   ChevronDown, ChevronUp, CalendarCheck, CheckCheck, LayoutDashboard, Database,
   ArrowRight, ShieldCheck, CreditCard, Menu, PanelLeftClose, PanelLeftOpen, Megaphone,
-  Wrench, Globe, ShoppingBag, FileSpreadsheet, Building2, Printer, Share2, Plus, Search, Mail
+  Wrench, Globe, ShoppingBag, FileSpreadsheet, Building2, Printer, Share2, Plus, Search, Mail,
+  Briefcase
 } from 'lucide-react'
 import GroupHotelVoucherModal from '../../components/GroupHotelVoucherModal'
 import { generateMasterGroupVoucherPdf, generateAllVisaVouchersPdf, generateSingleRoomVisaPdf } from '../../utils/hotelVoucherPdf'
 import NewsletterCampaignManager from '../../components/admin/NewsletterCampaignManager'
 import MarketingLeadsManager from '../../components/admin/MarketingLeadsManager'
+import JobOpeningsManager from '../../components/admin/JobOpeningsManager'
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
@@ -56,6 +58,7 @@ export default function AdminDashboard() {
     'section-approvals',
     'section-newsletters',
     'section-leads-directory',
+    'section-job-openings',
     'section-sitemap',
     'section-accounts',
     'section-payments',
@@ -539,6 +542,7 @@ export default function AdminDashboard() {
     { id: 'section-packages', label: 'Packages & Calendar', icon: Package, badge: totalPackages },
     { id: 'section-newsletters', label: 'Email Campaigns & Templates', icon: Mail },
     { id: 'section-leads-directory', label: 'Leads Directory & Outreach', icon: Users },
+    { id: 'section-job-openings', label: 'Careers & Job Openings', icon: Briefcase },
     { id: 'section-hotel-vouchers', label: 'Hotel Vouchers (Visa)', icon: Building2, badge: hotelVouchers.length },
     { id: 'section-approvals', label: 'Pending Approvals', icon: Clock, badge: pendingApprovalsCount },
     { id: 'section-accounts', label: 'Accounts & Ledger', icon: DollarSign },
@@ -1932,6 +1936,58 @@ export default function AdminDashboard() {
           )}
         </div>
 
+        {/* ── SECTION: CAREERS & JOB OPENINGS (LISTINGS, CANDIDATES & SETTINGS) ── */}
+        <div id="section-job-openings" style={{ background: '#FFF', borderRadius: '16px', padding: isSectionExpanded('section-job-openings') ? '1.75rem' : '1rem 1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '1.5rem', border: '1px solid #EDF2F7', transition: 'all 0.2s ease' }}>
+          <div 
+            onClick={() => toggleSection('section-job-openings')}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: isSectionExpanded('section-job-openings') ? '1px solid #E2E8F0' : 'none', paddingBottom: isSectionExpanded('section-job-openings') ? '1rem' : 0, marginBottom: isSectionExpanded('section-job-openings') ? '1.25rem' : 0 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#FEF2F2', border: '1px solid #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#800020' }}>
+                <Briefcase size={18} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', color: '#1A202C', margin: 0, fontFamily: 'var(--font-playfair), serif', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  Careers & Job Openings
+                </h2>
+                <div style={{ fontSize: '0.78rem', color: '#718096', marginTop: '0.1rem', fontFamily: 'var(--font-inter), sans-serif' }}>
+                  Create job postings, review candidate resumes, and manage auto-acknowledgement emails
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleSection('section-job-openings')
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.4rem 0.8rem',
+                borderRadius: '8px',
+                background: isSectionExpanded('section-job-openings') ? '#F1F5F9' : '#ECFDF5',
+                color: isSectionExpanded('section-job-openings') ? '#475569' : '#047857',
+                border: `1px solid ${isSectionExpanded('section-job-openings') ? '#CBD5E1' : '#A7F3D0'}`,
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+              title={isSectionExpanded('section-job-openings') ? "Collapse section" : "Expand section"}
+            >
+              {isSectionExpanded('section-job-openings') ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+              <span>{isSectionExpanded('section-job-openings') ? 'Collapse' : 'Expand'}</span>
+            </button>
+          </div>
+
+          {isSectionExpanded('section-job-openings') && (
+            <div style={{ marginTop: '0.5rem' }}>
+              <JobOpeningsManager />
+            </div>
+          )}
+        </div>
+
         {/* ── SECTION 3: SITE MAP & QUICK LINKS MATRIX ── */}
         <div id="section-sitemap" style={{ background: '#FFF', borderRadius: '16px', padding: isSectionExpanded('section-sitemap') ? '1.75rem' : '1rem 1.5rem', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '1.5rem', border: '1px solid #EDF2F7', transition: 'all 0.2s ease' }}>
 
@@ -2025,6 +2081,8 @@ export default function AdminDashboard() {
                   { name: 'Group Hotel Voucher Hub', path: '/admin-dashboard#section-hotel-vouchers', desc: 'Generate & manage Visa-compliant group hotel confirmation vouchers' },
                   { name: 'Live Voucher Verification Portal', path: '/verify-voucher', desc: 'Official Embassy & Border Control accommodation authentication gateway' },
                   { name: 'Card Scanner / Contact Ingest', path: '/add-contact', desc: 'Optical card reader & contact save' },
+                  { name: 'Careers & Job Openings (Public)', path: '/job-openings', desc: 'Job listings, candidate applications, profile uploads & talent network' },
+                  { name: 'Careers & Talent Admin Hub', path: '/admin-dashboard#section-job-openings', desc: 'Create job postings, review applications & customize auto-acknowledgement emails' },
                   { name: 'Passport Scanner & Air Ticketing Tool', path: '/travel-tools/scanner', desc: 'In-browser MRZ scanner, GDS fast-copy & 6-mo validity checker' },
                   { name: 'Competitor Price Tracker', path: '/api/admin/price-tracker', desc: 'Real-time JSON market price tracker' },
                 ].map(link => (

@@ -61,6 +61,11 @@ const HANDLED_SCHEMAS = new Set([
   'travelTools',
   'shoppingMall',
 
+  // Careers & Talent Network
+  'jobOpening',
+  'jobApplication',
+  'jobSettings',
+
   // Global Settings & Administration
   'siteSettings',
   'globalContact',
@@ -225,6 +230,28 @@ export const structure: StructureResolver = (S) =>
               S.documentTypeListItem('attractionsUser').title('👥 Registered Guest Accounts'),
               S.documentTypeListItem('travelTools').title('🧰 Travel Utility Tools'),
               S.documentTypeListItem('shoppingMall').title('🛍️ Shopping Malls & Retail Hubs'),
+            ])
+        ),
+
+      S.divider(),
+
+      // ─────────────────────────────────────────────────────────────
+      // 7. CAREERS & TALENT NETWORK
+      // ─────────────────────────────────────────────────────────────
+      S.listItem()
+        .title('Careers & Job Openings')
+        .icon(() => '💼')
+        .child(
+          S.list()
+            .title('Careers & Hiring Operations')
+            .items([
+              S.documentTypeListItem('jobOpening').title('💼 Job Openings & Roles'),
+              S.documentTypeListItem('jobApplication').title('📝 Candidate Applications & Resumes'),
+              S.divider(),
+              S.listItem()
+                .title('⚙️ Careers & Email Settings')
+                .icon(() => '⚙️')
+                .child(S.document().schemaType('jobSettings').documentId('jobSettings')),
             ])
         ),
 

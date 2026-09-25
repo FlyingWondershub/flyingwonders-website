@@ -72,7 +72,8 @@ export default function LayoutWrapper({
     pathname === '/sgac' ||
     pathname === '/mdac' ||
     pathname === '/air-suvidha' ||
-    pathname === '/ready-made'
+    pathname === '/ready-made' ||
+    pathname?.startsWith('/job-openings')
   
   const [subEmail, setSubEmail] = useState('')
   const [subStatus, setSubStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')

@@ -57,9 +57,15 @@ import { b2bLeadAuditLogSchema } from './b2bLeadAuditLog'
 import { hotelVoucherSchema } from './hotelVoucher'
 import { marketingLeadSchema } from './marketingLead'
 import { shoppingMallSchema } from './shoppingMall'
+import { jobOpeningSchema } from './jobOpening'
+import { jobApplicationSchema } from './jobApplication'
+import { jobSettingsSchema } from './jobSettings'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
+    jobOpeningSchema,
+    jobApplicationSchema,
+    jobSettingsSchema,
     marketingLeadSchema,
     packageSchema,
     reviewSchema,
