@@ -22,6 +22,7 @@ import {
   Globe2,
   Share2,
   Check,
+  Star,
   AlertCircle,
   HelpCircle,
   ArrowRight,
@@ -256,11 +257,25 @@ export default function JobOpeningsClient({
     }
   }
 
-  const handleShareJob = (job: JobOpening, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleShareJob = async (job: JobOpening, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
     const slug = job.slug?.current || job._id
-    const url = `${window.location.origin}/job-openings/${slug}`
-    if (navigator.clipboard) {
+    const url = typeof window !== 'undefined'
+      ? `${window.location.origin}/job-openings/${slug}`
+      : `https://www.flyingwonders.net/job-openings/${slug}`
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `${job.title} | Flying Wonders Careers`,
+          text: `Explore this career opportunity at Flying Wonders: ${job.title} (${job.location})`,
+          url: url,
+        })
+        return
+      } catch (err) {
+        // User cancelled or share not completed, fallback to clipboard
+      }
+    }
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(url)
       setCopiedJobId(job._id)
       setTimeout(() => setCopiedJobId(null), 2500)
@@ -1135,54 +1150,32 @@ export default function JobOpeningsClient({
       {/* ── JOB DETAILS MODAL / DRAWER ── */}
       {activeJobDetail && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.75)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1.25rem',
-          }}
+          className="job-modal-overlay"
           onClick={() => setActiveJobDetail(null)}
         >
           <div
-            style={{
-              background: '#FFFFFF',
-              width: '100%',
-              maxWidth: '750px',
-              maxHeight: '90vh',
-              borderRadius: '20px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }}
+            className="job-modal-container"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Mobile Sheet Handle Bar */}
+            <div className="job-modal-handle">
+              <div className="job-modal-handle-bar" />
+            </div>
+
             {/* Modal Header */}
-            <div
-              style={{
-                padding: '1.5rem 1.75rem',
-                borderBottom: '1px solid #E2E8F0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                background: '#F8FAFC',
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.4rem' }}>
+            <div className="job-modal-header">
+              <div style={{ flex: 1, minWidth: 0, paddingRight: '0.75rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.45rem', alignItems: 'center' }}>
                   <span
                     style={{
                       background: '#800020',
                       color: '#FFFFFF',
                       fontSize: '0.72rem',
                       fontWeight: 700,
-                      padding: '2px 8px',
+                      padding: '3px 9px',
                       borderRadius: '6px',
+                      letterSpacing: '0.3px',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {activeJobDetail.department}
@@ -1190,54 +1183,87 @@ export default function JobOpeningsClient({
                   <span
                     style={{
                       background: '#E2E8F0',
-                      color: '#334155',
+                      color: '#1E293B',
                       fontSize: '0.72rem',
                       fontWeight: 700,
-                      padding: '2px 8px',
+                      padding: '3px 9px',
                       borderRadius: '6px',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {activeJobDetail.workplaceType}
                   </span>
+                  {activeJobDetail.employmentType && (
+                    <span
+                      style={{
+                        background: '#FEF3C7',
+                        color: '#92400E',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '3px 9px',
+                        borderRadius: '6px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      ⏱️ {activeJobDetail.employmentType}
+                    </span>
+                  )}
                 </div>
+
                 <h3
                   style={{
-                    fontSize: '1.4rem',
+                    fontSize: '1.35rem',
                     fontWeight: 700,
                     color: '#0F172A',
                     margin: 0,
+                    lineHeight: 1.3,
+                    wordBreak: 'break-word',
                   }}
                 >
                   {activeJobDetail.title}
                 </h3>
+
                 <div
                   style={{
                     display: 'flex',
-                    gap: '1rem',
-                    fontSize: '0.85rem',
-                    color: '#64748B',
-                    marginTop: '0.35rem',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: '0.4rem 0.85rem',
+                    fontSize: '0.84rem',
+                    color: '#475569',
+                    marginTop: '0.45rem',
+                    fontWeight: 500,
                   }}
                 >
-                  <span>📍 {activeJobDetail.location}</span>
-                  {activeJobDetail.salaryRange && <span>💰 {activeJobDetail.salaryRange}</span>}
-                  {activeJobDetail.employmentType && <span>⏱️ {activeJobDetail.employmentType}</span>}
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <MapPin size={14} color="#800020" style={{ flexShrink: 0 }} />
+                    <span>{activeJobDetail.location}</span>
+                  </span>
+                  {activeJobDetail.salaryRange && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#065F46', fontWeight: 600 }}>
+                      <span>💰</span>
+                      <span>{activeJobDetail.salaryRange}</span>
+                    </span>
+                  )}
                 </div>
               </div>
 
               <button
                 onClick={() => setActiveJobDetail(null)}
+                aria-label="Close Job Details"
                 style={{
                   background: '#EDF2F7',
                   border: 'none',
                   borderRadius: '50%',
-                  width: '34px',
-                  height: '34px',
+                  width: '36px',
+                  height: '36px',
+                  minWidth: '36px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
                   color: '#475569',
+                  flexShrink: 0,
                 }}
               >
                 <X size={18} />
@@ -1245,115 +1271,249 @@ export default function JobOpeningsClient({
             </div>
 
             {/* Modal Body */}
-            <div
-              style={{
-                padding: '1.75rem',
-                overflowY: 'auto',
-                fontSize: '0.92rem',
-                color: '#334155',
-                lineHeight: 1.65,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.5rem',
-              }}
-            >
-              <div>
-                <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.4rem' }}>
-                  About the Role
+            <div className="job-modal-body">
+              {/* About the Role */}
+              <div
+                style={{
+                  background: '#F8FAFC',
+                  padding: '1.1rem 1.25rem',
+                  borderRadius: '12px',
+                  border: '1px solid #E2E8F0',
+                }}
+              >
+                <h4
+                  style={{
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    color: '#0F172A',
+                    marginBottom: '0.35rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  <span>About the Role</span>
                 </h4>
-                <p style={{ margin: 0 }}>{activeJobDetail.shortDescription}</p>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: '#334155', lineHeight: 1.65 }}>
+                  {activeJobDetail.shortDescription}
+                </p>
               </div>
 
+              {/* Responsibilities */}
               {activeJobDetail.responsibilities && activeJobDetail.responsibilities.length > 0 && (
                 <div>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.5rem' }}>
-                    What You&apos;ll Do (Key Responsibilities)
+                  <h4
+                    style={{
+                      fontSize: '1rem',
+                      fontWeight: 700,
+                      color: '#0F172A',
+                      marginBottom: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                    }}
+                  >
+                    <Check size={18} color="#059669" style={{ flexShrink: 0 }} />
+                    <span>What You&apos;ll Do (Key Responsibilities)</span>
                   </h4>
-                  <ul style={{ margin: 0, paddingLeft: '1.3rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                     {activeJobDetail.responsibilities.map((item, idx) => (
-                      <li key={idx} style={{ marginBottom: '0.4rem' }}>
-                        {item}
-                      </li>
+                      <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            background: '#800020',
+                            marginTop: '0.55rem',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span style={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.55 }}>
+                          {item}
+                        </span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
 
+              {/* Requirements */}
               {activeJobDetail.requirements && activeJobDetail.requirements.length > 0 && (
                 <div>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.5rem' }}>
-                    What We&apos;re Looking For (Qualifications)
+                  <h4
+                    style={{
+                      fontSize: '1rem',
+                      fontWeight: 700,
+                      color: '#0F172A',
+                      marginBottom: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                    }}
+                  >
+                    <Star size={18} color="#D97706" style={{ flexShrink: 0 }} />
+                    <span>What We&apos;re Looking For (Qualifications)</span>
                   </h4>
-                  <ul style={{ margin: 0, paddingLeft: '1.3rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                     {activeJobDetail.requirements.map((item, idx) => (
-                      <li key={idx} style={{ marginBottom: '0.4rem' }}>
-                        {item}
-                      </li>
+                      <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            background: '#D97706',
+                            marginTop: '0.55rem',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span style={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.55 }}>
+                          {item}
+                        </span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
 
+              {/* Benefits */}
               {activeJobDetail.benefits && activeJobDetail.benefits.length > 0 && (
                 <div>
-                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', marginBottom: '0.5rem' }}>
-                    What We Offer (Perks & Benefits)
+                  <h4
+                    style={{
+                      fontSize: '1rem',
+                      fontWeight: 700,
+                      color: '#0F172A',
+                      marginBottom: '0.75rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.45rem',
+                    }}
+                  >
+                    <Sparkles size={18} color="#800020" style={{ flexShrink: 0 }} />
+                    <span>What We Offer (Perks & Benefits)</span>
                   </h4>
-                  <ul style={{ margin: 0, paddingLeft: '1.3rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                     {activeJobDetail.benefits.map((item, idx) => (
-                      <li key={idx} style={{ marginBottom: '0.4rem' }}>
-                        {item}
-                      </li>
+                      <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem' }}>
+                        <div
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            background: '#059669',
+                            marginTop: '0.55rem',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span style={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.55 }}>
+                          {item}
+                        </span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
             </div>
 
             {/* Modal Footer */}
-            <div
-              style={{
-                padding: '1.25rem 1.75rem',
-                borderTop: '1px solid #E2E8F0',
-                background: '#F8FAFC',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '0.75rem',
-              }}
-            >
+            <div className="job-modal-footer">
+              <div className="job-modal-footer-secondary-row">
+                <button
+                  type="button"
+                  onClick={() => handleShareJob(activeJobDetail)}
+                  className="job-modal-footer-secondary-btn"
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #CBD5E1',
+                    color: copiedJobId === activeJobDetail._id ? '#059669' : '#334155',
+                    padding: '0.65rem 0.9rem',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  {copiedJobId === activeJobDetail._id ? (
+                    <>
+                      <Check size={14} color="#059669" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 size={14} />
+                      <span>Share</span>
+                    </>
+                  )}
+                </button>
+
+                <Link
+                  href={`/job-openings/${activeJobDetail.slug?.current || activeJobDetail._id}`}
+                  className="job-modal-footer-secondary-btn"
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #CBD5E1',
+                    color: '#334155',
+                    padding: '0.65rem 0.9rem',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  <ExternalLink size={13} color="#64748B" />
+                  <span>Full Page</span>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveJobDetail(null)}
+                  className="job-modal-footer-secondary-btn"
+                  style={{
+                    background: '#F1F5F9',
+                    border: '1px solid #E2E8F0',
+                    color: '#475569',
+                    padding: '0.65rem 1rem',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span>Close</span>
+                </button>
+              </div>
+
               <button
-                onClick={() => setActiveJobDetail(null)}
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid #CBD5E1',
-                  color: '#475569',
-                  padding: '0.65rem 1.25rem',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  fontSize: '0.88rem',
-                  cursor: 'pointer',
-                }}
-              >
-                Close
-              </button>
-              <button
+                type="button"
                 onClick={() => {
                   const job = activeJobDetail
                   setActiveJobDetail(null)
                   openApplyModal(job)
                 }}
+                className="job-modal-footer-primary-btn"
                 style={{
                   background: '#800020',
                   color: '#FFFFFF',
                   border: 'none',
-                  padding: '0.65rem 1.6rem',
-                  borderRadius: '8px',
+                  padding: '0.75rem 1.6rem',
+                  borderRadius: '10px',
                   fontWeight: 700,
-                  fontSize: '0.88rem',
+                  fontSize: '0.92rem',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.4rem',
+                  gap: '0.45rem',
+                  boxShadow: '0 3px 10px rgba(128, 0, 32, 0.25)',
                 }}
               >
                 <Send size={15} />
@@ -1367,37 +1527,24 @@ export default function JobOpeningsClient({
       {/* ── APPLICATION DRAWER / MODAL ── */}
       {isApplyModalOpen && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.8)',
-            backdropFilter: 'blur(5px)',
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-          }}
+          className="job-modal-overlay"
           onClick={closeApplyModal}
         >
           <div
-            style={{
-              background: '#FFFFFF',
-              width: '100%',
-              maxWidth: '680px',
-              maxHeight: '92vh',
-              borderRadius: '20px',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.3)',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }}
+            className="job-modal-container"
+            style={{ maxWidth: '680px' }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Mobile Sheet Handle Bar */}
+            <div className="job-modal-handle" style={{ background: '#800020' }}>
+              <div className="job-modal-handle-bar" style={{ background: 'rgba(255, 255, 255, 0.4)' }} />
+            </div>
+
             {/* Header */}
             <div
+              className="job-modal-header"
               style={{
-                padding: '1.5rem 1.75rem',
+                padding: '1.25rem 1.5rem',
                 borderBottom: '1px solid #E2E8F0',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -1406,7 +1553,7 @@ export default function JobOpeningsClient({
                 color: '#FFFFFF',
               }}
             >
-              <div>
+              <div style={{ flex: 1, minWidth: 0, paddingRight: '0.75rem' }}>
                 <span
                   style={{
                     fontSize: '0.75rem',
@@ -1420,10 +1567,12 @@ export default function JobOpeningsClient({
                 </span>
                 <h3
                   style={{
-                    fontSize: '1.25rem',
+                    fontSize: '1.2rem',
                     fontWeight: 700,
                     margin: '0.25rem 0 0 0',
                     color: '#FFFFFF',
+                    lineHeight: 1.3,
+                    wordBreak: 'break-word',
                   }}
                 >
                   {applyRole.title}
@@ -1432,17 +1581,20 @@ export default function JobOpeningsClient({
 
               <button
                 onClick={closeApplyModal}
+                aria-label="Close Application"
                 style={{
                   background: 'rgba(255, 255, 255, 0.2)',
                   border: 'none',
                   borderRadius: '50%',
                   width: '32px',
                   height: '32px',
+                  minWidth: '32px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
                   color: '#FFFFFF',
+                  flexShrink: 0,
                 }}
               >
                 <X size={18} />
@@ -1450,7 +1602,7 @@ export default function JobOpeningsClient({
             </div>
 
             {/* Body */}
-            <div style={{ padding: '1.75rem', overflowY: 'auto' }}>
+            <div className="job-apply-body">
               {submitSuccess ? (
                 <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
                   <div
@@ -1936,6 +2088,7 @@ export default function JobOpeningsClient({
 
                   {/* Actions */}
                   <div
+                    className="job-modal-footer"
                     style={{
                       display: 'flex',
                       justifyContent: 'flex-end',
@@ -1947,6 +2100,7 @@ export default function JobOpeningsClient({
                     <button
                       type="button"
                       onClick={closeApplyModal}
+                      className="job-modal-footer-secondary-btn"
                       style={{
                         background: '#FFFFFF',
                         border: '1px solid #CBD5E1',
@@ -1964,6 +2118,7 @@ export default function JobOpeningsClient({
                     <button
                       type="submit"
                       disabled={isSubmitting}
+                      className="job-modal-footer-primary-btn"
                       style={{
                         background: '#800020',
                         color: '#FFFFFF',
@@ -1975,6 +2130,7 @@ export default function JobOpeningsClient({
                         cursor: isSubmitting ? 'not-allowed' : 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         gap: '0.5rem',
                         opacity: isSubmitting ? 0.7 : 1,
                       }}

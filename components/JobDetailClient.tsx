@@ -683,46 +683,72 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
       {/* ── APPLICATION MODAL ── */}
       {isApplyModalOpen && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(15, 23, 42, 0.75)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 1200,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1.25rem',
-          }}
+          className="job-modal-overlay"
           onClick={() => setIsApplyModalOpen(false)}
         >
           <div
-            style={{
-              background: '#FFFFFF',
-              width: '100%',
-              maxWidth: '680px',
-              maxHeight: '92vh',
-              borderRadius: '16px',
-              boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }}
+            className="job-modal-container"
+            style={{ maxWidth: '680px' }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Mobile Sheet Handle Bar */}
+            <div className="job-modal-handle" style={{ background: '#0F172A' }}>
+              <div className="job-modal-handle-bar" style={{ background: '#475569' }} />
+            </div>
+
             {/* Modal Header */}
-            <div style={{ padding: '1.25rem 1.5rem', background: '#0F172A', color: '#FFFFFF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#94A3B8', fontWeight: 700 }}>
+            <div
+              className="job-modal-header"
+              style={{
+                padding: '1.25rem 1.5rem',
+                background: '#0F172A',
+                color: '#FFFFFF',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0, paddingRight: '0.75rem' }}>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    color: '#94A3B8',
+                    fontWeight: 700,
+                  }}
+                >
                   Application Form
                 </span>
-                <h3 style={{ margin: '0.2rem 0', fontSize: '1.2rem', fontWeight: 700 }}>
+                <h3
+                  style={{
+                    margin: '0.2rem 0',
+                    fontSize: '1.2rem',
+                    fontWeight: 700,
+                    lineHeight: 1.3,
+                    wordBreak: 'break-word',
+                  }}
+                >
                   Applying for: {job.title}
                 </h3>
               </div>
               <button
                 onClick={() => setIsApplyModalOpen(false)}
-                style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', color: '#FFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                aria-label="Close Application Form"
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  minWidth: '32px',
+                  color: '#FFF',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
               >
                 <X size={16} />
               </button>
@@ -750,7 +776,7 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
               </div>
             ) : (
               <form onSubmit={handleSubmitApplication} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-                <div style={{ padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+                <div className="job-apply-body" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {submitError && (
                     <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.85rem' }}>
                       {submitError}
@@ -785,7 +811,7 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
                   </div>
 
                   {/* 2-col inputs */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.25rem' }}>
                         Full Name *
@@ -814,7 +840,7 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.25rem' }}>
                         Phone / WhatsApp *
@@ -842,7 +868,7 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '0.25rem' }}>
                         Years of Experience
@@ -884,18 +910,54 @@ export default function JobDetailClient({ job, otherJobs }: JobDetailClientProps
                 </div>
 
                 {/* Modal Footer */}
-                <div style={{ padding: '1rem 1.5rem', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                <div
+                  className="job-modal-footer"
+                  style={{
+                    padding: '1rem 1.5rem',
+                    background: '#F8FAFC',
+                    borderTop: '1px solid #E2E8F0',
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    gap: '0.75rem',
+                  }}
+                >
                   <button
                     type="button"
                     onClick={() => setIsApplyModalOpen(false)}
-                    style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#475569', padding: '0.55rem 1.25rem', borderRadius: '8px', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+                    className="job-modal-footer-secondary-btn"
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #CBD5E1',
+                      color: '#475569',
+                      padding: '0.65rem 1.25rem',
+                      borderRadius: '8px',
+                      fontWeight: 600,
+                      fontSize: '0.88rem',
+                      cursor: 'pointer',
+                    }}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    style={{ background: '#800020', color: '#FFFFFF', border: 'none', padding: '0.55rem 1.5rem', borderRadius: '8px', fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer', boxShadow: '0 2px 6px rgba(128,0,32,0.25)' }}
+                    className="job-modal-footer-primary-btn"
+                    style={{
+                      background: '#800020',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '0.75rem 1.8rem',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      fontSize: '0.92rem',
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      opacity: isSubmitting ? 0.7 : 1,
+                      boxShadow: '0 2px 6px rgba(128,0,32,0.25)',
+                    }}
                   >
                     {isSubmitting ? 'Submitting Application...' : 'Submit Application'}
                   </button>
