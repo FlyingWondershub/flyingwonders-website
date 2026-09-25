@@ -1,14 +1,5 @@
-﻿import { NextResponse } from 'next/server'
-import { createClient } from 'next-sanity'
-import { apiVersion, dataset, projectId } from '../../../../sanity/env'
-
-const writeClient = createClient({
-  apiVersion,
-  dataset,
-  projectId,
-  token: process.env.SANITY_WRITE_TOKEN,
-  useCdn: false,
-})
+import { NextResponse } from 'next/server'
+import { unsubscribeByEmail } from '../../../../lib/audience-chunk-store'
 
 export async function GET(req: Request) {
   try {
@@ -20,19 +11,7 @@ export async function GET(req: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase()
-
-    // 1. Find subscriber document
-    const subscriber = await writeClient.fetch(
-      `*[_type == "newsletterSubscriber" && lower(email) == $cleanEmail][0]`,
-      { cleanEmail }
-    )
-
-    if (subscriber) {
-      await writeClient
-        .patch(subscriber._id)
-        .set({ isActive: false, unsubscribedAt: new Date().toISOString() })
-        .commit()
-    }
+    await unsubscribeByEmail(cleanEmail)
 
     // 2. Return clean branded HTML confirmation
     const htmlResponse = `

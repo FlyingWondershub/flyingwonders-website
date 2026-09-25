@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import nodemailer from 'nodemailer'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
+import { saveOrUpdateSubscribers } from '../../../../lib/audience-chunk-store'
 
 const writeClient = createClient({
   apiVersion,
@@ -31,23 +32,12 @@ export async function POST(req: Request) {
 
     // 2. Add/Transfer contact to Newsletter Subscribers if not already active
     try {
-      const existing = await writeClient.fetch(
-        `*[_type == "newsletterSubscriber" && email == $email][0]`,
-        { email }
-      )
-      if (!existing) {
-        await writeClient.create({
-          _type: 'newsletterSubscriber',
-          email,
-          subscribedAt: new Date().toISOString(),
-          isActive: true,
-        })
-      } else if (!existing.isActive) {
-        await writeClient
-          .patch(existing._id)
-          .set({ isActive: true, subscribedAt: new Date().toISOString() })
-          .commit()
-      }
+      await saveOrUpdateSubscribers([{
+        email,
+        name,
+        phone,
+        source: 'promotion_inquiry'
+      }])
     } catch (err) {
       console.error('Failed to subscribe user to newsletter during promotion inquiry:', err)
     }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 import { fetchLiveBrevoQuota, fetchSesStatus } from '../quota/route'
+import { getActiveSubscriberCount } from '../../../../lib/audience-chunk-store'
 
 const writeClient = createClient({
   apiVersion,
@@ -43,9 +44,7 @@ export async function GET(req: Request) {
       }`
     )
 
-    const subscriberCount = await writeClient.fetch(
-      `count(*[_type == "newsletterSubscriber" && isActive == true])`
-    )
+    const subscriberCount = await getActiveSubscriberCount()
 
     const [quota, ses] = await Promise.all([
       fetchLiveBrevoQuota(),

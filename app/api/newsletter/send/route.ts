@@ -4,6 +4,7 @@ import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 import { sendEmail } from '../../../../lib/brevo'
 import { isSesConfigured } from '../../../../lib/ses'
 import { fetchLiveBrevoQuota } from '../quota/route'
+import { getSubscribersForSend } from '../../../../lib/audience-chunk-store'
 
 const writeClient = createClient({
   apiVersion,
@@ -77,38 +78,8 @@ export async function POST(req: Request) {
       if (recipients.length === 0) {
         return NextResponse.json({ error: 'No valid email addresses provided in the custom list.' }, { status: 400 })
       }
-    } else if (targetAudience === 'tag' && sourceTag) {
-      const cleanTag = sourceTag.trim().toLowerCase()
-      const allActiveSubscribers: Recipient[] = await writeClient.fetch(
-        `*[_type == "newsletterSubscriber" && isActive == true] { email, name, company, audienceType, source }`
-      )
-      recipients = (allActiveSubscribers || []).filter((s: Recipient) => {
-        if (!s.source) return false
-        const tags = s.source.split(',').map((t: string) => t.trim().toLowerCase())
-        return tags.includes(cleanTag) || s.source.toLowerCase().includes(cleanTag)
-      })
-    } else if (targetAudience === 'b2b') {
-      const fetchedSubscribers = await writeClient.fetch(
-        `*[_type == "newsletterSubscriber" && isActive == true && (audienceType == "b2b" || !defined(audienceType))] { email, name, company, audienceType, source }`
-      )
-      recipients = fetchedSubscribers || []
-    } else if (targetAudience === 'b2c') {
-      const fetchedSubscribers = await writeClient.fetch(
-        `*[_type == "newsletterSubscriber" && isActive == true && audienceType == "b2c"] { email, name, company, audienceType, source }`
-      )
-      recipients = fetchedSubscribers || []
-    } else if (targetAudience === 'new') {
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-      const fetchedSubscribers = await writeClient.fetch(
-        `*[_type == "newsletterSubscriber" && isActive == true && (_createdAt >= $thirtyDaysAgo || subscribedAt >= $thirtyDaysAgo)] { email, name, company, audienceType, source }`,
-        { thirtyDaysAgo }
-      )
-      recipients = fetchedSubscribers || []
     } else {
-      const fetchedSubscribers = await writeClient.fetch(
-        `*[_type == "newsletterSubscriber" && isActive == true] { email, name, company, audienceType, source }`
-      )
-      recipients = fetchedSubscribers || []
+      recipients = (await getSubscribersForSend(targetAudience, sourceTag)) as Recipient[]
     }
 
     if (!recipients || recipients.length === 0) {

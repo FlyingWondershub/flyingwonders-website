@@ -48,6 +48,17 @@ scripts/gmail-lead-extractor/credentials.json
 scripts/gmail-lead-extractor/token.json
 scripts/gmail-lead-extractor/tokens/
 scripts/gmail-lead-extractor/data/
+
+# Local backup files
+backup_*.json
+prepared_*.json
+scripts/check-quota.mjs
+scripts/backup-data.mjs
+scripts/test-write.mjs
+scripts/verify-and-prepare-chunks.mjs
+scripts/migrate-to-chunks.mjs
+scripts/upload-chunks.mjs
+scripts/test-api-functions.mjs
 scripts/gmail-lead-extractor/output/
 scripts/gmail-lead-extractor/*.xlsx
 scripts/gmail-lead-extractor/*.csv

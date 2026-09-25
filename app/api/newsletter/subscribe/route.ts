@@ -1,19 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient } from 'next-sanity'
-import crypto from 'crypto'
-import { apiVersion, dataset, projectId } from '../../../../sanity/env'
+import {
+  getAllSubscribers,
+  saveOrUpdateSubscribers,
+  toggleSubscriberStatus,
+  deleteSubscriber,
+} from '../../../../lib/audience-chunk-store'
 import { sendEmail } from '../../../../lib/brevo'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
-
-const writeClient = createClient({
-  apiVersion,
-  dataset,
-  projectId,
-  token: process.env.SANITY_WRITE_TOKEN,
-  useCdn: false,
-})
 
 // GET: Fetch list of active subscriber emails or full subscriber records
 export async function GET(req: Request) {
@@ -22,19 +17,7 @@ export async function GET(req: Request) {
     const full = searchParams.get('full') === 'true'
 
     if (full) {
-      const subscribers = await writeClient.fetch(
-        `*[_type == "newsletterSubscriber"] | order(_createdAt desc) {
-          _id,
-          email,
-          name,
-          company,
-          audienceType,
-          source,
-          isActive,
-          subscribedAt,
-          _createdAt
-        }`
-      )
+      const subscribers = await getAllSubscribers(true)
       return NextResponse.json({
         success: true,
         subscribers: subscribers || [],
@@ -42,10 +25,7 @@ export async function GET(req: Request) {
       })
     }
 
-    const activeSubscribers = await writeClient.fetch(
-      `*[_type == "newsletterSubscriber" && isActive == true].email`
-    )
-    const emails = (activeSubscribers || []).map((e: string) => e.toLowerCase().trim())
+    const emails = await getAllSubscribers(false)
     return NextResponse.json({ success: true, subscribers: emails })
   } catch (err: any) {
     console.error('Fetch Subscribers Error:', err)
@@ -67,136 +47,11 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'No subscribers provided' }, { status: 400 })
       }
 
-      // Filter valid contacts (either has email, or has valid phone when dualSyncLeads is active)
-      const validContacts = subscribersList.filter(s => {
-        if (!s) return false
-        const hasEmail = s.email && typeof s.email === 'string' && s.email.includes('@')
-        const hasPhone = s.phone && typeof s.phone === 'string' && s.phone.replace(/[^\d]/g, '').length >= 7
-        return hasEmail || (dualSyncLeads && hasPhone)
-      })
-
-      if (validContacts.length === 0) {
-        return NextResponse.json({
-          success: true,
-          message: 'No eligible contacts with email or phone found in this batch.',
-          syncedCount: 0
-        })
-      }
-
-      let syncedCount = 0
-      const batchSize = 75
-
-      for (let i = 0; i < validContacts.length; i += batchSize) {
-        const chunk = validContacts.slice(i, i + batchSize)
-        const emails = chunk
-          .map(c => (c.email || '').toLowerCase().trim())
-          .filter(e => e.includes('@'))
-
-        // Check existing subscribers to preserve IDs, tags, and status
-        const existingDocs = emails.length > 0
-          ? await writeClient.fetch(
-              `*[_type == "newsletterSubscriber" && lower(email) in $emails]{_id, "lowerEmail": lower(email), isActive, source}`,
-              { emails }
-            )
-          : []
-
-        const existingMap = new Map<string, { _id: string; isActive?: boolean; source?: string }>()
-        for (const ed of (existingDocs || [])) {
-          if (ed.lowerEmail) existingMap.set(ed.lowerEmail, { _id: ed._id, isActive: ed.isActive, source: ed.source })
-        }
-
-        const transaction = writeClient.transaction()
-        const touchedSubIds = new Set<string>()
-        const touchedLeadIds = new Set<string>()
-
-        for (const sub of chunk) {
-          const cleanEmail = (sub.email || '').toLowerCase().trim()
-          const hasValidEmail = cleanEmail.includes('@')
-
-          if (hasValidEmail) {
-            const existingInfo = existingMap.get(cleanEmail)
-
-            if (existingInfo) {
-              if (!touchedSubIds.has(existingInfo._id)) {
-                touchedSubIds.add(existingInfo._id)
-                transaction.patch(existingInfo._id, (p) => {
-                  const patchObj: any = {}
-                  // Protect previously unsubscribed contacts from silent reactivation
-                  if (existingInfo.isActive !== false) {
-                    patchObj.isActive = true
-                  }
-                  if (sub.name) patchObj.name = sub.name
-                  if (sub.company) patchObj.company = sub.company
-                  if (sub.audienceType) patchObj.audienceType = sub.audienceType
-
-                  // Smart Tag Appending: preserve origin while appending new event tag
-                  if (sub.source) {
-                    const currentSource = existingInfo.source || ''
-                    const existingTags = currentSource.split(',').map((t: string) => t.trim().toLowerCase())
-                    const newTag = sub.source.trim()
-                    if (!existingTags.includes(newTag.toLowerCase())) {
-                      patchObj.source = currentSource ? `${currentSource}, ${newTag}` : newTag
-                    }
-                  }
-
-                  return p.set(patchObj)
-                })
-              }
-            } else {
-              const deterministicId = `newsletterSubscriber-${crypto.createHash('md5').update(cleanEmail).digest('hex').slice(0, 16)}`
-              if (!touchedSubIds.has(deterministicId)) {
-                touchedSubIds.add(deterministicId)
-                transaction.createOrReplace({
-                  _id: deterministicId,
-                  _type: 'newsletterSubscriber',
-                  email: cleanEmail,
-                  name: sub.name || undefined,
-                  company: sub.company || undefined,
-                  audienceType: sub.audienceType || 'b2b',
-                  source: sub.source || 'bulk_import',
-                  subscribedAt: new Date().toISOString(),
-                  isActive: true,
-                })
-              }
-            }
-          }
-
-          // Dual-sync to Marketing Leads Directory if requested
-          if (dualSyncLeads && (hasValidEmail || sub.phone)) {
-            const seed = (cleanEmail || sub.phone || '').toLowerCase().trim()
-            if (seed) {
-              const leadId = `marketingLead-${crypto.createHash('md5').update(seed).digest('hex').slice(0, 16)}`
-              if (!touchedLeadIds.has(leadId)) {
-                touchedLeadIds.add(leadId)
-                transaction.createOrReplace({
-                  _id: leadId,
-                  _type: 'marketingLead',
-                  name: sub.name || '',
-                  email: cleanEmail || '',
-                  phone: sub.phone || '',
-                  whatsapp: sub.whatsapp || (sub.phone ? `https://wa.me/${sub.phone.replace(/[^\d]/g, '')}` : ''),
-                  company: sub.company || '',
-                  city: sub.city || '',
-                  designation: sub.designation || '',
-                  accreditations: sub.accreditations || '',
-                  priority: sub.priority || 'normal',
-                  leadType: sub.audienceType === 'b2c' ? 'individual' : 'agent',
-                  status: 'new',
-                  source: sub.source || 'subscriber_sync',
-                })
-              }
-            }
-          }
-        }
-
-        await transaction.commit()
-        syncedCount += chunk.length
-      }
-
+      const result = await saveOrUpdateSubscribers(subscribersList, dualSyncLeads)
       return NextResponse.json({
         success: true,
-        message: `Successfully synced ${syncedCount} subscribers!${dualSyncLeads ? ' (And dual-synced to Leads Directory)' : ''}`,
-        syncedCount,
+        message: `Successfully synced ${result.added + result.updated} subscribers!${dualSyncLeads ? ' (And dual-synced to Leads Directory)' : ''}`,
+        syncedCount: result.added + result.updated,
       })
     }
 
@@ -208,50 +63,17 @@ export async function POST(req: Request) {
     }
 
     const cleanEmail = email.trim().toLowerCase()
+    const result = await saveOrUpdateSubscribers([{
+      email: cleanEmail,
+      name: name || undefined,
+      company: company || undefined,
+      audienceType: audienceType || 'b2b',
+      source: source || 'b2b_leads_directory',
+    }])
 
-    // 1. Check if subscriber already exists
-    const existing = await writeClient.fetch(
-      `*[_type == "newsletterSubscriber" && lower(email) == $cleanEmail][0]`,
-      { cleanEmail }
-    )
+    const isNewSubscriber = result.added > 0
 
-    let isNewSubscriber = false
-
-    if (existing) {
-      const patchData: any = { isActive: true }
-      if (name && !existing.name) patchData.name = name
-      if (company && !existing.company) patchData.company = company
-      if (audienceType) patchData.audienceType = audienceType
-      if (source) patchData.source = source
-
-      if (!existing.isActive) {
-        patchData.subscribedAt = new Date().toISOString()
-      }
-
-      await writeClient
-        .patch(existing._id)
-        .set(patchData)
-        .commit()
-
-      if (existing.isActive) {
-        return NextResponse.json({ success: true, message: 'This contact is already in the subscribers list!' })
-      }
-    } else {
-      // Create new subscriber
-      isNewSubscriber = true
-      await writeClient.create({
-        _type: 'newsletterSubscriber',
-        email: cleanEmail,
-        name: name || undefined,
-        company: company || undefined,
-        audienceType: audienceType || 'b2b',
-        source: source || 'b2b_leads_directory',
-        subscribedAt: new Date().toISOString(),
-        isActive: true,
-      })
-    }
-
-    // 2. Dispatch automated Welcome Email (only for B2C consumer opt-ins, or if skipWelcomeEmail is false)
+    // Dispatch automated Welcome Email (only for B2C consumer opt-ins, or if skipWelcomeEmail is false)
     if (!skipWelcomeEmail) {
       try {
         const unsubscribeUrl = `https://flyingwonders.net/api/newsletter/unsubscribe?email=${encodeURIComponent(cleanEmail)}`
@@ -361,19 +183,13 @@ export async function POST(req: Request) {
 // PATCH: Toggle active status or update subscriber
 export async function PATCH(req: Request) {
   try {
-    const { id, isActive, audienceType, name, company } = await req.json()
+    const { id, isActive } = await req.json()
     if (!id) {
       return NextResponse.json({ error: 'Subscriber ID is required.' }, { status: 400 })
     }
 
-    const patch = writeClient.patch(id)
-    if (typeof isActive === 'boolean') patch.set({ isActive })
-    if (audienceType) patch.set({ audienceType })
-    if (name !== undefined) patch.set({ name })
-    if (company !== undefined) patch.set({ company })
-
-    await patch.commit()
-    return NextResponse.json({ success: true, message: 'Subscriber updated successfully.' })
+    const success = await toggleSubscriberStatus(id, !!isActive)
+    return NextResponse.json({ success, message: success ? 'Subscriber updated successfully.' : 'Subscriber not found.' })
   } catch (err: any) {
     console.error('Update Subscriber Error:', err)
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })
@@ -388,11 +204,10 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'Subscriber ID is required.' }, { status: 400 })
     }
 
-    await writeClient.delete(id)
-    return NextResponse.json({ success: true, message: 'Subscriber removed successfully.' })
+    const success = await deleteSubscriber(id)
+    return NextResponse.json({ success, message: success ? 'Subscriber removed successfully.' : 'Subscriber not found.' })
   } catch (err: any) {
     console.error('Delete Subscriber Error:', err)
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })
   }
 }
-

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import nodemailer from 'nodemailer'
+import { saveOrUpdateSubscribers } from '../../../../lib/audience-chunk-store'
 
 const getSanityWriteClient = () => {
   const token = process.env.SANITY_WRITE_TOKEN
@@ -95,21 +96,13 @@ export async function POST(req: Request) {
     // 2. Add to Newsletter Subscribers if checked
     if (addToNewsletter) {
       try {
-        // First check if subscriber already exists
-        const query = `*[_type == "newsletterSubscriber" && email == $email][0]`
-        const existingSub = await writeClient.fetch(query, { email })
-
-        if (!existingSub) {
-          await writeClient.create({
-            _type: 'newsletterSubscriber',
-            email,
-            subscribedAt: new Date().toISOString(),
-            isActive: true
-          })
-          console.log(`Subscribed ${email} to newsletter successfully.`)
-        } else {
-          console.log(`Subscriber ${email} already exists.`)
-        }
+        await saveOrUpdateSubscribers([{
+          email,
+          name: name || undefined,
+          company: company || undefined,
+          source: 'save_card'
+        }])
+        console.log(`Subscribed ${email} to newsletter successfully.`)
       } catch (newsletterErr) {
         console.error('Failed to register email subscription:', newsletterErr)
       }

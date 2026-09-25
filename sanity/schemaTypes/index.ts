@@ -56,6 +56,8 @@ import { b2bLeadSubscriberSchema } from './b2bLeadSubscriber'
 import { b2bLeadAuditLogSchema } from './b2bLeadAuditLog'
 import { hotelVoucherSchema } from './hotelVoucher'
 import { marketingLeadSchema } from './marketingLead'
+import { marketingLeadChunkSchema } from './marketingLeadChunk'
+import { newsletterSubscriberChunkSchema } from './newsletterSubscriberChunk'
 import { shoppingMallSchema } from './shoppingMall'
 import { jobOpeningSchema } from './jobOpening'
 import { jobApplicationSchema } from './jobApplication'
@@ -67,6 +69,8 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     jobApplicationSchema,
     jobSettingsSchema,
     marketingLeadSchema,
+    marketingLeadChunkSchema,
+    newsletterSubscriberChunkSchema,
     packageSchema,
     reviewSchema,
     recognitionSchema,

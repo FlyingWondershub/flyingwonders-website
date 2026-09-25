@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
 import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 import { sendEmail } from '../../../../lib/brevo'
+import { saveOrUpdateSubscribers } from '../../../../lib/audience-chunk-store'
 
 const writeClient = createClient({
   apiVersion,
@@ -79,15 +80,13 @@ export async function POST(req: Request) {
         await writeClient.create(newAgentDoc)
 
         try {
-          const existingSub = await writeClient.fetch(`*[_type == "newsletterSubscriber" && (lower(email) == $cleanEmail || email == $cleanEmail)][0]`, { cleanEmail })
-          if (!existingSub) {
-            await writeClient.create({
-              _type: 'newsletterSubscriber',
-              email: cleanEmail,
-              subscribedAt: new Date().toISOString(),
-              isActive: true,
-            })
-          }
+          await saveOrUpdateSubscribers([{
+            email: cleanEmail,
+            name: agentName || undefined,
+            company: companyName || undefined,
+            audienceType: 'b2b',
+            source: 'agent_signup'
+          }])
         } catch (subErr) {}
       }
     } else {
