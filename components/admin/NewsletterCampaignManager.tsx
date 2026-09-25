@@ -6,7 +6,7 @@ import {
   Mail, Plus, Edit3, Send, Trash2, Eye, RefreshCw, CheckCircle,
   AlertCircle, Sparkles, X, ChevronRight, Users, Clock, CheckCheck,
   FileText, Smartphone, Monitor, ShieldCheck, Check, MessageSquare,
-  Image as ImageIcon, Upload, Download, UserPlus, Search, Filter, CheckCircle2,
+  Image as ImageIcon, Upload, UploadCloud, Download, UserPlus, Search, Filter, CheckCircle2,
   History, Copy, MessageCircle
 } from 'lucide-react'
 import { ParsedContact, parseSpreadsheetBuffer, parseWhatsAppChatText, parseRawContactText } from '../../lib/contact-parser'
@@ -614,6 +614,14 @@ export default function NewsletterCampaignManager() {
   const [isParsingImport, setIsParsingImport] = useState(false)
   const [isSyncingImport, setIsSyncingImport] = useState(false)
   const [importSyncFeedback, setImportSyncFeedback] = useState<string | null>(null)
+  const [importSyncProgress, setImportSyncProgress] = useState<{
+    current: number
+    total: number
+    percent: number
+    message?: string
+  } | null>(null)
+  const [stagingPage, setStagingPage] = useState(1)
+  const STAGING_PAGE_SIZE = 100
 
   const filteredParsedSubscribers = useMemo(() => {
     if (!importFilterQuery.trim()) return parsedImportSubscribers
@@ -626,6 +634,12 @@ export default function NewsletterCampaignManager() {
       (s.city && s.city.toLowerCase().includes(q))
     )
   }, [parsedImportSubscribers, importFilterQuery])
+
+  const totalStagingPages = Math.max(1, Math.ceil(filteredParsedSubscribers.length / STAGING_PAGE_SIZE))
+  const pagedSubscribers = useMemo(() => {
+    const start = (stagingPage - 1) * STAGING_PAGE_SIZE
+    return filteredParsedSubscribers.slice(start, start + STAGING_PAGE_SIZE)
+  }, [filteredParsedSubscribers, stagingPage])
 
   // Real-time compiled HTML for editor preview
   const liveCompiledHtml = useMemo(() => {
@@ -1266,33 +1280,86 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
     setIsSyncingImport(true)
     setImportSyncFeedback(null)
 
+    const BATCH_SIZE = 150
+    const total = parsedImportSubscribers.length
+    let totalSynced = 0
+
     try {
-      const res = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subscribers: parsedImportSubscribers,
-          dualSyncLeads: importDualSyncLeads,
-          skipWelcomeEmail: true,
-        }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setImportSyncFeedback(`✅ ${data.message}`)
-        await fetchSubscribersFull()
-        setTimeout(() => {
-          setIsImportModalOpen(false)
-          setParsedImportSubscribers([])
-          setImportSyncFeedback(null)
-          setImportText('')
-        }, 1400)
-      } else {
-        throw new Error(data.error || 'Failed to sync subscribers')
+      for (let i = 0; i < total; i += BATCH_SIZE) {
+        const chunk = parsedImportSubscribers.slice(i, i + BATCH_SIZE)
+        const currentProgress = Math.min(i + chunk.length, total)
+        const percent = Math.round((currentProgress / total) * 100)
+
+        setImportSyncProgress({
+          current: currentProgress,
+          total,
+          percent,
+          message: `Ingesting contacts ${currentProgress.toLocaleString()} of ${total.toLocaleString()} (${percent}%)...`
+        })
+
+        // Retry loop for resilience against transient network hiccups
+        let attempts = 0
+        let batchSuccess = false
+
+        while (attempts < 2 && !batchSuccess) {
+          attempts++
+          try {
+            const res = await fetch('/api/newsletter/subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                subscribers: chunk,
+                dualSyncLeads: importDualSyncLeads,
+                skipWelcomeEmail: true,
+              }),
+            })
+
+            if (!res.ok) {
+              const text = await res.text().catch(() => '')
+              let msg = `HTTP ${res.status}`
+              try {
+                const j = JSON.parse(text)
+                if (j.error) msg = j.error
+              } catch {
+                if (res.status === 413) msg = 'Payload too large for server'
+                else if (res.status === 504) msg = 'Server timeout'
+                else if (text.length > 0 && text.length < 150) msg = text
+              }
+              if (attempts < 2) {
+                await new Promise(r => setTimeout(r, 1200))
+                continue
+              }
+              throw new Error(`Batch (${i + 1}-${currentProgress}) failed: ${msg}`)
+            }
+
+            const data = await res.json()
+            if (!data.success && data.error) {
+              throw new Error(data.error)
+            }
+
+            totalSynced += (data.syncedCount !== undefined ? data.syncedCount : chunk.length)
+            batchSuccess = true
+          } catch (fetchErr: any) {
+            if (attempts >= 2) throw fetchErr
+            await new Promise(r => setTimeout(r, 1200))
+          }
+        }
       }
+
+      setImportSyncFeedback(`✅ Successfully imported and synchronized all ${totalSynced.toLocaleString()} contacts!${importDualSyncLeads ? ' (And dual-synced to Marketing Leads)' : ''}`)
+      await fetchSubscribersFull()
+      setImportSyncProgress(null)
+      setTimeout(() => {
+        setIsImportModalOpen(false)
+        setParsedImportSubscribers([])
+        setImportSyncFeedback(null)
+        setImportText('')
+      }, 2400)
     } catch (err: any) {
       setImportSyncFeedback(`❌ Error: ${err.message}`)
     } finally {
       setIsSyncingImport(false)
+      setImportSyncProgress(null)
     }
   }
 
@@ -4094,6 +4161,31 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                 </div>
               )}
 
+              {/* Ingestion Progress Bar */}
+              {importSyncProgress && (
+                <div style={{ marginTop: '14px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '10px', padding: '12px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '0.82rem', fontWeight: 700, color: '#14532D' }}>
+                    <span>{importSyncProgress.message || 'Ingesting contacts in verified chunks...'}</span>
+                    <span style={{ fontSize: '0.9rem', color: '#0F4C3A' }}>{importSyncProgress.percent}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '10px', background: '#DCFCE7', borderRadius: '9999px', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: `${importSyncProgress.percent}%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, #059669 0%, #0F4C3A 100%)',
+                        transition: 'width 0.25s ease-in-out',
+                        borderRadius: '9999px'
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', color: '#15803D', marginTop: '6px' }}>
+                    <span>Chunked ingestion (150/req) prevents server timeouts</span>
+                    <span>{importSyncProgress.current.toLocaleString()} / {importSyncProgress.total.toLocaleString()} processed</span>
+                  </div>
+                </div>
+              )}
+
               {/* Extracted Preview / Staging Grid */}
               {parsedImportSubscribers.length > 0 && (
                 <div style={{ marginTop: '22px', borderTop: '1px solid #E2E8F0', paddingTop: '18px' }}>
@@ -4110,16 +4202,16 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                       <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.92rem' }}>
                         📋 Staging Review:{' '}
                         <span style={{ color: '#059669' }}>
-                          {parsedImportSubscribers.length} contacts ready to ingest
+                          {parsedImportSubscribers.length.toLocaleString()} contacts ready to ingest
                         </span>
                         {importFilterQuery && (
                           <span style={{ fontSize: '0.76rem', color: '#64748B', fontWeight: 500, marginLeft: '6px' }}>
-                            ({filteredParsedSubscribers.length} matching filter)
+                            ({filteredParsedSubscribers.length.toLocaleString()} matching filter)
                           </span>
                         )}
                       </div>
                       <p style={{ margin: '2px 0 0', fontSize: '0.74rem', color: '#64748B' }}>
-                        You can edit fields inline or remove rows before syncing into subscribers audience.
+                        Showing {((stagingPage - 1) * STAGING_PAGE_SIZE) + 1}–{Math.min(stagingPage * STAGING_PAGE_SIZE, filteredParsedSubscribers.length).toLocaleString()} of {filteredParsedSubscribers.length.toLocaleString()} (All {parsedImportSubscribers.length.toLocaleString()} will be synced)
                       </p>
                     </div>
 
@@ -4129,7 +4221,10 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                         <input
                           type="text"
                           value={importFilterQuery}
-                          onChange={(e) => setImportFilterQuery(e.target.value)}
+                          onChange={(e) => {
+                            setImportFilterQuery(e.target.value)
+                            setStagingPage(1)
+                          }}
                           placeholder="Filter contacts..."
                           style={{
                             padding: '5px 8px 5px 26px',
@@ -4168,6 +4263,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                         onClick={() => {
                           setParsedImportSubscribers([])
                           setImportFilterQuery('')
+                          setStagingPage(1)
                         }}
                         style={{
                           fontSize: '0.74rem',
@@ -4191,7 +4287,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                     overflowY: 'auto',
                     border: '1px solid #CBD5E1',
                     borderRadius: '8px',
-                    marginBottom: '16px',
+                    marginBottom: '10px',
                     background: '#FFFFFF'
                   }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.76rem', textAlign: 'left' }}>
@@ -4209,13 +4305,14 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredParsedSubscribers.map((p, idx) => {
+                        {pagedSubscribers.map((p, idx) => {
                           const originalIdx = parsedImportSubscribers.indexOf(p)
                           const targetIdx = originalIdx >= 0 ? originalIdx : idx
+                          const rowNumber = ((stagingPage - 1) * STAGING_PAGE_SIZE) + idx + 1
                           return (
                             <tr key={idx} style={{ borderBottom: '1px solid #E2E8F0', background: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}>
                               <td style={{ padding: '6px 4px', textAlign: 'center', color: '#94A3B8', fontSize: '0.72rem', fontWeight: 600 }}>
-                                {targetIdx + 1}
+                                {rowNumber}
                               </td>
                               <td style={{ padding: '4px 6px' }}>
                                 <input
@@ -4391,6 +4488,31 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                     </table>
                   </div>
 
+                  {/* Pagination Controls */}
+                  {totalStagingPages > 1 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', background: '#F8FAFC', padding: '8px 12px', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.78rem' }}>
+                      <button
+                        type="button"
+                        disabled={stagingPage <= 1}
+                        onClick={() => setStagingPage(p => Math.max(1, p - 1))}
+                        style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', background: stagingPage <= 1 ? '#F1F5F9' : '#FFFFFF', cursor: stagingPage <= 1 ? 'not-allowed' : 'pointer', fontWeight: 600, color: stagingPage <= 1 ? '#94A3B8' : '#334155' }}
+                      >
+                        &larr; Previous Page
+                      </button>
+                      <span style={{ fontWeight: 700, color: '#0F172A' }}>
+                        Page {stagingPage} of {totalStagingPages}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={stagingPage >= totalStagingPages}
+                        onClick={() => setStagingPage(p => Math.min(totalStagingPages, p + 1))}
+                        style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', background: stagingPage >= totalStagingPages ? '#F1F5F9' : '#FFFFFF', cursor: stagingPage >= totalStagingPages ? 'not-allowed' : 'pointer', fontWeight: 600, color: stagingPage >= totalStagingPages ? '#94A3B8' : '#334155' }}
+                      >
+                        Next Page &rarr;
+                      </button>
+                    </div>
+                  )}
+
                   <button
                     type="button"
                     onClick={handleSyncImportToSubscribers}
@@ -4415,11 +4537,12 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                     {isSyncingImport ? (
                       <>
                         <RefreshCw size={16} className="animate-spin" />
-                        Syncing {parsedImportSubscribers.length} Contacts to Sanity...
+                        {importSyncProgress ? importSyncProgress.message : `Syncing ${parsedImportSubscribers.length.toLocaleString()} Contacts to Sanity...`}
                       </>
                     ) : (
                       <>
-                        🚀 Sync {parsedImportSubscribers.length} Contacts to Subscribers Audience {importDualSyncLeads ? '(& Leads Directory)' : ''}
+                        <UploadCloud size={16} />
+                        🚀 Sync All {parsedImportSubscribers.length.toLocaleString()} Contacts to Subscribers Audience {importDualSyncLeads ? '(& Leads Directory)' : ''}
                       </>
                     )}
                   </button>

@@ -5,6 +5,7 @@ import { apiVersion, dataset, projectId } from '../../../../sanity/env'
 import { sendEmail } from '../../../../lib/brevo'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 const writeClient = createClient({
   apiVersion,
@@ -62,93 +63,125 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'No subscribers provided' }, { status: 400 })
       }
 
-      // Filter valid emails
-      const validSubs = subscribersList.filter(s => s && s.email && typeof s.email === 'string' && s.email.includes('@'))
-      if (validSubs.length === 0) {
-        return NextResponse.json({ error: 'No valid email addresses found in the provided list.' }, { status: 400 })
+      // Filter valid contacts (either has email, or has valid phone when dualSyncLeads is active)
+      const validContacts = subscribersList.filter(s => {
+        if (!s) return false
+        const hasEmail = s.email && typeof s.email === 'string' && s.email.includes('@')
+        const hasPhone = s.phone && typeof s.phone === 'string' && s.phone.replace(/[^\d]/g, '').length >= 7
+        return hasEmail || (dualSyncLeads && hasPhone)
+      })
+
+      if (validContacts.length === 0) {
+        return NextResponse.json({
+          success: true,
+          message: 'No eligible contacts with email or phone found in this batch.',
+          syncedCount: 0
+        })
       }
 
       let syncedCount = 0
-      const batchSize = 50
+      const batchSize = 75
 
-      for (let i = 0; i < validSubs.length; i += batchSize) {
-        const chunk = validSubs.slice(i, i + batchSize)
-        const emails = chunk.map(c => c.email.toLowerCase().trim())
+      for (let i = 0; i < validContacts.length; i += batchSize) {
+        const chunk = validContacts.slice(i, i + batchSize)
+        const emails = chunk
+          .map(c => (c.email || '').toLowerCase().trim())
+          .filter(e => e.includes('@'))
 
         // Check existing subscribers to preserve IDs, tags, and status
-        const existingDocs = await writeClient.fetch(
-          `*[_type == "newsletterSubscriber" && lower(email) in $emails]{_id, "lowerEmail": lower(email), isActive, source}`,
-          { emails }
-        )
+        const existingDocs = emails.length > 0
+          ? await writeClient.fetch(
+              `*[_type == "newsletterSubscriber" && lower(email) in $emails]{_id, "lowerEmail": lower(email), isActive, source}`,
+              { emails }
+            )
+          : []
+
         const existingMap = new Map<string, { _id: string; isActive?: boolean; source?: string }>()
         for (const ed of (existingDocs || [])) {
           if (ed.lowerEmail) existingMap.set(ed.lowerEmail, { _id: ed._id, isActive: ed.isActive, source: ed.source })
         }
 
         const transaction = writeClient.transaction()
+        const touchedSubIds = new Set<string>()
+        const touchedLeadIds = new Set<string>()
 
         for (const sub of chunk) {
-          const cleanEmail = sub.email.toLowerCase().trim()
-          const existingInfo = existingMap.get(cleanEmail)
+          const cleanEmail = (sub.email || '').toLowerCase().trim()
+          const hasValidEmail = cleanEmail.includes('@')
 
-          if (existingInfo) {
-            transaction.patch(existingInfo._id, (p) => {
-              const patchObj: any = {}
-              // Protect previously unsubscribed contacts from silent reactivation
-              if (existingInfo.isActive !== false) {
-                patchObj.isActive = true
+          if (hasValidEmail) {
+            const existingInfo = existingMap.get(cleanEmail)
+
+            if (existingInfo) {
+              if (!touchedSubIds.has(existingInfo._id)) {
+                touchedSubIds.add(existingInfo._id)
+                transaction.patch(existingInfo._id, (p) => {
+                  const patchObj: any = {}
+                  // Protect previously unsubscribed contacts from silent reactivation
+                  if (existingInfo.isActive !== false) {
+                    patchObj.isActive = true
+                  }
+                  if (sub.name) patchObj.name = sub.name
+                  if (sub.company) patchObj.company = sub.company
+                  if (sub.audienceType) patchObj.audienceType = sub.audienceType
+
+                  // Smart Tag Appending: preserve origin while appending new event tag
+                  if (sub.source) {
+                    const currentSource = existingInfo.source || ''
+                    const existingTags = currentSource.split(',').map((t: string) => t.trim().toLowerCase())
+                    const newTag = sub.source.trim()
+                    if (!existingTags.includes(newTag.toLowerCase())) {
+                      patchObj.source = currentSource ? `${currentSource}, ${newTag}` : newTag
+                    }
+                  }
+
+                  return p.set(patchObj)
+                })
               }
-              if (sub.name) patchObj.name = sub.name
-              if (sub.company) patchObj.company = sub.company
-              if (sub.audienceType) patchObj.audienceType = sub.audienceType
-
-              // Smart Tag Appending: preserve origin while appending new event tag
-              if (sub.source) {
-                const currentSource = existingInfo.source || ''
-                const existingTags = currentSource.split(',').map((t: string) => t.trim().toLowerCase())
-                const newTag = sub.source.trim()
-                if (!existingTags.includes(newTag.toLowerCase())) {
-                  patchObj.source = currentSource ? `${currentSource}, ${newTag}` : newTag
-                }
+            } else {
+              const deterministicId = `newsletterSubscriber-${crypto.createHash('md5').update(cleanEmail).digest('hex').slice(0, 16)}`
+              if (!touchedSubIds.has(deterministicId)) {
+                touchedSubIds.add(deterministicId)
+                transaction.createOrReplace({
+                  _id: deterministicId,
+                  _type: 'newsletterSubscriber',
+                  email: cleanEmail,
+                  name: sub.name || undefined,
+                  company: sub.company || undefined,
+                  audienceType: sub.audienceType || 'b2b',
+                  source: sub.source || 'bulk_import',
+                  subscribedAt: new Date().toISOString(),
+                  isActive: true,
+                })
               }
-
-              return p.set(patchObj)
-            })
-          } else {
-            const deterministicId = `newsletterSubscriber-${crypto.createHash('md5').update(cleanEmail).digest('hex').slice(0, 16)}`
-            transaction.createOrReplace({
-              _id: deterministicId,
-              _type: 'newsletterSubscriber',
-              email: cleanEmail,
-              name: sub.name || undefined,
-              company: sub.company || undefined,
-              audienceType: sub.audienceType || 'b2b',
-              source: sub.source || 'bulk_import',
-              subscribedAt: new Date().toISOString(),
-              isActive: true,
-            })
+            }
           }
 
           // Dual-sync to Marketing Leads Directory if requested
-          if (dualSyncLeads) {
+          if (dualSyncLeads && (hasValidEmail || sub.phone)) {
             const seed = (cleanEmail || sub.phone || '').toLowerCase().trim()
-            const leadId = `marketingLead-${crypto.createHash('md5').update(seed).digest('hex').slice(0, 16)}`
-            transaction.createOrReplace({
-              _id: leadId,
-              _type: 'marketingLead',
-              name: sub.name || '',
-              email: cleanEmail,
-              phone: sub.phone || '',
-              whatsapp: sub.whatsapp || (sub.phone ? `https://wa.me/${sub.phone.replace(/[^\d]/g, '')}` : ''),
-              company: sub.company || '',
-              city: sub.city || '',
-              designation: sub.designation || '',
-              accreditations: sub.accreditations || '',
-              priority: sub.priority || 'normal',
-              leadType: sub.audienceType === 'b2c' ? 'individual' : 'agent',
-              status: 'new',
-              source: sub.source || 'subscriber_sync',
-            })
+            if (seed) {
+              const leadId = `marketingLead-${crypto.createHash('md5').update(seed).digest('hex').slice(0, 16)}`
+              if (!touchedLeadIds.has(leadId)) {
+                touchedLeadIds.add(leadId)
+                transaction.createOrReplace({
+                  _id: leadId,
+                  _type: 'marketingLead',
+                  name: sub.name || '',
+                  email: cleanEmail || '',
+                  phone: sub.phone || '',
+                  whatsapp: sub.whatsapp || (sub.phone ? `https://wa.me/${sub.phone.replace(/[^\d]/g, '')}` : ''),
+                  company: sub.company || '',
+                  city: sub.city || '',
+                  designation: sub.designation || '',
+                  accreditations: sub.accreditations || '',
+                  priority: sub.priority || 'normal',
+                  leadType: sub.audienceType === 'b2c' ? 'individual' : 'agent',
+                  status: 'new',
+                  source: sub.source || 'subscriber_sync',
+                })
+              }
+            }
           }
         }
 
