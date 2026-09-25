@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
     if (full) {
       const subscribers = await writeClient.fetch(
-        `*[_type == "newsletterSubscriber"] | order(_createdAt desc) [0...10000] {
+        `*[_type == "newsletterSubscriber"] | order(_createdAt desc) {
           _id,
           email,
           name,
@@ -35,7 +35,11 @@ export async function GET(req: Request) {
           _createdAt
         }`
       )
-      return NextResponse.json({ success: true, subscribers: subscribers || [] })
+      return NextResponse.json({
+        success: true,
+        subscribers: subscribers || [],
+        totalCount: (subscribers || []).length,
+      })
     }
 
     const activeSubscribers = await writeClient.fetch(

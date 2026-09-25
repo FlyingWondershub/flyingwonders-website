@@ -474,6 +474,8 @@ export default function NewsletterCampaignManager() {
   const [subscriberFilterAudience, setSubscriberFilterAudience] = useState('all')
   const [subscriberFilterSource, setSubscriberFilterSource] = useState('all')
   const [subscriberFilterStatus, setSubscriberFilterStatus] = useState('all')
+  const [subscriberPage, setSubscriberPage] = useState(1)
+  const SUBSCRIBERS_PER_PAGE = 50
 
   // Unique Source / Event Tags found in subscribers database (aggregated & deduplicated)
   const availableSourceTags = useMemo(() => {
@@ -1160,6 +1162,12 @@ export default function NewsletterCampaignManager() {
     })
   }, [subscribersList, subscriberSearch, subscriberFilterAudience, subscriberFilterSource, subscriberFilterStatus])
 
+  const totalSubscriberPages = Math.max(1, Math.ceil(filteredSubscribers.length / SUBSCRIBERS_PER_PAGE))
+  const pagedSubscribersList = useMemo(() => {
+    const start = (subscriberPage - 1) * SUBSCRIBERS_PER_PAGE
+    return filteredSubscribers.slice(start, start + SUBSCRIBERS_PER_PAGE)
+  }, [filteredSubscribers, subscriberPage])
+
   const handleExportSubscribers = () => {
     const list = filteredSubscribers.length > 0 ? filteredSubscribers : subscribersList
     if (list.length === 0) {
@@ -1701,7 +1709,10 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
               <input
                 type="text"
                 value={subscriberSearch}
-                onChange={(e) => setSubscriberSearch(e.target.value)}
+                onChange={(e) => {
+                  setSubscriberSearch(e.target.value)
+                  setSubscriberPage(1)
+                }}
                 placeholder="Search by email, name, or company..."
                 style={{ width: '100%', padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem' }}
               />
@@ -1710,7 +1721,10 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <select
                 value={subscriberFilterAudience}
-                onChange={(e) => setSubscriberFilterAudience(e.target.value)}
+                onChange={(e) => {
+                  setSubscriberFilterAudience(e.target.value)
+                  setSubscriberPage(1)
+                }}
                 style={{ padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', background: '#FFF', color: '#0F172A' }}
               >
                 <option value="all">All Audiences</option>
@@ -1721,7 +1735,10 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
 
               <select
                 value={subscriberFilterStatus}
-                onChange={(e) => setSubscriberFilterStatus(e.target.value)}
+                onChange={(e) => {
+                  setSubscriberFilterStatus(e.target.value)
+                  setSubscriberPage(1)
+                }}
                 style={{ padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', background: '#FFF', color: '#0F172A' }}
               >
                 <option value="all">All Statuses</option>
@@ -1731,7 +1748,10 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
 
               <select
                 value={subscriberFilterSource}
-                onChange={(e) => setSubscriberFilterSource(e.target.value)}
+                onChange={(e) => {
+                  setSubscriberFilterSource(e.target.value)
+                  setSubscriberPage(1)
+                }}
                 style={{ padding: '6px 10px', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', background: '#FFF', color: '#0F172A', maxWidth: '200px' }}
                 title="Filter by Event or Source Tag"
               >
@@ -1891,7 +1911,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredSubscribers.map((s) => {
+                  {pagedSubscribersList.map((s) => {
                     const isB2B = s.audienceType === 'b2b' || !s.audienceType
                     const dateStr = s.subscribedAt ? new Date(s.subscribedAt).toLocaleDateString() : (s._createdAt ? new Date(s._createdAt).toLocaleDateString() : '—')
 
@@ -1965,8 +1985,51 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                   })}
                 </tbody>
               </table>
-              <div style={{ padding: '10px 14px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', fontSize: '0.76rem', color: '#64748B' }}>
-                Showing <strong>{filteredSubscribers.length}</strong> of <strong>{subscribersList.length}</strong> subscribers
+              <div style={{ padding: '12px 16px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', fontSize: '0.78rem', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  Showing <strong>{pagedSubscribersList.length > 0 ? (subscriberPage - 1) * SUBSCRIBERS_PER_PAGE + 1 : 0}</strong>–<strong>{Math.min(subscriberPage * SUBSCRIBERS_PER_PAGE, filteredSubscribers.length)}</strong> of <strong>{filteredSubscribers.length}</strong> matching ({subscribersList.length} total subscribers)
+                </div>
+                {totalSubscriberPages > 1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      type="button"
+                      disabled={subscriberPage <= 1}
+                      onClick={() => setSubscriberPage(prev => Math.max(1, prev - 1))}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        background: subscriberPage <= 1 ? '#F1F5F9' : '#FFF',
+                        color: subscriberPage <= 1 ? '#94A3B8' : '#0F172A',
+                        cursor: subscriberPage <= 1 ? 'not-allowed' : 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      ← Previous
+                    </button>
+                    <span style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 600, padding: '0 4px' }}>
+                      Page {subscriberPage} of {totalSubscriberPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={subscriberPage >= totalSubscriberPages}
+                      onClick={() => setSubscriberPage(prev => Math.min(totalSubscriberPages, prev + 1))}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid #CBD5E1',
+                        background: subscriberPage >= totalSubscriberPages ? '#F1F5F9' : '#FFF',
+                        color: subscriberPage >= totalSubscriberPages ? '#94A3B8' : '#0F172A',
+                        cursor: subscriberPage >= totalSubscriberPages ? 'not-allowed' : 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
