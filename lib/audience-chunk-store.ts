@@ -171,51 +171,92 @@ export async function saveOrUpdateSubscribers(
   }>,
   dualSyncLeads: boolean = false
 ): Promise<{ added: number; updated: number; totalCount: number }> {
-  const chunks = await writeClient.fetch<Array<{
+  const cleanEmails = Array.from(new Set(
+    newSubscribers
+      .map(s => (s.email || '').toLowerCase().trim())
+      .filter(e => e.includes('@'))
+  ))
+
+  if (cleanEmails.length === 0) {
+    return { added: 0, updated: 0, totalCount: 0 }
+  }
+
+  // 1. Targeted fetch: Fetch ONLY chunks containing any of the incoming emails
+  const matchingChunks = await writeClient.fetch<Array<{
     _id: string
     chunkIndex: number
     count: number
     subscribers: SubscriberItem[]
-  }>>(`*[_type == "newsletterSubscriberChunk"] | order(chunkIndex asc) { _id, chunkIndex, count, subscribers }`)
+  }>>(
+    `*[_type == "newsletterSubscriberChunk" && count(subscribers[lower(email) in $emails]) > 0] {
+      _id,
+      chunkIndex,
+      count,
+      subscribers
+    }`,
+    { emails: cleanEmails }
+  )
 
-  let chunkList = (chunks || []).map(c => ({
+  const chunkMap = new Map<number, {
+    _id: string
+    chunkIndex: number
+    count: number
+    subscribers: SubscriberItem[]
+  }>()
+  matchingChunks.forEach(c => chunkMap.set(c.chunkIndex, {
     ...c,
     subscribers: Array.isArray(c.subscribers) ? [...c.subscribers] : []
   }))
 
-  // Safeguard: If Sanity has fewer than 20 chunks, load baseline chunks from disk
-  if (chunkList.length < 20) {
-    try {
-      const fs = await import('fs')
-      const path = await import('path')
-      const dataPath = path.join(process.cwd(), 'data', 'subscribers_chunked.json')
-      const rootPath = path.join(process.cwd(), 'prepared_subscriber_chunks.json')
-      const filePath = fs.existsSync(dataPath) ? dataPath : (fs.existsSync(rootPath) ? rootPath : null)
-      if (filePath) {
-        const baselineChunks = JSON.parse(fs.readFileSync(filePath, 'utf8'))
-        if (chunkList.length === 0) {
-          chunkList = baselineChunks.map((c: any) => ({
-            _id: c._id || `newsletterSubscriberChunk-${String(c.chunkIndex).padStart(3, '0')}`,
-            chunkIndex: c.chunkIndex,
-            count: (c.subscribers || []).length,
-            subscribers: Array.isArray(c.subscribers) ? [...c.subscribers] : []
-          }))
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  // Map email -> { chunkIndex, subscriberIndex, sub }
-  const emailMap = new Map<string, { chunkIdx: number; subIdx: number; item: SubscriberItem }>()
-  chunkList.forEach((chunk, cIdx) => {
-    chunk.subscribers.forEach((sub, sIdx) => {
+  const emailLocationMap = new Map<string, { chunkIndex: number; subIdx: number; item: SubscriberItem }>()
+  matchingChunks.forEach(chunk => {
+    (chunk.subscribers || []).forEach((sub, sIdx) => {
       if (sub.email) {
-        emailMap.set(sub.email.toLowerCase().trim(), { chunkIdx: cIdx, subIdx: sIdx, item: sub })
+        emailLocationMap.set(sub.email.toLowerCase().trim(), {
+          chunkIndex: chunk.chunkIndex,
+          subIdx: sIdx,
+          item: sub
+        })
       }
     })
   })
+
+  // 2. Fetch the latest open chunk with space (< CHUNK_MAX_SIZE)
+  let openChunk = await writeClient.fetch<{
+    _id: string
+    chunkIndex: number
+    count: number
+    subscribers: SubscriberItem[]
+  }>(
+    `*[_type == "newsletterSubscriberChunk" && count < ${CHUNK_MAX_SIZE}] | order(chunkIndex desc)[0] {
+      _id,
+      chunkIndex,
+      count,
+      subscribers
+    }`
+  )
+
+  let highestIndex = 0
+  if (openChunk) {
+    highestIndex = openChunk.chunkIndex
+    if (!chunkMap.has(openChunk.chunkIndex)) {
+      chunkMap.set(openChunk.chunkIndex, {
+        ...openChunk,
+        subscribers: Array.isArray(openChunk.subscribers) ? [...openChunk.subscribers] : []
+      })
+    }
+    openChunk = chunkMap.get(openChunk.chunkIndex)!
+  } else {
+    highestIndex = ((await writeClient.fetch<number>(`coalesce(max(*[_type == "newsletterSubscriberChunk"].chunkIndex), -1)`)) || 0) + 1
+    const pad = String(highestIndex).padStart(3, '0')
+    openChunk = {
+      _id: `newsletterSubscriberChunk-${pad}`,
+      chunkIndex: highestIndex,
+      count: 0,
+      subscribers: []
+    }
+    chunkMap.set(highestIndex, openChunk)
+  }
 
   const dirtyChunkIndices = new Set<number>()
   let added = 0
@@ -226,29 +267,42 @@ export async function saveOrUpdateSubscribers(
     const cleanEmail = (item.email || '').toLowerCase().trim()
     if (!cleanEmail.includes('@')) continue
 
-    const existing = emailMap.get(cleanEmail)
+    const existing = emailLocationMap.get(cleanEmail)
     if (existing) {
-      // Update existing subscriber
-      const current = existing.item
-      if (item.name) current.name = item.name
-      if (item.company) current.company = item.company
-      if (item.audienceType) current.audienceType = item.audienceType
-      current.isActive = true // Reactivate if re-subscribing
+      // Update in its existing chunk
+      const chunk = chunkMap.get(existing.chunkIndex)!
+      const sub = chunk.subscribers[existing.subIdx]
+      if (item.name) sub.name = item.name
+      if (item.company) sub.company = item.company
+      if (item.audienceType) sub.audienceType = item.audienceType
+      sub.isActive = true
 
       // Smart Tag Appending: preserve origin while appending new event tag
       if (item.source) {
-        const currentSource = current.source || ''
+        const currentSource = sub.source || ''
         const existingTags = currentSource.split(',').map(t => t.trim().toLowerCase())
         const newTag = item.source.trim()
         if (!existingTags.includes(newTag.toLowerCase())) {
-          current.source = currentSource ? `${currentSource}, ${newTag}` : newTag
+          sub.source = currentSource ? `${currentSource}, ${newTag}` : newTag
         }
       }
 
-      dirtyChunkIndices.add(existing.chunkIdx)
+      dirtyChunkIndices.add(chunk.chunkIndex)
       updated++
     } else {
-      // Create new subscriber record
+      // Add to open chunk
+      if (openChunk.subscribers.length >= CHUNK_MAX_SIZE) {
+        highestIndex = Math.max(highestIndex, openChunk.chunkIndex) + 1
+        const pad = String(highestIndex).padStart(3, '0')
+        openChunk = {
+          _id: `newsletterSubscriberChunk-${pad}`,
+          chunkIndex: highestIndex,
+          count: 0,
+          subscribers: []
+        }
+        chunkMap.set(highestIndex, openChunk)
+      }
+
       const id = `newsletterSubscriber-${crypto.createHash('md5').update(cleanEmail).digest('hex').slice(0, 16)}`
       const newSub: SubscriberItem = {
         id,
@@ -262,28 +316,13 @@ export async function saveOrUpdateSubscribers(
         _createdAt: new Date().toISOString()
       }
 
-      // Find chunk with space or allocate new one
-      let targetChunkIdx = chunkList.findIndex(c => c.subscribers.length < CHUNK_MAX_SIZE)
-      if (targetChunkIdx === -1) {
-        const nextIndex = chunkList.length
-        const pad = String(nextIndex).padStart(3, '0')
-        const newChunkDoc = {
-          _id: `newsletterSubscriberChunk-${pad}`,
-          chunkIndex: nextIndex,
-          count: 0,
-          subscribers: []
-        }
-        chunkList.push(newChunkDoc)
-        targetChunkIdx = nextIndex
-      }
-
-      chunkList[targetChunkIdx].subscribers.push(newSub)
-      emailMap.set(cleanEmail, {
-        chunkIdx: targetChunkIdx,
-        subIdx: chunkList[targetChunkIdx].subscribers.length - 1,
+      openChunk.subscribers.push(newSub)
+      emailLocationMap.set(cleanEmail, {
+        chunkIndex: openChunk.chunkIndex,
+        subIdx: openChunk.subscribers.length - 1,
         item: newSub
       })
-      dirtyChunkIndices.add(targetChunkIdx)
+      dirtyChunkIndices.add(openChunk.chunkIndex)
       added++
     }
 
@@ -303,9 +342,9 @@ export async function saveOrUpdateSubscribers(
     }
   }
 
-  // Commit all dirty chunks
+  // 3. Commit ONLY dirty chunks
   for (const cIdx of dirtyChunkIndices) {
-    const chunk = chunkList[cIdx]
+    const chunk = chunkMap.get(cIdx)!
     await writeClient.createOrReplace({
       _id: chunk._id,
       _type: 'newsletterSubscriberChunk',
@@ -320,8 +359,7 @@ export async function saveOrUpdateSubscribers(
     await saveOrUpdateLeads(leadsToSync)
   }
 
-  const totalCount = chunkList.reduce((acc, c) => acc + c.subscribers.length, 0)
-  return { added, updated, totalCount }
+  return { added, updated, totalCount: added + updated }
 }
 
 /**
@@ -500,51 +538,95 @@ export async function fetchChunkedLeads(params: {
  * Save or batch import marketing leads into chunks.
  */
 export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Promise<{ added: number; updated: number; totalCount: number }> {
-  const chunks = await writeClient.fetch<Array<{
+  const cleanEmails = Array.from(new Set(
+    leads
+      .map(l => (l.email || '').toLowerCase().trim())
+      .filter(e => e.includes('@'))
+  ))
+  const cleanPhones = Array.from(new Set(
+    leads
+      .map(l => (l.phone || '').replace(/[^\d]/g, ''))
+      .filter(p => p.length >= 7)
+  ))
+
+  if (leads.length === 0) {
+    return { added: 0, updated: 0, totalCount: 0 }
+  }
+
+  // 1. Targeted fetch: Fetch ONLY matching lead chunks
+  const matchingChunks = (cleanEmails.length > 0 || cleanPhones.length > 0)
+    ? await writeClient.fetch<Array<{
+        _id: string
+        chunkIndex: number
+        count: number
+        leads: MarketingLeadItem[]
+      }>>(
+        `*[_type == "marketingLeadChunk" && (count(leads[lower(email) in $emails]) > 0 || count(leads[phone in $phones]) > 0)] {
+          _id,
+          chunkIndex,
+          count,
+          leads
+        }`,
+        { emails: cleanEmails, phones: cleanPhones }
+      )
+    : []
+
+  const chunkMap = new Map<number, {
     _id: string
     chunkIndex: number
     count: number
     leads: MarketingLeadItem[]
-  }>>(`*[_type == "marketingLeadChunk"] | order(chunkIndex asc) { _id, chunkIndex, count, leads }`)
-
-  let chunkList = (chunks || []).map(c => ({
+  }>()
+  matchingChunks.forEach(c => chunkMap.set(c.chunkIndex, {
     ...c,
     leads: Array.isArray(c.leads) ? [...c.leads] : []
   }))
 
-  // Safeguard: If Sanity has fewer than 20 chunks, load baseline lead chunks from disk
-  if (chunkList.length < 20) {
-    try {
-      const fs = await import('fs')
-      const path = await import('path')
-      const dataPath = path.join(process.cwd(), 'data', 'marketing_leads_chunked.json')
-      const rootPath = path.join(process.cwd(), 'prepared_lead_chunks.json')
-      const filePath = fs.existsSync(dataPath) ? dataPath : (fs.existsSync(rootPath) ? rootPath : null)
-      if (filePath) {
-        const baselineChunks = JSON.parse(fs.readFileSync(filePath, 'utf8'))
-        if (chunkList.length === 0) {
-          chunkList = baselineChunks.map((c: any) => ({
-            _id: c._id || `marketingLeadChunk-${String(c.chunkIndex).padStart(3, '0')}`,
-            chunkIndex: c.chunkIndex,
-            count: (c.leads || []).length,
-            leads: Array.isArray(c.leads) ? [...c.leads] : []
-          }))
-        }
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  // Map seed (email or phone) -> { chunkIdx, leadIdx, item }
-  const leadMap = new Map<string, { chunkIdx: number; leadIdx: number; item: MarketingLeadItem }>()
-  chunkList.forEach((chunk, cIdx) => {
-    chunk.leads.forEach((l, lIdx) => {
-      if (l.email) leadMap.set(l.email.toLowerCase().trim(), { chunkIdx: cIdx, leadIdx: lIdx, item: l })
-      if (l.phone) leadMap.set(l.phone.replace(/[^\d]/g, ''), { chunkIdx: cIdx, leadIdx: lIdx, item: l })
-      if (l.id) leadMap.set(l.id, { chunkIdx: cIdx, leadIdx: lIdx, item: l })
+  const leadLocationMap = new Map<string, { chunkIndex: number; leadIdx: number; item: MarketingLeadItem }>()
+  matchingChunks.forEach(chunk => {
+    (chunk.leads || []).forEach((lead, lIdx) => {
+      if (lead.email) leadLocationMap.set(lead.email.toLowerCase().trim(), { chunkIndex: chunk.chunkIndex, leadIdx: lIdx, item: lead })
+      if (lead.phone) leadLocationMap.set(lead.phone.replace(/[^\d]/g, ''), { chunkIndex: chunk.chunkIndex, leadIdx: lIdx, item: lead })
+      if (lead.id) leadLocationMap.set(lead.id, { chunkIndex: chunk.chunkIndex, leadIdx: lIdx, item: lead })
     })
   })
+
+  // 2. Fetch the latest open lead chunk (< CHUNK_MAX_SIZE)
+  let openChunk = await writeClient.fetch<{
+    _id: string
+    chunkIndex: number
+    count: number
+    leads: MarketingLeadItem[]
+  }>(
+    `*[_type == "marketingLeadChunk" && count < ${CHUNK_MAX_SIZE}] | order(chunkIndex desc)[0] {
+      _id,
+      chunkIndex,
+      count,
+      leads
+    }`
+  )
+
+  let highestIndex = 0
+  if (openChunk) {
+    highestIndex = openChunk.chunkIndex
+    if (!chunkMap.has(openChunk.chunkIndex)) {
+      chunkMap.set(openChunk.chunkIndex, {
+        ...openChunk,
+        leads: Array.isArray(openChunk.leads) ? [...openChunk.leads] : []
+      })
+    }
+    openChunk = chunkMap.get(openChunk.chunkIndex)!
+  } else {
+    highestIndex = ((await writeClient.fetch<number>(`coalesce(max(*[_type == "marketingLeadChunk"].chunkIndex), -1)`)) || 0) + 1
+    const pad = String(highestIndex).padStart(3, '0')
+    openChunk = {
+      _id: `marketingLeadChunk-${pad}`,
+      chunkIndex: highestIndex,
+      count: 0,
+      leads: []
+    }
+    chunkMap.set(highestIndex, openChunk)
+  }
 
   const dirtyChunkIndices = new Set<number>()
   let added = 0
@@ -555,31 +637,39 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
     const cleanPhone = (item.phone || '').replace(/[^\d]/g, '')
     const idKey = item.id || ''
 
-    const existing = (idKey && leadMap.get(idKey)) ||
-                     (cleanEmail && leadMap.get(cleanEmail)) ||
-                     (cleanPhone && leadMap.get(cleanPhone))
+    const existing = (idKey && leadLocationMap.get(idKey)) ||
+                     (cleanEmail && leadLocationMap.get(cleanEmail)) ||
+                     (cleanPhone && leadLocationMap.get(cleanPhone))
 
     if (existing) {
-      const current = existing.item
-      if (item.name) current.name = item.name
-      if (item.email) current.email = cleanEmail
-      if (item.phone) current.phone = item.phone
-      if (item.whatsapp) current.whatsapp = item.whatsapp
-      if (item.company) current.company = item.company
-      if (item.city) current.city = item.city
-      if (item.designation) current.designation = item.designation
-      if (item.accreditations) current.accreditations = item.accreditations
-      if (item.priority) current.priority = item.priority
-      if (item.leadType) current.leadType = item.leadType
-      if (item.status) current.status = item.status
-      if (item.source) current.source = item.source
-      if (item.relevantKeywords) current.relevantKeywords = item.relevantKeywords
-      if (item.notes) current.notes = item.notes
-      current._updatedAt = new Date().toISOString()
-
-      dirtyChunkIndices.add(existing.chunkIdx)
+      const chunk = chunkMap.get(existing.chunkIndex)!
+      const lead = chunk.leads[existing.leadIdx]
+      if (item.name) lead.name = item.name
+      if (item.company) lead.company = item.company
+      if (item.city) lead.city = item.city
+      if (item.designation) lead.designation = item.designation
+      if (item.phone && !lead.phone) lead.phone = item.phone
+      if (item.email && !lead.email) lead.email = cleanEmail
+      if (item.whatsapp && !lead.whatsapp) lead.whatsapp = item.whatsapp
+      if (item.source && !lead.source?.includes(item.source)) {
+        lead.source = lead.source ? `${lead.source}, ${item.source}` : item.source
+      }
+      lead._updatedAt = new Date().toISOString()
+      dirtyChunkIndices.add(chunk.chunkIndex)
       updated++
     } else {
+      if (openChunk.leads.length >= CHUNK_MAX_SIZE) {
+        highestIndex = Math.max(highestIndex, openChunk.chunkIndex) + 1
+        const pad = String(highestIndex).padStart(3, '0')
+        openChunk = {
+          _id: `marketingLeadChunk-${pad}`,
+          chunkIndex: highestIndex,
+          count: 0,
+          leads: []
+        }
+        chunkMap.set(highestIndex, openChunk)
+      }
+
       const seed = cleanEmail || cleanPhone || Math.random().toString()
       const newId = `marketingLead-${crypto.createHash('md5').update(seed).digest('hex').slice(0, 16)}`
       const newLead: MarketingLeadItem = {
@@ -587,7 +677,7 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
         name: item.name || '',
         email: cleanEmail,
         phone: item.phone || '',
-        whatsapp: item.whatsapp || (item.phone ? `https://wa.me/${item.phone.replace(/[^\d]/g, '')}` : ''),
+        whatsapp: item.whatsapp || (cleanPhone ? `https://wa.me/${cleanPhone}` : ''),
         company: item.company || '',
         city: item.city || '',
         designation: item.designation || '',
@@ -595,35 +685,23 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
         priority: item.priority || 'normal',
         leadType: item.leadType || 'agent',
         status: item.status || 'new',
-        source: item.source || 'manual',
+        source: item.source || 'subscriber_sync',
         relevantKeywords: item.relevantKeywords || '',
         notes: item.notes || '',
         _createdAt: new Date().toISOString(),
         _updatedAt: new Date().toISOString()
       }
 
-      let targetChunkIdx = chunkList.findIndex(c => c.leads.length < CHUNK_MAX_SIZE)
-      if (targetChunkIdx === -1) {
-        const nextIndex = chunkList.length
-        const pad = String(nextIndex).padStart(3, '0')
-        const newChunkDoc = {
-          _id: `marketingLeadChunk-${pad}`,
-          chunkIndex: nextIndex,
-          count: 0,
-          leads: []
-        }
-        chunkList.push(newChunkDoc)
-        targetChunkIdx = nextIndex
-      }
-
-      chunkList[targetChunkIdx].leads.push(newLead)
-      dirtyChunkIndices.add(targetChunkIdx)
+      openChunk.leads.push(newLead)
+      if (cleanEmail) leadLocationMap.set(cleanEmail, { chunkIndex: openChunk.chunkIndex, leadIdx: openChunk.leads.length - 1, item: newLead })
+      if (cleanPhone) leadLocationMap.set(cleanPhone, { chunkIndex: openChunk.chunkIndex, leadIdx: openChunk.leads.length - 1, item: newLead })
+      dirtyChunkIndices.add(openChunk.chunkIndex)
       added++
     }
   }
 
   for (const cIdx of dirtyChunkIndices) {
-    const chunk = chunkList[cIdx]
+    const chunk = chunkMap.get(cIdx)!
     await writeClient.createOrReplace({
       _id: chunk._id,
       _type: 'marketingLeadChunk',
@@ -633,8 +711,7 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
     })
   }
 
-  const totalCount = chunkList.reduce((acc, c) => acc + c.leads.length, 0)
-  return { added, updated, totalCount }
+  return { added, updated, totalCount: added + updated }
 }
 
 /**

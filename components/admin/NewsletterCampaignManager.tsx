@@ -1288,7 +1288,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
     setIsSyncingImport(true)
     setImportSyncFeedback(null)
 
-    const BATCH_SIZE = 150
+    const BATCH_SIZE = 60
     const total = parsedImportSubscribers.length
     let totalSynced = 0
 
@@ -1309,7 +1309,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
         let attempts = 0
         let batchSuccess = false
 
-        while (attempts < 2 && !batchSuccess) {
+        while (attempts < 3 && !batchSuccess) {
           attempts++
           try {
             const res = await fetch('/api/newsletter/subscribe', {
@@ -1333,8 +1333,8 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                 else if (res.status === 504) msg = 'Server timeout'
                 else if (text.length > 0 && text.length < 150) msg = text
               }
-              if (attempts < 2) {
-                await new Promise(r => setTimeout(r, 1200))
+              if (attempts < 3) {
+                await new Promise(r => setTimeout(r, attempts * 1500))
                 continue
               }
               throw new Error(`Batch (${i + 1}-${currentProgress}) failed: ${msg}`)
@@ -1348,8 +1348,8 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
             totalSynced += (data.syncedCount !== undefined ? data.syncedCount : chunk.length)
             batchSuccess = true
           } catch (fetchErr: any) {
-            if (attempts >= 2) throw fetchErr
-            await new Promise(r => setTimeout(r, 1200))
+            if (attempts >= 3) throw fetchErr
+            await new Promise(r => setTimeout(r, attempts * 1500))
           }
         }
       }
