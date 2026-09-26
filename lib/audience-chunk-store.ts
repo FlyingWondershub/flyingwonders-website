@@ -181,21 +181,38 @@ export async function saveOrUpdateSubscribers(
     return { added: 0, updated: 0, totalCount: 0 }
   }
 
-  // 1. Targeted fetch: Fetch ONLY chunks containing any of the incoming emails
-  const matchingChunks = await writeClient.fetch<Array<{
-    _id: string
-    chunkIndex: number
-    count: number
-    subscribers: SubscriberItem[]
-  }>>(
-    `*[_type == "newsletterSubscriberChunk" && count(subscribers[lower(email) in $emails]) > 0] {
-      _id,
-      chunkIndex,
-      count,
-      subscribers
-    }`,
-    { emails: cleanEmails }
-  )
+  // 1. Targeted fetch & open chunk in parallel
+  const [matchingChunks, openChunkData] = await Promise.all([
+    writeClient.fetch<Array<{
+      _id: string
+      chunkIndex: number
+      count: number
+      subscribers: SubscriberItem[]
+    }>>(
+      `*[_type == "newsletterSubscriberChunk" && count(subscribers[lower(email) in $emails]) > 0] {
+        _id,
+        chunkIndex,
+        count,
+        subscribers
+      }`,
+      { emails: cleanEmails }
+    ),
+    writeClient.fetch<{
+      _id: string
+      chunkIndex: number
+      count: number
+      subscribers: SubscriberItem[]
+    }>(
+      `*[_type == "newsletterSubscriberChunk" && count < ${CHUNK_MAX_SIZE}] | order(chunkIndex desc)[0] {
+        _id,
+        chunkIndex,
+        count,
+        subscribers
+      }`
+    )
+  ])
+
+  let openChunk = openChunkData
 
   const chunkMap = new Map<number, {
     _id: string
@@ -221,21 +238,7 @@ export async function saveOrUpdateSubscribers(
     })
   })
 
-  // 2. Fetch the latest open chunk with space (< CHUNK_MAX_SIZE)
-  let openChunk = await writeClient.fetch<{
-    _id: string
-    chunkIndex: number
-    count: number
-    subscribers: SubscriberItem[]
-  }>(
-    `*[_type == "newsletterSubscriberChunk" && count < ${CHUNK_MAX_SIZE}] | order(chunkIndex desc)[0] {
-      _id,
-      chunkIndex,
-      count,
-      subscribers
-    }`
-  )
-
+  // 2. Resolve open chunk or create next sequential chunk
   let highestIndex = 0
   if (openChunk) {
     highestIndex = openChunk.chunkIndex
@@ -247,7 +250,8 @@ export async function saveOrUpdateSubscribers(
     }
     openChunk = chunkMap.get(openChunk.chunkIndex)!
   } else {
-    highestIndex = ((await writeClient.fetch<number>(`coalesce(max(*[_type == "newsletterSubscriberChunk"].chunkIndex), -1)`)) || 0) + 1
+    const maxIdx = await writeClient.fetch<number>(`coalesce(*[_type == "newsletterSubscriberChunk"] | order(chunkIndex desc)[0].chunkIndex, -1)`)
+    highestIndex = (maxIdx ?? -1) + 1
     const pad = String(highestIndex).padStart(3, '0')
     openChunk = {
       _id: `newsletterSubscriberChunk-${pad}`,
@@ -270,25 +274,27 @@ export async function saveOrUpdateSubscribers(
     const existing = emailLocationMap.get(cleanEmail)
     if (existing) {
       // Update in its existing chunk
-      const chunk = chunkMap.get(existing.chunkIndex)!
-      const sub = chunk.subscribers[existing.subIdx]
-      if (item.name) sub.name = item.name
-      if (item.company) sub.company = item.company
-      if (item.audienceType) sub.audienceType = item.audienceType
-      sub.isActive = true
+      const chunk = chunkMap.get(existing.chunkIndex)
+      if (chunk && chunk.subscribers[existing.subIdx]) {
+        const sub = chunk.subscribers[existing.subIdx]
+        if (item.name) sub.name = item.name
+        if (item.company) sub.company = item.company
+        if (item.audienceType) sub.audienceType = item.audienceType
+        sub.isActive = true
 
-      // Smart Tag Appending: preserve origin while appending new event tag
-      if (item.source) {
-        const currentSource = sub.source || ''
-        const existingTags = currentSource.split(',').map(t => t.trim().toLowerCase())
-        const newTag = item.source.trim()
-        if (!existingTags.includes(newTag.toLowerCase())) {
-          sub.source = currentSource ? `${currentSource}, ${newTag}` : newTag
+        // Smart Tag Appending: preserve origin while appending new event tag
+        if (item.source) {
+          const currentSource = sub.source || ''
+          const existingTags = currentSource.split(',').map(t => t.trim().toLowerCase())
+          const newTag = item.source.trim()
+          if (!existingTags.includes(newTag.toLowerCase())) {
+            sub.source = currentSource ? `${currentSource}, ${newTag}` : newTag
+          }
         }
-      }
 
-      dirtyChunkIndices.add(chunk.chunkIndex)
-      updated++
+        dirtyChunkIndices.add(chunk.chunkIndex)
+        updated++
+      }
     } else {
       // Add to open chunk
       if (openChunk.subscribers.length >= CHUNK_MAX_SIZE) {
@@ -342,16 +348,20 @@ export async function saveOrUpdateSubscribers(
     }
   }
 
-  // 3. Commit ONLY dirty chunks
-  for (const cIdx of dirtyChunkIndices) {
-    const chunk = chunkMap.get(cIdx)!
-    await writeClient.createOrReplace({
-      _id: chunk._id,
-      _type: 'newsletterSubscriberChunk',
-      chunkIndex: chunk.chunkIndex,
-      count: chunk.subscribers.length,
-      subscribers: chunk.subscribers
-    })
+  // 3. Commit dirty chunks atomically in a single transaction
+  if (dirtyChunkIndices.size > 0) {
+    let tx = writeClient.transaction()
+    for (const cIdx of dirtyChunkIndices) {
+      const chunk = chunkMap.get(cIdx)!
+      tx = tx.createOrReplace({
+        _id: chunk._id,
+        _type: 'newsletterSubscriberChunk',
+        chunkIndex: chunk.chunkIndex,
+        count: chunk.subscribers.length,
+        subscribers: chunk.subscribers
+      })
+    }
+    await tx.commit({ visibility: 'async' })
   }
 
   // Dual sync leads if requested
@@ -553,23 +563,54 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
     return { added: 0, updated: 0, totalCount: 0 }
   }
 
-  // 1. Targeted fetch: Fetch ONLY matching lead chunks
-  const matchingChunks = (cleanEmails.length > 0 || cleanPhones.length > 0)
-    ? await writeClient.fetch<Array<{
-        _id: string
-        chunkIndex: number
-        count: number
-        leads: MarketingLeadItem[]
-      }>>(
-        `*[_type == "marketingLeadChunk" && (count(leads[lower(email) in $emails]) > 0 || count(leads[phone in $phones]) > 0)] {
-          _id,
-          chunkIndex,
-          count,
-          leads
-        }`,
-        { emails: cleanEmails, phones: cleanPhones }
-      )
-    : []
+  // 1. Build targeted GROQ filter efficiently based on what keys we actually have
+  let filterClauses: string[] = []
+  const queryParams: Record<string, any> = {}
+
+  if (cleanEmails.length > 0) {
+    filterClauses.push('count(leads[lower(email) in $emails]) > 0')
+    queryParams.emails = cleanEmails
+  }
+  if (cleanPhones.length > 0) {
+    filterClauses.push('count(leads[phone in $phones]) > 0')
+    queryParams.phones = cleanPhones
+  }
+
+  const matchingQuery = filterClauses.length > 0
+    ? `*[_type == "marketingLeadChunk" && (${filterClauses.join(' || ')})] {
+        _id,
+        chunkIndex,
+        count,
+        leads
+      }`
+    : null
+
+  // Fetch matching chunks and open chunk concurrently
+  const [matchingChunks, openChunkData] = await Promise.all([
+    matchingQuery
+      ? writeClient.fetch<Array<{
+          _id: string
+          chunkIndex: number
+          count: number
+          leads: MarketingLeadItem[]
+        }>>(matchingQuery, queryParams)
+      : Promise.resolve([]),
+    writeClient.fetch<{
+      _id: string
+      chunkIndex: number
+      count: number
+      leads: MarketingLeadItem[]
+    }>(
+      `*[_type == "marketingLeadChunk" && count < ${CHUNK_MAX_SIZE}] | order(chunkIndex desc)[0] {
+        _id,
+        chunkIndex,
+        count,
+        leads
+      }`
+    )
+  ])
+
+  let openChunk = openChunkData
 
   const chunkMap = new Map<number, {
     _id: string
@@ -591,21 +632,7 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
     })
   })
 
-  // 2. Fetch the latest open lead chunk (< CHUNK_MAX_SIZE)
-  let openChunk = await writeClient.fetch<{
-    _id: string
-    chunkIndex: number
-    count: number
-    leads: MarketingLeadItem[]
-  }>(
-    `*[_type == "marketingLeadChunk" && count < ${CHUNK_MAX_SIZE}] | order(chunkIndex desc)[0] {
-      _id,
-      chunkIndex,
-      count,
-      leads
-    }`
-  )
-
+  // 2. Resolve open chunk or create next sequential chunk
   let highestIndex = 0
   if (openChunk) {
     highestIndex = openChunk.chunkIndex
@@ -617,7 +644,8 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
     }
     openChunk = chunkMap.get(openChunk.chunkIndex)!
   } else {
-    highestIndex = ((await writeClient.fetch<number>(`coalesce(max(*[_type == "marketingLeadChunk"].chunkIndex), -1)`)) || 0) + 1
+    const maxIdx = await writeClient.fetch<number>(`coalesce(*[_type == "marketingLeadChunk"] | order(chunkIndex desc)[0].chunkIndex, -1)`)
+    highestIndex = (maxIdx ?? -1) + 1
     const pad = String(highestIndex).padStart(3, '0')
     openChunk = {
       _id: `marketingLeadChunk-${pad}`,
@@ -642,21 +670,23 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
                      (cleanPhone && leadLocationMap.get(cleanPhone))
 
     if (existing) {
-      const chunk = chunkMap.get(existing.chunkIndex)!
-      const lead = chunk.leads[existing.leadIdx]
-      if (item.name) lead.name = item.name
-      if (item.company) lead.company = item.company
-      if (item.city) lead.city = item.city
-      if (item.designation) lead.designation = item.designation
-      if (item.phone && !lead.phone) lead.phone = item.phone
-      if (item.email && !lead.email) lead.email = cleanEmail
-      if (item.whatsapp && !lead.whatsapp) lead.whatsapp = item.whatsapp
-      if (item.source && !lead.source?.includes(item.source)) {
-        lead.source = lead.source ? `${lead.source}, ${item.source}` : item.source
+      const chunk = chunkMap.get(existing.chunkIndex)
+      if (chunk && chunk.leads[existing.leadIdx]) {
+        const lead = chunk.leads[existing.leadIdx]
+        if (item.name) lead.name = item.name
+        if (item.company) lead.company = item.company
+        if (item.city) lead.city = item.city
+        if (item.designation) lead.designation = item.designation
+        if (item.phone && !lead.phone) lead.phone = item.phone
+        if (item.email && !lead.email) lead.email = cleanEmail
+        if (item.whatsapp && !lead.whatsapp) lead.whatsapp = item.whatsapp
+        if (item.source && !lead.source?.includes(item.source)) {
+          lead.source = lead.source ? `${lead.source}, ${item.source}` : item.source
+        }
+        lead._updatedAt = new Date().toISOString()
+        dirtyChunkIndices.add(chunk.chunkIndex)
+        updated++
       }
-      lead._updatedAt = new Date().toISOString()
-      dirtyChunkIndices.add(chunk.chunkIndex)
-      updated++
     } else {
       if (openChunk.leads.length >= CHUNK_MAX_SIZE) {
         highestIndex = Math.max(highestIndex, openChunk.chunkIndex) + 1
@@ -700,15 +730,20 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
     }
   }
 
-  for (const cIdx of dirtyChunkIndices) {
-    const chunk = chunkMap.get(cIdx)!
-    await writeClient.createOrReplace({
-      _id: chunk._id,
-      _type: 'marketingLeadChunk',
-      chunkIndex: chunk.chunkIndex,
-      count: chunk.leads.length,
-      leads: chunk.leads
-    })
+  // 3. Commit dirty chunks atomically in a single transaction
+  if (dirtyChunkIndices.size > 0) {
+    let tx = writeClient.transaction()
+    for (const cIdx of dirtyChunkIndices) {
+      const chunk = chunkMap.get(cIdx)!
+      tx = tx.createOrReplace({
+        _id: chunk._id,
+        _type: 'marketingLeadChunk',
+        chunkIndex: chunk.chunkIndex,
+        count: chunk.leads.length,
+        leads: chunk.leads
+      })
+    }
+    await tx.commit({ visibility: 'async' })
   }
 
   return { added, updated, totalCount: added + updated }

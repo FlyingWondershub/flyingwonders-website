@@ -7,7 +7,7 @@ import {
   AlertCircle, Sparkles, X, ChevronRight, Users, Clock, CheckCheck,
   FileText, Smartphone, Monitor, ShieldCheck, Check, MessageSquare,
   Image as ImageIcon, Upload, UploadCloud, Download, UserPlus, Search, Filter, CheckCircle2,
-  History, Copy, MessageCircle
+  History, Copy, MessageCircle, RotateCcw
 } from 'lucide-react'
 import { ParsedContact, parseSpreadsheetBuffer, parseWhatsAppChatText, parseRawContactText } from '../../lib/contact-parser'
 
@@ -623,6 +623,7 @@ export default function NewsletterCampaignManager() {
     message?: string
   } | null>(null)
   const [stagingPage, setStagingPage] = useState(1)
+  const [lastSyncedIndex, setLastSyncedIndex] = useState<number>(0)
   const STAGING_PAGE_SIZE = 100
 
   const filteredParsedSubscribers = useMemo(() => {
@@ -1195,6 +1196,7 @@ export default function NewsletterCampaignManager() {
     if (!file) return
     setIsParsingImport(true)
     setImportSyncFeedback(null)
+    setLastSyncedIndex(0)
     try {
       const buffer = await file.arrayBuffer()
       const results = parseSpreadsheetBuffer(buffer, {
@@ -1214,6 +1216,7 @@ export default function NewsletterCampaignManager() {
     if (!file) return
     setIsParsingImport(true)
     setImportSyncFeedback(null)
+    setLastSyncedIndex(0)
     try {
       const text = await file.text()
       const results = parseWhatsAppChatText(text, {
@@ -1232,6 +1235,7 @@ export default function NewsletterCampaignManager() {
     if (!importText.trim()) return
     setIsParsingImport(true)
     setImportSyncFeedback(null)
+    setLastSyncedIndex(0)
     try {
       const results = parseRawContactText(importText, {
         defaultAudience: importAudience,
@@ -1283,17 +1287,18 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
     XLSX.writeFile(wb, `Parsed_Subscribers_${new Date().toISOString().slice(0, 10)}.xlsx`)
   }
 
-  const handleSyncImportToSubscribers = async () => {
+  const handleSyncImportToSubscribers = async (resume: boolean = false) => {
     if (parsedImportSubscribers.length === 0) return
     setIsSyncingImport(true)
     setImportSyncFeedback(null)
 
-    const BATCH_SIZE = 60
+    const BATCH_SIZE = 30
     const total = parsedImportSubscribers.length
-    let totalSynced = 0
+    const startFrom = resume ? Math.min(lastSyncedIndex, total) : 0
+    let totalSynced = startFrom
 
     try {
-      for (let i = 0; i < total; i += BATCH_SIZE) {
+      for (let i = startFrom; i < total; i += BATCH_SIZE) {
         const chunk = parsedImportSubscribers.slice(i, i + BATCH_SIZE)
         const currentProgress = Math.min(i + chunk.length, total)
         const percent = Math.round((currentProgress / total) * 100)
@@ -1334,7 +1339,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                 else if (text.length > 0 && text.length < 150) msg = text
               }
               if (attempts < 3) {
-                await new Promise(r => setTimeout(r, attempts * 1500))
+                await new Promise(r => setTimeout(r, attempts * 2000))
                 continue
               }
               throw new Error(`Batch (${i + 1}-${currentProgress}) failed: ${msg}`)
@@ -1347,14 +1352,19 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
 
             totalSynced += (data.syncedCount !== undefined ? data.syncedCount : chunk.length)
             batchSuccess = true
+            setLastSyncedIndex(currentProgress)
           } catch (fetchErr: any) {
-            if (attempts >= 3) throw fetchErr
-            await new Promise(r => setTimeout(r, attempts * 1500))
+            if (attempts >= 3) {
+              setLastSyncedIndex(i)
+              throw fetchErr
+            }
+            await new Promise(r => setTimeout(r, attempts * 2000))
           }
         }
       }
 
       setImportSyncFeedback(`✅ Successfully imported and synchronized all ${totalSynced.toLocaleString()} contacts!${importDualSyncLeads ? ' (And dual-synced to Marketing Leads)' : ''}`)
+      setLastSyncedIndex(0)
       await fetchSubscribersFull()
       setImportSyncProgress(null)
       setTimeout(() => {
@@ -3935,6 +3945,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                   setParsedImportSubscribers([])
                   setImportFilterQuery('')
                   setImportSyncFeedback(null)
+                  setLastSyncedIndex(0)
                 }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
               >
@@ -4602,39 +4613,89 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={handleSyncImportToSubscribers}
-                    disabled={isSyncingImport}
-                    style={{
-                      width: '100%',
-                      padding: '11px 16px',
-                      background: '#0F4C3A',
-                      color: '#FFF',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontWeight: 800,
-                      fontSize: '0.88rem',
-                      cursor: isSyncingImport ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(15, 76, 58, 0.2)'
-                    }}
-                  >
-                    {isSyncingImport ? (
-                      <>
-                        <RefreshCw size={16} className="animate-spin" />
-                        {importSyncProgress ? importSyncProgress.message : `Syncing ${parsedImportSubscribers.length.toLocaleString()} Contacts to Sanity...`}
-                      </>
-                    ) : (
-                      <>
+                  {!isSyncingImport && lastSyncedIndex > 0 && lastSyncedIndex < parsedImportSubscribers.length ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleSyncImportToSubscribers(true)}
+                        style={{
+                          width: '100%',
+                          padding: '11px 16px',
+                          background: '#0F4C3A',
+                          color: '#FFF',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: 800,
+                          fontSize: '0.88rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(15, 76, 58, 0.2)'
+                        }}
+                      >
                         <UploadCloud size={16} />
-                        🚀 Sync All {parsedImportSubscribers.length.toLocaleString()} Contacts to Subscribers Audience {importDualSyncLeads ? '(& Leads Directory)' : ''}
-                      </>
-                    )}
-                  </button>
+                        ▶️ Resume Ingestion from Contact {(lastSyncedIndex + 1).toLocaleString()} ({(parsedImportSubscribers.length - lastSyncedIndex).toLocaleString()} Remaining)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSyncImportToSubscribers(false)}
+                        style={{
+                          width: '100%',
+                          padding: '8px 16px',
+                          background: '#F8FAFC',
+                          color: '#475569',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <RotateCcw size={14} />
+                        Restart from Contact 1
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleSyncImportToSubscribers(false)}
+                      disabled={isSyncingImport}
+                      style={{
+                        width: '100%',
+                        padding: '11px 16px',
+                        background: '#0F4C3A',
+                        color: '#FFF',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        cursor: isSyncingImport ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(15, 76, 58, 0.2)'
+                      }}
+                    >
+                      {isSyncingImport ? (
+                        <>
+                          <RefreshCw size={16} className="animate-spin" />
+                          {importSyncProgress ? importSyncProgress.message : `Syncing ${parsedImportSubscribers.length.toLocaleString()} Contacts to Sanity...`}
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud size={16} />
+                          🚀 Sync All {parsedImportSubscribers.length.toLocaleString()} Contacts to Subscribers Audience {importDualSyncLeads ? '(& Leads Directory)' : ''}
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -4649,6 +4710,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                   setParsedImportSubscribers([])
                   setImportFilterQuery('')
                   setImportSyncFeedback(null)
+                  setLastSyncedIndex(0)
                 }}
                 style={{ padding: '7px 16px', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
               >
