@@ -8,7 +8,8 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  ShieldCheck
+  ShieldCheck,
+  Menu
 } from 'lucide-react'
 import { AdminWorkspace } from './AdminSidebar'
 
@@ -34,6 +35,7 @@ interface AdminHeaderProps {
   onRefreshData: () => void
   isRefreshing: boolean
   onCreateVoucher?: () => void
+  onToggleSidebar?: () => void
 }
 
 export default function AdminHeader({
@@ -50,10 +52,12 @@ export default function AdminHeader({
   syncMessage,
   onRefreshData,
   isRefreshing,
-  onCreateVoucher
+  onCreateVoucher,
+  onToggleSidebar
 }: AdminHeaderProps) {
   return (
     <header
+      className="admin-header-container"
       style={{
         background: '#FFFFFF',
         borderBottom: '1px solid #E2E8F0',
@@ -77,6 +81,17 @@ export default function AdminHeader({
       >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            {onToggleSidebar && (
+              <button
+                type="button"
+                onClick={onToggleSidebar}
+                className="admin-mobile-sidebar-toggle"
+                title="Toggle admin navigation"
+                aria-label="Toggle admin navigation"
+              >
+                <Menu size={18} />
+              </button>
+            )}
             <h1
               style={{
                 fontFamily: 'var(--font-playfair), serif',

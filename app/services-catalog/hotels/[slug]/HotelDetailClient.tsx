@@ -212,7 +212,18 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
       <div className="catalog-detail-grid" style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem' }}>
         
         {/* LEFT COLUMN: Overview, Highlights, Timings, Pro-Tips, Video, Rooms & Gallery */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+        <div
+          className="catalog-detail-main"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.75rem',
+            minWidth: 0,
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box'
+          }}
+        >
           
           {/* Property Overview & Description */}
           <div className="detail-content-card">
@@ -374,7 +385,7 @@ export default function HotelDetailClient({ hotel }: { hotel: HotelData }) {
 
           {/* YouTube Shorts Carousel for Hotel Video Walkthroughs */}
           {hotel.shorts && hotel.shorts.length > 0 && (
-            <div className="detail-content-card">
+            <div className="detail-content-card" style={{ minWidth: 0, width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
               <PackageShortsCarousel
                 destination={hotel.location || 'Singapore'}
                 curatedShorts={hotel.shorts}

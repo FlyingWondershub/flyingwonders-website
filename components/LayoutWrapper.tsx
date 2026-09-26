@@ -183,16 +183,17 @@ export default function LayoutWrapper({
                 border: '2px solid var(--gold-accent)'
               }} 
             />
-            <span style={{ 
-              fontFamily: 'var(--font-playfair), serif', 
-              fontSize: '2.1rem', 
-              fontWeight: 400, 
-              color: 'var(--text-dark)', 
-              letterSpacing: '0.22em', 
-              lineHeight: 1.1,
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap'
-            }}>
+            <span 
+              className="main-brand-logo-text"
+              style={{ 
+                fontFamily: 'var(--font-playfair), serif', 
+                fontWeight: 400, 
+                color: 'var(--text-dark)', 
+                lineHeight: 1.1,
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap'
+              }}
+            >
               Flying Wonders
             </span>
           </Link>

@@ -277,7 +277,13 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
 
       {/* ── 3. QUICK SECTION NAVIGATION LINKS ── */}
       <section className="no-print" style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 2rem', padding: '0 0.5rem' }}>
-        <div className="quick-jump-grid">
+        <div className="quick-jump-grid" style={{
+          background: '#FFFFFF',
+          borderRadius: '16px',
+          border: '1px solid #E2E8F0',
+          padding: '0.85rem 1rem',
+          boxShadow: '0 4px 16px -2px rgba(0,0,0,0.05)'
+        }}>
           {/* 1. Must Do */}
           <a
             href="#must-do"
@@ -287,11 +293,11 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
             }}
             className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
               <div className="quick-jump-icon" style={{ background: '#DCFCE7' }}>
                 <Sparkles size={18} color="#15803D" />
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <strong className="quick-jump-title">Highlights</strong>
                 <span className="quick-jump-sub">Must-Do Inclusions</span>
               </div>
@@ -308,11 +314,11 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
             }}
             className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
               <div className="quick-jump-icon" style={{ background: '#DBEAFE' }}>
                 <Clock size={18} color="#2563EB" />
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <strong className="quick-jump-title">Timeline</strong>
                 <span className="quick-jump-sub">Full-Day Circuit</span>
               </div>
@@ -329,11 +335,11 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
             }}
             className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
               <div className="quick-jump-icon" style={{ background: '#FEF3C7' }}>
                 <Navigation size={18} color="#D97706" />
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <strong className="quick-jump-title">Route & Transit</strong>
                 <span className="quick-jump-sub">Google Maps GPS</span>
               </div>
@@ -350,11 +356,11 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
             }}
             className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
               <div className="quick-jump-icon" style={{ background: '#F3E8FF' }}>
                 <Play size={18} color="#9333EA" fill="#9333EA" />
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <strong className="quick-jump-title">Videos</strong>
                 <span className="quick-jump-sub">Walkthrough Reels</span>
               </div>
@@ -371,11 +377,11 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
             }}
             className="quick-jump-card"
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
               <div className="quick-jump-icon" style={{ background: '#FFEDD5' }}>
                 <Utensils size={18} color="#EA580C" />
               </div>
-              <div>
+              <div style={{ minWidth: 0 }}>
                 <strong className="quick-jump-title">Dining</strong>
                 <span className="quick-jump-sub">Route Pitstops</span>
               </div>
@@ -389,7 +395,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
       <div className="catalog-detail-grid" style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem' }}>
         
         {/* LEFT COLUMN: Overview, Highlights, Timeline, Maps, Video, Dining, Tips */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+        <div className="catalog-detail-main" style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', minWidth: 0, width: '100%', maxWidth: '100%' }}>
           
           {/* Overview Section */}
           <div className="detail-content-card">
@@ -607,7 +613,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
           </div>
 
           {/* ── 4K VIDEO TOUR & SHORTS REELS ── */}
-          <div id="in-depth-experience" style={{ scrollMarginTop: '100px', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+          <div id="in-depth-experience" style={{ scrollMarginTop: '100px', display: 'flex', flexDirection: 'column', gap: '1.75rem', minWidth: 0, width: '100%', maxWidth: '100%' }}>
             {tour.videoUrl && (
               <div className="detail-content-card">
                 <div style={{ marginBottom: '1.25rem' }}>
@@ -629,7 +635,7 @@ export default function TourDetailClient({ tour }: { tour: TourData }) {
 
             {/* YOUTUBE SHORTS CAROUSEL */}
             {tour.shorts && tour.shorts.length > 0 && (
-              <div className="detail-content-card">
+              <div className="detail-content-card" style={{ minWidth: 0, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
                 <PackageShortsCarousel
                   destination={tour.destination}
                   curatedShorts={tour.shorts}

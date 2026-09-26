@@ -67,7 +67,7 @@ export default function PackageShortsCarousel({
   if (shorts.length === 0) return null
 
   return (
-    <section style={{ margin: '3.5rem 0' }}>
+    <section className="shorts-carousel-section" style={{ margin: '1.25rem 0 0.5rem', minWidth: 0, width: '100%', maxWidth: '100%' }}>
       {/* ── Section Header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.25rem', gap: '1rem', flexWrap: 'wrap' }}>
         <div>
@@ -155,7 +155,10 @@ export default function PackageShortsCarousel({
           paddingBottom: '0.75rem',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
+          minWidth: 0,
+          width: '100%',
+          maxWidth: '100%'
         }}
       >
         {shorts.map((item, index) => (

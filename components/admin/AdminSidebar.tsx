@@ -152,26 +152,42 @@ export default function AdminSidebar({
     }
   ]
 
+  const handleNavClick = (workspace: AdminWorkspace, subTab?: string) => {
+    onSelectWorkspace(workspace, subTab)
+    if (typeof window !== 'undefined' && window.innerWidth <= 768 && !isCollapsed) {
+      onToggleCollapse()
+    }
+  }
+
   return (
-    <aside
-      style={{
-        width: isCollapsed ? '72px' : '260px',
-        transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-        background: '#0B1320', // Deep luxury slate navy
-        color: '#E2E8F0',
-        height: '100vh',
-        position: 'sticky',
-        top: 0,
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '4px 0 16px rgba(0,0,0,0.15)',
-        zIndex: 50,
-        userSelect: 'none',
-        borderRight: '1px solid rgba(255,255,255,0.06)'
-      }}
-    >
+    <>
+      {!isCollapsed && (
+        <div
+          className="admin-sidebar-backdrop"
+          onClick={onToggleCollapse}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`admin-sidebar-aside ${isCollapsed ? 'collapsed' : 'expanded'}`}
+        style={{
+          width: isCollapsed ? '72px' : '260px',
+          transition: 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          background: '#0B1320', // Deep luxury slate navy
+          color: '#E2E8F0',
+          height: '100vh',
+          position: 'sticky',
+          top: 0,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '4px 0 16px rgba(0,0,0,0.15)',
+          zIndex: 50,
+          userSelect: 'none',
+          borderRight: '1px solid rgba(255,255,255,0.06)'
+        }}
+      >
       {/* Brand Header */}
       <div
         style={{
@@ -266,7 +282,7 @@ export default function AdminSidebar({
           return (
             <div key={group.id} style={{ display: 'flex', flexDirection: 'column' }}>
               <button
-                onClick={() => onSelectWorkspace(group.id)}
+                onClick={() => handleNavClick(group.id)}
                 title={isCollapsed ? group.label : undefined}
                 style={{
                   display: 'flex',
@@ -345,7 +361,7 @@ export default function AdminSidebar({
                     return (
                       <button
                         key={sub.id}
-                        onClick={() => onSelectWorkspace(group.id, sub.id)}
+                        onClick={() => handleNavClick(group.id, sub.id)}
                         style={{
                           background: isSubActive ? 'rgba(255,255,255,0.1)' : 'transparent',
                           color: isSubActive ? '#FFFFFF' : '#94A3B8',
@@ -459,5 +475,6 @@ export default function AdminSidebar({
         </Link>
       </div>
     </aside>
+    </>
   )
 }

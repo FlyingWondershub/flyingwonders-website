@@ -60,9 +60,12 @@ function AdminDashboardContent() {
   const [adBorderTrafficEnabled, setAdBorderTrafficEnabled] = useState(true)
   const [adAirlinePromosEnabled, setAdAirlinePromosEnabled] = useState(true)
 
-  // Load Ad settings from localStorage
+  // Auto-collapse sidebar on smaller screens and load Ad settings from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      if (window.innerWidth < 1024) {
+        setIsSidebarCollapsed(true)
+      }
       setAdBlogEnabled(localStorage.getItem('fw_ads_disabled_blog') !== 'true')
       setAdTravelToolsEnabled(localStorage.getItem('fw_ads_disabled_travel-tools') !== 'true')
       setAdTravelNewsEnabled(localStorage.getItem('fw_hide_travel_news') !== 'true')
@@ -579,10 +582,22 @@ function AdminDashboardContent() {
             setEditingVoucher(null)
             setVoucherModalOpen(true)
           }}
+          onToggleSidebar={() => setIsSidebarCollapsed(prev => !prev)}
         />
 
         {/* Focused Canvas View (Only renders active workspace!) */}
-        <main style={{ flex: 1, padding: '1.75rem 2rem', maxWidth: '1440px', width: '100%', margin: '0 auto' }}>
+        <main
+          className="admin-main-canvas"
+          style={{
+            flex: 1,
+            padding: '1.75rem 2rem',
+            maxWidth: '1440px',
+            width: '100%',
+            margin: '0 auto',
+            boxSizing: 'border-box',
+            minWidth: 0
+          }}
+        >
           
           {currentWorkspace === 'overview' && (
             <AdminOverviewView

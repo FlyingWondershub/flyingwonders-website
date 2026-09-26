@@ -272,7 +272,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
       <div className="catalog-detail-grid" style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem' }}>
         
         {/* LEFT COLUMN: Overview, Must-Dos, Timings, Pro-Tips, Video, App & Gallery */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+        <div className="catalog-detail-main" style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', minWidth: 0, width: '100%', maxWidth: '100%' }}>
           
           {/* Overview Section */}
           <div className="detail-content-card">
@@ -396,7 +396,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
           )}
 
           {/* ── IN-DEPTH EXPERIENCE: VIDEO SHOWCASE & SHORTS ── */}
-          <div id="in-depth-experience" style={{ scrollMarginTop: '100px', display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+          <div id="in-depth-experience" style={{ scrollMarginTop: '100px', display: 'flex', flexDirection: 'column', gap: '1.75rem', minWidth: 0, width: '100%', maxWidth: '100%' }}>
             {/* VIDEO SHOWCASE TOUR */}
             {attraction.videoUrl && (
               <div className="detail-content-card">
@@ -429,7 +429,7 @@ export default function AttractionDetailClient({ attraction }: { attraction: Att
 
             {/* YOUTUBE SHORTS CAROUSEL */}
             {attraction.shorts && attraction.shorts.length > 0 && (
-              <div className="detail-content-card">
+              <div className="detail-content-card" style={{ minWidth: 0, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
                 <PackageShortsCarousel
                   destination={attraction.destination || 'Singapore'}
                   curatedShorts={attraction.shorts}

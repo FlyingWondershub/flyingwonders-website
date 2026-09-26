@@ -24,6 +24,7 @@ export default function AppDownloadCard({
 
   return (
     <div
+      className="app-download-card"
       style={{
         background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
         color: '#FFFFFF',
@@ -32,7 +33,10 @@ export default function AppDownloadCard({
         border: '1px solid rgba(255, 255, 255, 0.12)',
         boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+        minWidth: 0,
+        maxWidth: '100%'
       }}
     >
       {/* Decorative Glow */}

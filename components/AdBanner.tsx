@@ -98,7 +98,7 @@ export default function AdBanner({
           paddingTop: '0.25rem'
         }}
       >
-        <div style={{ flex: '1 1 340px' }}>
+        <div style={{ flex: '1 1 280px', minWidth: 0 }}>
           <h4 style={{ margin: '0 0 0.35rem', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-dark, #0F172A)', lineHeight: 1.35 }}>
             {title}
           </h4>

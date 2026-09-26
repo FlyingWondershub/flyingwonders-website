@@ -308,7 +308,7 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
       <div className="catalog-detail-grid" style={{ maxWidth: '1600px', width: '96%', margin: '0 auto', padding: '0 0.5rem' }}>
         
         {/* LEFT COLUMN: Overview, Must-Dos, Top Brands, Timings, Pro-Tips, Video, App & Gallery */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="catalog-detail-main" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', minWidth: 0, width: '100%', maxWidth: '100%' }}>
           
           {/* Overview Section */}
           <div className="detail-content-card">

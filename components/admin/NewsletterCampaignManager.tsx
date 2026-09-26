@@ -1539,7 +1539,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
               </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '20px' }}>
               {campaigns.map((c) => {
                 const isDispatched = (c.dispatchCount && c.dispatchCount > 0) || c.status === 'sent'
                 const dispatchTimes = c.dispatchCount || (c.status === 'sent' ? 1 : 0)

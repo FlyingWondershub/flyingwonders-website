@@ -843,7 +843,7 @@ Rajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`
   }
 
   return (
-    <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+    <div className="admin-leads-card" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', boxSizing: 'border-box', minWidth: 0, maxWidth: '100%' }}>
       {/* Header & Stats Banner */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -907,7 +907,7 @@ Rajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`
       )}
 
       {/* KPI Cards Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+      <div className="admin-leads-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '20px' }}>
         <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '12px 16px' }}>
           <div style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Total Database Leads</div>
           <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0F172A', marginTop: '2px' }}>{stats.total || leads.length}</div>
@@ -927,7 +927,7 @@ Rajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`
       </div>
 
       {/* Filter & Search Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '16px', background: '#F8FAFC', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+      <div className="admin-leads-filter-bar" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '16px', background: '#F8FAFC', padding: '10px 14px', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 260px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '6px 12px' }}>
           <Search size={15} color={isSearchingServer ? '#0F4C3A' : '#94A3B8'} className={isSearchingServer ? 'animate-spin' : ''} />
           <input
