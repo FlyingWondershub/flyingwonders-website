@@ -64,10 +64,12 @@ export async function getAllSubscribers(full: boolean = true): Promise<Subscribe
           all.push(...c.subscribers)
         }
       }
-      if (!full) {
-        return all.filter(s => s.isActive).map(s => s.email)
+      if (all.length >= 1000) {
+        if (!full) {
+          return all.filter(s => s.isActive).map(s => s.email)
+        }
+        return all
       }
-      return all
     }
   } catch (e) {
     console.error('Error fetching subscriber chunks from Sanity, using local store:', e)
@@ -176,10 +178,34 @@ export async function saveOrUpdateSubscribers(
     subscribers: SubscriberItem[]
   }>>(`*[_type == "newsletterSubscriberChunk"] | order(chunkIndex asc) { _id, chunkIndex, count, subscribers }`)
 
-  const chunkList = (chunks || []).map(c => ({
+  let chunkList = (chunks || []).map(c => ({
     ...c,
     subscribers: Array.isArray(c.subscribers) ? [...c.subscribers] : []
   }))
+
+  // Safeguard: If Sanity has fewer than 20 chunks, load baseline chunks from disk
+  if (chunkList.length < 20) {
+    try {
+      const fs = await import('fs')
+      const path = await import('path')
+      const dataPath = path.join(process.cwd(), 'data', 'subscribers_chunked.json')
+      const rootPath = path.join(process.cwd(), 'prepared_subscriber_chunks.json')
+      const filePath = fs.existsSync(dataPath) ? dataPath : (fs.existsSync(rootPath) ? rootPath : null)
+      if (filePath) {
+        const baselineChunks = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+        if (chunkList.length === 0) {
+          chunkList = baselineChunks.map((c: any) => ({
+            _id: c._id || `newsletterSubscriberChunk-${String(c.chunkIndex).padStart(3, '0')}`,
+            chunkIndex: c.chunkIndex,
+            count: (c.subscribers || []).length,
+            subscribers: Array.isArray(c.subscribers) ? [...c.subscribers] : []
+          }))
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
 
   // Map email -> { chunkIndex, subscriberIndex, sub }
   const emailMap = new Map<string, { chunkIdx: number; subIdx: number; item: SubscriberItem }>()
@@ -389,6 +415,9 @@ export async function fetchChunkedLeads(params: {
           allLeads.push(...c.leads)
         }
       }
+      if (allLeads.length < 1000) {
+        allLeads = [] // trigger local fallback
+      }
     }
   } catch (e) {
     console.error('Error fetching lead chunks from Sanity, using local store:', e)
@@ -478,10 +507,34 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
     leads: MarketingLeadItem[]
   }>>(`*[_type == "marketingLeadChunk"] | order(chunkIndex asc) { _id, chunkIndex, count, leads }`)
 
-  const chunkList = (chunks || []).map(c => ({
+  let chunkList = (chunks || []).map(c => ({
     ...c,
     leads: Array.isArray(c.leads) ? [...c.leads] : []
   }))
+
+  // Safeguard: If Sanity has fewer than 20 chunks, load baseline lead chunks from disk
+  if (chunkList.length < 20) {
+    try {
+      const fs = await import('fs')
+      const path = await import('path')
+      const dataPath = path.join(process.cwd(), 'data', 'marketing_leads_chunked.json')
+      const rootPath = path.join(process.cwd(), 'prepared_lead_chunks.json')
+      const filePath = fs.existsSync(dataPath) ? dataPath : (fs.existsSync(rootPath) ? rootPath : null)
+      if (filePath) {
+        const baselineChunks = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+        if (chunkList.length === 0) {
+          chunkList = baselineChunks.map((c: any) => ({
+            _id: c._id || `marketingLeadChunk-${String(c.chunkIndex).padStart(3, '0')}`,
+            chunkIndex: c.chunkIndex,
+            count: (c.leads || []).length,
+            leads: Array.isArray(c.leads) ? [...c.leads] : []
+          }))
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
 
   // Map seed (email or phone) -> { chunkIdx, leadIdx, item }
   const leadMap = new Map<string, { chunkIdx: number; leadIdx: number; item: MarketingLeadItem }>()
