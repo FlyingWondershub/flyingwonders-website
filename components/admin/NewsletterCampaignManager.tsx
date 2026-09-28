@@ -7,7 +7,8 @@ import {
   AlertCircle, Sparkles, X, ChevronRight, Users, Clock, CheckCheck,
   FileText, Smartphone, Monitor, ShieldCheck, Check, MessageSquare,
   Image as ImageIcon, Upload, UploadCloud, Download, UserPlus, Search, Filter, CheckCircle2,
-  History, Copy, MessageCircle, RotateCcw
+  History, Copy, MessageCircle, RotateCcw,
+  Play, Pause, Square, Zap
 } from 'lucide-react'
 import { ParsedContact, parseSpreadsheetBuffer, parseWhatsAppChatText, parseRawContactText } from '../../lib/contact-parser'
 
@@ -402,6 +403,19 @@ export default function NewsletterCampaignManager() {
   const [dispatchSkipSent, setDispatchSkipSent] = useState(true)
   const [isDispatchingModal, setIsDispatchingModal] = useState(false)
   const [dispatchModalFeedback, setDispatchModalFeedback] = useState<{ success: boolean; message: string; remaining?: number } | null>(null)
+
+  // Auto-Pilot Continuous Dispatch State (Multi-Wave Automation)
+  const [isAutoPilotActive, setIsAutoPilotActive] = useState(false)
+  const [autoPilotPaused, setAutoPilotPaused] = useState(false)
+  const [autoPilotWave, setAutoPilotWave] = useState(1)
+  const [autoPilotTotalWaves, setAutoPilotTotalWaves] = useState(1)
+  const [autoPilotSentTotal, setAutoPilotSentTotal] = useState(0)
+  const [autoPilotTargetTotal, setAutoPilotTargetTotal] = useState(0)
+  const [autoPilotCountdown, setAutoPilotCountdown] = useState<number | null>(null)
+  const [autoPilotStatusText, setAutoPilotStatusText] = useState('')
+  const autoPilotAbortRef = React.useRef(false)
+  const autoPilotPausedRef = React.useRef(false)
+  const wakeLockRef = React.useRef<any>(null)
 
   // Dispatcher Engine State: 'ses' (Amazon SES) | 'brevo' (Brevo Free Waves)
   const [selectedDispatcher, setSelectedDispatcher] = useState<'ses' | 'brevo'>('ses')
@@ -940,6 +954,12 @@ export default function NewsletterCampaignManager() {
     setCustomEmailsInput('')
     setDispatchSkipSent(true)
     setDispatchModalFeedback(null)
+    setIsAutoPilotActive(false)
+    setAutoPilotPaused(false)
+    setAutoPilotCountdown(null)
+    setAutoPilotStatusText('')
+    autoPilotAbortRef.current = false
+    autoPilotPausedRef.current = false
     const preferSes = sesInfo?.configured ?? true
     setSelectedDispatcher(preferSes ? 'ses' : 'brevo')
     setDispatchBatchLimit(preferSes ? '1000' : '250')
@@ -949,6 +969,22 @@ export default function NewsletterCampaignManager() {
       fetchSubscribersFull()
     }
   }
+
+  // Warn user before closing or refreshing tab if Auto-Pilot is actively running
+  useEffect(() => {
+    if (!isAutoPilotActive) return
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = 'Auto-Pilot email dispatch is currently in progress. Leaving will stop subsequent waves.'
+      return e.returnValue
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [isAutoPilotActive])
 
   const handleExecuteDispatch = async () => {
     if (!dispatchModalCampaign) return
@@ -1022,6 +1058,159 @@ export default function NewsletterCampaignManager() {
       })
     } finally {
       setIsDispatchingModal(false)
+    }
+  }
+
+  const handleStartAutoPilot = async () => {
+    if (!dispatchModalCampaign) return
+
+    if (targetAudience === 'tag' && !selectedDispatchTag.trim()) {
+      alert('Please select an event tag to target.')
+      return
+    }
+
+    if (targetAudience === 'custom') {
+      const emailList = customEmailsInput
+        .split(/[\n,;]+/)
+        .map(e => e.trim())
+        .filter(e => e.length > 0 && e.includes('@'))
+      if (emailList.length === 0) {
+        alert('Please enter at least one valid recipient email address.')
+        return
+      }
+    }
+
+    const totalEligible = dispatchAudienceStats.eligible
+    if (totalEligible === 0) {
+      alert('No eligible contacts remaining to send for this audience.')
+      return
+    }
+
+    const totalWavesEst = Math.ceil(totalEligible / 1000)
+    const confirmMsg = `🤖 Start Auto-Pilot Dispatch?\n\nThis will automatically dispatch all ${totalEligible.toLocaleString()} eligible contacts across approx. ${totalWavesEst} continuous waves via Amazon SES.\n\n• Each wave dispatches up to 1,000 contacts.\n• Progress is saved to Sanity after every wave.\n• You do NOT need to click repeatedly.\n• Please keep this browser tab open until complete.\n\nProceed?`
+    if (!confirm(confirmMsg)) return
+
+    setIsAutoPilotActive(true)
+    setAutoPilotPaused(false)
+    autoPilotAbortRef.current = false
+    autoPilotPausedRef.current = false
+    setAutoPilotWave(1)
+    setAutoPilotTotalWaves(totalWavesEst)
+    setAutoPilotSentTotal(0)
+    setAutoPilotTargetTotal(totalEligible)
+    setAutoPilotStatusText(`Starting Wave 1 of ${totalWavesEst}...`)
+    setDispatchModalFeedback(null)
+
+    // Request screen wake lock so computer doesn't sleep
+    try {
+      if ('wakeLock' in navigator && (navigator as any).wakeLock) {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen')
+      }
+    } catch (e) {
+      console.log('Wake lock not supported or denied')
+    }
+
+    let currentWave = 1
+    let cumulativeSent = 0
+    let hasRemaining = true
+
+    while (hasRemaining && !autoPilotAbortRef.current) {
+      // Handle Pause state
+      while (autoPilotPausedRef.current && !autoPilotAbortRef.current) {
+        setAutoPilotStatusText('⏸️ Auto-Pilot Paused. Click Resume to continue.')
+        await new Promise(r => setTimeout(r, 1000))
+      }
+      if (autoPilotAbortRef.current) break
+
+      setAutoPilotStatusText(`🚀 Sending Wave ${currentWave} of ${totalWavesEst} (up to 1,000 contacts via Amazon SES)...`)
+
+      try {
+        const res = await fetch('/api/newsletter/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            campaignId: dispatchModalCampaign._id,
+            adminEmail: 'info.flyingwonders@gmail.com',
+            targetAudience,
+            sourceTag: targetAudience === 'tag' ? selectedDispatchTag.trim() : undefined,
+            customEmails: targetAudience === 'custom' ? customEmailsInput : undefined,
+            batchLimit: 1000,
+            skipPreviouslySent: true,
+            dispatcher: 'ses'
+          })
+        })
+
+        const data = await res.json()
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to dispatch wave')
+        }
+
+        const sentInWave = data.sentCount || 0
+        cumulativeSent += sentInWave
+        setAutoPilotSentTotal(cumulativeSent)
+
+        const remainingAfter = typeof data.remainingAfterBatch === 'number' ? data.remainingAfterBatch : 0
+
+        // Refresh Sanity state
+        await Promise.all([fetchCampaigns(), fetchSubscribersFull(), fetchQuota()])
+
+        if (remainingAfter <= 0 || sentInWave === 0) {
+          hasRemaining = false
+          setAutoPilotStatusText(`🎉 Auto-Pilot Complete! Successfully dispatched all ${cumulativeSent.toLocaleString()} contacts.`)
+          setDispatchModalFeedback({
+            success: true,
+            message: `🎉 Auto-Pilot Complete! Dispatched ${cumulativeSent.toLocaleString()} contacts via Amazon SES. All eligible contacts have received the campaign!`,
+            remaining: 0
+          })
+          break
+        }
+
+        // More contacts remaining! Countdown 3 seconds before next wave
+        currentWave++
+        setAutoPilotWave(currentWave)
+        for (let cd = 3; cd > 0; cd--) {
+          if (autoPilotAbortRef.current) break
+          setAutoPilotCountdown(cd)
+          setAutoPilotStatusText(`Wave ${currentWave - 1} complete (+${sentInWave.toLocaleString()} sent). Wave ${currentWave} starting in ${cd}s...`)
+          await new Promise(r => setTimeout(r, 1000))
+        }
+        setAutoPilotCountdown(null)
+      } catch (err: any) {
+        console.error('Auto-Pilot wave error:', err)
+        setAutoPilotStatusText(`⚠️ Wave encountered a transient issue: "${err.message}". Auto-retrying in 5s...`)
+        for (let cd = 5; cd > 0; cd--) {
+          if (autoPilotAbortRef.current) break
+          await new Promise(r => setTimeout(r, 1000))
+        }
+      }
+    }
+
+    if (wakeLockRef.current) {
+      try {
+        await wakeLockRef.current.release()
+        wakeLockRef.current = null
+      } catch (e) {}
+    }
+
+    setIsAutoPilotActive(false)
+    setAutoPilotCountdown(null)
+  }
+
+  const handlePauseAutoPilot = () => {
+    autoPilotPausedRef.current = !autoPilotPaused
+    setAutoPilotPaused(!autoPilotPaused)
+  }
+
+  const handleStopAutoPilot = () => {
+    if (confirm('Are you sure you want to stop Auto-Pilot? All emails dispatched up to this moment are safely recorded.')) {
+      autoPilotAbortRef.current = true
+      setIsAutoPilotActive(false)
+      setAutoPilotPaused(false)
+      setAutoPilotCountdown(null)
+      setAutoPilotStatusText('⏹️ Auto-Pilot stopped by user.')
+      if (wakeLockRef.current) {
+        try { wakeLockRef.current.release() } catch (e) {}
+      }
     }
   }
 
@@ -2843,13 +3032,22 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
               <button
                 type="button"
                 onClick={() => {
+                  if (isAutoPilotActive) {
+                    if (confirm('Auto-Pilot is currently dispatching waves. Stop Auto-Pilot and close?')) {
+                      handleStopAutoPilot()
+                      setDispatchModalCampaign(null)
+                      setDispatchModalFeedback(null)
+                    }
+                    return
+                  }
                   if (!isDispatchingModal) {
                     setDispatchModalCampaign(null)
                     setDispatchModalFeedback(null)
                   }
                 }}
-                disabled={isDispatchingModal}
-                style={{ border: 'none', background: 'transparent', cursor: isDispatchingModal ? 'not-allowed' : 'pointer', color: '#64748B', padding: '4px' }}
+                disabled={isDispatchingModal && !isAutoPilotActive}
+                style={{ border: 'none', background: 'transparent', cursor: (isDispatchingModal && !isAutoPilotActive) ? 'not-allowed' : 'pointer', color: '#64748B', padding: '4px' }}
+                title={isAutoPilotActive ? 'Stop Auto-Pilot and close' : 'Close'}
               >
                 <X size={20} />
               </button>
@@ -3381,24 +3579,174 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                       )}
                     </div>
 
-                    {dispatchAudienceStats.eligible > 1000 && (
-                      <div style={{ marginTop: '10px', fontSize: '0.74rem', color: '#92400E', background: '#FEF3C7', padding: '8px 12px', borderRadius: '8px', border: '1px solid #FDE68A', display: 'flex', alignItems: 'flex-start', gap: '8px', lineHeight: 1.45 }}>
-                        <span style={{ fontSize: '1rem', lineHeight: 1 }}>🛡️</span>
-                        <div>
-                          <strong>Large Audience Protection:</strong> High-volume lists are dispatched in safe waves of up to 1,000 contacts to guarantee zero Amazon SES throttling and prevent serverless execution timeouts. Contacts already sent in previous waves are automatically skipped.
+                    {/* ── AUTO-PILOT LIVE PROGRESS & CONTROL CENTER ── */}
+                    {isAutoPilotActive && (
+                      <div style={{
+                        marginTop: '12px',
+                        background: 'linear-gradient(135deg, #FFF5F6 0%, #FEF2F2 100%)',
+                        border: '2px solid #800020',
+                        borderRadius: '12px',
+                        padding: '14px 16px',
+                        boxShadow: '0 4px 12px rgba(128, 0, 32, 0.12)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '1.3rem' }}>🤖</span>
+                            <div>
+                              <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#800020', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span>Auto-Pilot Continuous Dispatch Active</span>
+                                <span style={{ fontSize: '0.66rem', background: '#DCFCE7', color: '#166534', padding: '1px 6px', borderRadius: '8px', fontWeight: 800 }}>
+                                  Screen Awake ⚡
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '0.72rem', color: '#64748B' }}>
+                                Wave {autoPilotWave} of {autoPilotTotalWaves} • Automatic wave sequencing via Amazon SES
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button
+                              type="button"
+                              onClick={handlePauseAutoPilot}
+                              style={{
+                                padding: '5px 12px',
+                                background: autoPilotPaused ? '#16A34A' : '#F59E0B',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontWeight: 700,
+                                fontSize: '0.74rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                              }}
+                            >
+                              {autoPilotPaused ? <Play size={12} /> : <Pause size={12} />}
+                              {autoPilotPaused ? 'Resume' : 'Pause'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleStopAutoPilot}
+                              style={{
+                                padding: '5px 12px',
+                                background: '#DC2626',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontWeight: 700,
+                                fontSize: '0.74rem',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                              }}
+                            >
+                              <Square size={12} /> Stop
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div style={{ width: '100%', background: '#E2E8F0', height: '10px', borderRadius: '5px', overflow: 'hidden', marginBottom: '8px' }}>
+                          <div
+                            style={{
+                              width: `${Math.min(100, Math.round(((autoPilotSentTotal) / (autoPilotTargetTotal || 1)) * 100))}%`,
+                              background: 'linear-gradient(90deg, #800020 0%, #D97706 100%)',
+                              height: '100%',
+                              transition: 'width 0.4s ease'
+                            }}
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
+                          <span>Dispatched: {autoPilotSentTotal.toLocaleString()} of {autoPilotTargetTotal.toLocaleString()} contacts</span>
+                          <span style={{ color: '#800020' }}>{Math.round(((autoPilotSentTotal) / (autoPilotTargetTotal || 1)) * 100)}% Complete</span>
+                        </div>
+
+                        {/* Real-time status ticker */}
+                        <div style={{
+                          fontSize: '0.74rem',
+                          color: '#1E293B',
+                          background: '#FFFFFF',
+                          border: '1px solid #CBD5E1',
+                          borderRadius: '6px',
+                          padding: '7px 10px',
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <RefreshCw size={13} className={!autoPilotPaused ? 'animate-spin' : ''} color="#800020" />
+                          <span>{autoPilotStatusText || 'Preparing wave dispatch...'}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── AUTO-PILOT LAUNCH BANNER CARD (WHEN IDLE & > 1,000 CONTACTS) ── */}
+                    {!isAutoPilotActive && dispatchAudienceStats.eligible > 1000 && (
+                      <div style={{
+                        marginTop: '12px',
+                        background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+                        border: '2px solid #F59E0B',
+                        borderRadius: '12px',
+                        padding: '14px 16px',
+                        boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                          <div style={{ flex: 1, minWidth: '240px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                              <span style={{ fontSize: '1.2rem' }}>🤖</span>
+                              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#92400E' }}>
+                                1-Click Auto-Pilot Continuous Dispatch
+                              </span>
+                              <span style={{ fontSize: '0.66rem', background: '#DCFCE7', color: '#166534', padding: '2px 8px', borderRadius: '10px', fontWeight: 800 }}>
+                                RECOMMENDED
+                              </span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.76rem', color: '#78350F', lineHeight: 1.45 }}>
+                              You have <strong>{dispatchAudienceStats.eligible.toLocaleString()} contacts</strong> remaining (~{Math.ceil(dispatchAudienceStats.eligible / 1000)} waves of 1,000). Instead of clicking dispatch {Math.ceil(dispatchAudienceStats.eligible / 1000)} times manually, Auto-Pilot will automatically send every wave back-to-back with live progress and zero duplicate risk.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleStartAutoPilot}
+                            disabled={isDispatchingModal}
+                            style={{
+                              padding: '9px 16px',
+                              background: 'linear-gradient(135deg, #800020 0%, #991B1B 100%)',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontWeight: 800,
+                              fontSize: '0.82rem',
+                              cursor: isDispatchingModal ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              boxShadow: '0 3px 6px rgba(128, 0, 32, 0.3)',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            <span>🤖</span>
+                            <span>Start Auto-Pilot ({Math.ceil(dispatchAudienceStats.eligible / 1000)} Waves)</span>
+                          </button>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  <div style={{ marginTop: '10px', fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>💡</span>
-                    <span>
-                      {dispatchAudienceStats.remainingAfter > 0
-                        ? `Delivering ${dispatchAudienceStats.toSendNow} contacts via Amazon SES. ${dispatchAudienceStats.remainingAfter} contacts will remain for subsequent waves.`
-                        : `Delivering instantly to all ${dispatchAudienceStats.eligible} eligible contacts via Amazon SES.`}
-                    </span>
-                  </div>
+                  {!isAutoPilotActive && (
+                    <div style={{ marginTop: '10px', fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>💡</span>
+                      <span>
+                        {dispatchAudienceStats.remainingAfter > 0
+                          ? `Delivering ${dispatchAudienceStats.toSendNow} contacts via Amazon SES. ${dispatchAudienceStats.remainingAfter} contacts will remain for subsequent waves.`
+                          : `Delivering instantly to all ${dispatchAudienceStats.eligible} eligible contacts via Amazon SES.`}
+                      </span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* BREVO SAFE WAVE CONTROLS */
@@ -3696,53 +4044,145 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
             </div>
 
             {/* Modal Footer */}
-            <div style={{ padding: '14px 22px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '14px 22px', background: '#F8FAFC', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <button
                 type="button"
                 onClick={() => {
+                  if (isAutoPilotActive) {
+                    if (confirm('Auto-Pilot is currently active. Stop Auto-Pilot and close?')) {
+                      handleStopAutoPilot()
+                      setDispatchModalCampaign(null)
+                      setDispatchModalFeedback(null)
+                    }
+                    return
+                  }
                   setDispatchModalCampaign(null)
                   setDispatchModalFeedback(null)
                 }}
-                disabled={isDispatchingModal}
-                style={{ padding: '8px 16px', background: '#FFF', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 600, color: '#334155', cursor: isDispatchingModal ? 'not-allowed' : 'pointer' }}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleExecuteDispatch}
-                disabled={isDispatchingModal || dispatchAudienceStats.toSendNow === 0}
+                disabled={isDispatchingModal && !isAutoPilotActive}
                 style={{
-                  padding: '9px 22px',
-                  background: dispatchAudienceStats.toSendNow === 0 ? '#94A3B8' : (selectedDispatcher === 'ses' ? '#800020' : '#0F4C3A'),
-                  border: 'none',
+                  padding: '8px 16px',
+                  background: '#FFF',
+                  border: '1px solid #CBD5E1',
                   borderRadius: '8px',
-                  fontSize: '0.84rem',
-                  fontWeight: 700,
-                  color: '#FFF',
-                  cursor: (isDispatchingModal || dispatchAudienceStats.toSendNow === 0) ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: selectedDispatcher === 'ses' ? '0 2px 4px rgba(128,0,32,0.25)' : '0 2px 4px rgba(15,76,58,0.25)'
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  color: isAutoPilotActive ? '#DC2626' : '#334155',
+                  cursor: (isDispatchingModal && !isAutoPilotActive) ? 'not-allowed' : 'pointer'
                 }}
               >
-                <Send size={15} className={isDispatchingModal ? 'animate-spin' : ''} />
-                {isDispatchingModal
-                  ? 'Dispatching In Batches...'
-                  : dispatchAudienceStats.toSendNow === 0
-                    ? (selectedDispatcher === 'brevo' && brevoQuota && brevoQuota.remainingCredits <= 0
-                        ? `Daily Brevo Limit Reached (${brevoQuota.sentToday}/${brevoQuota.dailyLimit} Sent Today)`
-                        : 'No Eligible Contacts / Already Dispatched')
-                    : selectedDispatcher === 'ses'
-                      ? (dispatchAudienceStats.remainingAfter > 0
-                          ? `🚀 Blast Wave (${dispatchAudienceStats.toSendNow} via Amazon SES)`
-                          : `🚀 Blast All (${dispatchAudienceStats.toSendNow} via Amazon SES)`)
-                      : (dispatchAudienceStats.remainingAfter > 0
-                          ? `🛡️ Launch Wave (${dispatchAudienceStats.toSendNow} via Brevo)`
-                          : `🛡️ Launch Campaign Broadcast (${dispatchAudienceStats.toSendNow} via Brevo)`)}
+                {isAutoPilotActive ? '⏹️ Stop & Close' : 'Cancel'}
               </button>
+
+              {isAutoPilotActive ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={handlePauseAutoPilot}
+                    style={{
+                      padding: '8px 16px',
+                      background: autoPilotPaused ? '#16A34A' : '#F59E0B',
+                      color: '#FFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {autoPilotPaused ? <Play size={14} /> : <Pause size={14} />}
+                    {autoPilotPaused ? '▶️ Resume Auto-Pilot' : '⏸️ Pause Auto-Pilot'}
+                  </button>
+
+                  <div style={{
+                    padding: '8px 14px',
+                    background: '#800020',
+                    color: '#FFF',
+                    borderRadius: '8px',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <RefreshCw size={14} className={!autoPilotPaused ? 'animate-spin' : ''} />
+                    Auto-Pilot Running (Wave {autoPilotWave}/{autoPilotTotalWaves})
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  {selectedDispatcher === 'ses' && dispatchAudienceStats.eligible > 1000 && (
+                    <button
+                      type="button"
+                      onClick={handleStartAutoPilot}
+                      disabled={isDispatchingModal || dispatchAudienceStats.toSendNow === 0}
+                      style={{
+                        padding: '9px 18px',
+                        background: 'linear-gradient(135deg, #800020 0%, #B45309 100%)',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '0.84rem',
+                        fontWeight: 800,
+                        color: '#FFF',
+                        cursor: (isDispatchingModal || dispatchAudienceStats.toSendNow === 0) ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 6px rgba(128,0,32,0.35)'
+                      }}
+                    >
+                      <span>🤖</span>
+                      Start Auto-Pilot ({Math.ceil(dispatchAudienceStats.eligible / 1000)} Waves)
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleExecuteDispatch}
+                    disabled={isDispatchingModal || dispatchAudienceStats.toSendNow === 0}
+                    style={{
+                      padding: '9px 20px',
+                      background: dispatchAudienceStats.toSendNow === 0
+                        ? '#94A3B8'
+                        : (selectedDispatcher === 'ses' && dispatchAudienceStats.eligible > 1000 ? '#F1F5F9' : (selectedDispatcher === 'ses' ? '#800020' : '#0F4C3A')),
+                      border: (selectedDispatcher === 'ses' && dispatchAudienceStats.eligible > 1000 && dispatchAudienceStats.toSendNow > 0)
+                        ? '1px solid #CBD5E1'
+                        : 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.84rem',
+                      fontWeight: 700,
+                      color: (selectedDispatcher === 'ses' && dispatchAudienceStats.eligible > 1000 && dispatchAudienceStats.toSendNow > 0)
+                        ? '#334155'
+                        : '#FFF',
+                      cursor: (isDispatchingModal || dispatchAudienceStats.toSendNow === 0) ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: (selectedDispatcher === 'ses' && dispatchAudienceStats.eligible > 1000)
+                        ? 'none'
+                        : (selectedDispatcher === 'ses' ? '0 2px 4px rgba(128,0,32,0.25)' : '0 2px 4px rgba(15,76,58,0.25)')
+                    }}
+                  >
+                    <Send size={15} className={isDispatchingModal ? 'animate-spin' : ''} />
+                    {isDispatchingModal
+                      ? 'Dispatching In Batches...'
+                      : dispatchAudienceStats.toSendNow === 0
+                        ? (selectedDispatcher === 'brevo' && brevoQuota && brevoQuota.remainingCredits <= 0
+                            ? `Daily Brevo Limit Reached (${brevoQuota.sentToday}/${brevoQuota.dailyLimit} Sent Today)`
+                            : 'No Eligible Contacts / Already Dispatched')
+                        : selectedDispatcher === 'ses'
+                          ? (dispatchAudienceStats.remainingAfter > 0
+                              ? `⚡ Blast 1 Wave (${dispatchAudienceStats.toSendNow.toLocaleString()})`
+                              : `🚀 Blast All (${dispatchAudienceStats.toSendNow.toLocaleString()} via Amazon SES)`)
+                          : (dispatchAudienceStats.remainingAfter > 0
+                              ? `🛡️ Launch Wave (${dispatchAudienceStats.toSendNow.toLocaleString()} via Brevo)`
+                              : `🛡️ Launch Campaign Broadcast (${dispatchAudienceStats.toSendNow.toLocaleString()} via Brevo)`)}
+                  </button>
+                </div>
+              )}
             </div>
 
           </div>
