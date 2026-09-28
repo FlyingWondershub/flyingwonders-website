@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "sync:attractions": "node scripts/sync-attractions.mjs",
-    "sync:shopping-malls": "npx tsx scripts/seed-shopping-malls.ts"
+    "sync:shopping-malls": "npx tsx scripts/seed-shopping-malls.ts",
+    "dispatch": "node scripts/auto-dispatch-ses.mjs",
+    "dispatch:ses": "node scripts/auto-dispatch-ses.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.1139.0",
