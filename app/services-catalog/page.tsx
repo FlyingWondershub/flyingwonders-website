@@ -20,13 +20,16 @@ import {
   Clock,
   Star,
   Info,
-  ShieldCheck
+  ShieldCheck,
+  MessageCircle
 } from 'lucide-react'
 import { client } from '../../sanity/lib/client'
 import AdBanner from '../../components/AdBanner'
 import ImageGalleryLightbox from '../../components/ImageGalleryLightbox'
 import { DEFAULT_HOTELS, cleanHotelName, slugifyHotelName } from '../../utils/hotels'
 import { DEFAULT_ATTRACTIONS, slugifyAttractionName } from '../../utils/attractions'
+import { getAllRestaurants, DEFAULT_RESTAURANTS, RestaurantData, slugifyRestaurantName } from '../../utils/restaurants'
+import PackageShortsCarousel from '../../components/PackageShortsCarousel'
 
 // Helper function to strip raw HTML tags and format clean text
 function stripHtml(htmlStr?: string) {
@@ -286,14 +289,17 @@ export default function ServicesCatalogPage() {
 
   // State Stores (Pre-populated with instant defaults for sub-100ms first paint)
   const [attractions, setAttractions] = useState<any[]>([])
+  const [restaurants, setRestaurants] = useState<RestaurantData[]>(DEFAULT_RESTAURANTS)
   const [mediaItems, setMediaItems] = useState<any[]>(DEFAULT_MEDIA_ITEMS)
   const [loading, setLoading] = useState(false)
 
   // Interactive UI State
   const [activeTab, setActiveTab] = useState<'all' | 'hotels' | 'attractions' | 'restaurants' | 'guides' | 'tours' | 'packages'>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [restaurantCategory, setRestaurantCategory] = useState<string>('all')
   const [activeMediaModal, setActiveMediaModal] = useState<any | null>(null)
   const [activeAttractionModal, setActiveAttractionModal] = useState<any | null>(null)
+  const [activeRestaurantModal, setActiveRestaurantModal] = useState<RestaurantData | null>(null)
 
   // Interactive Image Gallery Lightbox Slider State
   const [galleryLightboxPhotos, setGalleryLightboxPhotos] = useState<string[]>([])
@@ -311,6 +317,15 @@ export default function ServicesCatalogPage() {
 
   // Fetch all live data sources in parallel on mount
   useEffect(() => {
+    // Check URL query parameters for ?tab=restaurants etc.
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const tabParam = params.get('tab')
+      if (tabParam === 'restaurants' || tabParam === 'hotels' || tabParam === 'attractions' || tabParam === 'guides' || tabParam === 'tours' || tabParam === 'packages') {
+        setActiveTab(tabParam)
+      }
+    }
+
     // 1. Instant hydration from persistent storage if available
     try {
       const cached = localStorage.getItem('fw_services_catalog_cache') || sessionStorage.getItem('fw_services_catalog_cache')
@@ -318,6 +333,7 @@ export default function ServicesCatalogPage() {
         const parsed = JSON.parse(cached)
         if (parsed.settings) setSettings(parsed.settings)
         if (parsed.attractions?.length) setAttractions(parsed.attractions)
+        if (parsed.restaurants?.length) setRestaurants(parsed.restaurants)
         if (parsed.mediaItems?.length) setMediaItems(parsed.mediaItems)
       }
     } catch (e) {}
@@ -421,10 +437,24 @@ export default function ServicesCatalogPage() {
       }
     }
 
+    const fetchRestaurants = async () => {
+      try {
+        const fetchedRestaurants = await getAllRestaurants()
+        if (fetchedRestaurants && fetchedRestaurants.length > 0) {
+          setRestaurants(fetchedRestaurants)
+          return fetchedRestaurants
+        }
+      } catch (e) {
+        console.warn('Failed to load live restaurants, using defaults')
+      }
+      return DEFAULT_RESTAURANTS
+    }
+
     // Execute queries concurrently in parallel
-    const [settledSettings, settledAttractions, settledMedia] = await Promise.allSettled([
+    const [settledSettings, settledAttractions, settledRestaurants, settledMedia] = await Promise.allSettled([
       fetchSettings(),
       fetchAttractions(),
+      fetchRestaurants(),
       fetchMedia()
     ])
 
@@ -433,6 +463,7 @@ export default function ServicesCatalogPage() {
       const cachePayload = {
         settings: settledSettings.status === 'fulfilled' ? settledSettings.value : null,
         attractions: settledAttractions.status === 'fulfilled' ? settledAttractions.value : null,
+        restaurants: settledRestaurants.status === 'fulfilled' ? settledRestaurants.value : null,
         mediaItems: settledMedia.status === 'fulfilled' ? settledMedia.value : null,
         timestamp: Date.now()
       }
@@ -471,8 +502,38 @@ export default function ServicesCatalogPage() {
   const filteredRestaurants = useMemo(() => {
     if (settings.hideRestaurants) return []
     const q = searchQuery.toLowerCase().trim()
-    return mediaItems.filter(m => m.category === 'restaurant' && m.isDisplayed !== false && (!q || m.title.toLowerCase().includes(q) || (m.cuisineType || '').toLowerCase().includes(q)))
-  }, [mediaItems, searchQuery, settings.hideRestaurants])
+    return restaurants.filter(r => {
+      if (r.isDisplayed === false) return false
+
+      // Sub-category filter: 'video', 'veg', 'indian', 'vegan', 'chinese', 'buffet', 'biryani', 'hawker'
+      if (restaurantCategory !== 'all') {
+        const cat = restaurantCategory.toLowerCase()
+        const rCategories = (r.categories || []).map(c => c.toLowerCase())
+        const rDietary = (r.dietaryBadges || []).map(b => b.toLowerCase())
+        const rCuisine = (r.cuisineType || '').toLowerCase()
+
+        if (cat === 'video' && !r.videoUrl) return false
+        if (cat === 'buffet' && !r.hasBuffet && !rCategories.includes('buffet') && !rCuisine.includes('buffet') && !rDietary.some(d => d.includes('buffet') || d.includes('thali'))) return false
+        if (cat === 'veg' && !rCategories.includes('veg') && !rCuisine.includes('vegetarian') && !rDietary.some(d => d.includes('veg') || d.includes('jain'))) return false
+        if (cat === 'vegan' && !rCategories.includes('vegan') && !rDietary.some(d => d.includes('vegan') || d.includes('plant-based'))) return false
+        if (cat === 'indian' && !rCategories.includes('indian') && !rCuisine.includes('indian') && !rCuisine.includes('mughlai') && !rCuisine.includes('awadhi') && !rCuisine.includes('chettinad') && !rCuisine.includes('bengali') && !rCuisine.includes('punjabi')) return false
+        if (cat === 'chinese' && !rCategories.includes('chinese') && !rCuisine.includes('chinese') && !rCuisine.includes('cantonese') && !rCuisine.includes('asian')) return false
+        if (cat === 'biryani' && !rCategories.includes('biryani') && !rCuisine.includes('biryani') && !r.name.toLowerCase().includes('biryani') && !(r.mustTryDishes || []).some(d => (typeof d === 'string' ? d : d.name).toLowerCase().includes('biryani'))) return false
+        if (cat === 'hawker' && !rCategories.includes('hawker') && !rCuisine.includes('hawker') && !(r.address || '').toLowerCase().includes('tekka')) return false
+      }
+
+      if (!q) return true
+      const matchesName = r.name.toLowerCase().includes(q)
+      const matchesSubtitle = (r.subtitle || '').toLowerCase().includes(q)
+      const matchesCuisine = (r.cuisineType || '').toLowerCase().includes(q)
+      const matchesAddress = (r.address || '').toLowerCase().includes(q)
+      const matchesMrt = (r.nearestMrt || '').toLowerCase().includes(q)
+      const matchesDietary = (r.dietaryBadges || []).some(b => b.toLowerCase().includes(q))
+      const matchesDishes = (r.mustTryDishes || []).some(d => (typeof d === 'string' ? d : d.name).toLowerCase().includes(q))
+
+      return matchesName || matchesSubtitle || matchesCuisine || matchesAddress || matchesMrt || matchesDietary || matchesDishes
+    })
+  }, [restaurants, searchQuery, restaurantCategory, settings.hideRestaurants])
 
   const filteredGuides = useMemo(() => {
     if (settings.hideGuides) return []
@@ -923,43 +984,197 @@ export default function ServicesCatalogPage() {
               </section>
             )}
 
-            {/* ══ SECTION C: RESTAURANTS (PHOTO/VIDEO SHOWCASE) ══ */}
+            {/* ══ SECTION C: RESTAURANTS & DINING PALACES ══ */}
             {(!settings.hideRestaurants && (activeTab === 'all' || activeTab === 'restaurants')) && (
               <section>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Utensils size={22} color="#0F4C3A" /> Partner Restaurants & Dining ({filteredRestaurants.length})
-                  </h2>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0F172A', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Utensils size={24} color="#0F4C3A" /> Partner Restaurants & Dining Spreads ({filteredRestaurants.length})
+                    </h2>
+                    <p style={{ margin: 0, fontSize: '0.84rem', color: '#64748B' }}>
+                      Curated Indian fine dining, 1-for-1 buffet feasts, pure vegetarian institutions, Michelin Bib Gourmand gems, and hawker legends.
+                    </p>
+                  </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
-                  {filteredRestaurants.map((r) => (
-                    <div key={r._id} onClick={() => setActiveMediaModal(r)} style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ height: '150px', background: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6)), url(${r.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
-                          🍽️ {r.cuisineType || r.destination}
-                        </span>
-                        {r.videoUrl && (
-                          <span style={{ background: '#EF4444', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Play size={10} fill="#FFF" /> Video Tour
-                          </span>
-                        )}
-                      </div>
-
-                      <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0F172A', margin: '0 0 3px' }}>{r.title}</h3>
-                        <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '0 0 0.75rem', fontWeight: 600 }}>{r.subtitle || r.destination}</p>
-                        <p style={{ fontSize: '0.8rem', color: '#475569', margin: '0 0 0.85rem', lineHeight: 1.45 }}>{r.description}</p>
-                        
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 'auto' }}>
-                          {(r.features || []).map((ft: string, idx: number) => (
-                            <span key={idx} style={{ background: '#EFF6FF', color: '#1D4ED8', fontSize: '0.68rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>✓ {ft}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                {/* Restaurant Category Filter Tabs */}
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '1.25rem', scrollbarWidth: 'thin' }}>
+                  {[
+                    { id: 'all', label: `All Dining (${restaurants.length})` },
+                    { id: 'buffet', label: '🍽️ Buffet & Thali' },
+                    { id: 'video', label: '🎥 Video Showcase' },
+                    { id: 'veg', label: '🥗 Pure Veg & Jain' },
+                    { id: 'indian', label: '🍛 Indian (North/South)' },
+                    { id: 'vegan', label: '🌱 Vegan Friendly' },
+                    { id: 'chinese', label: '🥟 Chinese Vegetarian' },
+                    { id: 'biryani', label: '🥘 Dum Biryani' },
+                    { id: 'hawker', label: '🏮 Little India & Hawker' },
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setRestaurantCategory(tab.id)}
+                      style={{
+                        padding: '0.45rem 0.9rem',
+                        borderRadius: '20px',
+                        border: restaurantCategory === tab.id ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                        background: restaurantCategory === tab.id ? '#0F4C3A' : '#FFFFFF',
+                        color: restaurantCategory === tab.id ? '#FFFFFF' : '#334155',
+                        fontWeight: 700,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
+                        boxShadow: restaurantCategory === tab.id ? '0 2px 6px rgba(15,76,58,0.2)' : 'none'
+                      }}
+                    >
+                      {tab.label}
+                    </button>
                   ))}
                 </div>
+
+                {filteredRestaurants.length === 0 ? (
+                  <div style={{ background: '#FFF', borderRadius: '12px', padding: '2rem', textAlign: 'center', border: '1px solid #E2E8F0', color: '#64748B' }}>
+                    <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>No restaurants match your selected filter or search criteria.</p>
+                    <button
+                      onClick={() => { setRestaurantCategory('all'); setSearchQuery(''); }}
+                      style={{ marginTop: '0.75rem', padding: '0.45rem 1rem', background: '#0F4C3A', color: '#FFF', borderRadius: '8px', border: 'none', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+                    >
+                      Reset Restaurant Filters
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.35rem' }}>
+                    {filteredRestaurants.map((r) => {
+                      const restaurantSlug = r.slug || slugifyRestaurantName(r.name)
+                      const previewDishes = (r.mustTryDishes || []).slice(0, 3).map(d => typeof d === 'string' ? d : d.name)
+
+                      return (
+                        <div
+                          key={r._id}
+                          onClick={() => setActiveRestaurantModal(r)}
+                          style={{
+                            background: '#FFF',
+                            borderRadius: '16px',
+                            border: '1px solid #E2E8F0',
+                            overflow: 'hidden',
+                            boxShadow: '0 3px 12px rgba(0,0,0,0.03)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.transform = 'translateY(-3px)'
+                            e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.transform = 'translateY(0)'
+                            e.currentTarget.style.boxShadow = '0 3px 12px rgba(0,0,0,0.03)'
+                          }}
+                        >
+                          {/* Card Photo Header */}
+                          <div style={{ height: '175px', position: 'relative', background: `linear-gradient(to bottom, rgba(15,23,42,0.1), rgba(15,23,42,0.7)), url(${r.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px' }}>
+                              <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', backdropFilter: 'blur(4px)' }}>
+                                🍽️ {r.cuisineType}
+                              </span>
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                {r.videoUrl && (
+                                  <span style={{ background: '#EF4444', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                    <Play size={10} fill="#FFF" /> Video
+                                  </span>
+                                )}
+                                {r.hasBuffet && (
+                                  <span style={{ background: '#D97706', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+                                    Buffet
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                              <span style={{ background: 'rgba(255,255,255,0.92)', color: '#0F172A', fontSize: '0.7rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px' }}>
+                                {r.priceRange}
+                              </span>
+                              <span style={{ background: 'rgba(15,23,42,0.85)', color: '#FCD34D', fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                ★ {r.starRating}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Card Content Body */}
+                          <div style={{ padding: '1.1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            <h3 style={{ fontSize: '1.08rem', fontWeight: 900, color: '#0F172A', margin: '0 0 3px', lineHeight: 1.3 }}>
+                              {r.name}
+                            </h3>
+                            {r.subtitle && (
+                              <p style={{ fontSize: '0.76rem', color: '#64748B', margin: '0 0 0.5rem', fontWeight: 600 }}>
+                                {r.subtitle}
+                              </p>
+                            )}
+
+                            {r.nearestMrt && (
+                              <div style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700, margin: '0 0 0.65rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                🚇 <span>{r.nearestMrt}</span>
+                              </div>
+                            )}
+
+                            {/* Buffet Offer Highlight Chip */}
+                            {r.buffetHighlight && (
+                              <div style={{ background: '#FEF3C7', border: '1px solid #FDE68A', padding: '5px 8px', borderRadius: '6px', fontSize: '0.72rem', color: '#92400E', fontWeight: 700, marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span>🍽️</span>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.buffetHighlight}</span>
+                              </div>
+                            )}
+
+                            {/* Must Try Dishes Preview */}
+                            {previewDishes.length > 0 && (
+                              <div style={{ marginBottom: '0.75rem' }}>
+                                <span style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>
+                                  Must Try:
+                                </span>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                  {previewDishes.map((dish, didx) => (
+                                    <span key={didx} style={{ background: '#F1F5F9', color: '#334155', fontSize: '0.68rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
+                                      {dish}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Action Bar */}
+                            <div style={{ marginTop: 'auto', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.75rem', color: '#0F4C3A', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Play size={11} fill="#0F4C3A" /> Quick Preview
+                              </span>
+
+                              <Link
+                                href={`/services-catalog/restaurants/${restaurantSlug}`}
+                                onClick={e => e.stopPropagation()}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '6px',
+                                  background: '#0F4C3A',
+                                  color: '#FFF',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 800,
+                                  textDecoration: 'none'
+                                }}
+                              >
+                                <span>Menu & Details</span> →
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </section>
             )}
 
@@ -1445,6 +1660,278 @@ export default function ServicesCatalogPage() {
                 </p>
               </div>
             )}
+
+          </div>
+        </div>
+      )}
+
+      {/* ══ RESTAURANT FULL DETAILS POPUP MODAL (WITH VIDEOS, SHORTS & MUST-TRY DISHES) ══ */}
+      {activeRestaurantModal && (
+        <div
+          onClick={() => setActiveRestaurantModal(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.8)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '740px',
+              maxWidth: '94vw',
+              maxHeight: '88vh',
+              overflowY: 'auto',
+              backgroundColor: '#FFFFFF',
+              color: '#0F172A',
+              padding: '1.5rem',
+              borderRadius: '20px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+              border: '1px solid #E2E8F0'
+            }}
+          >
+            <button
+              onClick={() => setActiveRestaurantModal(null)}
+              style={{ position: 'absolute', top: '14px', right: '14px', background: '#F1F5F9', border: 'none', color: '#64748B', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}
+            >
+              <X size={18} />
+            </button>
+
+            {/* Modal Badges */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+                🍽️ {activeRestaurantModal.cuisineType}
+              </span>
+              <span style={{ background: '#F1F5F9', color: '#334155', fontSize: '0.72rem', fontWeight: 700, padding: '3px 8px', borderRadius: '6px' }}>
+                {activeRestaurantModal.priceRange}
+              </span>
+              <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                ★ {activeRestaurantModal.starRating} Rating
+              </span>
+            </div>
+
+            <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.4rem', fontWeight: 900, color: '#0F172A', lineHeight: 1.25 }}>
+              {activeRestaurantModal.name}
+            </h3>
+
+            {activeRestaurantModal.subtitle && (
+              <p style={{ margin: '0 0 0.85rem', fontSize: '0.82rem', color: '#64748B', fontWeight: 600 }}>
+                {activeRestaurantModal.subtitle}
+              </p>
+            )}
+
+            {/* Direct Link to Full Restaurant Experience & Menu (Top Placement) */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <Link
+                href={`/services-catalog/restaurants/${activeRestaurantModal.slug || slugifyRestaurantName(activeRestaurantModal.name)}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '0.65rem 1.2rem',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #0F4C3A 0%, #166534 100%)',
+                  color: '#FFF',
+                  fontWeight: 800,
+                  fontSize: '0.84rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 3px 10px rgba(15,76,58,0.25)'
+                }}
+              >
+                <span>Open Dedicated Full Restaurant Guide & Menu Page</span> →
+              </Link>
+            </div>
+
+            {/* Video Showcase Player */}
+            {activeRestaurantModal.videoUrl ? (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Play size={16} color="#EF4444" fill="#EF4444" /> Video Tour Showcase
+                </h4>
+                {activeRestaurantModal.videoUrl.includes('youtube.com') || activeRestaurantModal.videoUrl.includes('youtu.be') ? (
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+                    <iframe
+                      src={getYouTubeEmbedUrl(activeRestaurantModal.videoUrl)}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title={activeRestaurantModal.name}
+                    />
+                  </div>
+                ) : (
+                  <video
+                    controls
+                    autoPlay
+                    muted
+                    playsInline
+                    src={activeRestaurantModal.videoUrl}
+                    style={{ width: '100%', maxHeight: '340px', borderRadius: '12px', background: '#000', border: '1px solid #E2E8F0' }}
+                  />
+                )}
+              </div>
+            ) : (
+              activeRestaurantModal.coverImageUrl && (
+                <div
+                  onClick={() => openGalleryLightbox([activeRestaurantModal.coverImageUrl, ...(activeRestaurantModal.galleryImageUrls || [])], 0, activeRestaurantModal.name)}
+                  style={{ position: 'relative', cursor: 'pointer', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.25rem', border: '1px solid #E2E8F0' }}
+                  title="Click to view full photo"
+                >
+                  <img src={activeRestaurantModal.coverImageUrl} alt="" style={{ width: '100%', height: '220px', objectFit: 'cover', display: 'block' }} />
+                  <div style={{ position: 'absolute', bottom: '10px', right: '10px', background: 'rgba(15,23,42,0.85)', color: '#FFF', padding: '4px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <ImageIcon size={13} /> View Photo Gallery
+                  </div>
+                </div>
+              )
+            )}
+
+            {/* YouTube Shorts Carousel if present */}
+            {activeRestaurantModal.shorts && activeRestaurantModal.shorts.length > 0 && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={16} color="#D97706" /> Vertical Shorts & Reel Highlights
+                </h4>
+                <PackageShortsCarousel curatedShorts={activeRestaurantModal.shorts} destination={activeRestaurantModal.destination} />
+              </div>
+            )}
+
+            {/* Photo Gallery Grid */}
+            {activeRestaurantModal.galleryImageUrls && activeRestaurantModal.galleryImageUrls.length > 0 && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ImageIcon size={15} color="#0F4C3A" /> Ambience & Dish Gallery
+                  </h4>
+                  <span style={{ fontSize: '0.72rem', color: '#0F4C3A', fontWeight: 700 }}>Click to slide →</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '8px' }}>
+                  {[activeRestaurantModal.coverImageUrl, ...activeRestaurantModal.galleryImageUrls].filter(Boolean).slice(0, 4).map((imgUrl, gIdx) => (
+                    <div
+                      key={gIdx}
+                      onClick={() => openGalleryLightbox([activeRestaurantModal.coverImageUrl, ...(activeRestaurantModal.galleryImageUrls || [])], gIdx, activeRestaurantModal.name)}
+                      style={{ height: '75px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #E2E8F0', cursor: 'pointer' }}
+                    >
+                      <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Buffet & Thali Offer Box */}
+            {activeRestaurantModal.hasBuffet && (
+              <div style={{ background: '#FFFBEB', padding: '1rem', borderRadius: '12px', border: '1px solid #FDE68A', marginBottom: '1.25rem' }}>
+                <h4 style={{ margin: '0 0 0.35rem', fontSize: '0.88rem', fontWeight: 800, color: '#92400E', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🍽️ {activeRestaurantModal.buffetHighlight || 'Buffet & Thali Available'}
+                </h4>
+                {activeRestaurantModal.buffetDetails && (
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#78350F', lineHeight: 1.5 }}>
+                    {activeRestaurantModal.buffetDetails}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Description */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.4rem' }}>Overview & Dining Atmosphere</h4>
+              <p style={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                {activeRestaurantModal.longDescription || activeRestaurantModal.shortDescription}
+              </p>
+            </div>
+
+            {/* Must-Do / Must-Try Signature Dishes */}
+            {activeRestaurantModal.mustTryDishes && activeRestaurantModal.mustTryDishes.length > 0 && (
+              <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
+                <h4 style={{ margin: '0 0 0.65rem', fontSize: '0.88rem', fontWeight: 800, color: '#0F4C3A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  ✨ Signature Must-Try Dishes
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '8px' }}>
+                  {activeRestaurantModal.mustTryDishes.map((dishItem, didx) => {
+                    const dish = typeof dishItem === 'string' ? { name: dishItem, description: '' } : dishItem
+                    return (
+                      <div key={didx} style={{ background: '#FFF', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                        <strong style={{ fontSize: '0.82rem', color: '#0F172A', display: 'block' }}>{dish.name}</strong>
+                        {dish.description && <span style={{ fontSize: '0.74rem', color: '#64748B', lineHeight: 1.35, display: 'block', marginTop: '2px' }}>{dish.description}</span>}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Address & Timings */}
+            <div style={{ background: '#F0FDF4', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #BBF7D0', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ fontSize: '0.82rem', color: '#166534' }}>
+                  <strong>📍 Location:</strong> {activeRestaurantModal.address}
+                </div>
+                {activeRestaurantModal.nearestMrt && (
+                  <div style={{ fontSize: '0.8rem', color: '#15803D' }}>
+                    <strong>🚇 Nearest MRT:</strong> {activeRestaurantModal.nearestMrt}
+                  </div>
+                )}
+                {activeRestaurantModal.timings && (
+                  <div style={{ fontSize: '0.8rem', color: '#15803D' }}>
+                    <strong>🕒 Timings:</strong> {activeRestaurantModal.timings}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Bottom Actions */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', paddingTop: '0.5rem', borderTop: '1px solid #F1F5F9' }}>
+              <a
+                href={`https://wa.me/${(activeRestaurantModal.whatsappNumber || '919886171251').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(activeRestaurantModal.whatsappMessage || `Hi Flying Wonders! I would like to inquire about group dining at ${activeRestaurantModal.name}.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '0.55rem 1rem',
+                  borderRadius: '8px',
+                  background: '#25D366',
+                  color: '#FFF',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  textDecoration: 'none'
+                }}
+              >
+                <MessageCircle size={15} fill="#FFF" />
+                <span>WhatsApp Concierge</span>
+              </a>
+
+              <Link
+                href={`/services-catalog/restaurants/${activeRestaurantModal.slug || slugifyRestaurantName(activeRestaurantModal.name)}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '0.55rem 1.15rem',
+                  borderRadius: '8px',
+                  background: '#0F4C3A',
+                  color: '#FFF',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  textDecoration: 'none'
+                }}
+              >
+                <span>Full Guide, Gallery & Menu</span> →
+              </Link>
+            </div>
 
           </div>
         </div>

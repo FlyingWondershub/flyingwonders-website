@@ -142,7 +142,7 @@ export default function AdminSidebar({
       shortLabel: 'System',
       icon: Settings,
       subItems: [
-        { id: 'sitemap', label: 'Site Map & 51 Routes' },
+        { id: 'sitemap', label: 'Site Map & 53 Routes' },
         { id: 'sync', label: 'Attractions Sync' },
         { id: 'competitor', label: 'Competitor Rates' },
         { id: 'agents', label: 'Agent Access' },

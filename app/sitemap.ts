@@ -6,6 +6,7 @@ import { getAllPackages, normalizeSlug } from '../utils/packages';
 import { getAllReadyPackages } from '../utils/readyPackages';
 import { getAllHotels, slugifyHotelName } from '../utils/hotels';
 import { getAllAttractions, slugifyAttractionName } from '../utils/attractions';
+import { getAllRestaurants, slugifyRestaurantName } from '../utils/restaurants';
 import { getAllTours, slugifyTourTitle } from '../utils/tours';
 import { getAllBlogSlugs } from '../utils/blog';
 import { getAllShoppingMalls } from '../utils/shoppingMalls';
@@ -156,6 +157,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.error('Failed to get attraction routes for sitemap:', err)
     }
 
+    // Dynamic individual restaurant & dining routes
+    let restaurantSitemap: MetadataRoute.Sitemap = []
+    try {
+      const restaurants = await getAllRestaurants()
+      restaurantSitemap = restaurants.map((r) => ({
+        url: `${baseUrl}/services-catalog/restaurants/${r.slug || slugifyRestaurantName(r.name)}`,
+        lastModified: today,
+        changeFrequency: 'weekly' as MetadataRoute.Sitemap[0]['changeFrequency'],
+        priority: 0.88,
+      }))
+    } catch (err) {
+      console.error('Failed to get restaurant routes for sitemap:', err)
+    }
+
     // Dynamic individual 1-day & multi-day tour routes
     let tourSitemap: MetadataRoute.Sitemap = []
     try {
@@ -204,5 +219,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.error('Failed to get job openings for sitemap:', err)
     }
 
-    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...readyPackageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap, ...tourSitemap, ...shoppingMallSitemap, ...jobSitemap]
+    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...readyPackageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap, ...restaurantSitemap, ...tourSitemap, ...shoppingMallSitemap, ...jobSitemap]
 }

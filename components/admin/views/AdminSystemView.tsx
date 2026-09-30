@@ -104,6 +104,8 @@ export default function AdminSystemView({
       color: '#7C3AED',
       links: [
         { name: 'Services Catalog', path: '/services-catalog', desc: 'Master multi-category service directory' },
+        { name: 'Restaurants & Dining Directory', path: '/services-catalog?tab=restaurants', desc: 'Curated Indian, vegetarian, vegan, buffet & hawker dining catalog' },
+        { name: 'Restaurant Dedicated Page (Example)', path: '/services-catalog/restaurants/shahi-maharani-singapore', desc: 'Direct SEO landing pages with video tour, shorts & menu' },
         { name: 'Singapore Attractions', path: '/singapore-attractions', desc: 'Attractions catalog & quote builder' },
         { name: 'Active Promotions', path: '/singapore-attractions/promotions', desc: 'Discounted attraction deals & passes' },
         { name: 'Live Attraction Booking', path: '/attractions-live', desc: 'Direct instant e-ticket issuance' },
@@ -173,7 +175,7 @@ export default function AdminSystemView({
                   Site Map & Quick Links Matrix
                 </h2>
                 <span style={{ fontSize: '0.74rem', background: '#DCFCE7', color: '#166534', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 800 }}>
-                  ● 51 Verified Routes
+                  ● 53 Verified Routes
                 </span>
                 <span style={{ fontSize: '0.74rem', background: '#DBEAFE', color: '#1E40AF', padding: '0.15rem 0.55rem', borderRadius: '12px', fontWeight: 800 }}>
                   ● 0 Dead Links
@@ -189,7 +191,7 @@ export default function AdminSystemView({
                 <Search size={14} color="#94A3B8" style={{ position: 'absolute', left: '10px', top: '10px' }} />
                 <input
                   type="text"
-                  placeholder="Filter 51 routes..."
+                  placeholder="Filter 53 routes..."
                   value={routeSearch}
                   onChange={e => setRouteSearch(e.target.value)}
                   style={{

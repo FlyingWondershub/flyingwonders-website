@@ -20,6 +20,7 @@ import { transferMetaSchema } from './transferMeta'
 import { guideMetaSchema } from './guideMeta'
 import { hotelMetaSchema } from './hotelMeta'
 import { mealMetaSchema } from './mealMeta'
+import { restaurantMetaSchema } from './restaurantMeta'
 import { proposalSchema } from './proposal'
 import { promotionSchema } from './promotion'
 import { promotionInquirySchema } from './promotionInquiry'
@@ -106,6 +107,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     guideMetaSchema,
     hotelMetaSchema,
     mealMetaSchema,
+    restaurantMetaSchema,
     proposalSchema,
     promotionSchema,
     promotionInquirySchema,

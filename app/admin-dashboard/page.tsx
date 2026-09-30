@@ -519,7 +519,7 @@ function AdminDashboardContent() {
           title: 'System & Platform Settings',
           subtitle: 'Interactive site map, Google Sheets sync, competitor price radar, and audit trail.',
           subTabs: [
-            { id: 'sitemap', label: '🗺️ Site Map & 51 Routes' },
+            { id: 'sitemap', label: '🗺️ Site Map & 53 Routes' },
             { id: 'sync', label: '🔄 Attractions Sheets Sync' },
             { id: 'competitor', label: '🎡 Competitor Ticket Tracker' },
             { id: 'agents', label: '👤 Agent Access', badge: metrics.activeAgents },
