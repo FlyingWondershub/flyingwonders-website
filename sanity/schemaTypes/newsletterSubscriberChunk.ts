@@ -31,10 +31,22 @@ export const newsletterSubscriberChunkSchema = defineType({
             { name: 'source', title: 'Source', type: 'string' },
             { name: 'isActive', title: 'Active', type: 'boolean' },
             { name: 'subscribedAt', title: 'Subscribed At', type: 'string' },
-            { name: '_createdAt', title: 'Created At', type: 'string' },
+            { name: 'createdAt', title: 'Created At', type: 'string' },
           ],
         },
       ],
     }),
   ],
+  preview: {
+    select: {
+      chunkIndex: 'chunkIndex',
+      count: 'count',
+    },
+    prepare({ chunkIndex, count }: any) {
+      return {
+        title: `Subscriber Chunk #${chunkIndex ?? 0}`,
+        subtitle: `${count ?? 0} subscribers`,
+      }
+    },
+  },
 })

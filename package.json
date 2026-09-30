@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "validate:schema": "sanity schema validate",
     "sync:attractions": "node scripts/sync-attractions.mjs",
     "sync:shopping-malls": "npx tsx scripts/seed-shopping-malls.ts",
     "dispatch": "node scripts/auto-dispatch-ses.mjs",

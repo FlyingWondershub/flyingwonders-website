@@ -19,6 +19,7 @@ export interface SubscriberItem {
   source?: string
   isActive: boolean
   subscribedAt?: string
+  createdAt?: string
   _createdAt?: string
 }
 
@@ -38,6 +39,8 @@ export interface MarketingLeadItem {
   source?: string
   relevantKeywords?: string
   notes?: string
+  createdAt?: string
+  updatedAt?: string
   _createdAt?: string
   _updatedAt?: string
 }
@@ -179,7 +182,7 @@ export async function getSubscribersForSend(
 
   if (targetAudience === 'new') {
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
-    return active.filter(s => new Date(s.subscribedAt || s._createdAt || 0).getTime() >= thirtyDaysAgo)
+    return active.filter(s => new Date(s.subscribedAt || s.createdAt || s._createdAt || 0).getTime() >= thirtyDaysAgo)
   }
 
   return active
@@ -352,7 +355,7 @@ export async function saveOrUpdateSubscribers(
         source: item.source || 'website',
         isActive: true,
         subscribedAt: new Date().toISOString(),
-        _createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       }
 
       openChunk.subscribers.push(newSub)
@@ -716,7 +719,7 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
         if (item.source && !lead.source?.includes(item.source)) {
           lead.source = lead.source ? `${lead.source}, ${item.source}` : item.source
         }
-        lead._updatedAt = new Date().toISOString()
+        lead.updatedAt = new Date().toISOString()
         dirtyChunkIndices.add(chunk.chunkIndex)
         updated++
       }
@@ -751,8 +754,8 @@ export async function saveOrUpdateLeads(leads: Partial<MarketingLeadItem>[]): Pr
         source: item.source || 'subscriber_sync',
         relevantKeywords: item.relevantKeywords || '',
         notes: item.notes || '',
-        _createdAt: new Date().toISOString(),
-        _updatedAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       }
 
       openChunk.leads.push(newLead)
@@ -799,7 +802,7 @@ export async function updateLeadStatus(id: string, status: string): Promise<bool
   if (!target) return false
 
   target.status = status
-  target._updatedAt = new Date().toISOString()
+  target.updatedAt = new Date().toISOString()
   await writeClient.patch(chunk._id).set({ leads: chunk.leads }).commit()
   return true
 }

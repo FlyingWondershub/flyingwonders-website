@@ -50,9 +50,11 @@ const HANDLED_SCHEMAS = new Set([
 
   // Marketing & Media
   'marketingLead',
+  'marketingLeadChunk',
   'blogPost',
   'newsletterCampaign',
   'newsletterSubscriber',
+  'newsletterSubscriberChunk',
   'review',
   'recognition',
   'experience',
@@ -219,10 +221,12 @@ export const structure: StructureResolver = (S) =>
           S.list()
             .title('Marketing & Content')
             .items([
-              S.documentTypeListItem('marketingLead').title('🎯 Marketing Leads'),
+              S.documentTypeListItem('marketingLead').title('🎯 Marketing Leads (Direct)'),
+              S.documentTypeListItem('marketingLeadChunk').title('📦 Marketing Lead Chunks'),
               S.documentTypeListItem('blogPost').title('✍️ Blog Articles'),
               S.documentTypeListItem('newsletterCampaign').title('✉️ Newsletter Campaigns'),
-              S.documentTypeListItem('newsletterSubscriber').title('📬 Newsletter Subscribers'),
+              S.documentTypeListItem('newsletterSubscriber').title('📬 Newsletter Subscribers (Direct)'),
+              S.documentTypeListItem('newsletterSubscriberChunk').title('📦 Subscriber Chunks'),
               S.documentTypeListItem('review').title('⭐ Customer Reviews'),
               S.documentTypeListItem('recognition').title('🏆 Recognition & Awards'),
               S.documentTypeListItem('experience').title('✨ Travel Experiences'),

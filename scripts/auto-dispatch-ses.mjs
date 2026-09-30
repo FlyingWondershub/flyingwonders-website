@@ -106,15 +106,24 @@ function buildCampaignHtml(campaign, recipient) {
   let personalizedSubject = campaign.subject
     .replace(/\{\{\s*name\s*\}\}/gi, recipientName)
     .replace(/\{\{\s*company\s*\}\}/gi, recipientCompany)
+    .replace(/\{\{\s*email\s*\}\}/gi, recipient.email)
+
+  const personalizedPreheader = campaign.preheader
+    ? campaign.preheader
+        .replace(/\{\{\s*name\s*\}\}/gi, recipientName)
+        .replace(/\{\{\s*company\s*\}\}/gi, recipientCompany)
+        .replace(/\{\{\s*email\s*\}\}/gi, recipient.email)
+    : ''
 
   let personalizedContent = campaign.content
     .replace(/\{\{\s*name\s*\}\}/gi, recipientName)
     .replace(/\{\{\s*company\s*\}\}/gi, recipientCompany)
+    .replace(/\{\{\s*email\s*\}\}/gi, recipient.email)
     .replace(/https:\/\/wa\.me\/[0-9]+(\?[^"'\s]*)?/gi, defaultWhatsAppUrl)
 
-  const preheaderHtml = campaign.preheader
+  const preheaderHtml = personalizedPreheader
     ? `<div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-        ${campaign.preheader}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+        ${personalizedPreheader}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
       </div>`
     : ''
 

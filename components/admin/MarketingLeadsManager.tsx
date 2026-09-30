@@ -23,6 +23,7 @@ interface MarketingLead {
   accreditations?: string
   leadType?: string
   internalNotes?: string
+  createdAt?: string
   _createdAt?: string
 }
 
@@ -834,7 +835,7 @@ Rajesh Sharma | Skyway Travels Bangalore | info@skyway.com | 9845012345 | IATA`
       'Status': l.status || 'new',
       'Accreditations': l.accreditations || '',
       'Notes': l.internalNotes || '',
-      'Created Date': l._createdAt ? new Date(l._createdAt).toLocaleDateString() : ''
+      'Created Date': (l.createdAt || l._createdAt) ? new Date(l.createdAt || l._createdAt!).toLocaleDateString() : ''
     }))
     const wb = XLSX.utils.book_new()
     const ws = XLSX.utils.json_to_sheet(exportRows)

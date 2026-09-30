@@ -364,7 +364,7 @@ export const shoppingMallSchema = defineType({
       type: 'array',
       of: [
         defineField({
-          name: 'faqItem',
+          name: 'mallFaqItem',
           title: 'FAQ Item',
           type: 'object',
           fields: [

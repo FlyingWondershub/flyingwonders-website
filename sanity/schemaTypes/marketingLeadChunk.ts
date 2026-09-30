@@ -38,11 +38,23 @@ export const marketingLeadChunkSchema = defineType({
             { name: 'source', title: 'Source', type: 'string' },
             { name: 'relevantKeywords', title: 'Relevant Keywords', type: 'string' },
             { name: 'notes', title: 'Notes', type: 'string' },
-            { name: '_createdAt', title: 'Created At', type: 'string' },
-            { name: '_updatedAt', title: 'Updated At', type: 'string' },
+            { name: 'createdAt', title: 'Created At', type: 'string' },
+            { name: 'updatedAt', title: 'Updated At', type: 'string' },
           ],
         },
       ],
     }),
   ],
+  preview: {
+    select: {
+      chunkIndex: 'chunkIndex',
+      count: 'count',
+    },
+    prepare({ chunkIndex, count }: any) {
+      return {
+        title: `Marketing Lead Chunk #${chunkIndex ?? 0}`,
+        subtitle: `${count ?? 0} leads`,
+      }
+    },
+  },
 })

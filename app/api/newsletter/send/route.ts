@@ -176,10 +176,19 @@ export async function POST(req: Request) {
             let personalizedSubject = campaign.subject
               .replace(/\{\{\s*name\s*\}\}/gi, recipientName)
               .replace(/\{\{\s*company\s*\}\}/gi, recipientCompany)
+              .replace(/\{\{\s*email\s*\}\}/gi, recipient.email)
+
+            const personalizedPreheader = campaign.preheader
+              ? campaign.preheader
+                  .replace(/\{\{\s*name\s*\}\}/gi, recipientName)
+                  .replace(/\{\{\s*company\s*\}\}/gi, recipientCompany)
+                  .replace(/\{\{\s*email\s*\}\}/gi, recipient.email)
+              : ''
 
             let personalizedContent = campaign.content
               .replace(/\{\{\s*name\s*\}\}/gi, recipientName)
               .replace(/\{\{\s*company\s*\}\}/gi, recipientCompany)
+              .replace(/\{\{\s*email\s*\}\}/gi, recipient.email)
 
             // Auto-link pre-filled WhatsApp inquiry if standard WhatsApp link is present
             personalizedContent = personalizedContent.replace(
@@ -188,9 +197,9 @@ export async function POST(req: Request) {
             )
 
             // Optional Preheader snippet hidden for email client inbox snippet
-            const preheaderHtml = campaign.preheader
+            const preheaderHtml = personalizedPreheader
               ? `<div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-                  ${campaign.preheader}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+                  ${personalizedPreheader}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
                 </div>`
               : ''
 
