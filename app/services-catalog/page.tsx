@@ -628,11 +628,11 @@ export default function ServicesCatalogPage() {
           </div>
 
           {/* Section Category Tabs (Respects Sanity Individual Hide Toggles) */}
-          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
             
             <button
               onClick={() => setActiveTab('all')}
-              style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'all' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'all' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+              style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'all' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'all' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
             >
               <span>🌐 All Services</span>
             </button>
@@ -640,7 +640,7 @@ export default function ServicesCatalogPage() {
             {!settings.hideHotels && (
               <button
                 onClick={() => setActiveTab('hotels')}
-                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'hotels' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'hotels' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'hotels' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'hotels' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
               >
                 <Building2 size={15} /> Hotels ({totalHotelsCount})
               </button>
@@ -649,7 +649,7 @@ export default function ServicesCatalogPage() {
             {!settings.hideAttractions && (
               <button
                 onClick={() => setActiveTab('attractions')}
-                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'attractions' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'attractions' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'attractions' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'attractions' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
               >
                 <Compass size={15} /> Attractions ({totalAttractionsCount})
               </button>
@@ -658,7 +658,7 @@ export default function ServicesCatalogPage() {
             {!settings.hideRestaurants && (
               <button
                 onClick={() => setActiveTab('restaurants')}
-                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'restaurants' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'restaurants' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'restaurants' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'restaurants' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
               >
                 <Utensils size={15} /> Restaurants ({totalRestaurantsCount})
               </button>
@@ -667,7 +667,7 @@ export default function ServicesCatalogPage() {
             {!settings.hideGuides && (
               <button
                 onClick={() => setActiveTab('guides')}
-                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'guides' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'guides' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'guides' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'guides' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
               >
                 <UserCheck size={15} /> Tour Guides ({totalGuidesCount})
               </button>
@@ -676,7 +676,7 @@ export default function ServicesCatalogPage() {
             {!settings.hideTours && (
               <button
                 onClick={() => setActiveTab('tours')}
-                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'tours' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'tours' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'tours' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'tours' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
               >
                 <Map size={15} /> Tours (2N/3N/4N) ({totalToursCount})
               </button>
@@ -685,7 +685,7 @@ export default function ServicesCatalogPage() {
             {!settings.hidePackages && (
               <button
                 onClick={() => setActiveTab('packages')}
-                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'packages' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'packages' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
+                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'packages' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'packages' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
               >
                 <Package size={15} /> Packages ({totalPackagesCount})
               </button>
@@ -999,7 +999,7 @@ export default function ServicesCatalogPage() {
                 </div>
 
                 {/* Restaurant Category Filter Tabs */}
-                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '1.25rem', scrollbarWidth: 'thin' }}>
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '1.25rem', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
                   {[
                     { id: 'all', label: `All Dining (${restaurants.length})` },
                     { id: 'buffet', label: '🍽️ Buffet & Thali' },
@@ -1024,6 +1024,7 @@ export default function ServicesCatalogPage() {
                         fontSize: '0.78rem',
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
+                        flexShrink: 0,
                         transition: 'all 0.15s ease',
                         boxShadow: restaurantCategory === tab.id ? '0 2px 6px rgba(15,76,58,0.2)' : 'none'
                       }}
@@ -1044,7 +1045,7 @@ export default function ServicesCatalogPage() {
                     </button>
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.35rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1.25rem' }}>
                     {filteredRestaurants.map((r) => {
                       const restaurantSlug = r.slug || slugifyRestaurantName(r.name)
                       const previewDishes = (r.mustTryDishes || []).slice(0, 3).map(d => typeof d === 'string' ? d : d.name)
@@ -1187,7 +1188,7 @@ export default function ServicesCatalogPage() {
                   </h2>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1.25rem' }}>
                   {filteredGuides.map((g) => (
                     <div key={g._id} onClick={() => setActiveMediaModal(g)} style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ height: '150px', background: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6)), url(${g.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -1221,7 +1222,7 @@ export default function ServicesCatalogPage() {
                   </h2>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1.25rem' }}>
                   {filteredTours.map((t) => (
                     <div key={t._id} onClick={() => setActiveMediaModal(t)} style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ height: '160px', background: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.65)), url(${t.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -1256,7 +1257,7 @@ export default function ServicesCatalogPage() {
                   </h2>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1.25rem' }}>
                   {filteredPackages.map((p) => (
                     <div key={p._id} onClick={() => setActiveMediaModal(p)} style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', cursor: 'pointer', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ height: '160px', background: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.65)), url(${p.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -1684,7 +1685,7 @@ export default function ServicesCatalogPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '1rem'
+            padding: 'clamp(0.4rem, 2vw, 1rem)'
           }}
         >
           <div
@@ -1692,15 +1693,16 @@ export default function ServicesCatalogPage() {
             style={{
               position: 'relative',
               width: '740px',
-              maxWidth: '94vw',
-              maxHeight: '88vh',
+              maxWidth: '96vw',
+              maxHeight: '90vh',
               overflowY: 'auto',
               backgroundColor: '#FFFFFF',
               color: '#0F172A',
-              padding: '1.5rem',
-              borderRadius: '20px',
+              padding: 'clamp(1rem, 3.5vw, 1.5rem)',
+              borderRadius: '18px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
-              border: '1px solid #E2E8F0'
+              border: '1px solid #E2E8F0',
+              boxSizing: 'border-box'
             }}
           >
             <button
@@ -1723,12 +1725,12 @@ export default function ServicesCatalogPage() {
               </span>
             </div>
 
-            <h3 style={{ margin: '0 0 0.4rem', fontSize: '1.4rem', fontWeight: 900, color: '#0F172A', lineHeight: 1.25 }}>
+            <h3 style={{ margin: '0 0 0.4rem', fontSize: 'clamp(1.2rem, 3vw, 1.45rem)', fontWeight: 900, color: '#0F172A', lineHeight: 1.25, wordBreak: 'break-word' }}>
               {activeRestaurantModal.name}
             </h3>
 
             {activeRestaurantModal.subtitle && (
-              <p style={{ margin: '0 0 0.85rem', fontSize: '0.82rem', color: '#64748B', fontWeight: 600 }}>
+              <p style={{ margin: '0 0 0.85rem', fontSize: '0.82rem', color: '#64748B', fontWeight: 600, wordBreak: 'break-word' }}>
                 {activeRestaurantModal.subtitle}
               </p>
             )}
@@ -1738,15 +1740,19 @@ export default function ServicesCatalogPage() {
               <Link
                 href={`/services-catalog/restaurants/${activeRestaurantModal.slug || slugifyRestaurantName(activeRestaurantModal.name)}`}
                 style={{
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  width: '100%',
+                  boxSizing: 'border-box',
                   gap: '8px',
-                  padding: '0.65rem 1.2rem',
+                  padding: '0.75rem 1.2rem',
                   borderRadius: '10px',
                   background: 'linear-gradient(135deg, #0F4C3A 0%, #166534 100%)',
                   color: '#FFF',
                   fontWeight: 800,
-                  fontSize: '0.84rem',
+                  fontSize: '0.85rem',
                   textDecoration: 'none',
                   boxShadow: '0 3px 10px rgba(15,76,58,0.25)'
                 }}
@@ -1858,13 +1864,13 @@ export default function ServicesCatalogPage() {
                 <h4 style={{ margin: '0 0 0.65rem', fontSize: '0.88rem', fontWeight: 800, color: '#0F4C3A', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   ✨ Signature Must-Try Dishes
                 </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '8px' }}>
                   {activeRestaurantModal.mustTryDishes.map((dishItem, didx) => {
                     const dish = typeof dishItem === 'string' ? { name: dishItem, description: '' } : dishItem
                     return (
                       <div key={didx} style={{ background: '#FFF', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                        <strong style={{ fontSize: '0.82rem', color: '#0F172A', display: 'block' }}>{dish.name}</strong>
-                        {dish.description && <span style={{ fontSize: '0.74rem', color: '#64748B', lineHeight: 1.35, display: 'block', marginTop: '2px' }}>{dish.description}</span>}
+                        <strong style={{ fontSize: '0.82rem', color: '#0F172A', display: 'block', wordBreak: 'break-word' }}>{dish.name}</strong>
+                        {dish.description && <span style={{ fontSize: '0.74rem', color: '#64748B', lineHeight: 1.35, display: 'block', marginTop: '2px', wordBreak: 'break-word' }}>{dish.description}</span>}
                       </div>
                     )
                   })}
@@ -1875,7 +1881,7 @@ export default function ServicesCatalogPage() {
             {/* Address & Timings */}
             <div style={{ background: '#F0FDF4', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #BBF7D0', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ fontSize: '0.82rem', color: '#166534' }}>
+                <div style={{ fontSize: '0.82rem', color: '#166534', wordBreak: 'break-word' }}>
                   <strong>📍 Location:</strong> {activeRestaurantModal.address}
                 </div>
                 {activeRestaurantModal.nearestMrt && (
@@ -1892,40 +1898,43 @@ export default function ServicesCatalogPage() {
             </div>
 
             {/* Modal Bottom Actions */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', paddingTop: '0.5rem', borderTop: '1px solid #F1F5F9' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '10px', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9' }}>
               <a
                 href={`https://wa.me/${(activeRestaurantModal.whatsappNumber || '919886171251').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(activeRestaurantModal.whatsappMessage || `Hi Flying Wonders! I would like to inquire about group dining at ${activeRestaurantModal.name}.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: '6px',
-                  padding: '0.55rem 1rem',
-                  borderRadius: '8px',
+                  padding: '0.65rem 1rem',
+                  borderRadius: '10px',
                   background: '#25D366',
                   color: '#FFF',
                   fontWeight: 800,
-                  fontSize: '0.82rem',
-                  textDecoration: 'none'
+                  fontSize: '0.85rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 3px 10px rgba(37,211,102,0.25)'
                 }}
               >
-                <MessageCircle size={15} fill="#FFF" />
+                <MessageCircle size={16} fill="#FFF" />
                 <span>WhatsApp Concierge</span>
               </a>
 
               <Link
                 href={`/services-catalog/restaurants/${activeRestaurantModal.slug || slugifyRestaurantName(activeRestaurantModal.name)}`}
                 style={{
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: '6px',
-                  padding: '0.55rem 1.15rem',
-                  borderRadius: '8px',
+                  padding: '0.65rem 1.15rem',
+                  borderRadius: '10px',
                   background: '#0F4C3A',
                   color: '#FFF',
                   fontWeight: 800,
-                  fontSize: '0.82rem',
+                  fontSize: '0.85rem',
                   textDecoration: 'none'
                 }}
               >
