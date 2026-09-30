@@ -23,6 +23,8 @@ export async function POST(req: Request) {
       adminEmail,
       targetAudience = 'all',
       sourceTag,
+      sourceTags,
+      matchMode = 'any',
       customEmails,
       batchLimit,
       skipPreviouslySent = true,
@@ -48,6 +50,11 @@ export async function POST(req: Request) {
     if (!campaign) {
       return NextResponse.json({ error: 'Campaign not found.' }, { status: 404 })
     }
+
+    // Resolve multi-tag array or fallback single string
+    const resolvedTags: string[] = Array.isArray(sourceTags) && sourceTags.length > 0
+      ? sourceTags
+      : (typeof sourceTag === 'string' && sourceTag.trim().length > 0 ? sourceTag.split(/[,\n;]+/).map(t => t.trim()).filter(Boolean) : [])
 
     // 3. Resolve Target Recipient List
     interface Recipient {
@@ -81,7 +88,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'No valid email addresses provided in the custom list.' }, { status: 400 })
       }
     } else {
-      recipients = (await getSubscribersForSend(targetAudience, sourceTag)) as Recipient[]
+      recipients = (await getSubscribersForSend(targetAudience, resolvedTags.length > 0 ? resolvedTags : sourceTag, matchMode)) as Recipient[]
     }
 
     if (!recipients || recipients.length === 0) {
@@ -293,10 +300,14 @@ export async function POST(req: Request) {
     const nowIso = new Date().toISOString()
     const dispatcherTag = isUsingSes ? 'Amazon SES' : 'Brevo'
     const isMultiWave = remainingAfterBatch > 0 || prevDispatched.length > 0
+    const tagDisplayStr = resolvedTags.length > 1
+      ? `TAGS (${resolvedTags.length}): ${resolvedTags.join(', ')}`
+      : (resolvedTags[0] || (typeof sourceTag === 'string' ? sourceTag : 'None'))
+
     const waveNote = targetAudience === 'tag'
       ? (isMultiWave
-          ? `[${dispatcherTag}] Wave: Sent ${successCount} of ${eligibleRecipients.length} eligible tag "${sourceTag}" contacts (${remainingAfterBatch} remaining)`
-          : `[${dispatcherTag}] Event tag "${sourceTag}" (${recipients.length} recipients)`)
+          ? `[${dispatcherTag}] Wave: Sent ${successCount} of ${eligibleRecipients.length} eligible (${tagDisplayStr}) contacts (${remainingAfterBatch} remaining)`
+          : `[${dispatcherTag}] Event ${tagDisplayStr} (${recipients.length} recipients)`)
       : (targetAudience === 'custom'
           ? `[${dispatcherTag}] Custom list: Sent ${successCount} of ${eligibleRecipients.length} addresses`
           : (isMultiWave
@@ -306,7 +317,9 @@ export async function POST(req: Request) {
     const newHistoryEntry = {
       _key: `dispatch-${Date.now()}`,
       dispatchedAt: nowIso,
-      targetAudience: targetAudience === 'tag' && sourceTag ? `TAG: ${sourceTag.toUpperCase()}` : targetAudience.toUpperCase(),
+      targetAudience: targetAudience === 'tag'
+        ? (resolvedTags.length > 1 ? `TAGS (${resolvedTags.length}): ${resolvedTags.join(', ').toUpperCase()}` : `TAG: ${(resolvedTags[0] || sourceTag || '').toUpperCase()}`)
+        : targetAudience.toUpperCase(),
       sentCount: successCount,
       errorCount: errors.length,
       dispatchedBy: adminEmail,
@@ -336,7 +349,9 @@ export async function POST(req: Request) {
       totalAudience: recipients.length,
       remainingAfterBatch,
       nextWaveRecommended: remainingAfterBatch > 0,
-      targetAudience: targetAudience === 'tag' && sourceTag ? `TAG: ${sourceTag}` : targetAudience,
+      targetAudience: targetAudience === 'tag'
+        ? (resolvedTags.length > 1 ? `TAGS (${resolvedTags.length}): ${resolvedTags.join(', ')}` : `TAG: ${resolvedTags[0] || sourceTag}`)
+        : targetAudience,
       dispatcher: isUsingSes ? 'ses' : 'brevo',
       errors: errors.length > 0 ? errors : undefined,
     })

@@ -123,17 +123,50 @@ export async function getActiveSubscriberCount(): Promise<number> {
 /**
  * Fetch filtered subscribers for campaign send.
  */
-export async function getSubscribersForSend(targetAudience: string, sourceTag?: string): Promise<SubscriberItem[]> {
+export async function getSubscribersForSend(
+  targetAudience: string,
+  sourceTag?: string | string[],
+  matchMode: 'any' | 'all' = 'any'
+): Promise<SubscriberItem[]> {
   const all = (await getAllSubscribers(true)) as SubscriberItem[]
   const active = all.filter(s => s.isActive)
 
   if (targetAudience === 'tag' && sourceTag) {
-    const cleanTag = sourceTag.trim().toLowerCase()
-    return active.filter(s => {
+    const rawList = Array.isArray(sourceTag)
+      ? sourceTag
+      : sourceTag.split(/[,\n;]+/).map(t => t.trim())
+
+    const cleanTags = rawList
+      .map(t => t.trim().toLowerCase())
+      .filter(Boolean)
+
+    if (cleanTags.length === 0) {
+      return []
+    }
+
+    const matched = active.filter(s => {
       if (!s.source) return false
-      const tags = s.source.split(',').map(t => t.trim().toLowerCase())
-      return tags.includes(cleanTag) || s.source.toLowerCase().includes(cleanTag)
+      const sTags = s.source.split(',').map(t => t.trim().toLowerCase())
+      const sLower = s.source.toLowerCase()
+
+      if (matchMode === 'all') {
+        return cleanTags.every(t => sTags.includes(t) || sLower.includes(t))
+      } else {
+        return cleanTags.some(t => sTags.includes(t) || sLower.includes(t))
+      }
     })
+
+    // Strict email-level deduplication across chunks
+    const seenEmails = new Set<string>()
+    const deduped: SubscriberItem[] = []
+    for (const sub of matched) {
+      const cleanEmail = (sub.email || '').trim().toLowerCase()
+      if (cleanEmail && !seenEmails.has(cleanEmail)) {
+        seenEmails.add(cleanEmail)
+        deduped.push(sub)
+      }
+    }
+    return deduped
   }
 
   if (targetAudience === 'b2b') {

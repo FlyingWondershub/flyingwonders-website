@@ -396,7 +396,17 @@ export default function NewsletterCampaignManager() {
   // Targeted Audience Dispatch Modal State
   const [dispatchModalCampaign, setDispatchModalCampaign] = useState<Campaign | null>(null)
   const [targetAudience, setTargetAudience] = useState<'all' | 'b2b' | 'b2c' | 'new' | 'tag' | 'custom'>('all')
-  const [selectedDispatchTag, setSelectedDispatchTag] = useState('')
+  const [selectedDispatchTags, setSelectedDispatchTags] = useState<string[]>([])
+  const [tagSearchQuery, setTagSearchQuery] = useState('')
+  const [tagMatchMode, setTagMatchMode] = useState<'any' | 'all'>('any')
+  const selectedDispatchTag = selectedDispatchTags.join(', ')
+  const setSelectedDispatchTag = (tag: string) => {
+    if (!tag) {
+      setSelectedDispatchTags([])
+    } else {
+      setSelectedDispatchTags([tag])
+    }
+  }
   const [customEmailsInput, setCustomEmailsInput] = useState('')
   const [dispatchBatchLimit, setDispatchBatchLimit] = useState<'all' | '1000' | '500' | '250' | '100' | '50' | 'custom'>('1000')
   const [customBatchLimitInput, setCustomBatchLimitInput] = useState('500')
@@ -541,12 +551,32 @@ export default function NewsletterCampaignManager() {
       const unique = Array.from(new Set(list))
       matching = unique.map(e => ({ email: e }))
     } else if (targetAudience === 'tag') {
-      const t = (selectedDispatchTag || '').trim().toLowerCase()
-      matching = subscribersList.filter(s => {
-        if (!s.isActive || !s.source) return false
-        const tags = s.source.split(',').map((x: string) => x.trim().toLowerCase())
-        return t ? (tags.includes(t) || s.source.toLowerCase().includes(t)) : true
-      })
+      const selectedClean = selectedDispatchTags.map(t => t.trim().toLowerCase()).filter(Boolean)
+      if (selectedClean.length === 0) {
+        matching = []
+      } else {
+        const rawMatching = subscribersList.filter(s => {
+          if (!s.isActive || !s.source) return false
+          const tags = s.source.split(',').map((x: string) => x.trim().toLowerCase())
+          const sLower = s.source.toLowerCase()
+          if (tagMatchMode === 'all') {
+            return selectedClean.every(t => tags.includes(t) || sLower.includes(t))
+          } else {
+            return selectedClean.some(t => tags.includes(t) || sLower.includes(t))
+          }
+        })
+
+        // Strict email-level deduplication so multiple matching tags never double-count
+        const seenEmails = new Set<string>()
+        matching = []
+        for (const sub of rawMatching) {
+          const cleanEmail = (sub.email || '').trim().toLowerCase()
+          if (cleanEmail && !seenEmails.has(cleanEmail)) {
+            seenEmails.add(cleanEmail)
+            matching.push(sub)
+          }
+        }
+      }
     } else if (targetAudience === 'b2b') {
       matching = subscribersList.filter(s => s.isActive && (s.audienceType === 'b2b' || !s.audienceType))
     } else if (targetAudience === 'b2c') {
@@ -598,7 +628,8 @@ export default function NewsletterCampaignManager() {
   }, [
     dispatchModalCampaign,
     targetAudience,
-    selectedDispatchTag,
+    selectedDispatchTags,
+    tagMatchMode,
     customEmailsInput,
     subscribersList,
     dispatchSkipSent,
@@ -714,10 +745,10 @@ export default function NewsletterCampaignManager() {
   }, [])
 
   useEffect(() => {
-    if (targetAudience === 'tag' && !selectedDispatchTag && availableSourceTags.length > 0) {
-      setSelectedDispatchTag(availableSourceTags[0].tag)
+    if (targetAudience === 'tag' && selectedDispatchTags.length === 0 && availableSourceTags.length > 0) {
+      setSelectedDispatchTags([availableSourceTags[0].tag])
     }
-  }, [targetAudience, selectedDispatchTag, availableSourceTags])
+  }, [targetAudience, selectedDispatchTags, availableSourceTags])
 
   const handleOpenNew = () => {
     setEditingCampaignId(null)
@@ -950,7 +981,9 @@ export default function NewsletterCampaignManager() {
   const handleOpenDispatchModal = (c: Campaign) => {
     setDispatchModalCampaign(c)
     setTargetAudience('all')
-    setSelectedDispatchTag('')
+    setSelectedDispatchTags([])
+    setTagSearchQuery('')
+    setTagMatchMode('any')
     setCustomEmailsInput('')
     setDispatchSkipSent(true)
     setDispatchModalFeedback(null)
@@ -989,8 +1022,8 @@ export default function NewsletterCampaignManager() {
   const handleExecuteDispatch = async () => {
     if (!dispatchModalCampaign) return
 
-    if (targetAudience === 'tag' && !selectedDispatchTag.trim()) {
-      alert('Please select an event tag to target.')
+    if (targetAudience === 'tag' && selectedDispatchTags.length === 0) {
+      alert('Please select at least one event tag to target.')
       return
     }
 
@@ -1023,7 +1056,9 @@ export default function NewsletterCampaignManager() {
           campaignId: dispatchModalCampaign._id,
           adminEmail: 'info.flyingwonders@gmail.com',
           targetAudience,
-          sourceTag: targetAudience === 'tag' ? selectedDispatchTag.trim() : undefined,
+          sourceTags: targetAudience === 'tag' ? selectedDispatchTags : undefined,
+          sourceTag: targetAudience === 'tag' ? selectedDispatchTags.join(',') : undefined,
+          matchMode: tagMatchMode,
           customEmails: targetAudience === 'custom' ? customEmailsInput : undefined,
           batchLimit: effectiveLimit,
           skipPreviouslySent: dispatchSkipSent,
@@ -1064,8 +1099,8 @@ export default function NewsletterCampaignManager() {
   const handleStartAutoPilot = async () => {
     if (!dispatchModalCampaign) return
 
-    if (targetAudience === 'tag' && !selectedDispatchTag.trim()) {
-      alert('Please select an event tag to target.')
+    if (targetAudience === 'tag' && selectedDispatchTags.length === 0) {
+      alert('Please select at least one event tag to target.')
       return
     }
 
@@ -1132,7 +1167,9 @@ export default function NewsletterCampaignManager() {
             campaignId: dispatchModalCampaign._id,
             adminEmail: 'info.flyingwonders@gmail.com',
             targetAudience,
-            sourceTag: targetAudience === 'tag' ? selectedDispatchTag.trim() : undefined,
+            sourceTags: targetAudience === 'tag' ? selectedDispatchTags : undefined,
+            sourceTag: targetAudience === 'tag' ? selectedDispatchTags.join(',') : undefined,
+            matchMode: tagMatchMode,
             customEmails: targetAudience === 'custom' ? customEmailsInput : undefined,
             batchLimit: 1000,
             skipPreviouslySent: true,
@@ -3171,8 +3208,8 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                     checked={targetAudience === 'tag'}
                     onChange={() => {
                       setTargetAudience('tag')
-                      if (!selectedDispatchTag && availableSourceTags.length > 0) {
-                        setSelectedDispatchTag(availableSourceTags[0].tag)
+                      if (selectedDispatchTags.length === 0 && availableSourceTags.length > 0) {
+                        setSelectedDispatchTags([availableSourceTags[0].tag])
                       }
                     }}
                     style={{ marginTop: '3px', accentColor: '#800020' }}
@@ -3185,50 +3222,263 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                       </span>
                     </div>
                     <div style={{ fontSize: '0.74rem', color: '#64748B', marginTop: '2px' }}>
-                      Target exclusively delegates from a specific expo, roadshow, or partner list (e.g. SATTE, OTM).
+                      Target exclusively delegates from a specific expo, roadshow, or partner list (e.g. SATTE, OTM, Nidhi).
                     </div>
 
                     {targetAudience === 'tag' && (
-                      <div style={{ marginTop: '10px', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '10px 12px' }}>
-                        <label style={{ display: 'block', fontSize: '0.76rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                          Select Event Tag:
-                        </label>
+                      <div style={{ marginTop: '10px', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '8px', padding: '12px 14px' }}>
+                        
+                        {/* Header & Quick Action Buttons */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                          <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                            Select Event Tags (Multi-Select Checkboxes):
+                          </label>
+
+                          {availableSourceTags.length > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedDispatchTags(availableSourceTags.map(t => t.tag))}
+                                style={{
+                                  padding: '3px 8px',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  background: '#F1F5F9',
+                                  color: '#334155',
+                                  border: '1px solid #CBD5E1',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Select All ({availableSourceTags.length})
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedDispatchTags([])}
+                                style={{
+                                  padding: '3px 8px',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  background: '#F1F5F9',
+                                  color: '#64748B',
+                                  border: '1px solid #CBD5E1',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Clear All
+                              </button>
+                              <span style={{ fontSize: '0.7rem', fontWeight: 700, background: selectedDispatchTags.length > 0 ? '#DCFCE7' : '#FEE2E2', color: selectedDispatchTags.length > 0 ? '#15803D' : '#991B1B', padding: '2px 8px', borderRadius: '10px' }}>
+                                {selectedDispatchTags.length} of {availableSourceTags.length} Selected
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
                         {loadingSubscribers ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', fontSize: '0.78rem', color: '#64748B' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 0', fontSize: '0.78rem', color: '#64748B' }}>
                             <RefreshCw size={14} className="animate-spin" />
                             <span>Loading event tags from subscriber database...</span>
                           </div>
                         ) : availableSourceTags.length > 0 ? (
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                            <select
-                              value={selectedDispatchTag || (availableSourceTags[0]?.tag || '')}
-                              onChange={(e) => setSelectedDispatchTag(e.target.value)}
-                              style={{
-                                padding: '6px 10px',
-                                border: '1px solid #CBD5E1',
-                                borderRadius: '6px',
-                                fontSize: '0.82rem',
-                                fontWeight: 600,
-                                background: '#FFF',
-                                color: '#0F172A',
-                                flex: 1,
-                                minWidth: '180px',
-                                fontFamily: 'var(--font-inter), sans-serif',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <option value="">-- Choose an Event Tag --</option>
-                              {availableSourceTags.map(({ tag, activeCount }) => (
-                                <option key={tag} value={tag}>
-                                  🎪 {tag} ({activeCount} active contacts)
-                                </option>
-                              ))}
-                            </select>
-                            {(selectedDispatchTag || availableSourceTags[0]?.tag) && (
-                              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F4C3A', background: '#ECFDF5', padding: '4px 10px', borderRadius: '6px', border: '1px solid #A7F3D0' }}>
-                                Target: &ldquo;{selectedDispatchTag || availableSourceTags[0]?.tag}&rdquo;
-                              </span>
+                          <div>
+                            {/* Filter Search Input (if multiple tags) */}
+                            {availableSourceTags.length > 3 && (
+                              <div style={{ marginBottom: '8px' }}>
+                                <div style={{ position: 'relative' }}>
+                                  <input
+                                    type="text"
+                                    placeholder="🔍 Search / filter event tags..."
+                                    value={tagSearchQuery}
+                                    onChange={(e) => setTagSearchQuery(e.target.value)}
+                                    style={{
+                                      width: '100%',
+                                      padding: '6px 10px',
+                                      fontSize: '0.76rem',
+                                      border: '1px solid #CBD5E1',
+                                      borderRadius: '6px',
+                                      background: '#F8FAFC',
+                                      color: '#0F172A'
+                                    }}
+                                  />
+                                  {tagSearchQuery && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setTagSearchQuery('')}
+                                      style={{
+                                        position: 'absolute',
+                                        right: '8px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        border: 'none',
+                                        background: 'none',
+                                        color: '#94A3B8',
+                                        cursor: 'pointer',
+                                        fontSize: '0.8rem',
+                                        padding: 0
+                                      }}
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             )}
+
+                            {/* Scrollable Checkbox List */}
+                            <div style={{
+                              maxHeight: '190px',
+                              overflowY: 'auto',
+                              border: '1px solid #E2E8F0',
+                              borderRadius: '8px',
+                              background: '#FAFAFA',
+                              padding: '4px'
+                            }}>
+                              {availableSourceTags
+                                .filter(t => !tagSearchQuery.trim() || t.tag.toLowerCase().includes(tagSearchQuery.trim().toLowerCase()))
+                                .map(({ tag, activeCount }) => {
+                                  const isChecked = selectedDispatchTags.includes(tag)
+                                  return (
+                                    <label
+                                      key={tag}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '7px 10px',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        background: isChecked ? '#FFF5F6' : 'transparent',
+                                        border: isChecked ? '1px solid #FECACA' : '1px solid transparent',
+                                        marginBottom: '3px',
+                                        transition: 'all 0.12s ease'
+                                      }}
+                                    >
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                                        <input
+                                          type="checkbox"
+                                          checked={isChecked}
+                                          onChange={(e) => {
+                                            if (e.target.checked) {
+                                              setSelectedDispatchTags(prev => [...prev, tag])
+                                            } else {
+                                              setSelectedDispatchTags(prev => prev.filter(t => t !== tag))
+                                            }
+                                          }}
+                                          style={{ accentColor: '#800020', width: '15px', height: '15px', cursor: 'pointer' }}
+                                        />
+                                        <span style={{ fontSize: '0.8rem', fontWeight: isChecked ? 700 : 500, color: isChecked ? '#800020' : '#1E293B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                          🎪 {tag}
+                                        </span>
+                                      </div>
+                                      <span style={{
+                                        fontSize: '0.7rem',
+                                        fontWeight: 700,
+                                        padding: '2px 7px',
+                                        borderRadius: '10px',
+                                        background: isChecked ? '#800020' : '#E2E8F0',
+                                        color: isChecked ? '#FFFFFF' : '#475569',
+                                        whiteSpace: 'nowrap',
+                                        marginLeft: '8px'
+                                      }}>
+                                        {activeCount.toLocaleString()} contacts
+                                      </span>
+                                    </label>
+                                  )
+                                })}
+                            </div>
+
+                            {/* Selected Chips & Deduplicated Audience Summary */}
+                            <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px dashed #E2E8F0' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
+                                <div style={{ fontSize: '0.73rem', fontWeight: 700, color: '#475569' }}>
+                                  Active Tag Selection:
+                                </div>
+                                {selectedDispatchTags.length > 1 && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <span style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 600 }}>Match Rule:</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setTagMatchMode(prev => prev === 'any' ? 'all' : 'any')}
+                                      style={{
+                                        fontSize: '0.68rem',
+                                        fontWeight: 700,
+                                        padding: '1px 6px',
+                                        borderRadius: '4px',
+                                        border: '1px solid #CBD5E1',
+                                        background: tagMatchMode === 'any' ? '#ECFDF5' : '#EFF6FF',
+                                        color: tagMatchMode === 'any' ? '#065F46' : '#1E40AF',
+                                        cursor: 'pointer'
+                                      }}
+                                      title={tagMatchMode === 'any' ? 'Target contacts with ANY selected tag (Union)' : 'Target contacts with ALL selected tags (Intersection)'}
+                                    >
+                                      {tagMatchMode === 'any' ? 'ANY Tag (Union • Recommended)' : 'ALL Tags (Intersection)'}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+
+                              {selectedDispatchTags.length > 0 ? (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                                  {selectedDispatchTags.map(tag => {
+                                    const matchInfo = availableSourceTags.find(t => t.tag === tag)
+                                    return (
+                                      <span
+                                        key={tag}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '5px',
+                                          fontSize: '0.72rem',
+                                          fontWeight: 700,
+                                          background: '#ECFDF5',
+                                          color: '#065F46',
+                                          padding: '2px 8px',
+                                          borderRadius: '6px',
+                                          border: '1px solid #A7F3D0'
+                                        }}
+                                      >
+                                        <span>🎪 {tag}</span>
+                                        {matchInfo && <span style={{ opacity: 0.75, fontSize: '0.66rem' }}>({matchInfo.activeCount})</span>}
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            setSelectedDispatchTags(prev => prev.filter(t => t !== tag))
+                                          }}
+                                          style={{
+                                            border: 'none',
+                                            background: 'transparent',
+                                            color: '#065F46',
+                                            cursor: 'pointer',
+                                            padding: '0 2px',
+                                            fontSize: '0.76rem',
+                                            fontWeight: 800,
+                                            lineHeight: 1
+                                          }}
+                                          title={`Remove tag "${tag}"`}
+                                        >
+                                          ×
+                                        </button>
+                                      </span>
+                                    )
+                                  })}
+                                </div>
+                              ) : (
+                                <div style={{ fontSize: '0.73rem', color: '#DC2626', fontWeight: 600 }}>
+                                  ⚠️ No tags selected. Please check at least one tag above to target.
+                                </div>
+                              )}
+
+                              {selectedDispatchTags.length > 0 && (
+                                <div style={{ marginTop: '8px', fontSize: '0.72rem', color: '#0F766E', background: '#F0FDFA', padding: '6px 10px', borderRadius: '6px', border: '1px solid #CCFBF1', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <span>🛡️</span>
+                                  <span>
+                                    <strong>Automatic Email Deduplication Active:</strong> If any contact appears under multiple selected tags, they will receive strictly <strong>1 email</strong>.
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ) : (
                           <p style={{ margin: 0, fontSize: '0.78rem', color: '#94A3B8' }}>

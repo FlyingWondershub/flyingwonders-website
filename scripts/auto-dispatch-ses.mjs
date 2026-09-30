@@ -38,7 +38,9 @@ function getArg(flag, defaultValue = null) {
 const hasFlag = (flag) => args.includes(flag)
 
 const targetCampaignId = getArg('--campaignId')
-const targetTag = (getArg('--tag') || 'nidhi').trim()
+const rawTagInput = (getArg('--tags') || getArg('--tag') || 'nidhi').trim()
+const targetTags = rawTagInput.split(/[,\n;]+/).map(t => t.trim()).filter(Boolean)
+const targetTag = targetTags.join(', ')
 const targetRate = parseFloat(getArg('--rate', '12')) // max emails per second
 const maxSendsLimit = getArg('--maxSends') ? parseInt(getArg('--maxSends'), 10) : null
 const checkpointInterval = parseInt(getArg('--checkpoint', '500'), 10)
@@ -273,12 +275,23 @@ async function main() {
     }
   }
 
-  const cleanTag = targetTag.toLowerCase()
-  const matchingSubscribers = allSubscribers.filter((s) => {
+  const cleanTags = targetTags.map((t) => t.toLowerCase())
+  const rawMatching = allSubscribers.filter((s) => {
     if (!s.isActive || !s.source) return false
     const tags = s.source.split(',').map((t) => t.trim().toLowerCase())
-    return tags.includes(cleanTag) || s.source.toLowerCase().includes(cleanTag)
+    return cleanTags.some((ct) => tags.includes(ct) || s.source.toLowerCase().includes(ct))
   })
+
+  // Deduplicate by email address across matched subscribers
+  const seenMatchEmails = new Set()
+  const matchingSubscribers = []
+  for (const s of rawMatching) {
+    const cleanEmail = (s.email || '').trim().toLowerCase()
+    if (cleanEmail && !seenMatchEmails.has(cleanEmail)) {
+      seenMatchEmails.add(cleanEmail)
+      matchingSubscribers.push(s)
+    }
+  }
 
   // Deduplication: Exclude previously dispatched emails
   const prevDispatched = Array.isArray(campaign.dispatchedEmails) ? campaign.dispatchedEmails : []
