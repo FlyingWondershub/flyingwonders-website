@@ -163,6 +163,18 @@ export const proposalSchema = defineType({
         { name: 'totalClientPriceINR', type: 'number', title: 'Total Client Price approx (₹)' },
         { name: 'adultQuote', type: 'number', title: 'Price per Adult (S$)' },
         { name: 'childQuote', type: 'number', title: 'Price per Child (S$)' },
+        { name: 'hotelBuyCostTotal', type: 'number', title: 'Hotels Buy Cost Total (S$)' },
+        { name: 'transportBuyCostTotal', type: 'number', title: 'Transfers Buy Cost Total (S$)' },
+        { name: 'attractionBuyCostTotal', type: 'number', title: 'Attractions Buy Cost Total (S$)' },
+        { name: 'mealBuyCostTotal', type: 'number', title: 'Meals Buy Cost Total (S$)' },
+        { name: 'guideBuyCostTotal', type: 'number', title: 'Guides Buy Cost Total (S$)' },
+        { name: 'totalSupplierCost', type: 'number', title: 'Total Supplier Buy Cost (S$)' },
+        { name: 'totalSupplierCostINR', type: 'number', title: 'Total Supplier Buy Cost approx (₹)' },
+        { name: 'netProfit', type: 'number', title: 'Nett Profit (S$)' },
+        { name: 'netProfitINR', type: 'number', title: 'Nett Profit approx (₹)' },
+        { name: 'marginPercent', type: 'number', title: 'Profit Margin Percentage (%)' },
+        { name: 'minimumMarginThreshold', type: 'number', title: 'Applied Guardrail Threshold (%)' },
+        { name: 'isBelowMarginGuardrail', type: 'boolean', title: 'Below Minimum Margin Flag' },
       ]
     }),
     defineField({

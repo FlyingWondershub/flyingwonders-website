@@ -5,7 +5,7 @@ import Link from 'next/link'
 import * as XLSX from 'xlsx'
 import IciciQrModal from '../../components/IciciQrModal'
 import { load } from '@cashfreepayments/cashfree-js'
-import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X, Sparkles, Search, ChevronDown, Check, Mail, Share2, Eye, RefreshCw, Layers, CheckCircle2, ArrowRight, Receipt, CreditCard, Printer } from 'lucide-react'
+import { Loader2, Copy, FileText, Calendar, MessageSquare, Save, Send, CopyCheck, FileDown, CalendarDays, MessageCircle, BookmarkCheck, AlertTriangle, X, Sparkles, Search, ChevronDown, ChevronUp, Check, Mail, Share2, Eye, RefreshCw, Layers, CheckCircle2, ArrowRight, Receipt, CreditCard, Printer, ShieldAlert, TrendingUp } from 'lucide-react'
 import { generateFlyerDataUrl, generateFlyerBlob, FlyerInclusion } from '../../lib/flyer-generator'
 import { generateTaxInvoicePdf, generatePaymentReceiptPdf } from '../../utils/invoiceReceiptPdf'
 
@@ -551,6 +551,12 @@ const MEAL_PRICES = {
   dinner: 17
 }
 
+const MEAL_BUY_PRICES = {
+  breakfast: 12,
+  lunch: 17,
+  dinner: 17
+}
+
 const isVehicleSIC = (v?: { type?: string; isSIC?: boolean }) => {
   if (!v) return false
   if (v.isSIC) return true
@@ -884,17 +890,19 @@ export default function PrototypeBuilder() {
   const [hideClientPreview, setHideClientPreview] = useState(false)
 
   // Dynamic Master Data fetched from Google Sheets (SGD pricing)
-  const [hotelsList, setHotelsList] = useState(FALLBACK_HOTELS)
-  const [vehiclesList, setVehiclesList] = useState<{ type: string; pricePerTransfer: number; serviceName?: string; compositeKey?: string; vehicleType?: string; transferType?: string; rateType?: string }[]>(FALLBACK_VEHICLES)
-  const [attractionsList, setAttractionsList] = useState<{ name: string; adultPrice: number; childPrice: number; area?: string; rateType?: string }[]>(FALLBACK_ATTRACTIONS)
+  const [hotelsList, setHotelsList] = useState<{ name: string; rooms: { type: string; price: number; buyPrice?: number }[] }[]>(FALLBACK_HOTELS)
+  const [vehiclesList, setVehiclesList] = useState<{ type: string; pricePerTransfer: number; buyPrice?: number; serviceName?: string; compositeKey?: string; vehicleType?: string; transferType?: string; rateType?: string }[]>(FALLBACK_VEHICLES)
+  const [attractionsList, setAttractionsList] = useState<{ name: string; adultPrice: number; childPrice: number; adultBuy?: number; childBuy?: number; area?: string; rateType?: string }[]>(FALLBACK_ATTRACTIONS)
   const [attractionsMeta, setAttractionsMeta] = useState<Record<string, { shortDescription?: string; longDescription?: string; highlights?: string[]; tips?: string[]; rating?: number; category?: string; openingHours?: string; duration?: string; location?: string; photoUrl?: string | null }>>({})
   const [transfersMeta, setTransfersMeta] = useState<Record<string, any>>({})
   const [guidesMeta, setGuidesMeta] = useState<Record<string, any>>({})
   const [hotelsMeta, setHotelsMeta] = useState<Record<string, any>>({})
   const [mealsMeta, setMealsMeta] = useState<Record<string, any>>({})
-  const [mealsList, setMealsList] = useState<any[]>([])
-  const [guidesList, setGuidesList] = useState(FALLBACK_GUIDES)
+  const [mealsList, setMealsList] = useState<{ type: string; pricePerHead: number; buyPrice?: number }[]>([])
+  const [guidesList, setGuidesList] = useState<{ type: string; pricePerDay: number; buyPrice?: number }[]>(FALLBACK_GUIDES)
   const [sheetLoading, setSheetLoading] = useState(false)
+  const [minimumMarginThreshold, setMinimumMarginThreshold] = useState<number>(10)
+  const [showMarginInspector, setShowMarginInspector] = useState(false)
 
   // B2B Enquiry Form States
   const [agentName, setAgentName] = useState('')
@@ -911,7 +919,7 @@ export default function PrototypeBuilder() {
   const [customAgencyLogoUrl, setCustomAgencyLogoUrl] = useState('')
   const [brandingLogoUploading, setBrandingLogoUploading] = useState(false)
   const [hideNetPricing, setHideNetPricing] = useState(true)
-  const [breakdownModalType, setBreakdownModalType] = useState<'rooms' | 'transfers' | 'tickets' | 'meals' | 'guides' | null>(null)
+  const [breakdownModalType, setBreakdownModalType] = useState<'rooms' | 'transfers' | 'tickets' | 'meals' | 'guides' | 'margin' | null>(null)
   const [activeTab, setActiveTab] = useState<'editor' | 'preview' | 'templates'>('editor')
   const [hideReadyTemplatesSubpage, setHideReadyTemplatesSubpage] = useState(false)
   const [activeTemplateName, setActiveTemplateName] = useState<string | null>(null)
@@ -1521,16 +1529,18 @@ export default function PrototypeBuilder() {
         const hotelSheet = workbook.Sheets['Hotel']
         if (hotelSheet) {
           const hotelRows: any[] = XLSX.utils.sheet_to_json(hotelSheet)
-          const hotelMap: { [key: string]: { name: string, rooms: { type: string, price: number }[] } } = {}
+          const hotelMap: { [key: string]: { name: string, rooms: { type: string, price: number, buyPrice?: number }[] } } = {}
           hotelRows.forEach(row => {
             const hName = row['Hotel Name']
             const rType = row['Room Type']
             const price = Number(row['Price/room/night ($)'] ?? row['Price/ room / night ($)']) || 0
+            const buyRaw = row['Price/ room / night ($)-Buy'] ?? row['Price/room/night ($)-Buy'] ?? row['Price/ room / night ($) - Buy'] ?? row['Price-Buy'] ?? row['Price/room/night ($) Buy'] ?? row['Buy Price'] ?? row['Buy']
+            const buyPrice = (buyRaw !== undefined && buyRaw !== null && buyRaw !== '') ? (Number(buyRaw) || price) : price
             if (hName && rType) {
               if (!hotelMap[hName]) {
                 hotelMap[hName] = { name: hName, rooms: [] }
               }
-              hotelMap[hName].rooms.push({ type: rType, price })
+              hotelMap[hName].rooms.push({ type: rType, price, buyPrice })
             }
           })
           const parsedHotels = Object.values(hotelMap)
@@ -1548,6 +1558,8 @@ export default function PrototypeBuilder() {
             const transName = (row['Transfers'] || '').trim()
             const serviceName = (row['Service Name'] || row['Service'] || row['Transfers'] || 'Transfers').trim()
             const rate = Number(row['Rate($)'] ?? row['Rate']) || 0
+            const buyRateRaw = row['Rate-Buy'] ?? row['Rate - Buy'] ?? row['Rate Buy'] ?? row['Rate-buy'] ?? row['Rate ($)-Buy'] ?? row['Buy Rate'] ?? row['Buy']
+            const buyRate = (buyRateRaw !== undefined && buyRateRaw !== null && buyRateRaw !== '') ? (Number(buyRateRaw) || rate) : rate
             const compositeKey = [vType, tType, rType, serviceName].filter(Boolean).join(' - ')
             return {
               type: `${vType}${tType ? ` - ${tType}` : ''}`,
@@ -1556,7 +1568,8 @@ export default function PrototypeBuilder() {
               rateType: rType,
               serviceName,
               compositeKey,
-              pricePerTransfer: rate
+              pricePerTransfer: rate,
+              buyPrice: buyRate
             }
           }).filter(t => t.pricePerTransfer > 0 && t.type.trim() !== '')
           // Prioritize 13-Seater Minibuses at the very top so index 0 is guaranteed to be 13-Seater, never Sedan
@@ -1575,10 +1588,14 @@ export default function PrototypeBuilder() {
             const name = row['Attractions'] || ''
             const adult = Number(row['Adult ($)'] ?? row['Adult']) || 0
             const child = Number(row['Child ($)'] ?? row['Child']) || 0
+            const adultBuyRaw = row['Adult-Buy'] ?? row['Adult - Buy'] ?? row['Adult Buy'] ?? row['Adult ($)-Buy'] ?? row['Adult-buy']
+            const adultBuy = (adultBuyRaw !== undefined && adultBuyRaw !== null && adultBuyRaw !== '') ? (Number(adultBuyRaw) || adult) : adult
+            const childBuyRaw = row['Child-Buy'] ?? row['Child - Buy'] ?? row['Child Buy'] ?? row['Child ($)-Buy'] ?? row['Child-buy']
+            const childBuy = (childBuyRaw !== undefined && childBuyRaw !== null && childBuyRaw !== '') ? (Number(childBuyRaw) || child) : child
             const area = row['Area'] || ''
             const rawRateType = String(row['Rate type'] ?? row['Rate Type'] ?? row['rate type'] ?? row['RateType'] ?? row['Pricing Type'] ?? row['Type'] ?? '').trim().toLowerCase()
             const rateType = rawRateType.includes('group') ? 'group' : 'person'
-            return { name, adultPrice: adult, childPrice: child, area, rateType }
+            return { name, adultPrice: adult, childPrice: child, adultBuy, childBuy, area, rateType }
           }).filter(a => a.name.trim() !== '' && (a.adultPrice > 0 || a.childPrice > 0))
           if (parsedAttractions.length > 0) setAttractionsList(parsedAttractions)
         }
@@ -1591,16 +1608,19 @@ export default function PrototypeBuilder() {
             const restName = row['Restaurant Name'] || ''
             const mType = row['Meal Type'] || row['Type'] || ''
             const rate = Number(row['Rate($)'] ?? row['Rate'] ?? row['Price Per person'] ?? row['Price Per Person'] ?? row['Price']) || 0
+            const buyRateRaw = row['Price Per person-Buy'] ?? row['Price Per Person-Buy'] ?? row['Price Per person - Buy'] ?? row['Price-Buy'] ?? row['Rate-Buy'] ?? row['Rate - Buy'] ?? row['Rate Buy'] ?? row['Rate-buy'] ?? row['Buy Rate'] ?? row['Buy']
+            const buyRate = (buyRateRaw !== undefined && buyRateRaw !== null && buyRateRaw !== '') ? (Number(buyRateRaw) || rate) : rate
             
             // Sync standard meal prices if found
             const mtLower = mType.toLowerCase().trim()
-            if (mtLower === 'breakfast' && rate > 0) MEAL_PRICES.breakfast = rate
-            if (mtLower === 'lunch' && rate > 0) MEAL_PRICES.lunch = rate
-            if (mtLower === 'dinner' && rate > 0) MEAL_PRICES.dinner = rate
+            if (mtLower === 'breakfast' && rate > 0) { MEAL_PRICES.breakfast = rate; MEAL_BUY_PRICES.breakfast = buyRate; }
+            if (mtLower === 'lunch' && rate > 0) { MEAL_PRICES.lunch = rate; MEAL_BUY_PRICES.lunch = buyRate; }
+            if (mtLower === 'dinner' && rate > 0) { MEAL_PRICES.dinner = rate; MEAL_BUY_PRICES.dinner = buyRate; }
 
             return {
               type: restName ? `${restName} (${mType})` : mType,
-              pricePerHead: rate
+              pricePerHead: rate,
+              buyPrice: buyRate
             }
           }).filter(m => m.type && m.pricePerHead > 0)
           if (parsedMeals.length > 0) setMealsList(parsedMeals)
@@ -1613,7 +1633,9 @@ export default function PrototypeBuilder() {
           const parsedGuides = guideRows.map(row => {
             const desc = row['Transfer Description'] || ''
             const rate = Number(row['Rate($)'] ?? row['Rate']) || 0
-            return { type: desc, pricePerDay: rate }
+            const buyRateRaw = row['Rate-Buy'] ?? row['Rate - Buy'] ?? row['Rate Buy'] ?? row['Rate-buy'] ?? row['Buy Rate'] ?? row['Buy']
+            const buyRate = (buyRateRaw !== undefined && buyRateRaw !== null && buyRateRaw !== '') ? (Number(buyRateRaw) || rate) : rate
+            return { type: desc, pricePerDay: rate, buyPrice: buyRate }
           }).filter(g => g.type.trim() !== '' && g.pricePerDay > 0)
           if (parsedGuides.length > 0) setGuidesList(parsedGuides)
         }
@@ -1650,6 +1672,7 @@ export default function PrototypeBuilder() {
         if (data.settings?.hidePreviewPackageOverlay) setHidePreviewPackageOverlay(true)
         if (data.settings?.hideIciciCustomPackage) setHideIciciCustomPackage(true)
         if (data.settings?.hideCashfreeCustomPackage) setHideCashfreeCustomPackage(true)
+        if (typeof data.settings?.minimumMarginThreshold === 'number') setMinimumMarginThreshold(data.settings.minimumMarginThreshold)
       })
       .catch(() => {})
 
@@ -2964,7 +2987,7 @@ export default function PrototypeBuilder() {
   // Cost Calculations
   const costBreakdown = useMemo(() => {
     if (!isAuthenticated && isAuthenticated !== null) {
-      return { hotelTotal: 0, roomCostTotal: 0, suppCostTotal: 0, transportTotal: 0, attractionTotal: 0, mealTotal: 0, guideTotal: 0, miscTotal: 0, netCost: 0, netCostINR: 0, totalClientPrice: 0, totalClientPriceINR: 0, adultQuote: 0, childQuote: 0 }
+      return { hotelTotal: 0, hotelBuyTotal: 0, roomCostTotal: 0, roomBuyCostTotal: 0, suppCostTotal: 0, suppBuyCostTotal: 0, transportTotal: 0, transportBuyTotal: 0, attractionTotal: 0, attractionBuyTotal: 0, mealTotal: 0, mealBuyTotal: 0, guideTotal: 0, guideBuyTotal: 0, miscTotal: 0, totalSupplierCost: 0, totalSupplierCostINR: 0, netProfit: 0, netProfitINR: 0, marginPercent: 0, isBelowMarginGuardrail: false, minimumMarginThreshold: 10, netCost: 0, netCostINR: 0, totalClientPrice: 0, totalClientPriceINR: 0, adultQuote: 0, childQuote: 0, totalTransfers: 0, totalAttractionsCount: 0, totalLunchCount: 0, totalDinnerCount: 0, totalBreakfastCount: 0, totalGuidesCount: 0, optionalAddonsList: [], totalOptionalPrice: 0, totalOptionalPriceINR: 0 }
     }
 
     let hotelTotal = 0
@@ -2974,32 +2997,47 @@ export default function PrototypeBuilder() {
     let attractionChildTotal = 0
     let mealTotal = 0
     let guideTotal = 0
+    let hotelBuyTotal = 0
+    let transportBuyTotal = 0
+    let attractionBuyTotal = 0
+    let mealBuyTotal = 0
+    let guideBuyTotal = 0
 
     // Resilient Hotel lookup
-    let hotel: { name: string; rooms: { type: string; price: number }[] } | undefined = hotelsList[globalHotelIndex]
+    let hotel: { name: string; rooms: { type: string; price: number; buyPrice?: number }[] } | undefined = hotelsList[globalHotelIndex]
     if (!hotel && loadedProposalRaw?.hotelName && hotelsList.length > 0) {
       hotel = hotelsList.find(h => h.name.toLowerCase().trim() === loadedProposalRaw.hotelName.toLowerCase().trim())
     }
-    let mainRoom: { type: string; price: number } | undefined = hotel?.rooms[globalRoomIndex]
+    let mainRoom: { type: string; price: number; buyPrice?: number } | undefined = hotel?.rooms[globalRoomIndex]
     if (!mainRoom && hotel && loadedProposalRaw?.roomType) {
       mainRoom = hotel.rooms.find(r => r.type.toLowerCase().trim() === loadedProposalRaw.roomType.toLowerCase().trim())
     }
-    let suppRoom: { type: string; price: number } | null | undefined = globalSuppIndex >= 0 ? hotel?.rooms[globalSuppIndex] : null
+    let suppRoom: { type: string; price: number; buyPrice?: number } | null | undefined = globalSuppIndex >= 0 ? hotel?.rooms[globalSuppIndex] : null
     if (!suppRoom && hotel && loadedProposalRaw?.supplementType) {
       suppRoom = hotel.rooms.find(r => r.type.toLowerCase().trim() === loadedProposalRaw.supplementType.toLowerCase().trim()) || null
     }
 
     let roomCostTotal = 0
     let suppCostTotal = 0
+    let roomBuyCostTotal = 0
+    let suppBuyCostTotal = 0
     if (hotelRequired) {
       if (customHotelEnabled) {
         roomCostTotal = (customHotelPrice || 0) * (globalRoomCount || 1) * nightsCount
         suppCostTotal = (customHotelSuppCost || 0) * (globalSuppCount || 0) * nightsCount
         hotelTotal = roomCostTotal + suppCostTotal
+        roomBuyCostTotal = roomCostTotal
+        suppBuyCostTotal = suppCostTotal
+        hotelBuyTotal = hotelTotal
       } else if (mainRoom) {
         roomCostTotal = mainRoom.price * (globalRoomCount || 1) * nightsCount
         suppCostTotal = suppRoom ? (suppRoom.price * (globalSuppCount || 0) * nightsCount) : 0
         hotelTotal = roomCostTotal + suppCostTotal
+        const mainBuy = typeof mainRoom.buyPrice === 'number' ? mainRoom.buyPrice : mainRoom.price
+        const suppBuy = suppRoom ? (typeof suppRoom.buyPrice === 'number' ? suppRoom.buyPrice : suppRoom.price) : 0
+        roomBuyCostTotal = mainBuy * (globalRoomCount || 1) * nightsCount
+        suppBuyCostTotal = suppRoom ? (suppBuy * (globalSuppCount || 0) * nightsCount) : 0
+        hotelBuyTotal = roomBuyCostTotal + suppBuyCostTotal
       }
     }
     let totalTransfers = 0
@@ -3016,7 +3054,7 @@ export default function PrototypeBuilder() {
 
     itinerary.forEach((day, dIdx) => {
       day.transfers.forEach(trans => {
-        let vehicle: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = undefined
+        let vehicle: { type: string; pricePerTransfer: number; buyPrice?: number; serviceName?: string } | undefined = undefined
         if ((trans as any).compositeKey) {
           vehicle = vehiclesList.find(v => v.compositeKey && v.compositeKey.toLowerCase().trim() === (trans as any).compositeKey?.toLowerCase().trim())
         }
@@ -3034,12 +3072,14 @@ export default function PrototypeBuilder() {
           const isDisposal = (trans as any).serviceType === 'disposal' || (trans.description || '').toLowerCase().includes('disposal')
           const mult = isDisposal ? (Number((trans as any).hours) || 4) : 1
           transportTotal += vehicle.pricePerTransfer * qty * mult
+          const vehicleBuy = typeof vehicle.buyPrice === 'number' ? vehicle.buyPrice : vehicle.pricePerTransfer
+          transportBuyTotal += vehicleBuy * qty * mult
           totalTransfers += qty
         }
       })
 
       day.attractions.forEach(attrRow => {
-        let attr: { name: string; adultPrice: number; childPrice: number; area?: string; rateType?: string } | undefined = undefined
+        let attr: { name: string; adultPrice: number; childPrice: number; adultBuy?: number; childBuy?: number; area?: string; rateType?: string } | undefined = undefined
         if (!attr && attrRow.attractionName) {
           attr = findMatchingAttraction(attrRow.attractionName, attractionsList) || attractionsList.find(a => a.name.toLowerCase().trim() === attrRow.attractionName?.toLowerCase().trim())
         }
@@ -3061,6 +3101,7 @@ export default function PrototypeBuilder() {
 
         // Compute transfer cost tied to this attraction
         let rowTransferCost = 0
+        let rowTransferBuyCost = 0
         if (attrRow.hasTransfer) {
           const default13TransferIdx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
           if (attrRow.pickupEnabled !== false) {
@@ -3072,6 +3113,8 @@ export default function PrototypeBuilder() {
             if (pv) {
               const paxMult = isVehicleSIC(pv) ? totalPax : 1
               rowTransferCost += pv.pricePerTransfer * paxMult
+              const pvBuy = typeof (pv as any).buyPrice === 'number' ? (pv as any).buyPrice : pv.pricePerTransfer
+              rowTransferBuyCost += pvBuy * paxMult
             }
           }
           if (attrRow.dropEnabled !== false) {
@@ -3083,6 +3126,8 @@ export default function PrototypeBuilder() {
             if (dv) {
               const paxMult = isVehicleSIC(dv) ? totalPax : 1
               rowTransferCost += dv.pricePerTransfer * paxMult
+              const dvBuy = typeof (dv as any).buyPrice === 'number' ? (dv as any).buyPrice : dv.pricePerTransfer
+              rowTransferBuyCost += dvBuy * paxMult
             }
           }
         }
@@ -3138,12 +3183,17 @@ export default function PrototypeBuilder() {
               const groupCost = attr.adultPrice || attr.childPrice || 0
               const hasPax = (rowAdultCount + rowChildCount) > 0 || (adults + kids) > 0
               const rowCost = hasPax ? groupCost : 0
+              const groupBuyCost = typeof attr.adultBuy === 'number' ? attr.adultBuy : (typeof attr.childBuy === 'number' ? attr.childBuy : groupCost)
               attractionTotal += rowCost
+              attractionBuyTotal += hasPax ? groupBuyCost : 0
               const totalPax = (adults + kids) || 1
               attractionAdultTotal += rowCost * (adults / totalPax)
               attractionChildTotal += rowCost * (kids / totalPax)
             } else {
+              const adultBuyRate = typeof attr.adultBuy === 'number' ? attr.adultBuy : attr.adultPrice
+              const childBuyRate = typeof attr.childBuy === 'number' ? attr.childBuy : attr.childPrice
               attractionTotal += (attr.adultPrice * rowAdultCount) + (attr.childPrice * rowChildCount)
+              attractionBuyTotal += (adultBuyRate * rowAdultCount) + (childBuyRate * rowChildCount)
               attractionAdultTotal += attr.adultPrice * rowAdultCount
               attractionChildTotal += attr.childPrice * rowChildCount
             }
@@ -3152,6 +3202,7 @@ export default function PrototypeBuilder() {
 
           if (attrRow.hasTransfer && rowTransferCost > 0) {
             transportTotal += rowTransferCost
+            transportBuyTotal += rowTransferBuyCost
             if (attrRow.pickupEnabled !== false) totalTransfers++
             if (attrRow.dropEnabled !== false) totalTransfers++
           }
@@ -3159,10 +3210,12 @@ export default function PrototypeBuilder() {
       })
 
       let dayMealCost = 0
-      if (day.breakfast) { dayMealCost += MEAL_PRICES.breakfast; totalBreakfastCount++; }
-      if (day.lunch) { dayMealCost += MEAL_PRICES.lunch; totalLunchCount++; }
-      if (day.dinner) { dayMealCost += MEAL_PRICES.dinner; totalDinnerCount++; }
+      let dayMealBuyCost = 0
+      if (day.breakfast) { dayMealCost += MEAL_PRICES.breakfast; dayMealBuyCost += (MEAL_BUY_PRICES.breakfast || MEAL_PRICES.breakfast); totalBreakfastCount++; }
+      if (day.lunch) { dayMealCost += MEAL_PRICES.lunch; dayMealBuyCost += (MEAL_BUY_PRICES.lunch || MEAL_PRICES.lunch); totalLunchCount++; }
+      if (day.dinner) { dayMealCost += MEAL_PRICES.dinner; dayMealBuyCost += (MEAL_BUY_PRICES.dinner || MEAL_PRICES.dinner); totalDinnerCount++; }
       mealTotal += dayMealCost * (adults + kids)
+      mealBuyTotal += dayMealBuyCost * (adults + kids)
 
       if (day.meals && Array.isArray(day.meals)) {
         day.meals.forEach(mealRow => {
@@ -3172,6 +3225,8 @@ export default function PrototypeBuilder() {
           }
           if (meal) {
             mealTotal += meal.pricePerHead * (adults + kids)
+            const mBuy = typeof meal.buyPrice === 'number' ? meal.buyPrice : meal.pricePerHead
+            mealBuyTotal += mBuy * (adults + kids)
             const mType = (meal.type || '').toLowerCase()
             if (mType.includes('lunch')) totalLunchCount++
             else if (mType.includes('dinner')) totalDinnerCount++
@@ -3180,7 +3235,7 @@ export default function PrototypeBuilder() {
       }
 
       day.guides.forEach(guideRow => {
-        let guide: { type: string; pricePerDay: number } | undefined = undefined
+        let guide: { type: string; pricePerDay: number; buyPrice?: number } | undefined = undefined
         if (!guide && guideRow.type) {
           guide = guidesList.find(g => g.type.toLowerCase().trim() === guideRow.type?.toLowerCase().trim())
         }
@@ -3189,6 +3244,8 @@ export default function PrototypeBuilder() {
         }
         if (guide) {
           guideTotal += guide.pricePerDay
+          const gBuy = typeof guide.buyPrice === 'number' ? guide.buyPrice : guide.pricePerDay
+          guideBuyTotal += gBuy
           totalGuidesCount++
         }
       })
@@ -3201,6 +3258,12 @@ export default function PrototypeBuilder() {
     const netCost = Math.max(0, rawNetCost - totalDiscount)
     
     const totalClientPrice = Math.round(netCost * markupFactor + markupAbsolute)
+    const totalSupplierCost = Math.round(hotelBuyTotal + transportBuyTotal + attractionBuyTotal + mealBuyTotal + guideBuyTotal + miscTotal)
+    const totalSupplierCostINR = Math.round(totalSupplierCost * sgdToInrRate)
+    const netProfit = totalClientPrice - totalSupplierCost
+    const netProfitINR = Math.round(netProfit * sgdToInrRate)
+    const marginPercent = totalClientPrice > 0 ? Number(((netProfit / totalClientPrice) * 100).toFixed(1)) : 0
+    const isBelowMarginGuardrail = marginPercent < minimumMarginThreshold
 
     const sharedNetPerHead = (hotelTotal + transportTotal + guideTotal) / (totalPeople || 1)
     const mealsNetPerHead = mealTotal / (totalPeople || 1)
@@ -3220,13 +3283,27 @@ export default function PrototypeBuilder() {
 
     return {
       hotelTotal,
-      roomCostTotal,
+      hotelBuyTotal,
+      roomBuyCostTotal,
       suppCostTotal,
+      suppBuyCostTotal,
       transportTotal,
+      transportBuyTotal,
       attractionTotal,
+      attractionBuyTotal,
       mealTotal,
+      mealBuyTotal,
       guideTotal,
+      guideBuyTotal,
       miscTotal,
+      totalSupplierCost,
+      totalSupplierCostINR,
+      netProfit,
+      netProfitINR,
+      marginPercent,
+      isBelowMarginGuardrail,
+      minimumMarginThreshold,
+      roomCostTotal,
       netCost,
       netCostINR,
       totalClientPrice,
@@ -3243,7 +3320,7 @@ export default function PrototypeBuilder() {
       totalOptionalPrice,
       totalOptionalPriceINR,
     }
-  }, [itinerary, hotelsList, vehiclesList, attractionsList, mealsList, guidesList, adults, kids, nightsCount, miscCostPerPerson, globalHotelIndex, globalRoomIndex, globalRoomCount, globalSuppIndex, globalSuppCount, markupPercent, markupAbsolute, discountPerPerson, isAuthenticated, hotelRequired, sgdToInrRate, customHotelEnabled, customHotelName, customHotelRoomType, customHotelPrice, customHotelSuppName, customHotelSuppCost])
+  }, [itinerary, hotelsList, vehiclesList, attractionsList, mealsList, guidesList, adults, kids, nightsCount, miscCostPerPerson, globalHotelIndex, globalRoomIndex, globalRoomCount, globalSuppIndex, globalSuppCount, markupPercent, markupAbsolute, discountPerPerson, isAuthenticated, hotelRequired, sgdToInrRate, customHotelEnabled, customHotelName, customHotelRoomType, customHotelPrice, customHotelSuppName, customHotelSuppCost, minimumMarginThreshold])
 
   // Agent activity notification helper
   const notifyAgentActivity = (action: string) => {
@@ -9742,6 +9819,145 @@ ${proposal}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                 <span>Net Cost</span><span>S$ {costBreakdown.netCost.toLocaleString()}</span>
               </div>
+              {/* ══ PROFIT MARGIN GUARDRAIL & SUPPLIER COST INSPECTOR (Price Drawer) ══ */}
+              <div style={{
+                margin: '0.85rem 0',
+                padding: '0.85rem',
+                borderRadius: '10px',
+                background: costBreakdown.isBelowMarginGuardrail ? '#FEF2F2' : '#F0FDF4',
+                border: `1.5px solid ${costBreakdown.isBelowMarginGuardrail ? '#EF4444' : '#10B981'}`,
+                fontFamily: 'var(--font-inter), sans-serif',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    {costBreakdown.isBelowMarginGuardrail ? (
+                      <ShieldAlert size={16} color="#DC2626" />
+                    ) : (
+                      <CheckCircle2 size={16} color="#059669" />
+                    )}
+                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: costBreakdown.isBelowMarginGuardrail ? '#991B1B' : '#065F46', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Margin Guardrail
+                    </span>
+                  </div>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    padding: '2px 8px',
+                    borderRadius: '999px',
+                    background: costBreakdown.isBelowMarginGuardrail ? '#FEE2E2' : '#D1FAE5',
+                    color: costBreakdown.isBelowMarginGuardrail ? '#B91C1C' : '#047857',
+                    border: `1px solid ${costBreakdown.isBelowMarginGuardrail ? '#FCA5A5' : '#6EE7B7'}`
+                  }}>
+                    {costBreakdown.marginPercent}% Margin
+                  </span>
+                </div>
+
+                {costBreakdown.isBelowMarginGuardrail && (
+                  <div style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    color: '#991B1B',
+                    background: '#FEE2E2',
+                    padding: '0.4rem 0.6rem',
+                    borderRadius: '6px',
+                    marginBottom: '0.6rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}>
+                    <AlertTriangle size={13} color="#DC2626" style={{ flexShrink: 0 }} />
+                    <span>Margin below {minimumMarginThreshold}% guardrail! Adjust markup to maintain target margin.</span>
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
+                  <div style={{ background: '#FFFFFF', padding: '0.5rem 0.6rem', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ fontSize: '0.66rem', color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Supplier Net Cost</div>
+                    <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.9rem' }}>S$ {costBreakdown.totalSupplierCost.toLocaleString()}</div>
+                    <div style={{ fontSize: '0.66rem', color: '#64748B' }}>≈₹{costBreakdown.totalSupplierCostINR.toLocaleString('en-IN')}</div>
+                  </div>
+                  <div style={{ background: '#FFFFFF', padding: '0.5rem 0.6rem', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ fontSize: '0.66rem', color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>Net Profit</div>
+                    <div style={{ fontWeight: 800, color: costBreakdown.netProfit >= 0 ? '#059669' : '#DC2626', fontSize: '0.9rem' }}>
+                      S$ {costBreakdown.netProfit.toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: '0.66rem', color: costBreakdown.netProfit >= 0 ? '#059669' : '#DC2626' }}>≈₹{costBreakdown.netProfitINR.toLocaleString('en-IN')}</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowMarginInspector(!showMarginInspector)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      padding: '0.2rem 0',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      color: costBreakdown.isBelowMarginGuardrail ? '#991B1B' : '#065F46',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem'
+                    }}
+                  >
+                    <Eye size={12} />
+                    {showMarginInspector ? 'Hide Cost Breakdown' : 'Cost Breakdown'}
+                    {showMarginInspector ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBreakdownModalType('margin')}
+                    style={{
+                      background: '#FFFFFF',
+                      border: `1px solid ${costBreakdown.isBelowMarginGuardrail ? '#FCA5A5' : '#A7F3D0'}`,
+                      borderRadius: '4px',
+                      padding: '0.2rem 0.5rem',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      color: costBreakdown.isBelowMarginGuardrail ? '#991B1B' : '#065F46',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Detailed Inspector 🔍
+                  </button>
+                </div>
+
+                {showMarginInspector && (
+                  <div style={{
+                    marginTop: '0.5rem',
+                    paddingTop: '0.5rem',
+                    borderTop: `1px dashed ${costBreakdown.isBelowMarginGuardrail ? '#FCA5A5' : '#86EFAC'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem',
+                    fontSize: '0.72rem'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                      <span>🏨 Hotels:</span>
+                      <span style={{ fontWeight: 700 }}>Buy: S${costBreakdown.hotelBuyTotal.toLocaleString()} | Sell: S${costBreakdown.hotelTotal.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                      <span>🚐 Transport:</span>
+                      <span style={{ fontWeight: 700 }}>Buy: S${costBreakdown.transportBuyTotal.toLocaleString()} | Sell: S${costBreakdown.transportTotal.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                      <span>🎟️ Attractions:</span>
+                      <span style={{ fontWeight: 700 }}>Buy: S${costBreakdown.attractionBuyTotal.toLocaleString()} | Sell: S${costBreakdown.attractionTotal.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                      <span>🍽️ Meals:</span>
+                      <span style={{ fontWeight: 700 }}>Buy: S${costBreakdown.mealBuyTotal.toLocaleString()} | Sell: S${costBreakdown.mealTotal.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#475569' }}>
+                      <span>🚩 Guides:</span>
+                      <span style={{ fontWeight: 700 }}>Buy: S${costBreakdown.guideBuyTotal.toLocaleString()} | Sell: S${costBreakdown.guideTotal.toLocaleString()}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', opacity: 0.7, marginBottom: '1rem' }}>
                 <span>Per Adult / Child</span><span>S${costBreakdown.adultQuote}{kids > 0 ? ` / S$${costBreakdown.childQuote}` : ''}</span>
               </div>
@@ -9780,6 +9996,7 @@ ${proposal}
                     {breakdownModalType === 'tickets' && '🎟️'}
                     {breakdownModalType === 'meals' && '🍽️'}
                     {breakdownModalType === 'guides' && '🚩'}
+                    {breakdownModalType === 'margin' && '🛡️'}
                   </span>
                   <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>
                     {breakdownModalType === 'rooms' && 'Included Accommodation'}
@@ -9787,6 +10004,7 @@ ${proposal}
                     {breakdownModalType === 'tickets' && 'Included Attraction Tickets'}
                     {breakdownModalType === 'meals' && 'Included Meal Plan'}
                     {breakdownModalType === 'guides' && 'Included Guides & Assistance'}
+                    {breakdownModalType === 'margin' && 'Profit Margin & Supplier Cost Inspector'}
                   </h3>
                 </div>
                 <button 
@@ -10049,7 +10267,7 @@ ${proposal}
                               {day.meals && day.meals.map((m: any, mIdx: number) => {
                                 const mObj = (m.type ? mealsList.find(item => item.type?.toLowerCase().trim() === m.type?.toLowerCase().trim()) : undefined) || (typeof m.mealIndex === 'number' && m.mealIndex >= 0 && m.mealIndex < mealsList.length ? mealsList[m.mealIndex] : undefined)
                                 const typeName = mObj?.type || m.type || 'Special Meal'
-                                const price = (mObj?.price || 0) * (adults + kids)
+                                const price = ((mObj as any)?.pricePerHead || (mObj as any)?.price || 0) * (adults + kids)
                                 return (
                                   <div key={mIdx} style={{ display: 'flex', justifyContent: 'space-between', color: '#1E293B' }}>
                                     <span>🍽️ {typeName} ({adults + kids} Pax)</span>
@@ -10110,18 +10328,104 @@ ${proposal}
                   </>
                 )}
 
+                {/* 6. PROFIT MARGIN & SUPPLIER COST INSPECTOR MODAL VIEW */}
+                {breakdownModalType === 'margin' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    {/* Guardrail Banner */}
+                    <div style={{
+                      padding: '0.85rem 1rem',
+                      borderRadius: '10px',
+                      background: costBreakdown.isBelowMarginGuardrail ? '#FEF2F2' : '#F0FDF4',
+                      border: `1.5px solid ${costBreakdown.isBelowMarginGuardrail ? '#EF4444' : '#10B981'}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.6rem'
+                    }}>
+                      {costBreakdown.isBelowMarginGuardrail ? (
+                        <ShieldAlert size={24} color="#DC2626" style={{ flexShrink: 0 }} />
+                      ) : (
+                        <CheckCircle2 size={24} color="#059669" style={{ flexShrink: 0 }} />
+                      )}
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '0.9rem', color: costBreakdown.isBelowMarginGuardrail ? '#991B1B' : '#065F46' }}>
+                          {costBreakdown.isBelowMarginGuardrail
+                            ? `Low Margin Guardrail Alert (${costBreakdown.marginPercent}%)`
+                            : `Healthy Commercial Margin (${costBreakdown.marginPercent}%)`}
+                        </div>
+                        <div style={{ fontSize: '0.76rem', color: costBreakdown.isBelowMarginGuardrail ? '#B91C1C' : '#047857' }}>
+                          Configured threshold is {minimumMarginThreshold}%. Current Net Profit is S$ {costBreakdown.netProfit.toLocaleString()} (≈₹{costBreakdown.netProfitINR.toLocaleString('en-IN')}).
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Summary KPI Cards */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem' }}>
+                      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '0.75rem', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Supplier Net Cost</div>
+                        <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', marginTop: '0.2rem' }}>S$ {costBreakdown.totalSupplierCost.toLocaleString()}</div>
+                        <div style={{ fontSize: '0.66rem', color: '#64748B' }}>₹{costBreakdown.totalSupplierCostINR.toLocaleString('en-IN')}</div>
+                      </div>
+                      <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '0.75rem', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.68rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase' }}>Client Quoted Price</div>
+                        <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F4C3A', marginTop: '0.2rem' }}>S$ {costBreakdown.totalClientPrice.toLocaleString()}</div>
+                        <div style={{ fontSize: '0.66rem', color: '#64748B' }}>₹{costBreakdown.totalClientPriceINR.toLocaleString('en-IN')}</div>
+                      </div>
+                      <div style={{ background: costBreakdown.netProfit >= 0 ? '#ECFDF5' : '#FEF2F2', border: `1px solid ${costBreakdown.netProfit >= 0 ? '#A7F3D0' : '#FECACA'}`, padding: '0.75rem', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.68rem', color: costBreakdown.netProfit >= 0 ? '#047857' : '#991B1B', fontWeight: 700, textTransform: 'uppercase' }}>Net Profit & Margin</div>
+                        <div style={{ fontSize: '1.05rem', fontWeight: 800, color: costBreakdown.netProfit >= 0 ? '#059669' : '#DC2626', marginTop: '0.2rem' }}>
+                          S$ {costBreakdown.netProfit.toLocaleString()}
+                        </div>
+                        <div style={{ fontSize: '0.66rem', fontWeight: 700, color: costBreakdown.netProfit >= 0 ? '#059669' : '#DC2626' }}>
+                          {costBreakdown.marginPercent}% Margin
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Category Breakdown Table */}
+                    <div style={{ border: '1px solid #E2E8F0', borderRadius: '8px', overflow: 'hidden' }}>
+                      <div style={{ background: '#F1F5F9', padding: '0.5rem 0.75rem', fontSize: '0.75rem', fontWeight: 700, color: '#334155', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
+                        <span>Service Category</span>
+                        <span style={{ textAlign: 'right' }}>Supplier Buy</span>
+                        <span style={{ textAlign: 'right' }}>Client Sell</span>
+                        <span style={{ textAlign: 'right' }}>Net Profit</span>
+                      </div>
+                      {[
+                        { name: '🏨 Accommodation', buy: costBreakdown.hotelBuyTotal, sell: costBreakdown.hotelTotal },
+                        { name: '🚐 Transfers & Transport', buy: costBreakdown.transportBuyTotal, sell: costBreakdown.transportTotal },
+                        { name: '🎟️ Attractions & Tickets', buy: costBreakdown.attractionBuyTotal, sell: costBreakdown.attractionTotal },
+                        { name: '🍽️ Meal Plan', buy: costBreakdown.mealBuyTotal, sell: costBreakdown.mealTotal },
+                        { name: '🚩 Guides & Assistance', buy: costBreakdown.guideBuyTotal, sell: costBreakdown.guideTotal },
+                        { name: '📦 Misc & Surcharges', buy: costBreakdown.miscTotal, sell: costBreakdown.miscTotal },
+                      ].map((cat, cIdx) => {
+                        const prof = cat.sell - cat.buy
+                        return (
+                          <div key={cIdx} style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', borderTop: '1px solid #F1F5F9', background: cIdx % 2 === 0 ? '#FFFFFF' : '#FAFAFA' }}>
+                            <span style={{ fontWeight: 600, color: '#1E293B' }}>{cat.name}</span>
+                            <span style={{ textAlign: 'right', color: '#64748B' }}>S$ {cat.buy.toLocaleString()}</span>
+                            <span style={{ textAlign: 'right', fontWeight: 600, color: '#0F172A' }}>S$ {cat.sell.toLocaleString()}</span>
+                            <span style={{ textAlign: 'right', fontWeight: 700, color: prof >= 0 ? '#059669' : '#DC2626' }}>
+                              S$ {prof.toLocaleString()}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
               </div>
 
               {/* Modal Footer Total */}
               <div style={{ marginTop: '1.25rem', paddingTop: '0.85rem', borderTop: '2px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>Total Net Subtotal:</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>{breakdownModalType === 'margin' ? 'Net Profit Valuation:' : 'Total Net Subtotal:'}</span>
                 <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--emerald-secondary)' }}>
                   S$ {
                     breakdownModalType === 'rooms' ? (costBreakdown.roomCostTotal + costBreakdown.suppCostTotal).toLocaleString() :
                     breakdownModalType === 'transfers' ? costBreakdown.transportTotal.toLocaleString() :
                     breakdownModalType === 'tickets' ? costBreakdown.attractionTotal.toLocaleString() :
                     breakdownModalType === 'meals' ? costBreakdown.mealTotal.toLocaleString() :
-                    costBreakdown.guideTotal.toLocaleString()
+                    breakdownModalType === 'guides' ? costBreakdown.guideTotal.toLocaleString() :
+                    `${costBreakdown.netProfit.toLocaleString()} (${costBreakdown.marginPercent}% margin)`
                   }
                 </span>
               </div>
@@ -13505,6 +13809,145 @@ ${proposal}
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem' }}>
                     <span style={{ opacity: 0.8 }}>Quote per Child:</span>
                     <span style={{ fontWeight: 700, color: 'var(--gold-accent)' }}>S$ {costBreakdown.childQuote.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* ══ PROFIT MARGIN GUARDRAIL & SUPPLIER COST INSPECTOR (Desktop Sidebar) ══ */}
+              <div style={{
+                margin: '0.85rem 0',
+                padding: '0.75rem 0.85rem',
+                borderRadius: '8px',
+                background: costBreakdown.isBelowMarginGuardrail ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.12)',
+                border: `1.5px solid ${costBreakdown.isBelowMarginGuardrail ? '#EF4444' : '#10B981'}`,
+                fontFamily: 'var(--font-inter), sans-serif',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    {costBreakdown.isBelowMarginGuardrail ? (
+                      <ShieldAlert size={15} color="#F87171" />
+                    ) : (
+                      <CheckCircle2 size={15} color="#34D399" />
+                    )}
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: costBreakdown.isBelowMarginGuardrail ? '#FCA5A5' : '#6EE7B7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Margin Guardrail
+                    </span>
+                  </div>
+                  <span style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    padding: '2px 7px',
+                    borderRadius: '999px',
+                    background: costBreakdown.isBelowMarginGuardrail ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)',
+                    color: costBreakdown.isBelowMarginGuardrail ? '#FCA5A5' : '#6EE7B7',
+                    border: `1px solid ${costBreakdown.isBelowMarginGuardrail ? '#EF4444' : '#10B981'}`
+                  }}>
+                    {costBreakdown.marginPercent}% Margin
+                  </span>
+                </div>
+
+                {costBreakdown.isBelowMarginGuardrail && (
+                  <div style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    color: '#FECACA',
+                    background: 'rgba(239, 68, 68, 0.25)',
+                    padding: '0.35rem 0.5rem',
+                    borderRadius: '5px',
+                    marginBottom: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                  }}>
+                    <AlertTriangle size={12} color="#F87171" style={{ flexShrink: 0 }} />
+                    <span>Margin below {minimumMarginThreshold}% guardrail! Adjust markup to protect profitability.</span>
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.45rem', fontSize: '0.72rem', marginBottom: '0.45rem' }}>
+                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.45rem 0.55rem', borderRadius: '5px', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div style={{ fontSize: '0.62rem', opacity: 0.7, textTransform: 'uppercase', color: '#CBD5E1' }}>Supplier Net</div>
+                    <div style={{ fontWeight: 800, color: '#FFF', fontSize: '0.85rem' }}>S$ {costBreakdown.totalSupplierCost.toLocaleString()}</div>
+                    <div style={{ fontSize: '0.62rem', color: 'var(--gold-accent)' }}>≈₹{costBreakdown.totalSupplierCostINR.toLocaleString('en-IN')}</div>
+                  </div>
+                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.45rem 0.55rem', borderRadius: '5px', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div style={{ fontSize: '0.62rem', opacity: 0.7, textTransform: 'uppercase', color: '#CBD5E1' }}>Net Profit</div>
+                    <div style={{ fontWeight: 800, color: costBreakdown.netProfit >= 0 ? '#34D399' : '#F87171', fontSize: '0.85rem' }}>
+                      S$ {costBreakdown.netProfit.toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: '0.62rem', color: costBreakdown.netProfit >= 0 ? '#34D399' : '#F87171' }}>≈₹{costBreakdown.netProfitINR.toLocaleString('en-IN')}</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.4rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowMarginInspector(!showMarginInspector)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      padding: '0.2rem 0',
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      color: costBreakdown.isBelowMarginGuardrail ? '#FCA5A5' : '#6EE7B7',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem'
+                    }}
+                  >
+                    <Eye size={12} />
+                    {showMarginInspector ? 'Hide Cost Breakdown' : 'Cost Breakdown'}
+                    {showMarginInspector ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBreakdownModalType('margin')}
+                    style={{
+                      background: 'rgba(255,255,255,0.08)',
+                      border: `1px solid ${costBreakdown.isBelowMarginGuardrail ? '#EF4444' : '#10B981'}`,
+                      borderRadius: '4px',
+                      padding: '0.2rem 0.45rem',
+                      fontSize: '0.66rem',
+                      fontWeight: 700,
+                      color: '#FFF',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Inspector 🔍
+                  </button>
+                </div>
+
+                {showMarginInspector && (
+                  <div style={{
+                    marginTop: '0.45rem',
+                    paddingTop: '0.45rem',
+                    borderTop: '1px dashed rgba(255,255,255,0.15)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.3rem',
+                    fontSize: '0.68rem'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ opacity: 0.8 }}>🏨 Hotels:</span>
+                      <span style={{ fontWeight: 700 }}>Buy: S${costBreakdown.hotelBuyTotal.toLocaleString()} | Sell: S${costBreakdown.hotelTotal.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ opacity: 0.8 }}>🚐 Transport:</span>
+                      <span style={{ fontWeight: 700 }}>Buy: S${costBreakdown.transportBuyTotal.toLocaleString()} | Sell: S${costBreakdown.transportTotal.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ opacity: 0.8 }}>🎟️ Attractions:</span>
+                      <span style={{ fontWeight: 700 }}>Buy: S${costBreakdown.attractionBuyTotal.toLocaleString()} | Sell: S${costBreakdown.attractionTotal.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ opacity: 0.8 }}>🍽️ Meals:</span>
+                      <span style={{ fontWeight: 700 }}>Buy: S${costBreakdown.mealBuyTotal.toLocaleString()} | Sell: S${costBreakdown.mealTotal.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ opacity: 0.8 }}>🚩 Guides:</span>
+                      <span style={{ fontWeight: 700 }}>Buy: S${costBreakdown.guideBuyTotal.toLocaleString()} | Sell: S${costBreakdown.guideTotal.toLocaleString()}</span>
+                    </div>
                   </div>
                 )}
               </div>

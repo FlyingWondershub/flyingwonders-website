@@ -55,6 +55,14 @@ export const siteSettingsSchema = {
       group: 'b2bToggles',
     },
     {
+      name: 'minimumMarginThreshold',
+      title: '🛡️ Minimum Profit Margin Guardrail Threshold (%)',
+      type: 'number',
+      description: 'Proposals with a profit margin below this percentage will trigger a warning alert in the Admin Dashboard and Proposal Builder. Default is 10%.',
+      initialValue: 10,
+      group: 'b2bToggles',
+    },
+    {
       name: 'customPackageSheetUrl',
       title: '📊 Custom Package Singapore Master Pricing Google Sheet URL',
       type: 'url',

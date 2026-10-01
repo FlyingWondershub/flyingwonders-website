@@ -50,12 +50,14 @@ export async function GET() {
       hideIciciAttractions,
       hideIciciPackages,
       hideIciciPayDirect,
-      defaultLandPackageTerms
+      defaultLandPackageTerms,
+      minimumMarginThreshold
     }`)
 
     return NextResponse.json({
       success: true,
       settings: siteSettings || {
+        minimumMarginThreshold: 10,
         hideInstantQuote: true,
         hideCustomPackage: false,
         hideCustomPackageClientPreview: false,
