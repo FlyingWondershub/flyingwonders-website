@@ -17,10 +17,10 @@ async function verifyAdmin() {
   const cookieStore = await cookies()
   const sessionCookie = cookieStore.get('b2b_session')
   if (!sessionCookie?.value) return false
-  const email = sessionCookie.value
-  const isAdminCount = await readClient.fetch(`count(*[_type == "adminUser" && email == $email])`, { email })
-  if (email.toLowerCase() !== 'info.flyingwonders@gmail.com' && isAdminCount === 0) return false
-  return true
+  const email = sessionCookie.value.trim().toLowerCase()
+  if (email === 'info.flyingwonders@gmail.com') return true
+  const isAdminCount = await readClient.fetch(`count(*[_type == "adminUser" && lower(email) == $email])`, { email })
+  return isAdminCount > 0
 }
 
 export async function GET() {

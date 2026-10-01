@@ -32,7 +32,16 @@ function AdminDashboardContent() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   // Core Data State
-  const [metrics, setMetrics] = useState({ activeAgents: 0, pendingPayments: 0, totalContacts: 0 })
+  const [metrics, setMetrics] = useState({
+    activeAgents: 0,
+    pendingPayments: 0,
+    totalContacts: 0,
+    totalHotelVouchers: 0,
+    totalConsultingBookings: 0,
+    totalAuditLogs: 0,
+    totalProposals: 0,
+    pendingApprovals: 0
+  })
   const [pendingPayments, setPendingPayments] = useState<any[]>([])
   const [agents, setAgents] = useState<any[]>([])
   const [logs, setLogs] = useState<any[]>([])
@@ -140,39 +149,75 @@ function AdminDashboardContent() {
     setRefreshing(true)
     try {
       const cb = Date.now()
-      const [authRes, metRes, payRes, agentRes, logRes, propRes] = await Promise.all([
-        fetch(`/api/auth/check?cb=${cb}`),
-        fetch(`/api/admin/metrics?cb=${cb}`),
-        fetch(`/api/admin/payments/pending?cb=${cb}`),
-        fetch(`/api/admin/agents?cb=${cb}`),
-        fetch(`/api/admin/audit-logs?cb=${cb}`),
-        fetch(`/api/proposals?listAll=true&cb=${cb}`)
-      ])
 
-      const authData = await authRes.json()
-      if (authData.authenticated && authData.agent?.role === 'admin') {
-        setIsAdmin(true)
-        setMetrics(await metRes.json())
-        setPendingPayments(await payRes.json())
-        setAgents(await agentRes.json())
-        setLogs(await logRes.json())
+      // 1. Kick off Auth and Core Overview requests concurrently
+      const authPromise = fetch(`/api/auth/check?cb=${cb}`).then(r => r.json()).catch(() => ({ authenticated: false }))
+      const metPromise = fetch(`/api/admin/metrics?cb=${cb}`).then(r => r.json()).catch(() => null)
+      const payPromise = fetch(`/api/admin/payments/pending?cb=${cb}`).then(r => r.json()).catch(() => [])
+      const propPromise = fetch(`/api/proposals?listAll=true&cb=${cb}`).then(r => r.json()).catch(() => null)
 
-        const propData = await propRes.json()
-        if (propData.success && Array.isArray(propData.list)) {
-          setProposals(propData.list)
-        }
-
-        await fetchHotelVouchers()
-        await fetchConsultingBookings()
-        await fetchCompetitorPrices()
-      } else {
+      // Fast-path: Check authentication first
+      const authData = await authPromise
+      if (!authData?.authenticated || authData?.agent?.role !== 'admin') {
         setIsAdmin(false)
+        setLoading(false)
+        setRefreshing(false)
+        return
       }
-    } catch (e) {
-      console.error('Error fetching admin data:', e)
-    } finally {
+
+      setIsAdmin(true)
+
+      // 2. Resolve Core Overview data and immediately unblock UI!
+      const [metData, payData, propData] = await Promise.all([metPromise, payPromise, propPromise])
+
+      if (metData) {
+        setMetrics(prev => ({ ...prev, ...metData }))
+      }
+      if (Array.isArray(payData)) {
+        setPendingPayments(payData)
+      }
+      if (propData?.success && Array.isArray(propData.list)) {
+        setProposals(propData.list)
+      }
+
+      // Unblock the main screen instantly! Admin sees Executive Cockpit immediately!
       setLoading(false)
       setRefreshing(false)
+
+      // 3. Non-blocking background fetch for secondary tabs
+      fetchSecondaryData(cb)
+    } catch (e) {
+      console.error('Error fetching admin data:', e)
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  const fetchSecondaryData = (cb: number = Date.now()) => {
+    fetchHotelVouchers()
+    fetchConsultingBookings()
+    fetchCompetitorPrices()
+    fetchAgents(cb)
+    fetchAuditLogs(cb)
+  }
+
+  const fetchAgents = async (cb: number = Date.now()) => {
+    try {
+      const res = await fetch(`/api/admin/agents?cb=${cb}`)
+      const data = await res.json()
+      if (Array.isArray(data)) setAgents(data)
+    } catch (err) {
+      console.error('Failed to fetch agents:', err)
+    }
+  }
+
+  const fetchAuditLogs = async (cb: number = Date.now()) => {
+    try {
+      const res = await fetch(`/api/admin/audit-logs?cb=${cb}`)
+      const data = await res.json()
+      if (Array.isArray(data)) setLogs(data)
+    } catch (err) {
+      console.error('Failed to fetch audit logs:', err)
     }
   }
 
@@ -377,6 +422,16 @@ function AdminDashboardContent() {
           break
       }
     }
+
+    // Lazy load on demand if not yet loaded
+    if (workspace === 'operations') {
+      if (hotelVouchers.length === 0) fetchHotelVouchers()
+      if (consultingBookings.length === 0) fetchConsultingBookings()
+    } else if (workspace === 'system') {
+      if (competitorPrices.length === 0) fetchCompetitorPrices()
+      if (agents.length === 0) fetchAgents()
+      if (logs.length === 0) fetchAuditLogs()
+    }
   }
 
   // Loading Screen
@@ -450,8 +505,10 @@ function AdminDashboardContent() {
   }
 
   // Counts & Calculations
-  const pendingApprovalsCount = proposals.filter(p => p.statusChangeRequested).length
-  const urgentCount = pendingApprovalsCount + pendingPayments.length
+  const pendingApprovalsCount = proposals.length > 0
+    ? proposals.filter(p => p.statusChangeRequested).length
+    : (metrics.pendingApprovals || 0)
+  const urgentCount = pendingApprovalsCount + (pendingPayments.length || metrics.pendingPayments || 0)
 
   // Workspace Headers & SubTabs configuration
   const getWorkspaceConfig = () => {
@@ -469,7 +526,7 @@ function AdminDashboardContent() {
           title: 'Packages & Booking Calendar',
           subtitle: 'Track FIT proposal lifecycles, arrival calendar schedules, and agent requests.',
           subTabs: [
-            { id: 'list', label: '📋 Proposal Lifecycle', badge: proposals.length },
+            { id: 'list', label: '📋 Proposal Lifecycle', badge: proposals.length || metrics.totalProposals || 0 },
             { id: 'calendar', label: '📅 Arrival Calendar' },
             {
               id: 'approvals',
@@ -484,8 +541,8 @@ function AdminDashboardContent() {
           title: 'Travel Operations & Logistics',
           subtitle: 'Issue Visa-ready hotel vouchers and manage custom itinerary consulting bookings.',
           subTabs: [
-            { id: 'vouchers', label: '🏨 Hotel Vouchers (Visa-Ready)', badge: hotelVouchers.length },
-            { id: 'consulting', label: '🧭 Travel Consulting Inquiries', badge: consultingBookings.length }
+            { id: 'vouchers', label: '🏨 Hotel Vouchers (Visa-Ready)', badge: hotelVouchers.length || metrics.totalHotelVouchers || 0 },
+            { id: 'consulting', label: '🧭 Travel Consulting Inquiries', badge: consultingBookings.length || metrics.totalConsultingBookings || 0 }
           ]
         }
       case 'finance':
@@ -498,7 +555,7 @@ function AdminDashboardContent() {
             {
               id: 'payments',
               label: '💳 Manual Payments',
-              badge: pendingPayments.length,
+              badge: pendingPayments.length || metrics.pendingPayments || 0,
               badgeColor: 'urgent' as const
             }
           ]
@@ -523,7 +580,7 @@ function AdminDashboardContent() {
             { id: 'sync', label: '🔄 Attractions Sheets Sync' },
             { id: 'competitor', label: '🎡 Competitor Ticket Tracker' },
             { id: 'agents', label: '👤 Agent Access', badge: metrics.activeAgents },
-            { id: 'audit', label: '🛡️ Audit Trail', badge: logs.length },
+            { id: 'audit', label: '🛡️ Audit Trail', badge: logs.length || metrics.totalAuditLogs || 0 },
             { id: 'exports', label: '📥 Data Exports' }
           ]
         }
@@ -543,14 +600,14 @@ function AdminDashboardContent() {
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
         badges={{
-          totalProposals: proposals.length,
+          totalProposals: proposals.length || metrics.totalProposals || 0,
           pendingApprovals: pendingApprovalsCount,
-          pendingPayments: pendingPayments.length,
-          hotelVouchers: hotelVouchers.length,
-          consultingBookings: consultingBookings.length,
+          pendingPayments: pendingPayments.length || metrics.pendingPayments || 0,
+          hotelVouchers: hotelVouchers.length || metrics.totalHotelVouchers || 0,
+          consultingBookings: consultingBookings.length || metrics.totalConsultingBookings || 0,
           activeAgents: metrics.activeAgents,
           totalContacts: metrics.totalContacts,
-          auditLogs: logs.length
+          auditLogs: logs.length || metrics.totalAuditLogs || 0
         }}
       />
 

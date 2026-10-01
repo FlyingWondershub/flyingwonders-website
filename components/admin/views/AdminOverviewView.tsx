@@ -23,7 +23,16 @@ import {
 import { AdminWorkspace } from '../AdminSidebar'
 
 interface AdminOverviewViewProps {
-  metrics: { activeAgents: number; pendingPayments: number; totalContacts: number }
+  metrics: {
+    activeAgents: number
+    pendingPayments: number
+    totalContacts: number
+    totalHotelVouchers?: number
+    totalConsultingBookings?: number
+    totalAuditLogs?: number
+    totalProposals?: number
+    pendingApprovals?: number
+  }
   proposals: any[]
   hotelVouchers: any[]
   consultingBookings: any[]
@@ -332,7 +341,7 @@ export default function AdminOverviewView({
             </div>
           </div>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0F172A', marginTop: '0.4rem', fontFamily: 'var(--font-inter)' }}>
-            {hotelVouchers.length}
+            {hotelVouchers.length > 0 ? hotelVouchers.length : (metrics.totalHotelVouchers ?? 0)}
           </div>
           <div style={{ fontSize: '0.74rem', color: '#7E22CE', fontWeight: 600, marginTop: '0.3rem' }}>
             Visa Embassy-Compliant
@@ -369,7 +378,7 @@ export default function AdminOverviewView({
             </div>
           </div>
           <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0F172A', marginTop: '0.4rem', fontFamily: 'var(--font-inter)' }}>
-            {consultingBookings.length}
+            {consultingBookings.length > 0 ? consultingBookings.length : (metrics.totalConsultingBookings ?? 0)}
           </div>
           <div style={{ fontSize: '0.74rem', color: '#D97706', fontWeight: 600, marginTop: '0.3rem' }}>
             Custom Travel Bookings
@@ -765,7 +774,7 @@ export default function AdminOverviewView({
           <div style={{ padding: '0.85rem', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#1E293B' }}>Audit Activity Trail</span>
-              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#1E40AF', background: '#DBEAFE', padding: '2px 8px', borderRadius: '10px' }}>{logs.length} LOGS</span>
+              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#1E40AF', background: '#DBEAFE', padding: '2px 8px', borderRadius: '10px' }}>{logs.length > 0 ? logs.length : (metrics.totalAuditLogs ?? 0)} LOGS</span>
             </div>
             <p style={{ fontSize: '0.72rem', color: '#64748B', margin: '0.3rem 0 0 0' }}>Tamper-proof event logging</p>
           </div>
