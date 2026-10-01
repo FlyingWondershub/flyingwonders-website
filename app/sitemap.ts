@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const coreRoutes = [
     { path: '', priority: 1.0, freq: 'daily' },
     { path: '/services-catalog', priority: 0.95, freq: 'daily' },
+    { path: '/services-catalog/collections', priority: 0.95, freq: 'daily' },
     { path: '/b2b-directory', priority: 0.95, freq: 'daily' },
     { path: '/b2b-leads', priority: 0.95, freq: 'daily' },
     { path: '/b2b', priority: 0.90, freq: 'weekly' },
@@ -219,5 +220,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.error('Failed to get job openings for sitemap:', err)
     }
 
-    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...readyPackageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap, ...restaurantSitemap, ...tourSitemap, ...shoppingMallSitemap, ...jobSitemap]
+    // Dynamic Curated Collections & Tour Essentials routes
+    let collectionSitemap: MetadataRoute.Sitemap = []
+    try {
+      const client = createClient({ projectId, dataset, apiVersion, useCdn: true })
+      const collections = await client.fetch<{ slug?: { current?: string }; _id: string }[]>(
+        `*[_type == "curatedCollection" && isPublished != false]{ _id, slug }`
+      )
+      if (Array.isArray(collections)) {
+        collectionSitemap = collections
+          .filter((c) => c.slug?.current)
+          .map((c) => ({
+            url: `${baseUrl}/services-catalog/collections/${c.slug!.current}`,
+            lastModified: today,
+            changeFrequency: 'daily' as MetadataRoute.Sitemap[0]['changeFrequency'],
+            priority: 0.92,
+          }))
+      }
+    } catch (err) {
+      console.error('Failed to get curated collections for sitemap:', err)
+    }
+
+    return [...coreSitemap, ...toolSitemap, ...packageSitemap, ...readyPackageSitemap, ...blogRoutes, ...hotelSitemap, ...attractionSitemap, ...restaurantSitemap, ...tourSitemap, ...shoppingMallSitemap, ...jobSitemap, ...collectionSitemap]
 }

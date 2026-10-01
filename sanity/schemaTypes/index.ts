@@ -63,6 +63,7 @@ import { shoppingMallSchema } from './shoppingMall'
 import { jobOpeningSchema } from './jobOpening'
 import { jobApplicationSchema } from './jobApplication'
 import { jobSettingsSchema } from './jobSettings'
+import { curatedCollectionSchema } from './curatedCollection'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -126,6 +127,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     b2bLeadSubscriberSchema,
     b2bLeadAuditLogSchema,
     hotelVoucherSchema,
-    shoppingMallSchema
+    shoppingMallSchema,
+    curatedCollectionSchema
   ],
 }

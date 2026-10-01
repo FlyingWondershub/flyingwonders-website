@@ -22,7 +22,8 @@ import {
   Info,
   ShieldCheck,
   MessageCircle,
-  ShoppingBag
+  ShoppingBag,
+  ArrowRight
 } from 'lucide-react'
 import { client } from '../../sanity/lib/client'
 import AdBanner from '../../components/AdBanner'
@@ -658,7 +659,13 @@ export default function ServicesCatalogPage() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Link
+              href="/services-catalog/collections"
+              style={{ background: '#F59E0B', color: '#0F172A', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(245,158,11,0.3)' }}
+            >
+              <Sparkles size={15} /> Curated Collections
+            </Link>
             <Link
               href="/packages"
               style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#FFF', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
@@ -694,6 +701,14 @@ export default function ServicesCatalogPage() {
           {/* Section Category Tabs (Respects Sanity Individual Hide Toggles) */}
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
             
+            <Link
+              href="/services-catalog/collections"
+              style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: '1px solid #FDE68A', background: '#FEF3C7', color: '#92400E', fontWeight: 800, fontSize: '0.82rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
+            >
+              <Sparkles size={14} color="#D97706" />
+              <span>✨ Curated Collections</span>
+            </Link>
+
             <button
               onClick={() => setActiveTab('all')}
               style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'all' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'all' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
@@ -766,6 +781,34 @@ export default function ServicesCatalogPage() {
 
           </div>
 
+        </div>
+      </div>
+
+      {/* ══ 2B. CURATED COLLECTIONS SPOTLIGHT BANNER ══ */}
+      <div style={{ maxWidth: '1600px', width: '96%', margin: '0 auto 1.5rem', padding: '0 0.5rem' }}>
+        <div style={{ background: 'linear-gradient(135deg, #1E1B4B 0%, #0F4C3A 100%)', borderRadius: '14px', padding: '1.25rem 1.5rem', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', boxShadow: '0 4px 15px rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Sparkles size={22} color="#FBBF24" />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#FBBF24' }}>
+                New · Turnkey Tour Essentials
+              </div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#FFF' }}>
+                Curated Travel Collections & Single-Page Blueprints
+              </div>
+              <div style={{ fontSize: '0.82rem', color: '#CBD5E1', marginTop: '2px' }}>
+                Pre-selected bundles of hotels, attractions, dining, and circuits tailored for Family, Corporate MICE, Cross-Border SG+MY, and newsletters.
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/services-catalog/collections"
+            style={{ background: '#F59E0B', color: '#0F172A', padding: '0.65rem 1.25rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
+          >
+            Explore Curated Collections <ArrowRight size={15} />
+          </Link>
         </div>
       </div>
 
