@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import {
   Sparkles,
@@ -24,10 +24,7 @@ import {
   Bus,
   ArrowLeft,
   X,
-  ExternalLink,
   ChevronDown,
-  Phone,
-  Layers,
   Award
 } from 'lucide-react'
 import { CuratedCollectionData } from '../../../../utils/curatedCollections'
@@ -37,7 +34,6 @@ interface Props {
 }
 
 export default function CuratedCollectionClient({ collection }: Props) {
-  const [activeTab, setActiveTab] = useState<'itinerary' | 'hotels' | 'attractions' | 'dining' | 'shopping' | 'tours' | 'tips'>('itinerary')
   const [copiedLink, setCopiedLink] = useState(false)
   const [copiedBlurb, setCopiedBlurb] = useState(false)
   const [showNewsletterModal, setShowNewsletterModal] = useState(false)
@@ -90,292 +86,277 @@ export default function CuratedCollectionClient({ collection }: Props) {
   const daysCount = collection.itinerarySchedule?.length || 0
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200 pb-24 md:pb-12">
-      {/* Top Breadcrumb Navigation */}
-      <div className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between text-xs sm:text-sm">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 overflow-hidden">
-            <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors shrink-0">
-              Home
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-            <Link href="/services-catalog" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors shrink-0">
-              Catalog
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-            <Link href="/services-catalog/collections" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors shrink-0">
-              Collections
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 shrink-0" />
-            <span className="text-slate-900 dark:text-slate-100 font-medium truncate">{collection.title}</span>
+    <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', paddingBottom: '6rem' }}>
+      
+      {/* ── 1. BREADCRUMBS & TOP BAR ── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 40, borderBottom: '1px solid #E2E8F0', background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(8px)' }}>
+        <div style={{ maxWidth: '1440px', width: '94%', margin: '0 auto', padding: '0.75rem 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: '#64748B', flexWrap: 'wrap' }}>
+            <Link href="/" style={{ color: '#64748B', textDecoration: 'none' }}>Home</Link>
+            <ChevronRight size={13} color="#94A3B8" />
+            <Link href="/services-catalog" style={{ color: '#64748B', textDecoration: 'none' }}>Catalog</Link>
+            <ChevronRight size={13} color="#94A3B8" />
+            <Link href="/services-catalog/collections" style={{ color: '#64748B', textDecoration: 'none' }}>Collections</Link>
+            <ChevronRight size={13} color="#94A3B8" />
+            <span style={{ color: '#0F172A', fontWeight: 800, maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {collection.title}
+            </span>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <button
               onClick={() => setShowNewsletterModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-              title="Copy newsletter email blurb"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '0.45rem 0.9rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, color: '#334155', background: '#F1F5F9', border: '1px solid #E2E8F0', cursor: 'pointer' }}
             >
-              <Share2 className="w-3.5 h-3.5 text-blue-500" />
-              <span className="hidden sm:inline">Newsletter Snippet</span>
+              <Share2 size={13} color="#2563EB" />
+              <span>Newsletter Teaser</span>
             </button>
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '0.45rem 1rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, color: '#FFF', background: '#10B981', textDecoration: 'none', boxShadow: '0 2px 8px rgba(16,185,129,0.3)' }}
             >
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span>Inquire Package</span>
+              <MessageCircle size={14} /> Inquire Package
             </a>
           </div>
         </div>
       </div>
 
-      {/* Hero Showcase */}
-      <section className="relative overflow-hidden bg-slate-950 text-white border-b border-slate-800">
+      {/* ── 2. HERO SHOWCASE ── */}
+      <section style={{ background: '#0F172A', color: '#FFF', position: 'relative', overflow: 'hidden', borderBottom: '1px solid #1E293B' }}>
         {/* Background Image with Gradient Overlay */}
-        <div className="absolute inset-0">
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
           {collection.coverImageUrl ? (
             <img
               src={collection.coverImageUrl}
               alt={collection.title}
-              className="w-full h-full object-cover opacity-25 scale-105"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.25, transform: 'scale(1.03)' }}
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-blue-950 via-slate-900 to-slate-950" />
+            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1E1B4B 0%, #0F4C3A 100%)' }} />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent" />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0F172A 0%, rgba(15,23,42,0.7) 60%, transparent 100%)' }} />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <div className="max-w-4xl">
-            {/* Top Badge & Duration */}
-            <div className="flex flex-wrap items-center gap-2.5 mb-4">
-              <span className="px-3.5 py-1 rounded-full text-xs font-bold tracking-wider uppercase bg-amber-500 text-slate-950 shadow-sm">
+        <div style={{ position: 'relative', zIndex: 10, maxWidth: '1440px', width: '94%', margin: '0 auto', padding: '3.5rem 0 4rem' }}>
+          <div style={{ maxWidth: '850px' }}>
+            {/* Top Badges */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '1rem' }}>
+              <span style={{ background: '#F59E0B', color: '#0F172A', fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em', padding: '4px 12px', borderRadius: '14px', boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }}>
                 {collection.badge || 'CURATED ESSENTIALS'}
               </span>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white backdrop-blur border border-white/20">
+              <span style={{ background: 'rgba(255,255,255,0.15)', color: '#FFF', fontSize: '0.75rem', fontWeight: 800, padding: '4px 12px', borderRadius: '14px', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.2)' }}>
                 {collection.duration}
               </span>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                <MapPin className="w-3.5 h-3.5 text-blue-400" />
-                {collection.destination}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(56,189,248,0.2)', color: '#38BDF8', fontSize: '0.75rem', fontWeight: 800, padding: '4px 12px', borderRadius: '14px', border: '1px solid rgba(56,189,248,0.3)' }}>
+                <MapPin size={12} color="#38BDF8" /> {collection.destination}
               </span>
               {collection.targetAudience && (
-                <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-slate-800/90 text-slate-300 border border-slate-700">
-                  <Award className="w-3.5 h-3.5 text-amber-400" />
-                  Target: {collection.targetAudience}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.1)', color: '#E2E8F0', fontSize: '0.75rem', fontWeight: 600, padding: '4px 12px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.15)' }}>
+                  <Award size={12} color="#FBBF24" /> Target: {collection.targetAudience}
                 </span>
               )}
             </div>
 
             {/* Collection Title */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-serif tracking-tight text-white mb-4 leading-tight">
+            <h1 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', margin: '0 0 0.75rem', letterSpacing: '-0.02em', color: '#FFF', lineHeight: 1.2 }}>
               {collection.title}
             </h1>
 
             {/* Tagline */}
             {collection.tagline && (
-              <p className="text-base sm:text-lg md:text-xl text-slate-300 font-sans leading-relaxed mb-6">
+              <p style={{ fontSize: 'clamp(0.95rem, 2vw, 1.15rem)', color: '#E2E8F0', lineHeight: 1.6, margin: '0 0 1.75rem' }}>
                 {collection.tagline}
               </p>
             )}
 
             {/* Inclusions Counter Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 py-3 px-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur max-w-2xl mb-8">
-              <div className="flex items-center gap-2.5">
-                <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
+            <div className="hero-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '14px', padding: '12px 16px', maxWidth: '680px', marginBottom: '2rem', backdropFilter: 'blur(6px)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Calendar size={18} color="#60A5FA" style={{ flexShrink: 0 }} />
                 <div>
-                  <div className="text-[11px] text-slate-400">Duration</div>
-                  <div className="text-xs font-bold text-white">{daysCount} Days Plan</div>
+                  <div style={{ fontSize: '0.68rem', color: '#94A3B8' }}>Duration</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFF' }}>{daysCount} Days</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5">
-                <Building2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Building2 size={18} color="#34D399" style={{ flexShrink: 0 }} />
                 <div>
-                  <div className="text-[11px] text-slate-400">Hotels</div>
-                  <div className="text-xs font-bold text-white">{hotelsCount} Stays</div>
+                  <div style={{ fontSize: '0.68rem', color: '#94A3B8' }}>Hotels</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFF' }}>{hotelsCount} Stays</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5">
-                <Compass className="w-4 h-4 text-amber-400 shrink-0" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Compass size={18} color="#FBBF24" style={{ flexShrink: 0 }} />
                 <div>
-                  <div className="text-[11px] text-slate-400">Attractions</div>
-                  <div className="text-xs font-bold text-white">{attrCount} Sights</div>
+                  <div style={{ fontSize: '0.68rem', color: '#94A3B8' }}>Attractions</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFF' }}>{attrCount} Sights</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5">
-                <Utensils className="w-4 h-4 text-pink-400 shrink-0" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Utensils size={18} color="#F472B6" style={{ flexShrink: 0 }} />
                 <div>
-                  <div className="text-[11px] text-slate-400">Dining</div>
-                  <div className="text-xs font-bold text-white">{diningCount} Spots</div>
+                  <div style={{ fontSize: '0.68rem', color: '#94A3B8' }}>Dining</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFF' }}>{diningCount} Spots</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5 col-span-2 sm:col-span-1">
-                <ShoppingBag className="w-4 h-4 text-purple-400 shrink-0" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShoppingBag size={18} color="#C084FC" style={{ flexShrink: 0 }} />
                 <div>
-                  <div className="text-[11px] text-slate-400">Shopping</div>
-                  <div className="text-xs font-bold text-white">{shoppingCount} Hubs</div>
+                  <div style={{ fontSize: '0.68rem', color: '#94A3B8' }}>Shopping</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#FFF' }}>{shoppingCount} Hubs</div>
                 </div>
               </div>
             </div>
 
             {/* Quick Hero Actions */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-900/40 transition"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#10B981', color: '#FFF', padding: '0.8rem 1.6rem', borderRadius: '12px', fontWeight: 800, fontSize: '0.9rem', textDecoration: 'none', boxShadow: '0 4px 15px rgba(16,185,129,0.35)' }}
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>Inquire This Collection via WhatsApp</span>
+                <MessageCircle size={18} /> Inquire This Collection via WhatsApp
               </a>
 
               <button
                 onClick={() => setShowNewsletterModal(true)}
-                className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.15)', color: '#FFF', border: '1px solid rgba(255,255,255,0.25)', padding: '0.8rem 1.3rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer' }}
               >
-                <Share2 className="w-4 h-4 text-blue-400" />
-                <span>Copy for Newsletter</span>
+                <Share2 size={16} color="#38BDF8" /> Copy for Newsletter
               </button>
 
               <button
                 onClick={copyUrl}
-                className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.1)', color: '#E2E8F0', border: '1px solid rgba(255,255,255,0.2)', padding: '0.8rem 1.2rem', borderRadius: '12px', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
               >
-                {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedLink ? 'Link Copied!' : 'Share Link'}</span>
+                {copiedLink ? <Check size={16} color="#34D399" /> : <Copy size={16} />}
+                <span>{copiedLink ? 'Copied!' : 'Share'}</span>
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Sticky Section Navigation Pill Bar */}
-      <div className="sticky top-[49px] z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 overflow-x-auto py-3 scrollbar-none">
+      {/* ── 3. STICKY CATEGORY NAVIGATION BAR ── */}
+      <div style={{ position: 'sticky', top: '53px', zIndex: 30, background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+        <div style={{ maxWidth: '1440px', width: '94%', margin: '0 auto', display: 'flex', gap: '8px', overflowX: 'auto', padding: '0.65rem 0', scrollbarWidth: 'none' }}>
+          <a
+            href="#section-overview"
+            style={{ padding: '0.45rem 0.95rem', borderRadius: '20px', background: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', whiteSpace: 'nowrap' }}
+          >
+            Overview
+          </a>
+          {daysCount > 0 && (
             <a
-              href="#section-overview"
-              className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-700 dark:text-slate-300 transition shrink-0"
+              href="#section-itinerary"
+              style={{ padding: '0.45rem 0.95rem', borderRadius: '20px', background: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', whiteSpace: 'nowrap' }}
             >
-              Overview & Highlights
+              📅 Day-by-Day Blueprint ({daysCount})
             </a>
-            {daysCount > 0 && (
-              <a
-                href="#section-itinerary"
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-700 dark:text-slate-300 transition shrink-0"
-              >
-                📅 Day-by-Day Blueprint ({daysCount})
-              </a>
-            )}
-            {hotelsCount > 0 && (
-              <a
-                href="#section-hotels"
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-700 dark:text-slate-300 transition shrink-0"
-              >
-                🏨 Curated Stays ({hotelsCount})
-              </a>
-            )}
-            {attrCount > 0 && (
-              <a
-                href="#section-attractions"
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-700 dark:text-slate-300 transition shrink-0"
-              >
-                🎡 Attractions ({attrCount})
-              </a>
-            )}
-            {diningCount > 0 && (
-              <a
-                href="#section-dining"
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-700 dark:text-slate-300 transition shrink-0"
-              >
-                🍽️ Dining & Food ({diningCount})
-              </a>
-            )}
-            {shoppingCount > 0 && (
-              <a
-                href="#section-shopping"
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-700 dark:text-slate-300 transition shrink-0"
-              >
-                🛍️ Retail & Malls ({shoppingCount})
-              </a>
-            )}
-            {toursCount > 0 && (
-              <a
-                href="#section-tours"
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-700 dark:text-slate-300 transition shrink-0"
-              >
-                🚍 Tour Circuit ({toursCount})
-              </a>
-            )}
-            {collection.insiderTips && collection.insiderTips.length > 0 && (
-              <a
-                href="#section-tips"
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 text-slate-700 dark:text-slate-300 transition shrink-0"
-              >
-                💡 Curator Tips
-              </a>
-            )}
-          </div>
+          )}
+          {hotelsCount > 0 && (
+            <a
+              href="#section-hotels"
+              style={{ padding: '0.45rem 0.95rem', borderRadius: '20px', background: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', whiteSpace: 'nowrap' }}
+            >
+              🏨 Curated Stays ({hotelsCount})
+            </a>
+          )}
+          {attrCount > 0 && (
+            <a
+              href="#section-attractions"
+              style={{ padding: '0.45rem 0.95rem', borderRadius: '20px', background: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', whiteSpace: 'nowrap' }}
+            >
+              🎡 Attractions ({attrCount})
+            </a>
+          )}
+          {diningCount > 0 && (
+            <a
+              href="#section-dining"
+              style={{ padding: '0.45rem 0.95rem', borderRadius: '20px', background: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', whiteSpace: 'nowrap' }}
+            >
+              🍽️ Dining ({diningCount})
+            </a>
+          )}
+          {shoppingCount > 0 && (
+            <a
+              href="#section-shopping"
+              style={{ padding: '0.45rem 0.95rem', borderRadius: '20px', background: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', whiteSpace: 'nowrap' }}
+            >
+              🛍️ Retail ({shoppingCount})
+            </a>
+          )}
+          {toursCount > 0 && (
+            <a
+              href="#section-tours"
+              style={{ padding: '0.45rem 0.95rem', borderRadius: '20px', background: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', whiteSpace: 'nowrap' }}
+            >
+              🚍 Tour Circuit ({toursCount})
+            </a>
+          )}
+          {collection.insiderTips && collection.insiderTips.length > 0 && (
+            <a
+              href="#section-tips"
+              style={{ padding: '0.45rem 0.95rem', borderRadius: '20px', background: '#F1F5F9', color: '#334155', fontWeight: 700, fontSize: '0.78rem', textDecoration: 'none', whiteSpace: 'nowrap' }}
+            >
+              💡 Curator Tips
+            </a>
+          )}
         </div>
       </div>
 
-      {/* Main Content Body */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
-        {/* 1. Overview & Key Highlights */}
-        <section id="section-overview" className="scroll-mt-32">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-4">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                <Sparkles className="w-3.5 h-3.5" />
-                The Curator Narrative
+      {/* ── 4. MAIN CONTENT BODY ── */}
+      <main style={{ maxWidth: '1440px', width: '94%', margin: '2.5rem auto 0', display: 'flex', flexDirection: 'column', gap: '3.5rem' }}>
+        
+        {/* 1. Overview & Standout Inclusions */}
+        <section id="section-overview" style={{ scrollMarginTop: '110px' }}>
+          <div className="collection-overview-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#2563EB', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Sparkles size={14} /> The Curator Narrative
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900 dark:text-slate-100">
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: '0 0 1rem' }}>
                 Why this collection was engineered
               </h2>
-              <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
-                <p>{collection.overview}</p>
-              </div>
+              <p style={{ fontSize: '0.95rem', color: '#334155', lineHeight: 1.7, margin: '0 0 1.25rem' }}>
+                {collection.overview}
+              </p>
 
-              {/* Target Audience Note */}
               {collection.targetAudience && (
-                <div className="mt-4 p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-xs sm:text-sm text-blue-950 dark:text-blue-200">
-                  <div className="font-bold flex items-center gap-1.5 mb-1">
-                    <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    Recommended Traveler Profile:
+                <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '12px', padding: '1rem', fontSize: '0.85rem', color: '#1E3A8A' }}>
+                  <div style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                    <ShieldCheck size={16} color="#2563EB" /> Recommended Traveler Profile:
                   </div>
-                  <p>{collection.targetAudience}</p>
+                  <p style={{ margin: 0, lineHeight: 1.5 }}>{collection.targetAudience}</p>
                 </div>
               )}
             </div>
 
-            {/* Highlights Box */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-              <h3 className="text-base font-bold font-serif text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                <Award className="w-4 h-4 text-amber-500" />
-                Standout Inclusions
+            {/* Inclusions Box */}
+            <div style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Award size={18} color="#F59E0B" /> Standout Inclusions
               </h3>
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {collection.highlights?.map((h, i) => (
-                  <div key={i} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                    <span>{h}</span>
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.82rem', color: '#334155' }}>
+                    <CheckCircle2 size={16} color="#10B981" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <span style={{ lineHeight: 1.45 }}>{h}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">
+              <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid #F1F5F9' }}>
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"
+                  style={{ width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#10B981', color: '#FFF', padding: '0.65rem', borderRadius: '10px', fontSize: '0.82rem', fontWeight: 800, textDecoration: 'none', boxShadow: '0 2px 8px rgba(16,185,129,0.3)' }}
                 >
-                  <MessageCircle className="w-4 h-4" />
-                  Quick WhatsApp Inquiry
+                  <MessageCircle size={15} /> Quick WhatsApp Inquiry
                 </a>
               </div>
             </div>
@@ -384,35 +365,34 @@ export default function CuratedCollectionClient({ collection }: Props) {
 
         {/* 2. Day-by-Day Itinerary Blueprint */}
         {daysCount > 0 && (
-          <section id="section-itinerary" className="scroll-mt-32">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <section id="section-itinerary" style={{ scrollMarginTop: '110px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
               <div>
-                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Turnkey Blueprint
+                <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#2563EB', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Calendar size={14} /> Turnkey Blueprint
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900 dark:text-slate-100">
+                <h2 style={{ fontSize: '1.6rem', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: 0 }}>
                   Day-by-Day Tour Itinerary
                 </h2>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div style={{ display: 'flex', gap: '6px' }}>
                 <button
                   onClick={expandAllDays}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                  style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', background: '#FFF', fontSize: '0.78rem', fontWeight: 700, color: '#334155', cursor: 'pointer' }}
                 >
                   Expand All
                 </button>
                 <button
                   onClick={collapseAllDays}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                  style={{ padding: '0.45rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0', background: '#FFF', fontSize: '0.78rem', fontWeight: 700, color: '#334155', cursor: 'pointer' }}
                 >
                   Collapse All
                 </button>
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {collection.itinerarySchedule?.map((day, idx) => {
                 const key = day._key || `day-${idx + 1}`
                 const isExpanded = !!expandedDays[key]
@@ -420,78 +400,68 @@ export default function CuratedCollectionClient({ collection }: Props) {
                 return (
                   <div
                     key={key}
-                    className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm transition-all"
+                    style={{ background: '#FFFFFF', borderRadius: '16px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}
                   >
                     <button
                       onClick={() => toggleDay(key)}
-                      className="w-full text-left p-5 sm:p-6 flex items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                      style={{ width: '100%', padding: '1.25rem', background: 'none', border: 'none', textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', cursor: 'pointer' }}
                     >
-                      <div className="flex items-center gap-3 sm:gap-4">
-                        <span className="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-blue-600 text-white shrink-0">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.75rem', fontWeight: 900, padding: '4px 10px', borderRadius: '8px', flexShrink: 0 }}>
                           {day.day || `Day ${idx + 1}`}
                         </span>
                         <div>
-                          <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-slate-100">
+                          <div style={{ fontSize: '1rem', fontWeight: 800, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A' }}>
                             {day.title}
-                          </h3>
+                          </div>
                           {!isExpanded && day.description && (
-                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                            <div style={{ fontSize: '0.78rem', color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '600px', marginTop: '2px' }}>
                               {day.description}
-                            </p>
+                            </div>
                           )}
                         </div>
                       </div>
 
                       <ChevronDown
-                        className={`w-5 h-5 text-slate-400 transition-transform duration-200 shrink-0 ${
-                          isExpanded ? 'rotate-180' : ''
-                        }`}
+                        size={18}
+                        color="#94A3B8"
+                        style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease', flexShrink: 0 }}
                       />
                     </button>
 
                     {isExpanded && (
-                      <div className="px-5 sm:px-6 pb-6 pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-4">
+                      <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid #F1F5F9' }}>
                         {day.description && (
-                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                          <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.6, margin: '1rem 0' }}>
                             {day.description}
                           </p>
                         )}
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                        <div className="day-schedule-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '0.5rem' }}>
                           {day.morning && (
-                            <div className="p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 text-xs">
-                              <span className="font-bold text-amber-800 dark:text-amber-400 block mb-1">
-                                🌅 Morning Plan
-                              </span>
-                              <p className="text-slate-700 dark:text-slate-300">{day.morning}</p>
+                            <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '12px', padding: '10px', fontSize: '0.8rem' }}>
+                              <span style={{ fontWeight: 800, color: '#92400E', display: 'block', marginBottom: '4px' }}>🌅 Morning Plan</span>
+                              <p style={{ margin: 0, color: '#451A03', lineHeight: 1.45 }}>{day.morning}</p>
                             </div>
                           )}
-
                           {day.afternoon && (
-                            <div className="p-3.5 rounded-2xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 text-xs">
-                              <span className="font-bold text-blue-800 dark:text-blue-400 block mb-1">
-                                ☀️ Afternoon Plan
-                              </span>
-                              <p className="text-slate-700 dark:text-slate-300">{day.afternoon}</p>
+                            <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '12px', padding: '10px', fontSize: '0.8rem' }}>
+                              <span style={{ fontWeight: 800, color: '#1E40AF', display: 'block', marginBottom: '4px' }}>☀️ Afternoon Plan</span>
+                              <p style={{ margin: 0, color: '#172554', lineHeight: 1.45 }}>{day.afternoon}</p>
                             </div>
                           )}
-
                           {day.evening && (
-                            <div className="p-3.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-900/40 text-xs">
-                              <span className="font-bold text-indigo-800 dark:text-indigo-400 block mb-1">
-                                🌙 Evening Plan
-                              </span>
-                              <p className="text-slate-700 dark:text-slate-300">{day.evening}</p>
+                            <div style={{ background: '#EEF2FF', border: '1px solid #C7D2FE', borderRadius: '12px', padding: '10px', fontSize: '0.8rem' }}>
+                              <span style={{ fontWeight: 800, color: '#3730A3', display: 'block', marginBottom: '4px' }}>🌙 Evening Plan</span>
+                              <p style={{ margin: 0, color: '#1E1B4B', lineHeight: 1.45 }}>{day.evening}</p>
                             </div>
                           )}
                         </div>
 
                         {day.recommendedDining && (
-                          <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                            <Utensils className="w-3.5 h-3.5 text-pink-500 shrink-0" />
-                            <span>
-                              <strong>Recommended Dining:</strong> {day.recommendedDining}
-                            </span>
+                          <div style={{ marginTop: '10px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '8px 12px', fontSize: '0.8rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Utensils size={14} color="#EC4899" style={{ flexShrink: 0 }} />
+                            <span><strong>Recommended Dining:</strong> {day.recommendedDining}</span>
                           </div>
                         )}
                       </div>
@@ -505,59 +475,50 @@ export default function CuratedCollectionClient({ collection }: Props) {
 
         {/* 3. Curated Hotels */}
         {hotelsCount > 0 && (
-          <section id="section-hotels" className="scroll-mt-32">
-            <div className="mb-6">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                <Building2 className="w-3.5 h-3.5" />
-                Selected Stays
+          <section id="section-hotels" style={{ scrollMarginTop: '110px' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#10B981', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Building2 size={14} /> Selected Stays
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900 dark:text-slate-100">
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: 0 }}>
                 Curated Partner Hotels
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Hand-picked for proximity to MRT lines, family room availability, and verified hospitality.
-              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.5rem' }}>
               {collection.featuredHotels?.map((h) => {
                 const img = h.coverImageUrl || h.photoUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop'
                 return (
                   <div
                     key={h._id}
-                    className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col justify-between"
+                    style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
                   >
                     <div>
-                      <div className="relative h-48 w-full bg-slate-800">
-                        <img src={img} alt={h.name} className="w-full h-full object-cover" />
-                        <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-950/80 text-amber-400 backdrop-blur">
-                          <Star className="w-3.5 h-3.5 fill-amber-400" />
-                          <span>{h.starRating || '4-Star'}</span>
+                      <div style={{ position: 'relative', height: '200px', width: '100%', background: '#0F172A' }}>
+                        <img src={img} alt={h.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div style={{ position: 'absolute', top: '10px', left: '10px', background: 'rgba(15,23,42,0.85)', color: '#FBBF24', fontSize: '0.75rem', fontWeight: 800, padding: '4px 8px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Star size={12} fill="#FBBF24" /> {h.starRating || '4-Star'}
                         </div>
                       </div>
 
-                      <div className="p-5">
-                        <h3 className="text-lg font-bold font-serif text-slate-900 dark:text-slate-100 mb-1">
+                      <div style={{ padding: '1.25rem' }}>
+                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: '0 0 0.4rem' }}>
                           {h.name}
                         </h3>
                         {h.hotelAddress && (
-                          <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mb-3">
-                            <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                            <span className="truncate">{h.hotelAddress}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#64748B', marginBottom: '0.75rem' }}>
+                            <MapPin size={12} color="#EF4444" style={{ flexShrink: 0 }} />
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.hotelAddress}</span>
                           </div>
                         )}
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 line-clamp-3 mb-4 leading-relaxed">
+                        <p style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                           {h.description || h.shortDescription}
                         </p>
 
-                        {/* Features chips */}
                         {h.features && h.features.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mb-4">
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                             {h.features.slice(0, 4).map((f, i) => (
-                              <span
-                                key={i}
-                                className="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                              >
+                              <span key={i} style={{ background: '#F1F5F9', color: '#334155', fontSize: '0.72rem', fontWeight: 600, padding: '3px 8px', borderRadius: '6px' }}>
                                 {f}
                               </span>
                             ))}
@@ -566,27 +527,22 @@ export default function CuratedCollectionClient({ collection }: Props) {
                       </div>
                     </div>
 
-                    <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 mt-auto">
+                    <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                       {h.slug ? (
-                        <Link
-                          href={`/services-catalog/hotels/${h.slug}`}
-                          className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-                        >
-                          View Hotel Details
-                          <ChevronRight className="w-3.5 h-3.5" />
+                        <Link href={`/services-catalog/hotels/${h.slug}`} style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2563EB', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                          View Details <ChevronRight size={13} />
                         </Link>
                       ) : (
-                        <span className="text-xs text-slate-400">Official Partner Hotel</span>
+                        <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Partner Hotel</span>
                       )}
 
                       <a
-                        href={`https://wa.me/919886171251?text=Hi%20Flying%20Wonders!%20I%20would%20like%20to%20inquire%20about%20rates%20for%20${encodeURIComponent(h.name)}%20under%20the%20${encodeURIComponent(collection.title)}%20collection.`}
+                        href={`https://wa.me/919886171251?text=Hi%20Flying%20Wonders!%20I%20would%20like%20to%20inquire%20about%20rates%20for%20${encodeURIComponent(h.name)}.`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition inline-flex items-center gap-1"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#10B981', color: '#FFF', padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none' }}
                       >
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        Inquire Rates
+                        <MessageCircle size={13} /> Inquire Rates
                       </a>
                     </div>
                   </div>
@@ -598,83 +554,63 @@ export default function CuratedCollectionClient({ collection }: Props) {
 
         {/* 4. Curated Attractions */}
         {attrCount > 0 && (
-          <section id="section-attractions" className="scroll-mt-32">
-            <div className="mb-6">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                <Compass className="w-3.5 h-3.5" />
-                Must-Do Experiences
+          <section id="section-attractions" style={{ scrollMarginTop: '110px' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#F59E0B', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Compass size={14} /> Must-Do Experiences
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900 dark:text-slate-100">
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: 0 }}>
                 Curated Attractions & Sightseeing
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Included highlights with recommended visit durations and tips.
-              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
               {collection.featuredAttractions?.map((a) => {
                 const img = a.coverImageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop'
                 return (
                   <div
                     key={a._id}
-                    className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col justify-between"
+                    style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
                   >
                     <div>
-                      <div className="relative h-44 w-full bg-slate-800">
-                        <img src={img} alt={a.name} className="w-full h-full object-cover" />
+                      <div style={{ height: '180px', width: '100%', background: '#0F172A', overflow: 'hidden' }}>
+                        <img src={img} alt={a.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
 
-                      <div className="p-5">
-                        <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-slate-100 mb-2 line-clamp-2">
+                      <div style={{ padding: '1.25rem' }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 800, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: '0 0 0.5rem', lineHeight: 1.35 }}>
                           {a.name}
                         </h3>
 
                         {a.timings && (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-3">
-                            <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                            <span className="truncate">{a.timings}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#64748B', marginBottom: '0.65rem' }}>
+                            <Clock size={12} color="#2563EB" style={{ flexShrink: 0 }} />
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.timings}</span>
                           </div>
                         )}
 
-                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 line-clamp-3 mb-4 leading-relaxed">
+                        <p style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                           {a.description}
                         </p>
-
-                        {a.features && a.features.length > 0 && (
-                          <div className="space-y-1 mb-4">
-                            {a.features.slice(0, 2).map((f, i) => (
-                              <div key={i} className="flex items-start gap-1.5 text-xs text-slate-600 dark:text-slate-300">
-                                <span className="text-emerald-500 font-bold shrink-0">✓</span>
-                                <span className="line-clamp-1">{f}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </div>
 
-                    <div className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 mt-auto">
+                    <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                       {a.slug ? (
-                        <Link
-                          href={`/services-catalog/attractions/${a.slug}`}
-                          className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-                        >
-                          Attraction Guide
-                          <ChevronRight className="w-3.5 h-3.5" />
+                        <Link href={`/services-catalog/attractions/${a.slug}`} style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2563EB', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                          View Guide <ChevronRight size={13} />
                         </Link>
                       ) : (
-                        <span className="text-xs text-slate-400">Instant Admission Voucher</span>
+                        <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Instant E-Voucher</span>
                       )}
 
                       <a
                         href={`https://wa.me/919886171251?text=Hi%20Flying%20Wonders!%20I%20would%20like%20to%20inquire%20about%20tickets%20for%20${encodeURIComponent(a.name)}.`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition inline-flex items-center gap-1"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#10B981', color: '#FFF', padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none' }}
                       >
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        Ticket Desk
+                        <MessageCircle size={13} /> Ticket Desk
                       </a>
                     </div>
                   </div>
@@ -686,64 +622,56 @@ export default function CuratedCollectionClient({ collection }: Props) {
 
         {/* 5. Curated Dining */}
         {diningCount > 0 && (
-          <section id="section-dining" className="scroll-mt-32">
-            <div className="mb-6">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-pink-600 dark:text-pink-400">
-                <Utensils className="w-3.5 h-3.5" />
-                Culinary Highlights
+          <section id="section-dining" style={{ scrollMarginTop: '110px' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#EC4899', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Utensils size={14} /> Culinary Highlights
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900 dark:text-slate-100">
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: 0 }}>
                 Curated Dining & Food Gems
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Authentic Indian cuisine, certified Halal buffets, and vegetarian sanctuaries.
-              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.5rem' }}>
               {collection.featuredDining?.map((d) => (
                 <div
                   key={d._id}
-                  className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between"
+                  style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.25rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
                 >
                   <div>
-                    <div className="flex items-start justify-between gap-4 mb-2">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '0.5rem' }}>
                       <div>
-                        <h3 className="text-lg font-bold font-serif text-slate-900 dark:text-slate-100">
+                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: 0 }}>
                           {d.name}
                         </h3>
                         {d.cuisineType && (
-                          <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 mt-0.5">
+                          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2563EB', marginTop: '2px' }}>
                             {d.cuisineType}
                           </div>
                         )}
                       </div>
                       {d.priceTier && (
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                        <span style={{ background: '#F1F5F9', color: '#0F172A', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
                           {d.priceTier}
                         </span>
                       )}
                     </div>
 
                     {d.address && (
-                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mb-3">
-                        <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                        <span className="truncate">{d.address}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: '#64748B', marginBottom: '0.75rem' }}>
+                        <MapPin size={12} color="#EF4444" style={{ flexShrink: 0 }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.address}</span>
                       </div>
                     )}
 
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 line-clamp-3 mb-4 leading-relaxed">
+                    <p style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       {d.description}
                     </p>
 
-                    {/* Dietary Badges */}
                     {d.dietaryTypes && d.dietaryTypes.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-4">
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                         {d.dietaryTypes.map((dt, i) => (
-                          <span
-                            key={i}
-                            className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                          >
+                          <span key={i} style={{ background: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' }}>
                             {dt}
                           </span>
                         ))}
@@ -751,27 +679,22 @@ export default function CuratedCollectionClient({ collection }: Props) {
                     )}
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 mt-auto">
+                  <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                     {d.slug ? (
-                      <Link
-                        href={`/services-catalog/restaurants/${d.slug}`}
-                        className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-                      >
-                        Restaurant Profile
-                        <ChevronRight className="w-3.5 h-3.5" />
+                      <Link href={`/services-catalog/restaurants/${d.slug}`} style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2563EB', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        Menu & Reviews <ChevronRight size={13} />
                       </Link>
                     ) : (
-                      <span className="text-xs text-slate-400">Curated Group Dining Partner</span>
+                      <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Verified Group Dining</span>
                     )}
 
                     <a
                       href={`https://wa.me/919886171251?text=Hi%20Flying%20Wonders!%20I%20would%20like%20to%20reserve%20group%20dining%20at%20${encodeURIComponent(d.name)}.`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition inline-flex items-center gap-1"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#10B981', color: '#FFF', padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none' }}
                     >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      Reserve Table
+                      <MessageCircle size={13} /> Reserve Table
                     </a>
                   </div>
                 </div>
@@ -782,60 +705,51 @@ export default function CuratedCollectionClient({ collection }: Props) {
 
         {/* 6. Curated Shopping */}
         {shoppingCount > 0 && (
-          <section id="section-shopping" className="scroll-mt-32">
-            <div className="mb-6">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                <ShoppingBag className="w-3.5 h-3.5" />
-                Retail & Souvenirs
+          <section id="section-shopping" style={{ scrollMarginTop: '110px' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#8B5CF6', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ShoppingBag size={14} /> Retail & Souvenirs
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900 dark:text-slate-100">
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: 0 }}>
                 Curated Shopping & Outlet Hubs
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Designer outlet bargains, electronic districts, and street market souvenirs.
-              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.5rem' }}>
               {collection.featuredShopping?.map((m) => (
                 <div
                   key={m._id}
-                  className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between"
+                  style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.25rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
                 >
                   <div>
-                    <h3 className="text-lg font-bold font-serif text-slate-900 dark:text-slate-100 mb-1">
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: '0 0 0.35rem' }}>
                       {m.name}
                     </h3>
                     {m.heroSubtitle && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{m.heroSubtitle}</p>
+                      <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '0 0 0.75rem', lineHeight: 1.45 }}>{m.heroSubtitle}</p>
                     )}
 
                     {m.mrtStation && (
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 mb-4">
-                        <MapPin className="w-3.5 h-3.5 text-blue-500" />
-                        <span>MRT: {m.mrtStation}</span>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#F1F5F9', color: '#334155', fontSize: '0.75rem', fontWeight: 700, padding: '4px 8px', borderRadius: '6px' }}>
+                        <MapPin size={12} color="#2563EB" /> MRT: {m.mrtStation}
                       </div>
                     )}
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 mt-auto">
+                  <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                     {m.slug ? (
-                      <Link
-                        href={`/travel-tools/shopping-malls/${m.slug}`}
-                        className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-                      >
-                        Explore Shopping Guide
-                        <ChevronRight className="w-3.5 h-3.5" />
+                      <Link href={`/travel-tools/shopping-malls/${m.slug}`} style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2563EB', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        Explore Mall <ChevronRight size={13} />
                       </Link>
                     ) : (
-                      <span className="text-xs text-slate-400">9% GST eTRS Refund Eligible</span>
+                      <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>9% GST Refundable</span>
                     )}
 
                     <Link
                       href="/travel-tools/shopping-guide"
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                      style={{ background: '#F8FAFC', color: '#334155', border: '1px solid #CBD5E1', padding: '0.45rem 0.85rem', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 700, textDecoration: 'none' }}
                     >
-                      9% Tax Refund Guide
+                      GST Refund Guide
                     </Link>
                   </div>
                 </div>
@@ -844,34 +758,30 @@ export default function CuratedCollectionClient({ collection }: Props) {
           </section>
         )}
 
-        {/* 7. Curated Tours & Package Circuits */}
+        {/* 7. Curated Tours Circuit */}
         {toursCount > 0 && (
-          <section id="section-tours" className="scroll-mt-32">
-            <div className="mb-6">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                <Bus className="w-3.5 h-3.5" />
-                Underpinning Circuit
+          <section id="section-tours" style={{ scrollMarginTop: '110px' }}>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4F46E5', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Bus size={14} /> Underpinning Circuit
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold font-serif text-slate-900 dark:text-slate-100">
+              <h2 style={{ fontSize: '1.6rem', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: 0 }}>
                 Curated Guided Tour Package
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                The land circuit providing transportation, ticketing, and licensed guide escort.
-              </p>
             </div>
 
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {collection.featuredTours?.map((t) => (
                 <div
                   key={t._id}
-                  className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm"
+                  style={{ background: '#FFFFFF', borderRadius: '18px', border: '1px solid #E2E8F0', padding: '1.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.75rem' }}>
                     <div>
-                      <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
+                      <span style={{ background: '#EEF2FF', color: '#4F46E5', fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em', padding: '3px 8px', borderRadius: '6px' }}>
                         {t.duration || 'LAND CIRCUIT'}
                       </span>
-                      <h3 className="text-xl sm:text-2xl font-bold font-serif text-slate-900 dark:text-slate-100 mt-2">
+                      <h3 style={{ fontSize: '1.3rem', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: '6px 0 0' }}>
                         {t.name}
                       </h3>
                     </div>
@@ -880,22 +790,21 @@ export default function CuratedCollectionClient({ collection }: Props) {
                       href={whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition shrink-0"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#10B981', color: '#FFF', padding: '0.55rem 1.1rem', borderRadius: '8px', fontSize: '0.82rem', fontWeight: 800, textDecoration: 'none' }}
                     >
-                      <MessageCircle className="w-4 h-4" />
-                      Inquire Full Circuit
+                      <MessageCircle size={15} /> Inquire Full Circuit
                     </a>
                   </div>
 
-                  <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+                  <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.6, margin: '0 0 1rem' }}>
                     {t.description}
                   </p>
 
                   {t.features && t.features.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px', paddingTop: '1rem', borderTop: '1px solid #F1F5F9' }}>
                       {t.features.map((f, i) => (
-                        <div key={i} className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#334155' }}>
+                          <CheckCircle2 size={14} color="#10B981" style={{ flexShrink: 0 }} />
                           <span>{f}</span>
                         </div>
                       ))}
@@ -907,28 +816,24 @@ export default function CuratedCollectionClient({ collection }: Props) {
           </section>
         )}
 
-        {/* 8. Curator Insider Tips & Checklist */}
+        {/* 8. Curator Insider Tips */}
         {collection.insiderTips && collection.insiderTips.length > 0 && (
-          <section id="section-tips" className="scroll-mt-32">
-            <div className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent rounded-3xl border border-amber-300/40 dark:border-amber-900/40 p-6 sm:p-8">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 mb-2">
-                <Info className="w-4 h-4" />
-                Curator Logistics Checklist
+          <section id="section-tips" style={{ scrollMarginTop: '110px' }}>
+            <div style={{ background: '#FFFBEB', borderRadius: '20px', border: '1px solid #FDE68A', padding: '1.75rem' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#92400E', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Info size={16} /> Curator Logistics Checklist
               </div>
-              <h2 className="text-2xl font-bold font-serif text-slate-900 dark:text-slate-100 mb-4">
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#78350F', margin: '0 0 1.25rem' }}>
                 Insider Tips for This Collection
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
                 {collection.insiderTips.map((tip, i) => (
-                  <div
-                    key={i}
-                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-amber-200/60 dark:border-amber-900/30 text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-1 shadow-sm"
-                  >
-                    <span className="font-bold text-amber-600 dark:text-amber-400 block text-xs">
-                      Tip #{i + 1}
+                  <div key={i} style={{ background: '#FFFFFF', borderRadius: '12px', border: '1px solid #FEF3C7', padding: '1rem', fontSize: '0.82rem', color: '#451A03', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                    <span style={{ fontWeight: 800, color: '#D97706', display: 'block', marginBottom: '4px' }}>
+                      Pro-Tip #{i + 1}
                     </span>
-                    <p>{tip}</p>
+                    <p style={{ margin: 0, lineHeight: 1.5 }}>{tip}</p>
                   </div>
                 ))}
               </div>
@@ -936,107 +841,125 @@ export default function CuratedCollectionClient({ collection }: Props) {
           </section>
         )}
 
-        {/* Bottom CTA Card */}
-        <section className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-950 rounded-3xl p-8 sm:p-12 text-white shadow-xl text-center">
-          <div className="max-w-2xl mx-auto space-y-4">
-            <span className="px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500 text-slate-950">
+        {/* 9. Bottom CTA Card */}
+        <section style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1E1B4B 100%)', borderRadius: '20px', padding: '3rem 1.5rem', color: '#FFF', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+            <span style={{ display: 'inline-block', background: '#F59E0B', color: '#0F172A', fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em', padding: '4px 12px', borderRadius: '14px', marginBottom: '0.75rem' }}>
               Ready to Book or Customize?
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold font-serif">
-              Get Instant B2B / Family Rates for {collection.title}
+            <h2 style={{ fontSize: 'clamp(1.4rem, 3vw, 2rem)', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', margin: '0 0 0.75rem' }}>
+              Get Instant Rates for {collection.title}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+            <p style={{ fontSize: '0.9rem', color: '#E2E8F0', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
               Our operations team responds in minutes on WhatsApp with exact dates, hotel room allocations, and special group discounts.
             </p>
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-900/40 transition"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#10B981', color: '#FFF', padding: '0.8rem 1.6rem', borderRadius: '12px', fontWeight: 800, fontSize: '0.9rem', textDecoration: 'none', boxShadow: '0 4px 15px rgba(16,185,129,0.35)' }}
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>Chat with Concierge Desk on WhatsApp</span>
+                <MessageCircle size={18} /> Chat with Concierge on WhatsApp
               </a>
               <Link
                 href="/services-catalog/collections"
-                className="inline-flex items-center gap-2 px-5 py-3.5 rounded-2xl text-sm font-semibold bg-white/10 hover:bg-white/20 text-white backdrop-blur border border-white/20 transition"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', color: '#FFF', padding: '0.8rem 1.3rem', borderRadius: '12px', fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)' }}
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Explore Other Collections</span>
+                <ArrowLeft size={16} /> Other Collections
               </Link>
             </div>
           </div>
         </section>
+
       </main>
 
-      {/* Sticky Mobile Bottom Floating Action Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 p-3 shadow-2xl flex items-center gap-2">
+      {/* ── 5. STICKY MOBILE BOTTOM BAR ── */}
+      <div className="mobile-floating-bar" style={{ display: 'none', position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'rgba(255,255,255,0.98)', borderTop: '1px solid #E2E8F0', padding: '10px 14px', boxShadow: '0 -4px 20px rgba(0,0,0,0.08)', backdropFilter: 'blur(8px)' }}>
         <a
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition"
+          style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#10B981', color: '#FFF', padding: '0.75rem', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 800, textDecoration: 'none' }}
         >
-          <MessageCircle className="w-4 h-4" />
-          <span>Inquire via WhatsApp</span>
+          <MessageCircle size={16} /> Inquire via WhatsApp
         </a>
 
         <button
           onClick={() => setShowNewsletterModal(true)}
-          className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+          style={{ padding: '0.75rem', borderRadius: '10px', border: '1px solid #CBD5E1', background: '#F8FAFC', color: '#334155', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           title="Share for Newsletter"
         >
-          <Share2 className="w-4 h-4" />
+          <Share2 size={16} />
         </button>
       </div>
 
-      {/* Newsletter / Campaign Copy Modal */}
+      {/* ── 6. NEWSLETTER COPY MODAL ── */}
       {showNewsletterModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                <Share2 className="w-5 h-5" />
-                <h3 className="text-lg font-bold font-serif text-slate-900 dark:text-slate-100">
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '20px', maxWidth: '560px', width: '100%', padding: '1.75rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2563EB' }}>
+                <Share2 size={18} />
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 800, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: 0 }}>
                   Newsletter & Email Teaser
                 </h3>
               </div>
               <button
                 onClick={() => setShowNewsletterModal(false)}
-                className="p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#64748B' }}
               >
-                <X className="w-5 h-5" />
+                <X size={20} />
               </button>
             </div>
 
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-              Use this pre-formatted blurb in your email blasts, customer proposals, or WhatsApp campaigns. Click copy to grab the snippet:
+            <p style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.5, margin: '0 0 1rem' }}>
+              Copy and paste this snippet directly into your Brevo, Mailchimp, or WhatsApp newsletter campaigns:
             </p>
 
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 font-mono whitespace-pre-line leading-relaxed max-h-60 overflow-y-auto">
+            <div style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '12px', padding: '1rem', fontSize: '0.8rem', color: '#1E293B', fontFamily: 'monospace', whiteSpace: 'pre-line', lineHeight: 1.55, maxHeight: '220px', overflowY: 'auto' }}>
               {collection.newsletterTeaser ||
                 `✨ ${collection.title} (${collection.duration})\n\n${collection.tagline}\n\n👉 Complete One-Page Essentials Guide: https://flyingwonders.net/services-catalog/collections/${collection.slug}\n\n💬 Inquire on WhatsApp: https://wa.me/919886171251`}
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '1.25rem' }}>
               <button
                 onClick={() => setShowNewsletterModal(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                style={{ padding: '0.55rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0', background: '#F8FAFC', fontSize: '0.8rem', fontWeight: 700, color: '#64748B', cursor: 'pointer' }}
               >
                 Close
               </button>
               <button
                 onClick={copyNewsletterText}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '0.55rem 1.25rem', borderRadius: '8px', border: 'none', background: '#2563EB', color: '#FFF', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer' }}
               >
-                {copiedBlurb ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedBlurb ? <Check size={14} /> : <Copy size={14} />}
                 <span>{copiedBlurb ? 'Copied to Clipboard!' : 'Copy Snippet'}</span>
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Embedded Mobile CSS Styles */}
+      <style jsx>{`
+        @media (max-width: 768px) {
+          .collection-overview-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .hero-stats-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+          .day-schedule-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .mobile-floating-bar {
+            display: flex !important;
+            gap: 8px !important;
+          }
+        }
+      `}</style>
+
     </div>
   )
 }

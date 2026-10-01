@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import {
   Sparkles,
   Calendar,
@@ -28,12 +27,12 @@ import {
 import { getAllCuratedCollections, CuratedCollectionData } from '../../../utils/curatedCollections'
 
 const CATEGORY_TABS = [
-  { id: 'all', label: 'All Collections', icon: Layers },
-  { id: 'family', label: '👨‍👩‍👧‍👦 Family & Kids', icon: Users },
-  { id: 'cross-border', label: '🚍 Cross-Border (SG + MY)', icon: MapPin },
-  { id: 'corporate', label: '💼 Corporate MICE', icon: Briefcase },
-  { id: 'culture', label: '🍛 Culture & Food', icon: Utensils },
-  { id: 'honeymoon', label: '💍 Honeymoon & Couples', icon: Heart },
+  { id: 'all', label: 'All Collections' },
+  { id: 'family', label: '👨‍👩‍👧‍👦 Family & Kids' },
+  { id: 'cross-border', label: '🚍 Cross-Border (SG + MY)' },
+  { id: 'corporate', label: '💼 Corporate MICE' },
+  { id: 'culture', label: '🍛 Culture & Food' },
+  { id: 'honeymoon', label: '💍 Honeymoon & Couples' },
 ]
 
 export default function CuratedCollectionsIndexPage() {
@@ -93,172 +92,175 @@ export default function CuratedCollectionsIndexPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200">
-      {/* Top Breadcrumb Navigation */}
-      <div className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between text-xs sm:text-sm">
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-            <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-              Home
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <Link href="/services-catalog" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-              Services Catalog
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-slate-900 dark:text-slate-100 font-medium">Curated Collections</span>
+    <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', paddingBottom: '4rem' }}>
+      
+      {/* ── 1. BREADCRUMBS & TOP BAR ── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 40, borderBottom: '1px solid #E2E8F0', background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(8px)' }}>
+        <div style={{ maxWidth: '1440px', width: '94%', margin: '0 auto', padding: '0.75rem 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: '#64748B', flexWrap: 'wrap' }}>
+            <Link href="/" style={{ color: '#64748B', textDecoration: 'none' }}>Home</Link>
+            <ChevronRight size={13} color="#94A3B8" />
+            <Link href="/services-catalog" style={{ color: '#64748B', textDecoration: 'none' }}>Services Catalog</Link>
+            <ChevronRight size={13} color="#94A3B8" />
+            <span style={{ color: '#0F172A', fontWeight: 800 }}>Curated Collections</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Link
               href="/services-catalog"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '0.45rem 0.9rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700, color: '#334155', background: '#F1F5F9', border: '1px solid #E2E8F0', textDecoration: 'none' }}
             >
-              Browse Full Inventory
+              Master Catalog
             </Link>
             <a
               href="https://wa.me/919886171251?text=Hi%20Flying%20Wonders!%20I%20would%20like%20to%20inquire%20about%20a%20customized%20Curated%20Collection%20for%20our%20group."
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '0.45rem 1rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, color: '#FFF', background: '#10B981', textDecoration: 'none', boxShadow: '0 2px 8px rgba(16,185,129,0.3)' }}
             >
-              <MessageCircle className="w-3.5 h-3.5" />
-              WhatsApp Concierge
+              <MessageCircle size={14} /> WhatsApp Concierge
             </a>
           </div>
         </div>
       </div>
 
-      {/* Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-900 via-indigo-950 to-slate-950 text-white py-14 sm:py-20 px-4 sm:px-6 lg:px-8 border-b border-indigo-900/40">
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
-        
-        <div className="max-w-5xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-400/30 mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            Turnkey Itinerary Essentials
+      {/* ── 2. HERO HEADER ── */}
+      <header style={{ background: 'linear-gradient(135deg, #0F4C3A 0%, #1E1B4B 100%)', color: '#FFF', padding: '3.5rem 1.5rem 4rem', textAlign: 'center', position: 'relative' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', padding: '5px 14px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: 800, color: '#FBBF24', marginBottom: '1rem', border: '1px solid rgba(251,191,36,0.3)' }}>
+            <Sparkles size={14} color="#FBBF24" /> Turnkey Itinerary Essentials
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight font-serif text-white mb-4">
+          <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', margin: '0 0 0.75rem', letterSpacing: '-0.02em', color: '#FFF', lineHeight: 1.2 }}>
             Curated Travel Collections
           </h1>
-          <p className="text-base sm:text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed font-sans">
-            One-page blueprints hand-crafted for newsletters, corporate proposals, and specialized travel sectors. 
-            Each collection bundles recommended hotels, must-do attractions, authentic dining, and guided circuits.
+          <p style={{ fontSize: 'clamp(0.9rem, 2vw, 1.1rem)', color: '#E2E8F0', margin: '0 auto 1.5rem', lineHeight: 1.6, maxWidth: '720px' }}>
+            One-page blueprints hand-crafted for newsletters, corporate proposals, and specialized travel sectors. Each collection bundles recommended hotels, must-do attractions, authentic dining, and guided circuits.
           </p>
 
-          {/* Quick Newsletter Pitch Callout */}
-          <div className="mt-8 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900/80 border border-slate-700 text-xs sm:text-sm text-slate-300 backdrop-blur">
-            <BookOpen className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>
-              <strong>Newsletter & Agency Ready:</strong> Click any card to view the complete essentials guide or copy 1-click email teaser blurbs.
-            </span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '12px', padding: '0.6rem 1.2rem', fontSize: '0.82rem', color: '#CBD5E1', maxWidth: '100%', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <BookOpen size={16} color="#34D399" style={{ flexShrink: 0 }} />
+            <span><strong>Newsletter & Agency Ready:</strong> Click any collection to view the full essentials guide or copy 1-click email teasers.</span>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Filter and Search Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 transition-colors">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            {/* Search Input */}
-            <div className="relative w-full md:w-96">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search by collection title, theme, or keywords..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            {/* Destination Selector */}
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider shrink-0">
-                Destination:
-              </span>
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 w-full">
-                {['all', 'Singapore', 'Malaysia', 'Cross Border'].map((dest) => (
+      {/* ── 3. FILTER & SEARCH CONTROL BAR ── */}
+      <div style={{ maxWidth: '1440px', width: '94%', margin: '-2rem auto 2.5rem', position: 'relative', zIndex: 10 }}>
+        <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', boxShadow: '0 10px 30px rgba(0,0,0,0.06)', padding: '1.25rem' }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            
+            {/* Top Row: Search + Destination Filter */}
+            <div className="collection-filter-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+              
+              {/* Search Bar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#F8FAFC', padding: '0 14px', borderRadius: '10px', border: '1px solid #CBD5E1', flex: '1 1 320px', minWidth: '260px' }}>
+                <Search size={18} color="#0F4C3A" />
+                <input
+                  type="text"
+                  placeholder="Search collections by theme, title, or keywords..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ width: '100%', background: 'transparent', border: 'none', padding: '12px 0', outline: 'none', fontSize: '0.88rem', color: '#0F172A', fontWeight: 600 }}
+                />
+                {searchQuery && (
                   <button
-                    key={dest}
-                    onClick={() => setSelectedDestination(dest)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 ${
-                      selectedDestination === dest
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                    }`}
+                    onClick={() => setSearchQuery('')}
+                    style={{ background: 'none', border: 'none', fontSize: '0.78rem', color: '#64748B', cursor: 'pointer', padding: '4px' }}
                   >
-                    {dest === 'all' ? 'All Destinations' : dest}
+                    Clear
                   </button>
-                ))}
+                )}
               </div>
+
+              {/* Destination Pills */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748B' }}>
+                  Destination:
+                </span>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {['all', 'Singapore', 'Malaysia', 'Cross Border'].map((dest) => (
+                    <button
+                      key={dest}
+                      onClick={() => setSelectedDestination(dest)}
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: selectedDestination === dest ? '#0F4C3A' : '#F1F5F9',
+                        color: selectedDestination === dest ? '#FFF' : '#475569',
+                        fontWeight: 700,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      {dest === 'all' ? 'All Destinations' : dest}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
             </div>
+
+            {/* Bottom Row: Sector Category Pills */}
+            <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '0.85rem', display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+              {CATEGORY_TABS.map((tab) => {
+                const isActive = selectedCategory === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSelectedCategory(tab.id)}
+                    style={{
+                      padding: '0.55rem 1.1rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: isActive ? '#2563EB' : '#F8FAFC',
+                      color: isActive ? '#FFF' : '#334155',
+                      fontWeight: 800,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      boxShadow: isActive ? '0 2px 8px rgba(37,99,235,0.3)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
+
           </div>
 
-          {/* Sector Category Tabs */}
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {CATEGORY_TABS.map((tab) => {
-              const Icon = tab.icon
-              const isActive = selectedCategory === tab.id
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setSelectedCategory(tab.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition shrink-0 ${
-                    isActive
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  }`}
-                >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  <span>{tab.label}</span>
-                </button>
-              )
-            })}
-          </div>
         </div>
       </div>
 
-      {/* Main Collections Grid */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-8">
+      {/* ── 4. COLLECTIONS GRID ── */}
+      <main style={{ maxWidth: '1440px', width: '94%', margin: '0 auto' }}>
+        
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold font-serif text-slate-900 dark:text-slate-100">
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: 0 }}>
               Curated Itinerary Blueprints
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p style={{ fontSize: '0.82rem', color: '#64748B', margin: '4px 0 0' }}>
               Showing {filteredCollections.length} curated collection{filteredCollections.length === 1 ? '' : 's'}
             </p>
           </div>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 animate-pulse space-y-4"
-              >
-                <div className="h-52 bg-slate-200 dark:bg-slate-800 rounded-2xl" />
-                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
-                <div className="h-20 bg-slate-200 dark:bg-slate-800 rounded-xl" />
-              </div>
-            ))}
+          <div style={{ textAlign: 'center', padding: '5rem 1rem' }}>
+            <Sparkles className="animate-spin" size={36} color="#0F4C3A" style={{ margin: '0 auto 1rem' }} />
+            <p style={{ fontWeight: 700, color: '#64748B', fontSize: '0.95rem' }}>Loading Curated Collections...</p>
           </div>
         ) : filteredCollections.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 p-8">
-            <Compass className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">No collections match your filter</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1 mb-6">
+          <div style={{ textAlign: 'center', padding: '4rem 1.5rem', background: '#FFF', borderRadius: '16px', border: '2px dashed #CBD5E1' }}>
+            <Compass size={44} color="#94A3B8" style={{ margin: '0 auto 1rem' }} />
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1E293B', margin: '0 0 0.5rem' }}>No collections match your filter</h3>
+            <p style={{ fontSize: '0.85rem', color: '#64748B', maxWidth: '420px', margin: '0 auto 1.5rem' }}>
               Try adjusting your category, destination, or search query to explore other blueprints.
             </p>
             <button
@@ -267,13 +269,13 @@ export default function CuratedCollectionsIndexPage() {
                 setSelectedDestination('all')
                 setSearchQuery('')
               }}
-              className="px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition"
+              style={{ background: '#0F4C3A', color: '#FFF', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', cursor: 'pointer' }}
             >
-              Reset All Filters
+              Reset Filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="collection-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1.75rem' }}>
             {filteredCollections.map((col) => {
               const hotelsCount = col.featuredHotels?.length || 0
               const attrCount = col.featuredAttractions?.length || 0
@@ -283,92 +285,100 @@ export default function CuratedCollectionsIndexPage() {
               return (
                 <div
                   key={col._id}
-                  className="group bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+                  style={{
+                    background: '#FFFFFF',
+                    borderRadius: '18px',
+                    border: '1px solid #E2E8F0',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                  }}
                 >
                   <div>
-                    {/* Cover Image & Badges */}
-                    <div className="relative h-56 w-full overflow-hidden bg-slate-800">
+                    {/* Cover Hero Image & Badges */}
+                    <div style={{ position: 'relative', height: '220px', width: '100%', background: '#0F172A', overflow: 'hidden' }}>
                       {col.coverImageUrl ? (
                         <img
                           src={col.coverImageUrl}
                           alt={col.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-indigo-900 to-slate-900 flex items-center justify-center">
-                          <Sparkles className="w-10 h-10 text-indigo-400" />
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1E1B4B 0%, #0F4C3A 100%)' }}>
+                          <Sparkles size={36} color="#FBBF24" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30" />
+                      
+                      {/* Gradient overlay for readability */}
+                      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15,23,42,0.85) 0%, transparent 60%)' }} />
 
                       {/* Top Badges */}
-                      <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-                        <span className="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-amber-500 text-slate-950 shadow-sm">
+                      <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ background: '#F59E0B', color: '#0F172A', fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.04em', padding: '4px 10px', borderRadius: '14px', boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }}>
                           {col.badge || 'CURATED'}
                         </span>
-                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-900/80 text-white backdrop-blur border border-white/20">
+                        <span style={{ background: 'rgba(15,23,42,0.8)', color: '#FFF', fontSize: '0.75rem', fontWeight: 800, padding: '4px 10px', borderRadius: '14px', backdropFilter: 'blur(4px)', border: '1px solid rgba(255,255,255,0.2)' }}>
                           {col.duration}
                         </span>
                       </div>
 
-                      {/* Destination Pill */}
-                      <div className="absolute bottom-3 left-4 flex items-center gap-1.5 text-xs font-medium text-slate-200 bg-slate-950/70 backdrop-blur px-2.5 py-1 rounded-lg">
-                        <MapPin className="w-3.5 h-3.5 text-red-400" />
+                      {/* Destination Pin */}
+                      <div style={{ position: 'absolute', bottom: '12px', left: '12px', display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(4px)', padding: '4px 10px', borderRadius: '8px', color: '#FFF', fontSize: '0.78rem', fontWeight: 700 }}>
+                        <MapPin size={13} color="#EF4444" />
                         <span>{col.destination}</span>
                       </div>
                     </div>
 
-                    {/* Content Section */}
-                    <div className="p-6">
-                      <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 mb-2">
-                        <Link href={`/services-catalog/collections/${col.slug}`}>
+                    {/* Content Body */}
+                    <div style={{ padding: '1.25rem' }}>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', color: '#0F172A', margin: '0 0 0.5rem', lineHeight: 1.35 }}>
+                        <Link href={`/services-catalog/collections/${col.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>
                           {col.title}
                         </Link>
                       </h3>
 
-                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 line-clamp-2 mb-4 leading-relaxed">
+                      <p style={{ fontSize: '0.85rem', color: '#475569', lineHeight: 1.55, margin: '0 0 1rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {col.tagline || col.overview}
                       </p>
 
-                      {/* Included Components Counter Pill */}
-                      <div className="grid grid-cols-4 gap-1.5 py-2 px-3 rounded-2xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-center mb-5">
+                      {/* Stats Matrix */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '8px', textAlign: 'center', marginBottom: '1rem' }}>
                         <div>
-                          <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1">
-                            <Building2 className="w-3 h-3 text-blue-500" />
-                            Stays
+                          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                            <Building2 size={12} color="#2563EB" /> Stays
                           </div>
-                          <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{hotelsCount}</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#0F172A', marginTop: '2px' }}>{hotelsCount}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1">
-                            <Compass className="w-3 h-3 text-emerald-500" />
-                            Sights
+                          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                            <Compass size={12} color="#10B981" /> Sights
                           </div>
-                          <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{attrCount}</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#0F172A', marginTop: '2px' }}>{attrCount}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1">
-                            <Utensils className="w-3 h-3 text-amber-500" />
-                            Dine
+                          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                            <Utensils size={12} color="#F59E0B" /> Dine
                           </div>
-                          <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{diningCount}</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#0F172A', marginTop: '2px' }}>{diningCount}</div>
                         </div>
                         <div>
-                          <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1">
-                            <ShoppingBag className="w-3 h-3 text-purple-500" />
-                            Shop
+                          <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                            <ShoppingBag size={12} color="#8B5CF6" /> Shop
                           </div>
-                          <div className="text-xs font-bold text-slate-900 dark:text-slate-100 mt-0.5">{shoppingCount}</div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#0F172A', marginTop: '2px' }}>{shoppingCount}</div>
                         </div>
                       </div>
 
                       {/* Standout Highlights Preview */}
                       {col.highlights && col.highlights.length > 0 && (
-                        <div className="space-y-1.5 mb-4">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '0.75rem' }}>
                           {col.highlights.slice(0, 2).map((h, idx) => (
-                            <div key={idx} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
-                              <span className="text-emerald-500 font-bold shrink-0 mt-0.5">✓</span>
-                              <span className="line-clamp-1">{h}</span>
+                            <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.78rem', color: '#475569' }}>
+                              <span style={{ color: '#10B981', fontWeight: 900, flexShrink: 0 }}>✓</span>
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h}</span>
                             </div>
                           ))}
                         </div>
@@ -377,67 +387,102 @@ export default function CuratedCollectionsIndexPage() {
                   </div>
 
                   {/* Card Bottom CTA Actions */}
-                  <div className="p-6 pt-0 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3 mt-auto">
+                  <div style={{ padding: '1rem 1.25rem', borderTop: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
                     <Link
                       href={`/services-catalog/collections/${col.slug}`}
-                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition group/btn"
+                      style={{
+                        flex: 1,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        padding: '0.65rem 1rem',
+                        borderRadius: '10px',
+                        background: '#0F4C3A',
+                        color: '#FFF',
+                        fontWeight: 800,
+                        fontSize: '0.82rem',
+                        textDecoration: 'none',
+                        boxShadow: '0 2px 8px rgba(15,76,58,0.25)'
+                      }}
                     >
                       <span>Explore Essentials</span>
-                      <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
+                      <ArrowRight size={14} />
                     </Link>
 
-                    {/* Copy Newsletter Snippet */}
                     <button
                       type="button"
                       onClick={(e) => copyNewsletterSnippet(e, col)}
-                      title="Copy newsletter email blurb"
-                      className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition shrink-0"
+                      title="Copy newsletter email teaser snippet"
+                      style={{
+                        padding: '0.65rem',
+                        borderRadius: '10px',
+                        border: '1px solid #CBD5E1',
+                        background: '#F8FAFC',
+                        color: copiedId === col._id ? '#10B981' : '#475569',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
                     >
-                      {copiedId === col._id ? (
-                        <Check className="w-4 h-4 text-emerald-500" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
+                      {copiedId === col._id ? <Check size={16} /> : <Copy size={16} />}
                     </button>
                   </div>
+
                 </div>
               )
             })}
           </div>
         )}
 
-        {/* Bottom Newsletter Promotion Box */}
-        <section className="mt-16 bg-gradient-to-r from-blue-900 to-indigo-900 rounded-3xl p-8 sm:p-12 text-white shadow-xl relative overflow-hidden">
-          <div className="max-w-3xl">
-            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-400/20 text-blue-200 border border-blue-300/30">
+        {/* ── 5. NEWSLETTER CALLOUT BOX ── */}
+        <section style={{ marginTop: '4rem', background: 'linear-gradient(135deg, #1E1B4B 0%, #0F4C3A 100%)', borderRadius: '20px', padding: '2.5rem', color: '#FFF', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+          <div style={{ maxWidth: '800px' }}>
+            <span style={{ display: 'inline-block', background: 'rgba(255,255,255,0.15)', color: '#FBBF24', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 12px', borderRadius: '14px', marginBottom: '0.75rem' }}>
               For Tour Organizers & Newsletter Editors
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold font-serif mt-4 mb-3">
+            <h2 style={{ fontSize: 'clamp(1.3rem, 3vw, 1.8rem)', fontWeight: 900, fontFamily: 'var(--font-playfair), Georgia, serif', margin: '0 0 0.5rem' }}>
               Need a Custom Turnkey Collection for Your Campaign?
             </h2>
-            <p className="text-sm sm:text-base text-blue-100 leading-relaxed mb-6 font-sans">
+            <p style={{ fontSize: '0.9rem', color: '#E2E8F0', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
               Our destination operations team can create bespoke one-page collections curated specifically for your corporate incentive group, school delegation, or seasonal newsletter promotion.
             </p>
-            <div className="flex flex-wrap items-center gap-3">
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <a
                 href="https://wa.me/919886171251?text=Hi%20Flying%20Wonders!%20We%20would%20like%20to%20request%20a%20customized%20Curated%20Collection%20for%20our%20newsletter%20campaign."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow-md transition"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#10B981', color: '#FFF', padding: '0.7rem 1.3rem', borderRadius: '10px', fontWeight: 800, fontSize: '0.85rem', textDecoration: 'none', boxShadow: '0 4px 12px rgba(16,185,129,0.3)' }}
               >
-                <MessageCircle className="w-4 h-4" />
-                WhatsApp Our Operations Desk
+                <MessageCircle size={16} /> WhatsApp Operations Desk
               </a>
               <Link
                 href="/services-catalog"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 text-white backdrop-blur border border-white/20 transition"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.15)', color: '#FFF', padding: '0.7rem 1.3rem', borderRadius: '10px', fontWeight: 800, fontSize: '0.85rem', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)' }}
               >
-                Browse Master Inventory Catalog
+                Browse Master Directory
               </Link>
             </div>
           </div>
         </section>
+
       </main>
+
+      {/* Embedded Mobile CSS Styles */}
+      <style jsx>{`
+        @media (max-width: 768px) {
+          .collection-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .collection-filter-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+        }
+      `}</style>
+
     </div>
   )
 }
