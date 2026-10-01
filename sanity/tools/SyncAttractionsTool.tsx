@@ -3,7 +3,35 @@ import React, { useState } from 'react'
 export function SyncAttractionsTool() {
   const [syncing, setSyncing] = useState(false)
   const [syncingMalls, setSyncingMalls] = useState(false)
+  const [syncingRestaurants, setSyncingRestaurants] = useState(false)
   const [result, setResult] = useState<{ success: boolean; message: string; count?: number } | null>(null)
+
+  const handleSyncRestaurants = async () => {
+    setSyncingRestaurants(true)
+    setResult(null)
+    try {
+      const res = await fetch('/api/admin/sync-restaurants', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setResult({
+          success: true,
+          message: data.message || `Successfully synced ${data.count || 17} restaurants into Sanity CMS!`,
+        })
+      } else {
+        setResult({
+          success: false,
+          message: data.error || 'Failed to sync restaurants.'
+        })
+      }
+    } catch (e: any) {
+      setResult({
+        success: false,
+        message: e.message || 'Network error while syncing restaurants.'
+      })
+    } finally {
+      setSyncingRestaurants(false)
+    }
+  }
 
   const handleSyncShoppingMalls = async () => {
     setSyncingMalls(true)
@@ -108,7 +136,7 @@ export function SyncAttractionsTool() {
           <button
             type="button"
             onClick={handleSync}
-            disabled={syncing || syncingMalls}
+            disabled={syncing || syncingMalls || syncingRestaurants}
             style={{
               background: syncing ? '#94A3B8' : '#059669',
               color: '#FFFFFF',
@@ -117,7 +145,7 @@ export function SyncAttractionsTool() {
               padding: '0.9rem 1.75rem',
               fontSize: '1rem',
               fontWeight: 700,
-              cursor: (syncing || syncingMalls) ? 'not-allowed' : 'pointer',
+              cursor: (syncing || syncingMalls || syncingRestaurants) ? 'not-allowed' : 'pointer',
               boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
               transition: 'all 0.2s ease',
               display: 'inline-flex',
@@ -131,8 +159,32 @@ export function SyncAttractionsTool() {
 
           <button
             type="button"
+            onClick={handleSyncRestaurants}
+            disabled={syncing || syncingMalls || syncingRestaurants}
+            style={{
+              background: syncingRestaurants ? '#94A3B8' : '#B83A4B',
+              color: '#FFFFFF',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '0.9rem 1.75rem',
+              fontSize: '1rem',
+              fontWeight: 700,
+              cursor: (syncing || syncingMalls || syncingRestaurants) ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 12px rgba(184, 58, 75, 0.25)',
+              transition: 'all 0.2s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px'
+            }}
+          >
+            {syncingRestaurants ? '⏳ Syncing Restaurants...' : '🍴 Sync & Re-seed Restaurants to Sanity'}
+          </button>
+
+          <button
+            type="button"
             onClick={handleSyncShoppingMalls}
-            disabled={syncing || syncingMalls}
+            disabled={syncing || syncingMalls || syncingRestaurants}
             style={{
               background: syncingMalls ? '#94A3B8' : '#0F4C3A',
               color: '#FFFFFF',
@@ -141,7 +193,7 @@ export function SyncAttractionsTool() {
               padding: '0.9rem 1.75rem',
               fontSize: '1rem',
               fontWeight: 700,
-              cursor: (syncing || syncingMalls) ? 'not-allowed' : 'pointer',
+              cursor: (syncing || syncingMalls || syncingRestaurants) ? 'not-allowed' : 'pointer',
               boxShadow: '0 4px 12px rgba(15, 76, 58, 0.25)',
               transition: 'all 0.2s ease',
               display: 'inline-flex',

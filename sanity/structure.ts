@@ -7,6 +7,7 @@ const HANDLED_SCHEMAS = new Set([
   'hotelMeta',
   'mealMeta',
   'restaurantMeta',
+  'shoppingMall',
   'attractionMeta',
   'readyPackageTemplate',
   'attractionBundle',
@@ -62,7 +63,6 @@ const HANDLED_SCHEMAS = new Set([
   'faqItem',
   'attractionsUser',
   'travelTools',
-  'shoppingMall',
 
   // Careers & Talent Network
   'jobOpening',
@@ -97,6 +97,7 @@ export const structure: StructureResolver = (S) =>
               S.documentTypeListItem('hotelMeta').title('🏨 Hotel Property Details'),
               S.documentTypeListItem('mealMeta').title('🍽️ Meals & Dining Details'),
               S.documentTypeListItem('restaurantMeta').title('🍴 Restaurants & Dining Directory'),
+              S.documentTypeListItem('shoppingMall').title('🛍️ Shopping Malls & Retail Hubs'),
               S.divider(),
               S.documentTypeListItem('attractionMeta').title('🎡 Attraction Details'),
               S.documentTypeListItem('attractionBundle').title('🎟️ Attraction Bundles'),
@@ -235,7 +236,6 @@ export const structure: StructureResolver = (S) =>
               S.documentTypeListItem('faqItem').title('❓ Frequently Asked Questions'),
               S.documentTypeListItem('attractionsUser').title('👥 Registered Guest Accounts'),
               S.documentTypeListItem('travelTools').title('🧰 Travel Utility Tools'),
-              S.documentTypeListItem('shoppingMall').title('🛍️ Shopping Malls & Retail Hubs'),
             ])
         ),
 
@@ -264,14 +264,7 @@ export const structure: StructureResolver = (S) =>
       S.divider(),
 
       // ─────────────────────────────────────────────────────────────
-      // SHOPPING MALLS & RETAIL HUBS (TOP LEVEL QUICK ACCESS)
-      // ─────────────────────────────────────────────────────────────
-      S.documentTypeListItem('shoppingMall').title('🛍️ Shopping Malls & Retail Hubs'),
-
-      S.divider(),
-
-      // ─────────────────────────────────────────────────────────────
-      // 7. GLOBAL SITE SETTINGS & ADMINISTRATION
+      // 8. GLOBAL SITE SETTINGS & ADMINISTRATION
       // ─────────────────────────────────────────────────────────────
       S.listItem()
         .title('Site Settings & Admin')
