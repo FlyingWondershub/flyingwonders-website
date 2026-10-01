@@ -1449,7 +1449,7 @@ export default function PrototypeBuilder() {
             dayTitle: d.dayTitle || '',
             transfers: trs,
             attractions: attrs,
-            breakfast: true,
+            breakfast: dIdx > 0,
             lunch: false,
             dinner: false,
             guides: []
@@ -2005,7 +2005,7 @@ export default function PrototypeBuilder() {
     setHotelRequired(true)
 
     if (tmpl.itinerary && Array.isArray(tmpl.itinerary)) {
-      const mappedItinerary: DayPlan[] = tmpl.itinerary.map((day: any) => ({
+      const mappedItinerary: DayPlan[] = tmpl.itinerary.map((day: any, dIdx: number) => ({
         dayTitle: day.dayTitle || '',
         transfers: Array.isArray(day.transfers) ? day.transfers.map((t: any) => {
           let vIdx = typeof t.vehicleIndex === 'number' ? t.vehicleIndex : 0
@@ -2041,7 +2041,7 @@ export default function PrototypeBuilder() {
             isOptional: !!a.isOptional
           }
         }) : [],
-        breakfast: !!day.breakfast,
+        breakfast: dIdx > 0 && !!day.breakfast,
         lunch: !!day.lunch,
         dinner: !!day.dinner,
         guides: Array.isArray(day.guides) ? day.guides.map((g: any) => ({
@@ -2729,7 +2729,7 @@ export default function PrototypeBuilder() {
     setHotelRequired(true)
     setActiveTemplateName(landPackageModalItem.title)
 
-    const mappedItinerary: DayPlan[] = landPackageDays.map((d: any) => ({
+    const mappedItinerary: DayPlan[] = landPackageDays.map((d: any, dIdx: number) => ({
       dayTitle: d.dayTitle || '',
       transfers: (d.transfers || []).map((t: any) => {
         const sType = t.serviceType || ''
@@ -2795,7 +2795,7 @@ export default function PrototypeBuilder() {
           isOptional: !!a.isOptional
         }
       }),
-      breakfast: true,
+      breakfast: dIdx > 0,
       lunch: false,
       dinner: false,
       guides: []
@@ -5463,8 +5463,8 @@ export default function PrototypeBuilder() {
 
         const timelineItems: DayTimelineItem[] = []
 
-        // 1. Hotel Breakfast (included if hotel is required OR explicitly enabled for this day)
-        const isBreakfastIncluded = !!(day.breakfast || hotelRequired)
+        // 1. Hotel Breakfast (included only from Day 2 to last day of itinerary when hotel is selected, or if explicitly enabled)
+        const isBreakfastIncluded = !!(dIdx > 0 && (day.breakfast || hotelRequired))
         if (isBreakfastIncluded) {
           timelineItems.push({
             time: '07:30',
@@ -6813,10 +6813,11 @@ export default function PrototypeBuilder() {
             narrative = `Enjoy a relaxed day exploring Singapore's iconic neighborhoods, dining, and scenic waterfront attractions at your own pace.`
           }
 
-          const isSpdfBreakfast = !!(day.breakfast || hotelRequired)
+          // Breakfast is included only from Day 2 to last day of itinerary
+          const isSpdfBreakfast = !!(dIdx > 0 && (day.breakfast || hotelRequired))
 
           if (!narrative.endsWith('.')) narrative += '.'
-          if (isSpdfBreakfast && dIdx > 0) {
+          if (isSpdfBreakfast) {
             narrative += ` Have breakfast at hotel and start your trip with delicious Indian selections before embarking on your itinerary (hotel daily menu varies).`
           } else if (day.lunch && day.dinner) {
             narrative += ` Authentic Indian lunch and dinner buffet included today (menu depends on hotel/restaurant).`
