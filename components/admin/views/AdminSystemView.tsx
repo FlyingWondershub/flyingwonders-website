@@ -104,6 +104,8 @@ export default function AdminSystemView({
       color: '#7C3AED',
       links: [
         { name: 'Services Catalog', path: '/services-catalog', desc: 'Master multi-category service directory' },
+        { name: 'Shopping Malls & Outlets Directory', path: '/services-catalog?tab=shopping', desc: 'Curated factory outlets, 24/7 superstores, luxury flagships & street markets' },
+        { name: 'Shopping Mall Dedicated Page (Example)', path: '/services-catalog/shopping-malls/imm', desc: 'IMM Jurong East outlet guide with 90+ brand discounts & eTRS map' },
         { name: 'Restaurants & Dining Directory', path: '/services-catalog?tab=restaurants', desc: 'Curated Indian, vegetarian, vegan, buffet & hawker dining catalog' },
         { name: 'Restaurant Dedicated Page (Example)', path: '/services-catalog/restaurants/shahi-maharani-singapore', desc: 'Direct SEO landing pages with video tour, shorts & menu' },
         { name: 'Singapore Attractions', path: '/singapore-attractions', desc: 'Attractions catalog & quote builder' },

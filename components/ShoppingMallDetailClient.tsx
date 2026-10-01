@@ -142,6 +142,27 @@ export default function ShoppingMallDetailClient({ mall }: { mall: ShoppingMallD
             </Link>
 
             <Link
+              href="/services-catalog?tab=shopping"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '0.45rem 0.85rem',
+                borderRadius: '8px',
+                border: '1px solid #CBD5E1',
+                background: '#F1F5F9',
+                color: '#334155',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                textDecoration: 'none'
+              }}
+            >
+              <Compass size={14} />
+              <span className="detail-topbar-label-full">Services Catalog</span>
+              <span className="detail-topbar-label-short">Catalog</span>
+            </Link>
+
+            <Link
               href="/travel-tools/shopping-malls"
               style={{
                 display: 'inline-flex',

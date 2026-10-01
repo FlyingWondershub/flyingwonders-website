@@ -77,26 +77,49 @@ export default function ShoppingMallsClient({ initialMalls }: ShoppingMallsClien
             <span style={{ color: '#0F172A', fontWeight: 800 }}>Singapore Shopping Malls & Markets</span>
           </div>
 
-          <Link
-            href="/travel-tools/shopping-guide"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '0.45rem 1rem',
-              borderRadius: '20px',
-              background: 'linear-gradient(135deg, #059669 0%, #0F4C3A 100%)',
-              color: '#FFF',
-              fontSize: '0.82rem',
-              fontWeight: 800,
-              textDecoration: 'none',
-              boxShadow: '0 4px 12px rgba(15,76,58,0.2)'
-            }}
-          >
-            <Sparkles size={14} color="#FDE68A" />
-            <span className="detail-topbar-label-full">Master Singapore Shopping Guide & 9% GST Refund →</span>
-            <span className="detail-topbar-label-short">Shopping Guide & GST Refund →</span>
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Link
+              href="/services-catalog?tab=shopping"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0.45rem 0.9rem',
+                borderRadius: '20px',
+                background: '#F1F5F9',
+                color: '#334155',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                textDecoration: 'none',
+                border: '1px solid #CBD5E1'
+              }}
+            >
+              <Compass size={14} />
+              <span className="detail-topbar-label-full">Services Catalog</span>
+              <span className="detail-topbar-label-short">Catalog</span>
+            </Link>
+
+            <Link
+              href="/travel-tools/shopping-guide"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0.45rem 1rem',
+                borderRadius: '20px',
+                background: 'linear-gradient(135deg, #059669 0%, #0F4C3A 100%)',
+                color: '#FFF',
+                fontSize: '0.82rem',
+                fontWeight: 800,
+                textDecoration: 'none',
+                boxShadow: '0 4px 12px rgba(15,76,58,0.2)'
+              }}
+            >
+              <Sparkles size={14} color="#FDE68A" />
+              <span className="detail-topbar-label-full">Master Singapore Shopping Guide & 9% GST Refund →</span>
+              <span className="detail-topbar-label-short">Shopping Guide & GST Refund →</span>
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -21,7 +21,8 @@ import {
   Star,
   Info,
   ShieldCheck,
-  MessageCircle
+  MessageCircle,
+  ShoppingBag
 } from 'lucide-react'
 import { client } from '../../sanity/lib/client'
 import AdBanner from '../../components/AdBanner'
@@ -29,6 +30,7 @@ import ImageGalleryLightbox from '../../components/ImageGalleryLightbox'
 import { DEFAULT_HOTELS, cleanHotelName, slugifyHotelName } from '../../utils/hotels'
 import { DEFAULT_ATTRACTIONS, slugifyAttractionName } from '../../utils/attractions'
 import { getAllRestaurants, DEFAULT_RESTAURANTS, RestaurantData, slugifyRestaurantName } from '../../utils/restaurants'
+import { getAllShoppingMalls, DEFAULT_SHOPPING_MALLS, ShoppingMallData } from '../../utils/shoppingMalls'
 import PackageShortsCarousel from '../../components/PackageShortsCarousel'
 
 // Helper function to strip raw HTML tags and format clean text
@@ -268,6 +270,7 @@ export default function ServicesCatalogPage() {
     hideHotels: boolean
     hideAttractions: boolean
     hideRestaurants: boolean
+    hideShopping?: boolean
     hideGuides: boolean
     hideTours: boolean
     hidePackages: boolean
@@ -279,6 +282,7 @@ export default function ServicesCatalogPage() {
     hideHotels: false,
     hideAttractions: false,
     hideRestaurants: false,
+    hideShopping: false,
     hideGuides: false,
     hideTours: false,
     hidePackages: false,
@@ -290,16 +294,19 @@ export default function ServicesCatalogPage() {
   // State Stores (Pre-populated with instant defaults for sub-100ms first paint)
   const [attractions, setAttractions] = useState<any[]>([])
   const [restaurants, setRestaurants] = useState<RestaurantData[]>(DEFAULT_RESTAURANTS)
+  const [malls, setMalls] = useState<ShoppingMallData[]>(DEFAULT_SHOPPING_MALLS)
   const [mediaItems, setMediaItems] = useState<any[]>(DEFAULT_MEDIA_ITEMS)
   const [loading, setLoading] = useState(false)
 
   // Interactive UI State
-  const [activeTab, setActiveTab] = useState<'all' | 'hotels' | 'attractions' | 'restaurants' | 'guides' | 'tours' | 'packages'>('all')
+  const [activeTab, setActiveTab] = useState<'all' | 'hotels' | 'attractions' | 'restaurants' | 'shopping' | 'guides' | 'tours' | 'packages'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [restaurantCategory, setRestaurantCategory] = useState<string>('all')
+  const [mallCategory, setMallCategory] = useState<string>('all')
   const [activeMediaModal, setActiveMediaModal] = useState<any | null>(null)
   const [activeAttractionModal, setActiveAttractionModal] = useState<any | null>(null)
   const [activeRestaurantModal, setActiveRestaurantModal] = useState<RestaurantData | null>(null)
+  const [activeMallModal, setActiveMallModal] = useState<ShoppingMallData | null>(null)
 
   // Interactive Image Gallery Lightbox Slider State
   const [galleryLightboxPhotos, setGalleryLightboxPhotos] = useState<string[]>([])
@@ -321,7 +328,7 @@ export default function ServicesCatalogPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tabParam = params.get('tab')
-      if (tabParam === 'restaurants' || tabParam === 'hotels' || tabParam === 'attractions' || tabParam === 'guides' || tabParam === 'tours' || tabParam === 'packages') {
+      if (tabParam === 'restaurants' || tabParam === 'hotels' || tabParam === 'attractions' || tabParam === 'shopping' || tabParam === 'guides' || tabParam === 'tours' || tabParam === 'packages') {
         setActiveTab(tabParam)
       }
     }
@@ -334,6 +341,7 @@ export default function ServicesCatalogPage() {
         if (parsed.settings) setSettings(parsed.settings)
         if (parsed.attractions?.length) setAttractions(parsed.attractions)
         if (parsed.restaurants?.length) setRestaurants(parsed.restaurants)
+        if (parsed.malls?.length) setMalls(parsed.malls)
         if (parsed.mediaItems?.length) setMediaItems(parsed.mediaItems)
       }
     } catch (e) {}
@@ -450,11 +458,25 @@ export default function ServicesCatalogPage() {
       return DEFAULT_RESTAURANTS
     }
 
+    const fetchMalls = async () => {
+      try {
+        const fetchedMalls = await getAllShoppingMalls()
+        if (fetchedMalls && fetchedMalls.length > 0) {
+          setMalls(fetchedMalls)
+          return fetchedMalls
+        }
+      } catch (e) {
+        console.warn('Failed to load live shopping malls, using defaults')
+      }
+      return DEFAULT_SHOPPING_MALLS
+    }
+
     // Execute queries concurrently in parallel
-    const [settledSettings, settledAttractions, settledRestaurants, settledMedia] = await Promise.allSettled([
+    const [settledSettings, settledAttractions, settledRestaurants, settledMalls, settledMedia] = await Promise.allSettled([
       fetchSettings(),
       fetchAttractions(),
       fetchRestaurants(),
+      fetchMalls(),
       fetchMedia()
     ])
 
@@ -464,6 +486,7 @@ export default function ServicesCatalogPage() {
         settings: settledSettings.status === 'fulfilled' ? settledSettings.value : null,
         attractions: settledAttractions.status === 'fulfilled' ? settledAttractions.value : null,
         restaurants: settledRestaurants.status === 'fulfilled' ? settledRestaurants.value : null,
+        malls: settledMalls.status === 'fulfilled' ? settledMalls.value : null,
         mediaItems: settledMedia.status === 'fulfilled' ? settledMedia.value : null,
         timestamp: Date.now()
       }
@@ -535,6 +558,46 @@ export default function ServicesCatalogPage() {
     })
   }, [restaurants, searchQuery, restaurantCategory, settings.hideRestaurants])
 
+  const filteredMalls = useMemo(() => {
+    if (settings.hideShopping) return []
+    const q = searchQuery.toLowerCase().trim()
+    return malls.filter(m => {
+      if (m.isDisplayed === false) return false
+
+      // Category filter: 'all', 'outlet', 'superstore', 'street', 'luxury', 'belt', 'heritage'
+      if (mallCategory !== 'all') {
+        const cat = mallCategory.toLowerCase()
+        const mCategory = (m.category || '').toLowerCase()
+        const mName = m.name.toLowerCase()
+        const mDistrict = (m.district || '').toLowerCase()
+
+        if (cat === 'outlet' && !mCategory.includes('outlet') && !mName.includes('imm')) return false
+        if (cat === 'superstore' && !mCategory.includes('superstore') && !mCategory.includes('department') && !mName.includes('mustafa')) return false
+        if (cat === 'street' && !mCategory.includes('street') && !mCategory.includes('bargain')) return false
+        if (cat === 'luxury' && !mCategory.includes('luxury') && !mName.includes('sands')) return false
+        if (cat === 'belt' && !mCategory.includes('belt') && !mDistrict.includes('orchard') && !mName.includes('orchard')) return false
+        if (cat === 'heritage' && !mCategory.includes('heritage') && !mDistrict.includes('chinatown') && !mName.includes('chinatown')) return false
+      }
+
+      if (!q) return true
+      const matchesName = m.name.toLowerCase().includes(q)
+      const matchesAlt = (m.alternateName || '').toLowerCase().includes(q)
+      const matchesTagline = (m.tagline || '').toLowerCase().includes(q)
+      const matchesDistrict = (m.district || '').toLowerCase().includes(q)
+      const matchesCategory = (m.category || '').toLowerCase().includes(q)
+      const matchesMrt = (m.nearestMrt?.station || '').toLowerCase().includes(q)
+      const matchesBrands = (m.topStoresAndBrands || []).some(cat =>
+        cat.categoryName.toLowerCase().includes(q) ||
+        (cat.brands || []).some(b => b.toLowerCase().includes(q))
+      )
+      const matchesHighlights = (m.keyHighlights || []).some(h =>
+        h.title.toLowerCase().includes(q) || h.description.toLowerCase().includes(q)
+      )
+
+      return matchesName || matchesAlt || matchesTagline || matchesDistrict || matchesCategory || matchesMrt || matchesBrands || matchesHighlights
+    })
+  }, [malls, searchQuery, mallCategory, settings.hideShopping])
+
   const filteredGuides = useMemo(() => {
     if (settings.hideGuides) return []
     const q = searchQuery.toLowerCase().trim()
@@ -557,6 +620,7 @@ export default function ServicesCatalogPage() {
   const totalHotelsCount = filteredHotels.length
   const totalAttractionsCount = filteredAttractions.length
   const totalRestaurantsCount = filteredRestaurants.length
+  const totalMallsCount = filteredMalls.length
   const totalGuidesCount = filteredGuides.length
   const totalToursCount = filteredTours.length
   const totalPackagesCount = filteredPackages.length
@@ -620,7 +684,7 @@ export default function ServicesCatalogPage() {
             <Search size={18} color="#0F4C3A" />
             <input
               type="text"
-              placeholder="Search hotels, attractions, dining spots, guides, or tours..."
+              placeholder="Search hotels, attractions, dining spots, shopping malls, guides, or tours..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               style={{ width: '100%', background: 'transparent', border: 'none', padding: '12px 0', outline: 'none', fontSize: '0.9rem', color: '#0F172A', fontWeight: 600 }}
@@ -661,6 +725,15 @@ export default function ServicesCatalogPage() {
                 style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'restaurants' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'restaurants' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
               >
                 <Utensils size={15} /> Restaurants ({totalRestaurantsCount})
+              </button>
+            )}
+
+            {!settings.hideShopping && (
+              <button
+                onClick={() => setActiveTab('shopping')}
+                style={{ padding: '0.55rem 1.1rem', borderRadius: '8px', border: 'none', background: activeTab === 'shopping' ? '#0F4C3A' : '#F1F5F9', color: activeTab === 'shopping' ? '#FFF' : '#475569', fontWeight: 800, fontSize: '0.82rem', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
+              >
+                <ShoppingBag size={15} /> Shopping & Malls ({totalMallsCount})
               </button>
             )}
 
@@ -1179,7 +1252,228 @@ export default function ServicesCatalogPage() {
               </section>
             )}
 
-            {/* ══ SECTION D: TOUR GUIDES (PROFILES & LANGUAGES) ══ */}
+            {/* ══ SECTION D: SHOPPING MALLS & RETAIL HUBS ══ */}
+            {(!settings.hideShopping && (activeTab === 'all' || activeTab === 'shopping')) && (
+              <section>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0F172A', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <ShoppingBag size={24} color="#0F4C3A" /> Shopping Malls & Retail Hubs ({filteredMalls.length})
+                    </h2>
+                    <p style={{ margin: 0, fontSize: '0.84rem', color: '#64748B' }}>
+                      Explore premier factory outlets, 24/7 superstores, luxury flagships, street markets, and tourist 9% GST tax refund destinations.
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/travel-tools/shopping-guide"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '0.45rem 1rem',
+                      borderRadius: '20px',
+                      background: 'linear-gradient(135deg, #059669 0%, #0F4C3A 100%)',
+                      color: '#FFF',
+                      fontSize: '0.78rem',
+                      fontWeight: 800,
+                      textDecoration: 'none',
+                      boxShadow: '0 2px 8px rgba(15,76,58,0.2)'
+                    }}
+                  >
+                    <Sparkles size={13} color="#FDE68A" />
+                    <span>9% GST Tourist Refund Guide →</span>
+                  </Link>
+                </div>
+
+                {/* Shopping Category Filter Tabs */}
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '0.75rem', marginBottom: '1.25rem', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+                  {[
+                    { id: 'all', label: `All Malls (${malls.length})` },
+                    { id: 'outlet', label: '🏷️ Outlet & Factory Clearance' },
+                    { id: 'superstore', label: '🏪 24/7 Mega Superstores' },
+                    { id: 'luxury', label: '💎 Ultra-Luxury & MBS' },
+                    { id: 'belt', label: '🛍️ Orchard Shopping Belt' },
+                    { id: 'street', label: '🏮 Street Markets & Bargains' },
+                    { id: 'heritage', label: '🏛️ Heritage & Chinatown' },
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setMallCategory(tab.id)}
+                      style={{
+                        padding: '0.45rem 0.9rem',
+                        borderRadius: '20px',
+                        border: mallCategory === tab.id ? '1px solid #0F4C3A' : '1px solid #CBD5E1',
+                        background: mallCategory === tab.id ? '#0F4C3A' : '#FFFFFF',
+                        color: mallCategory === tab.id ? '#FFFFFF' : '#334155',
+                        fontWeight: 700,
+                        fontSize: '0.78rem',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        transition: 'all 0.15s ease',
+                        boxShadow: mallCategory === tab.id ? '0 2px 6px rgba(15,76,58,0.2)' : 'none'
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {filteredMalls.length === 0 ? (
+                  <div style={{ background: '#FFF', borderRadius: '12px', padding: '2rem', textAlign: 'center', border: '1px solid #E2E8F0', color: '#64748B' }}>
+                    <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>No shopping malls match your selected filter or search criteria.</p>
+                    <button
+                      onClick={() => { setMallCategory('all'); setSearchQuery(''); }}
+                      style={{ marginTop: '0.75rem', padding: '0.45rem 1rem', background: '#0F4C3A', color: '#FFF', borderRadius: '8px', border: 'none', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}
+                    >
+                      Reset Shopping Filters
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '1.25rem' }}>
+                    {filteredMalls.map((m) => {
+                      const mallSlug = m.slug
+                      const brandPreviewList = (m.topStoresAndBrands || [])
+                        .flatMap(c => c.brands || [])
+                        .slice(0, 4)
+                      const firstHighlight = m.keyHighlights && m.keyHighlights.length > 0 ? m.keyHighlights[0] : null
+
+                      return (
+                        <div
+                          key={m._id || mallSlug}
+                          onClick={() => setActiveMallModal(m)}
+                          style={{
+                            background: '#FFF',
+                            borderRadius: '14px',
+                            border: '1px solid #E2E8F0',
+                            overflow: 'hidden',
+                            boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            cursor: 'pointer',
+                            transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                          }}
+                        >
+                          {/* Mall Card Cover Banner */}
+                          <div
+                            style={{
+                              height: '145px',
+                              background: `linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.72)), url(${m.coverImageUrl})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                              padding: '10px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'space-between'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ background: 'rgba(15,23,42,0.82)', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', backdropFilter: 'blur(4px)' }}>
+                                🛍️ {m.category.replace(/&.*/, '').trim()}
+                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{ background: 'rgba(15,23,42,0.75)', color: '#A7F3D0', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                                  {m.budgetTier}
+                                </span>
+                                <span style={{ background: 'rgba(15,23,42,0.85)', color: '#FCD34D', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                  ★ {m.starRating}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                              <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#FFF', margin: 0, lineHeight: 1.25, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
+                                {m.name}
+                              </h3>
+                              {m.videoUrl && (
+                                <span style={{ background: 'rgba(239, 68, 68, 0.9)', color: '#FFF', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
+                                  <Play size={10} fill="#FFF" /> Video
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Mall Card Content Body */}
+                          <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                            {m.subtitle && (
+                              <p style={{ fontSize: '0.76rem', color: '#64748B', margin: '0 0 0.45rem', fontWeight: 600 }}>
+                                {m.subtitle}
+                              </p>
+                            )}
+
+                            {m.nearestMrt && (
+                              <div style={{ fontSize: '0.74rem', color: '#047857', fontWeight: 700, margin: '0 0 0.55rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                🚇 <span>{m.nearestMrt.station}</span>
+                                {m.nearestMrt.sheltered && (
+                                  <span style={{ fontSize: '0.65rem', color: '#059669', background: '#ECFDF5', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>Sheltered Walk</span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Highlight Chip */}
+                            {firstHighlight && (
+                              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '5px 8px', borderRadius: '6px', fontSize: '0.72rem', color: '#166534', fontWeight: 700, marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <span style={{ background: '#166534', color: '#FFF', fontSize: '0.62rem', padding: '1px 5px', borderRadius: '3px', fontWeight: 800 }}>
+                                  {firstHighlight.badge || 'PRO TIP'}
+                                </span>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {firstHighlight.title}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Top Brands Preview */}
+                            {brandPreviewList.length > 0 && (
+                              <div style={{ marginBottom: '0.75rem' }}>
+                                <span style={{ fontSize: '0.66rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', display: 'block', marginBottom: '3px' }}>
+                                  Top Brands:
+                                </span>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                  {brandPreviewList.map((brand, bidx) => (
+                                    <span key={bidx} style={{ background: '#F1F5F9', color: '#334155', fontSize: '0.68rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
+                                      {brand.replace(/\s*\(#.*\)/, '')}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Action Bar */}
+                            <div style={{ marginTop: 'auto', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.75rem', color: '#0F4C3A', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Play size={11} fill="#0F4C3A" /> Quick Preview
+                              </span>
+
+                              <Link
+                                href={`/services-catalog/shopping-malls/${mallSlug}`}
+                                onClick={e => e.stopPropagation()}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '6px',
+                                  background: '#0F4C3A',
+                                  color: '#FFF',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 800,
+                                  textDecoration: 'none'
+                                }}
+                              >
+                                <span>Mall Guide & Map</span> →
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* ══ SECTION E: TOUR GUIDES (PROFILES & LANGUAGES) ══ */}
             {(!settings.hideGuides && (activeTab === 'all' || activeTab === 'guides')) && (
               <section>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
@@ -1939,6 +2233,312 @@ export default function ServicesCatalogPage() {
                 }}
               >
                 <span>Full Guide, Gallery & Menu</span> →
+              </Link>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ══ SHOPPING MALL FULL DETAILS POPUP MODAL ══ */}
+      {activeMallModal && (
+        <div
+          onClick={() => setActiveMallModal(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(15, 23, 42, 0.8)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              width: '740px',
+              maxWidth: '94vw',
+              maxHeight: '88vh',
+              overflowY: 'auto',
+              backgroundColor: '#FFFFFF',
+              color: '#0F172A',
+              padding: 'clamp(1rem, 3.5vw, 1.5rem)',
+              borderRadius: '18px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+              border: '1px solid #E2E8F0',
+              boxSizing: 'border-box'
+            }}
+          >
+            <button
+              onClick={() => setActiveMallModal(null)}
+              style={{ position: 'absolute', top: '14px', right: '14px', background: '#F1F5F9', border: 'none', color: '#64748B', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}
+            >
+              <X size={18} />
+            </button>
+
+            {/* Modal Badges */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+                🛍️ {activeMallModal.category}
+              </span>
+              <span style={{ background: '#F1F5F9', color: '#334155', fontSize: '0.72rem', fontWeight: 700, padding: '3px 8px', borderRadius: '6px' }}>
+                Tier: {activeMallModal.budgetTier}
+              </span>
+              <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                ★ {activeMallModal.starRating} Rating
+              </span>
+              <span style={{ background: '#DCFCE7', color: '#166534', fontSize: '0.72rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
+                🏷️ eTRS 9% GST Refund
+              </span>
+            </div>
+
+            <h3 style={{ margin: '0 0 0.4rem', fontSize: 'clamp(1.2rem, 3vw, 1.45rem)', fontWeight: 900, color: '#0F172A', lineHeight: 1.25, wordBreak: 'break-word' }}>
+              {activeMallModal.name}
+            </h3>
+
+            {activeMallModal.subtitle && (
+              <p style={{ margin: '0 0 0.85rem', fontSize: '0.82rem', color: '#64748B', fontWeight: 600, wordBreak: 'break-word' }}>
+                {activeMallModal.subtitle}
+              </p>
+            )}
+
+            {/* Direct Link to Full Mall Experience (Top Placement) */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <Link
+                href={`/services-catalog/shopping-malls/${activeMallModal.slug}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  gap: '8px',
+                  padding: '0.75rem 1.2rem',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #0F4C3A 0%, #166534 100%)',
+                  color: '#FFF',
+                  fontWeight: 800,
+                  fontSize: '0.85rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 3px 10px rgba(15,76,58,0.25)'
+                }}
+              >
+                <span>Open Dedicated Full Mall Guide, Map & Timings Page</span> →
+              </Link>
+            </div>
+
+            {/* Video Showcase Player */}
+            {activeMallModal.videoUrl ? (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Play size={16} color="#EF4444" fill="#EF4444" /> Video Tour Showcase
+                </h4>
+                {activeMallModal.videoUrl.includes('youtube.com') || activeMallModal.videoUrl.includes('youtu.be') ? (
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+                    <iframe
+                      src={getYouTubeEmbedUrl(activeMallModal.videoUrl)}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title={activeMallModal.name}
+                    />
+                  </div>
+                ) : (
+                  <video
+                    controls
+                    autoPlay
+                    muted
+                    playsInline
+                    src={activeMallModal.videoUrl}
+                    style={{ width: '100%', maxHeight: '340px', borderRadius: '12px', background: '#000', border: '1px solid #E2E8F0' }}
+                  />
+                )}
+              </div>
+            ) : (
+              activeMallModal.coverImageUrl && (
+                <div
+                  onClick={() => openGalleryLightbox([activeMallModal.coverImageUrl, ...(activeMallModal.galleryImageUrls || [])], 0, activeMallModal.name)}
+                  style={{ position: 'relative', cursor: 'pointer', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.25rem', border: '1px solid #E2E8F0' }}
+                  title="Click to view full photo"
+                >
+                  <img src={activeMallModal.coverImageUrl} alt="" style={{ width: '100%', height: '220px', objectFit: 'cover', display: 'block' }} />
+                  <div style={{ position: 'absolute', bottom: '10px', right: '10px', background: 'rgba(15,23,42,0.85)', color: '#FFF', padding: '4px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <ImageIcon size={13} /> View Photo Gallery
+                  </div>
+                </div>
+              )
+            )}
+
+            {/* YouTube Shorts Carousel if present */}
+            {activeMallModal.shorts && activeMallModal.shorts.length > 0 && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={16} color="#D97706" /> Vertical Shorts & Reel Highlights
+                </h4>
+                <PackageShortsCarousel curatedShorts={activeMallModal.shorts} destination="Singapore" />
+              </div>
+            )}
+
+            {/* Photo Gallery Grid */}
+            {activeMallModal.galleryImageUrls && activeMallModal.galleryImageUrls.length > 0 && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <ImageIcon size={15} color="#0F4C3A" /> Mall & Store Gallery
+                  </h4>
+                  <span style={{ fontSize: '0.72rem', color: '#0F4C3A', fontWeight: 700 }}>Click to slide →</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '8px' }}>
+                  {[activeMallModal.coverImageUrl, ...activeMallModal.galleryImageUrls].filter(Boolean).slice(0, 4).map((imgUrl, gIdx) => (
+                    <div
+                      key={gIdx}
+                      onClick={() => openGalleryLightbox([activeMallModal.coverImageUrl, ...(activeMallModal.galleryImageUrls || [])], gIdx, activeMallModal.name)}
+                      style={{ height: '75px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #E2E8F0', cursor: 'pointer' }}
+                    >
+                      <img src={imgUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Key Highlights Grid */}
+            {activeMallModal.keyHighlights && activeMallModal.keyHighlights.length > 0 && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem' }}>Key Mall Highlights</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))', gap: '8px' }}>
+                  {activeMallModal.keyHighlights.map((kh, khIdx) => (
+                    <div key={khIdx} style={{ background: '#F8FAFC', padding: '0.75rem', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+                        <strong style={{ fontSize: '0.82rem', color: '#0F172A' }}>{kh.title}</strong>
+                        {kh.badge && (
+                          <span style={{ background: '#ECFDF5', color: '#047857', fontSize: '0.65rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                            {kh.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748B', lineHeight: 1.4 }}>{kh.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Overview & Description */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.4rem' }}>Overview & Shopping Experience</h4>
+              <p style={{ fontSize: '0.85rem', color: '#334155', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                {activeMallModal.overview}
+              </p>
+            </div>
+
+            {/* Top Stores & Brand Directory */}
+            {activeMallModal.topStoresAndBrands && activeMallModal.topStoresAndBrands.length > 0 && (
+              <div style={{ background: '#F8FAFC', padding: '1rem', borderRadius: '12px', border: '1px solid #E2E8F0', marginBottom: '1.25rem' }}>
+                <h4 style={{ margin: '0 0 0.65rem', fontSize: '0.88rem', fontWeight: 800, color: '#0F4C3A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🏷️ Top Store Categories & Brands
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {activeMallModal.topStoresAndBrands.map((cat, cIdx) => (
+                    <div key={cIdx} style={{ background: '#FFF', padding: '0.75rem 0.85rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
+                        <strong style={{ fontSize: '0.82rem', color: '#0F172A' }}>{cat.categoryName}</strong>
+                        {cat.discountBadge && (
+                          <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>
+                            {cat.discountBadge}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        {cat.brands.map((brand, bIdx) => (
+                          <span key={bIdx} style={{ background: '#F1F5F9', color: '#334155', fontSize: '0.72rem', fontWeight: 600, padding: '2px 6px', borderRadius: '4px' }}>
+                            {brand}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Location, Transit & Timings */}
+            <div style={{ background: '#F0FDF4', padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid #BBF7D0', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ fontSize: '0.82rem', color: '#166534', wordBreak: 'break-word' }}>
+                  <strong>📍 Location:</strong> {activeMallModal.locationAddress} ({activeMallModal.district})
+                </div>
+                {activeMallModal.nearestMrt && (
+                  <div style={{ fontSize: '0.8rem', color: '#15803D' }}>
+                    <strong>🚇 Nearest MRT:</strong> {activeMallModal.nearestMrt.station} ({activeMallModal.nearestMrt.line}) — {activeMallModal.nearestMrt.exit} ({activeMallModal.nearestMrt.walkingTime})
+                  </div>
+                )}
+                {activeMallModal.timings && (
+                  <div style={{ fontSize: '0.8rem', color: '#15803D' }}>
+                    <strong>🕒 Timings:</strong> {activeMallModal.timings}
+                  </div>
+                )}
+                {activeMallModal.bestTimeToVisit && (
+                  <div style={{ fontSize: '0.8rem', color: '#15803D' }}>
+                    <strong>💡 Best Time to Visit:</strong> {activeMallModal.bestTimeToVisit}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Bottom Actions */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '10px', paddingTop: '0.75rem', borderTop: '1px solid #F1F5F9' }}>
+              <a
+                href={`https://wa.me/${(activeMallModal.whatsappNumber || '919886171251').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(activeMallModal.whatsappMessage || `Hi Flying Wonders! I would like to inquire about shopping transfers and itinerary assistance for ${activeMallModal.name}.`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '0.65rem 1rem',
+                  borderRadius: '10px',
+                  background: '#25D366',
+                  color: '#FFF',
+                  fontWeight: 800,
+                  fontSize: '0.85rem',
+                  textDecoration: 'none',
+                  boxShadow: '0 3px 10px rgba(37,211,102,0.25)'
+                }}
+              >
+                <MessageCircle size={16} fill="#FFF" />
+                <span>WhatsApp Concierge</span>
+              </a>
+
+              <Link
+                href={`/services-catalog/shopping-malls/${activeMallModal.slug}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '0.65rem 1.15rem',
+                  borderRadius: '10px',
+                  background: '#0F4C3A',
+                  color: '#FFF',
+                  fontWeight: 800,
+                  fontSize: '0.85rem',
+                  textDecoration: 'none'
+                }}
+              >
+                <span>Full Mall Guide, Map & Timings</span> →
               </Link>
             </div>
 
