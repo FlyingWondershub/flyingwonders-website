@@ -358,11 +358,33 @@ export function compileEmailHtml(data: StructuredCampaignData): string {
   `.trim()
 }
 
-export default function NewsletterCampaignManager() {
+export interface NewsletterCampaignManagerProps {
+  proposals?: any[]
+  initialProposal?: any | null
+  onClearInitialProposal?: () => void
+}
+
+export default function NewsletterCampaignManager({
+  proposals = [],
+  initialProposal,
+  onClearInitialProposal
+}: NewsletterCampaignManagerProps = {}) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [subscriberCount, setSubscriberCount] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+
+  // AI & Proposal Assistant State
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false)
+  const [availableProposals, setAvailableProposals] = useState<any[]>(proposals || [])
+  const [isLoadingProposals, setIsLoadingProposals] = useState(false)
+  const [selectedProposalId, setSelectedProposalId] = useState<string>('')
+  const [aiSourceMode, setAiSourceMode] = useState<'proposal' | 'scratch'>('proposal')
+  const [customAiPrompt, setCustomAiPrompt] = useState('')
+  const [aiTone, setAiTone] = useState<'b2c' | 'b2b' | 'luxury' | 'deal'>('b2c')
+  const [aiImageCategory, setAiImageCategory] = useState<string>('skyline')
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false)
+  const [aiFeedback, setAiFeedback] = useState<{ success: boolean; message: string } | null>(null)
 
   // Editor Modal State
   const [isEditorOpen, setIsEditorOpen] = useState(false)
@@ -745,10 +767,191 @@ export default function NewsletterCampaignManager() {
   }, [])
 
   useEffect(() => {
-    if (targetAudience === 'tag' && selectedDispatchTags.length === 0 && availableSourceTags.length > 0) {
-      setSelectedDispatchTags([availableSourceTags[0].tag])
+    if (proposals && proposals.length > 0) {
+      setAvailableProposals(proposals)
     }
-  }, [targetAudience, selectedDispatchTags, availableSourceTags])
+  }, [proposals])
+
+  const fetchProposalsIfNeeded = async () => {
+    if (availableProposals.length > 0) return
+    setIsLoadingProposals(true)
+    try {
+      const res = await fetch('/api/proposals?listAll=true')
+      const data = await res.json()
+      if (data.success && Array.isArray(data.list)) {
+        setAvailableProposals(data.list)
+      }
+    } catch (err) {
+      console.error('Failed to fetch proposals for newsletter assistant:', err)
+    } finally {
+      setIsLoadingProposals(false)
+    }
+  }
+
+  const handleApplyProposalDirect = (prop: any, customNotes?: string, tone = 'b2c', imageCat = 'skyline') => {
+    const pNum = prop?.proposalNumber || ''
+    const guest = prop?.guestName || (tone === 'b2b' ? 'Valued Travel Partner' : 'Valued Traveler')
+    const nights = prop?.nights || 4
+    const days = nights + 1
+    const hotel = prop?.hotelName || 'Selected 4-Star Partner Hotel'
+    const adults = prop?.adults || 2
+    const kids = prop?.kids || 0
+
+    let extractedAttractions: string[] = []
+    if (prop?.itinerary) {
+      try {
+        const parsed = typeof prop.itinerary === 'string' ? JSON.parse(prop.itinerary) : prop.itinerary
+        if (Array.isArray(parsed)) {
+          parsed.forEach((day: any) => {
+            if (Array.isArray(day.attractions)) {
+              day.attractions.forEach((att: any) => {
+                const name = typeof att === 'string' ? att : att.title || att.name
+                if (name && !extractedAttractions.includes(name)) extractedAttractions.push(name)
+              })
+            }
+          })
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (extractedAttractions.length === 0) {
+      extractedAttractions = [
+        'Universal Studios Singapore (All-Zone Passes)',
+        'Gardens by the Bay (Cloud Forest Waterfall & Flower Dome)',
+        'Sentosa Island Mega Fun Pass & Cable Car Sky Network',
+        'Singapore River Cruise & Marina Bay Sands SkyPark'
+      ]
+    }
+
+    const heroImagesMap: Record<string, { url: string; alt: string }> = {
+      skyline: {
+        url: 'https://images.unsplash.com/photo-1506351421178-63b52a2d15c8?w=1200&auto=format&fit=crop&q=80',
+        alt: 'Marina Bay Sands Skyline and Singapore Waterfront'
+      },
+      gardens: {
+        url: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop&q=80',
+        alt: 'Gardens by the Bay Supertree Grove and Cloud Forest Dome'
+      },
+      sentosa: {
+        url: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=1200&auto=format&fit=crop&q=80',
+        alt: 'Sentosa Island and Universal Studios Singapore'
+      },
+      jewel: {
+        url: 'https://images.unsplash.com/photo-1574786198875-49f5d09fe2d5?w=1200&auto=format&fit=crop&q=80',
+        alt: 'Jewel Changi Airport Rain Vortex Waterfall'
+      },
+      wildlife: {
+        url: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=1200&auto=format&fit=crop&q=80',
+        alt: 'Singapore Wildlife Reserve and Night Safari'
+      },
+      luxury: {
+        url: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=1200&auto=format&fit=crop&q=80',
+        alt: 'Bioluminescent Supertrees and Luxury Singapore Evening'
+      }
+    }
+
+    const hero = heroImagesMap[imageCat] || heroImagesMap.skyline
+
+    const newTitle = `Proposal ${pNum} - ${guest} (${days}D${nights}N)`
+    const newSubject = tone === 'b2b'
+      ? `📋 B2B DMC Proposal ${pNum} | ${guest} - ${days}D${nights}N Singapore Package`
+      : `🌟 Your Singapore Vacation Proposal (${pNum}) | ${days}D${nights}N Custom Itinerary`
+    const newPreheader = `${days}D${nights}N Singapore Itinerary with ${hotel} & VIP Attraction Passes`
+
+    let body = `We are pleased to present your personalized Singapore holiday proposal curated by Flying Wonders DMC.\n\nYour customized itinerary features ${nights} nights accommodation at ${hotel}, private chauffeured ground transfers, and VIP admissions for ${adults} adult(s)${kids > 0 ? ` and ${kids} child(ren)` : ''}.\n\nEvery day of your journey is coordinated by our on-ground Singapore operations desk to ensure seamless convenience, zero ticket queues, and unforgettable moments.`
+    if (customNotes && customNotes.trim()) {
+      body += `\n\nSpecial Inclusions & Notes: ${customNotes.trim()}`
+    }
+
+    const ctaUrl = pNum
+      ? `https://flyingwonders.net/custom-package?ref=${encodeURIComponent(pNum)}`
+      : `https://flyingwonders.net/custom-package`
+
+    const highlights: HighlightItem[] = extractedAttractions.slice(0, 4).map((att, idx) => ({
+      id: String(idx + 1),
+      title: att,
+      desc: 'Guaranteed digital admission vouchers with skip-the-line privileges and seamless scheduled ground handling.'
+    }))
+
+    const newStructured: StructuredCampaignData = {
+      greeting: `Dear ${guest},`,
+      headline: `Exclusive Singapore ${days}D${nights}N Travel Proposal (${pNum})`,
+      bodyText: body,
+      heroImage: hero.url,
+      heroImageAlt: hero.alt,
+      heroImageLink: ctaUrl,
+      heroImagePosition: 'top',
+      highlights,
+      showCta: true,
+      ctaText: `Review Proposal & Confirm Package →`,
+      ctaUrl,
+      showWhatsApp: true,
+      whatsAppText: `Hi Flying Wonders, I received your proposal email for ${pNum} (${guest}) and would like to proceed.`,
+      showSignature: true,
+      salutation: 'Thanks & Best Regards,',
+      signoffName: 'Nithin'
+    }
+
+    setEditingCampaignId(null)
+    setFormTitle(newTitle)
+    setFormSubject(newSubject)
+    setFormPreheader(newPreheader)
+    setStructuredData(newStructured)
+    setRawHtmlContent(compileEmailHtml(newStructured))
+    setEditorMode('visual')
+    setSelectedProposalId(prop._id || prop.proposalNumber)
+  }
+
+  const handleGenerateAiCampaign = async () => {
+    setIsGeneratingAi(true)
+    setAiFeedback(null)
+    try {
+      const selectedProp = aiSourceMode === 'proposal' && selectedProposalId
+        ? availableProposals.find(p => p._id === selectedProposalId || p.proposalNumber === selectedProposalId)
+        : null
+
+      const res = await fetch('/api/admin/ai-generate-newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proposal: selectedProp,
+          customPrompt: customAiPrompt,
+          tone: aiTone,
+          imageCategory: aiImageCategory
+        })
+      })
+
+      const data = await res.json()
+      if (data.success && data.structuredData) {
+        setEditingCampaignId(null)
+        setFormTitle(data.title || 'Singapore Campaign')
+        setFormSubject(data.subject || '🌟 Singapore Exclusive Travel Proposal')
+        setFormPreheader(data.preheader || '')
+        setStructuredData(data.structuredData)
+        setRawHtmlContent(compileEmailHtml(data.structuredData))
+        setEditorMode('visual')
+        setIsAiModalOpen(false)
+        setIsEditorOpen(true)
+        setSaveMessage('✨ Campaign drafted with AI & proposal data successfully! You can now review and edit all fields.')
+      } else {
+        setAiFeedback({ success: false, message: data.error || 'Failed to generate campaign with AI' })
+      }
+    } catch (err: any) {
+      setAiFeedback({ success: false, message: err.message || 'Error executing AI generation' })
+    } finally {
+      setIsGeneratingAi(false)
+    }
+  }
+
+  useEffect(() => {
+    if (initialProposal) {
+      handleApplyProposalDirect(initialProposal)
+      setIsEditorOpen(true)
+      onClearInitialProposal?.()
+    }
+  }, [initialProposal])
 
   const handleOpenNew = () => {
     setEditingCampaignId(null)
@@ -1664,6 +1867,31 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
           </button>
 
           <button
+            type="button"
+            onClick={() => {
+              fetchProposalsIfNeeded()
+              setIsAiModalOpen(true)
+            }}
+            style={{
+              padding: '8px 16px',
+              background: 'linear-gradient(135deg, #7C3AED, #9333EA)',
+              color: '#FFF',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              boxShadow: '0 2px 6px rgba(124, 58, 237, 0.25)'
+            }}
+          >
+            <Sparkles size={15} color="#FFF" />
+            ✨ AI & Proposal Studio
+          </button>
+
+          <button
             onClick={handleOpenNew}
             style={{ padding: '8px 16px', background: '#800020', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 700 }}
           >
@@ -2347,7 +2575,7 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
             </div>
 
             {/* Quick Starter Presets Bar */}
-            <div style={{ padding: '10px 24px', background: '#FFFBEB', borderBottom: '1px solid #FEF3C7', display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto' }}>
+            <div style={{ padding: '10px 24px', background: '#FFFBEB', borderBottom: '1px solid #FEF3C7', display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#92400E', whiteSpace: 'nowrap' }}>
                 Quick Presets:
               </span>
@@ -2361,6 +2589,65 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                   {preset.name}
                 </button>
               ))}
+
+              {/* Proposal Fast Loader & AI Generator */}
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                <select
+                  value={selectedProposalId}
+                  onChange={(e) => {
+                    const id = e.target.value
+                    setSelectedProposalId(id)
+                    if (id) {
+                      const prop = availableProposals.find(p => p._id === id || p.proposalNumber === id)
+                      if (prop) handleApplyProposalDirect(prop)
+                    }
+                  }}
+                  onFocus={fetchProposalsIfNeeded}
+                  style={{
+                    padding: '4px 8px',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    borderRadius: '6px',
+                    border: '1px solid #CBD5E1',
+                    background: '#FFFFFF',
+                    color: '#1E293B',
+                    cursor: 'pointer',
+                    maxWidth: '220px'
+                  }}
+                >
+                  <option value="">📄 Load from Proposal...</option>
+                  {availableProposals.map((p: any) => (
+                    <option key={p._id || p.proposalNumber} value={p._id || p.proposalNumber}>
+                      {p.proposalNumber} - {p.guestName || 'FIT'} ({p.nights || 4}N)
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    fetchProposalsIfNeeded()
+                    setIsAiModalOpen(true)
+                  }}
+                  style={{
+                    padding: '4px 12px',
+                    background: 'linear-gradient(135deg, #7C3AED, #9333EA)',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '0.74rem',
+                    fontWeight: 700,
+                    color: '#FFFFFF',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  <Sparkles size={13} color="#FFF" />
+                  ✨ AI Generator
+                </button>
+              </div>
             </div>
 
             {/* Split Screen: Left = Form Inputs, Right = Live Side-by-Side Preview */}
@@ -5406,6 +5693,320 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
               >
                 Close
               </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ── AI & PROPOSAL CAMPAIGN STUDIO MODAL ── */}
+      {isAiModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ background: '#FFFFFF', maxWidth: '680px', width: '100%', maxHeight: '92vh', borderRadius: '16px', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)', overflow: 'hidden' }}>
+            
+            {/* Modal Header */}
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'linear-gradient(135deg, #FAF5FF, #F3E8FF)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #7C3AED, #9333EA)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF' }}>
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.08rem', fontWeight: 800, color: '#1E1B4B', margin: 0, fontFamily: 'var(--font-playfair), serif' }}>
+                    AI Campaign & Proposal Studio
+                  </h3>
+                  <p style={{ fontSize: '0.78rem', color: '#6B21A8', margin: '2px 0 0 0' }}>
+                    Generate bespoke copy, highlights, and matching imagery from proposals or custom ideas.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAiModalOpen(false)}
+                style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#64748B', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div style={{ padding: '20px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              
+              {/* Step 1: Content Source */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
+                  1. SELECT CAMPAIGN SOURCE:
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setAiSourceMode('proposal')}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: aiSourceMode === 'proposal' ? '2px solid #7C3AED' : '1px solid #CBD5E1',
+                      background: aiSourceMode === 'proposal' ? '#FAF5FF' : '#FFFFFF',
+                      color: aiSourceMode === 'proposal' ? '#581C87' : '#334155',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <FileText size={16} color={aiSourceMode === 'proposal' ? '#7C3AED' : '#64748B'} />
+                    <div>
+                      <div>From Existing Proposal</div>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 500, color: '#64748B' }}>Auto-extract hotel, pax & attractions</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAiSourceMode('scratch')}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: aiSourceMode === 'scratch' ? '2px solid #7C3AED' : '1px solid #CBD5E1',
+                      background: aiSourceMode === 'scratch' ? '#FAF5FF' : '#FFFFFF',
+                      color: aiSourceMode === 'scratch' ? '#581C87' : '#334155',
+                      fontWeight: 700,
+                      fontSize: '0.82rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <Sparkles size={16} color={aiSourceMode === 'scratch' ? '#7C3AED' : '#64748B'} />
+                    <div>
+                      <div>From Scratch / Custom Idea</div>
+                      <div style={{ fontSize: '0.7rem', fontWeight: 500, color: '#64748B' }}>Fresh marketing broadcast or deal</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Proposal Selector (Conditional) */}
+              {aiSourceMode === 'proposal' && (
+                <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>
+                    Choose Proposal to Output:
+                  </label>
+                  <select
+                    value={selectedProposalId}
+                    onChange={(e) => setSelectedProposalId(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid #CBD5E1',
+                      background: '#FFFFFF',
+                      color: '#0F172A',
+                      fontSize: '0.84rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    <option value="">-- Choose a proposal ({availableProposals.length} in database) --</option>
+                    {availableProposals.map((p: any) => (
+                      <option key={p._id || p.proposalNumber} value={p._id || p.proposalNumber}>
+                        {p.proposalNumber} • {p.guestName || 'FIT Client'} • {p.nights || 4}N / {p.hotelName || 'Hotel'} {p.costBreakdown?.totalClientPrice ? `• S$${p.costBreakdown.totalClientPrice}` : ''}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Selected Proposal Preview Summary */}
+                  {selectedProposalId && (() => {
+                    const sel = availableProposals.find(p => p._id === selectedProposalId || p.proposalNumber === selectedProposalId)
+                    if (!sel) return null
+                    return (
+                      <div style={{ marginTop: '10px', padding: '8px 12px', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.76rem', color: '#334155', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                        <div><strong>Guest:</strong> {sel.guestName || 'N/A'}</div>
+                        <div><strong>Duration:</strong> {sel.nights} Nights ({sel.adults || 2}A / {sel.kids || 0}K)</div>
+                        <div><strong>Hotel:</strong> {sel.hotelName || 'Not specified'}</div>
+                        {sel.costBreakdown?.totalClientPrice && (
+                          <div style={{ color: '#166534', fontWeight: 700 }}>
+                            <strong>Price:</strong> S$ {sel.costBreakdown.totalClientPrice}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
+
+              {/* Step 2: Tone & Audience */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
+                  2. AUDIENCE & TONE:
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                  {[
+                    { id: 'b2c', label: '🌴 B2C Traveler', sub: 'Exciting & Warm' },
+                    { id: 'b2b', label: '🤝 B2B Agent', sub: 'Wholesale / DMC' },
+                    { id: 'luxury', label: '✨ Luxury VIP', sub: 'Concierge / 5-Star' },
+                    { id: 'deal', label: '🔥 Flash Promo', sub: 'Urgent & Limited' },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setAiTone(t.id as any)}
+                      style={{
+                        padding: '8px 6px',
+                        borderRadius: '6px',
+                        border: aiTone === t.id ? '2px solid #7C3AED' : '1px solid #CBD5E1',
+                        background: aiTone === t.id ? '#FAF5FF' : '#FFFFFF',
+                        color: aiTone === t.id ? '#6B21A8' : '#334155',
+                        cursor: 'pointer',
+                        textAlign: 'center'
+                      }}
+                    >
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700 }}>{t.label}</div>
+                      <div style={{ fontSize: '0.68rem', color: '#64748B', marginTop: '2px' }}>{t.sub}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Step 3: Hero Image Landmark */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', marginBottom: '8px' }}>
+                  3. HERO BANNER VISUAL (Authentic Singapore Landmark):
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  {[
+                    { id: 'skyline', label: 'Marina Bay Skyline', icon: '🏙️' },
+                    { id: 'gardens', label: 'Gardens by the Bay', icon: '🌸' },
+                    { id: 'sentosa', label: 'Sentosa & USS', icon: '🎢' },
+                    { id: 'jewel', label: 'Jewel Changi Vortex', icon: '🌊' },
+                    { id: 'wildlife', label: 'Wildlife & Safari', icon: '🦁' },
+                    { id: 'luxury', label: 'Luxury Supertrees', icon: '💎' }
+                  ].map((img) => (
+                    <button
+                      key={img.id}
+                      type="button"
+                      onClick={() => setAiImageCategory(img.id)}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        border: aiImageCategory === img.id ? '2px solid #7C3AED' : '1px solid #CBD5E1',
+                        background: aiImageCategory === img.id ? '#FAF5FF' : '#FFFFFF',
+                        color: aiImageCategory === img.id ? '#6B21A8' : '#334155',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.76rem',
+                        fontWeight: 700
+                      }}
+                    >
+                      <span>{img.icon}</span>
+                      <span>{img.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Step 4: Custom Notes / Extra Text */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', marginBottom: '4px' }}>
+                  4. EXTRA INSTRUCTIONS & CUSTOM NOTES (Optional):
+                </label>
+                <div style={{ fontSize: '0.72rem', color: '#64748B', marginBottom: '6px' }}>
+                  Input any extra remarks, discounts, specific attraction perks, or hotel room preferences to weave into the copy.
+                </div>
+                <textarea
+                  rows={3}
+                  value={customAiPrompt}
+                  onChange={(e) => setCustomAiPrompt(e.target.value)}
+                  placeholder="e.g. Include 10% early bird booking discount for November, highlight private Toyota Alphard VIP transfers, and mention starting price S$480/pax..."
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '0.82rem',
+                    color: '#0F172A',
+                    fontFamily: 'var(--font-inter), sans-serif',
+                    background: '#FFFFFF'
+                  }}
+                />
+              </div>
+
+              {/* Feedback Error / Notice */}
+              {aiFeedback && (
+                <div style={{ padding: '10px 14px', borderRadius: '8px', background: aiFeedback.success ? '#ECFDF5' : '#FEF2F2', color: aiFeedback.success ? '#065F46' : '#991B1B', fontSize: '0.82rem', fontWeight: 600 }}>
+                  {aiFeedback.message}
+                </div>
+              )}
+
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div style={{ padding: '14px 24px', borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFC' }}>
+              <button
+                type="button"
+                onClick={() => setIsAiModalOpen(false)}
+                style={{ padding: '8px 16px', background: '#FFFFFF', border: '1px solid #CBD5E1', borderRadius: '6px', fontSize: '0.82rem', fontWeight: 600, color: '#475569', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {/* Fast Apply without AI (instant 0s fallback) */}
+                {aiSourceMode === 'proposal' && selectedProposalId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const prop = availableProposals.find(p => p._id === selectedProposalId || p.proposalNumber === selectedProposalId)
+                      if (prop) {
+                        handleApplyProposalDirect(prop, customAiPrompt, aiTone, aiImageCategory)
+                        setIsAiModalOpen(false)
+                        setIsEditorOpen(true)
+                        setSaveMessage(`Loaded Proposal ${prop.proposalNumber}! Review or edit details below.`)
+                      }
+                    }}
+                    style={{
+                      padding: '8px 14px',
+                      background: '#FFFFFF',
+                      border: '1px solid #7C3AED',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      color: '#6B21A8',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    📄 Quick Load (Zero AI)
+                  </button>
+                )}
+
+                {/* Gemini AI Generator */}
+                <button
+                  type="button"
+                  onClick={handleGenerateAiCampaign}
+                  disabled={isGeneratingAi}
+                  style={{
+                    padding: '8px 20px',
+                    background: isGeneratingAi ? '#94A3B8' : 'linear-gradient(135deg, #7C3AED, #9333EA)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    color: '#FFFFFF',
+                    cursor: isGeneratingAi ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 8px rgba(124, 58, 237, 0.3)'
+                  }}
+                >
+                  <Sparkles size={15} color="#FFF" className={isGeneratingAi ? 'animate-spin' : ''} />
+                  {isGeneratingAi ? 'Drafting with Gemini AI...' : '✨ Generate with Gemini AI'}
+                </button>
+              </div>
             </div>
 
           </div>

@@ -28,6 +28,9 @@ interface AdminMarketingViewProps {
   toggleTravelNews: () => void
   toggleBorderTraffic: () => void
   toggleAirlinePromos: () => void
+  proposals?: any[]
+  proposalForNewsletter?: any | null
+  clearProposalForNewsletter?: () => void
 }
 
 export default function AdminMarketingView({
@@ -41,7 +44,10 @@ export default function AdminMarketingView({
   toggleAdCategory,
   toggleTravelNews,
   toggleBorderTraffic,
-  toggleAirlinePromos
+  toggleAirlinePromos,
+  proposals,
+  proposalForNewsletter,
+  clearProposalForNewsletter
 }: AdminMarketingViewProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', paddingBottom: '3rem' }}>
@@ -49,7 +55,11 @@ export default function AdminMarketingView({
       {/* ── SUB-TAB 1: NEWSLETTER CAMPAIGNS ── */}
       {subTab === 'newsletters' && (
         <div>
-          <NewsletterCampaignManager />
+          <NewsletterCampaignManager
+            proposals={proposals}
+            initialProposal={proposalForNewsletter}
+            onClearInitialProposal={clearProposalForNewsletter}
+          />
         </div>
       )}
 

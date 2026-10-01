@@ -16,7 +16,9 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
-  DollarSign
+  DollarSign,
+  Sparkles,
+  Mail
 } from 'lucide-react'
 
 interface AdminPackagesViewProps {
@@ -28,6 +30,7 @@ interface AdminPackagesViewProps {
   refreshData: () => Promise<void>
   selectedProposal: any | null
   setSelectedProposal: (proposal: any | null) => void
+  onOpenNewsletterWithProposal?: (proposal: any) => void
 }
 
 export default function AdminPackagesView({
@@ -38,7 +41,8 @@ export default function AdminPackagesView({
   updatePackageStatus,
   refreshData,
   selectedProposal,
-  setSelectedProposal
+  setSelectedProposal,
+  onOpenNewsletterWithProposal
 }: AdminPackagesViewProps) {
   // Table filters & search
   const [packageFilter, setPackageFilter] = useState('all')
@@ -419,6 +423,31 @@ export default function AdminPackagesView({
                             >
                               Details
                             </button>
+                            {onOpenNewsletterWithProposal && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onOpenNewsletterWithProposal(p)
+                                }}
+                                title="Create Email Campaign / Flyer from this Proposal"
+                                style={{
+                                  padding: '0.3rem 0.65rem',
+                                  background: '#FAF5FF',
+                                  border: '1px solid #D8B4FE',
+                                  borderRadius: '6px',
+                                  color: '#6B21A8',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  marginLeft: '6px'
+                                }}
+                              >
+                                <Sparkles size={12} color="#7C3AED" /> Flyer
+                              </button>
+                            )}
                           </td>
                         </tr>
 
@@ -1052,7 +1081,33 @@ export default function AdminPackagesView({
             )}
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', borderTop: '1px solid #E2E8F0', paddingTop: '0.85rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', alignItems: 'center', borderTop: '1px solid #E2E8F0', paddingTop: '0.85rem' }}>
+              {onOpenNewsletterWithProposal && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const propToOpen = selectedProposal
+                    setSelectedProposal(null)
+                    onOpenNewsletterWithProposal(propToOpen)
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.55rem 1.1rem',
+                    background: 'linear-gradient(135deg, #7C3AED, #9333EA)',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(124, 58, 237, 0.25)'
+                  }}
+                >
+                  <Sparkles size={14} color="#FFF" /> Create Email Campaign / Flyer
+                </button>
+              )}
               <a
                 href={`/custom-package?ref=${selectedProposal.proposalNumber}`}
                 target="_blank"

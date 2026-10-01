@@ -61,6 +61,13 @@ function AdminDashboardContent() {
   const [voucherModalOpen, setVoucherModalOpen] = useState(false)
   const [editingVoucher, setEditingVoucher] = useState<any | null>(null)
   const [selectedProposal, setSelectedProposal] = useState<any | null>(null)
+  const [proposalForNewsletter, setProposalForNewsletter] = useState<any | null>(null)
+
+  const handleOpenNewsletterWithProposal = (prop: any) => {
+    setProposalForNewsletter(prop)
+    setCurrentWorkspace('marketing')
+    setCurrentSubTab('newsletters')
+  }
 
   // Ad Toggles
   const [adBlogEnabled, setAdBlogEnabled] = useState(true)
@@ -685,6 +692,7 @@ function AdminDashboardContent() {
               refreshData={fetchData}
               selectedProposal={selectedProposal}
               setSelectedProposal={setSelectedProposal}
+              onOpenNewsletterWithProposal={handleOpenNewsletterWithProposal}
             />
           )}
 
@@ -732,6 +740,9 @@ function AdminDashboardContent() {
               toggleTravelNews={toggleTravelNews}
               toggleBorderTraffic={toggleBorderTraffic}
               toggleAirlinePromos={toggleAirlinePromos}
+              proposals={proposals}
+              proposalForNewsletter={proposalForNewsletter}
+              clearProposalForNewsletter={() => setProposalForNewsletter(null)}
             />
           )}
 

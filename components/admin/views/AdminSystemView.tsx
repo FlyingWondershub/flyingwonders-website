@@ -59,7 +59,7 @@ export default function AdminSystemView({
       links: [
         { name: 'Sanity Studio CMS', path: '/studio', desc: 'Manage database schemas & live content' },
         { name: 'Marketing & B2B Leads Directory', path: '/admin-dashboard?workspace=marketing&tab=leads', desc: 'WhatsApp, CSV lead ingestion & CRM pipeline' },
-        { name: 'Email Campaigns & Subscribers Audience', path: '/admin-dashboard?workspace=marketing&tab=newsletters', desc: 'Visual block builder & Brevo dispatch' },
+        { name: 'Email Campaigns & AI Proposal Studio', path: '/admin-dashboard?workspace=marketing&tab=newsletters', desc: 'AI content generator, proposal converter, visual builder & dispatch' },
         { name: 'B2B Agent Portal', path: '/agent-portal', desc: 'Partner agent workspace & dashboard' },
         { name: 'Custom Package Builder & Land Quoter', path: '/custom-package', desc: 'FIT quotation engine, PDF & Flyer generator' },
         { name: 'Ready-Made Land Packages (No Hotels)', path: '/ready-made', desc: 'Dedicated B2B land packages (13-seater minibus & SIC)' },
