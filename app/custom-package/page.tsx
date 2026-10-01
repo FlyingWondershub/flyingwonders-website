@@ -3016,12 +3016,18 @@ export default function PrototypeBuilder() {
 
     itinerary.forEach((day, dIdx) => {
       day.transfers.forEach(trans => {
-        let vehicle: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[trans.vehicleIndex]
+        let vehicle: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = undefined
+        if ((trans as any).compositeKey) {
+          vehicle = vehiclesList.find(v => v.compositeKey && v.compositeKey.toLowerCase().trim() === (trans as any).compositeKey?.toLowerCase().trim())
+        }
         if (!vehicle && (trans.type || trans.serviceName)) {
           vehicle = vehiclesList.find(v => 
             (trans.type && v.type.toLowerCase().trim() === trans.type.toLowerCase().trim()) ||
             (trans.serviceName && v.serviceName && v.serviceName.toLowerCase().trim() === trans.serviceName.toLowerCase().trim())
           )
+        }
+        if (!vehicle && typeof trans.vehicleIndex === 'number' && trans.vehicleIndex >= 0 && trans.vehicleIndex < vehiclesList.length) {
+          vehicle = vehiclesList[trans.vehicleIndex]
         }
         if (vehicle) {
           const qty = trans.qty || 1
@@ -3033,9 +3039,12 @@ export default function PrototypeBuilder() {
       })
 
       day.attractions.forEach(attrRow => {
-        let attr: { name: string; adultPrice: number; childPrice: number; area?: string; rateType?: string } | undefined = attractionsList[attrRow.attractionIndex]
+        let attr: { name: string; adultPrice: number; childPrice: number; area?: string; rateType?: string } | undefined = undefined
         if (!attr && attrRow.attractionName) {
-          attr = attractionsList.find(a => a.name.toLowerCase().trim() === attrRow.attractionName?.toLowerCase().trim())
+          attr = findMatchingAttraction(attrRow.attractionName, attractionsList) || attractionsList.find(a => a.name.toLowerCase().trim() === attrRow.attractionName?.toLowerCase().trim())
+        }
+        if (!attr && typeof attrRow.attractionIndex === 'number' && attrRow.attractionIndex >= 0 && attrRow.attractionIndex < attractionsList.length) {
+          attr = attractionsList[attrRow.attractionIndex]
         }
         if (!attr && (typeof (attrRow as any).adultPrice === 'number' || typeof (attrRow as any).childPrice === 'number')) {
           attr = {
@@ -3171,9 +3180,12 @@ export default function PrototypeBuilder() {
       }
 
       day.guides.forEach(guideRow => {
-        let guide: { type: string; pricePerDay: number } | undefined = guidesList[guideRow.guideIndex]
+        let guide: { type: string; pricePerDay: number } | undefined = undefined
         if (!guide && guideRow.type) {
           guide = guidesList.find(g => g.type.toLowerCase().trim() === guideRow.type?.toLowerCase().trim())
+        }
+        if (!guide && typeof guideRow.guideIndex === 'number' && guideRow.guideIndex >= 0 && guideRow.guideIndex < guidesList.length) {
+          guide = guidesList[guideRow.guideIndex]
         }
         if (guide) {
           guideTotal += guide.pricePerDay
@@ -3385,7 +3397,7 @@ export default function PrototypeBuilder() {
         })
       })
       day.attractions.forEach(a => {
-        const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+        const rawName = a.attractionName || attractionsList[a.attractionIndex]?.name || 'Attraction'
         const name = cleanItemTitle(rawName)
         const isTransferAttraction = isTransferAttractionName(rawName)
         const isCityTourAttraction = isCityTourName(rawName)
@@ -4452,7 +4464,7 @@ export default function PrototypeBuilder() {
 
     // Preload attraction card photos (480x312 px exact 40mm x 26mm ratio: zero distortion, razor-sharp 305 DPI print)
     const attractionPhotosMap = new Map<string, string>()
-    const distinctAttractionNames = Array.from(new Set(itinerary.flatMap(d => (d.attractions || []).map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '')))).filter(Boolean)
+    const distinctAttractionNames = Array.from(new Set(itinerary.flatMap(d => (d.attractions || []).map(a => a.attractionName || attractionsList[a.attractionIndex]?.name || '')))).filter(Boolean)
     await Promise.all(
       distinctAttractionNames.map(async (name) => {
         const meta = getAttractionMetaInfo(name, attractionsMeta)
@@ -4504,7 +4516,7 @@ export default function PrototypeBuilder() {
       })
       ;(d.attractions || []).forEach(a => {
         if (a.hasTransfer) {
-          const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+          const rawName = a.attractionName || attractionsList[a.attractionIndex]?.name || 'Attraction'
           if (a.pickupEnabled !== false) {
             const pvIdx = a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13TransferIdx
             const pvObj = vehiclesList[pvIdx]
@@ -4577,7 +4589,7 @@ export default function PrototypeBuilder() {
 
     // Preload guide photos (only if guides are present in itinerary)
     const guidePhotosMap = new Map<string, string>()
-    const distinctGuides = Array.from(new Set(itinerary.flatMap(d => (d.guides || []).map(g => guidesList[g.guideIndex]?.type || g.type || '')))).filter(Boolean)
+    const distinctGuides = Array.from(new Set(itinerary.flatMap(d => (d.guides || []).map(g => g.type || guidesList[g.guideIndex]?.type || '')))).filter(Boolean)
     await Promise.all(
       distinctGuides.map(async (gt) => {
         const meta = getGuideMetaInfo(gt, guidesMeta)
@@ -5112,7 +5124,7 @@ export default function PrototypeBuilder() {
       itinerary.forEach(d => {
         d.attractions?.forEach(a => {
           if (!a.isOptional) {
-            const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || ''
+            const rawName = a.attractionName || attractionsList[a.attractionIndex]?.name || ''
             if (rawName && !isTransferAttractionName(rawName)) {
               const cleaned = cleanInclusionAttractionTitle(rawName)
               const norm = cleaned.toLowerCase()
@@ -5129,7 +5141,7 @@ export default function PrototypeBuilder() {
       const allVehiclesSet = new Set<string>()
       itinerary.forEach(d => {
         d.transfers?.forEach(t => {
-          const v = vehiclesList[t.vehicleIndex]?.type || t.type
+          const v = t.type || vehiclesList[t.vehicleIndex]?.type
           if (v) allVehiclesSet.add(v)
         })
         d.attractions?.forEach(a => {
@@ -5410,7 +5422,7 @@ export default function PrototypeBuilder() {
 
         // 3. Attractions with optional pickup/drop transfers
         day.attractions.forEach(a => {
-          const name = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+          const name = a.attractionName || attractionsList[a.attractionIndex]?.name || 'Attraction'
           const isOpt = !!a.isOptional
           if (a.hasTransfer) {
             if (a.pickupEnabled !== false) {
@@ -5826,7 +5838,7 @@ export default function PrototypeBuilder() {
             } else if (item.type === 'attraction' && item.attractionData) {
               // ── Rich Attraction Card (Placed at exact 24-hour time) ──
               const a = item.attractionData
-              const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+              const rawName = a.attractionName || attractionsList[a.attractionIndex]?.name || 'Attraction'
               const attrName = cleanPdfText(rawName)
               const notes = a.description ? cleanPdfText(a.description) : ''
               const meta = getAttractionMetaInfo(rawName, attractionsMeta) || getAttractionMetaInfo(attrName, attractionsMeta)
@@ -6469,7 +6481,7 @@ export default function PrototypeBuilder() {
 
         // Extract attractions with robust fallback
         for (const a of day.attractions) {
-          const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || ''
+          const rawName = a.attractionName || attractionsList[a.attractionIndex]?.name || ''
           if (isTransferAttractionName(rawName) || isCityTourName(rawName)) {
             if (isCityTourName(rawName) && !attractionUrls.includes('/images/transfers/city-tour.jpg')) {
               attractionUrls.push('/images/transfers/city-tour.jpg')
@@ -6495,8 +6507,8 @@ export default function PrototypeBuilder() {
           else if (idx === nightsCount) url1 = SCENIC_PHOTOS.departure
           else {
             const allText = [
-              ...day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || ''),
-              ...day.transfers.map(t => vehiclesList[t.vehicleIndex]?.type || t.type || ''),
+              ...day.attractions.map(a => a.attractionName || attractionsList[a.attractionIndex]?.name || ''),
+              ...day.transfers.map(t => t.type || vehiclesList[t.vehicleIndex]?.type || ''),
             ].join(' ').toLowerCase()
             for (const [kw, u] of Object.entries(SCENIC_PHOTOS)) {
               if (allText.includes(kw)) { url1 = u; break }
@@ -6667,7 +6679,7 @@ export default function PrototypeBuilder() {
           curY += 11.5
 
           // Day Title (Refined Luxury Phrasing)
-          const dayAttrNames = day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '').filter(Boolean)
+          const dayAttrNames = day.attractions.map(a => a.attractionName || attractionsList[a.attractionIndex]?.name || '').filter(Boolean)
           let dayTitle = ''
           if (day.dayTitle && day.dayTitle.trim().length > 3) {
             dayTitle = cleanItemTitle(day.dayTitle.trim())
@@ -6794,7 +6806,7 @@ export default function PrototypeBuilder() {
 
           // Attractions (with optional pickup/drop)
           day.attractions.forEach(a => {
-            const rawName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+            const rawName = a.attractionName || attractionsList[a.attractionIndex]?.name || 'Attraction'
             const name = cleanItemTitle(rawName)
             const isOpt = !!a.isOptional
             const isTransferAttraction = isTransferAttractionName(rawName)
@@ -6890,7 +6902,7 @@ export default function PrototypeBuilder() {
 
           // Tour Guides
           day.guides.forEach(g => {
-            const gt = guidesList[g.guideIndex]?.type || g.type || 'Tour Guide'
+            const gt = g.type || guidesList[g.guideIndex]?.type || 'Tour Guide'
             const gMeta = getGuideMetaInfo(gt, guidesMeta)
             const badge = gMeta?.certifications?.[0] ? ` (${gMeta.certifications[0]})` : ''
             highlights.push({ time: g.time || '09:00', type: 'service', label: 'GUIDE SERVICE', text: `${gt}${badge}` })
@@ -6919,7 +6931,7 @@ export default function PrototypeBuilder() {
               dayMeals.push(mt)
             })
           }
-          const allAttrText = day.attractions.map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '').join(' ').toLowerCase()
+          const allAttrText = day.attractions.map(a => a.attractionName || attractionsList[a.attractionIndex]?.name || '').join(' ').toLowerCase()
           if (allAttrText.includes('dinner') && !dayMeals.includes('Dinner')) dayMeals.push('Dinner')
           if (allAttrText.includes('lunch') && !dayMeals.includes('Lunch')) dayMeals.push('Lunch')
           if (allAttrText.includes('breakfast') && !dayMeals.includes('Breakfast')) dayMeals.push('Breakfast')
@@ -7176,7 +7188,7 @@ export default function PrototypeBuilder() {
         : `≈ S$ ${costBreakdown.adultQuote.toLocaleString()} SGD`
 
       // Photos from itinerary - prioritize Sanity CMS photoUrl
-      const distinctNames = Array.from(new Set(itinerary.flatMap(d => (d.attractions || []).map(a => attractionsList[a.attractionIndex]?.name || a.attractionName || '')))).filter(Boolean)
+      const distinctNames = Array.from(new Set(itinerary.flatMap(d => (d.attractions || []).map(a => a.attractionName || attractionsList[a.attractionIndex]?.name || '')))).filter(Boolean)
       const attractionPhotos = distinctNames.map(name => {
         const meta = getAttractionMetaInfo(name, attractionsMeta)
         return {
@@ -7783,8 +7795,8 @@ export default function PrototypeBuilder() {
               let vIdx = -1
 
               // 1. If valid vehicleIndex was saved, prioritize it!
-              if (typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0) {
-                vIdx = t.vehicleIndex
+              if (t.compositeKey && vehiclesList.length > 0) {
+                vIdx = vehiclesList.findIndex(v => v.compositeKey?.toLowerCase() === t.compositeKey?.toLowerCase())
               }
 
               // 2. Match by exact vehicle type + serviceName if available
@@ -7830,6 +7842,9 @@ export default function PrototypeBuilder() {
               }
 
               // 5. Fallback: only if index is unresolved, get 13-seater default
+              if (vIdx < 0 && typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && t.vehicleIndex < vehiclesList.length) {
+                vIdx = t.vehicleIndex
+              }
               if (vIdx < 0) {
                 vIdx = get13SeaterVehicleIndex(vehiclesList, t.serviceType, desc)
               }
@@ -7853,13 +7868,16 @@ export default function PrototypeBuilder() {
             meals: Array.isArray(day.meals) ? day.meals.map((m: any) => ({ ...m, time: sanitizeTime(m.time) })) : [],
             attractions: Array.isArray(day.attractions) ? day.attractions.map((a: any) => {
               const aName = a.attractionName || a.name || ''
-              let aIdx = typeof a.attractionIndex === 'number' && a.attractionIndex >= 0 ? a.attractionIndex : -1
+              let aIdx = -1
               if (aIdx === -1 && aName && attractionsList.length > 0) {
                 const matched = findMatchingAttraction(aName, attractionsList)
                 if (matched) {
                   const foundPos = attractionsList.findIndex(item => item.name.toLowerCase().trim() === matched.name.toLowerCase().trim())
                   if (foundPos >= 0) aIdx = foundPos
                 }
+              }
+              if (aIdx === -1 && typeof a.attractionIndex === 'number' && a.attractionIndex >= 0 && a.attractionIndex < attractionsList.length) {
+                aIdx = a.attractionIndex
               }
               const defaultAdultPrice = typeof a.adultPrice === 'number' ? a.adultPrice : (aIdx >= 0 ? attractionsList[aIdx]?.adultPrice : 0)
               const defaultChildPrice = typeof a.childPrice === 'number' ? a.childPrice : (aIdx >= 0 ? attractionsList[aIdx]?.childPrice : 0)
@@ -7914,7 +7932,8 @@ export default function PrototypeBuilder() {
       const next = prev.map(day => {
         let dayChanged = false
         const updatedAttractions = day.attractions.map(a => {
-          if ((a.attractionIndex === -1 || a.attractionIndex === undefined) && a.attractionName) {
+          const curAt = (typeof a.attractionIndex === 'number' && a.attractionIndex >= 0 && a.attractionIndex < attractionsList.length) ? attractionsList[a.attractionIndex] : null
+          if (a.attractionName && (!curAt || curAt.name.toLowerCase().trim() !== a.attractionName.toLowerCase().trim())) {
             const matched = findMatchingAttraction(a.attractionName, attractionsList)
             if (matched) {
               const f = attractionsList.findIndex(item => item.name.toLowerCase().trim() === matched.name.toLowerCase().trim())
@@ -7952,7 +7971,7 @@ export default function PrototypeBuilder() {
           const isSedan = curVeh && ((curVeh.vehicleType || '').toLowerCase().includes('sedan') || (curVeh.type || '').toLowerCase().includes('sedan'))
           const isInvalid = t.vehicleIndex === undefined || t.vehicleIndex < 0 || !curVeh
           const tType = (t.type || '').toLowerCase().trim()
-          const isSizeMismatch = curVeh && tType && !curVeh.type.toLowerCase().includes(tType.slice(0, 5)) && (tType.includes('45') || tType.includes('24') || tType.includes('55') || tType.includes('sic'))
+          const isSizeMismatch = (curVeh && tType && curVeh.type.toLowerCase().trim() !== tType) || (curVeh && tType && !curVeh.type.toLowerCase().includes(tType.slice(0, 5)) && (tType.includes('45') || tType.includes('24') || tType.includes('55') || tType.includes('sic')))
           
           if (isSedan || isInvalid || isSizeMismatch) {
             const desc = (t.description || t.routeDescription || t.serviceType || '').toLowerCase().trim()
@@ -8003,15 +8022,48 @@ export default function PrototypeBuilder() {
           }
           return t
         })
+        const updatedGuides = (day.guides || []).map(g => {
+          if (g.type && guidesList.length > 0) {
+            const curG = (typeof g.guideIndex === 'number' && g.guideIndex >= 0 && g.guideIndex < guidesList.length) ? guidesList[g.guideIndex] : null
+            if (!curG || (curG.type || '').toLowerCase().trim() !== (g.type || '').toLowerCase().trim()) {
+              const gf = guidesList.findIndex(item => (item.type || '').toLowerCase().trim() === (g.type || '').toLowerCase().trim())
+              if (gf >= 0 && gf !== g.guideIndex) {
+                dayChanged = true
+                g = { ...g, guideIndex: gf }
+              }
+            }
+          }
+          return g
+        })
         if (dayChanged) {
           changed = true
-          return { ...day, attractions: updatedAttractions, transfers: updatedTransfers }
+          return { ...day, attractions: updatedAttractions, transfers: updatedTransfers, guides: updatedGuides }
         }
         return day
       })
       return changed ? next : prev
     })
-  }, [attractionsList, vehiclesList])
+  }, [attractionsList, vehiclesList, guidesList])
+
+  // Re-match loaded proposal hotel if hotelsList finishes loading after proposal fetch
+  useEffect(() => {
+    if (hotelsList.length === 0 || !loadedProposalRaw?.hotelName) return
+    const hName = loadedProposalRaw.hotelName.toLowerCase().trim()
+    const hIdx = hotelsList.findIndex(h => h.name.toLowerCase().trim() === hName)
+    if (hIdx >= 0) {
+      setGlobalHotelIndex(hIdx)
+      if (loadedProposalRaw.roomType) {
+        const rType = loadedProposalRaw.roomType.toLowerCase().trim()
+        const rIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === rType)
+        if (rIdx >= 0) setGlobalRoomIndex(rIdx)
+      }
+      if (loadedProposalRaw.supplementType) {
+        const sType = loadedProposalRaw.supplementType.toLowerCase().trim()
+        const sIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === sType)
+        if (sIdx >= 0) setGlobalSuppIndex(sIdx)
+      }
+    }
+  }, [hotelsList, loadedProposalRaw])
 
   // Handle Search Form Submission
   const handleSearchProposal = async (e: React.FormEvent) => {
@@ -9829,7 +9881,7 @@ ${proposal}
                               {/* Interline Attraction Transfers (Pickup & Drop) */}
                               {day.attractions && day.attractions.map((a, aIdx) => {
                                 if (!a.hasTransfer) return null
-                                const attrName = attractionsList[a.attractionIndex]?.name || a.attractionName || 'Attraction'
+                                const attrName = a.attractionName || attractionsList[a.attractionIndex]?.name || 'Attraction'
                                 
                                 const default13TransferIdx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
                                 const pv = vehiclesList[a.pickupVehicleIndex !== undefined && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : default13TransferIdx] || (a.pickupVehicleType ? vehiclesList.find(v => v.type.toLowerCase().trim() === a.pickupVehicleType?.toLowerCase().trim()) : undefined)
@@ -9903,9 +9955,12 @@ ${proposal}
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                               {day.attractions.map((a, aIdx) => {
-                                let attrObj: (typeof attractionsList)[number] | undefined = attractionsList[a.attractionIndex]
+                                let attrObj: (typeof attractionsList)[number] | undefined = undefined
                                 if (!attrObj && a.attractionName) {
-                                  attrObj = attractionsList.find(item => item.name.toLowerCase().trim() === a.attractionName?.toLowerCase().trim())
+                                  attrObj = findMatchingAttraction(a.attractionName, attractionsList) || attractionsList.find(item => item.name.toLowerCase().trim() === a.attractionName?.toLowerCase().trim())
+                                }
+                                if (!attrObj && typeof a.attractionIndex === 'number' && a.attractionIndex >= 0 && a.attractionIndex < attractionsList.length) {
+                                  attrObj = attractionsList[a.attractionIndex]
                                 }
                                 const name = attrObj?.name || a.attractionName || 'Attraction'
                                 const adultP = attrObj?.adultPrice ?? (typeof (a as any).adultPrice === 'number' ? (a as any).adultPrice : 0)
@@ -9992,7 +10047,7 @@ ${proposal}
                                 </div>
                               )}
                               {day.meals && day.meals.map((m: any, mIdx: number) => {
-                                const mObj = mealsList[m.mealIndex]
+                                const mObj = (m.type ? mealsList.find(item => item.type?.toLowerCase().trim() === m.type?.toLowerCase().trim()) : undefined) || (typeof m.mealIndex === 'number' && m.mealIndex >= 0 && m.mealIndex < mealsList.length ? mealsList[m.mealIndex] : undefined)
                                 const typeName = mObj?.type || m.type || 'Special Meal'
                                 const price = (mObj?.price || 0) * (adults + kids)
                                 return (
@@ -12809,8 +12864,8 @@ ${proposal}
                             {(() => {
                               const areaOriginalIndices = new Set(areaAttractions.map(a => a.originalIdx))
                               const selectedInAreaCount = day.attractions.filter(sel => 
-                                areaOriginalIndices.has(sel.attractionIndex) ||
-                                areaAttractions.some(a => a.name.toLowerCase().trim() === sel.attractionName?.toLowerCase().trim())
+                                (sel.attractionName ? areaAttractions.some(a => a.name.toLowerCase().trim() === sel.attractionName?.toLowerCase().trim()) : areaOriginalIndices.has(sel.attractionIndex))
+
                               ).length
 
                               return (
@@ -12841,8 +12896,8 @@ ${proposal}
                                 ) : (
                                   areaAttractions.map(attraction => {
                                     const existingIdx = day.attractions.findIndex(sel => 
-                                      sel.attractionIndex === attraction.originalIdx ||
-                                      (sel.attractionName && sel.attractionName.toLowerCase().trim() === attraction.name.toLowerCase().trim())
+                                      (sel.attractionName ? sel.attractionName.toLowerCase().trim() === attraction.name.toLowerCase().trim() : sel.attractionIndex === attraction.originalIdx)
+
                                     )
                                     const isSelected = existingIdx >= 0
                                     const row = isSelected ? day.attractions[existingIdx] : null
