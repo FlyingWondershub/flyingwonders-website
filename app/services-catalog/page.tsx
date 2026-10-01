@@ -342,16 +342,19 @@ export default function ServicesCatalogPage() {
       }
     }
 
-    // 1. Instant hydration from persistent storage if available
+    // 1. Instant hydration from persistent storage if available (within 5-minute freshness window)
     try {
       const cached = localStorage.getItem('fw_services_catalog_cache') || sessionStorage.getItem('fw_services_catalog_cache')
       if (cached) {
         const parsed = JSON.parse(cached)
-        if (parsed.settings) setSettings(parsed.settings)
-        if (parsed.attractions?.length) setAttractions(parsed.attractions)
-        if (parsed.restaurants?.length) setRestaurants(parsed.restaurants)
-        if (parsed.malls?.length) setMalls(parsed.malls)
-        if (parsed.mediaItems?.length) setMediaItems(parsed.mediaItems)
+        const isStale = !parsed.timestamp || (Date.now() - parsed.timestamp > 5 * 60 * 1000)
+        if (!isStale) {
+          if (parsed.settings) setSettings(parsed.settings)
+          if (parsed.attractions?.length) setAttractions(parsed.attractions)
+          if (parsed.restaurants?.length) setRestaurants(parsed.restaurants)
+          if (parsed.malls?.length) setMalls(parsed.malls)
+          if (parsed.mediaItems?.length) setMediaItems(parsed.mediaItems)
+        }
       }
     } catch (e) {}
 
@@ -431,7 +434,7 @@ export default function ServicesCatalogPage() {
           appDetails,
           shorts,
           isDisplayed
-        }`)
+        }`, {}, { useCdn: false })
         
         if (fetchedMedia && fetchedMedia.length > 0) {
           const normalized = fetchedMedia.map((m: any) => ({
@@ -537,11 +540,71 @@ export default function ServicesCatalogPage() {
     })
   }, [mediaItems, searchQuery, settings.hideHotels, settings.hiddenHotelNames])
 
+  // Sanity-curated Attractions (e.g. Harry Potter: Visions of Magic)
+  const sanityAttractions = useMemo(() => {
+    return mediaItems
+      .filter(m => m.category === 'attraction' && m.isDisplayed !== false)
+      .map(m => {
+        const attractionName = m.title || 'Singapore Attraction'
+        const attractionSlug = m.slug || slugifyAttractionName(attractionName)
+        const coverImg = m.coverImageUrl || m.coverImageFile || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800'
+        return {
+          id: m._id,
+          _id: m._id,
+          name: attractionName,
+          category: m.subtitle || 'Singapore Attraction',
+          imageUrl: coverImg,
+          coverImageUrl: coverImg,
+          description: m.description || '',
+          validity: 'Instant E-Pass / Voucher',
+          slug: attractionSlug,
+          starRating: m.starRating || '4.8',
+          duration: m.duration || '2 to 3 Hours',
+          features: m.features || [],
+          mustDoThings: m.mustDoThings || [],
+          timings: m.timings || '',
+          appDetails: m.appDetails,
+          isSanityMedia: true,
+          rawMedia: m
+        }
+      })
+  }, [mediaItems])
+
   const filteredAttractions = useMemo(() => {
     if (settings.hideAttractions) return []
     const q = searchQuery.toLowerCase().trim()
-    return attractions.filter(a => !q || a.name.toLowerCase().includes(q) || (a.category || '').toLowerCase().includes(q))
-  }, [attractions, searchQuery, settings.hideAttractions])
+    const sanityNames = new Set(sanityAttractions.map(s => s.name.toLowerCase().trim()))
+    const remainingSupplier = attractions.filter(a => !sanityNames.has(a.name.toLowerCase().trim()))
+    // Sanity-curated attractions appear prominently at the top
+    const allAttractions = [...sanityAttractions, ...remainingSupplier]
+    return allAttractions.filter(a =>
+      !q ||
+      a.name.toLowerCase().includes(q) ||
+      (a.category || '').toLowerCase().includes(q) ||
+      (a.description || '').toLowerCase().includes(q)
+    )
+  }, [sanityAttractions, attractions, searchQuery, settings.hideAttractions])
+
+  // Flagship Featured Attractions (Sanity attractions placed first, followed by default marquee attractions)
+  const featuredAttractionsList = useMemo(() => {
+    const sanityFeatured = sanityAttractions.map(s => ({
+      _id: s.id,
+      slug: s.slug,
+      name: s.name,
+      category: s.category,
+      starRating: s.starRating,
+      duration: s.duration,
+      description: s.description,
+      coverImageUrl: s.imageUrl,
+      features: (s.features || []) as string[],
+      mustDoThings: (s.mustDoThings || []) as string[],
+      timings: s.timings,
+      appDetails: s.appDetails
+    }))
+    const sanitySlugs = new Set(sanityFeatured.map(s => (s.slug || '').toLowerCase()))
+    const remainingDefaults = DEFAULT_ATTRACTIONS.filter(d => !sanitySlugs.has((d.slug || '').toLowerCase()))
+    return [...sanityFeatured, ...remainingDefaults]
+  }, [sanityAttractions])
 
   const filteredRestaurants = useMemo(() => {
     if (settings.hideRestaurants) return []
@@ -1008,9 +1071,9 @@ export default function ServicesCatalogPage() {
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-                    {DEFAULT_ATTRACTIONS.map((fa) => (
+                    {featuredAttractionsList.map((fa) => (
                       <div
-                        key={fa._id}
+                        key={fa._id || fa.slug}
                         onClick={() => setActiveAttractionModal(fa)}
                         style={{
                           background: '#FFFFFF',
@@ -1024,30 +1087,30 @@ export default function ServicesCatalogPage() {
                           transition: 'transform 0.15s ease, box-shadow 0.15s ease'
                         }}
                       >
-                        <div style={{ height: '140px', background: `linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.75)), url(${fa.coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div style={{ height: '140px', background: `linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.75)), url(${fa.coverImageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800'})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ background: '#0F4C3A', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px' }}>
                               ★ Featured Spotlight
                             </span>
                             <span style={{ background: '#FEF3C7', color: '#D97706', fontSize: '0.7rem', fontWeight: 800, padding: '2px 7px', borderRadius: '5px' }}>
-                              ★ {fa.starRating}
+                              ★ {fa.starRating || '4.8'}
                             </span>
                           </div>
                           <div>
                             <h4 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#FFF', margin: '0 0 2px', lineHeight: 1.2, textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
                               {fa.name}
                             </h4>
-                            <span style={{ fontSize: '0.72rem', color: '#E2E8F0', fontWeight: 600 }}>⏱️ {fa.duration}</span>
+                            <span style={{ fontSize: '0.72rem', color: '#E2E8F0', fontWeight: 600 }}>⏱️ {fa.duration || '2 to 3 Hours'}</span>
                           </div>
                         </div>
 
                         <div style={{ padding: '1rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
                           <p style={{ fontSize: '0.78rem', color: '#475569', margin: '0 0 0.85rem', lineHeight: 1.45 }}>
-                            {fa.description.slice(0, 110)}...
+                            {(fa.description || '').slice(0, 110)}...
                           </p>
 
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '1rem' }}>
-                            {(fa.features || []).slice(0, 2).map((ft, i) => (
+                            {(fa.features || []).slice(0, 2).map((ft: string, i: number) => (
                               <span key={i} style={{ background: '#ECFDF5', color: '#047857', fontSize: '0.68rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>
                                 ✓ {ft}
                               </span>
@@ -1062,7 +1125,7 @@ export default function ServicesCatalogPage() {
                           <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.6rem', borderTop: '1px solid #F1F5F9' }}>
                             <span style={{ fontSize: '0.72rem', color: '#0F4C3A', fontWeight: 700 }}>Full Guide & App</span>
                             <Link
-                              href={`/services-catalog/attractions/${fa.slug}`}
+                              href={`/services-catalog/attractions/${fa.slug || slugifyAttractionName(fa.name)}`}
                               onClick={e => e.stopPropagation()}
                               style={{
                                 fontSize: '0.75rem',
@@ -1101,9 +1164,9 @@ export default function ServicesCatalogPage() {
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
                     {filteredAttractions.map((a) => {
-                      const attractionSlug = slugifyAttractionName(a.name)
+                      const attractionSlug = a.slug || slugifyAttractionName(a.name)
                       return (
-                        <div key={a.id} onClick={() => setActiveAttractionModal(a)} style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
+                        <div key={a.id || a._id || attractionSlug} onClick={() => setActiveAttractionModal(a)} style={{ background: '#FFF', borderRadius: '12px', border: '1px solid #E2E8F0', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
                           <div style={{ height: '140px', background: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6)), url(${a.imageUrl || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800'})`, backgroundSize: 'cover', backgroundPosition: 'center', padding: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                             <span style={{ background: 'rgba(15,23,42,0.75)', color: '#FFF', fontSize: '0.68rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', backdropFilter: 'blur(4px)', alignSelf: 'flex-start' }}>
                               📍 {a.category || 'Singapore Attraction'}

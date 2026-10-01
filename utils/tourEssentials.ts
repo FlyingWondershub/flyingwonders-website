@@ -108,7 +108,7 @@ const SHOWCASE_PROJECTION = `{
     "name": coalesce(title, name),
     "slug": slug.current,
     description,
-    coverImageUrl,
+    "coverImageUrl": coalesce(coverImage.asset->url, coverImageUrl),
     features,
     timings
   },
