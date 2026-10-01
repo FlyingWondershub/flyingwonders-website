@@ -2,31 +2,31 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-// Curated high-resolution Singapore landmark hero images
+// 100% Verified, live high-resolution Singapore landmark hero images hosted on flyingwonders.net
 const LANDMARK_HERO_IMAGES: Record<string, { url: string; alt: string }> = {
   skyline: {
-    url: 'https://images.unsplash.com/photo-1506351421178-63b52a2d15c8?w=1200&auto=format&fit=crop&q=80',
+    url: 'https://flyingwonders.net/images/hero/singapore-hero-1.jpg',
     alt: 'Marina Bay Sands Skyline and Singapore Waterfront'
   },
-  gardens: {
-    url: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop&q=80',
-    alt: 'Gardens by the Bay Supertree Grove and Cloud Forest Dome'
+  universal: {
+    url: 'https://flyingwonders.net/images/attractions/universal-studios-singapore/cover.jpg',
+    alt: 'Universal Studios Singapore Theme Park'
   },
-  sentosa: {
-    url: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=1200&auto=format&fit=crop&q=80',
-    alt: 'Sentosa Island and Universal Studios Singapore'
+  nightsafari: {
+    url: 'https://flyingwonders.net/images/attractions/night-safari-singapore/cover.jpg',
+    alt: 'Singapore Night Safari with Guided Tram'
+  },
+  gardens: {
+    url: 'https://flyingwonders.net/images/attractions/gardens-by-the-bay/cover.jpg',
+    alt: 'Gardens by the Bay Supertree Grove and Conservatories'
   },
   jewel: {
-    url: 'https://images.unsplash.com/photo-1574786198875-49f5d09fe2d5?w=1200&auto=format&fit=crop&q=80',
+    url: 'https://flyingwonders.net/images/hero/singapore-hero-4.jpg',
     alt: 'Jewel Changi Airport Rain Vortex Waterfall'
   },
-  wildlife: {
-    url: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=1200&auto=format&fit=crop&q=80',
-    alt: 'Singapore Wildlife Reserve and Night Safari'
-  },
-  luxury: {
-    url: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=1200&auto=format&fit=crop&q=80',
-    alt: 'Bioluminescent Supertrees and Luxury Singapore Evening'
+  city: {
+    url: 'https://flyingwonders.net/images/hero/singapore-hero-2.jpg',
+    alt: 'Singapore Merlion and Downtown Skyline'
   }
 }
 
@@ -38,47 +38,130 @@ interface RequestBody {
   customImagePrompt?: string
 }
 
-// Heuristic fallback generator when AI key is absent or rate-limited
-function generateFallbackCampaign(proposal?: any, customPrompt?: string, tone = 'b2c', imageCategory = 'skyline') {
-  const pNum = proposal?.proposalNumber || ''
-  const guest = proposal?.guestName || (tone === 'b2b' ? 'Valued Travel Partner' : 'Valued Traveler')
-  const nights = proposal?.nights || 4
-  const days = nights + 1
-  const hotel = proposal?.hotelName || 'Selected 4-Star Premium Hotel'
-  const adults = proposal?.adults || 2
-  const kids = proposal?.kids || 0
-  const arrival = proposal?.arrivalDate || 'Upcoming Travel Season'
-
-  // Extract attractions from itinerary if present
-  let extractedAttractions: string[] = []
+// Extraction helper for proposals
+function extractProposalDetails(proposal: any) {
+  let itineraryDays: any[] = []
   if (proposal?.itinerary) {
     try {
-      const parsed = typeof proposal.itinerary === 'string' ? JSON.parse(proposal.itinerary) : proposal.itinerary
-      if (Array.isArray(parsed)) {
-        parsed.forEach((day: any) => {
-          if (Array.isArray(day.attractions)) {
-            day.attractions.forEach((att: any) => {
-              const name = typeof att === 'string' ? att : att.title || att.name
-              if (name && !extractedAttractions.includes(name)) extractedAttractions.push(name)
-            })
-          }
-        })
-      }
+      itineraryDays = typeof proposal.itinerary === 'string' ? JSON.parse(proposal.itinerary) : proposal.itinerary
     } catch {
       // ignore
     }
   }
 
-  if (extractedAttractions.length === 0) {
-    extractedAttractions = [
-      'Universal Studios Singapore (All-Zone Passes)',
-      'Gardens by the Bay (Cloud Forest Waterfall & Flower Dome)',
-      'Sentosa Island Mega Fun Pass & Cable Car Sky Network',
-      'Singapore River Cruise & Marina Bay Sands SkyPark'
-    ]
+  const rawAttractions: string[] = []
+  const rawTransfers: string[] = []
+  const dayTitles: string[] = []
+
+  if (Array.isArray(itineraryDays)) {
+    itineraryDays.forEach(day => {
+      if (day.dayTitle) dayTitles.push(day.dayTitle)
+      if (Array.isArray(day.attractions)) {
+        day.attractions.forEach((att: any) => {
+          const name = (att.attractionName || att.title || att.name || '').trim()
+          if (!name) return
+          if (/arrival|departure|airport transfer/i.test(name)) {
+            rawTransfers.push(name)
+          } else {
+            rawAttractions.push(name)
+          }
+        })
+      }
+      if (Array.isArray(day.transfers)) {
+        day.transfers.forEach((tr: any) => {
+          const desc = (tr.description || tr.serviceName || '').trim()
+          if (desc && !rawTransfers.includes(desc)) rawTransfers.push(desc)
+        })
+      }
+    })
   }
 
-  const selectedHero = LANDMARK_HERO_IMAGES[imageCategory] || LANDMARK_HERO_IMAGES.skyline
+  return { rawAttractions, rawTransfers, dayTitles }
+}
+
+// Heuristic fallback generator when AI key is absent or rate-limited
+function generateFallbackCampaign(proposal?: any, customPrompt?: string, tone = 'b2c', imageCategory?: string) {
+  const pNum = proposal?.proposalNumber || ''
+  const guest = proposal?.guestName || (tone === 'b2b' ? 'Valued Travel Partner' : 'Valued Traveler')
+  const nights = proposal?.nights || 3
+  const days = nights + 1
+  const hotel = proposal?.hotelName || 'Selected 4-Star Partner Hotel'
+  const adults = proposal?.adults || 2
+  const kids = proposal?.kids || 0
+  const price = proposal?.costBreakdown?.totalClientPrice || proposal?.totalClientPrice
+
+  const { rawAttractions, rawTransfers } = extractProposalDetails(proposal)
+
+  // Build clean, professional highlights
+  const highlights: Array<{ id: string; title: string; desc: string }> = []
+  let detectedHeroKey = 'skyline'
+
+  rawAttractions.forEach((att) => {
+    let cleanTitle = att.replace(/ - Fixed.*$/i, '').trim()
+    let desc = 'Guaranteed digital admission vouchers with scheduled transfers and VIP skip-the-line privileges.'
+
+    if (/universal/i.test(att)) {
+      cleanTitle = 'Universal Studios Singapore (Theme Park Passes)'
+      desc = 'Full-day admission to 7 immersive movie-themed zones, cutting-edge roller coasters, and world-class live entertainment.'
+      detectedHeroKey = 'universal'
+    } else if (/night safari/i.test(att)) {
+      cleanTitle = 'Night Safari with Guided Tram Experience'
+      desc = "Explore the world's first nocturnal wildlife park with guided open-air tram ride and animal presentations."
+      if (detectedHeroKey === 'skyline') detectedHeroKey = 'nightsafari'
+    } else if (/city tour|group tour/i.test(att)) {
+      cleanTitle = 'Singapore City Exploration & Heritage Tour'
+      desc = 'Guided panoramic city drive covering Merlion Park, Marina Bay waterfront, and vibrant cultural districts.'
+    } else if (/gardens|flower dome|cloud forest/i.test(att)) {
+      cleanTitle = 'Gardens by the Bay (Cloud Forest & Flower Dome)'
+      desc = 'Iconic 35-meter indoor waterfall, world-record glass conservatory, and illuminated Supertree Grove.'
+      if (detectedHeroKey === 'skyline') detectedHeroKey = 'gardens'
+    } else if (/sentosa|cable car/i.test(att)) {
+      cleanTitle = 'Sentosa Island & Cable Car Sky Network'
+      desc = 'Scenic panoramic sky cableway flights connecting Mount Faber to Sentosa Island attractions.'
+    }
+
+    highlights.push({
+      id: String(highlights.length + 1),
+      title: cleanTitle,
+      desc
+    })
+  })
+
+  // Add transfer highlight if present
+  if (rawTransfers.length > 0) {
+    const specialTransfer = rawTransfers.find(t => /imm|jurong|shopping|mustafa/i.test(t))
+    if (specialTransfer) {
+      highlights.push({
+        id: String(highlights.length + 1),
+        title: 'Jurong IMM Shopping Outlet Transfer',
+        desc: "Comfortable dedicated private transfer to Singapore's premier outlet mall with over 90 designer brand outlets."
+      })
+    }
+    highlights.push({
+      id: String(highlights.length + 1),
+      title: 'Airport Meet & Greet Ground Fleet',
+      desc: 'Seamless arrival and departure airport transfers with dedicated luggage assistance and zero wait time.'
+    })
+  }
+
+  // Generic fallback if empty
+  if (highlights.length === 0) {
+    highlights.push({
+      id: '1',
+      title: 'Universal Studios Singapore',
+      desc: 'Full-day theme park adventure across 7 movie-themed zones with instant mobile entry.'
+    })
+    highlights.push({
+      id: '2',
+      title: 'Night Safari with Tram',
+      desc: 'Guided tram ride through nocturnal rainforest habitats.'
+    })
+  }
+
+  const finalHeroKey = imageCategory && LANDMARK_HERO_IMAGES[imageCategory]
+    ? imageCategory
+    : detectedHeroKey
+  const selectedHero = LANDMARK_HERO_IMAGES[finalHeroKey] || LANDMARK_HERO_IMAGES.skyline
 
   // Determine Title, Subject, & Headline
   let title = ''
@@ -87,14 +170,22 @@ function generateFallbackCampaign(proposal?: any, customPrompt?: string, tone = 
   let greeting = ''
   let bodyText = ''
 
+  const attractionNamesSummary = rawAttractions.map(a => a.replace(/ - Fixed.*$/i, '').trim()).join(', ')
+
   if (proposal) {
-    title = `Proposal ${pNum} - ${guest} (${days}D${nights}N Singapore)`
+    title = `Proposal ${pNum} - ${guest} (${days}D${nights}N)`
     subject = tone === 'b2b'
       ? `📋 B2B DMC Proposal ${pNum} | ${guest} - ${days}D${nights}N Singapore Package`
-      : `🌟 Your Singapore Vacation Proposal (${pNum}) | ${days}D${nights}N Custom Itinerary`
+      : `🌟 Singapore Proposal (${pNum}) | ${days}D${nights}N at ${hotel}${rawAttractions.length ? ` incl. ${rawAttractions[0].replace(/ - Fixed.*$/i, '')}` : ''}`
     greeting = `Dear ${guest},`
-    headline = `Exclusive Singapore ${days}D${nights}N Travel Proposal (${pNum})`
-    bodyText = `We are delighted to present your personalized Singapore holiday proposal curated by Flying Wonders DMC.\n\nYour customized itinerary features ${nights} nights accommodation at ${hotel}, private chauffeured ground transfers, and VIP admissions for ${adults} adult(s)${kids > 0 ? ` and ${kids} child(ren)` : ''}.\n\nEvery day of your journey is coordinated by our on-ground Singapore operations desk to ensure seamless convenience, zero ticket queues, and unforgettable moments.`
+    headline = `Your Singapore ${days}D${nights}N Custom Package Proposal (${pNum})`
+    bodyText = `We are delighted to present your personalized Singapore holiday proposal (${pNum}) curated by Flying Wonders DMC.\n\nYour customized ${days}-day itinerary features ${nights} nights accommodation at ${hotel}, private chauffeured ground transfers, and scheduled admissions for ${adults} adult(s)${kids > 0 ? ` and ${kids} child(ren)` : ''}.\n\n` +
+      (rawAttractions.length > 0 ? `Featured Experiences: Highlights include ${attractionNamesSummary} with seamless ground coordination and zero ticket queues.\n\n` : '') +
+      `Every detail of your stay is handled by our on-ground Singapore operations desk to ensure complete peace of mind from airport arrival to departure.`
+    
+    if (price) {
+      bodyText += `\n\nTotal Package Quote: SGD ${price} net.`
+    }
   } else {
     title = `Singapore Seasonal Gateway - ${days}D${nights}N`
     subject = tone === 'b2b'
@@ -109,12 +200,6 @@ function generateFallbackCampaign(proposal?: any, customPrompt?: string, tone = 
     bodyText += `\n\nSpecial Inclusions & Notes: ${customPrompt.trim()}`
   }
 
-  const highlights = extractedAttractions.slice(0, 4).map((att, idx) => ({
-    id: String(idx + 1),
-    title: att,
-    desc: `Guaranteed digital admission vouchers with skip-the-line privileges and seamless scheduled ground handling.`
-  }))
-
   const ctaUrl = pNum
     ? `https://flyingwonders.net/custom-package?ref=${encodeURIComponent(pNum)}`
     : `https://flyingwonders.net/custom-package`
@@ -126,7 +211,7 @@ function generateFallbackCampaign(proposal?: any, customPrompt?: string, tone = 
   return {
     title,
     subject,
-    preheader: `${days}D${nights}N Singapore Itinerary with ${hotel} & VIP Attraction Passes`,
+    preheader: `${days}D${nights}N Singapore Itinerary with ${hotel} & VIP Attraction Passes (${pNum || 'FW-DMC'})`,
     structuredData: {
       greeting,
       headline,
@@ -135,9 +220,9 @@ function generateFallbackCampaign(proposal?: any, customPrompt?: string, tone = 
       heroImageAlt: selectedHero.alt,
       heroImageLink: ctaUrl,
       heroImagePosition: 'top' as const,
-      highlights,
+      highlights: highlights.slice(0, 4),
       showCta: true,
-      ctaText: pNum ? `Review Proposal & Confirm Package →` : `Explore Singapore Packages →`,
+      ctaText: pNum ? `Review Proposal Details (${pNum}) →` : `Explore Singapore Packages →`,
       ctaUrl,
       showWhatsApp: true,
       whatsAppText: 'Chat with our Singapore Desk on WhatsApp',
@@ -151,17 +236,27 @@ function generateFallbackCampaign(proposal?: any, customPrompt?: string, tone = 
 export async function POST(req: NextRequest) {
   try {
     const body: RequestBody = await req.json()
-    const { proposal, customPrompt, tone = 'b2c', imageCategory = 'skyline', customImagePrompt } = body
+    const { proposal, customPrompt, tone = 'b2c', imageCategory, customImagePrompt } = body
 
     const apiKey = (process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '').trim()
 
-    // Determine initial selected hero image
-    let heroImageUrl = LANDMARK_HERO_IMAGES[imageCategory]?.url || LANDMARK_HERO_IMAGES.skyline.url
-    let heroImageAlt = LANDMARK_HERO_IMAGES[imageCategory]?.alt || LANDMARK_HERO_IMAGES.skyline.alt
+    const { rawAttractions, rawTransfers, dayTitles } = extractProposalDetails(proposal)
+
+    // Detect hero image
+    let detectedHero = 'skyline'
+    if (rawAttractions.some(a => /universal/i.test(a))) detectedHero = 'universal'
+    else if (rawAttractions.some(a => /night safari/i.test(a))) detectedHero = 'nightsafari'
+    else if (rawAttractions.some(a => /gardens/i.test(a))) detectedHero = 'gardens'
+
+    const chosenHeroKey = imageCategory && LANDMARK_HERO_IMAGES[imageCategory]
+      ? imageCategory
+      : detectedHero
+    let heroImageUrl = (LANDMARK_HERO_IMAGES[chosenHeroKey] || LANDMARK_HERO_IMAGES.skyline).url
+    let heroImageAlt = (LANDMARK_HERO_IMAGES[chosenHeroKey] || LANDMARK_HERO_IMAGES.skyline).alt
 
     // If no API key is available, return the high-quality fallback immediately
     if (!apiKey) {
-      const fallback = generateFallbackCampaign(proposal, customPrompt, tone, imageCategory)
+      const fallback = generateFallbackCampaign(proposal, customPrompt, tone, chosenHeroKey)
       return NextResponse.json({
         success: true,
         source: 'heuristic_template',
@@ -174,10 +269,14 @@ export async function POST(req: NextRequest) {
 Generate an irresistible, highly converting, professional email newsletter / proposal broadcast.
 Tone: ${tone === 'b2b' ? 'Professional B2B Travel Agent partner tone, highlighting net wholesale margins, instant vouchers, and reliability' : tone === 'luxury' ? 'Ultra-luxury VIP tone emphasizing bespoke concierge, private chauffeured Alphard transfers, and 5-star hospitality' : 'Warm, enticing B2C family vacation tone highlighting excitement, convenience, and unforgettable memories'}.
 
+CRITICAL RULES:
+1. If PROPOSAL CONTEXT is provided, you MUST explicitly feature the exact hotel (${proposal?.hotelName || ''}) and EXACT attractions booked in the itinerary: ${rawAttractions.join(', ') || 'Singapore Highlights'}. DO NOT invent unrelated attractions that are not in the itinerary!
+2. Highlights array must contain 3-4 bullet items directly based on the proposal's booked attractions and excursions.
+
 Return ONLY a valid JSON object with the exact keys:
 {
   "title": "Short internal title",
-  "subject": "Catchy email subject line with 1-2 relevant emojis",
+  "subject": "Catchy email subject line mentioning the proposal code and key attraction with 1-2 relevant emojis",
   "preheader": "1-sentence preview text for inbox list",
   "greeting": "e.g. Dear [Guest or Partner],",
   "headline": "Compelling headline",
@@ -187,8 +286,8 @@ Return ONLY a valid JSON object with the exact keys:
     { "id": "2", "title": "Highlight or Attraction Name", "desc": "Compelling description" },
     { "id": "3", "title": "Highlight or Attraction Name", "desc": "Compelling description" }
   ],
-  "ctaText": "Call to action button text (e.g. Confirm Your Singapore Package →)",
-  "recommendedHeroImageCategory": "skyline | gardens | sentosa | jewel | wildlife | luxury"
+  "ctaText": "Call to action button text (e.g. Review Proposal & Confirm →)",
+  "recommendedHeroImageCategory": "universal | nightsafari | skyline | gardens | jewel | city"
 }
 Do not wrap in markdown quotes or backticks if possible, or return raw valid JSON.`
 
@@ -204,11 +303,13 @@ ${proposal ? JSON.stringify({
   arrivalDate: proposal.arrivalDate,
   pricing: proposal.costBreakdown?.totalClientPrice ? `SGD ${proposal.costBreakdown.totalClientPrice}` : undefined,
   destinationMode: proposal.destinationMode,
-  itinerary: proposal.itinerary
+  bookedAttractions: rawAttractions,
+  transfersAndExcursions: rawTransfers,
+  dayTitles: dayTitles
 }, null, 2) : 'General Singapore Destination Showcase'}
 
 ADDITIONAL USER INSTRUCTIONS & EXTRA NOTES:
-${customPrompt || 'Create an alluring, comprehensive proposal campaign for Singapore.'}
+${customPrompt || 'Create a bespoke, alluring proposal campaign matching the exact itinerary.'}
 ${customImagePrompt ? `Custom Image Request: ${customImagePrompt}` : ''}`
 
     const payload = {
@@ -253,8 +354,7 @@ ${customImagePrompt ? `Custom Image Request: ${customImagePrompt}` : ''}`
     }
 
     if (!generatedText) {
-      // Fallback
-      const fallback = generateFallbackCampaign(proposal, customPrompt, tone, imageCategory)
+      const fallback = generateFallbackCampaign(proposal, customPrompt, tone, chosenHeroKey)
       return NextResponse.json({
         success: true,
         source: 'heuristic_fallback',
@@ -273,7 +373,7 @@ ${customImagePrompt ? `Custom Image Request: ${customImagePrompt}` : ''}`
     try {
       const parsed = JSON.parse(cleanJson)
 
-      const recCategory = parsed.recommendedHeroImageCategory || imageCategory
+      const recCategory = parsed.recommendedHeroImageCategory || chosenHeroKey
       if (LANDMARK_HERO_IMAGES[recCategory]) {
         heroImageUrl = LANDMARK_HERO_IMAGES[recCategory].url
         heroImageAlt = LANDMARK_HERO_IMAGES[recCategory].alt
@@ -287,12 +387,12 @@ ${customImagePrompt ? `Custom Image Request: ${customImagePrompt}` : ''}`
       return NextResponse.json({
         success: true,
         source: 'gemini_ai',
-        title: parsed.title || `Singapore Campaign - ${pNum || 'Special'}`,
+        title: parsed.title || `Proposal ${pNum} - ${proposal?.guestName || 'Special'}`,
         subject: parsed.subject || `Singapore Package Proposal ${pNum}`,
         preheader: parsed.preheader || '',
         structuredData: {
-          greeting: parsed.greeting || 'Dear Valued Traveler,',
-          headline: parsed.headline || 'Singapore Unveiled',
+          greeting: parsed.greeting || `Dear ${proposal?.guestName || 'Valued Traveler'},`,
+          headline: parsed.headline || `Your Singapore Custom Package Proposal (${pNum})`,
           bodyText: parsed.bodyText || '',
           heroImage: heroImageUrl,
           heroImageAlt: heroImageAlt,
@@ -300,18 +400,17 @@ ${customImagePrompt ? `Custom Image Request: ${customImagePrompt}` : ''}`
           heroImagePosition: 'top',
           highlights: Array.isArray(parsed.highlights) ? parsed.highlights : [],
           showCta: true,
-          ctaText: parsed.ctaText || 'View Package Details →',
+          ctaText: parsed.ctaText || `Review Proposal Details (${pNum}) →`,
           ctaUrl,
           showWhatsApp: true,
-          whatsAppText: 'Chat with our Singapore Desk on WhatsApp',
+          whatsAppText: `Hi Flying Wonders, I received the proposal email for ${pNum} (${proposal?.guestName || ''}) and would like to proceed.`,
           showSignature: true,
           salutation: 'Thanks & Best Regards,',
           signoffName: 'Nithin'
         }
       })
     } catch {
-      // JSON parse error fallback
-      const fallback = generateFallbackCampaign(proposal, customPrompt, tone, imageCategory)
+      const fallback = generateFallbackCampaign(proposal, customPrompt, tone, chosenHeroKey)
       return NextResponse.json({
         success: true,
         source: 'heuristic_parsed_fallback',

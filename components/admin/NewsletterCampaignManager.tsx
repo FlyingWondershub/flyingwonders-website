@@ -788,79 +788,162 @@ export default function NewsletterCampaignManager({
     }
   }
 
-  const handleApplyProposalDirect = (prop: any, customNotes?: string, tone = 'b2c', imageCat = 'skyline') => {
+  const handleApplyProposalDirect = (prop: any, customNotes?: string, tone = 'b2c', imageCat?: string) => {
     const pNum = prop?.proposalNumber || ''
     const guest = prop?.guestName || (tone === 'b2b' ? 'Valued Travel Partner' : 'Valued Traveler')
-    const nights = prop?.nights || 4
+    const nights = prop?.nights || 3
     const days = nights + 1
     const hotel = prop?.hotelName || 'Selected 4-Star Partner Hotel'
     const adults = prop?.adults || 2
     const kids = prop?.kids || 0
+    const price = prop?.costBreakdown?.totalClientPrice || prop?.totalClientPrice
 
-    let extractedAttractions: string[] = []
+    let itineraryDays: any[] = []
     if (prop?.itinerary) {
       try {
-        const parsed = typeof prop.itinerary === 'string' ? JSON.parse(prop.itinerary) : prop.itinerary
-        if (Array.isArray(parsed)) {
-          parsed.forEach((day: any) => {
-            if (Array.isArray(day.attractions)) {
-              day.attractions.forEach((att: any) => {
-                const name = typeof att === 'string' ? att : att.title || att.name
-                if (name && !extractedAttractions.includes(name)) extractedAttractions.push(name)
-              })
-            }
-          })
-        }
+        itineraryDays = typeof prop.itinerary === 'string' ? JSON.parse(prop.itinerary) : prop.itinerary
       } catch {
         // ignore
       }
     }
 
-    if (extractedAttractions.length === 0) {
-      extractedAttractions = [
-        'Universal Studios Singapore (All-Zone Passes)',
-        'Gardens by the Bay (Cloud Forest Waterfall & Flower Dome)',
-        'Sentosa Island Mega Fun Pass & Cable Car Sky Network',
-        'Singapore River Cruise & Marina Bay Sands SkyPark'
-      ]
+    const rawAttractions: string[] = []
+    const rawTransfers: string[] = []
+    const dayTitles: string[] = []
+
+    if (Array.isArray(itineraryDays)) {
+      itineraryDays.forEach(day => {
+        if (day.dayTitle) dayTitles.push(day.dayTitle)
+        if (Array.isArray(day.attractions)) {
+          day.attractions.forEach((att: any) => {
+            const name = (att.attractionName || att.title || att.name || '').trim()
+            if (!name) return
+            if (/arrival|departure|airport transfer/i.test(name)) {
+              rawTransfers.push(name)
+            } else {
+              rawAttractions.push(name)
+            }
+          })
+        }
+        if (Array.isArray(day.transfers)) {
+          day.transfers.forEach((tr: any) => {
+            const desc = (tr.description || tr.serviceName || '').trim()
+            if (desc && !rawTransfers.includes(desc)) rawTransfers.push(desc)
+          })
+        }
+      })
+    }
+
+    // Build clean, professional highlights
+    const highlights: HighlightItem[] = []
+    let detectedHeroKey = 'skyline'
+
+    rawAttractions.forEach((att) => {
+      let cleanTitle = att.replace(/ - Fixed.*$/i, '').trim()
+      let desc = 'Guaranteed digital admission vouchers with scheduled transfers and VIP skip-the-line privileges.'
+
+      if (/universal/i.test(att)) {
+        cleanTitle = 'Universal Studios Singapore (Theme Park Passes)'
+        desc = 'Full-day admission to 7 immersive movie-themed zones, cutting-edge roller coasters, and world-class live entertainment.'
+        detectedHeroKey = 'universal'
+      } else if (/night safari/i.test(att)) {
+        cleanTitle = 'Night Safari with Guided Tram Experience'
+        desc = "Explore the world's first nocturnal wildlife park with guided open-air tram ride and animal presentations."
+        if (detectedHeroKey === 'skyline') detectedHeroKey = 'nightsafari'
+      } else if (/city tour|group tour/i.test(att)) {
+        cleanTitle = 'Singapore City Exploration & Heritage Tour'
+        desc = 'Guided panoramic city drive covering Merlion Park, Marina Bay waterfront, and vibrant cultural districts.'
+      } else if (/gardens|flower dome|cloud forest/i.test(att)) {
+        cleanTitle = 'Gardens by the Bay (Cloud Forest & Flower Dome)'
+        desc = 'Iconic 35-meter indoor waterfall, world-record glass conservatory, and illuminated Supertree Grove.'
+        if (detectedHeroKey === 'skyline') detectedHeroKey = 'gardens'
+      } else if (/sentosa|cable car/i.test(att)) {
+        cleanTitle = 'Sentosa Island & Cable Car Sky Network'
+        desc = 'Scenic panoramic sky cableway flights connecting Mount Faber to Sentosa Island attractions.'
+      }
+
+      highlights.push({
+        id: String(highlights.length + 1),
+        title: cleanTitle,
+        desc
+      })
+    })
+
+    // Add transfer / shopping highlight if present
+    if (rawTransfers.length > 0) {
+      const specialTransfer = rawTransfers.find(t => /imm|jurong|shopping|mustafa/i.test(t))
+      if (specialTransfer) {
+        highlights.push({
+          id: String(highlights.length + 1),
+          title: 'Jurong IMM Shopping Outlet Transfer',
+          desc: "Comfortable dedicated private transfer to Singapore's premier outlet mall with over 90 designer brand outlets."
+        })
+      }
+      highlights.push({
+        id: String(highlights.length + 1),
+        title: 'Airport Meet & Greet Ground Fleet',
+        desc: 'Seamless arrival and departure airport transfers with dedicated luggage assistance and zero wait time.'
+      })
+    }
+
+    if (highlights.length === 0) {
+      highlights.push({
+        id: '1',
+        title: 'Universal Studios Singapore',
+        desc: 'Full-day theme park adventure across 7 movie-themed zones with instant mobile entry.'
+      })
+      highlights.push({
+        id: '2',
+        title: 'Night Safari with Tram',
+        desc: 'Guided tram ride through nocturnal rainforest habitats.'
+      })
     }
 
     const heroImagesMap: Record<string, { url: string; alt: string }> = {
       skyline: {
-        url: 'https://images.unsplash.com/photo-1506351421178-63b52a2d15c8?w=1200&auto=format&fit=crop&q=80',
+        url: 'https://flyingwonders.net/images/hero/singapore-hero-1.jpg',
         alt: 'Marina Bay Sands Skyline and Singapore Waterfront'
       },
-      gardens: {
-        url: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1200&auto=format&fit=crop&q=80',
-        alt: 'Gardens by the Bay Supertree Grove and Cloud Forest Dome'
+      universal: {
+        url: 'https://flyingwonders.net/images/attractions/universal-studios-singapore/cover.jpg',
+        alt: 'Universal Studios Singapore Theme Park'
       },
-      sentosa: {
-        url: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=1200&auto=format&fit=crop&q=80',
-        alt: 'Sentosa Island and Universal Studios Singapore'
+      nightsafari: {
+        url: 'https://flyingwonders.net/images/attractions/night-safari-singapore/cover.jpg',
+        alt: 'Singapore Night Safari with Guided Tram'
+      },
+      gardens: {
+        url: 'https://flyingwonders.net/images/attractions/gardens-by-the-bay/cover.jpg',
+        alt: 'Gardens by the Bay Supertree Grove and Conservatories'
       },
       jewel: {
-        url: 'https://images.unsplash.com/photo-1574786198875-49f5d09fe2d5?w=1200&auto=format&fit=crop&q=80',
+        url: 'https://flyingwonders.net/images/hero/singapore-hero-4.jpg',
         alt: 'Jewel Changi Airport Rain Vortex Waterfall'
       },
-      wildlife: {
-        url: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=1200&auto=format&fit=crop&q=80',
-        alt: 'Singapore Wildlife Reserve and Night Safari'
-      },
-      luxury: {
-        url: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=1200&auto=format&fit=crop&q=80',
-        alt: 'Bioluminescent Supertrees and Luxury Singapore Evening'
+      city: {
+        url: 'https://flyingwonders.net/images/hero/singapore-hero-2.jpg',
+        alt: 'Singapore Merlion and Downtown Skyline'
       }
     }
 
-    const hero = heroImagesMap[imageCat] || heroImagesMap.skyline
+    const finalHeroKey = imageCat && heroImagesMap[imageCat] ? imageCat : detectedHeroKey
+    const hero = heroImagesMap[finalHeroKey] || heroImagesMap.skyline
 
     const newTitle = `Proposal ${pNum} - ${guest} (${days}D${nights}N)`
     const newSubject = tone === 'b2b'
       ? `📋 B2B DMC Proposal ${pNum} | ${guest} - ${days}D${nights}N Singapore Package`
-      : `🌟 Your Singapore Vacation Proposal (${pNum}) | ${days}D${nights}N Custom Itinerary`
-    const newPreheader = `${days}D${nights}N Singapore Itinerary with ${hotel} & VIP Attraction Passes`
+      : `🌟 Singapore Proposal (${pNum}) | ${days}D${nights}N at ${hotel}${rawAttractions.length ? ` incl. ${rawAttractions[0].replace(/ - Fixed.*$/i, '')}` : ''}`
+    const newPreheader = `${days}D${nights}N Singapore Itinerary with ${hotel} & VIP Attraction Passes (${pNum})`
 
-    let body = `We are pleased to present your personalized Singapore holiday proposal curated by Flying Wonders DMC.\n\nYour customized itinerary features ${nights} nights accommodation at ${hotel}, private chauffeured ground transfers, and VIP admissions for ${adults} adult(s)${kids > 0 ? ` and ${kids} child(ren)` : ''}.\n\nEvery day of your journey is coordinated by our on-ground Singapore operations desk to ensure seamless convenience, zero ticket queues, and unforgettable moments.`
+    const attractionNamesSummary = rawAttractions.map(a => a.replace(/ - Fixed.*$/i, '').trim()).join(', ')
+
+    let body = `We are delighted to present your personalized Singapore holiday proposal (${pNum}) curated by Flying Wonders DMC.\n\nYour customized ${days}-day itinerary features ${nights} nights accommodation at ${hotel}, private chauffeured ground transfers, and scheduled admissions for ${adults} adult(s)${kids > 0 ? ` and ${kids} child(ren)` : ''}.\n\n` +
+      (rawAttractions.length > 0 ? `Featured Experiences: Highlights include ${attractionNamesSummary} with seamless ground coordination and zero ticket queues.\n\n` : '') +
+      `Every detail of your stay is handled by our on-ground Singapore operations desk to ensure complete peace of mind from airport arrival to departure.`
+    
+    if (price) {
+      body += `\n\nTotal Package Quote: SGD ${price} net.`
+    }
     if (customNotes && customNotes.trim()) {
       body += `\n\nSpecial Inclusions & Notes: ${customNotes.trim()}`
     }
@@ -869,23 +952,17 @@ export default function NewsletterCampaignManager({
       ? `https://flyingwonders.net/custom-package?ref=${encodeURIComponent(pNum)}`
       : `https://flyingwonders.net/custom-package`
 
-    const highlights: HighlightItem[] = extractedAttractions.slice(0, 4).map((att, idx) => ({
-      id: String(idx + 1),
-      title: att,
-      desc: 'Guaranteed digital admission vouchers with skip-the-line privileges and seamless scheduled ground handling.'
-    }))
-
     const newStructured: StructuredCampaignData = {
       greeting: `Dear ${guest},`,
-      headline: `Exclusive Singapore ${days}D${nights}N Travel Proposal (${pNum})`,
+      headline: `Your Singapore ${days}D${nights}N Travel Proposal (${pNum})`,
       bodyText: body,
       heroImage: hero.url,
       heroImageAlt: hero.alt,
       heroImageLink: ctaUrl,
       heroImagePosition: 'top',
-      highlights,
+      highlights: highlights.slice(0, 4),
       showCta: true,
-      ctaText: `Review Proposal & Confirm Package →`,
+      ctaText: `Review Proposal Details (${pNum}) →`,
       ctaUrl,
       showWhatsApp: true,
       whatsAppText: `Hi Flying Wonders, I received your proposal email for ${pNum} (${guest}) and would like to proceed.`,
@@ -5877,12 +5954,12 @@ Priya Nair | Wanderlust Corporate Desk | priya@wanderlust.co.in | +919876543210 
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                   {[
+                    { id: 'universal', label: 'Universal Studios', icon: '🎢' },
+                    { id: 'nightsafari', label: 'Night Safari', icon: '🦁' },
                     { id: 'skyline', label: 'Marina Bay Skyline', icon: '🏙️' },
                     { id: 'gardens', label: 'Gardens by the Bay', icon: '🌸' },
-                    { id: 'sentosa', label: 'Sentosa & USS', icon: '🎢' },
                     { id: 'jewel', label: 'Jewel Changi Vortex', icon: '🌊' },
-                    { id: 'wildlife', label: 'Wildlife & Safari', icon: '🦁' },
-                    { id: 'luxury', label: 'Luxury Supertrees', icon: '💎' }
+                    { id: 'city', label: 'Singapore Cityscape', icon: '✨' }
                   ].map((img) => (
                     <button
                       key={img.id}
