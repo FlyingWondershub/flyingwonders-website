@@ -33,6 +33,8 @@ import { DEFAULT_ATTRACTIONS, slugifyAttractionName } from '../../utils/attracti
 import { getAllRestaurants, DEFAULT_RESTAURANTS, RestaurantData, slugifyRestaurantName } from '../../utils/restaurants'
 import { getAllShoppingMalls, DEFAULT_SHOPPING_MALLS, ShoppingMallData } from '../../utils/shoppingMalls'
 import PackageShortsCarousel from '../../components/PackageShortsCarousel'
+import TourEssentialsShowcaseView from '../../components/TourEssentialsShowcaseView'
+import { getDefaultTourEssentialsShowcase, TourEssentialsShowcase } from '../../utils/tourEssentials'
 
 // Helper function to strip raw HTML tags and format clean text
 function stripHtml(htmlStr?: string) {
@@ -300,6 +302,8 @@ export default function ServicesCatalogPage() {
   const [loading, setLoading] = useState(false)
 
   // Interactive UI State
+  const [viewMode, setViewMode] = useState<'essentials' | 'full'>('essentials')
+  const [showcase, setShowcase] = useState<TourEssentialsShowcase | null>(null)
   const [activeTab, setActiveTab] = useState<'all' | 'hotels' | 'attractions' | 'restaurants' | 'shopping' | 'guides' | 'tours' | 'packages'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [restaurantCategory, setRestaurantCategory] = useState<string>('all')
@@ -325,10 +329,14 @@ export default function ServicesCatalogPage() {
 
   // Fetch all live data sources in parallel on mount
   useEffect(() => {
-    // Check URL query parameters for ?tab=restaurants etc.
+    // Check URL query parameters for ?tab=restaurants or ?view=full etc.
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tabParam = params.get('tab')
+      const viewParam = params.get('view')
+      if (tabParam || viewParam === 'full') {
+        setViewMode('full')
+      }
       if (tabParam === 'restaurants' || tabParam === 'hotels' || tabParam === 'attractions' || tabParam === 'shopping' || tabParam === 'guides' || tabParam === 'tours' || tabParam === 'packages') {
         setActiveTab(tabParam)
       }
@@ -472,13 +480,25 @@ export default function ServicesCatalogPage() {
       return DEFAULT_SHOPPING_MALLS
     }
 
+    const fetchShowcase = async () => {
+      try {
+        const sc = await getDefaultTourEssentialsShowcase()
+        if (sc) setShowcase(sc)
+        return sc
+      } catch (e) {
+        console.warn('Failed to load tour essentials showcase', e)
+        return null
+      }
+    }
+
     // Execute queries concurrently in parallel
     const [settledSettings, settledAttractions, settledRestaurants, settledMalls, settledMedia] = await Promise.allSettled([
       fetchSettings(),
       fetchAttractions(),
       fetchRestaurants(),
       fetchMalls(),
-      fetchMedia()
+      fetchMedia(),
+      fetchShowcase()
     ])
 
     // Save snapshot to localStorage for instant sub-second render on subsequent visits
@@ -641,6 +661,17 @@ export default function ServicesCatalogPage() {
     )
   }
 
+  // When visitor lands on /services-catalog without tab/view=full, default to Tour Essentials Showcase
+  if (viewMode === 'essentials' && showcase) {
+    return (
+      <TourEssentialsShowcaseView
+        showcase={showcase}
+        showCatalogToggle={true}
+        onToggleFullCatalog={() => setViewMode('full')}
+      />
+    )
+  }
+
   return (
     <div style={{ background: '#F8FAFC', minHeight: '100vh', fontFamily: 'var(--font-inter), sans-serif', color: '#1E293B', paddingBottom: '4rem' }}>
       
@@ -660,9 +691,15 @@ export default function ServicesCatalogPage() {
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setViewMode('essentials')}
+              style={{ background: '#F59E0B', color: '#0F172A', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(245,158,11,0.3)' }}
+            >
+              <Sparkles size={15} /> ⭐ Tour Essentials Showcase
+            </button>
             <Link
               href="/services-catalog/collections"
-              style={{ background: '#F59E0B', color: '#0F172A', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(245,158,11,0.3)' }}
+              style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)', color: '#FFF', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: 800, fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
               <Sparkles size={15} /> Curated Collections
             </Link>

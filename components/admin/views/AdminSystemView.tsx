@@ -103,6 +103,7 @@ export default function AdminSystemView({
       icon: ShoppingBag,
       color: '#7C3AED',
       links: [
+        { name: 'Tour Essentials Showcase (Landing Page)', path: '/tour-essentials', desc: 'Curated one-page essentials showcase (Collections, Hotels, Attractions, Dining, Malls) for newsletters' },
         { name: 'Services Catalog', path: '/services-catalog', desc: 'Master multi-category service directory' },
         { name: 'Curated Collections & Tour Essentials', path: '/services-catalog/collections', desc: 'One-page curated itinerary essentials for newsletters, campaigns & niche travel sectors' },
         { name: 'Curated Collection Dedicated Page (Example)', path: '/services-catalog/collections/singapore-family-wonder-essentials-4d3n', desc: 'Single-page turnkey blueprint with hotels, attractions, dining & day-by-day plan' },
