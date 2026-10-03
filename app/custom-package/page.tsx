@@ -12,29 +12,118 @@ import { generateTaxInvoicePdf, generatePaymentReceiptPdf } from '../../utils/in
 // Default Fallback Master Data (Configured in SGD)
 const FALLBACK_HOTELS = [
   {
-    name: 'Boss Hotel Singapore (3★ Budget)',
+    name: '4* Boss Hotel',
     rooms: [
-      { type: 'Standard Queen Room', price: 105 },
-      { type: 'Family Quad Room', price: 150 },
-      { type: 'Extra Bed Surcharge', price: 40 },
+      { type: 'Double Bed / Twin Bed Room', price: 180, buyPrice: 180 },
+      { type: 'Supplementary Cost', price: 100, buyPrice: 100 },
     ],
   },
   {
-    name: 'Orchard Hotel Singapore (4★ Premium)',
+    name: '3* Hotel Chancellor @ Orchard',
     rooms: [
-      { type: 'Deluxe Twin Room', price: 190 },
-      { type: 'Executive Suite', price: 350 },
-      { type: 'Extra Bed Surcharge', price: 60 },
+      { type: 'Double Bed / Twin Bed Room', price: 150, buyPrice: 140 },
+      { type: 'Supplementary Cost', price: 75, buyPrice: 75 },
+    ],
+  },
+  {
+    name: '3* Hotel - Little India',
+    rooms: [
+      { type: 'Double Bed / Twin Bed Room', price: 160, buyPrice: 160 },
+      { type: 'Supplementary Cost', price: 100, buyPrice: 100 },
+    ],
+  },
+  {
+    name: '4* Hotel - Little India',
+    rooms: [
+      { type: 'Double Bed / Twin Bed Room', price: 220, buyPrice: 220 },
+      { type: 'Supplementary Cost', price: 100, buyPrice: 100 },
+    ],
+  },
+  {
+    name: 'Budget / Value Hotel - Little India',
+    rooms: [
+      { type: 'Double Bed / Twin Bed Room', price: 120, buyPrice: 100 },
+      { type: 'Supplementary Cost', price: 60, buyPrice: 60 },
+    ],
+  },
+  {
+    name: '4* V Hotel lavendar',
+    rooms: [
+      { type: 'Double Bed / Twin Bed Room', price: 180, buyPrice: 180 },
+      { type: 'Supplementary Cost', price: 100, buyPrice: 100 },
+    ],
+  },
+  {
+    name: '4* Mi Rochor',
+    rooms: [
+      { type: 'Double Bed / Twin Bed Room', price: 180, buyPrice: 180 },
+    ],
+  },
+  {
+    name: '4* Mercury Singapore tyrwhitt',
+    rooms: [
+      { type: 'Double Bed / Twin Bed Room', price: 170, buyPrice: 170 },
+    ],
+  },
+  {
+    name: '4* Hilton Garden Inn Little India',
+    rooms: [
+      { type: 'Double Bed / Twin Bed Room', price: 235, buyPrice: 235 },
+    ],
+  },
+  {
+    name: '3* Ibis Styles Albert Court',
+    rooms: [
+      { type: 'Double Bed / Twin Bed Room', price: 170, buyPrice: 170 },
+    ],
+  },
+  {
+    name: '3* Aqueen Prestige Lavendar',
+    rooms: [
+      { type: 'Double Bed / Twin Bed Room', price: 160, buyPrice: 160 },
+    ],
+  },
+  {
+    name: '5* Holiday Inn Little India',
+    rooms: [
+      { type: 'Double Bed / Twin Bed Room', price: 270, buyPrice: 270 },
+    ],
+  },
+  {
+    name: '3* Ibis Styles Albert Street',
+    rooms: [
+      { type: 'Double Bed / Twin Bed Room', price: 160, buyPrice: 160 },
+      { type: 'Supplementary Cost', price: 100, buyPrice: 100 },
     ],
   },
 ]
 
-const FALLBACK_VEHICLES: { type: string; pricePerTransfer: number; serviceName?: string; compositeKey?: string; vehicleType?: string; transferType?: string; rateType?: string }[] = [
-  { type: '13-Seater - Private', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Transfers', compositeKey: '13-Seater - Private - group - Transfers', pricePerTransfer: 45 },
-  { type: '13-Seater - Private (Arrivals)', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Arrivals', compositeKey: '13-Seater - Private - group - Arrivals', pricePerTransfer: 45 },
-  { type: '13-Seater - Private (Departures)', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Departures', compositeKey: '13-Seater - Private - group - Departures', pricePerTransfer: 45 },
-  { type: 'Private Minibus (13-Seater High Roof)', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Transfers', compositeKey: '13-Seater - Private - group - Transfers', pricePerTransfer: 100 },
-  { type: 'Private Sedan (Toyota Camry / Similar)', vehicleType: 'Sedan', transferType: 'Private', rateType: 'group', serviceName: 'Transfers', compositeKey: 'Sedan - Private - group - Transfers', pricePerTransfer: 45 },
+const FALLBACK_VEHICLES: { type: string; pricePerTransfer: number; buyPrice?: number; serviceName?: string; compositeKey?: string; vehicleType?: string; transferType?: string; rateType?: string }[] = [
+  { type: '13-Seater - Private', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Arrivals', compositeKey: '13-Seater - Private - group - Arrivals', pricePerTransfer: 45, buyPrice: 40 },
+  { type: '13-Seater - Private', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Departures', compositeKey: '13-Seater - Private - group - Departures', pricePerTransfer: 45, buyPrice: 35 },
+  { type: '13-Seater - Private', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Transfers', compositeKey: '13-Seater - Private - group - Transfers', pricePerTransfer: 45, buyPrice: 35 },
+  { type: '13-Seater - Private', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'City tour', compositeKey: '13-Seater - Private - group - City tour', pricePerTransfer: 120, buyPrice: 90 },
+  { type: '13-Seater - Private', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Disposal / Hour', compositeKey: '13-Seater - Private - group - Disposal / Hour', pricePerTransfer: 45, buyPrice: 35 },
+  { type: '13-Seater - Private', vehicleType: '13-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Additional Hotel Pickup', compositeKey: '13-Seater - Private - group - Additional Hotel Pickup', pricePerTransfer: 20, buyPrice: 20 },
+  { type: 'Sedan - Private', vehicleType: 'Sedan', transferType: 'Private', rateType: 'group', serviceName: 'Transfers', compositeKey: 'Sedan - Private - group - Transfers', pricePerTransfer: 45, buyPrice: 40 },
+  { type: '24-Seater - Private', vehicleType: '24-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Arrival / Departure', compositeKey: '24-Seater - Private - group - Arrival / Departure', pricePerTransfer: 70, buyPrice: 70 },
+  { type: '24-Seater - Private', vehicleType: '24-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Transfers', compositeKey: '24-Seater - Private - group - Transfers', pricePerTransfer: 70, buyPrice: 60 },
+  { type: '24-Seater - Private', vehicleType: '24-Seater', transferType: 'Private', rateType: 'group', serviceName: 'City tour', compositeKey: '24-Seater - Private - group - City tour', pricePerTransfer: 160, buyPrice: 130 },
+  { type: '24-Seater - Private', vehicleType: '24-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Disposal / Hour', compositeKey: '24-Seater - Private - group - Disposal / Hour', pricePerTransfer: 50, buyPrice: 45 },
+  { type: '24-Seater - Private', vehicleType: '24-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Additional Hotel Pickup', compositeKey: '24-Seater - Private - group - Additional Hotel Pickup', pricePerTransfer: 35, buyPrice: 35 },
+  { type: '45-Seater - Private', vehicleType: '45-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Arrivals', compositeKey: '45-Seater - Private - group - Arrivals', pricePerTransfer: 100, buyPrice: 90 },
+  { type: '45-Seater - Private', vehicleType: '45-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Departures', compositeKey: '45-Seater - Private - group - Departures', pricePerTransfer: 100, buyPrice: 80 },
+  { type: '45-Seater - Private', vehicleType: '45-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Transfers', compositeKey: '45-Seater - Private - group - Transfers', pricePerTransfer: 80, buyPrice: 80 },
+  { type: '45-Seater - Private', vehicleType: '45-Seater', transferType: 'Private', rateType: 'group', serviceName: 'City tour', compositeKey: '45-Seater - Private - group - City tour', pricePerTransfer: 160, buyPrice: 140 },
+  { type: '45-Seater - Private', vehicleType: '45-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Disposal / Hour', compositeKey: '45-Seater - Private - group - Disposal / Hour', pricePerTransfer: 60, buyPrice: 50 },
+  { type: '45-Seater - Private', vehicleType: '45-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Additional Hotel Pickup', compositeKey: '45-Seater - Private - group - Additional Hotel Pickup', pricePerTransfer: 50, buyPrice: 50 },
+  { type: '55-Seater - Private', vehicleType: '55-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Arrival / Departure', compositeKey: '55-Seater - Private - group - Arrival / Departure', pricePerTransfer: 130, buyPrice: 120 },
+  { type: '55-Seater - Private', vehicleType: '55-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Transfers', compositeKey: '55-Seater - Private - group - Transfers', pricePerTransfer: 110, buyPrice: 100 },
+  { type: '55-Seater - Private', vehicleType: '55-Seater', transferType: 'Private', rateType: 'group', serviceName: 'City tour', compositeKey: '55-Seater - Private - group - City tour', pricePerTransfer: 220, buyPrice: 200 },
+  { type: '55-Seater - Private', vehicleType: '55-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Disposal / Hour', compositeKey: '55-Seater - Private - group - Disposal / Hour', pricePerTransfer: 85, buyPrice: 75 },
+  { type: '55-Seater - Private', vehicleType: '55-Seater', transferType: 'Private', rateType: 'group', serviceName: 'Additional Hotel Pickup', compositeKey: '55-Seater - Private - group - Additional Hotel Pickup', pricePerTransfer: 55, buyPrice: 55 },
+  { type: 'SIC - SIC', vehicleType: 'SIC', transferType: 'SIC', rateType: 'per person', serviceName: 'Transfers ( per way )', compositeKey: 'SIC - SIC - per person - Transfers ( per way )', pricePerTransfer: 7, buyPrice: 5 },
+  { type: 'SIC - SIC', vehicleType: 'SIC', transferType: 'SIC', rateType: 'per person', serviceName: 'City Tour ( 3 hours )', compositeKey: 'SIC - SIC - per person - City Tour ( 3 hours )', pricePerTransfer: 15, buyPrice: 10 },
 ]
 
 function get13SeaterVehicleIndex(vList: any[], serviceType?: string, desc?: string): number {
@@ -564,6 +653,103 @@ const isVehicleSIC = (v?: { type?: string; isSIC?: boolean }) => {
   return t.includes('sic') || t.includes('seat-in-coach') || t.includes('seat in coach') || t.includes('shared')
 }
 
+// ── 1-TO-1 GOOGLE SHEET HEADING MATCHERS ──
+// Canonical Google Sheet Headings: 'Vehicle Type', 'Transfer Type', 'Rate type', 'Service Name'
+function normalizeVehicleType(raw?: string): string {
+  if (!raw) return ''
+  const c = raw.trim()
+  if (c.includes('13')) return '13-Seater'
+  if (c.includes('24')) return '24-Seater'
+  if (c.includes('45')) return '45-Seater'
+  if (c.includes('55')) return '55-Seater'
+  if (c.toLowerCase().includes('sedan')) return 'Sedan'
+  if (c.toLowerCase().includes('sic')) return 'SIC'
+  return c
+}
+
+function normalizeServiceName(raw?: string): string {
+  if (!raw) return ''
+  const c = raw.trim().toLowerCase()
+  if (c.includes('arrival') && c.includes('departure')) return 'Arrival / Departure'
+  if (c.includes('arrival')) return 'Arrivals'
+  if (c.includes('departure')) return 'Departures'
+  if (c.includes('city')) {
+    return c.includes('3 hour') ? 'City Tour ( 3 hours )' : 'City tour'
+  }
+  if (c.includes('disposal') || c.includes('hour')) return 'Disposal / Hour'
+  if (c.includes('additional') || c.includes('extra pickup')) return 'Additional Hotel Pickup'
+  if (c.includes('per way')) return 'Transfers ( per way )'
+  if (c.includes('transfer')) return 'Transfers'
+  return raw.trim()
+}
+
+function findVehicleByHeadings(
+  vList: any[],
+  t: {
+    vehicleType?: string
+    serviceName?: string
+    transferType?: string
+    rateType?: string
+    type?: string
+    serviceType?: string
+    description?: string
+    routeDescription?: string
+    vehicleIndex?: number
+  }
+): any | undefined {
+  if (!Array.isArray(vList) || vList.length === 0) return undefined
+
+  // 1. Direct 1-to-1 match by Sheet Headings: Vehicle Type + Service Name
+  const targetV = normalizeVehicleType(t.vehicleType || t.type)
+  const targetS = normalizeServiceName(t.serviceName || t.serviceType || t.description || t.routeDescription)
+
+  if (targetV && targetS) {
+    const match = vList.find(v => 
+      normalizeVehicleType(v.vehicleType || v.type) === targetV &&
+      normalizeServiceName(v.serviceName || v.transfers) === targetS
+    )
+    if (match) return match
+  }
+
+  // 2. Fallback within the exact same Vehicle Type (never cross to a different vehicle type)
+  if (targetV) {
+    const matchTransfers = vList.find(v => 
+      normalizeVehicleType(v.vehicleType || v.type) === targetV &&
+      normalizeServiceName(v.serviceName || v.transfers) === 'Transfers'
+    )
+    if (matchTransfers) return matchTransfers
+
+    const matchAnySameV = vList.find(v => normalizeVehicleType(v.vehicleType || v.type) === targetV)
+    if (matchAnySameV) return matchAnySameV
+  }
+
+  // 3. If explicit vehicleIndex was specified and candidate matches target vehicle type
+  if (typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && t.vehicleIndex < vList.length) {
+    const cand = vList[t.vehicleIndex]
+    if (cand && (!targetV || normalizeVehicleType(cand.vehicleType || cand.type) === targetV)) {
+      return cand
+    }
+  }
+
+  return undefined
+}
+
+function findVehicleIndex(vList: any[], t: any, groupPax?: number): number {
+  if (!Array.isArray(vList) || vList.length === 0) return 0
+  const veh = findVehicleByHeadings(vList, t)
+  if (veh) {
+    const idx = vList.indexOf(veh)
+    if (idx >= 0) return idx
+  }
+  // Group size aware default if target vehicle was undefined:
+  if (groupPax && groupPax > 12) {
+    const targetSize = groupPax <= 20 ? '24-Seater' : groupPax <= 40 ? '45-Seater' : '55-Seater'
+    const coachIdx = vList.findIndex(v => normalizeVehicleType(v.vehicleType || v.type) === targetSize)
+    if (coachIdx >= 0) return coachIdx
+  }
+  return get13SeaterVehicleIndex(vList, t.serviceType, t.description)
+}
+
 const TIME_OPTIONS: string[] = []
 for (let h = 0; h < 24; h++) {
   const hStr = h.toString().padStart(2, '0')
@@ -573,9 +759,62 @@ for (let h = 0; h < 24; h++) {
   TIME_OPTIONS.push(`${hStr}:45`)
 }
 
+function findHotelIndex(hList: any[], targetName?: string): number {
+  if (!Array.isArray(hList) || hList.length === 0 || !targetName) return -1
+  const clean = targetName.toLowerCase().trim()
+  // 1. Exact match
+  let idx = hList.findIndex(h => h.name.toLowerCase().trim() === clean)
+  if (idx >= 0) return idx
+
+  // 2. Normalized match (strip star prefix like '3* ', '4* ', '5* ' and parenthetical notes)
+  const stripStar = (s: string) => s.toLowerCase().replace(/^[1-5]\s*\*\s*/, '').replace(/\(.*?\)/g, '').replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim()
+  const cleanTarget = stripStar(targetName)
+  idx = hList.findIndex(h => stripStar(h.name) === cleanTarget)
+  if (idx >= 0) return idx
+
+  // 3. Substring match
+  if (cleanTarget.length > 3) {
+    idx = hList.findIndex(h => {
+      const hClean = stripStar(h.name)
+      return hClean.includes(cleanTarget) || cleanTarget.includes(hClean)
+    })
+    if (idx >= 0) return idx
+  }
+  return -1
+}
+
+function findRoomIndex(rooms: any[], targetRoom?: string): number {
+  if (!Array.isArray(rooms) || rooms.length === 0 || !targetRoom) return 0
+  const clean = targetRoom.toLowerCase().trim()
+  let idx = rooms.findIndex(r => r.type.toLowerCase().trim() === clean)
+  if (idx >= 0) return idx
+  idx = rooms.findIndex(r => r.type.toLowerCase().includes(clean) || clean.includes(r.type.toLowerCase()))
+  return idx >= 0 ? idx : 0
+}
+
+function findGuideIndex(gList: any[], targetType?: string): number {
+  if (!Array.isArray(gList) || gList.length === 0 || !targetType) return 0
+  const clean = targetType.toLowerCase().trim()
+  let idx = gList.findIndex(g => (g.type || '').toLowerCase().trim() === clean)
+  if (idx >= 0) return idx
+  idx = gList.findIndex(g => (g.type || '').toLowerCase().includes(clean) || clean.includes((g.type || '').toLowerCase()))
+  return idx >= 0 ? idx : 0
+}
+
 const FALLBACK_GUIDES = [
-  { type: 'Half-Day Professional Heritage Guide', pricePerDay: 80 },
-  { type: 'Full-Day Accompanying Tour Director', pricePerDay: 145 },
+  { type: 'Arrival', pricePerDay: 50, buyPrice: 50 },
+  { type: 'Departure', pricePerDay: 50, buyPrice: 50 },
+  { type: 'Gardens by the Bay', pricePerDay: 100, buyPrice: 90 },
+  { type: 'City tour', pricePerDay: 100, buyPrice: 100 },
+  { type: 'Night Safari', pricePerDay: 100, buyPrice: 100 },
+  { type: 'Sentosa half day 1 show', pricePerDay: 130, buyPrice: 130 },
+  { type: 'Sentosa half day 2 show', pricePerDay: 150, buyPrice: 150 },
+  { type: 'Sentosa full day', pricePerDay: 280, buyPrice: 280 },
+  { type: 'USS', pricePerDay: 100, buyPrice: 100 },
+  { type: 'Mandai 6 in 1', pricePerDay: 350, buyPrice: 350 },
+  { type: 'Guide Included', pricePerDay: 300, buyPrice: 300 },
+  { type: 'City tour + Flyer', pricePerDay: 150, buyPrice: 150 },
+  { type: 'Meal Transfer', pricePerDay: 40, buyPrice: 40 },
 ]
 
 interface TransferEntry {
@@ -588,6 +827,10 @@ interface TransferEntry {
   serviceType?: string
   routeDescription?: string
   hours?: number
+  compositeKey?: string
+  vehicleType?: string
+  transferType?: string
+  rateType?: string
 }
 
 interface MealEntry {
@@ -1777,16 +2020,16 @@ export default function PrototypeBuilder() {
     }
 
     if (!loadedProposalRaw.customHotelEnabled && loadedProposalRaw.hotelName && hotelsList.length > 0) {
-      const hIdx = hotelsList.findIndex(h => h.name.toLowerCase().trim() === (loadedProposalRaw.hotelName || '').toLowerCase().trim())
+      const hIdx = findHotelIndex(hotelsList, loadedProposalRaw.hotelName)
       if (hIdx >= 0) {
         setGlobalHotelIndex(hIdx)
         if (loadedProposalRaw.roomType) {
-          const rIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === (loadedProposalRaw.roomType || '').toLowerCase().trim())
-          if (rIdx >= 0) setGlobalRoomIndex(rIdx)
+          const rIdx = findRoomIndex(hotelsList[hIdx]?.rooms, loadedProposalRaw.roomType)
+          setGlobalRoomIndex(rIdx)
         }
         if (loadedProposalRaw.supplementType) {
-          const sIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === (loadedProposalRaw.supplementType || '').toLowerCase().trim())
-          if (sIdx >= 0) setGlobalSuppIndex(sIdx)
+          const sIdx = findRoomIndex(hotelsList[hIdx]?.rooms, loadedProposalRaw.supplementType)
+          setGlobalSuppIndex(sIdx)
         }
       }
     }
@@ -1798,124 +2041,61 @@ export default function PrototypeBuilder() {
         ...day,
         transfers: (day.transfers || []).map(t => {
           if (vehiclesList.length > 0) {
-            let vIdx = -1
-
-            // 1. If existing vehicleIndex points to a valid vehicle in vehiclesList that matches t.type (or t.type is empty), prioritize it!
-            if (typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && t.vehicleIndex < vehiclesList.length) {
-              const candidate = vehiclesList[t.vehicleIndex]
-              // Check if candidate vehicle matches the saved vehicle type (e.g. 45-Seater vs 13-Seater)
-              if (!t.type || (candidate && candidate.type.toLowerCase().trim() === (t.type || '').toLowerCase().trim())) {
-                vIdx = t.vehicleIndex
-              }
-            }
-
-            const tType = (t.type || '').toLowerCase().trim()
-            const tService = (t.serviceName || '').toLowerCase().trim()
-            const desc = (t.description || t.routeDescription || t.serviceType || '').toLowerCase().trim()
-            const allText = `${tType} ${tService} ${desc}`
-
-            // 2. If vehicleIndex is invalid, missing, or mismatched, match by exact vehicle type + serviceName
-            if (vIdx < 0 && tType && tService) {
-              vIdx = vehiclesList.findIndex(v => 
-                v.type.toLowerCase().trim() === tType &&
-                (v.serviceName || '').toLowerCase().trim() === tService
-              )
-            }
-            // 3. Match on distinctive serviceName ONLY if vehicle type is compatible
-            if (vIdx < 0 && tService && !tService.includes('transfer')) {
-              vIdx = vehiclesList.findIndex(v => {
-                const sMatch = (v.serviceName || '').toLowerCase().trim() === tService
-                if (!sMatch) return false
-                if (!tType) return true
-                const vt = (v.type || '').toLowerCase()
-                if (tType.includes('45')) return vt.includes('45')
-                if (tType.includes('24')) return vt.includes('24')
-                if (tType.includes('55')) return vt.includes('55')
-                if (tType.includes('13')) return vt.includes('13')
-                return vt === tType
-              })
-            }
-            // 4. Match on vehicle type (unless it's a generic 13-seater when a larger coach was intended)
-            if (vIdx < 0 && tType) {
-              vIdx = vehiclesList.findIndex(v => 
-                v.type.toLowerCase().trim() === tType
-              )
-            }
-            // 5. Match by vehicle size if 45, 24, 55 seater or SIC is specified in text, respecting service type (arrival/departure)
-            if (vIdx < 0) {
-              const isArr = tService.includes('arrival') || desc.includes('arrival') || (t.serviceType || '').toLowerCase().includes('arrival')
-              const isDep = tService.includes('departure') || desc.includes('departure') || (t.serviceType || '').toLowerCase().includes('departure')
-
-              const findMatchingCoach = (sizeStr: string) => {
-                let idx = -1
-                if (isArr) {
-                  idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('arrival') || v.type?.toLowerCase().includes('arrival')))
-                } else if (isDep) {
-                  idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('departure') || v.type?.toLowerCase().includes('departure')))
-                }
-                if (idx < 0) {
-                  idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)))
-                }
-                return idx
-              }
-
-              if (allText.includes('45') || allText.includes('full coach')) {
-                vIdx = findMatchingCoach('45')
-              } else if (allText.includes('24') || allText.includes('medium coach')) {
-                vIdx = findMatchingCoach('24')
-              } else if (allText.includes('55') || allText.includes('super coach')) {
-                vIdx = findMatchingCoach('55')
-              } else if (allText.includes('sic') || (allText.includes('coach') && !allText.includes('full') && !allText.includes('medium'))) {
-                vIdx = vehiclesList.findIndex(v => isVehicleSIC(v))
-              }
-            }
-            // 6. If still unresolved but valid vehicleIndex exists, keep vehicleIndex
-            if (vIdx < 0 && typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && t.vehicleIndex < vehiclesList.length) {
-              vIdx = t.vehicleIndex
-            }
-
-            if (vIdx >= 0) {
-              const matchedVeh = vehiclesList[vIdx]
+            const matchedVeh = findVehicleByHeadings(vehiclesList, t)
+            if (matchedVeh) {
+              const vIdx = vehiclesList.indexOf(matchedVeh)
               return {
                 ...t,
-                vehicleIndex: vIdx,
-                type: matchedVeh?.type || t.type,
-                serviceName: matchedVeh?.serviceName || t.serviceName
+                vehicleIndex: vIdx >= 0 ? vIdx : t.vehicleIndex,
+                vehicleType: matchedVeh.vehicleType,
+                serviceName: matchedVeh.serviceName,
+                transferType: matchedVeh.transferType,
+                rateType: matchedVeh.rateType,
+                type: matchedVeh.type
               }
             }
           }
           return t
         }),
         attractions: (day.attractions || []).map(a => {
+          let updated = { ...a }
           if (attractionsList.length > 0 && a.attractionName) {
-            const aName = a.attractionName.toLowerCase().trim()
-            const aIdx = attractionsList.findIndex(item => item.name.toLowerCase().trim() === aName)
-            let updated = a
-            if (aIdx >= 0) {
-              updated = { ...updated, attractionIndex: aIdx }
-            }
-            if (vehiclesList.length > 0) {
-              let pvIdx = typeof a.pickupVehicleIndex === 'number' && a.pickupVehicleIndex >= 0 && a.pickupVehicleIndex < vehiclesList.length ? a.pickupVehicleIndex : -1
-              if (pvIdx < 0 && a.pickupVehicleType) {
-                const pvName = a.pickupVehicleType.toLowerCase().trim()
-                pvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === pvName)
-              }
-              if (pvIdx >= 0) {
-                updated = { ...updated, pickupVehicleIndex: pvIdx, pickupVehicleType: vehiclesList[pvIdx]?.type || a.pickupVehicleType }
-              }
-
-              let dvIdx = typeof a.dropVehicleIndex === 'number' && a.dropVehicleIndex >= 0 && a.dropVehicleIndex < vehiclesList.length ? a.dropVehicleIndex : -1
-              if (dvIdx < 0 && a.dropVehicleType) {
-                const dvName = a.dropVehicleType.toLowerCase().trim()
-                dvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === dvName)
-              }
-              if (dvIdx >= 0) {
-                updated = { ...updated, dropVehicleIndex: dvIdx, dropVehicleType: vehiclesList[dvIdx]?.type || a.dropVehicleType }
+            const matched = findMatchingAttraction(a.attractionName, attractionsList)
+            if (matched) {
+              const aIdx = attractionsList.indexOf(matched)
+              if (aIdx >= 0) {
+                updated = { ...updated, attractionIndex: aIdx }
               }
             }
-            return updated
           }
-          return a
+          if (vehiclesList.length > 0) {
+            if (a.pickupVehicleType) {
+              const matchedVeh = findVehicleByHeadings(vehiclesList, { vehicleType: a.pickupVehicleType, serviceName: 'Transfers' })
+              if (matchedVeh) {
+                const f = vehiclesList.indexOf(matchedVeh)
+                if (f >= 0) {
+                  updated = { ...updated, pickupVehicleIndex: f, pickupVehicleType: matchedVeh.vehicleType || matchedVeh.type }
+                }
+              }
+            } else if (typeof a.pickupVehicleIndex === 'number' && a.pickupVehicleIndex >= 0 && a.pickupVehicleIndex < vehiclesList.length) {
+              const v = vehiclesList[a.pickupVehicleIndex]
+              if (v) updated = { ...updated, pickupVehicleType: v.vehicleType || v.type }
+            }
+
+            if (a.dropVehicleType) {
+              const matchedVeh = findVehicleByHeadings(vehiclesList, { vehicleType: a.dropVehicleType, serviceName: 'Transfers' })
+              if (matchedVeh) {
+                const f = vehiclesList.indexOf(matchedVeh)
+                if (f >= 0) {
+                  updated = { ...updated, dropVehicleIndex: f, dropVehicleType: matchedVeh.vehicleType || matchedVeh.type }
+                }
+              }
+            } else if (typeof a.dropVehicleIndex === 'number' && a.dropVehicleIndex >= 0 && a.dropVehicleIndex < vehiclesList.length) {
+              const v = vehiclesList[a.dropVehicleIndex]
+              if (v) updated = { ...updated, dropVehicleType: v.vehicleType || v.type }
+            }
+          }
+          return updated
         }),
         meals: (day.meals || []).map(m => {
           if (mealsList.length > 0 && m.type) {
@@ -1927,9 +2107,8 @@ export default function PrototypeBuilder() {
         }),
         guides: (day.guides || []).map(g => {
           if (guidesList.length > 0 && g.type) {
-            const gName = g.type.toLowerCase().trim()
-            const gIdx = guidesList.findIndex(item => item.type.toLowerCase().trim() === gName)
-            if (gIdx >= 0) return { ...g, guideIndex: gIdx }
+            const gIdx = findGuideIndex(guidesList, g.type)
+            return { ...g, guideIndex: gIdx }
           }
           return g
         })
@@ -2772,7 +2951,11 @@ export default function PrototypeBuilder() {
           serviceType: t.serviceType,
           routeDescription: t.routeDescription,
           type: veh?.type,
-          serviceName: veh?.serviceName
+          serviceName: veh?.serviceName,
+          compositeKey: veh?.compositeKey,
+          vehicleType: veh?.vehicleType,
+          transferType: veh?.transferType,
+          rateType: veh?.rateType
         }
       }),
       attractions: (d.attractions || []).map((a: any) => {
@@ -2824,7 +3007,18 @@ export default function PrototypeBuilder() {
     const vObj = vehiclesList[default13Idx]
     const isSic = vObj ? isVehicleSIC(vObj) : false
     const defaultQty = isSic ? (adults + kids) || 1 : 1
-    updateDay(dayIndex, 'transfers', [...day.transfers, { vehicleIndex: default13Idx, time: '12:00', description: '', qty: defaultQty, type: vObj?.type, serviceName: vObj?.serviceName }])
+    updateDay(dayIndex, 'transfers', [...day.transfers, {
+      vehicleIndex: default13Idx,
+      time: '12:00',
+      description: '',
+      qty: defaultQty,
+      type: vObj?.type,
+      serviceName: vObj?.serviceName,
+      compositeKey: vObj?.compositeKey,
+      vehicleType: vObj?.vehicleType,
+      transferType: vObj?.transferType,
+      rateType: vObj?.rateType
+    }])
   }
 
   const removeTransferRow = (dayIndex: number, rIdx: number) => {
@@ -2847,7 +3041,11 @@ export default function PrototypeBuilder() {
         vehicleIndex: value,
         qty: newQty,
         type: selectedVehicle?.type,
-        serviceName: selectedVehicle?.serviceName
+        serviceName: selectedVehicle?.serviceName,
+        compositeKey: selectedVehicle?.compositeKey,
+        vehicleType: selectedVehicle?.vehicleType,
+        transferType: selectedVehicle?.transferType,
+        rateType: selectedVehicle?.rateType
       }
     } else {
       updated[rIdx] = { ...updated[rIdx], [field]: value }
@@ -2859,7 +3057,8 @@ export default function PrototypeBuilder() {
     const day = itinerary[dayIndex]
     if (!day) return
     const currentMeals = day.meals || []
-    updateDay(dayIndex, 'meals', [...currentMeals, { mealIndex: 0, time: '12:00', description: '' }])
+    const defaultType = mealsList[0]?.type || 'Breakfast'
+    updateDay(dayIndex, 'meals', [...currentMeals, { mealIndex: 0, type: defaultType, time: '12:00', description: '' }])
   }
 
   const removeMealRow = (dayIndex: number, rIdx: number) => {
@@ -2875,14 +3074,20 @@ export default function PrototypeBuilder() {
     if (!day) return
     const currentMeals = day.meals || []
     const updated = [...currentMeals]
-    updated[rIdx] = { ...updated[rIdx], [field]: value }
+    if (field === 'mealIndex') {
+      const mObj = mealsList[value]
+      updated[rIdx] = { ...updated[rIdx], mealIndex: value, type: mObj?.type }
+    } else {
+      updated[rIdx] = { ...updated[rIdx], [field]: value }
+    }
     updateDay(dayIndex, 'meals', updated)
   }
 
   const addGuideRow = (dayIndex: number) => {
     const day = itinerary[dayIndex]
     if (!day) return
-    updateDay(dayIndex, 'guides', [...day.guides, { guideIndex: 0, time: '09:00', description: '' }])
+    const defaultType = guidesList[0]?.type || 'Arrival'
+    updateDay(dayIndex, 'guides', [...day.guides, { guideIndex: 0, type: defaultType, time: '09:00', description: '' }])
   }
 
   const removeGuideRow = (dayIndex: number, rIdx: number) => {
@@ -2896,7 +3101,12 @@ export default function PrototypeBuilder() {
     const day = itinerary[dayIndex]
     if (!day) return
     const updated = [...day.guides]
-    updated[rIdx] = { ...updated[rIdx], [field]: value }
+    if (field === 'guideIndex') {
+      const gObj = guidesList[value]
+      updated[rIdx] = { ...updated[rIdx], guideIndex: value, type: gObj?.type }
+    } else {
+      updated[rIdx] = { ...updated[rIdx], [field]: value }
+    }
     updateDay(dayIndex, 'guides', updated)
   }
 
@@ -2925,14 +3135,14 @@ export default function PrototypeBuilder() {
       updated[rIdx] = {
         ...updated[rIdx],
         pickupVehicleIndex: value,
-        pickupVehicleType: veh?.type
+        pickupVehicleType: veh?.vehicleType || veh?.type
       }
     } else if (field === 'dropVehicleIndex') {
       const veh = vehiclesList[value]
       updated[rIdx] = {
         ...updated[rIdx],
         dropVehicleIndex: value,
-        dropVehicleType: veh?.type
+        dropVehicleType: veh?.vehicleType || veh?.type
       }
     } else {
       updated[rIdx] = { ...updated[rIdx], [field]: value }
@@ -3054,19 +3264,7 @@ export default function PrototypeBuilder() {
 
     itinerary.forEach((day, dIdx) => {
       day.transfers.forEach(trans => {
-        let vehicle: { type: string; pricePerTransfer: number; buyPrice?: number; serviceName?: string } | undefined = undefined
-        if ((trans as any).compositeKey) {
-          vehicle = vehiclesList.find(v => v.compositeKey && v.compositeKey.toLowerCase().trim() === (trans as any).compositeKey?.toLowerCase().trim())
-        }
-        if (!vehicle && (trans.type || trans.serviceName)) {
-          vehicle = vehiclesList.find(v => 
-            (trans.type && v.type.toLowerCase().trim() === trans.type.toLowerCase().trim()) ||
-            (trans.serviceName && v.serviceName && v.serviceName.toLowerCase().trim() === trans.serviceName.toLowerCase().trim())
-          )
-        }
-        if (!vehicle && typeof trans.vehicleIndex === 'number' && trans.vehicleIndex >= 0 && trans.vehicleIndex < vehiclesList.length) {
-          vehicle = vehiclesList[trans.vehicleIndex]
-        }
+        const vehicle = findVehicleByHeadings(vehiclesList, trans)
         if (vehicle) {
           const qty = trans.qty || 1
           const isDisposal = (trans as any).serviceType === 'disposal' || (trans.description || '').toLowerCase().includes('disposal')
@@ -3099,17 +3297,17 @@ export default function PrototypeBuilder() {
         const rowChildCount = typeof attrRow.childTickets === 'number' ? attrRow.childTickets : kids
         const isGroup = attr?.rateType === 'group'
 
-        // Compute transfer cost tied to this attraction
+        // Compute transfer cost tied to this attraction using 1-1 heading match
         let rowTransferCost = 0
         let rowTransferBuyCost = 0
         if (attrRow.hasTransfer) {
           const default13TransferIdx = get13SeaterVehicleIndex(vehiclesList, 'transfer')
           if (attrRow.pickupEnabled !== false) {
-            const pIdx = attrRow.pickupVehicleIndex !== undefined && attrRow.pickupVehicleIndex >= 0 ? attrRow.pickupVehicleIndex : default13TransferIdx
-            let pv: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[pIdx]
-            if (!pv && attrRow.pickupVehicleType) {
-              pv = vehiclesList.find(v => v.type.toLowerCase().trim() === attrRow.pickupVehicleType?.toLowerCase().trim())
-            }
+            const pv = findVehicleByHeadings(vehiclesList, {
+              vehicleType: attrRow.pickupVehicleType,
+              serviceName: 'Transfers',
+              vehicleIndex: attrRow.pickupVehicleIndex
+            }) || vehiclesList[default13TransferIdx]
             if (pv) {
               const paxMult = isVehicleSIC(pv) ? totalPax : 1
               rowTransferCost += pv.pricePerTransfer * paxMult
@@ -3118,11 +3316,11 @@ export default function PrototypeBuilder() {
             }
           }
           if (attrRow.dropEnabled !== false) {
-            const dIdx = attrRow.dropVehicleIndex !== undefined && attrRow.dropVehicleIndex >= 0 ? attrRow.dropVehicleIndex : default13TransferIdx
-            let dv: { type: string; pricePerTransfer: number; serviceName?: string } | undefined = vehiclesList[dIdx]
-            if (!dv && attrRow.dropVehicleType) {
-              dv = vehiclesList.find(v => v.type.toLowerCase().trim() === attrRow.dropVehicleType?.toLowerCase().trim())
-            }
+            const dv = findVehicleByHeadings(vehiclesList, {
+              vehicleType: attrRow.dropVehicleType,
+              serviceName: 'Transfers',
+              vehicleIndex: attrRow.dropVehicleIndex
+            }) || vehiclesList[default13TransferIdx]
             if (dv) {
               const paxMult = isVehicleSIC(dv) ? totalPax : 1
               rowTransferCost += dv.pricePerTransfer * paxMult
@@ -7788,16 +7986,17 @@ export default function PrototypeBuilder() {
           setCustomHotelSuppCost(prop.customHotelSuppCost || 0)
         } else {
           // Match hotel name
-          const hName = (prop.hotelName || '').toLowerCase().trim()
-          const hIdx = hotelsList.findIndex(h => h.name.toLowerCase().trim() === hName)
+          const hIdx = findHotelIndex(hotelsList, prop.hotelName)
           if (hIdx >= 0) {
             setGlobalHotelIndex(hIdx)
-            const rType = (prop.roomType || '').toLowerCase().trim()
-            const rIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === rType)
-            if (rIdx >= 0) setGlobalRoomIndex(rIdx)
-            const sType = (prop.supplementType || '').toLowerCase().trim()
-            const sIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === sType)
-            if (sIdx >= 0) setGlobalSuppIndex(sIdx)
+            if (prop.roomType) {
+              const rIdx = findRoomIndex(hotelsList[hIdx]?.rooms, prop.roomType)
+              setGlobalRoomIndex(rIdx)
+            }
+            if (prop.supplementType) {
+              const sIdx = findRoomIndex(hotelsList[hIdx]?.rooms, prop.supplementType)
+              setGlobalSuppIndex(sIdx)
+            }
           }
         }
         setMiscCostPerPerson(prop.miscCostPerPerson || 0)
@@ -7865,76 +8064,25 @@ export default function PrototypeBuilder() {
             ...day,
             dayTitle: day.dayTitle || '',
             transfers: Array.isArray(day.transfers) ? day.transfers.map((t: any) => {
-              const tType = (t.type || '').toLowerCase().trim()
-              const tService = (t.serviceName || '').toLowerCase().trim()
+              const matchedVeh = findVehicleByHeadings(vehiclesList, t)
+              const vIdx = matchedVeh ? vehiclesList.indexOf(matchedVeh) : (typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && t.vehicleIndex < vehiclesList.length ? t.vehicleIndex : 0)
+              const resolvedVeh = vehiclesList[vIdx] || matchedVeh
               const desc = (t.routeDescription || t.serviceType || t.description || '').toLowerCase().trim()
-              const allText = `${tType} ${tService} ${desc}`
-
-              let vIdx = -1
-
-              // 1. If valid vehicleIndex was saved, prioritize it!
-              if (t.compositeKey && vehiclesList.length > 0) {
-                vIdx = vehiclesList.findIndex(v => v.compositeKey?.toLowerCase() === t.compositeKey?.toLowerCase())
-              }
-
-              // 2. Match by exact vehicle type + serviceName if available
-              if (vIdx < 0 && vehiclesList.length > 0 && tType && tService) {
-                vIdx = vehiclesList.findIndex(v =>
-                  v.type.toLowerCase().trim() === tType &&
-                  (v.serviceName || '').toLowerCase().trim() === tService
-                )
-              }
-
-              // 3. Match by exact vehicle type
-              if (vIdx < 0 && vehiclesList.length > 0 && tType) {
-                vIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === tType)
-              }
-
-              // 4. Match by vehicle size if 45, 24, or 55 seater was specified in text/type/desc, respecting service type
-              if (vIdx < 0 && vehiclesList.length > 0) {
-                const isArr = (t.serviceType || '').toLowerCase().includes('arrival') || desc.includes('arrival') || (t.serviceName || '').toLowerCase().includes('arrival')
-                const isDep = (t.serviceType || '').toLowerCase().includes('departure') || desc.includes('departure') || (t.serviceName || '').toLowerCase().includes('departure')
-
-                const findCoach = (sizeStr: string) => {
-                  let idx = -1
-                  if (isArr) {
-                    idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('arrival') || v.type?.toLowerCase().includes('arrival')))
-                  } else if (isDep) {
-                    idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('departure') || v.type?.toLowerCase().includes('departure')))
-                  }
-                  if (idx < 0) {
-                    idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)))
-                  }
-                  return idx
-                }
-
-                if (allText.includes('45') || allText.includes('full coach')) {
-                  vIdx = findCoach('45')
-                } else if (allText.includes('24') || allText.includes('medium coach')) {
-                  vIdx = findCoach('24')
-                } else if (allText.includes('55') || allText.includes('super coach')) {
-                  vIdx = findCoach('55')
-                } else if (allText.includes('sic') || (allText.includes('coach') && !allText.includes('full') && !allText.includes('medium'))) {
-                  vIdx = vehiclesList.findIndex(v => isVehicleSIC(v))
-                }
-              }
-
-              // 5. Fallback: only if index is unresolved, get 13-seater default
-              if (vIdx < 0 && typeof t.vehicleIndex === 'number' && t.vehicleIndex >= 0 && t.vehicleIndex < vehiclesList.length) {
-                vIdx = t.vehicleIndex
-              }
-              if (vIdx < 0) {
-                vIdx = get13SeaterVehicleIndex(vehiclesList, t.serviceType, desc)
-              }
-
-              const resolvedVeh = vehiclesList[vIdx]
               const sType = t.serviceType || (desc.includes('arrival') ? 'arrival' : desc.includes('departure') ? 'departure' : desc.includes('disposal') ? 'disposal' : 'interAttraction')
               const isDisposal = sType === 'disposal' || desc.includes('disposal')
+
+              const vType = normalizeVehicleType(t.vehicleType || t.type)
+              const finalVehicleType = resolvedVeh?.vehicleType || t.vehicleType || vType
+              const finalServiceName = resolvedVeh?.serviceName || t.serviceName || 'Transfers'
+
               return {
                 ...t,
                 vehicleIndex: vIdx >= 0 ? vIdx : (typeof t.vehicleIndex === 'number' ? t.vehicleIndex : 0),
-                type: t.type || resolvedVeh?.type,
-                serviceName: t.serviceName || resolvedVeh?.serviceName,
+                vehicleType: finalVehicleType,
+                serviceName: finalServiceName,
+                transferType: resolvedVeh?.transferType || t.transferType || 'Private',
+                rateType: resolvedVeh?.rateType || t.rateType || 'group',
+                type: resolvedVeh?.type || t.type || `${finalVehicleType} - ${finalServiceName}`,
                 serviceType: sType,
                 time: sanitizeTime(t.time),
                 description: t.description || t.routeDescription || t.serviceType || 'Transfer',
@@ -7942,8 +8090,26 @@ export default function PrototypeBuilder() {
                 qty: typeof t.qty === 'number' ? t.qty : 1
               }
             }) : [],
-            guides: Array.isArray(day.guides) ? day.guides.map((g: any) => ({ ...g, time: sanitizeTime(g.time) })) : [],
-            meals: Array.isArray(day.meals) ? day.meals.map((m: any) => ({ ...m, time: sanitizeTime(m.time) })) : [],
+            guides: Array.isArray(day.guides) ? day.guides.map((g: any) => {
+              const gType = g.type || (typeof g.guideIndex === 'number' && guidesList[g.guideIndex] ? guidesList[g.guideIndex].type : undefined)
+              const gIdx = gType ? findGuideIndex(guidesList, gType) : (typeof g.guideIndex === 'number' ? g.guideIndex : 0)
+              return {
+                ...g,
+                type: gType,
+                guideIndex: gIdx,
+                time: sanitizeTime(g.time)
+              }
+            }) : [],
+            meals: Array.isArray(day.meals) ? day.meals.map((m: any) => {
+              const mType = m.type || (typeof m.mealIndex === 'number' && mealsList[m.mealIndex] ? mealsList[m.mealIndex].type : undefined)
+              const mIdx = mType ? mealsList.findIndex(item => item.type.toLowerCase().trim() === mType.toLowerCase().trim()) : (typeof m.mealIndex === 'number' ? m.mealIndex : 0)
+              return {
+                ...m,
+                type: mType,
+                mealIndex: mIdx >= 0 ? mIdx : 0,
+                time: sanitizeTime(m.time)
+              }
+            }) : [],
             attractions: Array.isArray(day.attractions) ? day.attractions.map((a: any) => {
               const aName = a.attractionName || a.name || ''
               let aIdx = -1
@@ -7959,6 +8125,39 @@ export default function PrototypeBuilder() {
               }
               const defaultAdultPrice = typeof a.adultPrice === 'number' ? a.adultPrice : (aIdx >= 0 ? attractionsList[aIdx]?.adultPrice : 0)
               const defaultChildPrice = typeof a.childPrice === 'number' ? a.childPrice : (aIdx >= 0 ? attractionsList[aIdx]?.childPrice : 0)
+
+              let pVehIdx = -1
+              let pVehType = a.pickupVehicleType
+              if (pVehType && vehiclesList.length > 0) {
+                const matched = findVehicleByHeadings(vehiclesList, { vehicleType: pVehType, serviceName: 'Transfers' })
+                if (matched) {
+                  pVehIdx = vehiclesList.indexOf(matched)
+                  pVehType = matched.vehicleType || matched.type
+                }
+              }
+              if (pVehIdx < 0 && typeof a.pickupVehicleIndex === 'number' && a.pickupVehicleIndex >= 0 && a.pickupVehicleIndex < vehiclesList.length) {
+                pVehIdx = a.pickupVehicleIndex
+                if (!pVehType && vehiclesList[pVehIdx]) {
+                  pVehType = vehiclesList[pVehIdx].vehicleType || vehiclesList[pVehIdx].type
+                }
+              }
+
+              let dVehIdx = -1
+              let dVehType = a.dropVehicleType
+              if (dVehType && vehiclesList.length > 0) {
+                const matched = findVehicleByHeadings(vehiclesList, { vehicleType: dVehType, serviceName: 'Transfers' })
+                if (matched) {
+                  dVehIdx = vehiclesList.indexOf(matched)
+                  dVehType = matched.vehicleType || matched.type
+                }
+              }
+              if (dVehIdx < 0 && typeof a.dropVehicleIndex === 'number' && a.dropVehicleIndex >= 0 && a.dropVehicleIndex < vehiclesList.length) {
+                dVehIdx = a.dropVehicleIndex
+                if (!dVehType && vehiclesList[dVehIdx]) {
+                  dVehType = vehiclesList[dVehIdx].vehicleType || vehiclesList[dVehIdx].type
+                }
+              }
+
               return {
                 ...a,
                 attractionIndex: aIdx,
@@ -7974,10 +8173,10 @@ export default function PrototypeBuilder() {
                 hasTransfer: !!a.hasTransfer,
                 pickupEnabled: a.pickupEnabled !== undefined ? !!a.pickupEnabled : (a.hasTransfer ? true : undefined),
                 dropEnabled: a.dropEnabled !== undefined ? !!a.dropEnabled : (a.hasTransfer ? true : undefined),
-                pickupVehicleIndex: typeof a.pickupVehicleIndex === 'number' && a.pickupVehicleIndex >= 0 ? a.pickupVehicleIndex : undefined,
-                pickupVehicleType: a.pickupVehicleType || (typeof a.pickupVehicleIndex === 'number' && vehiclesList[a.pickupVehicleIndex]?.type ? vehiclesList[a.pickupVehicleIndex].type : undefined),
-                dropVehicleIndex: typeof a.dropVehicleIndex === 'number' && a.dropVehicleIndex >= 0 ? a.dropVehicleIndex : undefined,
-                dropVehicleType: a.dropVehicleType || (typeof a.dropVehicleIndex === 'number' && vehiclesList[a.dropVehicleIndex]?.type ? vehiclesList[a.dropVehicleIndex].type : undefined),
+                pickupVehicleIndex: pVehIdx >= 0 ? pVehIdx : undefined,
+                pickupVehicleType: pVehType,
+                dropVehicleIndex: dVehIdx >= 0 ? dVehIdx : undefined,
+                dropVehicleType: dVehType,
                 pickupNotes: a.pickupNotes || '',
                 dropNotes: a.dropNotes || ''
               }
@@ -8022,79 +8221,56 @@ export default function PrototypeBuilder() {
             }
           }
           if (vehiclesList.length > 0) {
-            let pvIdx = typeof a.pickupVehicleIndex === 'number' && a.pickupVehicleIndex >= 0 && a.pickupVehicleIndex < vehiclesList.length ? a.pickupVehicleIndex : -1
-            if (pvIdx < 0 && a.pickupVehicleType) {
-              const pvName = a.pickupVehicleType.toLowerCase().trim()
-              pvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === pvName)
-            }
-            if (pvIdx >= 0 && pvIdx !== a.pickupVehicleIndex) {
-              dayChanged = true
-              a = { ...a, pickupVehicleIndex: pvIdx, pickupVehicleType: vehiclesList[pvIdx]?.type || a.pickupVehicleType }
+            if (a.pickupVehicleType) {
+              const matchedVeh = findVehicleByHeadings(vehiclesList, { vehicleType: a.pickupVehicleType, serviceName: 'Transfers' })
+              if (matchedVeh) {
+                const f = vehiclesList.indexOf(matchedVeh)
+                if (f >= 0 && (f !== a.pickupVehicleIndex || a.pickupVehicleType !== (matchedVeh.vehicleType || matchedVeh.type))) {
+                  dayChanged = true
+                  a = { ...a, pickupVehicleIndex: f, pickupVehicleType: matchedVeh.vehicleType || matchedVeh.type }
+                }
+              }
+            } else if (typeof a.pickupVehicleIndex === 'number' && a.pickupVehicleIndex >= 0 && a.pickupVehicleIndex < vehiclesList.length) {
+              const v = vehiclesList[a.pickupVehicleIndex]
+              if (v && a.pickupVehicleType !== (v.vehicleType || v.type)) {
+                dayChanged = true
+                a = { ...a, pickupVehicleType: v.vehicleType || v.type }
+              }
             }
 
-            let dvIdx = typeof a.dropVehicleIndex === 'number' && a.dropVehicleIndex >= 0 && a.dropVehicleIndex < vehiclesList.length ? a.dropVehicleIndex : -1
-            if (dvIdx < 0 && a.dropVehicleType) {
-              const dvName = a.dropVehicleType.toLowerCase().trim()
-              dvIdx = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === dvName)
-            }
-            if (dvIdx >= 0 && dvIdx !== a.dropVehicleIndex) {
-              dayChanged = true
-              a = { ...a, dropVehicleIndex: dvIdx, dropVehicleType: vehiclesList[dvIdx]?.type || a.dropVehicleType }
+            if (a.dropVehicleType) {
+              const matchedVeh = findVehicleByHeadings(vehiclesList, { vehicleType: a.dropVehicleType, serviceName: 'Transfers' })
+              if (matchedVeh) {
+                const f = vehiclesList.indexOf(matchedVeh)
+                if (f >= 0 && (f !== a.dropVehicleIndex || a.dropVehicleType !== (matchedVeh.vehicleType || matchedVeh.type))) {
+                  dayChanged = true
+                  a = { ...a, dropVehicleIndex: f, dropVehicleType: matchedVeh.vehicleType || matchedVeh.type }
+                }
+              }
+            } else if (typeof a.dropVehicleIndex === 'number' && a.dropVehicleIndex >= 0 && a.dropVehicleIndex < vehiclesList.length) {
+              const v = vehiclesList[a.dropVehicleIndex]
+              if (v && a.dropVehicleType !== (v.vehicleType || v.type)) {
+                dayChanged = true
+                a = { ...a, dropVehicleType: v.vehicleType || v.type }
+              }
             }
           }
           return a
         })
         const updatedTransfers = day.transfers.map(t => {
-          const curVeh = vehiclesList[t.vehicleIndex]
-          const isSedan = curVeh && ((curVeh.vehicleType || '').toLowerCase().includes('sedan') || (curVeh.type || '').toLowerCase().includes('sedan'))
-          const isInvalid = t.vehicleIndex === undefined || t.vehicleIndex < 0 || !curVeh
-          const tType = (t.type || '').toLowerCase().trim()
-          const isSizeMismatch = (curVeh && tType && curVeh.type.toLowerCase().trim() !== tType) || (curVeh && tType && !curVeh.type.toLowerCase().includes(tType.slice(0, 5)) && (tType.includes('45') || tType.includes('24') || tType.includes('55') || tType.includes('sic')))
-          
-          if (isSedan || isInvalid || isSizeMismatch) {
-            const desc = (t.description || t.routeDescription || t.serviceType || '').toLowerCase().trim()
-            const allText = `${tType} ${desc}`
-            let f = -1
-
-            const isArr = (t.serviceType || '').toLowerCase().includes('arrival') || desc.includes('arrival') || (t.serviceName || '').toLowerCase().includes('arrival')
-            const isDep = (t.serviceType || '').toLowerCase().includes('departure') || desc.includes('departure') || (t.serviceName || '').toLowerCase().includes('departure')
-
-            const findCoach = (sizeStr: string) => {
-              let idx = -1
-              if (isArr) {
-                idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('arrival') || v.type?.toLowerCase().includes('arrival')))
-              } else if (isDep) {
-                idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)) && (v.serviceName?.toLowerCase().includes('departure') || v.type?.toLowerCase().includes('departure')))
-              }
-              if (idx < 0) {
-                idx = vehiclesList.findIndex(v => (v.vehicleType?.includes(sizeStr) || v.type?.includes(sizeStr)))
-              }
-              return idx
-            }
-
-            if (allText.includes('45') || allText.includes('full coach')) {
-              f = findCoach('45')
-            } else if (allText.includes('24') || allText.includes('medium coach')) {
-              f = findCoach('24')
-            } else if (allText.includes('55') || allText.includes('super coach')) {
-              f = findCoach('55')
-            } else if (allText.includes('sic') || (allText.includes('coach') && !allText.includes('full') && !allText.includes('medium'))) {
-              f = vehiclesList.findIndex(v => isVehicleSIC(v))
-            } else if (tType) {
-              f = vehiclesList.findIndex(v => v.type.toLowerCase().trim() === tType)
-            }
-
-            if (f < 0) {
-              f = get13SeaterVehicleIndex(vehiclesList, t.serviceType, t.description)
-            }
-
-            if (f >= 0 && f !== t.vehicleIndex) {
+          const matchedVeh = findVehicleByHeadings(vehiclesList, t)
+          if (matchedVeh) {
+            const f = vehiclesList.indexOf(matchedVeh)
+            if (f >= 0 && (f !== t.vehicleIndex || t.vehicleType !== matchedVeh.vehicleType || t.serviceName !== matchedVeh.serviceName)) {
               dayChanged = true
               return { 
                 ...t, 
                 vehicleIndex: f,
-                type: vehiclesList[f]?.type,
-                serviceName: vehiclesList[f]?.serviceName
+                vehicleType: matchedVeh.vehicleType,
+                serviceName: matchedVeh.serviceName,
+                transferType: matchedVeh.transferType,
+                rateType: matchedVeh.rateType,
+                type: matchedVeh.type
               }
             }
           }
@@ -8102,13 +8278,10 @@ export default function PrototypeBuilder() {
         })
         const updatedGuides = (day.guides || []).map(g => {
           if (g.type && guidesList.length > 0) {
-            const curG = (typeof g.guideIndex === 'number' && g.guideIndex >= 0 && g.guideIndex < guidesList.length) ? guidesList[g.guideIndex] : null
-            if (!curG || (curG.type || '').toLowerCase().trim() !== (g.type || '').toLowerCase().trim()) {
-              const gf = guidesList.findIndex(item => (item.type || '').toLowerCase().trim() === (g.type || '').toLowerCase().trim())
-              if (gf >= 0 && gf !== g.guideIndex) {
-                dayChanged = true
-                g = { ...g, guideIndex: gf }
-              }
+            const gf = findGuideIndex(guidesList, g.type)
+            if (gf >= 0 && gf !== g.guideIndex) {
+              dayChanged = true
+              g = { ...g, guideIndex: gf }
             }
           }
           return g
@@ -8126,19 +8299,16 @@ export default function PrototypeBuilder() {
   // Re-match loaded proposal hotel if hotelsList finishes loading after proposal fetch
   useEffect(() => {
     if (hotelsList.length === 0 || !loadedProposalRaw?.hotelName) return
-    const hName = loadedProposalRaw.hotelName.toLowerCase().trim()
-    const hIdx = hotelsList.findIndex(h => h.name.toLowerCase().trim() === hName)
+    const hIdx = findHotelIndex(hotelsList, loadedProposalRaw.hotelName)
     if (hIdx >= 0) {
       setGlobalHotelIndex(hIdx)
       if (loadedProposalRaw.roomType) {
-        const rType = loadedProposalRaw.roomType.toLowerCase().trim()
-        const rIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === rType)
-        if (rIdx >= 0) setGlobalRoomIndex(rIdx)
+        const rIdx = findRoomIndex(hotelsList[hIdx]?.rooms, loadedProposalRaw.roomType)
+        setGlobalRoomIndex(rIdx)
       }
       if (loadedProposalRaw.supplementType) {
-        const sType = loadedProposalRaw.supplementType.toLowerCase().trim()
-        const sIdx = hotelsList[hIdx]?.rooms.findIndex(r => r.type.toLowerCase().trim() === sType)
-        if (sIdx >= 0) setGlobalSuppIndex(sIdx)
+        const sIdx = findRoomIndex(hotelsList[hIdx]?.rooms, loadedProposalRaw.supplementType)
+        setGlobalSuppIndex(sIdx)
       }
     }
   }, [hotelsList, loadedProposalRaw])
@@ -12994,7 +13164,11 @@ ${proposal}
                     <p style={{ fontSize: '0.8rem', opacity: 0.6, fontStyle: 'italic' }}>No transport transfers scheduled for this day</p>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {day.transfers.map((trans, rIdx) => (
+                      {day.transfers.map((trans, rIdx) => {
+                        const matchedVeh = findVehicleByHeadings(vehiclesList, trans) || vehiclesList[trans.vehicleIndex]
+                        const effectiveVehicleIndex = matchedVeh ? vehiclesList.indexOf(matchedVeh) : (typeof trans.vehicleIndex === 'number' && trans.vehicleIndex >= 0 && trans.vehicleIndex < vehiclesList.length ? trans.vehicleIndex : 0)
+
+                        return (
                         <div key={rIdx} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center', background: '#FFF', padding: '0.5rem', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
                           <select 
                             value={trans.time}
@@ -13007,7 +13181,7 @@ ${proposal}
                           </select>
 
                           <select 
-                            value={trans.vehicleIndex} 
+                            value={effectiveVehicleIndex} 
                             onChange={e => updateTransferRow(dIdx, rIdx, 'vehicleIndex', parseInt(e.target.value))}
                             style={{ padding: '0.4rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem', minWidth: '180px', flex: '1 0 180px' }}
                           >
@@ -13046,7 +13220,7 @@ ${proposal}
                                 title="Admin Net Tariff"
                                 style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D', padding: '2px 6px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 800, whiteSpace: 'nowrap' }}
                               >
-                                Admin Net: S$ {((vehiclesList[trans.vehicleIndex]?.pricePerTransfer || 0) * (trans.qty || 1))}
+                                Admin Net: S$ {(((matchedVeh || vehiclesList[effectiveVehicleIndex])?.pricePerTransfer || 0) * (trans.qty || 1))}
                               </span>
                             )}
                           </div>
@@ -13055,7 +13229,7 @@ ${proposal}
                             ×
                           </button>
                         </div>
-                      ))}
+                      )})}
                     </div>
                   )}
                 </div>
@@ -13087,7 +13261,7 @@ ${proposal}
                             </select>
 
                             <select 
-                              value={guideRow.guideIndex} 
+                              value={guideRow.type ? findGuideIndex(guidesList, guideRow.type) : (guideRow.guideIndex !== undefined && guideRow.guideIndex >= 0 && guideRow.guideIndex < guidesList.length ? guideRow.guideIndex : 0)} 
                               onChange={e => updateGuideRow(dIdx, rIdx, 'guideIndex', parseInt(e.target.value))}
                               style={{ padding: '0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.8rem', width: '180px' }}
                             >
@@ -13380,7 +13554,7 @@ ${proposal}
                                                     ))}
                                                   </select>
                                                   <select
-                                                    value={row.pickupVehicleIndex !== undefined && row.pickupVehicleIndex >= 0 ? row.pickupVehicleIndex : get13SeaterVehicleIndex(vehiclesList, 'transfer')}
+                                                    value={row.pickupVehicleType ? findVehicleIndex(vehiclesList, { vehicleType: row.pickupVehicleType, serviceName: 'Transfers' }, adults + kids) : (row.pickupVehicleIndex !== undefined && row.pickupVehicleIndex >= 0 ? row.pickupVehicleIndex : get13SeaterVehicleIndex(vehiclesList, 'transfer'))}
                                                     onChange={e => updateAttractionRow(dIdx, existingIdx, 'pickupVehicleIndex', parseInt(e.target.value))}
                                                     style={{ padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', maxWidth: '200px' }}
                                                     disabled={row.pickupEnabled === false}
@@ -13429,7 +13603,7 @@ ${proposal}
                                                     ))}
                                                   </select>
                                                   <select
-                                                    value={row.dropVehicleIndex !== undefined && row.dropVehicleIndex >= 0 ? row.dropVehicleIndex : get13SeaterVehicleIndex(vehiclesList, 'transfer')}
+                                                    value={row.dropVehicleType ? findVehicleIndex(vehiclesList, { vehicleType: row.dropVehicleType, serviceName: 'Transfers' }, adults + kids) : (row.dropVehicleIndex !== undefined && row.dropVehicleIndex >= 0 ? row.dropVehicleIndex : get13SeaterVehicleIndex(vehiclesList, 'transfer'))}
                                                     onChange={e => updateAttractionRow(dIdx, existingIdx, 'dropVehicleIndex', parseInt(e.target.value))}
                                                     style={{ padding: '0.2rem 0.35rem', borderRadius: '4px', border: '1px solid #CBD5E1', fontSize: '0.75rem', background: '#FFF', maxWidth: '200px' }}
                                                     disabled={row.dropEnabled === false}
